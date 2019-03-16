@@ -27,7 +27,7 @@ There are several excellent tools for plotting marginalised posteriors:
 
 - `getdist <http://getdist.readthedocs.io/en/latest/intro.html>`__ 
 - `corner <https://corner.readthedocs.io/en/latest/>`__
-- `MontePython <https://github.com/brinckmann/montepython_public>`__
+- `MontePython <http://baudren.github.io/montepython.html>`__
 - `pygtc <https://pygtc.readthedocs.io/en/latest/>`__
 
 Why create another one? In general, any user of software will find that there is some functionality that in their opinion is severely lacking. In my case this was primarily:
