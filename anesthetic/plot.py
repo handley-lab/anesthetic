@@ -2,6 +2,7 @@ import numpy
 import matplotlib.pyplot as plt
 from fastkde import fastKDE
 from scipy.interpolate import interp1d
+from matplotlib.ticker import MaxNLocator
 
 convert={'r':'Reds', 'b':'Blues', 'y':'Yellows', 'g':'Greens', 'k':'Greys'}
 
@@ -17,8 +18,11 @@ def make_1D_axes(paramnames, tex=None):
     for p, ax in zip(paramnames, axes.flatten()):
         ax.set_xlabel('$%s$' % tex[p])
         ax.set_yticks([])
-        for tick in ax.get_xticklabels():
-            tick.set_rotation(30)
+        ax.xaxis.set_major_locator(MaxNLocator(3))
+
+    
+    for ax in axes.flatten()[n:]:
+        ax.remove()
 
     return fig, axes
 
@@ -37,11 +41,11 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None):
 
     for p_y, ax in zip(paramnames_y, axes[:,0]):
         ax.set_ylabel('$%s$' % tex[p_y])
+        ax.yaxis.set_major_locator(MaxNLocator(3))
 
     for p_x, ax in zip(paramnames_x, axes[-1,:]):
         ax.set_xlabel('$%s$' % tex[p_x])
-        for tick in ax.get_xticklabels():
-            tick.set_rotation(30)
+        ax.xaxis.set_major_locator(MaxNLocator(3))
 
 
     # Unshare any 1D axes

@@ -119,7 +119,6 @@ class NestedSamplingKDE(pandas.DataFrame):
             fig = axes[0,0].figure
 
         for p, ax in zip(paramnames, axes.flatten()):
-            print(p,ax)
             self.plot(p, ax=ax, prior=prior, colorscheme=color)
 
         return fig, axes
