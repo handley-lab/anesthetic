@@ -12,6 +12,10 @@ This project is still in alpha stage. It aims to bring together tools for proces
 - scipy
 - pandas
 
+As well as the state-of-the-art KDE tool:
+
+- fastKDE
+
 Another triangle plotting tool?
 -------------------------------
 
