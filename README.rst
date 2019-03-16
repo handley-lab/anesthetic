@@ -16,6 +16,7 @@ Another triangle plotting tool?
 -------------------------------
 
 ::
+    
     This is my triangle plotter. There are many like it, but this one is mine.
 
 There are several excellent tools for plotting marginalised posteriors:
