@@ -50,3 +50,4 @@ To Do
 -----
 - tests
 - CI
+- docstrings

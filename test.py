@@ -17,14 +17,14 @@ samples.plot_1d('omegab')
 samples.plot_1d(['omegam', 'sigma8', 'theta', 'tau'])
 samples.plot_2d( ['omegam', 'omegab', 'omegac'], 'H0')
 
-paramnames = ['omegam', 'sigma8']
-fig, axes = samples.plot_2d(paramnames)
 
 
 samples_2 = load_nested_samples('/data/will/data/pablo/runs/chains/DES')
 samples_3 = load_nested_samples('/data/will/data/pablo/runs/chains/DES_planck')
 
-samples_2.plot_2d(paramnames, axes=axes, color='r')
+paramnames = ['omegam', 'sigma8']
+fig, axes = samples_2.plot_2d(paramnames, color='b')
+samples.plot_2d(paramnames, axes=axes, color='r')
 samples_3.plot_2d(paramnames, axes=axes, color='g')
 
 fig, axes = samples.plot_2d(['omegam', 'omegab', 'omegac'], ['H0','tau'])

@@ -72,7 +72,7 @@ def plot_1d(data, weights, ax=None, colorscheme=None, *args, **kwargs):
     p /= p.max()
     i = (p>=1e-2)
 
-    return ax.plot(x[i], p[i], color=colorscheme, *args, **kwargs)
+    return ax.plot(x[i], p[i], color=colorscheme, linewidth=1, *args, **kwargs)
 
 
 def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b', *args, **kwargs):
@@ -90,8 +90,10 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b', *args, **
     i = (pmf>=1e-2).any(axis=0)
     j = (pmf>=1e-2).any(axis=1)
 
-    ax.contour(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, linewidths=0.5, colors='k', *args, **kwargs)  
-    cbar = ax.contourf(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, cmap=plt.cm.get_cmap(convert[colorscheme]), *args, **kwargs)  
+    zorder = max([child.zorder for child in ax.get_children()])
+
+    cbar = ax.contourf(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, cmap=plt.cm.get_cmap(convert[colorscheme]), zorder=zorder+1, *args, **kwargs)  
+    ax.contour(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
     return cbar
 
 
