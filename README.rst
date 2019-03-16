@@ -46,7 +46,7 @@ Second, existing tools can make it painfully difficult to define new parameters.
     samples['omegab'] = samples.omegabh2/h**2      # Define omegab
     samples.tex['omegab'] = '\Omega_b'             # Label omegab
 
-    samples.plot('omegab')                         # Simple 1D plot
+    samples.plot_1d('omegab')                         # Simple 1D plot
 
 This triangle plotting tool was designed primarily for use with nested sampling, although it can be used for normal MCMC chains.
 
