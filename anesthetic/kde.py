@@ -1,61 +1,11 @@
 import numpy
 import pandas
 from scipy.special import logsumexp
-import matplotlib.pyplot as plt
-from scipy.stats import gaussian_kde
-from scipy.optimize import minimize
-from scipy.interpolate import interp1d
+from anesthetic.plot import make_2D_axes, plot_1d, scatter_plot_2d, contour_plot_2d
 
 
 def load_nested_samples(root):
     return NestedSamplingKDE.read(root)
-
-
-def plot_1d(data, weights, ax=None, colorscheme=None, *args, **kwargs):
-    if ax is None:
-        ax = plt.gca()
-    npoints = 1000
-    i = numpy.random.choice(len(weights), size=npoints, replace=True, p=weights)
-    kde = gaussian_kde(data[i], weights=weights[i])
-    mean = numpy.average(data, weights=weights)
-    x = numpy.linspace(data[i].min(), data[i].max(), 100)
-    kde_max = numpy.exp(-minimize(lambda x: -kde.logpdf(x),mean,method='Nelder-Mead')['fun'])
-    return ax.plot(x, kde(x)/kde_max, color=colorscheme, *args, **kwargs)
-
-convert={'r':'Reds', 'b':'Blues', 'y':'Yellows', 'g':'Greens', 'k':'Greys'}
-
-def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b', *args, **kwargs):
-    if ax is None:
-        ax = plt.gca()
-    npoints = 1000
-    i = numpy.random.choice(len(weights), size=npoints, replace=True, p=weights)
-    data = numpy.array([data_x, data_y])
-    kde = gaussian_kde(data[:,i])
-
-    p = sorted(kde(data[:,i]))
-    m = numpy.arange(len(p))/len(p)
-
-    interp = interp1d([0]+list(p)+[numpy.inf],[0]+list(m)+[1])
-
-    x = numpy.linspace(data_x[i].min(), data_x[i].max(), 100)
-    y = numpy.linspace(data_y[i].min(), data_y[i].max(), 100)
-    xx, yy = numpy.meshgrid(x, y)
-    positions = numpy.vstack([xx.ravel(), yy.ravel()])
-    f = numpy.reshape(kde(positions).T, xx.shape)
-    f = interp(f)
-    cbar = ax.contour(x, y, f, [0.05, 0.33, 1], vmin=0,vmax=1, linewidths=0.5, colors='k', *args, **kwargs)  
-    cbar = ax.contourf(x, y, f, [0.05, 0.33, 1], vmin=0,vmax=1, cmap=plt.cm.get_cmap(convert[colorscheme]), *args, **kwargs)  
-    return cbar
-
-
-def scatter_plot_2d(data_x, data_y, weights, ax=None, colorscheme=None, *args, **kwargs):
-    if ax is None:
-        ax = plt.gca()
-    w = weights / weights.max()
-    if w.sum() > 100:
-        w *= 100/w.sum()
-    i = w > numpy.random.rand(len(w))
-    return ax.scatter(data_x[i], data_y[i], c=colorscheme, *args, **kwargs)
 
 
 class NestedSamplingKDE(pandas.DataFrame):
@@ -97,6 +47,17 @@ class NestedSamplingKDE(pandas.DataFrame):
         data['prior_weights'] = dlogX
         data['prior_weights'] -= logsumexp(data.prior_weights)
         data['prior_weights'] = numpy.exp(data.prior_weights)
+
+        weights = data['posterior_weights']
+        cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
+        frac, iw = numpy.modf(weights*cc)
+        data['posterior_iweights'] = (iw + (numpy.random.rand(len(frac))<frac)).astype(int)
+
+        weights = data['prior_weights']
+        cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
+        frac, iw = numpy.modf(weights*cc)
+        data['prior_iweights'] = (iw + (numpy.random.rand(len(frac))<frac)).astype(int)
+
         return data
 
     def dlogX(self, nsamples=100):
@@ -136,16 +97,43 @@ class NestedSamplingKDE(pandas.DataFrame):
         logZ = logsumexp(self.logL + dlogX)
         return numpy.exp(self.logL + dlogX - logZ)
 
-    def weights(self, prior=False):
+    def weights(self, integer=True, prior=False):
         if prior:
-            return self.prior_weights
+            if integer:
+                return self.prior_iweights
+            else:
+                return self.prior_weights
         else:
-            return self.posterior_weights
+            if integer:
+                return self.posterior_iweights
+            else:
+                return self.posterior_weights
+
+    def plot_2d(self, paramnames, paramnames_y=None, axes=None, prior=None, color='b'):
+        if axes is None:
+            fig, axes = make_2D_axes(paramnames, paramnames_y, self.tex)
+        else:
+            fig = axes[0,0].figure
+
+        paramnames_x = paramnames
+        if paramnames_y is None:
+            paramnames_y = paramnames
+
+        for y, (p_y, row) in enumerate(zip(paramnames_x, axes)):
+            for x, (p_x, ax) in enumerate(zip(paramnames_y, row)):
+                print(p_x, p_y)
+                if paramnames_x is paramnames_y and x > y:
+                    kind='scatter'
+                else:
+                    kind='contour'
+                self.plot(p_x, p_y, ax, prior=prior, kind=kind, colorscheme=color)
+        return fig, axes
+
 
     def plot(self, paramname_x, paramname_y=None, ax=None, colorscheme='b',
              prior=False, kind='contour', *args, **kwargs):
         if paramname_y is None or paramname_x == paramname_y:
-            return plot_1d(self[paramname_x], self.weights(prior), ax, colorscheme,
+            return plot_1d(self[paramname_x], self.weights(prior=prior), ax, colorscheme,
                            *args, **kwargs)
 
         if kind == 'contour':
@@ -153,7 +141,7 @@ class NestedSamplingKDE(pandas.DataFrame):
         elif kind == 'scatter':
             plot = scatter_plot_2d
 
-        return plot(self[paramname_x], self[paramname_y], self.weights(prior),
+        return plot(self[paramname_x], self[paramname_y], self.weights(prior=prior),
                     ax, colorscheme, *args, **kwargs)
 
     def cov(self, paramnames, prior=False):
