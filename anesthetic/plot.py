@@ -1,4 +1,5 @@
 import numpy
+import warnings
 import matplotlib.pyplot as plt
 from fastkde import fastKDE
 from scipy.interpolate import interp1d
@@ -36,7 +37,7 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None):
 
     n_x = len(paramnames_x)
     n_y = len(paramnames_y)
-    fig, axes = plt.subplots(n_x, n_y, sharex='col', sharey='row', gridspec_kw={'wspace':0, 'hspace':0})
+    fig, axes = plt.subplots(n_y, n_x, sharex='col', sharey='row', gridspec_kw={'wspace':0, 'hspace':0}, squeeze=False)
 
 
     for p_y, ax in zip(paramnames_y, axes[:,0]):
@@ -61,7 +62,9 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None):
 def plot_1d(data, weights, ax=None, colorscheme=None, *args, **kwargs):
     if ax is None:
         ax = plt.gca()
-    p, x = fastKDE.pdf(numpy.repeat(data, weights))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        p, x = fastKDE.pdf(numpy.repeat(data, weights))
     p /= p.max()
     i = (p>=1e-2)
 
@@ -71,8 +74,9 @@ def plot_1d(data, weights, ax=None, colorscheme=None, *args, **kwargs):
 def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b', *args, **kwargs):
     if ax is None:
         ax = plt.gca()
-    pdf, (x, y) = fastKDE.pdf(numpy.repeat(data_x, weights), numpy.repeat(data_y, weights))
-
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        pdf, (x, y) = fastKDE.pdf(numpy.repeat(data_x, weights), numpy.repeat(data_y, weights))
     p = sorted(pdf.flatten())
     m = numpy.cumsum(p)
     m /= m[-1]

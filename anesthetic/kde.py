@@ -49,12 +49,14 @@ class NestedSamplingKDE(pandas.DataFrame):
         data['prior_weights'] = numpy.exp(data.prior_weights)
 
         weights = data['posterior_weights']
-        cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
+        with numpy.errstate(divide='ignore'):
+            cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
         frac, iw = numpy.modf(weights*cc)
         data['posterior_iweights'] = (iw + (numpy.random.rand(len(frac))<frac)).astype(int)
 
         weights = data['prior_weights']
-        cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
+        with numpy.errstate(divide='ignore'):
+            cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
         frac, iw = numpy.modf(weights*cc)
         data['prior_iweights'] = (iw + (numpy.random.rand(len(frac))<frac)).astype(int)
 
@@ -125,6 +127,11 @@ class NestedSamplingKDE(pandas.DataFrame):
 
 
     def plot_2d(self, paramnames, paramnames_y=None, axes=None, prior=None, color='b'):
+        if isinstance(paramnames, str):
+            paramnames = [paramnames]
+        if isinstance(paramnames_y, str):
+            paramnames_y = [paramnames_y]
+
         if axes is None:
             fig, axes = make_2D_axes(paramnames, paramnames_y, self.tex)
         else:
@@ -134,8 +141,8 @@ class NestedSamplingKDE(pandas.DataFrame):
         if paramnames_y is None:
             paramnames_y = paramnames
 
-        for y, (p_y, row) in enumerate(zip(paramnames_x, axes)):
-            for x, (p_x, ax) in enumerate(zip(paramnames_y, row)):
+        for y, (p_y, row) in enumerate(zip(paramnames_y, axes)):
+            for x, (p_x, ax) in enumerate(zip(paramnames_x, row)):
                 if paramnames_x is paramnames_y and x > y:
                     kind='scatter'
                 else:
