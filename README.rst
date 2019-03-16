@@ -28,7 +28,7 @@ There are several excellent tools for plotting marginalised posteriors:
 
 Why create another one? In general, any user of software will find that there is some functionality that in their opinion is severely lacking. In my case this was primarily:
 
-First, for large numbers of samples, kernel density estimation is slow, or inaccurate. There are now better state-of-the-art kernel density estimators, such as `fastKDE <https://pypi.org/project/fastkde/>`, which ameliorate many of these difficulties.
+First, for large numbers of samples, kernel density estimation is slow, or inaccurate. There are now better state-of-the-art kernel density estimators, such as `fastKDE <https://pypi.org/project/fastkde/>`__, which ameliorate many of these difficulties.
 
 Second, existing tools can make it painfully difficult to define new parameters. Take for example the default cosmomc chain, which defines ``omegabh2``, but not ``omegab``. The transformation is easy, since ``omegab = omegabh2/ (H0/100)**2``, but writing this simple line in code is not easy. This tool solves this issue by storing the samples as a pandas array, for which the relevant code for defining the above new parameter would be
 
