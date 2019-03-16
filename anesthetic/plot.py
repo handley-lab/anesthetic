@@ -38,23 +38,27 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None):
     n_x = len(paramnames_x)
     n_y = len(paramnames_y)
     fig, axes = plt.subplots(n_y, n_x, sharex='col', sharey='row', gridspec_kw={'wspace':0, 'hspace':0}, squeeze=False)
+    
+    for y, (p_y, row) in enumerate(zip(paramnames_y, axes)):
+        for x, (p_x, ax) in enumerate(zip(paramnames_x, row)):
+            # y labels
+            if x==0:
+                ax.set_ylabel('$%s$' % tex[p_y])
+                ax.yaxis.set_major_locator(MaxNLocator(3))
+            else:
+                ax.tick_params('y',left=False)
 
+            # x labels
+            if y==n_y-1:
+                ax.set_xlabel('$%s$' % tex[p_x])
+                ax.xaxis.set_major_locator(MaxNLocator(3))
+            else:
+                ax.tick_params('x',bottom=False)
 
-    for p_y, ax in zip(paramnames_y, axes[:,0]):
-        ax.set_ylabel('$%s$' % tex[p_y])
-        ax.yaxis.set_major_locator(MaxNLocator(3))
-
-    for p_x, ax in zip(paramnames_x, axes[-1,:]):
-        ax.set_xlabel('$%s$' % tex[p_x])
-        ax.xaxis.set_major_locator(MaxNLocator(3))
-
-
-    # Unshare any 1D axes
-    for j, (p_j, row) in enumerate(zip(paramnames, axes)):
-        for i, (p_i, ax) in enumerate(zip(paramnames, row)):
-            if p_i == p_j:
-                axes[i,j] = ax.twinx()
-                axes[i,j].set_yticks([])
+            # 1D plots
+            if p_x == p_y:
+                axes[x,y] = ax.twinx()
+                axes[x,y].set_yticks([])
 
     return fig, axes
 

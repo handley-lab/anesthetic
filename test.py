@@ -14,8 +14,12 @@ samples.tex['omegac'] = '\Omega_c'
 
 samples.plot_1d('omegab')
 
-paramnames = ['omegam', 'sigma8', 'theta', 'tau', 'logA', 'ns']
+samples.plot_1d(['omegam', 'sigma8', 'theta', 'tau'])
+samples.plot_2d( ['omegam', 'omegab', 'omegac'], 'H0')
+
+paramnames = ['omegam', 'sigma8']
 fig, axes = samples.plot_2d(paramnames)
+
 
 samples_2 = load_nested_samples('/data/will/data/pablo/runs/chains/DES')
 samples_3 = load_nested_samples('/data/will/data/pablo/runs/chains/DES_planck')
@@ -23,6 +27,8 @@ samples_3 = load_nested_samples('/data/will/data/pablo/runs/chains/DES_planck')
 samples_2.plot_2d(paramnames, axes=axes, color='r')
 samples_3.plot_2d(paramnames, axes=axes, color='g')
 
-samples.plot_1d(['omegab'])
+fig, axes = samples.plot_2d(['omegam', 'omegab', 'omegac'], ['H0','tau'])
+for ax in axes.flatten():
+    ax.label_outer()
 
-fig, axes = samples.plot_2d(paramnames,['omegam', 'tau'])
+samples.infer()
