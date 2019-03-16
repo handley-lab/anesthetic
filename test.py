@@ -4,7 +4,12 @@
 from anesthetic.kde import load_nested_samples
 
 # Load the samples
-samples = load_nested_samples('/data/will/data/pablo/runs/chains/planck')
+samples = load_nested_samples('./chains/example')
+samples['C'] = samples.B/samples.A
+samples.tex['C'] = 'C'
+
+fig, axes = samples.plot_2d(['A','B'],prior=True,color='r')
+#samples.plot_2d(['A','B','C'],color='b')
 
 h = samples['H0']/100
 samples['omegab'] = samples['omegabh2']/h**2
@@ -16,6 +21,7 @@ samples.plot_1d('omegab')
 
 samples.plot_1d(['omegam', 'sigma8', 'theta', 'tau'])
 samples.plot_2d( ['omegam', 'omegab', 'omegac'], 'H0')
+samples.plot_2d( ['omegam', 'omegab', 'omegac'])
 
 
 
