@@ -5,6 +5,24 @@ from scipy.interpolate import interp1d
 
 convert={'r':'Reds', 'b':'Blues', 'y':'Yellows', 'g':'Greens', 'k':'Greys'}
 
+def make_1D_axes(paramnames, tex=None):
+    if tex is None:
+        tex = {p:p for p in paramnames}
+
+    n = len(paramnames)
+    cols = int(numpy.ceil(numpy.sqrt(n)))
+    rows = int(numpy.ceil(n/cols))
+    fig, axes = plt.subplots(rows, cols, squeeze=False, gridspec_kw={'wspace':0})
+
+    for p, ax in zip(paramnames, axes.flatten()):
+        ax.set_xlabel('$%s$' % tex[p])
+        ax.set_yticks([])
+        for tick in ax.get_xticklabels():
+            tick.set_rotation(30)
+
+    return fig, axes
+
+
 def make_2D_axes(paramnames, paramnames_y=None, tex=None):
     paramnames_x = paramnames
     if paramnames_y is None:
@@ -34,6 +52,7 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None):
                 axes[i,j].set_yticks([])
 
     return fig, axes
+
 
 def plot_1d(data, weights, ax=None, colorscheme=None, *args, **kwargs):
     if ax is None:

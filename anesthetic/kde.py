@@ -1,7 +1,7 @@
 import numpy
 import pandas
 from scipy.special import logsumexp
-from anesthetic.plot import make_2D_axes, plot_1d, scatter_plot_2d, contour_plot_2d
+from anesthetic.plot import make_1D_axes, make_2D_axes, plot_1d, scatter_plot_2d, contour_plot_2d
 
 
 def load_nested_samples(root):
@@ -109,6 +109,22 @@ class NestedSamplingKDE(pandas.DataFrame):
             else:
                 return self.posterior_weights
 
+    def plot_1d(self, paramnames, axes=None, prior=None, color='b'):
+        if isinstance(paramnames, str):
+            paramnames = [paramnames]
+
+        if axes is None:
+            fig, axes = make_1D_axes(paramnames, self.tex)
+        else:
+            fig = axes[0,0].figure
+
+        for p, ax in zip(paramnames, axes.flatten()):
+            print(p,ax)
+            self.plot(p, ax=ax, prior=prior, colorscheme=color)
+
+        return fig, axes
+
+
     def plot_2d(self, paramnames, paramnames_y=None, axes=None, prior=None, color='b'):
         if axes is None:
             fig, axes = make_2D_axes(paramnames, paramnames_y, self.tex)
@@ -121,13 +137,13 @@ class NestedSamplingKDE(pandas.DataFrame):
 
         for y, (p_y, row) in enumerate(zip(paramnames_x, axes)):
             for x, (p_x, ax) in enumerate(zip(paramnames_y, row)):
-                print(p_x, p_y)
                 if paramnames_x is paramnames_y and x > y:
                     kind='scatter'
                 else:
                     kind='contour'
                 self.plot(p_x, p_y, ax, prior=prior, kind=kind, colorscheme=color)
         return fig, axes
+
 
 
     def plot(self, paramname_x, paramname_y=None, ax=None, colorscheme='b',
