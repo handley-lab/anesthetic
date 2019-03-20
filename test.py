@@ -1,7 +1,7 @@
 %load_ext autoreload
 %autoreload 2
 
-from anesthetic.kde import load_nested_samples
+from anesthetic.anesthetic import load_nested_samples
 
 # Load the samples
 samples = load_nested_samples('./chains/example')
@@ -9,6 +9,7 @@ samples['C'] = samples.B/samples.A
 samples.tex['C'] = 'C'
 
 fig, axes = samples.plot_2d(['A','B'],prior=True,color='r')
+samples.plot_2d(['A','B'],axes=axes,prior=True,color='b')
 #samples.plot_2d(['A','B','C'],color='b')
 
 h = samples['H0']/100
