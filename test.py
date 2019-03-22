@@ -5,14 +5,13 @@ from anesthetic.anesthetic import load_nested_samples
 
 # Load the samples
 samples = load_nested_samples('./chains/example')
-samples['C'] = samples.B/samples.A
+samples['C'] = samples.B+samples.A
 samples.tex['C'] = 'C'
 samples.prior_range['A']=(-2,2)
 samples.prior_range['B']=(-2,2)
 
-fig, axes = samples.plot_2d(['A','B'],prior=True,color='r')
-samples.plot_2d(['A','B'],axes=axes,prior=False,color='b')
-#samples.plot_2d(['A','B','C'],color='b')
+fig, axes = samples.plot_2d(['A','B','C'],prior=True,color='r')
+samples.plot_2d(['A','B','C'],axes=axes,prior=False,color='b')
 
 h = samples['H0']/100
 samples['omegab'] = samples['omegabh2']/h**2

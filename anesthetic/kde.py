@@ -2,6 +2,14 @@ import numpy
 import warnings
 from fastkde import fastKDE
 
+def check_bounds(d, xmin=None, xmax=None):
+    if xmin is not None and (d.min() - xmin)/(d.max()-d.min()) >1e-2:
+        xmin = None
+    if xmax is not None and (xmax - d.max())/(d.max()-d.min()) >1e-2:
+        xmax = None
+    return xmin, xmax
+
+
 def mirror_1d(d, xmin=None, xmax=None):
     if xmin is not None and xmax is not None:
         xmed = (xmin+xmax)/2
@@ -42,7 +50,9 @@ def mirror_2d(d_x_, d_y_, xmin=None, xmax=None, ymin=None, ymax=None):
 
     return d_x, d_y
 
+
 def kde_1d(d, xmin=None, xmax=None):
+    xmin, xmax = check_bounds(d, xmin, xmax)
     axisExpansionFactor = xmax is None or xmin is None
     d_ = mirror_1d(d, xmin, xmax)
     with warnings.catch_warnings():
@@ -53,6 +63,8 @@ def kde_1d(d, xmin=None, xmax=None):
 
 
 def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
+    xmin, xmax = check_bounds(d_x, xmin, xmax)
+    ymin, ymax = check_bounds(d_y, ymin, ymax)
     axisExpansionFactor=[xmax is None or xmin is None,
                          ymax is None or ymin is None] 
     d_x_, d_y_ = mirror_2d(d_x, d_y, xmin, xmax, ymin, ymax)
