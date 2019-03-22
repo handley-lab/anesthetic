@@ -1,8 +1,7 @@
 import numpy
-import warnings
 import matplotlib.pyplot as plt
 from fastkde import fastKDE
-from anesthetic.kde import kde_1d
+from anesthetic.kde import kde_1d, kde_2d
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 
@@ -70,9 +69,8 @@ def plot_1d(data, weights, ax=None, colorscheme=None, xmin=None, xmax=None,
             *args, **kwargs):
     if ax is None:
         ax = plt.gca()
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        x, p = kde_1d(numpy.repeat(data, weights), xmin, xmax)
+
+    x, p = kde_1d(numpy.repeat(data, weights), xmin, xmax)
     p /= p.max()
     i = (p>=1e-2)
 
@@ -85,9 +83,9 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
                     xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
     if ax is None:
         ax = plt.gca()
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        pdf, (x, y) = fastKDE.pdf(numpy.repeat(data_x, weights), numpy.repeat(data_y, weights))
+
+    x, y, pdf = kde_2d(numpy.repeat(data_x, weights), numpy.repeat(data_y, weights),
+                       xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
     p = sorted(pdf.flatten())
     m = numpy.cumsum(p)
     m /= m[-1]
