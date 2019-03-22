@@ -2,6 +2,7 @@ import numpy
 import pandas
 from scipy.special import logsumexp
 from anesthetic.plot import make_1D_axes, make_2D_axes, plot_1d, scatter_plot_2d, contour_plot_2d
+from anesthetic.read import read_birth, read_ranges, read_paramnames
 
 def load_nested_samples(root):
     return NestedSamplingKDE.read(root)
@@ -12,23 +13,17 @@ class NestedSamplingKDE(pandas.DataFrame):
 
     @classmethod
     def read(cls, root):
-        # Get paramnames
-        paramnames = []
-        tex = {}
-        paramnames_file = root + '.paramnames'
-        for line in open(paramnames_file, 'r'):
-            line = line.strip().split()
-            paramname = line[0].replace('*', '')
-            paramnames.append(paramname)
-            tex[paramname] = ''.join(line[1:])
+        # Read in data
+        paramnames, tex = read_paramnames(root)
+        prior_range = read_ranges(root)
+        data = read_birth(root)
 
-        # Get data
-        birth_file = root + '_dead-birth.txt'
-        data = numpy.loadtxt(birth_file)
+        # Build pandas DataFrame
         columns = paramnames + ['logL', 'logL_birth']
         data = cls(data=data, columns=columns)
         data.tex = tex
         data.paramnames = paramnames
+        data.prior_range = prior_range
 
         # Compute nlive
         index = data.logL.searchsorted(data.logL_birth)-1
@@ -58,8 +53,6 @@ class NestedSamplingKDE(pandas.DataFrame):
             cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
         frac, iw = numpy.modf(weights*cc)
         data['prior_iweights'] = (iw + (numpy.random.rand(len(frac))<frac)).astype(int)
-
-        data.prior_range = {}
 
         return data
 
