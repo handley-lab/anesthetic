@@ -8,7 +8,7 @@ def load_nested_samples(root):
 
 
 class NestedSamplingKDE(pandas.DataFrame):
-    _metadata = ['paramnames', 'tex']
+    _metadata = ['paramnames', 'tex', 'prior_range']
 
     @classmethod
     def read(cls, root):
@@ -58,6 +58,8 @@ class NestedSamplingKDE(pandas.DataFrame):
             cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
         frac, iw = numpy.modf(weights*cc)
         data['prior_iweights'] = (iw + (numpy.random.rand(len(frac))<frac)).astype(int)
+
+        data.prior_range = {}
 
         return data
 
@@ -124,7 +126,6 @@ class NestedSamplingKDE(pandas.DataFrame):
 
         return fig, axes
 
-
     def plot_2d(self, paramnames, paramnames_y=None, axes=None, prior=None, color='b'):
         if isinstance(paramnames, str):
             paramnames = [paramnames]
@@ -142,28 +143,32 @@ class NestedSamplingKDE(pandas.DataFrame):
 
         for y, (p_y, row) in enumerate(zip(paramnames_y, axes)):
             for x, (p_x, ax) in enumerate(zip(paramnames_x, row)):
-                if paramnames_x is paramnames_y and x > y:
+                if paramnames_x == paramnames_y and x > y:
                     kind='scatter'
                 else:
                     kind='contour'
                 self.plot(p_x, p_y, ax, prior=prior, kind=kind, colorscheme=color)
         return fig, axes
 
-
-
     def plot(self, paramname_x, paramname_y=None, ax=None, colorscheme='b',
              prior=False, kind='contour', *args, **kwargs):
         if paramname_y is None or paramname_x == paramname_y:
-            return plot_1d(self[paramname_x], self.weights(prior=prior), ax, colorscheme,
-                           *args, **kwargs)
+            xmin, xmax = self.prior_range.get(paramname_x, (None, None))
+            return plot_1d(self[paramname_x], self.weights(prior=prior),
+                           ax=ax, colorscheme=colorscheme,
+                           xmin=xmin, xmax=xmax, *args, **kwargs)
 
         if kind == 'contour':
             plot = contour_plot_2d
         elif kind == 'scatter':
             plot = scatter_plot_2d
+        xmin, xmax = self.prior_range.get(paramname_x, (None, None))
+        ymin, ymax = self.prior_range.get(paramname_y, (None, None))
 
         return plot(self[paramname_x], self[paramname_y], self.weights(prior=prior),
-                    ax, colorscheme, *args, **kwargs)
+                    ax=ax, colorscheme=colorscheme,
+                    xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
+                    *args, **kwargs)
 
     def cov(self, paramnames, prior=False):
         return pandas.DataFrame(numpy.cov(self[paramnames].T,

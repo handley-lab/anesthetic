@@ -2,6 +2,7 @@ import numpy
 import warnings
 import matplotlib.pyplot as plt
 from fastkde import fastKDE
+from anesthetic.kde import kde_1d
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 
@@ -19,6 +20,7 @@ def make_1D_axes(paramnames, tex=None):
     for p, ax in zip(paramnames, axes.flatten()):
         ax.set_xlabel('$%s$' % tex[p])
         ax.set_yticks([])
+        ax.set_ylim(0,1.1)
         ax.xaxis.set_major_locator(MaxNLocator(3))
 
     
@@ -59,23 +61,28 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None):
             if p_x == p_y:
                 axes[x,y] = ax.twinx()
                 axes[x,y].set_yticks([])
+                axes[x,y].set_ylim(0,1.1)
 
     return fig, axes
 
 
-def plot_1d(data, weights, ax=None, colorscheme=None, *args, **kwargs):
+def plot_1d(data, weights, ax=None, colorscheme=None, xmin=None, xmax=None,
+            *args, **kwargs):
     if ax is None:
         ax = plt.gca()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        p, x = fastKDE.pdf(numpy.repeat(data, weights))
+        x, p = kde_1d(numpy.repeat(data, weights), xmin, xmax)
     p /= p.max()
     i = (p>=1e-2)
 
-    return ax.plot(x[i], p[i], color=colorscheme, linewidth=1, *args, **kwargs)
+    ans = ax.plot(x[i], p[i], color=colorscheme, linewidth=1, *args, **kwargs)
+    ax.set_xlim(xmin, xmax, auto=True)
+    return ans
 
 
-def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b', *args, **kwargs):
+def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
+                    xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
     if ax is None:
         ax = plt.gca()
     with warnings.catch_warnings():
@@ -94,14 +101,21 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b', *args, **
 
     cbar = ax.contourf(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, cmap=plt.cm.get_cmap(convert[colorscheme]), zorder=zorder+1, *args, **kwargs)  
     ax.contour(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
+    ax.set_xlim(xmin, xmax, auto=True)
+    ax.set_ylim(ymin, ymax, auto=True)
     return cbar
 
 
-def scatter_plot_2d(data_x, data_y, weights, ax=None, colorscheme=None, n=1000, *args, **kwargs):
+def scatter_plot_2d(data_x, data_y, weights, ax=None, colorscheme=None, n=1000, 
+                    xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
+
     if ax is None:
         ax = plt.gca()
     w = weights / weights.max()
     if w.sum() > n:
         w *= n/w.sum()
     i = w > numpy.random.rand(len(w))
-    return ax.plot(data_x[i], data_y[i], 'o', markersize=1, color=colorscheme, *args, **kwargs)
+    points = ax.plot(data_x[i], data_y[i], 'o', markersize=1, color=colorscheme, *args, **kwargs)
+    ax.set_xlim(xmin, xmax, auto=True)
+    ax.set_ylim(ymin, ymax, auto=True)
+    return points
