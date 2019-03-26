@@ -73,7 +73,7 @@ def plot_1d(data, weights, ax=None, colorscheme=None, xmin=None, xmax=None,
 
     x, p = kde_1d(numpy.repeat(data, weights), xmin, xmax)
     p /= p.max()
-    i = (p>=5e-3)
+    i = (p>=1e-2)
 
     ans = ax.plot(x[i], p[i], color=colorscheme, linewidth=1, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -95,8 +95,8 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
     contours = list(interp([0.05, 0.33]))+[1]
     print(contours)
 
-    i = (pdf>=5e-3).any(axis=0)
-    j = (pdf>=5e-3).any(axis=1)
+    i = (pdf>=1e-2).any(axis=0)
+    j = (pdf>=1e-2).any(axis=1)
 
     zorder = max([child.zorder for child in ax.get_children()])
 

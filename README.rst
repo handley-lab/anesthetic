@@ -55,4 +55,8 @@ To Do
 - tests
 - CI
 - docstrings
-- automatic axis alteration?
+- better interfaces for plotting multiple samples
+- better interfaces for prior + posterior
+- multiple nested sampler input formats (MultiNest, Dynesty, NeuralNest)
+- tex handling for outputs
+- clear interface to evidence outputs
