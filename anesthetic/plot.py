@@ -2,6 +2,7 @@ import numpy
 import matplotlib.pyplot as plt
 from fastkde import fastKDE
 from anesthetic.kde import kde_1d, kde_2d
+from anesthetic.utils import check_bounds
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 
@@ -75,7 +76,7 @@ def plot_1d(data, weights, ax=None, colorscheme=None, xmin=None, xmax=None,
     i = (p>=1e-2)
 
     ans = ax.plot(x[i], p[i], color=colorscheme, linewidth=1, *args, **kwargs)
-    ax.set_xlim(xmin, xmax, auto=True)
+    ax.set_xlim(*check_bounds(data, xmin, xmax), auto=True)
     return ans
 
 
@@ -99,8 +100,8 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
 
     cbar = ax.contourf(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, cmap=plt.cm.get_cmap(convert[colorscheme]), zorder=zorder+1, *args, **kwargs)  
     ax.contour(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
-    ax.set_xlim(xmin, xmax, auto=True)
-    ax.set_ylim(ymin, ymax, auto=True)
+    ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
+    ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
     return cbar
 
 
