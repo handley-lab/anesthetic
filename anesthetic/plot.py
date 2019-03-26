@@ -100,10 +100,10 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
 
     zorder = max([child.zorder for child in ax.get_children()])
 
-    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1, cmap=plt.cm.get_cmap(convert[colorscheme]), zorder=zorder+1, *args, **kwargs)  
-    ax.contour(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
+    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1.2, cmap=plt.cm.get_cmap(convert[colorscheme]), zorder=zorder+1, *args, **kwargs)  
+    ax.contour(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1.2, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
-    ax.set_ylim(*check_bounds(y[i], ymin, ymax), auto=True)
+    ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
     return cbar
 
 
