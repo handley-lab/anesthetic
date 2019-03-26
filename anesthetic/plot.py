@@ -73,10 +73,10 @@ def plot_1d(data, weights, ax=None, colorscheme=None, xmin=None, xmax=None,
 
     x, p = kde_1d(numpy.repeat(data, weights), xmin, xmax)
     p /= p.max()
-    i = (p>=1e-2)
+    i = (p>=5e-3)
 
     ans = ax.plot(x[i], p[i], color=colorscheme, linewidth=1, *args, **kwargs)
-    ax.set_xlim(*check_bounds(data, xmin, xmax), auto=True)
+    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
 
@@ -87,25 +87,27 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
 
     x, y, pdf = kde_2d(numpy.repeat(data_x, weights), numpy.repeat(data_y, weights),
                        xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    pdf /= pdf.max()
     p = sorted(pdf.flatten())
     m = numpy.cumsum(p)
     m /= m[-1]
-    interp = interp1d([0]+list(p)+[numpy.inf],[0]+list(m)+[1])
-    pmf = interp(pdf)
+    interp = interp1d([0]+list(m)+[1],[0]+list(p)+[1])
+    contours = list(interp([0.05, 0.33]))+[1]
+    print(contours)
 
-    i = (pmf>=1e-2).any(axis=0)
-    j = (pmf>=1e-2).any(axis=1)
+    i = (pdf>=5e-3).any(axis=0)
+    j = (pdf>=5e-3).any(axis=1)
 
     zorder = max([child.zorder for child in ax.get_children()])
 
-    cbar = ax.contourf(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, cmap=plt.cm.get_cmap(convert[colorscheme]), zorder=zorder+1, *args, **kwargs)  
-    ax.contour(x[i], y[j], pmf[numpy.ix_(j,i)], [0.05, 0.33, 1], vmin=0,vmax=1, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
-    ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
-    ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
+    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1, cmap=plt.cm.get_cmap(convert[colorscheme]), zorder=zorder+1, *args, **kwargs)  
+    ax.contour(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
+    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
+    ax.set_ylim(*check_bounds(y[i], ymin, ymax), auto=True)
     return cbar
 
 
-def scatter_plot_2d(data_x, data_y, weights, ax=None, colorscheme=None, n=1000, 
+def scatter_plot_2d(data_x, data_y, weights, ax=None, colorscheme=None, n=500, 
                     xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
 
     if ax is None:
@@ -114,7 +116,9 @@ def scatter_plot_2d(data_x, data_y, weights, ax=None, colorscheme=None, n=1000,
     if w.sum() > n:
         w *= n/w.sum()
     i = w > numpy.random.rand(len(w))
-    points = ax.plot(data_x[i], data_y[i], 'o', markersize=1, color=colorscheme, *args, **kwargs)
-    ax.set_xlim(xmin, xmax, auto=True)
-    ax.set_ylim(ymin, ymax, auto=True)
+    x = data_x[i]
+    y = data_y[i]
+    points = ax.plot(x, y, 'o', markersize=1, color=colorscheme, *args, **kwargs)
+    ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
+    ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)
     return points

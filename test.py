@@ -10,9 +10,12 @@ samples.tex['C'] = 'C'
 samples.prior_range['A']=(-2,2)
 samples.prior_range['B']=(-2,2)
 
-fig, axes = samples.plot_2d(['A','B','C'],prior=True,color='r')
-samples.plot_2d(['A','B','C'],axes=axes,prior=False,color='b')
+fig, axes = samples.plot_2d(['A','B'],prior=True,color='r')
+samples.plot_2d(['A','B'],axes=axes,prior=False,color='b')
+samples.plot_2d(['A','B'],color='b')
 
+samples = load_nested_samples('/data/will/data/pablo/runs/chains/planck')
+samples.paramnames
 h = samples['H0']/100
 samples['omegab'] = samples['omegabh2']/h**2
 samples.tex['omegab'] = '\Omega_b'

@@ -12,6 +12,16 @@ def kde_1d(d, xmin=None, xmax=None):
         warnings.simplefilter("ignore")
         p, x = fastKDE.pdf(d_,axisExpansionFactor=axisExpansionFactor)
     p *= 2-axisExpansionFactor
+
+    if xmin is not None:
+        p = p[x>=xmin]
+        x = x[x>=xmin]
+
+    if xmax is not None:
+        p = p[x<=xmax]
+        x = x[x<=xmax]
+
+    print(x.shape, p.shape)
     return x, p
 
 
@@ -28,5 +38,21 @@ def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
 
     p *= (2-axisExpansionFactor[0])
     p *= (2-axisExpansionFactor[1])
+    if xmin is not None:
+        p = p[:,x>=xmin]
+        x = x[x>=xmin]
 
+    if xmax is not None:
+        p = p[:,x<=xmax]
+        x = x[x<=xmax]
+
+    if ymin is not None:
+        p = p[y>=ymin,:]
+        y = y[y>=ymin]
+
+    if ymax is not None:
+        p = p[y<=ymax,:]
+        y = y[y<=ymax]
+
+    print(x.shape, y.shape, p.shape)
     return x, y, p
