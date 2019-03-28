@@ -60,7 +60,6 @@ To Do
 - better interfaces for plotting multiple samples
 - better interfaces for prior + posterior
 - multiple nested sampler input formats (MultiNest, Dynesty, NeuralNest)
-- tex handling for outputs
 - clear interface to evidence outputs
 - Read multiple MCMC chains
 - Handle non-integer weights correctly

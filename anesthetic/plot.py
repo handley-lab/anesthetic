@@ -18,7 +18,7 @@ def make_1D_axes(paramnames, tex=None):
     fig, axes = plt.subplots(rows, cols, squeeze=False, gridspec_kw={'wspace':0})
 
     for p, ax in zip(paramnames, axes.flatten()):
-        ax.set_xlabel('$%s$' % tex[p])
+        ax.set_xlabel(tex[p])
         ax.set_yticks([])
         ax.set_ylim(0,1.1)
         ax.xaxis.set_major_locator(MaxNLocator(3))
@@ -45,14 +45,14 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None):
         for x, (p_x, ax) in enumerate(zip(paramnames_x, row)):
             # y labels
             if x==0:
-                ax.set_ylabel('$%s$' % tex[p_y])
+                ax.set_ylabel(tex[p_y])
                 ax.yaxis.set_major_locator(MaxNLocator(3))
             else:
                 ax.tick_params('y',left=False)
 
             # x labels
             if y==n_y-1:
-                ax.set_xlabel('$%s$' % tex[p_x])
+                ax.set_xlabel(tex[p_x])
                 ax.xaxis.set_major_locator(MaxNLocator(3))
             else:
                 ax.tick_params('x',bottom=False)

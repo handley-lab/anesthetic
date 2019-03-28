@@ -9,7 +9,7 @@ def read_paramnames(root):
             line = line.strip().split()
             paramname = line[0].replace('*', '')
             paramnames.append(paramname)
-            tex[paramname] = ''.join(line[1:])
+            tex[paramname] = '$' + ''.join(line[1:]) + '$'
     return paramnames, tex
 
 def read_limits(root):

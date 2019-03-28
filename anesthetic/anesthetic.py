@@ -42,7 +42,7 @@ class MCMCSamples(pandas.DataFrame):
         nsamps, nparams = params.shape
 
         weights = kwargs.pop('weights', numpy.ones((nsamps,1)))
-        paramnames = kwargs.pop('paramnames', ['x_%i' % i for i in range(nparams)])
+        paramnames = kwargs.pop('paramnames', ['x%i' % i for i in range(nparams)])
         tex = kwargs.pop('tex', paramnames)
         limits = kwargs.pop('limits', {})
         columns = paramnames + ['weights', 'logL']
