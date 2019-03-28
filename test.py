@@ -2,15 +2,26 @@
 %autoreload 2
 
 from anesthetic.anesthetic import load_nested_samples
+from anesthetic.anesthetic import MCMCSamples
+import numpy
 
-# Load the samples
-samples = load_nested_samples('./chains/example')
+samples = MCMCSamples.read('/data/will/data/COM_CosmoParams_base-plikHM_R3.00/base/plikHM_TT_lowl/base_plikHM_TT_lowl')
+
+
+
 samples['C'] = samples.B+samples.A
 samples.tex['C'] = 'C'
-samples.prior_range['A']=(-2,2)
-samples.prior_range['B']=(-2,2)
+samples.limits['A']=(-2,2)
+samples.limits['B']=(-2,2)
 
-fig, axes = samples.plot_2d(['A','B'],prior=True,color='r')
+fig, axes = samples.plot_2d(['H0','tau','omegabh2'],colorscheme='r')
+p = samples.weights
+p /= p.sum()
+sum(-numpy.log(p)*p)
+import matplotlib.pyplot as plt
+plt.hist(samples.weights,bins=28)
+
+
 samples.plot_2d(['A','B'],axes=axes,prior=False,color='b')
 samples.plot_2d(['A','B'],color='b')
 
@@ -37,6 +48,10 @@ paramnames = ['omegam', 'sigma8']
 fig, axes = samples_2.plot_2d(paramnames, color='b')
 samples.plot_2d(paramnames, axes=axes, color='r')
 samples_3.plot_2d(paramnames, axes=axes, color='g')
+
+fig, axes = samples_2.plot_2d('omegam', 'sigma8', color='b')
+samples.plot_2d('omegam', 'sigma8', axes=axes, color='r')
+samples_3.plot_2d('omegam', 'sigma8', axes=axes, color='g')
 
 fig, axes = samples.plot_2d(['omegam', 'omegab', 'omegac'], ['H0','tau'])
 for ax in axes.flatten():

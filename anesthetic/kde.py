@@ -10,7 +10,8 @@ def kde_1d(d, xmin=None, xmax=None):
     d_ = mirror_1d(d, xmin, xmax)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        p, x = fastKDE.pdf(d_,axisExpansionFactor=axisExpansionFactor)
+        p, x = fastKDE.pdf(d_,axisExpansionFactor=axisExpansionFactor,
+                           numPointsPerSigma=10*(2-axisExpansionFactor))
     p *= 2-axisExpansionFactor
 
     if xmin is not None:
@@ -21,7 +22,6 @@ def kde_1d(d, xmin=None, xmax=None):
         p = p[x<=xmax]
         x = x[x<=xmax]
 
-    print(x.shape, p.shape)
     return x, p
 
 
@@ -34,7 +34,8 @@ def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        p, (x, y) = fastKDE.pdf(d_x_, d_y_, axisExpansionFactor=axisExpansionFactor)
+        p, (x, y) = fastKDE.pdf(d_x_, d_y_, axisExpansionFactor=axisExpansionFactor,
+                                numPointsPerSigma=10*(2-axisExpansionFactor[0])*(2-axisExpansionFactor[1]))
 
     p *= (2-axisExpansionFactor[0])
     p *= (2-axisExpansionFactor[1])
@@ -54,5 +55,5 @@ def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
         p = p[y<=ymax,:]
         y = y[y<=ymax]
 
-    print(x.shape, y.shape, p.shape)
+    print(xmin, xmax, ymin, ymax)
     return x, y, p

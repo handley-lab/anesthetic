@@ -62,3 +62,4 @@ To Do
 - multiple nested sampler input formats (MultiNest, Dynesty, NeuralNest)
 - tex handling for outputs
 - clear interface to evidence outputs
+- Read multiple MCMC chains

@@ -93,7 +93,6 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
     m /= m[-1]
     interp = interp1d([0]+list(m)+[1],[0]+list(p)+[1])
     contours = list(interp([0.05, 0.33]))+[1]
-    print(contours)
 
     i = (pdf>=1e-2).any(axis=0)
     j = (pdf>=1e-2).any(axis=1)
