@@ -64,3 +64,5 @@ To Do
 - Read multiple MCMC chains
 - Handle non-integer weights correctly
 - Ressurect prior weights
+- Automatic coloring
+- Legends

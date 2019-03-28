@@ -55,5 +55,4 @@ def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
         p = p[y<=ymax,:]
         y = y[y<=ymax]
 
-    print(xmin, xmax, ymin, ymax)
     return x, y, p

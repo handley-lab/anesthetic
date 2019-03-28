@@ -26,7 +26,7 @@ class MCMCSamples(pandas.DataFrame):
         limits = read_limits(root)
 
         # Build class
-        return cls.build(params=params, weights=weights, logL=logL, paramnames=paramnames, tex=tex, limits=limits)
+        return cls.build(params=params, w=w, logL=logL, paramnames=paramnames, tex=tex, limits=limits)
 
     @classmethod
     def build(cls, **kwargs):
@@ -41,17 +41,20 @@ class MCMCSamples(pandas.DataFrame):
 
         nsamps, nparams = params.shape
 
-        weights = kwargs.pop('weights', numpy.ones((nsamps,1)))
+        w = kwargs.pop('w', None)
         paramnames = kwargs.pop('paramnames', ['x%i' % i for i in range(nparams)])
         tex = kwargs.pop('tex', paramnames)
         limits = kwargs.pop('limits', {})
-        columns = paramnames + ['weights', 'logL']
-        data = numpy.concatenate((params, weights, logL), axis=1)
 
-        data = cls(data=data, columns=columns)
+        data = cls(data=params, columns=paramnames)
+        if w is not None:
+            data['w'] = w
+        data['logL'] = logL
+
         data.tex = tex
         data.paramnames = paramnames
         data.limits = limits
+
 
         return data
 
@@ -156,6 +159,13 @@ class MCMCSamples(pandas.DataFrame):
                 self.plot(p_x, p_y, ax, kind=kind, colorscheme=colorscheme)
         return fig, axes
 
+    @property
+    def weights(self):
+        try:
+            return self[weights]
+        except KeyError:
+            return numpy.ones(len(self))
+
     def cov(self, paramnames, prior=False):
         return pandas.DataFrame(numpy.cov(self[paramnames].T,
                                           aweights=self.weights(prior)),
@@ -184,7 +194,6 @@ class NestedSamples(MCMCSamples):
         # Build pandas DataFrame
         logL_birth = kwargs.pop('logL_birth', None)
         data = super(NestedSamples, cls).build(**kwargs)
-        data.drop('weights', inplace=True, axis=1)
         data['logL_birth'] = logL_birth
 
         # Compute nlive
