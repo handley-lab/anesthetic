@@ -16,7 +16,8 @@ As well as the state-of-the-art KDE tool:
 
 - fastKDE
 
-You can see it in action in the `plot gallery <https://github.com/williamjameshandley/cosmo_example/blob/master/demos/anesthetic.ipynb>`__.
+You can see it in action in the `plot gallery <http://htmlpreview.github.io/?https://github.com/williamjameshandley/cosmo_example/blob/master/demos/demo.html>`__.
+
 
 Another triangle plotting tool?
 -------------------------------
