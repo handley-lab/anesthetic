@@ -36,7 +36,7 @@ This tool was designed primarily for use with nested sampling, although it can b
 Installation
 ------------
 
-This can be installed via pip
+anesthetic can be installed via pip
 
 .. code:: bash
 
