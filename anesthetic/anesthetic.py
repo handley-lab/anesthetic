@@ -100,7 +100,7 @@ class MCMCSamples(pandas.DataFrame):
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
                     *args, **kwargs)
 
-    def plot_1d(self, paramnames, axes=None, colorscheme='b', *args, **kwargs):
+    def plot_1d(self, paramnames=None, axes=None, colorscheme='b', *args, **kwargs):
         """Create an array of 1D plots
 
         Parameters
@@ -112,7 +112,10 @@ class MCMCSamples(pandas.DataFrame):
         axes: numpy.array(matplotlib.axes.Axes)
             Existing array of axes to plot on. If not provided, one is created.
         """
-        paramnames = numpy.atleast_1d(paramnames)
+        if paramnames is None:
+            paramnames = self.paramnames
+        else:
+            paramnames = numpy.atleast_1d(paramnames)
 
         if axes is None:
             fig, axes = make_1D_axes(paramnames, self.tex)
@@ -241,7 +244,7 @@ class NestedSamples(MCMCSamples):
         dlogX -= numpy.log(2)
         return numpy.squeeze(dlogX)
 
-    def infer(self, nsamples=100):
+    def ns_output(self, nsamples=100):
         columns = ['logZ', 'D', 'd']
         dlogX = self.dlogX(nsamples)
 

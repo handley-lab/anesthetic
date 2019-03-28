@@ -16,6 +16,8 @@ As well as the state-of-the-art KDE tool:
 
 - fastKDE
 
+You can see it in action in the `plot gallery <https://github.com/williamjameshandley/cosmo_example/blob/master/demos/anesthetic.ipynb>`__.
+
 Another triangle plotting tool?
 -------------------------------
 
@@ -34,19 +36,19 @@ Why create another one? In general, any user of software will find that there is
 
 1. For large numbers of samples, kernel density estimation is slow, or inaccurate. There are now better state-of-the-art kernel density estimators, such as `fastKDE <https://pypi.org/project/fastkde/>`__, which ameliorate many of these difficulties.
 
-2. Existing tools can make it painfully difficult to define new parameters. Take for example the default cosmomc chain, which defines ``omegabh2``, but not ``omegab``. The transformation is easy, since ``omegab = omegabh2/ (H0/100)**2``, but writing this simple transformation in code is not easy. anesthetic solves this issue by storing the samples as a pandas array, for which the relevant code for defining the above new parameter would be
+2. Existing tools can make it painfully difficult to define new parameters. Take for example the default cosmomc chain, which defines ``omegabh2``, but not ``omegab``. The transformation is easy, since ``omegab = omegabh2/ (H0/100)**2``, but writing this simple transformation in code is not so trivial. anesthetic solves this issue by storing the samples as a pandas array, for which the relevant code for defining the above new parameter would be
 
 .. code:: python
 
-    from anesthetic.kde import load_nested_samples
+    from anesthetic.anesthetic import MCMCSamples
 
-    samples = load_nested_samples(file_root)       # Load the samples
+    samples = MCMCSamples.read(file_root)          # Load the samples
 
     h = samples['H0']/100                          # Define h
     samples['omegab'] = samples.omegabh2/h**2      # Define omegab
     samples.tex['omegab'] = '\Omega_b'             # Label omegab
 
-    samples.plot_1d('omegab')                         # Simple 1D plot
+    samples.plot_1d('omegab')                      # Simple 1D plot
     
 3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which is a pain if you are trying to plot priors along with your posteriors. This tool has a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
 
