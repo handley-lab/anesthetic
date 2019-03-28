@@ -64,7 +64,7 @@ There are several excellent tools for plotting marginalised posteriors:
 - `MontePython <http://baudren.github.io/montepython.html>`__
 - `pygtc <https://pygtc.readthedocs.io/en/latest/>`__
 
-Why create another one? In general, any dedicated user of software will find that there is some functionality that in their use case is lacking, and the designs of previous codes make such an extensions challenging. In my case this was:
+Why create another one? In general, any dedicated user of software will find that there is some functionality that in their use case is lacking, and the designs of previous codes make such extensions challenging. In my case this was:
 
 1. For large numbers of samples, kernel density estimation is slow, or inaccurate. There are now better state-of-the-art kernel density estimators, such as `fastKDE <https://pypi.org/project/fastkde/>`__, which ameliorate many of these difficulties.
 
