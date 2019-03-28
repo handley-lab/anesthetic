@@ -59,9 +59,9 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None):
 
             # 1D plots
             if p_x == p_y:
-                axes[x,y] = ax.twinx()
-                axes[x,y].set_yticks([])
-                axes[x,y].set_ylim(0,1.1)
+                axes[y,x] = ax.twinx()
+                axes[y,x].set_yticks([])
+                axes[y,x].set_ylim(0,1.1)
 
     return fig, axes
 

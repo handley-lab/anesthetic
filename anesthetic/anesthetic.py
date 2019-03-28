@@ -125,7 +125,6 @@ class MCMCSamples(pandas.DataFrame):
         return fig, axes
 
     def plot_2d(self, paramnames, paramnames_y=None, axes=None, colorscheme='b'):
-        paramnames_x = numpy.atleast_1d(paramnames)
         """Create an array of 2D plots
 
         Parameters
@@ -142,6 +141,7 @@ class MCMCSamples(pandas.DataFrame):
         axes: numpy.array(matplotlib.axes.Axes)
             Existing array of axes to plot on. If not provided, one is created.
         """
+        paramnames_x = numpy.atleast_1d(paramnames)
         if paramnames_y is None:
             paramnames_y = paramnames_x
         else:
@@ -152,10 +152,9 @@ class MCMCSamples(pandas.DataFrame):
         else:
             fig = numpy.atleast_2d(axes)[0,0].figure
 
-
         for y, (p_y, row) in enumerate(zip(paramnames_y, axes)):
             for x, (p_x, ax) in enumerate(zip(paramnames_x, row)):
-                if (paramnames_x == paramnames_y).all() and x > y:
+                if p_x in paramnames_y and x > y:
                     kind='scatter'
                 else:
                     kind='contour'
