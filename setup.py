@@ -36,7 +36,7 @@ setup(name='anesthetic',
       include_package_data=True,
       license='MIT',
       classifiers=[
-                   'Development Status :: 3 - Alpha'
+                   'Development Status :: 3 - Alpha',
                    'Intended Audience :: Developers',
                    'Intended Audience :: Science/Research',
                    'Natural Language :: English',
