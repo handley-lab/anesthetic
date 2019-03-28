@@ -32,6 +32,23 @@ Current functionality includes:
 
 This tool was designed primarily for use with nested sampling, although it can be used for normal MCMC chains.
 
+Installation
+------------
+
+This can be installed via pip
+
+.. code:: bash
+
+    pip install anesthetic
+
+Or via the setup.py
+
+.. code:: bash
+
+    git clone https://github.com/williamjameshandley/anesthetic 
+    cd anesthetic
+    python setup.py install --user
+
 Another posterior plotting tool?
 --------------------------------
 
