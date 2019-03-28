@@ -3,12 +3,8 @@ import pandas
 from scipy.special import logsumexp
 from anesthetic.plot import make_1D_axes, make_2D_axes, plot_1d, scatter_plot_2d, contour_plot_2d
 from anesthetic.read import read_chains, read_birth, read_limits, read_paramnames
+from anesthetic.information_theory import compress_weights
 
-def load_nested_samples(root):
-    return NestedSamplingKDE.read(root)
-
-#def build_samples(samples, paramnames=None, tex=None, prior_range=None):
-    #return NestedSamplingKDE.build(samples, paramnames=paramnames, tex=tex, prior_range=prior_range)
 
 class MCMCSamples(pandas.DataFrame):
     """Extension to pandas DataFrame for storing and plotting MCMC samples.
@@ -49,7 +45,8 @@ class MCMCSamples(pandas.DataFrame):
 
         data = cls(data=params, columns=paramnames)
         if w is not None:
-            data['w'] = w
+            data['w'] = w 
+            data.w = compress_weights(data.w)
             tex['w'] = r'MCMC weight'
         if logL is not None:
             data['logL'] = logL

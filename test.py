@@ -2,10 +2,22 @@
 %autoreload 2
 
 from anesthetic.anesthetic import MCMCSamples, NestedSamples
+from anesthetic.information_theory import normalise_weights, channel_capacity
 
-samples = MCMCSamples.read('/data/will/data/COM_CosmoParams_base-plikHM_R3.00/base/plikHM_TT_lowl/base_plikHM_TT_lowl')
-fig, axes = samples.plot_2d(['H0','tau'], ['H0','tau'], colorscheme='r')
-fig, axes = samples.plot_2d(['H0','tau','logA'], ['omegabh2','H0','tau'], colorscheme='r')
+samples = MCMCSamples.read('./plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing')
+
+fig, axes = samples.plot_2d(['logA','tau'], colorscheme='b')
+
+numpy.log(samples.w).hist()
+w = samples.w
+
+w /= w.sum()
+numpy.exp((w*-numpy.log(w)).sum())
+samples.w.sum()
+
+
+samples = NestedSamples.read('./plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
+fig, axes = samples.plot_2d(['logA','tau'], axes=axes, colorscheme='b')
 
 samples = NestedSamples.read('./chains/example')
 infer = samples.infer()
