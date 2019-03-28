@@ -27,6 +27,7 @@ As well as the state-of-the-art KDE tool:
 You can see it in action in the `plot gallery <http://htmlpreview.github.io/?https://github.com/williamjameshandley/cosmo_example/blob/master/demos/demo.html>`__.
 
 Current functionality includes:
+
 - Computation of Bayesian evidences, Kullback-Liebler divergences and Bayesian model dimensionalities.
 - Marginalised 1d and 2d plots.
 
