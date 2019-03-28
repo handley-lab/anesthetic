@@ -1,20 +1,23 @@
 %load_ext autoreload
 %autoreload 2
 
-from anesthetic.anesthetic import load_nested_samples
-from anesthetic.anesthetic import MCMCSamples
-import numpy
+from anesthetic.anesthetic import MCMCSamples, NestedSamples
 
 samples = MCMCSamples.read('/data/will/data/COM_CosmoParams_base-plikHM_R3.00/base/plikHM_TT_lowl/base_plikHM_TT_lowl')
+fig, axes = samples.plot_2d(['H0','tau','omegabh2'],colorscheme='r')
 
+samples = NestedSamples.read('./chains/example')
 
 
 samples['C'] = samples.B+samples.A
-samples.tex['C'] = 'C'
+samples.tex['C'] = '$C$'
 samples.limits['A']=(-2,2)
 samples.limits['B']=(-2,2)
 
-fig, axes = samples.plot_2d(['H0','tau','omegabh2'],colorscheme='r')
+samples.plot_2d(['A','B'])
+
+numpy.repeat([1,2,3],[1,0.5,3])
+
 p = samples.weights
 p /= p.sum()
 sum(-numpy.log(p)*p)

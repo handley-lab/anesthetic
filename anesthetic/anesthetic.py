@@ -21,7 +21,7 @@ class MCMCSamples(pandas.DataFrame):
     @classmethod
     def read(cls, root):
         # Read in data
-        weights, logL, params = read_chains(root)
+        w, logL, params = read_chains(root)
         paramnames, tex = read_paramnames(root)
         limits = read_limits(root)
 
@@ -80,7 +80,7 @@ class MCMCSamples(pandas.DataFrame):
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
-            return plot_1d(self[paramname_x], self.weights,
+            return plot_1d(self[paramname_x], self.weights(),
                            ax=ax, colorscheme=colorscheme,
                            xmin=xmin, xmax=xmax, *args, **kwargs)
 
@@ -92,7 +92,7 @@ class MCMCSamples(pandas.DataFrame):
         elif kind == 'scatter':
             plot = scatter_plot_2d
 
-        return plot(self[paramname_x], self[paramname_y], self.weights,
+        return plot(self[paramname_x], self[paramname_y], self.weights(),
                     ax=ax, colorscheme=colorscheme,
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
                     *args, **kwargs)
@@ -159,17 +159,11 @@ class MCMCSamples(pandas.DataFrame):
                 self.plot(p_x, p_y, ax, kind=kind, colorscheme=colorscheme)
         return fig, axes
 
-    @property
     def weights(self):
         try:
-            return self[weights]
+            return self['w']
         except KeyError:
             return numpy.ones(len(self))
-
-    def cov(self, paramnames, prior=False):
-        return pandas.DataFrame(numpy.cov(self[paramnames].T,
-                                          aweights=self.weights(prior)),
-                                columns=paramnames, index=paramnames)
 
     def _limits(self, paramname):
         return self.limits.get(paramname, (None, None))
@@ -264,7 +258,6 @@ class NestedSamples(MCMCSamples):
         logZ = logsumexp(self.logL + dlogX)
         return numpy.exp(self.logL + dlogX - logZ)
 
-    @property
     def weights(self):
         if self._prior:
             if self._integer:
