@@ -12,7 +12,7 @@ class MCMCSamples(pandas.DataFrame):
     We extend the DataFrame by providing plotting methods and standardising
     sample storage.
     """
-    _metadata = ['paramnames', 'tex', 'limits']
+    _metadata = pandas.DataFrame._metadata + ['paramnames', 'tex', 'limits']
 
     @classmethod
     def read(cls, root):
@@ -46,11 +46,12 @@ class MCMCSamples(pandas.DataFrame):
         data = cls(data=params, columns=paramnames)
         if w is not None:
             data['w'] = w 
-            data.w = compress_weights(data.w)
             tex['w'] = r'MCMC weight'
         if logL is not None:
             data['logL'] = logL
             tex['logL'] = r'$\log\mathcal{L}$'
+
+        data['u'] = numpy.random.rand(len(data))
 
         data.tex = tex
         data.paramnames = paramnames
@@ -59,7 +60,7 @@ class MCMCSamples(pandas.DataFrame):
         return data
 
     def plot(self, paramname_x, paramname_y=None, ax=None, colorscheme='b',
-             kind='contour', *args, **kwargs):
+             kind='contour', beta=1, *args, **kwargs):
         """Generic plotting interface. 
         
         Produces a single 1D or 2D plot on an axis.
@@ -80,7 +81,7 @@ class MCMCSamples(pandas.DataFrame):
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
-            return plot_1d(self[paramname_x], self.weights(),
+            return plot_1d(self[paramname_x], self.weights(beta),
                            ax=ax, colorscheme=colorscheme,
                            xmin=xmin, xmax=xmax, *args, **kwargs)
 
@@ -92,12 +93,12 @@ class MCMCSamples(pandas.DataFrame):
         elif kind == 'scatter':
             plot = scatter_plot_2d
 
-        return plot(self[paramname_x], self[paramname_y], self.weights(),
+        return plot(self[paramname_x], self[paramname_y], self.weights(beta),
                     ax=ax, colorscheme=colorscheme,
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
                     *args, **kwargs)
 
-    def plot_1d(self, paramnames=None, axes=None, colorscheme='b', *args, **kwargs):
+    def plot_1d(self, paramnames=None, axes=None, colorscheme='b', beta=1, *args, **kwargs):
         """Create an array of 1D plots
 
         Parameters
@@ -120,11 +121,11 @@ class MCMCSamples(pandas.DataFrame):
             fig = numpy.atleast_2d(axes)[0,0].figure
 
         for p, ax in zip(paramnames, axes.flatten()):
-            self.plot(p, ax=ax, colorscheme=colorscheme, *args, **kwargs)
+            self.plot(p, ax=ax, colorscheme=colorscheme, beta=beta, *args, **kwargs)
 
         return fig, axes
 
-    def plot_2d(self, paramnames, paramnames_y=None, axes=None, colorscheme='b', *args, **kwargs):
+    def plot_2d(self, paramnames, paramnames_y=None, axes=None, colorscheme='b', beta=1, *args, **kwargs):
         """Create an array of 2D plots
 
         Parameters
@@ -159,14 +160,14 @@ class MCMCSamples(pandas.DataFrame):
                     kind='scatter'
                 else:
                     kind='contour'
-                self.plot(p_x, p_y, ax, kind=kind, colorscheme=colorscheme, *args, **kwargs)
+                self.plot(p_x, p_y, ax, kind=kind, colorscheme=colorscheme, beta=beta, *args, **kwargs)
         return fig, axes
 
-    def weights(self):
+    def weights(self, beta):
         """ Return the posterior weights for plotting. """
         try:
-            return self['w']
-        except KeyError:
+            return compress_weights(self.w, self.u)
+        except AttributeError:
             return numpy.ones(len(self), dtype=int)
 
     def _limits(self, paramname):
@@ -174,8 +175,6 @@ class MCMCSamples(pandas.DataFrame):
 
 
 class NestedSamples(MCMCSamples):
-    _prior = False
-    _integer = True
 
     @classmethod
     def read(cls, root):
@@ -201,32 +200,11 @@ class NestedSamples(MCMCSamples):
         nlive = pandas.concat([births, deaths]).sort_index().cumsum()
         nlive = (nlive[~nlive.index.duplicated(keep='first')]+1)[1:]
         data['nlive'] = nlive
-
-        # Compute weights
-        dlogX = data.dlogX(-1)
-        data['posterior_weights'] = data.logL+dlogX
-        data['posterior_weights'] -= logsumexp(data.posterior_weights)
-        data['posterior_weights'] = numpy.exp(data.posterior_weights)
-        data['prior_weights'] = dlogX
-        data['prior_weights'] -= logsumexp(data.prior_weights)
-        data['prior_weights'] = numpy.exp(data.prior_weights)
-
-        weights = data['posterior_weights']
-        with numpy.errstate(divide='ignore'):
-            cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
-        frac, iw = numpy.modf(weights*cc)
-        data['posterior_iweights'] = (iw + (numpy.random.rand(len(frac))<frac)).astype(int)
-
-        weights = data['prior_weights']
-        with numpy.errstate(divide='ignore'):
-            cc = int(numpy.exp((weights * -numpy.log(weights)).sum()))
-        frac, iw = numpy.modf(weights*cc)
-        data['prior_iweights'] = (iw + (numpy.random.rand(len(frac))<frac)).astype(int)
-
+        data['logw'] = data.dlogX()
         return data
 
-    def dlogX(self, nsamples=100):
-        if nsamples < 0:
+    def dlogX(self, nsamples=None):
+        if nsamples is None:
             t = numpy.atleast_2d(numpy.log(self.nlive/(self.nlive+1)))
             nsamples=1
         else:
@@ -258,20 +236,7 @@ class NestedSamples(MCMCSamples):
         tex = [r'$\log\mathcal{Z}$', r'$\mathcal{D}$', r'$d$']
         return MCMCSamples.build(params=params, paramnames=paramnames, tex=tex)
 
-    def w(self):
-        dlogX = self.dlogX(1)
-        logZ = logsumexp(self.logL + dlogX)
-        return numpy.exp(self.logL + dlogX - logZ)
-
-    def weights(self):
-        if self._prior:
-            if self._integer:
-                return self.prior_iweights
-            else:
-                return self.prior_weights
-        else:
-            if self._integer:
-                return self.posterior_iweights
-            else:
-                return self.posterior_weights
-
+    def weights(self, beta):
+        logw = self.logw + beta*self.logL
+        w = numpy.exp(logw - logw.max())
+        return compress_weights(w, self.u)

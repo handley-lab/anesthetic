@@ -76,7 +76,7 @@ ns_output.plot_1d();
 
 #| We can also inspect the correlation between these inferences:
 
-ns_output.plot_2d('logZ','D')
+ns_output.plot_2d('logZ','D');
 
 #| Here is a comparison of the base and NS output
 
@@ -86,3 +86,10 @@ nested.tex['omegab'] = '$\Omega_b$'
 
 fig, axes = mcmc.plot_2d(['sigma8','omegab'])
 nested.plot_2d(['sigma8','omegab'], axes=axes, colorscheme='r');
+
+#| Finally, with nested samples, we can plot the prior (or any temperature), by
+#| passing beta=0
+
+fig, axes = nested.plot_2d(['ns','tau'], colorscheme='r', beta=0)
+nested.plot_2d(['ns','tau'], axes=axes, colorscheme='b');
+

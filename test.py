@@ -2,22 +2,28 @@
 %autoreload 2
 
 from anesthetic.anesthetic import MCMCSamples, NestedSamples
-from anesthetic.information_theory import normalise_weights, channel_capacity
 
-samples = MCMCSamples.read('./plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing')
+mcmc = MCMCSamples.read('./plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing')
 
-fig, axes = samples.plot_2d(['logA','tau'], colorscheme='b')
-
-numpy.log(samples.w).hist()
-w = samples.w
-
-w /= w.sum()
-numpy.exp((w*-numpy.log(w)).sum())
-samples.w.sum()
-
+fig, axes = mcmc.plot_2d(['logA','tau'], colorscheme='b')
 
 samples = NestedSamples.read('./plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
-fig, axes = samples.plot_2d(['logA','tau'], axes=axes, colorscheme='b')
+
+fig, axes = samples.plot_2d(['tau','logA'], colorscheme='r', beta=0)
+fig, axes = samples.plot_2d(['tau','logA'], axes=axes, colorscheme='b')
+mcmc.plot_2d(['tau','logA'], axes=axes, colorscheme='g')
+
+fig, axes = samples.plot_2d(['omegabh2','omegach2'], colorscheme='r', beta=0)
+fig, axes = samples.plot_2d(['omegabh2','omegach2'], axes=axes, colorscheme='b')
+
+import numpy
+w = numpy.exp(samples.logw + samples.logL - (samples.logw+samples.logL).max())
+from anesthetic.information_theory import channel_capacity, compress_weights
+plt.plot(w)
+numpy.log(w)
+compress_weights(w, samples.u)
+numpy.exp(sum((numpy.log(sum(w))-numpy.log(w))*w)/sum(w))
+numpy.exp(numpy.nansum((numpy.log(sum(w))-numpy.log(w))*w)/sum(w))
 
 samples = NestedSamples.read('./chains/example')
 infer = samples.infer()

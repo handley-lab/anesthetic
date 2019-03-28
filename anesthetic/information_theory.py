@@ -1,12 +1,20 @@
 import numpy
 
 def channel_capacity(w):
-    return numpy.exp(sum((numpy.log(sum(w))-numpy.log(w))*w)/sum(w))
+    with numpy.errstate(divide='ignore'):
+        return numpy.exp(numpy.nansum((numpy.log(sum(w))-numpy.log(w))*w)/sum(w))
 
 
-def compress_weights(w):
+def compress_weights(w, u=None, unity=False):
     """ Compresses weights to their approximate channel capacity."""
-    W = w * channel_capacity(w) / w.sum()
+    if u is None:
+        u = numpy.random.rand(len(w))
+
+    if unity:
+        W = w/w.max()
+    else:
+        W = w * channel_capacity(w) / w.sum()
+
     fraction, integer = numpy.modf(W)
-    extra = (numpy.random.rand(len(fraction))<fraction).astype(int)
+    extra = (u<fraction).astype(int)
     return integer + extra
