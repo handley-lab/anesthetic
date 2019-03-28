@@ -8,7 +8,8 @@ fig, axes = samples.plot_2d(['H0','tau','omegabh2'],colorscheme='r')
 samples.plot_1d('logL')
 
 samples = NestedSamples.read('./chains/example')
-
+infer = samples.infer()
+infer.plot_2d(['D','d','logZ'])
 
 samples['C'] = samples.B+samples.A
 samples.tex['C'] = '$C$'

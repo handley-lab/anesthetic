@@ -42,6 +42,9 @@ class MCMCSamples(pandas.DataFrame):
         w = kwargs.pop('w', None)
         paramnames = kwargs.pop('paramnames', ['x%i' % i for i in range(nparams)])
         tex = kwargs.pop('tex', paramnames)
+        if not isinstance(tex,dict):
+            tex = {p:t for p, t in zip(paramnames, tex)}
+
         limits = kwargs.pop('limits', {})
 
         data = cls(data=params, columns=paramnames)
@@ -55,7 +58,6 @@ class MCMCSamples(pandas.DataFrame):
         data.tex = tex
         data.paramnames = paramnames
         data.limits = limits
-
 
         return data
 
@@ -161,10 +163,11 @@ class MCMCSamples(pandas.DataFrame):
         return fig, axes
 
     def weights(self):
+        """ Return the posterior weights for plotting. """
         try:
             return self['w']
         except KeyError:
-            return numpy.ones(len(self))
+            return numpy.ones(len(self), dtype=int)
 
     def _limits(self, paramname):
         return self.limits.get(paramname, (None, None))
@@ -240,19 +243,20 @@ class NestedSamples(MCMCSamples):
 
     def infer(self, nsamples=100):
         columns = ['logZ', 'D', 'd']
-        data = pandas.DataFrame(numpy.zeros((nsamples, len(columns))),
-                                columns=columns)
         dlogX = self.dlogX(nsamples)
 
-        data.logZ = logsumexp(self.logL.values + dlogX, axis=1)
-        logw = ((self.logL.values + dlogX).T - data.logZ.values).T
-        Info = ((self.logL.values + numpy.zeros_like(dlogX)).T
-                - data.logZ.values).T
+        logZ = logsumexp(self.logL.values + dlogX, axis=1)
+        logw = ((self.logL.values + dlogX).T - logZ).T
+        S = ((self.logL.values + numpy.zeros_like(dlogX)).T
+             - logZ).T
 
-        data.D = numpy.exp(logsumexp(logw, b=Info, axis=1))
-        data.d = numpy.exp(logsumexp(logw, b=(Info.T-data.D.values).T**2,
-                                     axis=1))*2
-        return data
+        D = numpy.exp(logsumexp(logw, b=S, axis=1))
+        d = numpy.exp(logsumexp(logw, b=(S.T-D).T**2, axis=1))*2
+
+        params = numpy.vstack((logZ, D, d)).T
+        paramnames = ['logZ', 'D', 'd']
+        tex = [r'$\log\mathcal{Z}$', r'$\mathcal{D}$', r'$d$']
+        return MCMCSamples.build(params=params, paramnames=paramnames, tex=tex)
 
     def w(self):
         dlogX = self.dlogX(1)
