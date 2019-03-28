@@ -21,7 +21,7 @@ def make_1D_axes(paramnames, tex=None):
         ax.set_xlabel(tex[p])
         ax.set_yticks([])
         ax.set_ylim(0,1.1)
-        ax.xaxis.set_major_locator(MaxNLocator(3))
+        ax.xaxis.set_major_locator(MaxNLocator(2))
 
     
     for ax in axes.flatten()[n:]:
@@ -46,14 +46,14 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None):
             # y labels
             if x==0:
                 ax.set_ylabel(tex[p_y])
-                ax.yaxis.set_major_locator(MaxNLocator(3))
+                ax.yaxis.set_major_locator(MaxNLocator(2))
             else:
                 ax.tick_params('y',left=False)
 
             # x labels
             if y==n_y-1:
                 ax.set_xlabel(tex[p_x])
-                ax.xaxis.set_major_locator(MaxNLocator(3))
+                ax.xaxis.set_major_locator(MaxNLocator(2))
             else:
                 ax.tick_params('x',bottom=False)
 

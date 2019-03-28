@@ -124,7 +124,7 @@ class MCMCSamples(pandas.DataFrame):
 
         return fig, axes
 
-    def plot_2d(self, paramnames, paramnames_y=None, axes=None, colorscheme='b'):
+    def plot_2d(self, paramnames, paramnames_y=None, axes=None, colorscheme='b', *args, **kwargs):
         """Create an array of 2D plots
 
         Parameters
@@ -146,19 +146,20 @@ class MCMCSamples(pandas.DataFrame):
             paramnames_y = paramnames_x
         else:
             paramnames_y = numpy.atleast_1d(paramnames_y)
+        all_paramnames = list(paramnames_y) +list(paramnames_x)
 
         if axes is None:
-            fig, axes = make_2D_axes(paramnames, paramnames_y, self.tex)
+            fig, axes = make_2D_axes(paramnames_x, paramnames_y, self.tex)
         else:
             fig = numpy.atleast_2d(axes)[0,0].figure
 
-        for y, (p_y, row) in enumerate(zip(paramnames_y, axes)):
-            for x, (p_x, ax) in enumerate(zip(paramnames_x, row)):
-                if p_x in paramnames_y and x > y:
+        for p_y, row in zip(paramnames_y, axes):
+            for p_x, ax in zip(paramnames_x, row):
+                if p_x in paramnames_y and p_y in paramnames_x and all_paramnames.index(p_x) > all_paramnames.index(p_y):
                     kind='scatter'
                 else:
                     kind='contour'
-                self.plot(p_x, p_y, ax, kind=kind, colorscheme=colorscheme)
+                self.plot(p_x, p_y, ax, kind=kind, colorscheme=colorscheme, *args, **kwargs)
         return fig, axes
 
     def weights(self):

@@ -4,8 +4,8 @@
 from anesthetic.anesthetic import MCMCSamples, NestedSamples
 
 samples = MCMCSamples.read('/data/will/data/COM_CosmoParams_base-plikHM_R3.00/base/plikHM_TT_lowl/base_plikHM_TT_lowl')
-fig, axes = samples.plot_2d(['H0','tau','omegabh2'],colorscheme='r')
-samples.plot_1d('logL')
+fig, axes = samples.plot_2d(['H0','tau'], ['H0','tau'], colorscheme='r')
+fig, axes = samples.plot_2d(['H0','tau','logA'], ['omegabh2','H0','tau'], colorscheme='r')
 
 samples = NestedSamples.read('./chains/example')
 infer = samples.infer()

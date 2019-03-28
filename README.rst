@@ -66,4 +66,3 @@ To Do
 - Automatic coloring
 - Legends
 - plotting weights seems off
-- Need to fix scatter plot > < 
