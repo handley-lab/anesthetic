@@ -6,6 +6,10 @@ aNESThetic: nested sampling post-processing
 :Version: 0.5.0
 :Homepage: https://github.com/williamjameshandley/anesthetic
 
+.. image:: https://zenodo.org/badge/175663535.svg
+   :target: https://zenodo.org/badge/latestdoi/175663535
+
+
 This project is still in alpha stage. It aims to bring together tools for processing nested sampling chains, leveraging the standard python libraries:
 
 - numpy
