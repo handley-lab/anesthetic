@@ -32,13 +32,22 @@ class MCMCSamples(pandas.DataFrame):
     def build(cls, **kwargs):
         params = kwargs.pop('params', None)
         logL = kwargs.pop('logL', None) 
-        weights = kwargs.pop('weights', None)
-        paramnames = kwargs.pop('paramnames', None)
-        tex = kwargs.pop('tex', None)
-        limits = kwargs.pop('limits', None)
+        if params is None and logL is None:
+            raise ValueError("You must provide either params or logL")
+        elif params is None:
+            params = numpy.empty(logL.shape[0],0)
+        elif logL is None:
+            logL = numpy.empty(params.shape[0],0)
 
+        nsamps, nparams = params.shape
+
+        weights = kwargs.pop('weights', numpy.ones((nsamps,1)))
+        paramnames = kwargs.pop('paramnames', ['x_%i' % i for i in range(nparams)])
+        tex = kwargs.pop('tex', paramnames)
+        limits = kwargs.pop('limits', {})
         columns = paramnames + ['weights', 'logL']
-        data = numpy.concatenate((params,weights,logL), axis=1)
+        data = numpy.concatenate((params, weights, logL), axis=1)
+
         data = cls(data=data, columns=columns)
         data.tex = tex
         data.paramnames = paramnames
@@ -164,17 +173,18 @@ class NestedSamples(MCMCSamples):
     def read(cls, root):
         # Read in data
         paramnames, tex = read_paramnames(root)
-        prior_range = read_limits(root)
+        limits = read_limits(root)
         params, logL, logL_birth = read_birth(root)
 
         # Build class
-        return cls.build(params=params, weights=weights, logL=logL, paramnames=paramnames, tex=tex, limits=limits, logL_birth = logL)
+        return cls.build(params=params, logL=logL, paramnames=paramnames, tex=tex, limits=limits, logL_birth=logL_birth)
 
     @classmethod
     def build(cls, **kwargs):
         # Build pandas DataFrame
         logL_birth = kwargs.pop('logL_birth', None)
         data = super(NestedSamples, cls).build(**kwargs)
+        data.drop('weights', inplace=True, axis=1)
         data['logL_birth'] = logL_birth
 
         # Compute nlive

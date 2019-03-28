@@ -63,3 +63,5 @@ To Do
 - tex handling for outputs
 - clear interface to evidence outputs
 - Read multiple MCMC chains
+- Handle non-integer weights correctly
+- Ressurect prior weights
