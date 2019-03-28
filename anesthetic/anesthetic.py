@@ -36,8 +36,6 @@ class MCMCSamples(pandas.DataFrame):
             raise ValueError("You must provide either params or logL")
         elif params is None:
             params = numpy.empty(logL.shape[0],0)
-        elif logL is None:
-            logL = numpy.empty(params.shape[0],0)
 
         nsamps, nparams = params.shape
 
@@ -49,7 +47,10 @@ class MCMCSamples(pandas.DataFrame):
         data = cls(data=params, columns=paramnames)
         if w is not None:
             data['w'] = w
-        data['logL'] = logL
+            tex['w'] = r'MCMC weight'
+        if logL is not None:
+            data['logL'] = logL
+            tex['logL'] = r'$\log\mathcal{L}$'
 
         data.tex = tex
         data.paramnames = paramnames

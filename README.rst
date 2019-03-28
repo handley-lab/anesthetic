@@ -66,3 +66,4 @@ To Do
 - Ressurect prior weights
 - Automatic coloring
 - Legends
+- plotting weights seems off

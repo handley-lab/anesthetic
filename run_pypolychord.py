@@ -17,7 +17,7 @@ def likelihood(theta):
 
 def prior(hypercube):
     """ Uniform prior from [-1,1]^D. """
-    return UniformPrior(0, 2)(hypercube)
+    return UniformPrior(-2, 2)(hypercube)
 
 
 settings = PolyChordSettings(nDims, nDerived)
