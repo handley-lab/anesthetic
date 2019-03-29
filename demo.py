@@ -6,17 +6,17 @@ import tarfile
 for filename in ["plikHM_TTTEEE_lowl_lowE_lensing.tar.gz","plikHM_TTTEEE_lowl_lowE_lensing_NS.tar.gz"]:
     github_url = "https://github.com/williamjameshandley/cosmo_example/raw/master/"
     url = github_url + filename
-    open(filename, 'wb').write(requests.get(url).content)
-    tarfile.open(filename).extractall()
+    open('data/' + filename, 'wb').write(requests.get(url).content)
+    tarfile.open('data/' + filename).extractall()
 
 #| This downloaded the PLA chains for the planck baseline cosmology
 
 import os
-os.listdir('plikHM_TTTEEE_lowl_lowE_lensing')
+os.listdir('data/plikHM_TTTEEE_lowl_lowE_lensing')
 
 #| And the equivalent nested sampling chains
 
-os.listdir('plikHM_TTTEEE_lowl_lowE_lensing_NS')
+os.listdir('data/plikHM_TTTEEE_lowl_lowE_lensing_NS')
 
 #| Now import anesthetic and load the MCMC samples
 
