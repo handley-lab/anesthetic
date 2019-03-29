@@ -27,7 +27,7 @@ setup(name='anesthetic',
       author_email='wh260@cam.ac.uk',
       url='https://github.com/williamjameshandley/anesthetic',
       packages=find_packages(),
-      install_requires=['numpy', 'scipy'],
+      install_requires=['numpy', 'scipy', 'pandas', 'fastkde'],
       setup_requires=['pytest-runner'],
       extras_require={
           'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc'],
