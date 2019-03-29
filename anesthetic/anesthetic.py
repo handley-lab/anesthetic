@@ -7,10 +7,16 @@ from anesthetic.information_theory import compress_weights
 
 
 class MCMCSamples(pandas.DataFrame):
-    """Extension to pandas DataFrame for storing and plotting MCMC samples.
+    """Storage and plotting tools for MCMC samples
 
-    We extend the DataFrame by providing plotting methods and standardising
+    We extend the pandas.DataFrame by providing plotting methods and standardising
     sample storage.
+
+    Note that because of the design of pandas this does not override the
+    __init__ constructor. You should build the samples with either:
+
+    * MCMCSamples.read('your/file/root')
+    * MCMCSamples.build(params=params, other_keyword_arguments)
     """
     _metadata = pandas.DataFrame._metadata + ['paramnames', 'tex', 'limits']
 
@@ -89,14 +95,18 @@ class MCMCSamples(pandas.DataFrame):
         ymin, ymax = self._limits(paramname_y)
 
         if kind == 'contour':
-            plot = contour_plot_2d
+            return contour_plot_2d(self[paramname_x], self[paramname_y],
+                                   self.weights(beta),
+                                   ax=ax, colorscheme=colorscheme,
+                                   xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
+                                   *args, **kwargs)
         elif kind == 'scatter':
-            plot = scatter_plot_2d
+            return scatter_plot_2d(self[paramname_x], self[paramname_y],
+                                   self.weights(beta, nsamples=500),
+                                   ax=ax, colorscheme=colorscheme,
+                                   xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
+                                   *args, **kwargs)
 
-        return plot(self[paramname_x], self[paramname_y], self.weights(beta),
-                    ax=ax, colorscheme=colorscheme,
-                    xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
-                    *args, **kwargs)
 
     def plot_1d(self, paramnames=None, axes=None, colorscheme='b', beta=1, *args, **kwargs):
         """Create an array of 1D plots
@@ -163,18 +173,30 @@ class MCMCSamples(pandas.DataFrame):
                 self.plot(p_x, p_y, ax, kind=kind, colorscheme=colorscheme, beta=beta, *args, **kwargs)
         return fig, axes
 
-    def weights(self, beta):
+    def weights(self, beta, nsamples=None):
         """ Return the posterior weights for plotting. """
         try:
-            return compress_weights(self.w, self.u)
+            return compress_weights(self.w, self.u, nsamples=nsamples)
         except AttributeError:
-            return numpy.ones(len(self), dtype=int)
+            return numpy.ones(len(self), dtype=int, unit_weights=unit_weights)
 
     def _limits(self, paramname):
         return self.limits.get(paramname, (None, None))
 
 
 class NestedSamples(MCMCSamples):
+    """Storage and plotting tools for Nested Sampling samples
+
+    We extend the MCMCSamples class with the additional methods:
+    
+    * ns_output
+
+    Note that because of the design of pandas this does not override the
+    __init__ constructor. You should build the samples with either:
+
+    * NestedSamples.read('your/file/root')
+    * NestedSamples.build(params=params, other_keyword_arguments)
+    """
 
     @classmethod
     def read(cls, root):
@@ -236,7 +258,7 @@ class NestedSamples(MCMCSamples):
         tex = [r'$\log\mathcal{Z}$', r'$\mathcal{D}$', r'$d$']
         return MCMCSamples.build(params=params, paramnames=paramnames, tex=tex)
 
-    def weights(self, beta):
+    def weights(self, beta, nsamples=None):
         logw = self.logw + beta*self.logL
         w = numpy.exp(logw - logw.max())
-        return compress_weights(w, self.u)
+        return compress_weights(w, self.u, nsamples=nsamples)

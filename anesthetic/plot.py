@@ -108,17 +108,13 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
     return cbar
 
 
-def scatter_plot_2d(data_x, data_y, weights, ax=None, colorscheme=None, n=500, 
+def scatter_plot_2d(data_x, data_y, weights, ax=None, colorscheme=None, 
                     xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
 
     if ax is None:
         ax = plt.gca()
-    w = weights / weights.max()
-    if w.sum() > n:
-        w *= n/w.sum()
-    i = w > numpy.random.rand(len(w))
-    x = data_x[i]
-    y = data_y[i]
+    x = numpy.repeat(data_x, weights)
+    y = numpy.repeat(data_y, weights) 
     points = ax.plot(x, y, 'o', markersize=1, color=colorscheme, *args, **kwargs)
     ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)

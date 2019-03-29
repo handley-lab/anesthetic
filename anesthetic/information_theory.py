@@ -5,13 +5,15 @@ def channel_capacity(w):
         return numpy.exp(numpy.nansum((numpy.log(sum(w))-numpy.log(w))*w)/sum(w))
 
 
-def compress_weights(w, u=None, unity=False):
+def compress_weights(w, u=None, nsamples=None):
     """ Compresses weights to their approximate channel capacity."""
     if u is None:
         u = numpy.random.rand(len(w))
 
-    if unity:
+    if nsamples is not None:
         W = w/w.max()
+        if nsamples>0 and sum(W) > nsamples:
+            W = W/sum(W)*nsamples
     else:
         W = w * channel_capacity(w) / w.sum()
 
