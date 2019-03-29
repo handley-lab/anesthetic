@@ -1,6 +1,8 @@
 numpy
 scipy
 pandas
+matplotlib
+fastkde
 sphinx
 sphinx_rtd_theme
 numpydoc
