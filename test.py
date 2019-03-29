@@ -2,12 +2,14 @@
 %autoreload 2
 
 from anesthetic.anesthetic import MCMCSamples, NestedSamples
+from anesthetic.rhinestone.plot import 
 
-mcmc = MCMCSamples.read('./plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing')
+mcmc = MCMCSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing')
 
 fig, axes = mcmc.plot_2d(['logA','tau'], colorscheme='b')
 
-samples = NestedSamples.read('./plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
+samples = NestedSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
+samples.live_points(-1.5e4)['omegabh2']
 
 fig, axes = samples.plot_2d(['tau','logA'], colorscheme='r', beta=0)
 fig, axes = samples.plot_2d(['tau','logA'], axes=axes, colorscheme='b')

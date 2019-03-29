@@ -1,10 +1,11 @@
 """ Main plotting tools."""
+import numpy
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import (GridSpec as GS,
                                  GridSpecFromSubplotSpec as sGS)
 from rhinestone.widgets import (Widget, Slider, Button,
                                 RadioButtons, TrianglePlot, CheckButtons)
-from rhinestone.run import NestedSamplingRun
+from anesthetic.anesthetic import NestedSamples
 
 
 class Higson(Widget):
@@ -83,7 +84,7 @@ class Temperature(Slider):
     """ Logarithmic slider controlling temperature of the posterior points."""
     def __init__(self, fig, gridspec, action):
         super(Temperature, self).__init__(fig, gridspec, action, r'$kT$',
-                                          -2, 2, 0, 'vertical')
+                                          -1, 5, 0, 'vertical')
 
     def __call__(self):
         """ Return the current temperature. """
@@ -108,7 +109,7 @@ class RunPlotter(object):
             The root string for the chains files to be used.
 
     Attributes:
-        run (rhinestone.run.NestedSamplingRun):
+        run (anesthetic.anesthetic.NestedSamples):
             Object for extracting nested sampling data from chains files.
 
         fig (matplotlib.figure.Figure):
@@ -138,9 +139,12 @@ class RunPlotter(object):
         param_choice (rhinestone.widgets.CheckButtons):
             Checkbox that selects which parameters to plot.
     """
-    def __init__(self, root):
-        self.run = NestedSamplingRun(root)
-        self.labels = self.run.files.latex
+    def __init__(self, root, labels=None):
+        self.run = NestedSamples.read(root)
+        if labels is None:
+            labels = self.run.paramnames[:10]
+
+        self.labels = numpy.array(labels)
         self.fig = plt.figure()
         self._set_up()
         self.redraw(None)
@@ -180,7 +184,7 @@ class RunPlotter(object):
         self.triangle = TrianglePlot(self.fig, gs0[0])
         self.temperature = Temperature(self.fig, gs0[1], self.update)
         self.evolution = Evolution(self.fig, gs10[0],
-                                   self.update, self.run.npoints)
+                                   self.update, len(self.run))
         self.higson = Higson(self.fig, gs10[1])
         self.reset = Button(self.fig, gs11[0],
                             self.reset_range, 'Reset Range')
@@ -211,21 +215,22 @@ class RunPlotter(object):
         """
         if self.type() == 'posterior':
             kT = self.temperature()
-            return self.run.posterior_points(kT)[:, self.labels == label]
+            return self.run.posterior_points(1/kT)[label]
         else:
             i = self.evolution()
-            logL = self.run.logL[i]
-            return self.run.live_points(logL)[:, self.labels == label]
+            logL = self.run.logL.iloc[i]
+            return self.run.live_points(logL)[label]
 
     def update(self, _):
         """ Update all the plots upon slider changes."""
-        logX = self.run.logX
+        logX = numpy.log(self.run.nlive/(self.run.nlive+1)).cumsum()
         kT = self.temperature()
-        LX = self.run.LX(kT)
+        LX = self.run.logL/kT + logX
+        LX = numpy.exp(LX-LX.max())
         i = self.evolution()
-        logL = self.run.logL[i]
+        logL = self.run.logL.iloc[i]
         try:
-            n = self.run.n[i+1]
+            n = self.run.nlive.iloc[i]
         except IndexError:
             n = 0
 

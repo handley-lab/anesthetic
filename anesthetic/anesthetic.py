@@ -265,6 +265,14 @@ class NestedSamples(MCMCSamples):
         tex = [r'$\log\mathcal{Z}$', r'$\mathcal{D}$', r'$d$']
         return MCMCSamples.build(params=params, paramnames=paramnames, tex=tex)
 
+    def live_points(self, logL):
+        """ Get the live points within logL """
+        return self[(self.logL > logL) & (self.logL_birth <= logL)]
+
+    def posterior_points(self, beta):
+        """ Get the posterior points at temperature beta """
+        return self[self.weights(beta, nsamples=-1)>0]
+
     def weights(self, beta, nsamples=None):
         logw = self.logw + beta*self.logL
         w = numpy.exp(logw - logw.max())
