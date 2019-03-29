@@ -15,8 +15,15 @@ class MCMCSamples(pandas.DataFrame):
     Note that because of the design of pandas this does not override the
     __init__ constructor. You should build the samples with either:
 
-    * MCMCSamples.read('your/file/root')
-    * MCMCSamples.build(params=params, other_keyword_arguments)
+    * `mcmc = MCMCSamples.read('your/file/root')`
+    * `mcmc = MCMCSamples.build(params=params, other_keyword_arguments)`
+
+    Example plotting commands include
+
+    * `mcmc.plot_1d()`
+    * `mcmc.plot_2d(['paramA', 'paramB'])`
+    * `mcmc.plot_2d(['paramA', 'paramB'],['paramC', 'paramD'])`
+
     """
     _metadata = pandas.DataFrame._metadata + ['paramnames', 'tex', 'limits']
 
