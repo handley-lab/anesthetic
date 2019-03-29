@@ -9,9 +9,13 @@ a*nest*hetic: nested sampling post-processing
 .. image:: https://badge.fury.io/py/anesthetic.svg
    :target: https://badge.fury.io/py/anesthetic
    :alt: PyPi location
+.. image:: https://readthedocs.org/projects/anesthetic/badge/?version=latest
+   :target: https://anesthetic.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 .. image:: https://zenodo.org/badge/175663535.svg
    :target: https://zenodo.org/badge/latestdoi/175663535
    :alt: Permanent DOI for this release
+
 
 
 This project is still in alpha stage. It aims to bring together tools for processing nested sampling chains, leveraging the standard python libraries:
