@@ -1,7 +1,7 @@
 scipy
 numpy
 pandas
-cython
+Cython
 fastkde
 sphinx
 numpydoc
