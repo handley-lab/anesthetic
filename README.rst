@@ -5,6 +5,7 @@ a*nest*hetic: nested sampling post-processing
 :Author: Will Handley
 :Version: 0.5.3
 :Homepage: https://github.com/williamjameshandley/anesthetic
+:Documentation: http://anesthetic.readthedocs.io/
 
 .. image:: https://badge.fury.io/py/anesthetic.svg
    :target: https://badge.fury.io/py/anesthetic
