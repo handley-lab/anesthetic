@@ -8,14 +8,20 @@
 
 # -- Path setup --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import sys
+import os
+sys.path.append(os.path.abspath('../../'))
 
+def get_version(short=False):
+    with open('../../README.rst') as f:
+        for line in f:
+            if ':Version:' in line:
+                ver = line.split(':')[2].strip()
+                if short:
+                    subver = ver.split('.')
+                    return '%s.%s' % tuple(subver[:2])
+                else:
+                    return ver
 
 # -- Project information -----------------------------------------------------
 
@@ -24,9 +30,9 @@ copyright = '2019, Will Handley'
 author = 'Will Handley'
 
 # The short X.Y version
-version = ''
+version = get_version(True)
 # The full version, including alpha/beta/rc tags
-release = '0.6.0'
+release = get_version()
 
 
 # -- General configuration ---------------------------------------------------
@@ -48,6 +54,8 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.imgconverter',
+    'numpydoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -75,7 +83,7 @@ language = None
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+pygments_style = 'sphinx'
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -83,7 +91,7 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -168,6 +176,9 @@ texinfo_documents = [
 
 # Bibliographic Dublin Core info.
 epub_title = project
+epub_author = author
+epub_publisher = author
+epub_copyright = copyright
 
 # The unique identifier of the text. This can be a ISBN number
 # or the project homepage.

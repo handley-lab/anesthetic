@@ -1,7 +1,7 @@
-===========================================
-aNESThetic: nested sampling post-processing 
-===========================================
-:aNESThetic: nested sampling post-processing
+=============================================
+a*nest*hetic: nested sampling post-processing 
+=============================================
+:anesthetic: nested sampling post-processing
 :Author: Will Handley
 :Version: 0.5.3
 :Homepage: https://github.com/williamjameshandley/anesthetic
