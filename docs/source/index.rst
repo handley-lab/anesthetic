@@ -5,7 +5,8 @@
    :caption: Contents
 
    Introduction <intro>
-   API <anesthetic>
+   anesthetic <anesthetic>
+   rhinestone <rhinestone>
 
 .. include:: ../../README.rst
 
