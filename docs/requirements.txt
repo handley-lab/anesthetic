@@ -1,9 +1,4 @@
-numpy
-scipy
-pandas
-matplotlib
 Cython
-fastkde
 sphinx
 sphinx_rtd_theme
 numpydoc

@@ -2,5 +2,4 @@ scipy
 numpy
 pandas
 matplotlib
-Cython
 fastkde
