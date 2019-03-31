@@ -9,7 +9,6 @@ mcmc = MCMCSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTE
 fig, axes = mcmc.plot_2d(['logA','tau'], colorscheme='b')
 
 samples = NestedSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
-samples.live_points(-1.5e4)['omegabh2']
 
 fig, axes = samples.plot_2d(['tau','logA'], colorscheme='r', beta=0)
 fig, axes = samples.plot_2d(['tau','logA'], axes=axes, colorscheme='b')

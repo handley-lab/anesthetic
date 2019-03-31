@@ -3,7 +3,7 @@ anesthetic: nested sampling post-processing
 ===========================================
 :anesthetic: nested sampling post-processing
 :Author: Will Handley
-:Version: 0.6.4
+:Version: 0.6.5
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -100,4 +100,4 @@ To Do
 - Read multiple MCMC chains
 - Automatic coloring
 - Legends
-- resurrect rhinestone
+- Implement live point reading for multinest

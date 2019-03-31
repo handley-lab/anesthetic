@@ -25,7 +25,7 @@ class MCMCSamples(pandas.DataFrame):
     * `mcmc.plot_2d(['paramA', 'paramB'],['paramC', 'paramD'])`
 
     """
-    _metadata = pandas.DataFrame._metadata + ['paramnames', 'tex', 'limits']
+    _metadata = pandas.DataFrame._metadata + ['paramnames', 'tex', 'limits', 'root']
 
     @classmethod
     def read(cls, root):
@@ -35,7 +35,12 @@ class MCMCSamples(pandas.DataFrame):
         limits = read_limits(root)
 
         # Build class
-        return cls.build(params=params, w=w, logL=logL, paramnames=paramnames, tex=tex, limits=limits)
+        data = cls.build(params=params, w=w, logL=logL, paramnames=paramnames,
+                         tex=tex, limits=limits)
+
+        # Record root
+        data.root = root
+        return data
 
     @classmethod
     def build(cls, **kwargs):
@@ -50,8 +55,9 @@ class MCMCSamples(pandas.DataFrame):
 
         w = kwargs.pop('w', None)
         paramnames = kwargs.pop('paramnames', ['x%i' % i for i in range(nparams)])
-        tex = kwargs.pop('tex', paramnames)
-        if not isinstance(tex,dict):
+
+        tex = kwargs.pop('tex', {})
+        if isinstance(tex, list):
             tex = {p:t for p, t in zip(paramnames, tex)}
 
         limits = kwargs.pop('limits', {})
@@ -69,7 +75,7 @@ class MCMCSamples(pandas.DataFrame):
         data.tex = tex
         data.paramnames = paramnames
         data.limits = limits
-
+        data.root = None
         return data
 
     def plot(self, paramname_x, paramname_y=None, ax=None, colorscheme='b',
@@ -133,7 +139,7 @@ class MCMCSamples(pandas.DataFrame):
             paramnames = numpy.atleast_1d(paramnames)
 
         if axes is None:
-            fig, axes = make_1D_axes(paramnames, self.tex)
+            fig, axes = make_1D_axes(paramnames, self.full_tex())
         else:
             fig = numpy.atleast_2d(axes)[0,0].figure
 
@@ -167,7 +173,7 @@ class MCMCSamples(pandas.DataFrame):
         all_paramnames = list(paramnames_y) +list(paramnames_x)
 
         if axes is None:
-            fig, axes = make_2D_axes(paramnames_x, paramnames_y, self.tex)
+            fig, axes = make_2D_axes(paramnames_x, paramnames_y, self.full_tex())
         else:
             fig = numpy.atleast_2d(axes)[0,0].figure
 
@@ -189,6 +195,12 @@ class MCMCSamples(pandas.DataFrame):
 
     def _limits(self, paramname):
         return self.limits.get(paramname, (None, None))
+
+    def full_tex(self):
+        return {p:self.tex.get(p,p) for p in self.paramnames}
+
+    def reload_data(self):
+        self = type(self).read(self.root)
 
 
 class NestedSamples(MCMCSamples):
@@ -213,7 +225,11 @@ class NestedSamples(MCMCSamples):
         params, logL, logL_birth = read_birth(root)
 
         # Build class
-        return cls.build(params=params, logL=logL, paramnames=paramnames, tex=tex, limits=limits, logL_birth=logL_birth)
+        data = cls.build(params=params, logL=logL, paramnames=paramnames, tex=tex, limits=limits, logL_birth=logL_birth)
+
+        # Record root
+        data.root = root
+        return data
 
     @classmethod
     def build(cls, **kwargs):
