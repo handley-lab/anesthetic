@@ -28,7 +28,7 @@ setup(name='anesthetic',
       url='https://github.com/williamjameshandley/anesthetic',
       packages=['anesthetic', 'rhinestone'],
       scripts=['scripts/rhinestone'],
-      install_requires=['numpy', 'scipy', 'pandas', 'matplotlib', 'fastkde'],
+      install_requires=['numpy', 'scipy', 'pandas', 'matplotlib', 'Cython', 'fastkde'],
       setup_requires=['pytest-runner'],
       extras_require={
           'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc'],
