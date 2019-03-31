@@ -139,12 +139,13 @@ class RunPlotter(object):
         param_choice (rhinestone.widgets.CheckButtons):
             Checkbox that selects which parameters to plot.
     """
-    def __init__(self, root, labels=None):
+    def __init__(self, root, labels=10):
         self.run = NestedSamples.read(root)
-        if labels is None:
-            labels = self.run.paramnames[:10]
+        if isinstance(labels, int):
+            self.labels = numpy.array(self.run.paramnames[:labels])
+        else:
+            self.labels = numpy.array(labels)
 
-        self.labels = numpy.array(labels)
         self.fig = plt.figure()
         self._set_up()
         self.redraw(None)
