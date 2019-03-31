@@ -246,7 +246,7 @@ class RunPlotter(object):
     def reload_file(self, _):
         """ Reload the data from file."""
         self.run.reload_data()
-        self.evolution.reset_range(valmax=self.run.npoints)
+        self.evolution.reset_range(valmax=len(self.run))
         self.update(None)
 
     def reset_range(self, _):
