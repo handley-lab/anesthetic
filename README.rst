@@ -35,8 +35,16 @@ Current functionality includes:
 
 - Computation of Bayesian evidences, Kullback-Liebler divergences and Bayesian model dimensionalities.
 - Marginalised 1d and 2d plots.
+- Dynamic replaying of nested sampling run
 
 This tool was designed primarily for use with nested sampling, although it can be used for normal MCMC chains.
+
+For an interactive view of a nested sampling run, you can use the ``rhinestone`` script.
+
+.. code:: bash
+
+   $ rhinestone <ns file root>
+
 
 Installation
 ------------
