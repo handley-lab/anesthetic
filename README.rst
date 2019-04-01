@@ -3,7 +3,7 @@ anesthetic: nested sampling post-processing
 ===========================================
 :anesthetic: nested sampling post-processing
 :Author: Will Handley
-:Version: 0.6.5
+:Version: 0.6.7
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
