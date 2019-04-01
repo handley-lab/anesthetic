@@ -95,7 +95,7 @@ Why create another one? In general, any dedicated user of software will find tha
 
     samples.plot_1d('omegab')                      # Simple 1D plot
     
-3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which is a pain if you are trying to plot priors along with your posteriors. anesthetic a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
+3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which is a pain if you are trying to plot priors along with your posteriors. ``anesthetic`` has a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
 
 To Do
 -----
@@ -103,7 +103,6 @@ To Do
 - CI
 - docstrings
 - better interfaces for plotting multiple samples
-- better interfaces for prior + posterior
 - multiple nested sampler input formats (MultiNest, Dynesty, NeuralNest)
 - Read multiple MCMC chains
 - Automatic coloring
