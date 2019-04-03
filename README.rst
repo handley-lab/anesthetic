@@ -108,12 +108,10 @@ Why create another one? In general, any dedicated user of software will find tha
 To Do
 -----
 - tests
-- CI
 - docstrings
 - better interfaces for plotting multiple samples
 - multiple nested sampler input formats (MultiNest, Dynesty, NeuralNest)
 - Read multiple MCMC chains
-- Automatic coloring
 - Legends
 - Implement live point reading for multinest
 - Actual triangle plots

@@ -78,7 +78,7 @@ class MCMCSamples(pandas.DataFrame):
         data.root = None
         return data
 
-    def plot(self, ax, paramname_x, paramname_y=None, colorscheme='b',
+    def plot(self, ax, paramname_x, paramname_y=None,
              plot_type='contour', beta=1, *args, **kwargs):
         """Generic plotting interface. 
         
@@ -101,7 +101,6 @@ class MCMCSamples(pandas.DataFrame):
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
             return plot_1d(ax, numpy.repeat(self[paramname_x], self.weights(beta)),
-                           colorscheme=colorscheme,
                            xmin=xmin, xmax=xmax, *args, **kwargs)
 
         xmin, xmax = self._limits(paramname_x)
@@ -115,12 +114,10 @@ class MCMCSamples(pandas.DataFrame):
             plot = scatter_plot_2d
         return plot(ax, numpy.repeat(self[paramname_x], weights),
                     numpy.repeat(self[paramname_y], weights),
-                    colorscheme=colorscheme,
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
                     *args, **kwargs)
 
-
-    def plot_1d(self, paramnames=None, axes=None, colorscheme='b', beta=1, *args, **kwargs):
+    def plot_1d(self, paramnames=None, axes=None, beta=1, *args, **kwargs):
         """Create an array of 1D plots
 
         Parameters
@@ -143,11 +140,11 @@ class MCMCSamples(pandas.DataFrame):
             fig = numpy.atleast_2d(axes)[0,0].figure
 
         for p in paramnames:
-            self.plot(axes[p], p, colorscheme=colorscheme, beta=beta, *args, **kwargs)
+            self.plot(axes[p], p, beta=beta, *args, **kwargs)
 
         return fig, axes
 
-    def plot_2d(self, paramnames, paramnames_y=None, axes=None, colorscheme='b', beta=1, *args, **kwargs):
+    def plot_2d(self, paramnames, paramnames_y=None, axes=None, beta=1, *args, **kwargs):
         """Create an array of 2D plots
 
         Parameters
@@ -183,7 +180,7 @@ class MCMCSamples(pandas.DataFrame):
                     plot_type='scatter'
                 else:
                     plot_type='contour'
-                self.plot(axes[px][py], px, py, plot_type=plot_type, colorscheme=colorscheme, beta=beta, *args, **kwargs)
+                self.plot(axes[px][py], px, py, plot_type=plot_type, beta=beta, *args, **kwargs)
         return fig, axes
 
     def weights(self, beta, nsamples=None):

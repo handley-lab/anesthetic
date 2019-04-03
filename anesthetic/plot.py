@@ -7,8 +7,7 @@ from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
-
-convert={'r':'Reds', 'b':'Blues', 'y':'Yellows', 'g':'Greens', 'k':'Greys'}
+import matplotlib.colors
 
 def make_1D_axes(paramnames, **kwargs):
     """ Create a set of axes for plotting 1D marginalised posteriors
@@ -146,8 +145,7 @@ def make_2D_axes(paramnames, paramnames_y=None, **kwargs):
     return fig, axes
 
 
-def plot_1d(ax, data, colorscheme=None, xmin=None, xmax=None,
-            *args, **kwargs):
+def plot_1d(ax, data, xmin=None, xmax=None, *args, **kwargs):
     """Plot a 1d marginalised distribution
 
     Parameters
@@ -170,13 +168,15 @@ def plot_1d(ax, data, colorscheme=None, xmin=None, xmax=None,
     p /= p.max()
     i = (p>=1e-2)
 
-    ans = ax.twin.plot(x[i], p[i], color=colorscheme, linewidth=1, *args, **kwargs)
+    ans = ax.twin.plot(x[i], p[i], *args, **kwargs)
     ax.twin.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
 
-def contour_plot_2d(ax, data_x, data_y, colorscheme='b',
+def contour_plot_2d(ax, data_x, data_y,
                     xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
+
+    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
 
     x, y, pdf = kde_2d(data_x, data_y, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
     pdf /= pdf.max()
@@ -200,18 +200,19 @@ def contour_plot_2d(ax, data_x, data_y, colorscheme='b',
     j = (pdf>=1e-2).any(axis=1)
 
     zorder = max([child.zorder for child in ax.get_children()])
+    cmap = matplotlib.colors.LinearSegmentedColormap.from_list(color, ['#ffffff',color])
 
-    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1.2, cmap=plt.cm.get_cmap(convert[colorscheme]), zorder=zorder+1, *args, **kwargs)  
+    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0, vmax=1.0, cmap=cmap, zorder=zorder+1, *args, **kwargs)  
     ax.contour(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1.2, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
     return cbar
 
 
-def scatter_plot_2d(ax, data_x, data_y, colorscheme=None, 
+def scatter_plot_2d(ax, data_x, data_y,
                     xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
 
-    points = ax.plot(data_x, data_y, 'o', markersize=1, color=colorscheme, *args, **kwargs)
+    points = ax.plot(data_x, data_y, 'o', markersize=1, *args, **kwargs)
     ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
     return points

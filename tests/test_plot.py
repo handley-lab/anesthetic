@@ -89,4 +89,4 @@ def test_make_2D_axes():
 
     # Check unexpected kwargs
     with pytest.raises(TypeError):
-        make_1D_axes(paramnames_x, foo='bar')
+        make_2D_axes(paramnames_x, foo='bar')
