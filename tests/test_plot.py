@@ -122,21 +122,39 @@ def test_plot_1d():
     line, = plot_1d(ax, data, xmin=xmin)
     assert((line.get_xdata()>=xmin).all())
 
+    # Check xmax
     xmax = 0.5
     line, = plot_1d(ax, data, xmax=xmax)
     assert((line.get_xdata()<=xmax).all())
 
-    line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
-    assert((line.get_xdata()<=xmax).all())
-    assert((line.get_xdata()<=xmax).all())
-
 
 def test_contour_plot_2d():
-    fig, ax = plt.subplots()
+    ax = plt.gca()
     data_x = numpy.random.randn(1000)
     data_y = numpy.random.randn(1000)
     c = contour_plot_2d(ax, data_x, data_y)
     assert(isinstance(c, QuadContourSet))
+
+    xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, xmin=xmin)
+    assert(ax.get_xlim()[0] >= xmin)
+    plt.close()
+
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, xmax=xmax)
+    assert(ax.get_xlim()[1] <= xmax)
+    plt.close()
+
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, ymin=ymin)
+    assert(ax.get_ylim()[0] >= ymin)
+    plt.close()
+
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, ymax=ymax)
+    assert(ax.get_ylim()[1] <= ymax)
+    plt.close()
 
 
 def test_scatter_plot_2d():
@@ -145,3 +163,24 @@ def test_scatter_plot_2d():
     data_y = numpy.random.randn(1000)
     lines, = scatter_plot_2d(ax, data_x, data_y)
     assert(isinstance(lines, Line2D))
+
+    xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, xmin=xmin)
+    assert(ax.get_xlim()[0] >= xmin)
+    plt.close()
+
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, xmax=xmax)
+    assert(ax.get_xlim()[1] <= xmax)
+    plt.close()
+
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, ymin=ymin)
+    assert(ax.get_ylim()[0] >= ymin)
+    plt.close()
+
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, ymax=ymax)
+    assert(ax.get_ylim()[1] <= ymax)
+    plt.close()
