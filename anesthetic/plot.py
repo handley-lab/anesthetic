@@ -35,7 +35,7 @@ def make_1D_axes(paramnames, **kwargs):
             optional, default None
     """
 
-    tex = kwargs.pop('tex', {p:p for p in paramnames})
+    tex = kwargs.pop('tex', {})
     fig = kwargs.pop('fig', plt.gcf())
     ncols = kwargs.pop('ncols', int(numpy.ceil(numpy.sqrt(len(paramnames)))))
     nrows = int(numpy.ceil(len(paramnames)/ncols))
@@ -47,6 +47,10 @@ def make_1D_axes(paramnames, **kwargs):
 
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
+
+    for p in paramnames:
+        if p not in tex:
+            tex[p] = p
 
     axes = pandas.Series(index=paramnames, dtype=object)
 

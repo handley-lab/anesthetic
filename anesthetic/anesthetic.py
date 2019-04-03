@@ -139,7 +139,7 @@ class MCMCSamples(pandas.DataFrame):
             paramnames = numpy.atleast_1d(paramnames)
 
         if axes is None:
-            fig, axes = make_1D_axes(paramnames, self.full_tex())
+            fig, axes = make_1D_axes(paramnames, self.tex)
         else:
             fig = numpy.atleast_2d(axes)[0,0].figure
 
@@ -173,7 +173,7 @@ class MCMCSamples(pandas.DataFrame):
         all_paramnames = list(paramnames_y) +list(paramnames_x)
 
         if axes is None:
-            fig, axes = make_2D_axes(paramnames_x, paramnames_y, self.full_tex())
+            fig, axes = make_2D_axes(paramnames_x, paramnames_y, self.tex)
         else:
             axes = pandas.DataFrame(axes, index=paramnames_y, columns=paramnames_x)
             fig = axes.iloc[0,0].figure
@@ -196,9 +196,6 @@ class MCMCSamples(pandas.DataFrame):
 
     def _limits(self, paramname):
         return self.limits.get(paramname, (None, None))
-
-    def full_tex(self):
-        return {p:self.tex.get(p,p) for p in self.paramnames}
 
     def reload_data(self):
         self = type(self).read(self.root)
