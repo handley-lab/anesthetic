@@ -62,16 +62,14 @@ def test_build_mcmc():
     assert(mcmc.root is None)
 
 
-def test_plot_mcmc():
-    params, logL, w = mcmc_sim()
-    mcmc = MCMCSamples.build(params=params, logL=logL, w=w)
+def test_read_mcmc():
+    mcmc = MCMCSamples.read('./tests/example_data/mcmc/mcmc')
     mcmc.plot_2d()
     mcmc.plot_1d()
 
 
 def test_plot_ns():
-    params, logL, logL_birth = ns_sim()
-    ns = NestedSamples.build(params=params, logL=logL, logL_birth=logL_birth)
+    ns = NestedSamples.read('./tests/example_data/ns/ns')
     ns.plot_2d()
     ns.plot_1d()
     ns.ns_output()
