@@ -62,7 +62,6 @@ def make_1D_axes(paramnames, **kwargs):
         axes[p] = ax = fig.add_subplot(g) 
         ax.set_xlabel(tex[p])
         ax.set_yticks([])
-        ax.set_ylim(0,1.1)
         ax.xaxis.set_major_locator(MaxNLocator(2))
 
     return fig, axes
@@ -145,8 +144,16 @@ def make_2D_axes(paramnames, paramnames_y=None, **kwargs):
     return fig, axes
 
 
-def plot_1d(ax, data, xmin=None, xmax=None, *args, **kwargs):
+def plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution
+
+    This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
+    density estimation computation in between. All remaining keyword arguments
+    are passed onwards.
+
+    To avoid intefering with y-axis sharing, one-dimensional plots are created
+    on a separate axis, which is monkey-patched onto the argument ax as the
+    attribute ax.twin.
 
     Parameters
     ----------
@@ -154,8 +161,25 @@ def plot_1d(ax, data, xmin=None, xmax=None, *args, **kwargs):
         axis object to plot on
 
     data: numpy.array
-        samples to plot
+        Uniformly weighted samples to generate kernel density estimator.
+
+    xmin: float
+        lower prior bound
+        optional, default None
+
+    xmax: float
+        lower prior bound
+        optional, default None
+
+    Returns
+    -------
+    lines: matplotlib.lines.Line2D
+        A list of line objects representing the plotted data (same as
+        matplotlib matplotlib.axes.Axes.plot command)
     """
+
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
 
     if not hasattr(ax, 'twin'):
         ax.twin = ax.twinx() 

@@ -1,8 +1,9 @@
 import pytest
+import numpy
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
-from anesthetic.plot import make_1D_axes, make_2D_axes
-from numpy.testing import assert_array_equal
+from anesthetic.plot import make_1D_axes, make_2D_axes, plot_1d
+from numpy.testing import assert_array_equal, assert_array_less
 
 def test_make_1D_axes():
     paramnames = ['A', 'B', 'C', 'D', 'E']
@@ -48,6 +49,7 @@ def test_make_1D_axes():
     with pytest.raises(TypeError):
         make_1D_axes(paramnames, foo='bar')
 
+
 def test_make_2D_axes():
     paramnames_x = ['A', 'B', 'C']
     paramnames_y = ['B', 'A', 'D']
@@ -90,3 +92,28 @@ def test_make_2D_axes():
     # Check unexpected kwargs
     with pytest.raises(TypeError):
         make_2D_axes(paramnames_x, foo='bar')
+
+def test_plot_1d():
+    fig, ax = plt.subplots()
+    data = numpy.random.randn(1000)
+
+    # Check height
+    line, = plot_1d(ax, data)
+    assert(line.get_ydata().max() <=1)
+
+    # Check arguments are passed onward to underlying function
+    line, = plot_1d(ax, data, color='r')
+    assert(line.get_color()=='r')
+
+    # Check xmin
+    xmin = -0.5
+    line, = plot_1d(ax, data, xmin=xmin)
+    assert((line.get_xdata()>=xmin).all())
+
+    xmax = 0.5
+    line, = plot_1d(ax, data, xmax=xmax)
+    assert((line.get_xdata()<=xmax).all())
+
+    line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
+    assert((line.get_xdata()<=xmax).all())
+    assert((line.get_xdata()<=xmax).all())
