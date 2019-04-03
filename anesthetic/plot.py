@@ -33,6 +33,14 @@ def make_1D_axes(paramnames, **kwargs):
         subplot_spec: matplotlib.gridspec.GridSpec
             gridspec to plot array as part of a subfigure
             optional, default None
+
+    Returns
+    -------
+    fig: matplotlib.figure.Figure
+        New or original (if supplied) figure object
+
+    axes: pandas.DataFrame(matplotlib.axes.Axes)
+        Pandas array of axes objects 
     """
 
     tex = kwargs.pop('tex', {})
@@ -84,6 +92,14 @@ def make_2D_axes(paramnames, paramnames_y=None, **kwargs):
         subplot_spec: matplotlib.gridspec.GridSpec
             gridspec to plot array as part of a subfigure
             optional, default None
+
+    Returns
+    -------
+    fig: matplotlib.figure.Figure
+        New or original (if supplied) figure object
+
+    axes: pandas.DataFrame(matplotlib.axes.Axes)
+        Pandas array of axes objects 
     """
     paramnames_x = paramnames
     if paramnames_y is None:
@@ -130,8 +146,18 @@ def make_2D_axes(paramnames, paramnames_y=None, **kwargs):
     return fig, axes
 
 
-def plot_1d(ax, data, weights, colorscheme=None, xmin=None, xmax=None,
+def plot_1d(ax, data, colorscheme=None, xmin=None, xmax=None,
             *args, **kwargs):
+    """Plot a 1d marginalised distribution
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on
+
+    data: numpy.array
+        samples to plot
+    """
 
     if not hasattr(ax, 'twin'):
         ax.twin = ax.twinx() 
@@ -140,7 +166,7 @@ def plot_1d(ax, data, weights, colorscheme=None, xmin=None, xmax=None,
         if not ax.is_first_col():
             ax.tick_params('y',left=False)
 
-    x, p = kde_1d(numpy.repeat(data, weights), xmin, xmax)
+    x, p = kde_1d(data, xmin, xmax)
     p /= p.max()
     i = (p>=1e-2)
 
@@ -149,11 +175,10 @@ def plot_1d(ax, data, weights, colorscheme=None, xmin=None, xmax=None,
     return ans
 
 
-def contour_plot_2d(ax, data_x, data_y, weights, colorscheme='b',
+def contour_plot_2d(ax, data_x, data_y, colorscheme='b',
                     xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
 
-    x, y, pdf = kde_2d(numpy.repeat(data_x, weights), numpy.repeat(data_y, weights),
-                       xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    x, y, pdf = kde_2d(data_x, data_y, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
     pdf /= pdf.max()
     p = sorted(pdf.flatten())
     m = numpy.cumsum(p)
@@ -183,12 +208,10 @@ def contour_plot_2d(ax, data_x, data_y, weights, colorscheme='b',
     return cbar
 
 
-def scatter_plot_2d(ax, data_x, data_y, weights, colorscheme=None, 
+def scatter_plot_2d(ax, data_x, data_y, colorscheme=None, 
                     xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
 
-    x = numpy.repeat(data_x, weights)
-    y = numpy.repeat(data_y, weights) 
-    points = ax.plot(x, y, 'o', markersize=1, color=colorscheme, *args, **kwargs)
-    ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
-    ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)
+    points = ax.plot(data_x, data_y, 'o', markersize=1, color=colorscheme, *args, **kwargs)
+    ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
+    ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
     return points

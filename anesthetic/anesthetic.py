@@ -100,7 +100,7 @@ class MCMCSamples(pandas.DataFrame):
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
-            return plot_1d(ax, self[paramname_x], self.weights(beta),
+            return plot_1d(ax, numpy.repeat(self[paramname_x], self.weights(beta)),
                            colorscheme=colorscheme,
                            xmin=xmin, xmax=xmax, *args, **kwargs)
 
@@ -108,17 +108,16 @@ class MCMCSamples(pandas.DataFrame):
         ymin, ymax = self._limits(paramname_y)
 
         if plot_type == 'contour':
-            return contour_plot_2d(ax, self[paramname_x], self[paramname_y],
-                                   self.weights(beta),
-                                   colorscheme=colorscheme,
-                                   xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
-                                   *args, **kwargs)
+            weights = self.weights(beta)
+            plot = contour_plot_2d
         elif plot_type == 'scatter':
-            return scatter_plot_2d(ax, self[paramname_x], self[paramname_y],
-                                   self.weights(beta, nsamples=500),
-                                   colorscheme=colorscheme,
-                                   xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
-                                   *args, **kwargs)
+            weights = self.weights(beta, nsamples=500)
+            plot = scatter_plot_2d
+        return plot(ax, numpy.repeat(self[paramname_x], weights),
+                    numpy.repeat(self[paramname_y], weights),
+                    colorscheme=colorscheme,
+                    xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
+                    *args, **kwargs)
 
 
     def plot_1d(self, paramnames=None, axes=None, colorscheme='b', beta=1, *args, **kwargs):
