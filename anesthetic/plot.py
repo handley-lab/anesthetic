@@ -10,27 +10,45 @@ from matplotlib.ticker import MaxNLocator
 
 convert={'r':'Reds', 'b':'Blues', 'y':'Yellows', 'g':'Greens', 'k':'Greys'}
 
-def make_1D_axes(paramnames, tex=None, fig=None, subplot_spec=None, ncols=None):
-    if tex is None:
-        tex = {p:p for p in paramnames}
+def make_1D_axes(paramnames, **kwargs):
+    """ Create a set of axes for plotting 1D marginalised posteriors
 
-    n = len(paramnames)
+    Parameters
+    ----------
+        paramnames: list(str)
+            names of parameters.
 
-    axes = pandas.Series(index=paramnames, dtype=object)
+        tex: dict(str:str)
+            Dictionary mapping paramnames to tex plot labels.
+            optional, default paramnames
 
-    if ncols is None:
-        ncols = int(numpy.ceil(numpy.sqrt(n)))
+        fig: matplotlib.figure.Figure
+            Figure to plot on
+            optional, default last figure matplotlib.pyplot.gcf()
 
-    nrows = int(numpy.ceil(n/ncols))
+        ncols: int
+            Number of columns in the plot
+            option, default ceil(sqrt(num_params))
+            
+        subplot_spec: matplotlib.gridspec.GridSpec
+            gridspec to plot array as part of a subfigure
+            optional, default None
+    """
 
-    if subplot_spec is not None:
+    tex = kwargs.pop('tex', {p:p for p in paramnames})
+    fig = kwargs.pop('fig', plt.gcf())
+    ncols = kwargs.pop('ncols', int(numpy.ceil(numpy.sqrt(len(paramnames)))))
+    nrows = int(numpy.ceil(len(paramnames)/ncols))
+    if 'subplot_spec' in kwargs:
         grid = gs.GridSpecFromSubplotSpec(nrows, ncols, wspace=0,
-                                          subplot_spec=subplot_spec)
+                                          subplot_spec=kwargs.pop('subplot_spec'))
     else:
         grid = gs.GridSpec(nrows, ncols, wspace=0)
 
-    if fig is None:
-        fig = plt.gcf()
+    if kwargs:
+        raise TypeError('Unexpected **kwargs: %r' % kwargs)
+
+    axes = pandas.Series(index=paramnames, dtype=object)
 
     for p, g in zip(paramnames, grid):
         axes[p] = ax = fig.add_subplot(g) 
