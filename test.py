@@ -12,6 +12,8 @@ fig, axes = samples.plot_2d(['tau','logA'], colorscheme='r', beta=0)
 samples.plot_2d(['tau','logA'], axes=axes, colorscheme='b')
 mcmc.plot_2d(['tau','logA'], axes=axes, colorscheme='g')
 
+fig, axes = samples.plot_1d(['tau','logA','omegabh2','omegach2', 'ns'])
+
 fig, axes = samples.plot_2d(['omegabh2','omegach2','theta','tau','logA','ns'], colorscheme='r', beta=0)
 fig, axes = samples.plot_2d(['omegabh2','omegach2','theta','tau','logA','ns'], axes=axes, colorscheme='b')
 

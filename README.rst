@@ -108,3 +108,4 @@ To Do
 - Automatic coloring
 - Legends
 - Implement live point reading for multinest
+- Actual triangle plots

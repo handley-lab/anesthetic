@@ -10,24 +10,34 @@ from matplotlib.ticker import MaxNLocator
 
 convert={'r':'Reds', 'b':'Blues', 'y':'Yellows', 'g':'Greens', 'k':'Greys'}
 
-def make_1D_axes(paramnames, tex=None):
+def make_1D_axes(paramnames, tex=None, fig=None, subplot_spec=None, ncols=None):
     if tex is None:
         tex = {p:p for p in paramnames}
 
     n = len(paramnames)
-    cols = int(numpy.ceil(numpy.sqrt(n)))
-    rows = int(numpy.ceil(n/cols))
-    fig, axes = plt.subplots(rows, cols, squeeze=False, gridspec_kw={'wspace':0})
 
-    for p, ax in zip(paramnames, axes.flatten()):
+    axes = pandas.Series(index=paramnames, dtype=object)
+
+    if ncols is None:
+        ncols = int(numpy.ceil(numpy.sqrt(n)))
+
+    nrows = int(numpy.ceil(n/ncols))
+
+    if subplot_spec is not None:
+        grid = gs.GridSpecFromSubplotSpec(nrows, ncols, wspace=0,
+                                          subplot_spec=subplot_spec)
+    else:
+        grid = gs.GridSpec(nrows, ncols, wspace=0)
+
+    if fig is None:
+        fig = plt.gcf()
+
+    for p, g in zip(paramnames, grid):
+        axes[p] = ax = fig.add_subplot(g) 
         ax.set_xlabel(tex[p])
         ax.set_yticks([])
         ax.set_ylim(0,1.1)
         ax.xaxis.set_major_locator(MaxNLocator(2))
-
-    
-    for ax in axes.flatten()[n:]:
-        ax.remove()
 
     return fig, axes
 
