@@ -1,0 +1,43 @@
+# linux matrix
+language: python
+os: linux
+python:
+    - "3.6"
+#    - "3.5"
+#    - "3.4"
+#    - "2.7"
+
+# OSX matrix
+#matrix:
+#    include:
+#        - os: osx
+#          osx_image: xcode10.1
+#          language: generic
+#          env: PYTHON_VERSION=python2
+#        - os: osx
+#          osx_image: xcode10.1
+#          language: generic
+#          env: PYTHON_VERSION=python3
+
+install:
+    - pip install -r requirements.txt
+    - pip install pytest-cov codecov
+    - pip install flake8 pydocstyle sphinx sphinx_rtd_theme
+
+#before_script:
+#    # Test for pep-compliance
+#    - flake8 anesthetic tests
+#
+#    # Test for documentation referencing
+#    - sphinx-build docs/source docs/build -nW
+#
+#    # Test for documentation style
+#    - pydocstyle anesthetic
+
+# Run tests
+script:
+      python -m pytest tests --cov=anesthetic;
+
+# Run coverage summary
+after_success:
+    - codecov
