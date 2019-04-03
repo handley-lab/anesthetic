@@ -7,13 +7,13 @@ anesthetic: nested sampling post-processing
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
-.. image:: https://travis-ci.org/williamjamesandley/anesthetic.svg?branch=master
-   :target: https://travis-ci.org/williamjamesandley/anesthetic
+.. image:: https://travis-ci.org/williamjameshandley/anesthetic.svg?branch=master
+   :target: https://travis-ci.org/williamjameshandley/anesthetic
    :alt: Build Status
-.. image:: https://circleci.com/gh/williamjamesandley/anesthetic.svg?style=svg
-    :target: https://circleci.com/gh/williamjamesandley/anesthetic
-.. image:: https://codecov.io/gh/williamjamesandley/anesthetic/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/williamjamesandley/anesthetic
+.. image:: https://circleci.com/gh/williamjameshandley/anesthetic.svg?style=svg
+   :target: https://circleci.com/gh/williamjameshandley/anesthetic
+.. image:: https://codecov.io/gh/williamjameshandley/anesthetic/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/williamjameshandley/anesthetic
    :alt: Test Coverage Status
 .. image:: https://badge.fury.io/py/anesthetic.svg
    :target: https://badge.fury.io/py/anesthetic
