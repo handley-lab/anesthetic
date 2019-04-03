@@ -38,7 +38,7 @@ def make_1D_axes(paramnames, **kwargs):
     fig: matplotlib.figure.Figure
         New or original (if supplied) figure object
 
-    axes: pandas.DataFrame(matplotlib.axes.Axes)
+    axes: pandas.Series(matplotlib.axes.Axes)
         Pandas array of axes objects 
     """
 

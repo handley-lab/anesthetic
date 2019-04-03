@@ -106,6 +106,7 @@ def test_make_2D_axes():
 
 def test_plot_1d():
     fig, ax = plt.subplots()
+    numpy.random.seed(0)
     data = numpy.random.randn(1000)
 
     # Check height
@@ -135,6 +136,7 @@ def test_plot_1d():
 
 def test_contour_plot_2d():
     ax = plt.gca()
+    numpy.random.seed(1)
     data_x = numpy.random.randn(1000)
     data_y = numpy.random.randn(1000)
     c = contour_plot_2d(ax, data_x, data_y)
@@ -183,6 +185,7 @@ def test_contour_plot_2d():
 
 def test_scatter_plot_2d():
     fig, ax = plt.subplots()
+    numpy.random.seed(2)
     data_x = numpy.random.randn(1000)
     data_y = numpy.random.randn(1000)
     lines, = scatter_plot_2d(ax, data_x, data_y)
