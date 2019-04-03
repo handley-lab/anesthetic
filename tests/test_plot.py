@@ -2,8 +2,15 @@ import pytest
 import numpy
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
-from anesthetic.plot import make_1D_axes, make_2D_axes, plot_1d
+from anesthetic.plot import make_1D_axes, make_2D_axes, plot_1d, contour_plot_2d, scatter_plot_2d
 from numpy.testing import assert_array_equal, assert_array_less
+
+from matplotlib.contour import QuadContourSet
+from matplotlib.lines import Line2D
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
+from pandas.core.series import Series
+from pandas.core.frame import DataFrame
 
 def test_make_1D_axes():
     paramnames = ['A', 'B', 'C', 'D', 'E']
@@ -11,6 +18,8 @@ def test_make_1D_axes():
 
     # Check no optional arguments
     fig, axes = make_1D_axes(paramnames)
+    assert(isinstance(fig, Figure))
+    assert(isinstance(axes, Series))
     assert_array_equal(axes.index, paramnames)
     for p, ax in axes.iteritems():
         assert(ax.get_xlabel() == p)
@@ -57,6 +66,8 @@ def test_make_2D_axes():
 
     # 2D axes
     fig, axes = make_2D_axes(paramnames_x, paramnames_y)
+    assert(isinstance(fig, Figure))
+    assert(isinstance(axes, DataFrame))
     assert_array_equal(axes.index, paramnames_y)
     assert_array_equal(axes.columns, paramnames_x)
 
@@ -99,6 +110,7 @@ def test_plot_1d():
 
     # Check height
     line, = plot_1d(ax, data)
+    assert(isinstance(line, Line2D))
     assert(line.get_ydata().max() <=1)
 
     # Check arguments are passed onward to underlying function
@@ -117,3 +129,19 @@ def test_plot_1d():
     line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
     assert((line.get_xdata()<=xmax).all())
     assert((line.get_xdata()<=xmax).all())
+
+
+def test_contour_plot_2d():
+    fig, ax = plt.subplots()
+    data_x = numpy.random.randn(1000)
+    data_y = numpy.random.randn(1000)
+    c = contour_plot_2d(ax, data_x, data_y)
+    assert(isinstance(c, QuadContourSet))
+
+
+def test_scatter_plot_2d():
+    fig, ax = plt.subplots()
+    data_x = numpy.random.randn(1000)
+    data_y = numpy.random.randn(1000)
+    lines, = scatter_plot_2d(ax, data_x, data_y)
+    assert(isinstance(lines, Line2D))

@@ -6,9 +6,6 @@ from anesthetic.anesthetic import MCMCSamples, NestedSamples
 mcmc = MCMCSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing')
 samples = NestedSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
 
-import matplotlib.colors
-color = '#d62728'
-cmap = matplotlib.colors.LinearSegmentedColormap.from_list(color, ['#ffffff',color])
 fig, axes = samples.plot_2d(['tau','logA'], beta=0)
 samples.plot_2d(['tau','logA'], axes=axes)
 mcmc.plot_2d(['tau','logA'], axes=axes)

@@ -163,12 +163,8 @@ def plot_1d(ax, data, *args, **kwargs):
     data: numpy.array
         Uniformly weighted samples to generate kernel density estimator.
 
-    xmin: float
-        lower prior bound
-        optional, default None
-
-    xmax: float
-        lower prior bound
+    xmin, xmax: float
+        lower/upper prior bound
         optional, default None
 
     Returns
@@ -197,9 +193,37 @@ def plot_1d(ax, data, *args, **kwargs):
     return ans
 
 
-def contour_plot_2d(ax, data_x, data_y,
-                    xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
+def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
+    """Plot a 2d marginalised distribution as contours
 
+    This functions as a wrapper around matplotlib.axes.Axes.contour, and
+    matplotlib.axes.Axes.contourf with a kernel density estimation computation
+    in between. All remaining keyword arguments are passed onwards to both
+    functions.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on
+
+    data_x, data_y: numpy.array
+        x and y coordinates of uniformly weighted samples to generate kernel
+        density estimator.
+
+    xmin, xmax, ymin, ymax: float
+        lower/upper prior bounds in x/y coordinates
+        optional, default None
+
+    Returns
+    -------
+    c: matplotlib.contour.QuadContourSet
+        A set of contourlines or filled regions
+    """
+
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
+    ymin = kwargs.pop('ymin', None)
+    ymax = kwargs.pop('ymax', None)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
 
     x, y, pdf = kde_2d(data_x, data_y, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
@@ -223,18 +247,44 @@ def contour_plot_2d(ax, data_x, data_y,
     i = (pdf>=1e-2).any(axis=0)
     j = (pdf>=1e-2).any(axis=1)
 
-    zorder = max([child.zorder for child in ax.get_children()])
-    cmap = matplotlib.colors.LinearSegmentedColormap.from_list(color, ['#ffffff',color])
+    cmap = matplotlib.colors.LinearSegmentedColormap.from_list(color, ['#ffffff', color])
 
-    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0, vmax=1.0, cmap=cmap, zorder=zorder+1, *args, **kwargs)  
-    ax.contour(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1.2, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
+    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0, vmax=1.0, cmap=cmap, *args, **kwargs)  
+    ax.contour(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1.2, linewidths=0.5, colors='k', *args, **kwargs)  
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
     return cbar
 
 
-def scatter_plot_2d(ax, data_x, data_y,
-                    xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
+def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
+    """Plot samples from a 2d marginalised distribution
+
+    This functions as a wrapper around matplotlib.axes.Axes.plot, enforcing any
+    prior bounds. All remaining keyword arguments are passed onwards.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on
+
+    data_x, data_y: numpy.array
+        x and y coordinates of uniformly weighted samples to generate kernel
+        density estimator.
+
+    xmin, xmax, ymin, ymax: float
+        lower/upper prior bounds in x/y coordinates
+        optional, default None
+
+    Returns
+    -------
+    lines: matplotlib.lines.Line2D
+        A list of line objects representing the plotted data (same as
+        matplotlib matplotlib.axes.Axes.plot command)
+    """
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
+    ymin = kwargs.pop('ymin', None)
+    ymax = kwargs.pop('ymax', None)
 
     points = ax.plot(data_x, data_y, 'o', markersize=1, *args, **kwargs)
     ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
