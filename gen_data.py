@@ -39,6 +39,12 @@ with open(root + '.paramnames', 'w') as f:
     for i in range(len(mcmc.paramnames)):
         f.write('x%i\tx_%i\n' % (i, i))
 
+# ranges file
+with open(root + '.ranges', 'w') as f:
+    for i in range(len(mcmc.paramnames)):
+        f.write('x%i\t0\t1\n' % i)
+
+
 # NS
 # --
 
@@ -75,3 +81,7 @@ with open(root + '.paramnames', 'w') as f:
     for i in range(len(ns.paramnames)):
         f.write('x%i\tx_%i\n' % (i, i))
 
+# ranges file
+with open(root + '.ranges', 'w') as f:
+    for i in range(len(mcmc.paramnames)):
+        f.write('x%i\t0\t1\n' % i)
