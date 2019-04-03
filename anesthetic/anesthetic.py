@@ -72,7 +72,7 @@ class MCMCSamples(pandas.DataFrame):
         if params is None and logL is None:
             raise ValueError("You must provide either params or logL")
         elif params is None:
-            params = numpy.empty((logL.shape[0],0))
+            params = numpy.empty((len(logL),0))
 
         nsamps, nparams = numpy.atleast_2d(params).shape
 
