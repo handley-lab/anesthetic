@@ -78,7 +78,7 @@ class MCMCSamples(pandas.DataFrame):
         data.root = None
         return data
 
-    def plot(self, paramname_x, paramname_y=None, ax=None, colorscheme='b',
+    def plot(self, ax, paramname_x, paramname_y=None, colorscheme='b',
              kind='contour', beta=1, *args, **kwargs):
         """Generic plotting interface. 
         
@@ -86,6 +86,9 @@ class MCMCSamples(pandas.DataFrame):
 
         Parameters
         ----------
+        ax: matplotlib.axes.Axes
+            Axes to plot on 
+
         paramname_x: str
             Choice of parameter to plot on x-coordinate from self.columns.
 
@@ -93,9 +96,6 @@ class MCMCSamples(pandas.DataFrame):
             Choice of parameter to plot on y-coordinate from self.columns.
             If not provided, or the same as paramname_x, then 1D plot produced.
 
-        ax: matplotlib.axes.Axes
-            Axes to plot on. 
-            If not provided, the last axis is used
         """
 
         if paramname_y is None or paramname_x == paramname_y:
@@ -144,7 +144,7 @@ class MCMCSamples(pandas.DataFrame):
             fig = numpy.atleast_2d(axes)[0,0].figure
 
         for p, ax in zip(paramnames, axes.flatten()):
-            self.plot(p, ax=ax, colorscheme=colorscheme, beta=beta, *args, **kwargs)
+            self.plot(ax, p, colorscheme=colorscheme, beta=beta, *args, **kwargs)
 
         return fig, axes
 
@@ -175,15 +175,16 @@ class MCMCSamples(pandas.DataFrame):
         if axes is None:
             fig, axes = make_2D_axes(paramnames_x, paramnames_y, self.full_tex())
         else:
-            fig = numpy.atleast_2d(axes)[0,0].figure
+            axes = pandas.DataFrame(axes, index=paramnames_y, columns=paramnames_x)
+            fig = axes.iloc[0,0].figure
 
-        for p_y, row in zip(paramnames_y, axes):
-            for p_x, ax in zip(paramnames_x, row):
-                if p_x in paramnames_y and p_y in paramnames_x and all_paramnames.index(p_x) > all_paramnames.index(p_y):
+        for py in paramnames_y:
+            for px in paramnames_x:
+                if px in paramnames_y and py in paramnames_x and all_paramnames.index(px) > all_paramnames.index(py):
                     kind='scatter'
                 else:
                     kind='contour'
-                self.plot(p_x, p_y, ax, kind=kind, colorscheme=colorscheme, beta=beta, *args, **kwargs)
+                self.plot(axes[px][py], px, py, kind=kind, colorscheme=colorscheme, beta=beta, *args, **kwargs)
         return fig, axes
 
     def weights(self, beta, nsamples=None):

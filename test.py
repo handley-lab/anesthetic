@@ -2,20 +2,18 @@
 %autoreload 2
 
 from anesthetic.anesthetic import MCMCSamples, NestedSamples
-from anesthetic.rhinestone.plot import 
 
 mcmc = MCMCSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing')
 
-fig, axes = mcmc.plot_2d(['logA','tau'], colorscheme='b')
 
 samples = NestedSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
 
 fig, axes = samples.plot_2d(['tau','logA'], colorscheme='r', beta=0)
-fig, axes = samples.plot_2d(['tau','logA'], axes=axes, colorscheme='b')
+samples.plot_2d(['tau','logA'], axes=axes, colorscheme='b')
 mcmc.plot_2d(['tau','logA'], axes=axes, colorscheme='g')
 
-fig, axes = samples.plot_2d(['omegabh2','omegach2'], colorscheme='r', beta=0)
-fig, axes = samples.plot_2d(['omegabh2','omegach2'], axes=axes, colorscheme='b')
+fig, axes = samples.plot_2d(['omegabh2','omegach2','theta','tau','logA','ns'], colorscheme='r', beta=0)
+fig, axes = samples.plot_2d(['omegabh2','omegach2','theta','tau','logA','ns'], axes=axes, colorscheme='b')
 
 import numpy
 w = numpy.exp(samples.logw + samples.logL - (samples.logw+samples.logL).max())

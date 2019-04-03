@@ -1,5 +1,7 @@
 import numpy
+import pandas
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gs
 from fastkde import fastKDE
 from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds
@@ -30,38 +32,55 @@ def make_1D_axes(paramnames, tex=None):
     return fig, axes
 
 
-def make_2D_axes(paramnames, paramnames_y=None, tex=None):
+def make_2D_axes(paramnames, paramnames_y=None, tex=None, fig=None, subplot_spec=None):
     paramnames_x = paramnames
     if paramnames_y is None:
         paramnames_y = paramnames
     if tex is None:
         tex = {p:p for p in paramnames}
 
-    n_x = len(paramnames_x)
-    n_y = len(paramnames_y)
-    fig, axes = plt.subplots(n_y, n_x, sharex='col', sharey='row', gridspec_kw={'wspace':0, 'hspace':0}, squeeze=False)
-    
-    for y, (p_y, row) in enumerate(zip(paramnames_y, axes)):
-        for x, (p_x, ax) in enumerate(zip(paramnames_x, row)):
-            # y labels
-            if x==0:
-                ax.set_ylabel(tex[p_y])
-                ax.yaxis.set_major_locator(MaxNLocator(2))
-            else:
-                ax.tick_params('y',left=False)
+    nx = len(paramnames_x)
+    ny = len(paramnames_y)
 
-            # x labels
-            if y==n_y-1:
-                ax.set_xlabel(tex[p_x])
+    axes = pandas.DataFrame(index=paramnames_y, columns=paramnames_x, dtype=object)
+    axes[:][:] = None
+
+    if subplot_spec is not None:
+        grid = gs.GridSpecFromSubplotSpec(ny, nx, hspace=0, wspace=0,
+                                          subplot_spec=subplot_spec)
+    else:
+        grid = gs.GridSpec(ny, nx, hspace=0, wspace=0)
+
+    if fig is None:
+        fig = plt.gcf()
+
+    for y, py in enumerate(paramnames_y):
+        for x, px in enumerate(paramnames_x):
+            sx = axes[px][paramnames_y[0]]
+            sy = axes[paramnames_y[0]][py]
+            axes[px][py] = ax = fig.add_subplot(grid[y,x], sharex=sx, sharey=sy)
+            
+            ax.label_outer()
+            if y == ny-1:
+                ax.set_xlabel(tex[px])
                 ax.xaxis.set_major_locator(MaxNLocator(2))
             else:
                 ax.tick_params('x',bottom=False)
 
-            # 1D plots
-            if p_x == p_y:
-                axes[y,x] = ax.twinx()
-                axes[y,x].set_yticks([])
-                axes[y,x].set_ylim(0,1.1)
+            if x == 0:
+                ax.set_ylabel(tex[py])
+                ax.yaxis.set_major_locator(MaxNLocator(2))
+            else:
+                ax.tick_params('y',left=False)
+
+    for y, py in enumerate(paramnames_y):
+        for x, px in enumerate(paramnames_x):
+            if px == py:
+                ax1 = axes[px][py].twinx() 
+                ax1.set_yticks([])
+                ax.tick_params('y',left=False)
+                ax1.set_ylim(0,1.1)
+                axes[px][py] = ax1
 
     return fig, axes
 
@@ -93,9 +112,17 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
     m /= m[-1]
     interp = interp1d([0]+list(m)+[1],[0]+list(p)+[1])
     contours = list(interp([0.05, 0.33]))+[1]
+
+    # Correct non-zero edges
     if min(p) != 0:
         contours = [min(p)] + contours
 
+    # Correct level sets
+    for i in range(1, len(contours)):
+        if contours[i-1]==contours[i]:
+            for j in range(i):
+                contours[j] = contours[j] - 1e-5
+            
     i = (pdf>=1e-2).any(axis=0)
     j = (pdf>=1e-2).any(axis=1)
 
