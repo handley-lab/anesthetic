@@ -5,6 +5,27 @@ from anesthetic.utils import check_bounds, mirror_1d, mirror_2d
 
 
 def kde_1d(d, xmin=None, xmax=None):
+    """ Perform a one-dimensional kernel density estimation
+
+    Wrapper round fastkde.fastKDE. Boundary corrections implemented by
+    reflecting boundary conditions.
+
+    Parameters
+    ----------
+    d: numpy.array
+        Data to perform kde on
+
+    xmin, xmax: float
+        lower/upper prior bounds 
+        optional, default None
+    
+    Returns
+    -------
+    x: numpy.array
+        x-coordinates of kernel density estimates
+    p: numpy.array
+        kernel density estimates
+    """
     xmin, xmax = check_bounds(d, xmin, xmax)
     axisExpansionFactor = xmax is None or xmin is None
     d_ = mirror_1d(d, xmin, xmax)
@@ -26,6 +47,27 @@ def kde_1d(d, xmin=None, xmax=None):
 
 
 def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
+    """ Perform a two-dimensional kernel density estimation
+
+    Wrapper round fastkde.fastKDE. Boundary corrections implemented by
+    reflecting boundary conditions.
+
+    Parameters
+    ----------
+    d_x, d_y: numpy.array
+        x/y coordinates of data to perform kde on
+
+    xmin, xmax, ymin, ymax: float
+        lower/upper prior bounds in x/y coordinates
+        optional, default None
+
+    Returns
+    -------
+    x,y: numpy.array
+        x/y-coordinates of kernel density estimates. One-dimensional array
+    p: numpy.array
+        kernel density estimates. Two-dimensional array
+    """
     xmin, xmax = check_bounds(d_x, xmin, xmax)
     ymin, ymax = check_bounds(d_y, ymin, ymax)
     axisExpansionFactor=[xmax is None or xmin is None,

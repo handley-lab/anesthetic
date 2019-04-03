@@ -127,6 +127,11 @@ def test_plot_1d():
     line, = plot_1d(ax, data, xmax=xmax)
     assert((line.get_xdata()<=xmax).all())
 
+    # Check xmin and xmax
+    line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
+    assert((line.get_xdata()<=xmax).all())
+    assert((line.get_xdata()>=xmin).all())
+
 
 def test_contour_plot_2d():
     ax = plt.gca()
@@ -136,24 +141,43 @@ def test_contour_plot_2d():
     assert(isinstance(c, QuadContourSet))
 
     xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
+
+    # Check xmin
     ax = plt.gca()
     contour_plot_2d(ax, data_x, data_y, xmin=xmin)
     assert(ax.get_xlim()[0] >= xmin)
     plt.close()
 
+    # Check xmax
     ax = plt.gca()
     contour_plot_2d(ax, data_x, data_y, xmax=xmax)
     assert(ax.get_xlim()[1] <= xmax)
     plt.close()
 
+    # Check xmin and xmax
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, xmin=xmin, xmax=xmax)
+    assert(ax.get_xlim()[1] <= xmax)
+    assert(ax.get_xlim()[0] >= xmin)
+    plt.close()
+
+    # Check ymin
     ax = plt.gca()
     contour_plot_2d(ax, data_x, data_y, ymin=ymin)
     assert(ax.get_ylim()[0] >= ymin)
     plt.close()
 
+    # Check ymax
     ax = plt.gca()
     contour_plot_2d(ax, data_x, data_y, ymax=ymax)
     assert(ax.get_ylim()[1] <= ymax)
+    plt.close()
+
+    # Check ymin and ymax
+    ax = plt.gca()
+    contour_plot_2d(ax, data_x, data_y, ymin=ymin, ymax=ymax)
+    assert(ax.get_ylim()[1] <= ymax)
+    assert(ax.get_ylim()[0] >= ymin)
     plt.close()
 
 
