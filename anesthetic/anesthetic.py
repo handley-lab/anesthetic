@@ -74,7 +74,7 @@ class MCMCSamples(pandas.DataFrame):
         elif params is None:
             params = numpy.empty((logL.shape[0],0))
 
-        nsamps, nparams = params.shape
+        nsamps, nparams = numpy.atleast_2d(params).shape
 
         w = kwargs.pop('w', None)
         paramnames = kwargs.pop('paramnames', ['x%i' % i for i in range(nparams)])
@@ -123,11 +123,11 @@ class MCMCSamples(pandas.DataFrame):
             corresponds to the posterior.
         """
 
-        if isinstance(self, MCMCSamples):
-            raise ValueError("You cannot adjust the temperataure of MCMCSamples")
-
         plot_type = kwargs.pop('plot_type', 'contour')
         beta = kwargs.pop('beta', 1)
+
+        if beta != 1 and isinstance(self, MCMCSamples):
+            raise ValueError("You cannot adjust the temperature of MCMCSamples")
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
