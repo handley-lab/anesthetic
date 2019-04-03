@@ -48,10 +48,7 @@ def make_1D_axes(paramnames, **kwargs):
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
-    for p in paramnames:
-        if p not in tex:
-            tex[p] = p
-
+    tex = {p:tex[p] if p in tex else p for p in paramnames}
     axes = pandas.Series(index=paramnames, dtype=object)
 
     for p, g in zip(paramnames, grid):
@@ -64,28 +61,52 @@ def make_1D_axes(paramnames, **kwargs):
     return fig, axes
 
 
-def make_2D_axes(paramnames, paramnames_y=None, tex=None, fig=None, subplot_spec=None):
+def make_2D_axes(paramnames, paramnames_y=None, **kwargs):
+    """ Create a set of axes for plotting 2D marginalised posteriors
+
+    Parameters
+    ----------
+        paramnames: list(str)
+            names of parameters.
+
+        paramnames_y: list(str)
+            names of parameters.
+            optional, default paramnames
+
+        tex: dict(str:str)
+            Dictionary mapping paramnames to tex plot labels.
+            optional, default paramnames
+
+        fig: matplotlib.figure.Figure
+            Figure to plot on
+            optional, default last figure matplotlib.pyplot.gcf()
+            
+        subplot_spec: matplotlib.gridspec.GridSpec
+            gridspec to plot array as part of a subfigure
+            optional, default None
+    """
     paramnames_x = paramnames
     if paramnames_y is None:
         paramnames_y = paramnames
-    if tex is None:
-        tex = {p:p for p in paramnames}
-
+    tex = kwargs.pop('tex', {})
+    fig = kwargs.pop('fig', plt.gcf())
     nx = len(paramnames_x)
     ny = len(paramnames_y)
-
-    axes = pandas.DataFrame(index=paramnames_y, columns=paramnames_x, dtype=object)
-    axes[:][:] = None
-
-    if subplot_spec is not None:
+    if 'subplot_spec' in kwargs:
         grid = gs.GridSpecFromSubplotSpec(ny, nx, hspace=0, wspace=0,
-                                          subplot_spec=subplot_spec)
+                                          subplot_spec=kwargs.pop('subplot_spec'))
     else:
         grid = gs.GridSpec(ny, nx, hspace=0, wspace=0)
 
-    if fig is None:
-        fig = plt.gcf()
+    if kwargs:
+        raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
+    tex = {p:tex[p] if p in tex else p for p in numpy.concatenate((paramnames_x, paramnames_y))}
+    axes = pandas.DataFrame(index=paramnames_y, columns=paramnames_x, dtype=object)
+    axes[:][:] = None
+
+
+    # 2D plots
     for y, py in enumerate(paramnames_y):
         for x, px in enumerate(paramnames_x):
             sx = axes[px][paramnames_y[0]]
@@ -93,6 +114,7 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None, fig=None, subplot_spec
             axes[px][py] = ax = fig.add_subplot(grid[y,x], sharex=sx, sharey=sy)
             
             ax.label_outer()
+
             if y == ny-1:
                 ax.set_xlabel(tex[px])
                 ax.xaxis.set_major_locator(MaxNLocator(2))
@@ -105,36 +127,30 @@ def make_2D_axes(paramnames, paramnames_y=None, tex=None, fig=None, subplot_spec
             else:
                 ax.tick_params('y',left=False)
 
-    for y, py in enumerate(paramnames_y):
-        for x, px in enumerate(paramnames_x):
-            if px == py:
-                ax1 = axes[px][py].twinx() 
-                ax1.set_yticks([])
-                ax.tick_params('y',left=False)
-                ax1.set_ylim(0,1.1)
-                axes[px][py] = ax1
-
     return fig, axes
 
 
-def plot_1d(data, weights, ax=None, colorscheme=None, xmin=None, xmax=None,
+def plot_1d(ax, data, weights, colorscheme=None, xmin=None, xmax=None,
             *args, **kwargs):
-    if ax is None:
-        ax = plt.gca()
+
+    if not hasattr(ax, 'twin'):
+        ax.twin = ax.twinx() 
+        ax.twin.set_yticks([])
+        ax.twin.set_ylim(0,1.1)
+        if not ax.is_first_col():
+            ax.tick_params('y',left=False)
 
     x, p = kde_1d(numpy.repeat(data, weights), xmin, xmax)
     p /= p.max()
     i = (p>=1e-2)
 
-    ans = ax.plot(x[i], p[i], color=colorscheme, linewidth=1, *args, **kwargs)
-    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
+    ans = ax.twin.plot(x[i], p[i], color=colorscheme, linewidth=1, *args, **kwargs)
+    ax.twin.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
 
-def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
+def contour_plot_2d(ax, data_x, data_y, weights, colorscheme='b',
                     xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
-    if ax is None:
-        ax = plt.gca()
 
     x, y, pdf = kde_2d(numpy.repeat(data_x, weights), numpy.repeat(data_y, weights),
                        xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
@@ -167,11 +183,9 @@ def contour_plot_2d(data_x, data_y, weights, ax=None, colorscheme='b',
     return cbar
 
 
-def scatter_plot_2d(data_x, data_y, weights, ax=None, colorscheme=None, 
+def scatter_plot_2d(ax, data_x, data_y, weights, colorscheme=None, 
                     xmin=None, xmax=None, ymin=None, ymax=None, *args, **kwargs):
 
-    if ax is None:
-        ax = plt.gca()
     x = numpy.repeat(data_x, weights)
     y = numpy.repeat(data_y, weights) 
     points = ax.plot(x, y, 'o', markersize=1, color=colorscheme, *args, **kwargs)

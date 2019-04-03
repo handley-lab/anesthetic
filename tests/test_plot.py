@@ -1,6 +1,7 @@
+import pytest
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
-from anesthetic.plot import make_1D_axes
+from anesthetic.plot import make_1D_axes, make_2D_axes
 from numpy.testing import assert_array_equal
 
 def test_make_1D_axes():
@@ -42,3 +43,50 @@ def test_make_1D_axes():
     g00 = grid[0,0]
     fig, axes = make_1D_axes(paramnames, subplot_spec=g00)
     assert(g00 is axes[0].get_subplotspec().get_topmost_subplotspec())
+
+    # Check unexpected kwargs
+    with pytest.raises(TypeError):
+        make_1D_axes(paramnames, foo='bar')
+
+def test_make_2D_axes():
+    paramnames_x = ['A', 'B', 'C']
+    paramnames_y = ['B', 'A', 'D']
+    tex = {'A':'tA', 'B':'tB', 'C':'tC', 'D':'tD', 'E':'tE'}
+
+    # 2D axes
+    fig, axes = make_2D_axes(paramnames_x, paramnames_y)
+    assert_array_equal(axes.index, paramnames_y)
+    assert_array_equal(axes.columns, paramnames_x)
+
+    # Axes labels
+    for p, ax in axes.iloc[:,0].iteritems():
+        assert(ax.get_ylabel() == p)
+
+    for p, ax in axes.iloc[-1].iteritems():
+        assert(ax.get_xlabel() == p)
+
+    for ax in axes.iloc[:-1,1:].values.flatten():
+        assert(ax.get_xlabel()=='')
+        assert(ax.get_ylabel()=='')
+    plt.close(fig)
+
+    # Check fig argument
+    fig0 = plt.figure()
+    fig1 = plt.figure()
+    fig, axes = make_2D_axes(paramnames_x)
+    assert(fig is fig1)
+    fig, axes = make_2D_axes(paramnames_x, fig=fig0)
+    assert(fig is fig0)
+    plt.close(fig0)
+    plt.close(fig1)
+
+    # Check gridspec argument
+    grid = gs.GridSpec(2, 2, width_ratios=[3,1], height_ratios=[3,1])
+    g00 = grid[0,0]
+    fig, axes = make_2D_axes(paramnames_x, subplot_spec=g00)
+    assert(g00 is axes.iloc[0,0].get_subplotspec().get_topmost_subplotspec())
+    plt.close(fig)
+
+    # Check unexpected kwargs
+    with pytest.raises(TypeError):
+        make_1D_axes(paramnames_x, foo='bar')

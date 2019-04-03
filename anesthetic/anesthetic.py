@@ -100,23 +100,23 @@ class MCMCSamples(pandas.DataFrame):
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
-            return plot_1d(self[paramname_x], self.weights(beta),
-                           ax=ax, colorscheme=colorscheme,
+            return plot_1d(ax, self[paramname_x], self.weights(beta),
+                           colorscheme=colorscheme,
                            xmin=xmin, xmax=xmax, *args, **kwargs)
 
         xmin, xmax = self._limits(paramname_x)
         ymin, ymax = self._limits(paramname_y)
 
         if plot_type == 'contour':
-            return contour_plot_2d(self[paramname_x], self[paramname_y],
+            return contour_plot_2d(ax, self[paramname_x], self[paramname_y],
                                    self.weights(beta),
-                                   ax=ax, colorscheme=colorscheme,
+                                   colorscheme=colorscheme,
                                    xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
                                    *args, **kwargs)
         elif plot_type == 'scatter':
-            return scatter_plot_2d(self[paramname_x], self[paramname_y],
+            return scatter_plot_2d(ax, self[paramname_x], self[paramname_y],
                                    self.weights(beta, nsamples=500),
-                                   ax=ax, colorscheme=colorscheme,
+                                   colorscheme=colorscheme,
                                    xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
                                    *args, **kwargs)
 
@@ -139,7 +139,7 @@ class MCMCSamples(pandas.DataFrame):
             paramnames = numpy.atleast_1d(paramnames)
 
         if axes is None:
-            fig, axes = make_1D_axes(paramnames, self.tex)
+            fig, axes = make_1D_axes(paramnames, tex=self.tex)
         else:
             fig = numpy.atleast_2d(axes)[0,0].figure
 
@@ -173,7 +173,7 @@ class MCMCSamples(pandas.DataFrame):
         all_paramnames = list(paramnames_y) +list(paramnames_x)
 
         if axes is None:
-            fig, axes = make_2D_axes(paramnames_x, paramnames_y, self.tex)
+            fig, axes = make_2D_axes(paramnames_x, paramnames_y, tex=self.tex)
         else:
             axes = pandas.DataFrame(axes, index=paramnames_y, columns=paramnames_x)
             fig = axes.iloc[0,0].figure

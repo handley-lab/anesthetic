@@ -4,14 +4,15 @@
 from anesthetic.anesthetic import MCMCSamples, NestedSamples
 
 mcmc = MCMCSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing')
-
-
 samples = NestedSamples.read('./data/plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
 
 fig, axes = samples.plot_2d(['tau','logA'], colorscheme='r', beta=0)
 samples.plot_2d(['tau','logA'], axes=axes, colorscheme='b')
 mcmc.plot_2d(['tau','logA'], axes=axes, colorscheme='g')
 
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(3,3)
+ax[1,1].label_outer()
 fig, axes = samples.plot_1d(['tau','logA','omegabh2','omegach2', 'ns'])
 
 fig, axes = samples.plot_2d(['omegabh2','omegach2','theta','tau','logA','ns'], colorscheme='r', beta=0)
