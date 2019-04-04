@@ -124,7 +124,7 @@ def make_2D_axes(paramnames, paramnames_y=None, **kwargs):
     for y, py in enumerate(paramnames_y):
         for x, px in enumerate(paramnames_x):
             sx = axes[px][paramnames_y[0]]
-            sy = axes[paramnames_y[0]][py]
+            sy = axes[paramnames_x[0]][py]
             axes[px][py] = ax = fig.add_subplot(grid[y,x], sharex=sx, sharey=sy)
             
             ax.label_outer()
@@ -248,9 +248,10 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     j = (pdf>=1e-2).any(axis=1)
 
     cmap = matplotlib.colors.LinearSegmentedColormap.from_list(color, ['#ffffff', color])
+    zorder = max([child.zorder for child in ax.get_children()])
 
-    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0, vmax=1.0, cmap=cmap, *args, **kwargs)  
-    ax.contour(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1.2, linewidths=0.5, colors='k', *args, **kwargs)  
+    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0, vmax=1.0, cmap=cmap, zorder=zorder+1, *args, **kwargs)  
+    ax.contour(x[i], y[j], pdf[numpy.ix_(j,i)], contours, vmin=0,vmax=1.2, linewidths=0.5, colors='k', zorder=zorder+2, *args, **kwargs)  
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
     return cbar

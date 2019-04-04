@@ -126,7 +126,7 @@ class MCMCSamples(pandas.DataFrame):
         plot_type = kwargs.pop('plot_type', 'contour')
         beta = kwargs.pop('beta', 1)
 
-        if beta != 1 and isinstance(self, MCMCSamples):
+        if beta != 1 and not isinstance(self, NestedSamples):
             raise ValueError("You cannot adjust the temperature of MCMCSamples")
 
         if paramname_y is None or paramname_x == paramname_y:
@@ -251,7 +251,7 @@ class MCMCSamples(pandas.DataFrame):
         try:
             return compress_weights(self.w, self.u, nsamples=nsamples)
         except AttributeError:
-            return numpy.ones(len(self), dtype=int, unit_weights=unit_weights)
+            return numpy.ones(len(self), dtype=int)
 
     def _limits(self, paramname):
         return self.limits.get(paramname, (None, None))

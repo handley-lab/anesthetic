@@ -25,7 +25,7 @@ mcmc = MCMCSamples.read('plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl
 
 #| You can see that these are stored as a pandas array
 
-print(mcmc)
+print(mcmc[:6])
 
 #| We have plotting tools for 1D plots ...
 
@@ -67,8 +67,8 @@ nested = NestedSamples.read('plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE
 
 #| We can infer the evidence, KL divergence and Bayesian model dimensionality:
 
-ns_output = nested.ns_output(1000)
-print(ns_output)
+ns_output = nested.ns_output(200)
+print(ns_output[:6])
 
 #| This is a set of MCMC samples that may be plotted as usual:
 
@@ -85,11 +85,11 @@ nested['omegab'] = nested['omegabh2']/h**2
 nested.tex['omegab'] = '$\Omega_b$'
 
 fig, axes = mcmc.plot_2d(['sigma8','omegab'])
-nested.plot_2d(['sigma8','omegab'], axes=axes, colorscheme='r');
+nested.plot_2d(['sigma8','omegab'], axes=axes);
 
 #| Finally, with nested samples, we can plot the prior (or any temperature), by
 #| passing beta=0
 
-fig, axes = nested.plot_2d(['ns','tau'], colorscheme='r', beta=0)
-nested.plot_2d(['ns','tau'], axes=axes, colorscheme='b');
+fig, axes = nested.plot_2d(['ns','tau'], beta=0)
+nested.plot_2d(['ns','tau'], axes=axes);
 
