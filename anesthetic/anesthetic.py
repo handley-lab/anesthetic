@@ -1,42 +1,51 @@
+"""Main classes for the anesthetic module.
+
+* ``MCMCSamples``
+* ``NestedSamples``
+"""
 import numpy
 import pandas
 from scipy.special import logsumexp
-from anesthetic.plot import make_1D_axes, make_2D_axes, plot_1d, scatter_plot_2d, contour_plot_2d
-from anesthetic.read import read_chains, read_birth, read_limits, read_paramnames
+from anesthetic.plot import (make_1D_axes, make_2D_axes, plot_1d,
+                             scatter_plot_2d, contour_plot_2d)
+from anesthetic.read import (read_chains, read_birth, read_limits,
+                             read_paramnames)
 from anesthetic.information_theory import compress_weights
 
 
 class MCMCSamples(pandas.DataFrame):
-    """Storage and plotting tools for MCMC samples
+    """Storage and plotting tools for MCMC samples.
 
-    We extend the pandas.DataFrame by providing plotting methods and standardising
-    sample storage.
+    We extend the pandas.DataFrame by providing plotting methods and
+    standardising sample storage.
 
     Note that because of the design of pandas this does not override the
     __init__ constructor. You should build the samples with either:
 
-    * `mcmc = MCMCSamples.read('your/file/root')`
-    * `mcmc = MCMCSamples.build(params=params, other_keyword_arguments)`
+    * ``mcmc = MCMCSamples.read('your/file/root')``
+    * ``mcmc = MCMCSamples.build(params=params, other_keyword_arguments)``
 
     Example plotting commands include
 
-    * `mcmc.plot_1d()`
-    * `mcmc.plot_2d(['paramA', 'paramB'])`
-    * `mcmc.plot_2d(['paramA', 'paramB'],['paramC', 'paramD'])`
+    * ``mcmc.plot_1d()``
+    * ``mcmc.plot_2d(['paramA', 'paramB'])``
+    * ``mcmc.plot_2d(['paramA', 'paramB'], ['paramC', 'paramD'])``
 
     """
-    _metadata = pandas.DataFrame._metadata + ['paramnames', 'tex', 'limits', 'root']
+
+    _metadata = (pandas.DataFrame._metadata +
+                 ['params', 'tex', 'limits', 'root'])
 
     @classmethod
     def read(cls, root):
         """Read in data from file root."""
         # Read in data
-        w, logL, params = read_chains(root)
-        paramnames, tex = read_paramnames(root)
+        w, logL, samples = read_chains(root)
+        params, tex = read_paramnames(root)
         limits = read_limits(root)
 
         # Build class
-        data = cls.build(params=params, w=w, logL=logL, paramnames=paramnames,
+        data = cls.build(samples=samples, w=w, logL=logL, params=params,
                          tex=tex, limits=limits)
 
         # Record root
@@ -49,7 +58,7 @@ class MCMCSamples(pandas.DataFrame):
 
         Parameters
         ----------
-        params: numpy.array
+        samples: numpy.array
             Coordinates of samples. shape = (nsamples, ndims).
 
         logL: numpy.array
@@ -58,33 +67,34 @@ class MCMCSamples(pandas.DataFrame):
         w: numpy.array
             weights of samples.
 
-        paramnames: list(str)
+        params: list(str)
             reference names of parameters
 
         tex: dict
-            mapping from paramnames to tex labels for plotting
+            mapping from params to tex labels for plotting
 
         limits: dict
-            mapping from paramnames to prior limits
-        """
-        params = kwargs.pop('params', None)
-        logL = kwargs.pop('logL', None) 
-        if params is None and logL is None:
-            raise ValueError("You must provide either params or logL")
-        elif params is None:
-            params = numpy.empty((len(logL),0))
+            mapping from params to prior limits
 
-        nsamps, nparams = numpy.atleast_2d(params).shape
+        """
+        samples = kwargs.pop('samples', None)
+        logL = kwargs.pop('logL', None)
+        if samples is None and logL is None:
+            raise ValueError("You must provide either samples or logL")
+        elif samples is None:
+            samples = numpy.empty((len(logL), 0))
+
+        nsamps, nsamples = numpy.atleast_2d(samples).shape
 
         w = kwargs.pop('w', None)
-        paramnames = kwargs.pop('paramnames', ['x%i' % i for i in range(nparams)])
+        params = kwargs.pop('params', ['x%i' % i for i in range(nsamps)])
 
         tex = kwargs.pop('tex', {})
         limits = kwargs.pop('limits', {})
 
-        data = cls(data=params, columns=paramnames)
+        data = cls(data=samples, columns=params)
         if w is not None:
-            data['w'] = w 
+            data['w'] = w
             tex['w'] = r'MCMC weight'
         if logL is not None:
             data['logL'] = logL
@@ -93,20 +103,20 @@ class MCMCSamples(pandas.DataFrame):
         data['u'] = numpy.random.rand(len(data))
 
         data.tex = tex
-        data.paramnames = paramnames
+        data.params = params
         data.limits = limits
         data.root = None
         return data
 
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
-        """Generic plotting interface. 
-        
+        """Interface for 2D and 1D plotting routines.
+
         Produces a single 1D or 2D plot on an axis.
 
         Parameters
         ----------
         ax: matplotlib.axes.Axes
-            Axes to plot on 
+            Axes to plot on
 
         paramname_x: str
             Choice of parameter to plot on x-coordinate from self.columns.
@@ -115,32 +125,33 @@ class MCMCSamples(pandas.DataFrame):
             Choice of parameter to plot on y-coordinate from self.columns.
             If not provided, or the same as paramname_x, then 1D plot produced.
 
-        plot_type: str
-            Optional. must be in {'contour','scatter'}
+        plot_type: str, optional
+            Must be in {'contour','scatter'}. (Default: 'contour')
 
-        beta: float
+        beta: float, optional
             Temperature to plot at. beta=0 corresponds to the prior, beta=1
-            corresponds to the posterior.
+            corresponds to the posterior. (Default: 1)
 
         Returns
         -------
-        fig: :obj:`matplotlib.figure.Figure`
+        fig: matplotlib.figure.Figure
             New or original (if supplied) figure object
 
-        axes: pandas.DataFrame(matplotlib.axes.Axes) or pandas.Series
+        axes: pandas.DataFrame or pandas.Series of matplotlib.axes.Axes
             Pandas array of axes objects
-        """
 
+        """
         plot_type = kwargs.pop('plot_type', 'contour')
         beta = kwargs.pop('beta', 1)
 
         if beta != 1 and not isinstance(self, NestedSamples):
-            raise ValueError("You cannot adjust the temperature of MCMCSamples")
+            raise ValueError("You cannot adjust temperature for MCMCSamples")
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
-            return plot_1d(ax, numpy.repeat(self[paramname_x], self._weights(beta)),
-                           xmin=xmin, xmax=xmax, *args, **kwargs)
+            return plot_1d(ax, numpy.repeat(self[paramname_x],
+                           self._weights(beta)), xmin=xmin, xmax=xmax,
+                           *args, **kwargs)
 
         xmin, xmax = self._limits(paramname_x)
         ymin, ymax = self._limits(paramname_y)
@@ -156,106 +167,109 @@ class MCMCSamples(pandas.DataFrame):
 
         return plot(ax, numpy.repeat(self[paramname_x], weights),
                     numpy.repeat(self[paramname_y], weights),
-                    xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
+                    xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                     *args, **kwargs)
 
-    def plot_1d(self, paramnames=None, *args, **kwargs):
-        """Create an array of 1D plots
+    def plot_1d(self, params=None, *args, **kwargs):
+        """Create an array of 1D plots.
 
         Parameters
         ----------
-        paramnames: list(str) or str
+        params: list(str) or st, optional
             list of parameter names, or single parameter name to plot from
-            self.columns. Optional, defaults to all parameters.
+            self.columns. (Default: self.params)
 
-        axes: numpy.array(matplotlib.axes.Axes)
+        axes: numpy.array of matplotlib.axes.Axes, optional
             Existing array of axes to plot on. If not provided, one is created.
 
-        beta: float
+        beta: float, optional
             Temperature to plot at. beta=0 corresponds to the prior, beta=1
-            corresponds to the posterior.
+            corresponds to the posterior. (Default: 1)
 
         Returns
         -------
         fig: matplotlib.figure.Figure
             New or original (if supplied) figure object
 
-        axes: pandas.Series(matplotlib.axes.Axes)
-            Pandas array of axes objects 
+        axes: pandas.Series of matplotlib.axes.Axes
+            Pandas array of axes objects
+
         """
-        if paramnames is None:
-            paramnames = self.paramnames
+        if params is None:
+            params = self.params
         else:
-            paramnames = numpy.atleast_1d(paramnames)
+            params = numpy.atleast_1d(params)
 
         axes = kwargs.pop('axes', None)
         beta = kwargs.pop('beta', 1)
         if axes is None:
-            fig, axes = make_1D_axes(paramnames, tex=self.tex)
+            fig, axes = make_1D_axes(params, tex=self.tex)
         else:
-            fig = numpy.atleast_2d(axes)[0,0].figure
+            fig = numpy.atleast_2d(axes)[0, 0].figure
 
-        for p in paramnames:
+        for p in params:
             self.plot(axes[p], p, beta=beta, *args, **kwargs)
 
         return fig, axes
 
-    def plot_2d(self, paramnames_x=None, paramnames_y=None, *args, **kwargs):
-        """Create an array of 2D plots
+    def plot_2d(self, xparams=None, yparams=None, *args, **kwargs):
+        """Create an array of 2D plots.
 
         Parameters
         ----------
-        paramnames_x: list(str) or str
+        xparams: list(str) or str, optional
             list of parameter names, or single parameter name to plot from
-            self.columns. If paramnames_y is not provided, produce triangle plot
+            self.columns. (Default: self.params)
 
-        paramnames_y: list(str) or str
+        yparams: list(str) or str, optional
             list of parameter names, or single parameter name to plot on y
-            coordinate from self.columns. If not provided, then a triangle plot
-            is produced from paramnames_x
+            coordinate from self.columns. (Default: xparams)
 
-        axes: numpy.array(matplotlib.axes.Axes)
+        axes: numpy.array(matplotlib.axes.Axes), optional
             Existing array of axes to plot on. If not provided, one is created.
 
-        beta: float
+        beta: float, optional
             Temperature to plot at. beta=0 corresponds to the prior, beta=1
-            corresponds to the posterior.
+            corresponds to the posterior. (Default: 1)
 
         Returns
         -------
         fig: matplotlib.figure.Figure
             New or original (if supplied) figure object
 
-        axes: pandas.DataFrame(matplotlib.axes.Axes)
-            Pandas array of axes objects 
+        axes: pandas.DataFrame of matplotlib.axes.Axes
+            Pandas array of axes objects
+
         """
-        if paramnames_x is None:
-            paramnames_x = self.paramnames
-        paramnames_x = numpy.atleast_1d(paramnames_x)
-        if paramnames_y is None:
-            paramnames_y = paramnames_x
-        paramnames_y = numpy.atleast_1d(paramnames_y)
-        all_paramnames = list(paramnames_y) +list(paramnames_x)
+        if xparams is None:
+            xparams = self.params
+        xparams = numpy.atleast_1d(xparams)
+        if yparams is None:
+            yparams = xparams
+        yparams = numpy.atleast_1d(yparams)
+        all_params = list(yparams) + list(xparams)
 
         axes = kwargs.pop('axes', None)
         beta = kwargs.pop('beta', 1)
         if axes is None:
-            fig, axes = make_2D_axes(paramnames_x, paramnames_y, tex=self.tex)
+            fig, axes = make_2D_axes(xparams, yparams, tex=self.tex)
         else:
-            axes = pandas.DataFrame(axes, index=paramnames_y, columns=paramnames_x)
-            fig = axes.iloc[0,0].figure
+            axes = pandas.DataFrame(axes, index=yparams, columns=xparams)
+            fig = axes.iloc[0, 0].figure
 
-        for py in paramnames_y:
-            for px in paramnames_x:
-                if px in paramnames_y and py in paramnames_x and all_paramnames.index(px) > all_paramnames.index(py):
-                    plot_type='scatter'
+        for y in yparams:
+            for x in xparams:
+                if (x in yparams and y in xparams and (all_params.index(x) >
+                                                       all_params.index(y))):
+                    plot_type = 'scatter'
                 else:
-                    plot_type='contour'
-                self.plot(axes[px][py], px, py, plot_type=plot_type, beta=beta, *args, **kwargs)
+                    plot_type = 'contour'
+                self.plot(axes[x][y], x, y, plot_type=plot_type, beta=beta,
+                          *args, **kwargs)
         return fig, axes
 
     def _weights(self, beta, nsamples=None):
-        """ Return the posterior weights for plotting. """
+        """Return the posterior weights for plotting."""
         try:
             return compress_weights(self.w, self.u, nsamples=nsamples)
         except AttributeError:
@@ -269,29 +283,30 @@ class MCMCSamples(pandas.DataFrame):
 
 
 class NestedSamples(MCMCSamples):
-    """Storage and plotting tools for Nested Sampling samples
+    """Storage and plotting tools for Nested Sampling samples.
 
     We extend the MCMCSamples class with the additional methods:
-    
-    * ns_output
+
+    * ``ns_output``
 
     Note that because of the design of pandas this does not override the
     __init__ constructor. You should build the samples with either:
 
-    * NestedSamples.read('your/file/root')
-    * NestedSamples.build(params=params, other_keyword_arguments)
+    * ``NestedSamples.read('your/file/root')``
+    * ``NestedSamples.build(keyword_arguments)``
     """
 
     @classmethod
     def read(cls, root):
         """Read in data from file root."""
         # Read in data
-        paramnames, tex = read_paramnames(root)
+        params, tex = read_paramnames(root)
         limits = read_limits(root)
-        params, logL, logL_birth = read_birth(root)
+        samples, logL, logL_birth = read_birth(root)
 
         # Build class
-        data = cls.build(params=params, logL=logL, paramnames=paramnames, tex=tex, limits=limits, logL_birth=logL_birth)
+        data = cls.build(samples=samples, logL=logL, params=params,
+                         tex=tex, limits=limits, logL_birth=logL_birth)
 
         # Record root
         data.root = root
@@ -315,14 +330,15 @@ class NestedSamples(MCMCSamples):
         w: numpy.array
             weights of samples.
 
-        paramnames: list(str)
+        params: list(str)
             reference names of parameters
 
         tex: dict
-            mapping from paramnames to tex labels for plotting
+            mapping from params to tex labels for plotting
 
         limits: dict
-            mapping from paramnames to prior limits
+            mapping from params to prior limits
+
         """
         # Build pandas DataFrame
         logL_birth = kwargs.pop('logL_birth', None)
@@ -340,7 +356,7 @@ class NestedSamples(MCMCSamples):
         return data
 
     def ns_output(self, nsamples=100):
-        """ Compute Bayesian global quantities
+        """Compute Bayesian global quantities.
 
         Using nested sampling we can compute the evidence (logZ),
         Kullback-Leibler divergence (D) and Bayesian model dimensionality (d).
@@ -349,17 +365,15 @@ class NestedSamples(MCMCSamples):
 
         Parameters
         ----------
-        nsamples: int
-            number of samples to generate
-            optional, default 100
-        
+        nsamples: int, optional
+            number of samples to generate (Default: 100)
+
         Returns
         -------
         pandas.DataFrame
             Samples from the P(logZ, D, d) distribution
-        
+
         """
-        columns = ['logZ', 'D', 'd']
         dlogX = self._dlogX(nsamples)
 
         logZ = logsumexp(self.logL.values + dlogX, axis=1)
@@ -370,38 +384,41 @@ class NestedSamples(MCMCSamples):
         D = numpy.exp(logsumexp(logw, b=S, axis=1))
         d = numpy.exp(logsumexp(logw, b=(S.T-D).T**2, axis=1))*2
 
-        params = numpy.vstack((logZ, D, d)).T
-        paramnames = ['logZ', 'D', 'd']
-        tex = {'logZ':r'$\log\mathcal{Z}$', 'D':r'$\mathcal{D}$', 'd':r'$d$'}
-        return MCMCSamples.build(params=params, paramnames=paramnames, tex=tex)
+        samples = numpy.vstack((logZ, D, d)).T
+        params = ['logZ', 'D', 'd']
+        tex = {'logZ': r'$\log\mathcal{Z}$',
+               'D': r'$\mathcal{D}$',
+               'd': r'$d$'}
+        return MCMCSamples.build(samples=samples, params=params, tex=tex)
 
     def live_points(self, logL):
-        """ Get the live points within logL """
+        """Get the live points within logL."""
         return self[(self.logL > logL) & (self.logL_birth <= logL)]
 
     def posterior_points(self, beta):
-        """ Get the posterior points at temperature beta """
-        return self[self._weights(beta, nsamples=-1)>0]
+        """Get the posterior points at temperature beta."""
+        return self[self._weights(beta, nsamples=-1) > 0]
 
     def _weights(self, beta, nsamples=None):
-        """ Return the posterior weights for plotting. """
+        """Return the posterior weights for plotting."""
         logw = self.logw + beta*self.logL
         w = numpy.exp(logw - logw.max())
         return compress_weights(w, self.u, nsamples=nsamples)
 
     def _dlogX(self, nsamples=None):
-        """ Compute volume of shell of loglikelihood
+        """Compute volume of shell of loglikelihood.
 
         Parameters
         ----------
-        nsamples: int
-            Number of samples to generate. optional. If None (default), then
-            compute the statistical average. If integer, generate samples from
-            the distribution
+        nsamples: int, optional
+            Number of samples to generate. optional. If None, then compute the
+            statistical average. If integer, generate samples from the
+            distribution. (Default: None)
+
         """
         if nsamples is None:
             t = numpy.atleast_2d(numpy.log(self.nlive/(self.nlive+1)))
-            nsamples=1
+            nsamples = 1
         else:
             t = numpy.log(numpy.random.rand(nsamples, len(self))
                           )/self.nlive.values
@@ -413,4 +430,3 @@ class NestedSamples(MCMCSamples):
                           b=[numpy.ones_like(t), -numpy.ones_like(t)], axis=0)
         dlogX -= numpy.log(2)
         return numpy.squeeze(dlogX)
-
