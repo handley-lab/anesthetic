@@ -115,3 +115,4 @@ To Do
 - Legends
 - Implement live point reading for multinest
 - Actual triangle plots
+- Histogram

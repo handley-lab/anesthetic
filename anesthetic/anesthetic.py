@@ -121,6 +121,14 @@ class MCMCSamples(pandas.DataFrame):
         beta: float
             Temperature to plot at. beta=0 corresponds to the prior, beta=1
             corresponds to the posterior.
+
+        Returns
+        -------
+        fig: :obj:`matplotlib.figure.Figure`
+            New or original (if supplied) figure object
+
+        axes: pandas.DataFrame(matplotlib.axes.Axes) or pandas.Series
+            Pandas array of axes objects
         """
 
         plot_type = kwargs.pop('plot_type', 'contour')
