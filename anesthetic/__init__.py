@@ -8,8 +8,8 @@ Key routines:
 - ``NestedSamples.read``
 
 """
-from anesthetic.anesthetic import MCMCSamples
-from anesthetic.anesthetic import NestedSamples
+import anesthetic.samples
 
-MCMCSamples
-NestedSamples
+
+MCMCSamples = anesthetic.samples.MCMCSamples
+NestedSamples = anesthetic.samples.NestedSamples

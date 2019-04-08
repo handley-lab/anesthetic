@@ -13,7 +13,7 @@ def channel_capacity(w):
 
         N = e^{-H}
     """
-    with numpy.errstate(divide='ignore'):
+    with numpy.errstate(divide='ignore', invalid='ignore'):
         W = numpy.array(w)/sum(w)
         H = numpy.nansum(numpy.log(W)*W)
         return numpy.exp(-H)

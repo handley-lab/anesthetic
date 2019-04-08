@@ -5,7 +5,7 @@ from matplotlib.gridspec import (GridSpec as GS,
                                  GridSpecFromSubplotSpec as sGS)
 from rhinestone.widgets import (Widget, Slider, Button,
                                 RadioButtons, TrianglePlot, CheckButtons)
-from anesthetic.anesthetic import NestedSamples
+from anesthetic import NestedSamples
 
 
 class Higson(Widget):
@@ -109,7 +109,7 @@ class RunPlotter(object):
             The root string for the chains files to be used.
 
     Attributes:
-        run (anesthetic.anesthetic.NestedSamples):
+        run (anesthetic.samples.NestedSamples):
             Object for extracting nested sampling data from chains files.
 
         fig (matplotlib.figure.Figure):
