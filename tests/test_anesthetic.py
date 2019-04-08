@@ -1,7 +1,5 @@
 import pytest
 import numpy
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gs
 from anesthetic.anesthetic import MCMCSamples, NestedSamples
 from numpy.testing import assert_array_equal
 
@@ -12,10 +10,10 @@ def test_build_mcmc():
     ndims = 3
     samples = numpy.random.randn(nsamps, ndims)
     logL = numpy.random.rand(nsamps)
-    w = numpy.random.randint(1,20,size=nsamps)
+    w = numpy.random.randint(1, 20, size=nsamps)
     params = ['A', 'B', 'C']
-    tex = {'A':'$A$', 'B':'$B$', 'C':'$C$'}
-    limits = {'A':(-1,1), 'B':(-2,2), 'C':(-3,3)}
+    tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
+    limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
 
     with pytest.raises(ValueError):
         mcmc = MCMCSamples.build()
@@ -45,7 +43,6 @@ def test_build_mcmc():
     assert_array_equal(mcmc.params, ['x0', 'x1', 'x2'])
     assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'w', 'logL', 'u'])
 
-    
     mcmc = MCMCSamples.build(samples=samples, params=params)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.params, ['A', 'B', 'C'])
