@@ -9,7 +9,6 @@ from numpy.testing import assert_array_equal
 from matplotlib.contour import QuadContourSet
 from matplotlib.lines import Line2D
 from matplotlib.figure import Figure
-from matplotlib.axes import Axes
 from pandas.core.series import Series
 from pandas.core.frame import DataFrame
 
@@ -22,7 +21,6 @@ def test_make_1D_axes():
     fig, axes = make_1D_axes(paramnames)
     assert(isinstance(fig, Figure))
     assert(isinstance(axes, Series))
-    assert(isinstance(axes[0, 0], Axes))
     assert_array_equal(axes.index, paramnames)
     for p, ax in axes.iteritems():
         assert(ax.get_xlabel() == p)
