@@ -1,7 +1,7 @@
 """Main classes for the anesthetic module.
 
-* ``MCMCSamples``
-* ``NestedSamples``
+- ``MCMCSamples``
+- ``NestedSamples``
 """
 import numpy
 import pandas
@@ -10,7 +10,7 @@ from anesthetic.plot import (make_1D_axes, make_2D_axes, plot_1d,
                              scatter_plot_2d, contour_plot_2d)
 from anesthetic.read import (read_chains, read_birth, read_limits,
                              read_paramnames)
-from anesthetic.information_theory import compress_weights
+from anesthetic.utils import compress_weights
 
 
 class MCMCSamples(pandas.DataFrame):
@@ -22,14 +22,14 @@ class MCMCSamples(pandas.DataFrame):
     Note that because of the design of pandas this does not override the
     __init__ constructor. You should build the samples with either:
 
-    * ``mcmc = MCMCSamples.read('your/file/root')``
-    * ``mcmc = MCMCSamples.build(params=params, other_keyword_arguments)``
+    - ``mcmc = MCMCSamples.read('your/file/root')``
+    - ``mcmc = MCMCSamples.build(samples=samples, other_keyword_arguments)``
 
     Example plotting commands include
 
-    * ``mcmc.plot_1d()``
-    * ``mcmc.plot_2d(['paramA', 'paramB'])``
-    * ``mcmc.plot_2d(['paramA', 'paramB'], ['paramC', 'paramD'])``
+    - ``mcmc.plot_1d()``
+    - ``mcmc.plot_2d(['paramA', 'paramB'])``
+    - ``mcmc.plot_2d(['paramA', 'paramB'], ['paramC', 'paramD'])``
 
     """
 
@@ -84,10 +84,10 @@ class MCMCSamples(pandas.DataFrame):
         elif samples is None:
             samples = numpy.empty((len(logL), 0))
 
-        nsamps, nsamples = numpy.atleast_2d(samples).shape
+        nsamples, nparams = numpy.atleast_2d(samples).shape
 
         w = kwargs.pop('w', None)
-        params = kwargs.pop('params', ['x%i' % i for i in range(nsamps)])
+        params = kwargs.pop('params', ['x%i' % i for i in range(nparams)])
 
         tex = kwargs.pop('tex', {})
         limits = kwargs.pop('limits', {})

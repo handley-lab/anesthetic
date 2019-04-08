@@ -1,4 +1,26 @@
+"""Data-processing utility functions."""
 import numpy
+
+
+def channel_capacity(w):
+    with numpy.errstate(divide='ignore'):
+        return numpy.exp(numpy.nansum((numpy.log(sum(w))-numpy.log(w))*w)/sum(w))
+
+def compress_weights(w, u=None, nsamples=None):
+    """ Compresses weights to their approximate channel capacity."""
+    if u is None:
+        u = numpy.random.rand(len(w))
+
+    if nsamples is not None:
+        W = w/w.max()
+        if nsamples>0 and sum(W) > nsamples:
+            W = W/sum(W)*nsamples
+    else:
+        W = w * channel_capacity(w) / w.sum()
+
+    fraction, integer = numpy.modf(W)
+    extra = (u<fraction).astype(int)
+    return integer + extra
 
 def check_bounds(d, xmin=None, xmax=None):
     if xmin is not None and (d.min() - xmin)/(d.max()-d.min()) >1e-2:
@@ -47,4 +69,3 @@ def mirror_2d(d_x_, d_y_, xmin=None, xmax=None, ymin=None, ymax=None):
         d_y = numpy.concatenate((d_y,2*ymax-d_y))
 
     return d_x, d_y
-

@@ -27,7 +27,7 @@ anesthetic: nested sampling post-processing
 
 
 
-This project is still in alpha stage. It aims to bring together tools for processing nested sampling chains, leveraging the standard python libraries:
+This project is still in beta phase. It aims to bring together tools for processing nested sampling chains, leveraging the standard python libraries:
 
 - numpy
 - scipy

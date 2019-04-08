@@ -1,6 +1,30 @@
+"""Tools for reading from chains files.
+
+This acts as an interface to MCMC samplers. Currently provide reading for
+
+- GetDist
+- PolyChord
+
+More will be added in future
+"""
 import numpy
 
+
 def read_paramnames(root):
+    r"""Read ``<root>.paramnames`` in getdist format.
+
+    This file should contain one or two columns. The first column indicates a
+    reference name for the sample, used as labels in the pandas array. The
+    second optional column should include the equivalent axis label, possibly
+    in tex, with the understanding that it will be surrounded by dollar signs,
+    for example
+
+    <root.paramnames>
+
+    a1     a_1
+    a2     a_2
+    omega  \omega
+    """
     try:
         paramnames = []
         tex = {}
@@ -16,7 +40,9 @@ def read_paramnames(root):
     except IOError:
         return None, None
 
+
 def read_limits(root):
+    """Read ``<root>.ranges`` in getdist format."""
     limits_file = root + '.ranges'
     limits = {}
     try:
@@ -40,15 +66,17 @@ def read_limits(root):
 
 
 def read_birth(root):
+    """Read ``<root>_dead-birth.txt`` in polychord format."""
     birth_file = root + '_dead-birth.txt'
     data = numpy.loadtxt(birth_file)
-    params, logL, logL_birth  = numpy.split(data,[-2,-1], axis=1)
-    return params, logL, logL_birth
+    samples, logL, logL_birth = numpy.split(data, [-2, -1], axis=1)
+    return samples, logL, logL_birth
 
 
 def read_chains(root):
+    """Read ``<root>_1.txt`` in getdist format."""
     chains_file = root + '_1.txt'
     data = numpy.loadtxt(chains_file)
-    weights, chi2, params = numpy.split(data,[1,2], axis=1)
+    weights, chi2, samples = numpy.split(data, [1, 2], axis=1)
     logL = chi2/-2
-    return weights, logL, params
+    return weights, logL, samples
