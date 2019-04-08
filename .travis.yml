@@ -32,7 +32,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
       then 
           pip install virtualenv;
-          $PYTHON_VERSION -m venv environment
+          $PYTHON_VERSION -m venv environment;
           source environment/bin/activate;
       fi
 
