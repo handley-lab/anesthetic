@@ -35,7 +35,7 @@ before_install:
           then
               pip install virtualenv;
               virtualenv venv -p $PYTHON_VERSION;
-          else
+          else;
               $PYTHON_VERSION -m venv environment;
           fi;
           source environment/bin/activate;
