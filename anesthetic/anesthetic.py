@@ -287,7 +287,9 @@ class NestedSamples(MCMCSamples):
 
     We extend the MCMCSamples class with the additional methods:
 
-    * ``ns_output``
+    * ``self.ns_output()``
+    * ``self.live_points(logL)``
+    * ``self.posterior_points(beta)``
 
     Note that because of the design of pandas this does not override the
     __init__ constructor. You should build the samples with either:
