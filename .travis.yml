@@ -13,6 +13,7 @@ matrix:
 before_install:
     # OSX setup
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
+      then
           python3 -m venv environment;
           source environment/bin/activate;
       fi
