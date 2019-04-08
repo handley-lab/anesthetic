@@ -25,15 +25,12 @@ install:
     - pip install pytest-cov codecov
     - pip install flake8 pydocstyle sphinx sphinx_rtd_theme
 
-#before_script:
-#    # Test for pep-compliance
-#    - flake8 anesthetic tests
-#
-#    # Test for documentation referencing
-#    - sphinx-build docs/source docs/build -nW
-#
-#    # Test for documentation style
-#    - pydocstyle anesthetic
+before_script:
+    # Test for pep-compliance
+    - flake8 anesthetic tests
+
+    # Test for documentation style
+    - pydocstyle anesthetic
 
 # Run tests
 script:

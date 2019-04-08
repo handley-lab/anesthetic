@@ -23,23 +23,17 @@ jobs:
             pip install pytest pytest-cov codecov
             pip install flake8 pydocstyle sphinx sphinx_rtd_theme
 
-#      - run: 
-#          name: flake8
-#          command: |
-#            . venv/bin/activate
-#            flake8 anesthetic tests 
-#
-#      - run: 
-#          name: sphinx-build
-#          command: |
-#            . venv/bin/activate
-#            sphinx-build docs/source docs/build -nW
-#
-#      - run: 
-#          name: pydocstyle
-#          command: |
-#            . venv/bin/activate
-#            pydocstyle anesthetic 
+      - run: 
+          name: flake8
+          command: |
+            . venv/bin/activate
+            flake8 anesthetic tests 
+
+      - run: 
+          name: pydocstyle
+          command: |
+            . venv/bin/activate
+            pydocstyle anesthetic 
 
       - run: 
           name: tests
