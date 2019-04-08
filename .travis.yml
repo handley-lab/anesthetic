@@ -37,6 +37,8 @@ before_install:
       fi
 
 before_script:
+    - "export MPLBACKEND=Agg"
+
     # Test for pep-compliance
     - flake8 anesthetic tests
 
