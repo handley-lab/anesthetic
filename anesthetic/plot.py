@@ -1,6 +1,7 @@
 """Lower-level plotting tools.
 
-Routines that may be of use to users wishing for more fine-grained analyses may wish to use
+Routines that may be of use to users wishing for more fine-grained analyses may
+wish to use.
 
 - ``make_1D_axes``
 - ``make_2D_axes``

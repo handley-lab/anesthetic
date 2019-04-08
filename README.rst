@@ -93,7 +93,7 @@ Why create another one? In general, any dedicated user of software will find tha
 
 .. code:: python
 
-    from anesthetic.anesthetic import MCMCSamples
+    from anesthetic import MCMCSamples
 
     samples = MCMCSamples.read(file_root)          # Load the samples
 
