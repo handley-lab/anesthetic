@@ -62,7 +62,7 @@ def make_1D_axes(paramnames, **kwargs):
     tex = kwargs.pop('tex', {})
     fig = kwargs.pop('fig', plt.gcf())
     ncols = kwargs.pop('ncols', int(numpy.ceil(numpy.sqrt(len(paramnames)))))
-    nrows = int(numpy.ceil(len(paramnames)/ncols))
+    nrows = int(numpy.ceil(len(paramnames)/float(ncols)))
     if 'subplot_spec' in kwargs:
         grid = SGS(nrows, ncols, wspace=0,
                    subplot_spec=kwargs.pop('subplot_spec'))
