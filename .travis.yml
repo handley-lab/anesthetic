@@ -6,22 +6,35 @@ python:
     - "2.7"
 
 # OSX matrix
-#matrix:
-#    include:
-#        - os: osx
-#          osx_image: xcode10.1
-#          language: generic
-#          env: PYTHON_VERSION=python2
-#        - os: osx
-#          osx_image: xcode10.1
-#          language: generic
-#          env: PYTHON_VERSION=python3
+matrix:
+    include:
+        - os: osx
+          language: generic
+          env: PYTHON_VERSION=python2
+        - os: osx
+          language: generic
+          env: PYTHON_VERSION=python3
 
 install:
     - pip install Cython numpy
     - pip install -r requirements.txt
     - pip install pytest-cov codecov
     - pip install flake8 pydocstyle sphinx sphinx_rtd_theme
+
+addons:
+    homebrew:
+        packages: 
+            - python2
+            - python3
+
+before_install:
+    # OSX setup
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
+      then 
+          pip install virtualenv;
+          virtualenv venv -p $PYTHON_VERSION;
+          source venv/bin/activate;
+      fi
 
 before_script:
     # Test for pep-compliance
