@@ -1,6 +1,6 @@
 import pytest
 import numpy
-from anesthetic.anesthetic import MCMCSamples, NestedSamples
+from anesthetic import MCMCSamples, NestedSamples
 from numpy.testing import assert_array_equal
 
 
