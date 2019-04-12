@@ -156,7 +156,7 @@ class MCMCSamples(pandas.DataFrame):
         xmin, xmax = self._limits(paramname_x)
         ymin, ymax = self._limits(paramname_y)
 
-        if plot_type == 'contour':
+        if plot_type == 'kde':
             weights = self._weights(beta)
             plot = contour_plot_2d
         elif plot_type == 'scatter':
@@ -228,6 +228,12 @@ class MCMCSamples(pandas.DataFrame):
         axes: numpy.array(matplotlib.axes.Axes), optional
             Existing array of axes to plot on. If not provided, one is created.
 
+        types: list(str) or str, optional
+            What type (or types) of plots to produce. If two types are provided
+            then pairs of parameters 'above the diagonal' have the second type.
+            each string must be one of {'kde', 'scatter'}.
+            Default: ['kde', 'scatter']
+
         beta: float, optional
             Temperature to plot at. beta=0 corresponds to the prior, beta=1
             corresponds to the posterior. (Default: 1)
@@ -250,7 +256,11 @@ class MCMCSamples(pandas.DataFrame):
         all_params = list(yparams) + list(xparams)
 
         axes = kwargs.pop('axes', None)
+        types = kwargs.pop('types', ['kde', 'scatter'])
         beta = kwargs.pop('beta', 1)
+
+        types = numpy.atleast_1d(types)
+
         if axes is None:
             fig, axes = make_2D_axes(xparams, yparams, tex=self.tex)
         else:
@@ -261,9 +271,9 @@ class MCMCSamples(pandas.DataFrame):
             for x in xparams:
                 if (x in yparams and y in xparams and (all_params.index(x) >
                                                        all_params.index(y))):
-                    plot_type = 'scatter'
+                    plot_type = types[0]
                 else:
-                    plot_type = 'contour'
+                    plot_type = types[-1]
                 self.plot(axes[x][y], x, y, plot_type=plot_type, beta=beta,
                           *args, **kwargs)
         return fig, axes

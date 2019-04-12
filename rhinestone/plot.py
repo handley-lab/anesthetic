@@ -144,7 +144,7 @@ class RunPlotter(object):
         if labels:
             self.labels = numpy.array(labels)
         else:
-            self.labels = numpy.array(self.run.paramnames[:10])
+            self.labels = numpy.array(self.run.params[:10])
 
         self.fig = plt.figure()
         self._set_up()

@@ -22,21 +22,21 @@ from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
 from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds
 from scipy.interpolate import interp1d
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MaxNLocator, Locator
 from matplotlib.colors import LinearSegmentedColormap
 
 
-def make_1D_axes(paramnames, **kwargs):
+def make_1D_axes(params, **kwargs):
     """Create a set of axes for plotting 1D marginalised posteriors.
 
     Parameters
     ----------
-        paramnames: list(str)
+        params: list(str)
             names of parameters.
 
         tex: dict(str:str)
-            Dictionary mapping paramnames to tex plot labels.
-            optional, default paramnames
+            Dictionary mapping params to tex plot labels.
+            optional, default params
 
         fig: matplotlib.figure.Figure
             Figure to plot on
@@ -45,6 +45,10 @@ def make_1D_axes(paramnames, **kwargs):
         ncols: int
             Number of columns in the plot
             option, default ceil(sqrt(num_params))
+
+        ticks: integer or matplotlib.ticker.Locator, optional
+            Tick preferences for axes. If int, specifies the maximum number
+            of ticks. Default: 3
 
         subplot_spec: matplotlib.gridspec.GridSpec
             gridspec to plot array as part of a subfigure
@@ -61,52 +65,68 @@ def make_1D_axes(paramnames, **kwargs):
     """
     tex = kwargs.pop('tex', {})
     fig = kwargs.pop('fig', plt.gcf())
-    ncols = kwargs.pop('ncols', int(numpy.ceil(numpy.sqrt(len(paramnames)))))
-    nrows = int(numpy.ceil(len(paramnames)/float(ncols)))
+    ncols = kwargs.pop('ncols', int(numpy.ceil(numpy.sqrt(len(params)))))
+    nrows = int(numpy.ceil(len(params)/float(ncols)))
     if 'subplot_spec' in kwargs:
         grid = SGS(nrows, ncols, wspace=0,
                    subplot_spec=kwargs.pop('subplot_spec'))
     else:
         grid = GS(nrows, ncols, wspace=0)
 
+    locator = kwargs.pop('ticks', 3)
+    if not isinstance(locator, Locator):
+        locator = MaxNLocator(locator+1, prune='both')
+
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
-    tex = {p: tex[p] if p in tex else p for p in paramnames}
-    axes = pandas.Series(index=paramnames, dtype=object)
+    tex = {p: tex[p] if p in tex else p for p in params}
+    axes = pandas.Series(index=params, dtype=object)
 
-    for p, g in zip(paramnames, grid):
+    for p, g in zip(params, grid):
         axes[p] = ax = fig.add_subplot(g)
         ax.set_xlabel(tex[p])
         ax.set_yticks([])
-        ax.xaxis.set_major_locator(MaxNLocator(2))
+        ax.xaxis.set_major_locator(locator)
 
     return fig, axes
 
 
-def make_2D_axes(paramnames, paramnames_y=None, **kwargs):
+def make_2D_axes(params, yparams=None, **kwargs):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
     Parameters
     ----------
-        paramnames: list(str)
+        params: list(str)
             names of parameters.
 
-        paramnames_y: list(str)
-            names of parameters.
-            optional, default paramnames
+        yparams: list(str), optional
+            names of parameters on y axis.
+            Default: params
 
-        tex: dict(str:str)
-            Dictionary mapping paramnames to tex plot labels.
-            optional, default paramnames
+        tex: dict(str:str), optional
+            Dictionary mapping params to tex plot labels.
+            Default: params
 
-        fig: matplotlib.figure.Figure
-            Figure to plot on
-            optional, default last figure matplotlib.pyplot.gcf()
+        lower: None or logical, optional
+            Whether to create plots in the lower/upper triangle.
+            If None do both. Default: None
 
-        subplot_spec: matplotlib.gridspec.GridSpec
-            gridspec to plot array as part of a subfigure
-            optional, default None
+        diagonal: True, optional
+            Whether to create 1D marginalised plots on the diagonal.
+            Default: True
+
+        fig: matplotlib.figure.Figure, optional
+            Figure to plot on.
+            Default: matplotlib.pyplot.gcf()
+
+        ticks: integer or matplotlib.ticker.Locator, optional
+            Tick preferences for axes. If int, specifies the maximum number
+            of ticks. Default: 3
+
+        subplot_spec: matplotlib.gridspec.GridSpec, optional
+            gridspec to plot array as part of a subfigure.
+            Default: None
 
     Returns
     -------
@@ -117,46 +137,70 @@ def make_2D_axes(paramnames, paramnames_y=None, **kwargs):
         Pandas array of axes objects
 
     """
-    paramnames_x = paramnames
-    if paramnames_y is None:
-        paramnames_y = paramnames
+    xparams = params
+    if yparams is None:
+        yparams = params
     tex = kwargs.pop('tex', {})
     fig = kwargs.pop('fig', plt.gcf())
-    nx = len(paramnames_x)
-    ny = len(paramnames_y)
+    nx = len(xparams)
+    ny = len(yparams)
     if 'subplot_spec' in kwargs:
         grid = SGS(ny, nx, hspace=0, wspace=0,
                    subplot_spec=kwargs.pop('subplot_spec'))
     else:
         grid = GS(ny, nx, hspace=0, wspace=0)
 
+    lower = kwargs.pop('lower', None)
+    diagonal = kwargs.pop('diagonal', True)
+    locator = kwargs.pop('ticks', 3)
+    if not isinstance(locator, Locator):
+        locator = MaxNLocator(locator+1, prune='both')
+
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
     tex = {p: tex[p] if p in tex else p
-           for p in numpy.concatenate((paramnames_x, paramnames_y))}
-    axes = pandas.DataFrame(index=paramnames_y, columns=paramnames_x)
+           for p in numpy.concatenate((xparams, yparams))}
+
+    axes = pandas.DataFrame(index=yparams, columns=xparams)
     axes[:][:] = None
 
-    for y, py in enumerate(paramnames_y):
-        for x, px in enumerate(paramnames_x):
-            sx = axes[px][paramnames_y[0]]
-            sy = axes[paramnames_x[0]][py]
+    all_params = list(yparams) + list(xparams)
+
+    for y, py in enumerate(yparams):
+        for x, px in enumerate(xparams):
+            _lower = not (px in yparams and py in xparams
+                          and all_params.index(px) < all_params.index(py))
+
+            if px == py and not diagonal:
+                continue
+
+            if lower == _lower and px != py:
+                continue
+
+            sx = list(axes[px].dropna())
+            sx = sx[0] if sx else None
+            sy = list(axes.T[py].dropna())
+            sy = sy[0] if sy else None
             axes[px][py] = fig.add_subplot(grid[y, x], sharex=sx, sharey=sy)
             ax = axes[px][py]
-            ax.label_outer()
+            ax._lower = _lower
 
-            if y == ny-1:
-                ax.set_xlabel(tex[px])
-                ax.xaxis.set_major_locator(MaxNLocator(2))
-            else:
-                ax.tick_params('x', bottom=False)
+    for py in yparams:
+        ax = axes.T[py].dropna()
+        if len(ax):
+            ax[0].set_ylabel(tex[py])
+            ax[0].yaxis.set_major_locator(locator)
+            for a in ax[1:]:
+                a.tick_params('y', left=False, labelleft=False)
 
-            if x == 0:
-                ax.set_ylabel(tex[py])
-                ax.yaxis.set_major_locator(MaxNLocator(2))
-            else:
-                ax.tick_params('y', left=False)
+    for px in xparams:
+        ax = axes[px].dropna()
+        if len(ax):
+            ax[-1].set_xlabel(tex[px])
+            ax[-1].xaxis.set_major_locator(locator)
+            for a in ax[:-1]:
+                a.tick_params('x', bottom=False, labelbottom=False)
 
     return fig, axes
 
