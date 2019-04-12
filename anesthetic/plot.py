@@ -34,13 +34,12 @@ def make_1D_axes(params, **kwargs):
         params: list(str)
             names of parameters.
 
-        tex: dict(str:str)
+        tex: dict(str:str), optional
             Dictionary mapping params to tex plot labels.
-            optional, default params
 
-        fig: matplotlib.figure.Figure
-            Figure to plot on
-            optional, default last figure matplotlib.pyplot.gcf()
+        fig: matplotlib.figure.Figure, optional
+            Figure to plot on.
+            Default: matplotlib.pyplot.figure()
 
         ncols: int
             Number of columns in the plot
@@ -50,9 +49,9 @@ def make_1D_axes(params, **kwargs):
             Tick preferences for axes. If int, specifies the maximum number
             of ticks. Default: 3
 
-        subplot_spec: matplotlib.gridspec.GridSpec
+        subplot_spec: matplotlib.gridspec.GridSpec, optional
             gridspec to plot array as part of a subfigure
-            optional, default None
+            Default: None
 
     Returns
     -------
@@ -64,7 +63,7 @@ def make_1D_axes(params, **kwargs):
 
     """
     tex = kwargs.pop('tex', {})
-    fig = kwargs.pop('fig', plt.gcf())
+    fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     ncols = kwargs.pop('ncols', int(numpy.ceil(numpy.sqrt(len(params)))))
     nrows = int(numpy.ceil(len(params)/float(ncols)))
     if 'subplot_spec' in kwargs:
@@ -102,7 +101,7 @@ def make_2D_axes(params, **kwargs):
             * list(str) if the x and y axes are the same
             * [list(str),list(str)] if the x and y axes are different
             Strings indicate the names of the parameters
-            
+
         tex: dict(str:str), optional
             Dictionary mapping params to tex plot labels.
             Default: params
@@ -117,7 +116,7 @@ def make_2D_axes(params, **kwargs):
 
         fig: matplotlib.figure.Figure, optional
             Figure to plot on.
-            Default: matplotlib.pyplot.gcf()
+            Default: matplotlib.pyplot.figure()
 
         ticks: integer or matplotlib.ticker.Locator, optional
             Tick preferences for axes. If int, specifies the maximum number
@@ -136,7 +135,7 @@ def make_2D_axes(params, **kwargs):
         Pandas array of axes objects
 
     """
-    if len(params) is 2:
+    if len(params) == 2:
         xparams, yparams = params
     else:
         xparams = yparams = params
@@ -145,7 +144,7 @@ def make_2D_axes(params, **kwargs):
     axes[:][:] = None
 
     tex = kwargs.pop('tex', {})
-    fig = kwargs.pop('fig', plt.gcf())
+    fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     if 'subplot_spec' in kwargs:
         grid = SGS(*axes.shape, hspace=0, wspace=0,
                    subplot_spec=kwargs.pop('subplot_spec'))
@@ -182,7 +181,8 @@ def make_2D_axes(params, **kwargs):
                 sx = sx[0] if sx else None
                 sy = list(axes.T[py].dropna())
                 sy = sy[0] if sy else None
-                axes[px][py] = fig.add_subplot(grid[y, x], sharex=sx, sharey=sy)
+                axes[px][py] = fig.add_subplot(grid[y, x],
+                                               sharex=sx, sharey=sy)
 
             axes[px][py]._upper = _upper
 

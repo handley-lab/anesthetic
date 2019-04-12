@@ -26,30 +26,25 @@ def test_make_1D_axes():
     for p, ax in axes.iteritems():
         print(ax, p)
         assert(ax.get_xlabel() == p)
-    plt.close(fig)
 
     # Check tex argument
     fig, axes = make_1D_axes(paramnames, tex=tex)
     for t in tex:
         assert(axes[t].get_xlabel() != t)
         assert(axes[t].get_xlabel() == tex[t])
-    plt.close(fig)
 
     # Check fig argument
     fig0 = plt.figure()
-    fig1 = plt.figure()
+    fig0.suptitle('hi there')
     fig, axes = make_1D_axes(paramnames)
-    assert(fig is fig1)
+    assert(fig is not fig0)
     fig, axes = make_1D_axes(paramnames, fig=fig0)
     assert(fig is fig0)
-    plt.close(fig0)
-    plt.close(fig1)
 
     # Check ncols argument
     fig, axes = make_1D_axes(paramnames, ncols=2)
     nrows, ncols = axes[0].get_subplotspec().get_gridspec().get_geometry()
     assert(ncols == 2)
-    plt.close(fig)
 
     # Check gridspec argument
     grid = gs.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[3, 1])
@@ -83,24 +78,20 @@ def test_make_2D_axes():
     for ax in axes.iloc[:-1, 1:].values.flatten():
         assert(ax.get_xlabel() == '')
         assert(ax.get_ylabel() == '')
-    plt.close(fig)
 
     # Check fig argument
     fig0 = plt.figure()
-    fig1 = plt.figure()
     fig, axes = make_2D_axes(paramnames_x)
-    assert(fig is fig1)
+    assert(fig is not fig0)
     fig, axes = make_2D_axes(paramnames_x, fig=fig0)
     assert(fig is fig0)
-    plt.close(fig0)
-    plt.close(fig1)
+    plt.close('all')
 
     # Check gridspec argument
     grid = gs.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[3, 1])
     g00 = grid[0, 0]
     fig, axes = make_2D_axes(paramnames_x, subplot_spec=g00)
     assert(g00 is axes.iloc[0, 0].get_subplotspec().get_topmost_subplotspec())
-    plt.close(fig)
 
     # Check unexpected kwargs
     with pytest.raises(TypeError):
@@ -120,6 +111,7 @@ def test_make_2D_axes():
     assert((~axes.isna()).sum().sum() == ((nx-1)*nx)//2)
     fig, axes = make_2D_axes(paramnames_x, upper=False, diagonal=False)
     assert((~axes.isna()).sum().sum() == ((nx-1)*nx)//2)
+    plt.close('all')
 
     fig, axes = make_2D_axes([paramnames_x, paramnames_y])
     assert((~axes.isna()).sum().sum() == nx*ny)
@@ -129,6 +121,7 @@ def test_make_2D_axes():
     assert((~axes.isna()).sum().sum() == (nintersect*(nintersect+1))//2)
     fig, axes = make_2D_axes([paramnames_x, paramnames_y], upper=True)
     assert((~axes.isna()).sum().sum() == nx*ny-((nintersect-1)*nintersect)//2)
+    plt.close('all')
 
 
 def test_plot_1d():

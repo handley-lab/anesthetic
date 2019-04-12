@@ -177,11 +177,12 @@ class MCMCSamples(pandas.DataFrame):
         ----------
         axes: plotting axes, optional
             Can be either:
-                * list(str) or str 
+                * list(str) or str
                 * pandas.Series(matplotlib.axes.Axes)
             If a pandas.Series is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
+            Default: self.params
 
         beta: float, optional
             Temperature to plot at. beta=0 corresponds to the prior, beta=1
@@ -215,7 +216,7 @@ class MCMCSamples(pandas.DataFrame):
 
         Parameters
         ----------
-        axes: list or lists of str or numpy.array(matplotlib.axes.Axes), optional
+        axes: plotting axes, optional
             Can be either:
                 * list(str) if the x and y axes are the same
                 * [list(str),list(str)] if the x and y axes are different
@@ -223,6 +224,7 @@ class MCMCSamples(pandas.DataFrame):
             If a pandas.DataFrame is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
+            Default: self.params
 
         types: list(str) or str, optional
             What type (or types) of plots to produce. If two types are provided
@@ -257,7 +259,7 @@ class MCMCSamples(pandas.DataFrame):
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
                 if ax is not None and x in self and y in self:
-                    plot_type =  types[-1] if ax._upper else types[0]
+                    plot_type = types[-1] if ax._upper else types[0]
                     self.plot(ax, x, y, plot_type=plot_type, beta=beta,
                               *args, **kwargs)
 
