@@ -79,7 +79,9 @@ def make_1D_axes(params, **kwargs):
         axes[p] = ax = fig.add_subplot(g)
         ax.set_xlabel(tex[p])
         ax.set_yticks([])
-        ax.xaxis.set_major_locator(MaxNLocator(3, prune='both'))
+
+    for x, ax in axes.dropna().iteritems():
+        ax.xaxis.set_major_locator(MaxNLocator(2, integer=True))
 
     return fig, axes
 
@@ -182,16 +184,20 @@ def make_2D_axes(params, **kwargs):
     for y, ax in axes.iterrows():
         ax_ = ax.dropna()
         if len(ax_):
-            ax_[0].yaxis.set_major_locator(MaxNLocator(3, prune='both'))
             for a in ax_[1:]:
                 a.tick_params('y', left=False, labelleft=False)
 
     for x, ax in axes.iteritems():
         ax_ = ax.dropna()
         if len(ax_):
-            ax_[-1].xaxis.set_major_locator(MaxNLocator(3, prune='both'))
             for a in ax_[:-1]:
                 a.tick_params('x', bottom=False, labelbottom=False)
+
+    for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
+        ax.yaxis.set_major_locator(MaxNLocator(3, prune='both'))
+
+    for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().iteritems():
+        ax.xaxis.set_major_locator(MaxNLocator(3, prune='both'))
 
     return fig, axes
 
