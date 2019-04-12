@@ -252,7 +252,7 @@ class MCMCSamples(pandas.DataFrame):
             axes = self.params
 
         if not isinstance(axes, pandas.DataFrame):
-            upper = None if len(types)>1 else False
+            upper = None if len(types) > 1 else False
             fig, axes = make_2D_axes(axes, tex=self.tex, upper=upper)
         else:
             fig = axes.values[~axes.isna()][0].figure

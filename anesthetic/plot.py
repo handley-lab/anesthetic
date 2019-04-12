@@ -169,14 +169,14 @@ def make_2D_axes(params, **kwargs):
                 sy = list(axes.T[y].dropna())
                 sy = sy[0] if sy else None
                 axes[x][y] = fig.add_subplot(grid[j, i],
-                                               sharex=sx, sharey=sy)
+                                             sharex=sx, sharey=sy)
 
             axes[x][y]._upper = not lower
 
-    for y, ax in axes.bfill(axis=1).iloc[:,0].dropna().iteritems():
+    for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
         ax.set_ylabel(tex[y])
 
-    for x, ax in axes.ffill(axis=0).iloc[-1,:].dropna().iteritems():
+    for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().iteritems():
         ax.set_xlabel(tex[x])
 
     for y, ax in axes.iterrows():
