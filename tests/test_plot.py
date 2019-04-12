@@ -67,7 +67,7 @@ def test_make_2D_axes():
     paramnames_y = ['B', 'A', 'D', 'E']
 
     # 2D axes
-    fig, axes = make_2D_axes(paramnames_x, paramnames_y)
+    fig, axes = make_2D_axes([paramnames_x, paramnames_y])
     assert(isinstance(fig, Figure))
     assert(isinstance(axes, DataFrame))
     assert_array_equal(axes.index, paramnames_y)
@@ -106,29 +106,29 @@ def test_make_2D_axes():
     with pytest.raises(TypeError):
         make_2D_axes(paramnames_x, foo='bar')
 
-    # Check lower and diagonal arguments
+    # Check upper and diagonal arguments
     nx = len(paramnames_x)
     ny = len(paramnames_y)
     nintersect = len(set(paramnames_x).intersection(set(paramnames_y)))
     fig, axes = make_2D_axes(paramnames_x)
     assert((~axes.isna()).sum().sum() == nx**2)
-    fig, axes = make_2D_axes(paramnames_x, lower=True)
+    fig, axes = make_2D_axes(paramnames_x, upper=True)
     assert((~axes.isna()).sum().sum() == (nx*(nx+1))//2)
-    fig, axes = make_2D_axes(paramnames_x, lower=False)
+    fig, axes = make_2D_axes(paramnames_x, upper=False)
     assert((~axes.isna()).sum().sum() == (nx*(nx+1))//2)
-    fig, axes = make_2D_axes(paramnames_x, lower=True, diagonal=False)
+    fig, axes = make_2D_axes(paramnames_x, upper=True, diagonal=False)
     assert((~axes.isna()).sum().sum() == ((nx-1)*nx)//2)
-    fig, axes = make_2D_axes(paramnames_x, lower=False, diagonal=False)
+    fig, axes = make_2D_axes(paramnames_x, upper=False, diagonal=False)
     assert((~axes.isna()).sum().sum() == ((nx-1)*nx)//2)
 
-    fig, axes = make_2D_axes(paramnames_x, paramnames_y)
+    fig, axes = make_2D_axes([paramnames_x, paramnames_y])
     assert((~axes.isna()).sum().sum() == nx*ny)
-    fig, axes = make_2D_axes(paramnames_x, paramnames_y, diagonal=False)
+    fig, axes = make_2D_axes([paramnames_x, paramnames_y], diagonal=False)
     assert((~axes.isna()).sum().sum() == nx*ny-nintersect)
-    fig, axes = make_2D_axes(paramnames_x, paramnames_y, lower=False)
-    assert((~axes.isna()).sum().sum() == nx*ny-((nintersect-1)*nintersect)//2)
-    fig, axes = make_2D_axes(paramnames_x, paramnames_y, lower=True)
+    fig, axes = make_2D_axes([paramnames_x, paramnames_y], upper=False)
     assert((~axes.isna()).sum().sum() == (nintersect*(nintersect+1))//2)
+    fig, axes = make_2D_axes([paramnames_x, paramnames_y], upper=True)
+    assert((~axes.isna()).sum().sum() == nx*ny-((nintersect-1)*nintersect)//2)
 
 
 def test_plot_1d():

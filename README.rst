@@ -105,6 +105,12 @@ Why create another one? In general, any dedicated user of software will find tha
     
 3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which is a pain if you are trying to plot priors along with your posteriors. ``anesthetic`` has a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
 
+Features
+--------
+
+- Both samples and plotting axes are stored as a ``pandas.DataFrame``, which makes for easy access and modification
+- No overlapping tick labels in large plots
+
 To Do
 -----
 - tests
@@ -114,5 +120,4 @@ To Do
 - Read multiple MCMC chains
 - Legends
 - Implement live point reading for multinest
-- Actual triangle plots
 - Histogram

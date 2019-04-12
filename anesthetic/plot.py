@@ -92,24 +92,23 @@ def make_1D_axes(params, **kwargs):
     return fig, axes
 
 
-def make_2D_axes(params, yparams=None, **kwargs):
+def make_2D_axes(params, **kwargs):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
     Parameters
     ----------
-        params: list(str)
-            names of parameters.
-
-        yparams: list(str), optional
-            names of parameters on y axis.
-            Default: params
-
+        params: lists of parameters
+            Can be either:
+            * list(str) if the x and y axes are the same
+            * [list(str),list(str)] if the x and y axes are different
+            Strings indicate the names of the parameters
+            
         tex: dict(str:str), optional
             Dictionary mapping params to tex plot labels.
             Default: params
 
-        lower: None or logical, optional
-            Whether to create plots in the lower/upper triangle.
+        upper: None or logical, optional
+            Whether to create plots in the upper triangle.
             If None do both. Default: None
 
         diagonal: True, optional
@@ -137,20 +136,23 @@ def make_2D_axes(params, yparams=None, **kwargs):
         Pandas array of axes objects
 
     """
-    xparams = params
-    if yparams is None:
-        yparams = params
+    if len(params) is 2:
+        xparams, yparams = params
+    else:
+        xparams = yparams = params
+    axes = pandas.DataFrame(index=numpy.atleast_1d(yparams),
+                            columns=numpy.atleast_1d(xparams))
+    axes[:][:] = None
+
     tex = kwargs.pop('tex', {})
     fig = kwargs.pop('fig', plt.gcf())
-    nx = len(xparams)
-    ny = len(yparams)
     if 'subplot_spec' in kwargs:
-        grid = SGS(ny, nx, hspace=0, wspace=0,
+        grid = SGS(*axes.shape, hspace=0, wspace=0,
                    subplot_spec=kwargs.pop('subplot_spec'))
     else:
-        grid = GS(ny, nx, hspace=0, wspace=0)
+        grid = GS(*axes.shape, hspace=0, wspace=0)
 
-    lower = kwargs.pop('lower', None)
+    upper = kwargs.pop('upper', None)
     diagonal = kwargs.pop('diagonal', True)
     locator = kwargs.pop('ticks', 3)
     if not isinstance(locator, Locator):
@@ -160,46 +162,44 @@ def make_2D_axes(params, yparams=None, **kwargs):
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
     tex = {p: tex[p] if p in tex else p
-           for p in numpy.concatenate((xparams, yparams))}
+           for p in numpy.concatenate((axes.index, axes.columns))}
 
-    axes = pandas.DataFrame(index=yparams, columns=xparams)
-    axes[:][:] = None
+    all_params = list(axes.index) + list(axes.columns)
 
-    all_params = list(yparams) + list(xparams)
-
-    for y, py in enumerate(yparams):
-        for x, px in enumerate(xparams):
-            _lower = not (px in yparams and py in xparams
+    for y, py in enumerate(axes.index):
+        for x, px in enumerate(axes.columns):
+            _upper = not (px in axes.index and py in axes.columns
                           and all_params.index(px) < all_params.index(py))
 
             if px == py and not diagonal:
                 continue
 
-            if lower == _lower and px != py:
+            if upper == (not _upper) and px != py:
                 continue
 
-            sx = list(axes[px].dropna())
-            sx = sx[0] if sx else None
-            sy = list(axes.T[py].dropna())
-            sy = sy[0] if sy else None
-            axes[px][py] = fig.add_subplot(grid[y, x], sharex=sx, sharey=sy)
-            ax = axes[px][py]
-            ax._lower = _lower
+            if axes[px][py] is None:
+                sx = list(axes[px].dropna())
+                sx = sx[0] if sx else None
+                sy = list(axes.T[py].dropna())
+                sy = sy[0] if sy else None
+                axes[px][py] = fig.add_subplot(grid[y, x], sharex=sx, sharey=sy)
 
-    for py in yparams:
-        ax = axes.T[py].dropna()
-        if len(ax):
-            ax[0].set_ylabel(tex[py])
-            ax[0].yaxis.set_major_locator(locator)
-            for a in ax[1:]:
+            axes[px][py]._upper = _upper
+
+    for py, ax in axes.iterrows():
+        ax_ = ax.dropna()
+        if len(ax_):
+            ax_[0].set_ylabel(tex[py])
+            ax_[0].yaxis.set_major_locator(locator)
+            for a in ax_[1:]:
                 a.tick_params('y', left=False, labelleft=False)
 
-    for px in xparams:
-        ax = axes[px].dropna()
-        if len(ax):
-            ax[-1].set_xlabel(tex[px])
-            ax[-1].xaxis.set_major_locator(locator)
-            for a in ax[:-1]:
+    for px, ax in axes.iteritems():
+        ax_ = ax.dropna()
+        if len(ax_):
+            ax_[-1].set_xlabel(tex[px])
+            ax_[-1].xaxis.set_major_locator(locator)
+            for a in ax_[:-1]:
                 a.tick_params('x', bottom=False, labelbottom=False)
 
     return fig, axes

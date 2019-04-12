@@ -1,6 +1,6 @@
 import pytest
 import numpy
-from anesthetic import MCMCSamples, NestedSamples
+from anesthetic import MCMCSamples, NestedSamples, make_2D_axes, make_1D_axes
 from numpy.testing import assert_array_equal
 
 

@@ -126,7 +126,7 @@ class MCMCSamples(pandas.DataFrame):
             If not provided, or the same as paramname_x, then 1D plot produced.
 
         plot_type: str, optional
-            Must be in {'contour','scatter'}. (Default: 'contour')
+            Must be in {'kde','scatter'}. (Default: 'kde')
 
         beta: float, optional
             Temperature to plot at. beta=0 corresponds to the prior, beta=1
@@ -141,7 +141,7 @@ class MCMCSamples(pandas.DataFrame):
             Pandas array of axes objects
 
         """
-        plot_type = kwargs.pop('plot_type', 'contour')
+        plot_type = kwargs.pop('plot_type', 'kde')
         beta = kwargs.pop('beta', 1)
 
         if beta != 1 and not isinstance(self, NestedSamples):
@@ -163,24 +163,25 @@ class MCMCSamples(pandas.DataFrame):
             weights = self._weights(beta, nsamples=500)
             plot = scatter_plot_2d
         else:
-            raise ValueError("plot_type must be in {'contour', 'scatter'}")
+            raise ValueError("plot_type must be in {'kde', 'scatter'}")
 
         return plot(ax, numpy.repeat(self[paramname_x], weights),
                     numpy.repeat(self[paramname_y], weights),
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                     *args, **kwargs)
 
-    def plot_1d(self, params=None, *args, **kwargs):
+    def plot_1d(self, *args, **kwargs):
         """Create an array of 1D plots.
 
         Parameters
         ----------
-        params: list(str) or st, optional
-            list of parameter names, or single parameter name to plot from
-            self.columns. (Default: self.params)
-
-        axes: numpy.array of matplotlib.axes.Axes, optional
-            Existing array of axes to plot on. If not provided, one is created.
+        axes: plotting axes, optional
+            Can be either:
+                * list(str) or str 
+                * pandas.Series(matplotlib.axes.Axes)
+            If a pandas.Series is provided as an existing set of axes, then
+            this is used for creating the plot. Otherwise a new set of axes are
+            created using the list or lists of strings.
 
         beta: float, optional
             Temperature to plot at. beta=0 corresponds to the prior, beta=1
@@ -195,38 +196,33 @@ class MCMCSamples(pandas.DataFrame):
             Pandas array of axes objects
 
         """
-        if params is None:
-            params = self.params
-        else:
-            params = numpy.atleast_1d(params)
-
-        axes = kwargs.pop('axes', None)
+        axes = kwargs.pop('axes', self.params)
         beta = kwargs.pop('beta', 1)
-        if axes is None:
-            fig, axes = make_1D_axes(params, tex=self.tex)
-        else:
-            fig = numpy.atleast_2d(axes)[0, 0].figure
 
-        for p in params:
-            self.plot(axes[p], p, beta=beta, *args, **kwargs)
+        if not isinstance(axes, pandas.Series):
+            fig, axes = make_1D_axes(axes, tex=self.tex)
+        else:
+            fig = axes.values[~axes.isna()][0].figure
+
+        for x, ax in axes.iteritems():
+            if ax is not None and x in self:
+                self.plot(ax, x, beta=beta, *args, **kwargs)
 
         return fig, axes
 
-    def plot_2d(self, xparams=None, yparams=None, *args, **kwargs):
+    def plot_2d(self, *args, **kwargs):
         """Create an array of 2D plots.
 
         Parameters
         ----------
-        xparams: list(str) or str, optional
-            list of parameter names, or single parameter name to plot from
-            self.columns. (Default: self.params)
-
-        yparams: list(str) or str, optional
-            list of parameter names, or single parameter name to plot on y
-            coordinate from self.columns. (Default: xparams)
-
-        axes: numpy.array(matplotlib.axes.Axes), optional
-            Existing array of axes to plot on. If not provided, one is created.
+        axes: list or lists of str or numpy.array(matplotlib.axes.Axes), optional
+            Can be either:
+                * list(str) if the x and y axes are the same
+                * [list(str),list(str)] if the x and y axes are different
+                * pandas.DataFrame(matplotlib.axes.Axes)
+            If a pandas.DataFrame is provided as an existing set of axes, then
+            this is used for creating the plot. Otherwise a new set of axes are
+            created using the list or lists of strings.
 
         types: list(str) or str, optional
             What type (or types) of plots to produce. If two types are provided
@@ -247,35 +243,24 @@ class MCMCSamples(pandas.DataFrame):
             Pandas array of axes objects
 
         """
-        if xparams is None:
-            xparams = self.params
-        xparams = numpy.atleast_1d(xparams)
-        if yparams is None:
-            yparams = xparams
-        yparams = numpy.atleast_1d(yparams)
-        all_params = list(yparams) + list(xparams)
-
-        axes = kwargs.pop('axes', None)
+        axes = kwargs.pop('axes', self.params)
         types = kwargs.pop('types', ['kde', 'scatter'])
         beta = kwargs.pop('beta', 1)
 
+        if not isinstance(axes, pandas.DataFrame):
+            fig, axes = make_2D_axes(axes, tex=self.tex)
+        else:
+            fig = axes.values[~axes.isna()][0].figure
+
         types = numpy.atleast_1d(types)
 
-        if axes is None:
-            fig, axes = make_2D_axes(xparams, yparams, tex=self.tex)
-        else:
-            axes = pandas.DataFrame(axes, index=yparams, columns=xparams)
-            fig = axes.iloc[0, 0].figure
+        for y, row in axes.iterrows():
+            for x, ax in row.iteritems():
+                if ax is not None and x in self and y in self:
+                    plot_type =  types[-1] if ax._upper else types[0]
+                    self.plot(ax, x, y, plot_type=plot_type, beta=beta,
+                              *args, **kwargs)
 
-        for y in yparams:
-            for x in xparams:
-                if (x in yparams and y in xparams and (all_params.index(x) >
-                                                       all_params.index(y))):
-                    plot_type = types[0]
-                else:
-                    plot_type = types[-1]
-                self.plot(axes[x][y], x, y, plot_type=plot_type, beta=beta,
-                          *args, **kwargs)
         return fig, axes
 
     def _weights(self, beta, nsamples=None):
