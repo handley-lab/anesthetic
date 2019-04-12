@@ -118,9 +118,9 @@ def test_make_2D_axes():
     fig, axes = make_2D_axes([paramnames_x, paramnames_y], diagonal=False)
     assert((~axes.isna()).sum().sum() == nx*ny-nintersect)
     fig, axes = make_2D_axes([paramnames_x, paramnames_y], upper=False)
-    assert((~axes.isna()).sum().sum() == (nintersect*(nintersect+1))//2)
-    fig, axes = make_2D_axes([paramnames_x, paramnames_y], upper=True)
     assert((~axes.isna()).sum().sum() == nx*ny-((nintersect-1)*nintersect)//2)
+    fig, axes = make_2D_axes([paramnames_x, paramnames_y], upper=True)
+    assert((~axes.isna()).sum().sum() == (nintersect*(nintersect+1))//2)
     plt.close('all')
 
 

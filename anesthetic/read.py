@@ -35,7 +35,7 @@ def read_paramnames(root):
                 paramname = line[0].replace('*', '')
                 paramnames.append(paramname)
                 if len(line) > 1:
-                    tex[paramname] = '$' + ''.join(line[1:]) + '$'
+                    tex[paramname] = '$' + ' '.join(line[1:]) + '$'
         return paramnames, tex
     except IOError:
         return None, None

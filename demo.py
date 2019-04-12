@@ -29,11 +29,15 @@ print(mcmc[:6])
 
 #| We have plotting tools for 1D plots ...
 
-mcmc.plot_1d('omegabh2');
+fig, axes = mcmc.plot_1d('omegabh2');
 
 #| ... multiple 1D plots ...
 
-mcmc.plot_1d(['omegabh2','omegach2','H0','tau','logA','ns']);
+fig, axes = mcmc.plot_1d(['omegabh2','omegach2','H0','tau','logA','ns']);
+
+#| ... triangle plots (with the equivalent scatter plot filling up the left hand side) ...
+
+mcmc.plot_2d(['omegabh2','omegach2','H0'], types=['kde']);
 
 #| ... triangle plots (with the equivalent scatter plot filling up the left hand side) ...
 
@@ -41,11 +45,11 @@ mcmc.plot_2d(['omegabh2','omegach2','H0']);
 
 #| ... and rectangle plots.
 
-mcmc.plot_2d(['omegabh2','omegach2','H0'], ['logA', 'ns']);
+mcmc.plot_2d([['omegabh2','omegach2','H0'], ['logA', 'ns']]);
 
 #| Rectangle plots are pretty flexible with what they can do:
 
-mcmc.plot_2d(['omegabh2','omegach2','H0'], ['H0','omegach2']);
+mcmc.plot_2d([['omegabh2','omegach2','H0'], ['H0','omegach2']]);
 
 #| More importantly, since this is a pandas array, we can redefine new parameters with relative ease.
 #| For example, the default cosmoMC setup does not include omegab, only omegabh2:
@@ -76,7 +80,7 @@ ns_output.plot_1d();
 
 #| We can also inspect the correlation between these inferences:
 
-ns_output.plot_2d('logZ','D');
+ns_output.plot_2d(['logZ','D']);
 
 #| Here is a comparison of the base and NS output
 
@@ -85,11 +89,11 @@ nested['omegab'] = nested['omegabh2']/h**2
 nested.tex['omegab'] = '$\Omega_b$'
 
 fig, axes = mcmc.plot_2d(['sigma8','omegab'])
-nested.plot_2d(['sigma8','omegab'], axes=axes);
+nested.plot_2d(axes=axes);
 
 #| Finally, with nested samples, we can plot the prior (or any temperature), by
 #| passing beta=0
 
 fig, axes = nested.plot_2d(['ns','tau'], beta=0)
-nested.plot_2d(['ns','tau'], axes=axes);
+nested.plot_2d(axes=axes);
 

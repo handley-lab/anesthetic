@@ -170,7 +170,7 @@ class MCMCSamples(pandas.DataFrame):
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                     *args, **kwargs)
 
-    def plot_1d(self, *args, **kwargs):
+    def plot_1d(self, axes=None, *args, **kwargs):
         """Create an array of 1D plots.
 
         Parameters
@@ -197,8 +197,9 @@ class MCMCSamples(pandas.DataFrame):
             Pandas array of axes objects
 
         """
-        axes = kwargs.pop('axes', self.params)
         beta = kwargs.pop('beta', 1)
+        if axes is None:
+            axes = self.params
 
         if not isinstance(axes, pandas.Series):
             fig, axes = make_1D_axes(axes, tex=self.tex)
@@ -211,7 +212,7 @@ class MCMCSamples(pandas.DataFrame):
 
         return fig, axes
 
-    def plot_2d(self, *args, **kwargs):
+    def plot_2d(self, axes=None, *args, **kwargs):
         """Create an array of 2D plots.
 
         Parameters
@@ -245,12 +246,14 @@ class MCMCSamples(pandas.DataFrame):
             Pandas array of axes objects
 
         """
-        axes = kwargs.pop('axes', self.params)
         types = kwargs.pop('types', ['kde', 'scatter'])
         beta = kwargs.pop('beta', 1)
+        if axes is None:
+            axes = self.params
 
         if not isinstance(axes, pandas.DataFrame):
-            fig, axes = make_2D_axes(axes, tex=self.tex)
+            upper = None if len(types)>1 else False
+            fig, axes = make_2D_axes(axes, tex=self.tex, upper=upper)
         else:
             fig = axes.values[~axes.isna()][0].figure
 

@@ -22,7 +22,7 @@ from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
 from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds
 from scipy.interpolate import interp1d
-from matplotlib.ticker import MaxNLocator, Locator
+from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 
 
@@ -45,10 +45,6 @@ def make_1D_axes(params, **kwargs):
             Number of columns in the plot
             option, default ceil(sqrt(num_params))
 
-        ticks: integer or matplotlib.ticker.Locator, optional
-            Tick preferences for axes. If int, specifies the maximum number
-            of ticks. Default: 3
-
         subplot_spec: matplotlib.gridspec.GridSpec, optional
             gridspec to plot array as part of a subfigure
             Default: None
@@ -62,31 +58,28 @@ def make_1D_axes(params, **kwargs):
         Pandas array of axes objects
 
     """
+    axes = pandas.Series(index=numpy.atleast_1d(params), dtype=object)
+    axes[:] = None
     tex = kwargs.pop('tex', {})
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
-    ncols = kwargs.pop('ncols', int(numpy.ceil(numpy.sqrt(len(params)))))
-    nrows = int(numpy.ceil(len(params)/float(ncols)))
+    ncols = kwargs.pop('ncols', int(numpy.ceil(numpy.sqrt(len(axes)))))
+    nrows = int(numpy.ceil(len(axes)/float(ncols)))
     if 'subplot_spec' in kwargs:
         grid = SGS(nrows, ncols, wspace=0,
                    subplot_spec=kwargs.pop('subplot_spec'))
     else:
         grid = GS(nrows, ncols, wspace=0)
 
-    locator = kwargs.pop('ticks', 3)
-    if not isinstance(locator, Locator):
-        locator = MaxNLocator(locator+1, prune='both')
-
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
-    tex = {p: tex[p] if p in tex else p for p in params}
-    axes = pandas.Series(index=params, dtype=object)
+    tex = {p: tex[p] if p in tex else p for p in axes.index}
 
-    for p, g in zip(params, grid):
+    for p, g in zip(axes.index, grid):
         axes[p] = ax = fig.add_subplot(g)
         ax.set_xlabel(tex[p])
         ax.set_yticks([])
-        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_locator(MaxNLocator(3, prune='both'))
 
     return fig, axes
 
@@ -118,10 +111,6 @@ def make_2D_axes(params, **kwargs):
             Figure to plot on.
             Default: matplotlib.pyplot.figure()
 
-        ticks: integer or matplotlib.ticker.Locator, optional
-            Tick preferences for axes. If int, specifies the maximum number
-            of ticks. Default: 3
-
         subplot_spec: matplotlib.gridspec.GridSpec, optional
             gridspec to plot array as part of a subfigure.
             Default: None
@@ -140,7 +129,8 @@ def make_2D_axes(params, **kwargs):
     else:
         xparams = yparams = params
     axes = pandas.DataFrame(index=numpy.atleast_1d(yparams),
-                            columns=numpy.atleast_1d(xparams))
+                            columns=numpy.atleast_1d(xparams),
+                            dtype=object)
     axes[:][:] = None
 
     tex = kwargs.pop('tex', {})
@@ -153,9 +143,6 @@ def make_2D_axes(params, **kwargs):
 
     upper = kwargs.pop('upper', None)
     diagonal = kwargs.pop('diagonal', True)
-    locator = kwargs.pop('ticks', 3)
-    if not isinstance(locator, Locator):
-        locator = MaxNLocator(locator+1, prune='both')
 
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
@@ -165,40 +152,44 @@ def make_2D_axes(params, **kwargs):
 
     all_params = list(axes.index) + list(axes.columns)
 
-    for y, py in enumerate(axes.index):
-        for x, px in enumerate(axes.columns):
-            _upper = not (px in axes.index and py in axes.columns
-                          and all_params.index(px) < all_params.index(py))
+    for j, y in enumerate(axes.index):
+        for i, x in enumerate(axes.columns):
+            lower = not (x in axes.index and y in axes.columns
+                         and all_params.index(x) > all_params.index(y))
 
-            if px == py and not diagonal:
+            if x == y and not diagonal:
                 continue
 
-            if upper == (not _upper) and px != py:
+            if upper == lower and x != y:
                 continue
 
-            if axes[px][py] is None:
-                sx = list(axes[px].dropna())
+            if axes[x][y] is None:
+                sx = list(axes[x].dropna())
                 sx = sx[0] if sx else None
-                sy = list(axes.T[py].dropna())
+                sy = list(axes.T[y].dropna())
                 sy = sy[0] if sy else None
-                axes[px][py] = fig.add_subplot(grid[y, x],
+                axes[x][y] = fig.add_subplot(grid[j, i],
                                                sharex=sx, sharey=sy)
 
-            axes[px][py]._upper = _upper
+            axes[x][y]._upper = not lower
 
-    for py, ax in axes.iterrows():
+    for y, ax in axes.bfill(axis=1).iloc[:,0].dropna().iteritems():
+        ax.set_ylabel(tex[y])
+
+    for x, ax in axes.ffill(axis=0).iloc[-1,:].dropna().iteritems():
+        ax.set_xlabel(tex[x])
+
+    for y, ax in axes.iterrows():
         ax_ = ax.dropna()
         if len(ax_):
-            ax_[0].set_ylabel(tex[py])
-            ax_[0].yaxis.set_major_locator(locator)
+            ax_[0].yaxis.set_major_locator(MaxNLocator(3, prune='both'))
             for a in ax_[1:]:
                 a.tick_params('y', left=False, labelleft=False)
 
-    for px, ax in axes.iteritems():
+    for x, ax in axes.iteritems():
         ax_ = ax.dropna()
         if len(ax_):
-            ax_[-1].set_xlabel(tex[px])
-            ax_[-1].xaxis.set_major_locator(locator)
+            ax_[-1].xaxis.set_major_locator(MaxNLocator(3, prune='both'))
             for a in ax_[:-1]:
                 a.tick_params('x', bottom=False, labelbottom=False)
 
@@ -235,6 +226,9 @@ def plot_1d(ax, data, *args, **kwargs):
         matplotlib matplotlib.axes.Axes.plot command)
 
     """
+    if data.max()-data.min() <= 0:
+        return
+
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
 
