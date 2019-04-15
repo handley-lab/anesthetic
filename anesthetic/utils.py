@@ -88,3 +88,12 @@ def mirror_2d(d_x_, d_y_, xmin=None, xmax=None, ymin=None, ymax=None):
         d_y = numpy.concatenate((d_y, 2*ymax-d_y))
 
     return d_x, d_y
+
+
+def nest_level(lst):
+    """Calculate the nesting level of a list."""
+    if not isinstance(lst, list):
+        return 0
+    if not lst:
+        return 1
+    return max(nest_level(item) for item in lst) + 1

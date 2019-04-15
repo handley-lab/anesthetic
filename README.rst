@@ -113,8 +113,7 @@ Features
 
 To Do
 -----
-- tests
-- docstrings
+- Fix nlive
 - better interfaces for plotting multiple samples
 - multiple nested sampler input formats (MultiNest, Dynesty, NeuralNest)
 - Read multiple MCMC chains

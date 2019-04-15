@@ -20,7 +20,7 @@ import pandas
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
 from anesthetic.kde import kde_1d, kde_2d
-from anesthetic.utils import check_bounds
+from anesthetic.utils import check_bounds, nest_level
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
@@ -126,7 +126,7 @@ def make_2D_axes(params, **kwargs):
         Pandas array of axes objects
 
     """
-    if len(params) == 2:
+    if nest_level(params) == 2:
         xparams, yparams = params
     else:
         xparams = yparams = params
@@ -148,6 +148,9 @@ def make_2D_axes(params, **kwargs):
 
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
+
+    if axes.size == 0:
+        return fig, axes
 
     tex = {p: tex[p] if p in tex else p
            for p in numpy.concatenate((axes.index, axes.columns))}
@@ -172,6 +175,10 @@ def make_2D_axes(params, **kwargs):
                 sy = sy[0] if sy else None
                 axes[x][y] = fig.add_subplot(grid[j, i],
                                              sharex=sx, sharey=sy)
+            if x == y:
+                axes[x][y].twin = axes[x][y].twinx()
+                axes[x][y].twin.set_yticks([])
+                axes[x][y].twin.set_ylim(0, 1.1)
 
             axes[x][y]._upper = not lower
 
@@ -209,10 +216,6 @@ def plot_1d(ax, data, *args, **kwargs):
     density estimation computation in between. All remaining keyword arguments
     are passed onwards.
 
-    To avoid intefering with y-axis sharing, one-dimensional plots are created
-    on a separate axis, which is monkey-patched onto the argument ax as the
-    attribute ax.twin.
-
     Parameters
     ----------
     ax: matplotlib.axes.Axes
@@ -238,19 +241,12 @@ def plot_1d(ax, data, *args, **kwargs):
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
 
-    if not hasattr(ax, 'twin'):
-        ax.twin = ax.twinx()
-        ax.twin.set_yticks([])
-        ax.twin.set_ylim(0, 1.1)
-        if not ax.is_first_col():
-            ax.tick_params('y', left=False)
-
     x, p = kde_1d(data, xmin, xmax)
     p /= p.max()
     i = (p >= 1e-2)
 
-    ans = ax.twin.plot(x[i], p[i], *args, **kwargs)
-    ax.twin.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
+    ans = ax.plot(x[i], p[i], *args, **kwargs)
+    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
 
