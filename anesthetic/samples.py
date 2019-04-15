@@ -215,9 +215,9 @@ class MCMCSamples(pandas.DataFrame):
     def plot_2d(self, axes=None, *args, **kwargs):
         """Create an array of 2D plots.
 
-        To avoid intefering with y-axis sharing, one-dimensional plots are created
-        on a separate axis, which is monkey-patched onto the argument ax as the
-        attribute ax.twin.
+        To avoid intefering with y-axis sharing, one-dimensional plots are
+        created on a separate axis, which is monkey-patched onto the argument
+        ax as the attribute ax.twin.
 
         Parameters
         ----------
