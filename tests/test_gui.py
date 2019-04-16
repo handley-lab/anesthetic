@@ -22,13 +22,13 @@ def test_gui():
 
     # Sliders
     plotter.evolution.slider.set_val(100)
-    assert(plotter.evolution()==100)
+    assert(plotter.evolution() == 100)
     plotter.type.buttons.set_active(1)
     plotter.temperature.slider.set_val(0)
-    assert(plotter.temperature()==1)
+    assert(plotter.temperature() == 1)
 
     plotter.temperature.slider.set_val(1)
-    assert(plotter.temperature()==10)
+    assert(plotter.temperature() == 10)
     plotter.temperature.slider.set_val(2)
-    assert(plotter.temperature()==100)
+    assert(plotter.temperature() == 100)
     plotter.type.buttons.set_active(0)
