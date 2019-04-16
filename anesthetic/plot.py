@@ -305,7 +305,7 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     i = (pdf >= 1e-2).any(axis=0)
     j = (pdf >= 1e-2).any(axis=1)
 
-    cmap = LinearSegmentedColormap.from_list(color, ['#ffffff', color])
+    cmap = basic_cmap(color)
     zorder = max([child.zorder for child in ax.get_children()])
 
     cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
@@ -354,3 +354,26 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
     return points
+
+
+def get_legend_proxy(fig):
+    """Extract a proxy for plotting onto a legend.
+
+    Example usage
+    -------------
+        >>> fig, axes = modelA.plot_2d()
+        >>> modelB.plot_2d(axes)
+        >>> proxy = get_legend_proxy(fig)
+        >>> fig.legend(proxy, ['A', 'B']
+    """
+    colors = [line.get_color() for ax in fig.axes for line in  ax.lines ]
+    _, idx = numpy.unique(colors, return_index=True)
+    colors = numpy.array(colors)[idx]
+    cmaps = [basic_cmap(color) for color in colors]
+    proxy = [plt.Rectangle((0,0),1,1,facecolor=cmap(0.999), edgecolor=cmap(0.33), linewidth=2)
+             for cmap in cmaps]
+    return proxy
+
+def basic_cmap(color):
+    """Construct basic colormap a single color."""
+    return LinearSegmentedColormap.from_list(color, ['#ffffff', color]) 

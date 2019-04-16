@@ -115,9 +115,7 @@ Features
 To Do
 -----
 - Fix nlive
-- better interfaces for plotting multiple samples
 - multiple nested sampler input formats (MultiNest, Dynesty, NeuralNest)
 - Read multiple MCMC chains
-- Legends
 - Implement live point reading for multinest
-- Histogram
+- Histograms as alternative to KDE
