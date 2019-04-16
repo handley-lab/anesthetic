@@ -158,7 +158,8 @@ class RunPlotter(object):
 
     def __init__(self, root, labels=None):
         """Initialise RunPlotter interface."""
-        self.run = NestedSamples.read(root)
+        self.root = root
+        self.run = NestedSamples.read(self.root)
         if labels:
             self.labels = numpy.array(labels)
         else:
@@ -267,7 +268,7 @@ class RunPlotter(object):
 
     def reload_file(self, _):
         """Reload the data from file."""
-        self.run.reload_data()
+        self.run = NestedSamples.read(self.root)
         self.evolution.reset_range(valmax=len(self.run))
         self.update(None)
 
