@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def readme(short=False):
@@ -29,7 +29,7 @@ setup(name='anesthetic',
       author='Will Handley',
       author_email='wh260@cam.ac.uk',
       url='https://github.com/williamjameshandley/anesthetic',
-      packages=['anesthetic'],
+      packages=find_packages(),
       scripts=['scripts/anesthetic'],
       install_requires=['numpy', 'scipy', 'pandas', 'matplotlib', 'fastkde'],
       setup_requires=['pytest-runner'],

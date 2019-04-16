@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 ===========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
-:Version: 0.8.0
+:Version: 0.8.1
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -48,11 +48,11 @@ Current functionality includes:
 
 This tool was designed primarily for use with nested sampling, although it can be used for normal MCMC chains.
 
-For an interactive view of a nested sampling run, you can use the ``rhinestone`` script.
+For an interactive view of a nested sampling run, you can use the ``anesthetic`` script.
 
 .. code:: bash
 
-   $ rhinestone <ns file root>
+   $ anesthetic <ns file root>
 
 
 Installation
