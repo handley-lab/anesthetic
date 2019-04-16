@@ -19,3 +19,16 @@ def test_gui():
     plotter.param_choice.buttons.set_active(2)
     plotter.param_choice.buttons.set_active(3)
     assert(len(plotter.triangle.ax) == 4)
+
+    # Sliders
+    plotter.evolution.slider.set_val(100)
+    assert(plotter.evolution()==100)
+    plotter.type.buttons.set_active(1)
+    plotter.temperature.slider.set_val(0)
+    assert(plotter.temperature()==1)
+
+    plotter.temperature.slider.set_val(1)
+    assert(plotter.temperature()==10)
+    plotter.temperature.slider.set_val(2)
+    assert(plotter.temperature()==100)
+    plotter.type.buttons.set_active(0)
