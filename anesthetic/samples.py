@@ -8,8 +8,8 @@ import pandas
 from scipy.special import logsumexp
 from anesthetic.plot import (make_1D_axes, make_2D_axes, plot_1d,
                              scatter_plot_2d, contour_plot_2d)
-from anesthetic.read import (read_chains, read_birth, read_limits,
-                             read_paramnames)
+from anesthetic.read.getdist import GetDistReader
+from anesthetic.read.polychord import PolyChordReader
 from anesthetic.utils import compress_weights
 
 
@@ -40,9 +40,10 @@ class MCMCSamples(pandas.DataFrame):
     def read(cls, root):
         """Read in data from file root."""
         # Read in data
-        w, logL, samples = read_chains(root)
-        params, tex = read_paramnames(root)
-        limits = read_limits(root)
+        reader = GetDistReader(root)
+        w, logL, samples = reader.samples()
+        params, tex = reader.paramnames()
+        limits = reader.limits()
 
         # Build class
         data = cls.build(samples=samples, w=w, logL=logL, params=params,
@@ -307,9 +308,10 @@ class NestedSamples(MCMCSamples):
     def read(cls, root):
         """Read in data from file root."""
         # Read in data
-        params, tex = read_paramnames(root)
-        limits = read_limits(root)
-        samples, logL, logL_birth = read_birth(root)
+        reader = PolyChordReader(root)
+        params, tex = reader.paramnames()
+        limits = reader.limits()
+        samples, logL, logL_birth = reader.samples()
 
         # Build class
         data = cls.build(samples=samples, logL=logL, params=params,
