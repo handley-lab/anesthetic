@@ -10,7 +10,7 @@ class ChainReader(object):
 
     def paramnames(self):
         """Parameter names mapping."""
-        return None, None
+        return None, {}
 
     def limits(self):
         """Parameter limits mapping."""

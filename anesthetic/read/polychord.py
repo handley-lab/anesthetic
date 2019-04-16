@@ -8,7 +8,11 @@ class PolyChordReader(GetDistReader):
 
     def samples(self):
         """Read ``<root>_dead-birth.txt`` in polychord format."""
-        birth_file = self.root + '_dead-birth.txt'
-        data = numpy.loadtxt(birth_file)
+        data = numpy.loadtxt(self.birth_file)
         samples, logL, logL_birth = numpy.split(data, [-2, -1], axis=1)
         return samples, logL, logL_birth
+
+    @property
+    def birth_file(self):
+        """File containing dead and birth contours."""
+        return self.root + '_dead-birth.txt'

@@ -9,7 +9,7 @@ from scipy.special import logsumexp
 from anesthetic.plot import (make_1D_axes, make_2D_axes, plot_1d,
                              scatter_plot_2d, contour_plot_2d)
 from anesthetic.read.getdist import GetDistReader
-from anesthetic.read.polychord import PolyChordReader
+from anesthetic.read.nested import NestedReader
 from anesthetic.utils import compress_weights
 
 
@@ -308,7 +308,7 @@ class NestedSamples(MCMCSamples):
     def read(cls, root):
         """Read in data from file root."""
         # Read in data
-        reader = PolyChordReader(root)
+        reader = NestedReader(root)
         params, tex = reader.paramnames()
         limits = reader.limits()
         samples, logL, logL_birth = reader.samples()
@@ -334,7 +334,7 @@ class NestedSamples(MCMCSamples):
             loglikelihoods of samples.
 
         logL_birth: numpy.array
-            birth loglikelihoods of samples.
+            birth loglikelihoods of samples, or number of live points.
 
         w: numpy.array
             weights of samples.
@@ -352,15 +352,21 @@ class NestedSamples(MCMCSamples):
         # Build pandas DataFrame
         logL_birth = kwargs.pop('logL_birth', None)
         data = super(NestedSamples, cls).build(**kwargs)
-        data['logL_birth'] = logL_birth
 
         # Compute nlive
-        index = data.logL.searchsorted(data.logL_birth)-1
-        births = pandas.Series(+1, index=index).sort_index()
-        deaths = pandas.Series(-1, index=data.index)
-        nlive = pandas.concat([births, deaths]).sort_index().cumsum()
-        nlive = (nlive[~nlive.index.duplicated(keep='first')]+1)[1:]
-        data['nlive'] = nlive
+        if isinstance(logL_birth, int):
+            nlive = logL_birth
+            data['nlive'] = nlive
+            data['nlive'][-nlive:] = numpy.arange(nlive, 0, -1)
+        else:
+            data['logL_birth'] = logL_birth
+            index = data.logL.searchsorted(data.logL_birth)-1
+            births = pandas.Series(+1, index=index).sort_index()
+            deaths = pandas.Series(-1, index=data.index)
+            nlive = pandas.concat([births, deaths]).sort_index().cumsum()
+            nlive = (nlive[~nlive.index.duplicated(keep='first')]+1)[1:]
+            data['nlive'] = nlive
+
         data['logw'] = data._dlogX()
         return data
 
