@@ -3,9 +3,9 @@ import numpy
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import (GridSpec as GS,
                                  GridSpecFromSubplotSpec as sGS)
-from rhinestone.widgets import (Widget, Slider, Button,
-                                RadioButtons, TrianglePlot, CheckButtons)
 from anesthetic import NestedSamples
+from anesthetic.gui.widgets import (Widget, Slider, Button,
+                                    RadioButtons, TrianglePlot, CheckButtons)
 
 
 class Higson(Widget):
@@ -115,28 +115,28 @@ class RunPlotter(object):
         fig (matplotlib.figure.Figure):
             Reference to the underlying figure
 
-        triangle (rhinestone.widgets.TrianglePlot):
+        triangle (anesthetic.gui.widgets.TrianglePlot):
             Corner plot of live or posterior samples.
 
-        temperature (rhinestone.plot.Temperature):
+        temperature (anesthetic.gui.plot.Temperature):
             Slider selecting the posterior temperature.
 
-        evolution (rhinestone.plot.Evolution):
+        evolution (anesthetic.gui.plot.Evolution):
             Slider selecting the live iteration.
 
-        higson (rhinestone.plot.Higson):
+        higson (anesthetic.gui.plot.Higson):
             Higson plot of posterior weights.
 
-        reset (rhinestone.widgets.Button):
+        reset (anesthetic.gui.widgets.Button):
             Button that resets the parameter ranges.
 
-        reload (rhinestone.widgets.Button):
+        reload (anesthetic.gui.widgets.Button):
             Button that reloads the files.
 
-        type (rhinestone.widgets.RadioButtons):
+        type (anesthetic.gui.widgets.RadioButtons):
             Radio buttons that selects whether to plot live or posteriors.
 
-        param_choice (rhinestone.widgets.CheckButtons):
+        param_choice (anesthetic.gui.widgets.CheckButtons):
             Checkbox that selects which parameters to plot.
     """
     def __init__(self, root, labels=None):

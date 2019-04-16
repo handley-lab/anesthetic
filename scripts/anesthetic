@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import matplotlib.pyplot as plt
-from rhinestone.plot import RunPlotter
+from anesthetic.gui import RunPlotter
 
 # Parse arguments
 description = "Nested sampling visualisation"

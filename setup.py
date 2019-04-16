@@ -2,9 +2,12 @@
 from setuptools import setup
 
 
-def readme():
+def readme(short=False):
     with open('README.rst') as f:
-        return f.read()
+        if short:
+            return f.readlines()[1].strip()
+        else:
+            return f.read()
 
 
 def get_version(short=False):
@@ -21,13 +24,13 @@ def get_version(short=False):
 
 setup(name='anesthetic',
       version=get_version(),
-      description='anesthetic: nested sampling post-processing',
+      description=readme(short=True),
       long_description=readme(),
       author='Will Handley',
       author_email='wh260@cam.ac.uk',
       url='https://github.com/williamjameshandley/anesthetic',
-      packages=['anesthetic', 'rhinestone'],
-      scripts=['scripts/rhinestone'],
+      packages=['anesthetic'],
+      scripts=['scripts/anesthetic'],
       install_requires=['numpy', 'scipy', 'pandas', 'matplotlib', 'fastkde'],
       setup_requires=['pytest-runner'],
       extras_require={
@@ -46,6 +49,7 @@ setup(name='anesthetic',
                    'Programming Language :: Python :: 3.4',
                    'Programming Language :: Python :: 3.5',
                    'Programming Language :: Python :: 3.6',
+                   'Programming Language :: Python :: 3.7',
                    'Topic :: Scientific/Engineering',
                    'Topic :: Scientific/Engineering :: Astronomy',
                    'Topic :: Scientific/Engineering :: Physics',

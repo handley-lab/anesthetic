@@ -9,13 +9,13 @@ they are plotted.
 from matplotlib.widgets import Button as mplButton
 from matplotlib.widgets import CheckButtons as mplCheckButtons
 from matplotlib.widgets import RadioButtons as mplRadioButtons
-from rhinestone._matplotlib import Slider as mplSlider
-from rhinestone.utils import histogram, min_max
+from anesthetic.gui._matplotlib import Slider as mplSlider
+from anesthetic.gui.utils import histogram
 from anesthetic.plot import make_2D_axes
 
 
 class Widget(object):
-    """ Base class for rhinestone widgets widget.
+    """ Base class for anesthetic gui widgets.
 
     Stores a reference to the underlying figure, the gridspec that the
     widget is placed at and the axes of the widget.
@@ -210,8 +210,7 @@ class TrianglePlot(Widget):
     def __init__(self, fig, gridspec):
         super(TrianglePlot, self).__init__(fig, gridspec)
         self.fig.delaxes(self.ax)
-        self.ax = pandas.DataFrame()
-        make_2D_axes([], fig=self.fig, subplot_spec=self.gridspec)
+        _, self.ax = make_2D_axes([], fig=self.fig, subplot_spec=self.gridspec)
 
     def draw(self, labels):
         """ Draw a new triangular grid for list of parameters labels.
@@ -224,21 +223,22 @@ class TrianglePlot(Widget):
         for y, row in self.ax.iterrows():
             for x, ax in row.iteritems():
                 if ax is not None:
-                    if x==y:
+                    if x == y:
                         self.fig.delaxes(ax.twin)
                     self.fig.delaxes(ax)
 
         # Set up the axes
-        _, self.ax = make_2D_axes(labels, upper=False, fig=self.fig, subplot_spec=self.gridspec)
+        _, self.ax = make_2D_axes(labels, upper=False,
+                                  fig=self.fig, subplot_spec=self.gridspec)
 
         # Plot no points  points.
         for y, row in self.ax.iterrows():
             for x, ax in row.iteritems():
                 if ax is not None:
-                    if x==y:
-                        ax.twin.plot([None], [None], 'k-') 
+                    if x == y:
+                        ax.twin.plot([None], [None], 'k-')
                     else:
-                        ax.plot([None], [None], 'k.') 
+                        ax.plot([None], [None], 'k.')
 
     def update(self, f):
         """ Update the points in the triangle plot using f function.
@@ -252,20 +252,19 @@ class TrianglePlot(Widget):
             for x, ax in row.iteritems():
                 if ax is not None:
                     if x == y:
-                        xdata, ydata = histogram(f(x), bins='auto', density=True)
-                        ax.twin.lines[0].set_xdata(xdata)
-                        ax.twin.lines[0].set_ydata(ydata)
+                        datx, daty = histogram(f(x), bins='auto', density=True)
+                        ax.twin.lines[0].set_xdata(datx)
+                        ax.twin.lines[0].set_ydata(daty)
                     else:
                         ax.lines[0].set_xdata(f(x))
                         ax.lines[0].set_ydata(f(y))
-
 
     def reset_range(self):
         """ Reset the range of each grid. """
         for y, row in self.ax.iterrows():
             for x, ax in row.iteritems():
                 if ax is not None:
-                    if x==y:
+                    if x == y:
                         ax.twin.relim()
                         ax.twin.autoscale_view()
                     ax.relim()
