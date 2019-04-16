@@ -1,4 +1,4 @@
-"""Tools for reading from polychord chains files."""
+"""Tools for reading from getdist chains files."""
 import numpy
 from anesthetic.read.getdist import GetDistReader
 

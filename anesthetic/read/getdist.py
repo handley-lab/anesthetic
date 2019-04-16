@@ -2,17 +2,18 @@
 import numpy
 from anesthetic.read.base import ChainReader
 
+
 class GetDistReader(ChainReader):
     """Read getdist files."""
 
     def paramnames(self):
         r"""Read ``<root>.paramnames`` in getdist format.
 
-        This file should contain one or two columns. The first column indicates a
-        reference name for the sample, used as labels in the pandas array. The
-        second optional column should include the equivalent axis label, possibly
-        in tex, with the understanding that it will be surrounded by dollar signs,
-        for example
+        This file should contain one or two columns. The first column indicates
+        a reference name for the sample, used as labels in the pandas array.
+        The second optional column should include the equivalent axis label,
+        possibly in tex, with the understanding that it will be surrounded by
+        dollar signs, for example
 
         <root.paramnames>
 
