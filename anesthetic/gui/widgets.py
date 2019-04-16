@@ -10,7 +10,7 @@ from matplotlib.widgets import Button as mplButton
 from matplotlib.widgets import CheckButtons as mplCheckButtons
 from matplotlib.widgets import RadioButtons as mplRadioButtons
 from anesthetic.gui._matplotlib import Slider as mplSlider
-from anesthetic.gui.utils import histogram
+from anesthetic.utils import histogram
 from anesthetic.plot import make_2D_axes
 
 
