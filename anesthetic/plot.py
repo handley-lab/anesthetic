@@ -366,14 +366,16 @@ def get_legend_proxy(fig):
         >>> proxy = get_legend_proxy(fig)
         >>> fig.legend(proxy, ['A', 'B']
     """
-    colors = [line.get_color() for ax in fig.axes for line in  ax.lines ]
+    colors = [line.get_color() for ax in fig.axes for line in ax.lines]
     _, idx = numpy.unique(colors, return_index=True)
     colors = numpy.array(colors)[idx]
     cmaps = [basic_cmap(color) for color in colors]
-    proxy = [plt.Rectangle((0,0),1,1,facecolor=cmap(0.999), edgecolor=cmap(0.33), linewidth=2)
+    proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.999),
+                           edgecolor=cmap(0.33), linewidth=2)
              for cmap in cmaps]
     return proxy
 
+
 def basic_cmap(color):
     """Construct basic colormap a single color."""
-    return LinearSegmentedColormap.from_list(color, ['#ffffff', color]) 
+    return LinearSegmentedColormap.from_list(color, ['#ffffff', color])
