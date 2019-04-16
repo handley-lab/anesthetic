@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 ===========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
-:Version: 0.8.2
+:Version: 0.8.3
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -109,13 +109,11 @@ Why create another one? In general, any dedicated user of software will find tha
 Features
 --------
 
-- Both samples and plotting axes are stored as a ``pandas.DataFrame``, which makes for easy access and modification
-- No overlapping tick labels in large plots
+- Both samples and plotting axes are stored as a ``pandas.DataFrame``, which makes for easy access and modification.
+- No overlapping tick labels in large plots.
+- Sensible color scheme for plotting nearly flat distributions.
 
 To Do
 -----
 - Fix nlive
-- multiple nested sampler input formats (MultiNest, Dynesty, NeuralNest)
-- Read multiple MCMC chains
-- Implement live point reading for multinest
 - Histograms as alternative to KDE
