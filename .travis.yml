@@ -40,7 +40,7 @@ before_script:
     - flake8 anesthetic tests
 
     # Test for documentation style
-    - pydocstyle anesthetic
+    - pydocstyle --convention=numpy anesthetic
 
 # Run tests
 script:

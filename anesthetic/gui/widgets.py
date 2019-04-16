@@ -1,8 +1,8 @@
-""" Widget wrappers to matplotlib.
+"""Widget wrappers to matplotlib.
 
-These basically extend the matplotlib widgets by plotting themselves onto an
-axis and storing a reference to both the widget object and the axis on which
-they are plotted.
+These extend the matplotlib widgets by plotting themselves onto an axis and
+storing a reference to both the widget object and the axis on which they are
+plotted.
 
 """
 
@@ -15,170 +15,193 @@ from anesthetic.plot import make_2D_axes
 
 
 class Widget(object):
-    """ Base class for anesthetic gui widgets.
+    """Base class for anesthetic gui widgets.
 
     Stores a reference to the underlying figure, the gridspec that the
     widget is placed at and the axes of the widget.
 
-    Args:
-        fig (matplotlib.figure.Figure):
+    Parameters
+    ----------
+        fig: matplotlib.figure.Figure
             Figure for drawing widget on.
 
-        gridspec (matplotlib.gridspec.GridSpec):
+        gridspec: matplotlib.gridspec.GridSpec
             Specification for where to draw in the figure.
             Technically could be any argument that can be passed to
             matplotlib.figure.Figure.add_subplot.
 
-    Attributes:
-        fig  (matplotlib.figure.Figure):
+    Attributes
+    ----------
+        fig: (matplotlib.figure.Figure
             Figure for drawing widget on.
 
-        gridspec (matplotlib.gridspec.GridSpec)
+        gridspec: matplotlib.gridspec.GridSpec
             Specification for where to draw in the figure.
             Technically could be any argument that can be passed to
             matplotlib.figure.Figure.add_subplot.
 
-        ax  (matplotlib.axes.Axes):
+        ax: matplotlib.axes.Axes
             Axes of widget.
+
     """
+
     def __init__(self, fig, gridspec):
+        """Initialise Widget."""
         self.fig = fig
         self.gridspec = gridspec
         self.ax = self.fig.add_subplot(self.gridspec)
 
 
 class LabelsWidget(Widget):
-    """ Widget with labels to choose from.
+    """Widget with labels to choose from.
 
-    Args:
-        labels (list(str)):
+    Parameters
+    ----------
+        labels: list(str)
             Set of labels to be tied to Widget.
 
-    Attributes:
-        labels (list(str)):
+    Attributes
+    ----------
+        labels: list(str)
             Set of labels on Widget.
+
     """
+
     def __init__(self, fig, gridspec, labels):
+        """Initialise LabelsWidget."""
         super(LabelsWidget, self).__init__(fig, gridspec)
         self.labels = labels
 
 
 class Button(Widget):
-    """ Push button that performs an action.
+    """Push button that performs an action.
 
-    Args:
-        action (func):
+    Parameters
+    ----------
+        action: func
             What should be run upon clicking the button.
 
-        text (str):
+        text: str
             Overlay text on the button.
 
-    Attributes:
-        button (matplotlib.widgets.Button):
+    Attributes
+    ----------
+        button: matplotlib.widgets.Button
             matplotlib Button.
+
     """
+
     def __init__(self, fig, gridspec, action, text):
+        """Initialise button widget."""
         super(Button, self).__init__(fig, gridspec)
         self.button = mplButton(self.ax, text)
         self.button.on_clicked(action)
 
 
 class CheckButtons(LabelsWidget):
-    """ Set of checkboxes.
+    """Set of checkboxes.
 
     Defaults to choosing the only the first label at start.
 
-    Args:
-        action (func):
+    Parameters
+    ----------
+        action: func
             What should be done upon checking the box.
 
-    Attributes:
-        buttons (matplotlib.widgets.CheckButtons):
+    Attributes
+    ----------
+        buttons: matplotlib.widgets.CheckButtons
             matplotlib CheckButtons.
+
     """
+
     def __init__(self, fig, gridspec, labels, action):
+        """Initialise CheckButtons."""
         super(CheckButtons, self).__init__(fig, gridspec, labels)
         default = [i == 0 for i, _ in enumerate(self.labels)]
         self.buttons = mplCheckButtons(self.ax, self.labels, default)
         self.buttons.on_clicked(action)
 
     def __call__(self):
-        """ Current status of the check boxes.
-
-        Returns:
-            list(str):
-                Labels that are currently selected.
-        """
+        """Get current status of the check boxes."""
         return self.labels[list(self.buttons.get_status())]
 
 
 class RadioButtons(LabelsWidget):
-    """ Set of radio selection choices.
+    """Set of radio selection choices.
 
-    Args:
-        labels (list(str))
+    Parameters
+    ----------
+        labels: list(str))
 
-    Attributes:
-        buttons (matplotlib.widgets.RadioButtons):
+    Attributes
+    ----------
+        buttons: matplotlib.widgets.RadioButtons
             matplotlib RadioButtons.
+
     """
+
     def __init__(self, fig, gridspec, labels, action):
+        """Initialise RadioButtons."""
         super(RadioButtons, self).__init__(fig, gridspec, labels)
         self.buttons = mplRadioButtons(self.ax, self.labels)
         self.buttons.on_clicked(action)
 
     def __call__(self):
-        """ Current status of the radio selection.
-
-        Returns:
-            str:
-                Label that is currently selected.
-        """
+        """Get current selection string."""
         return self.buttons.value_selected
 
 
 class Slider(Widget):
-    """ Choose a parameter via a slider widget.
+    """Choose a parameter via a slider widget.
 
-    Args:
-        action (func):
+    Parameters
+    ----------
+        action: func
             What should be done upon altering the slider.
 
-        text (str):
+        text: str
             Text at the start of the slider.
 
-        valmin, valmax, valinit (float):
+        valmin, valmax, valinit: float
             Range and initial value for the slider.
 
-        orientation (str):
+        orientation: str
             Orientation for slider ('horizontal' or 'vertical').
 
-    Attributes:
-        slider (matplotlib.widgets.Slider):
+    Attributes
+    ----------
+        slider: matplotlib.widgets.Slider
             matplotlib Slider.
+
     """
+
     def __init__(self, fig, gridspec, action, text,
                  valmin, valmax, valinit, orientation):
+        """Initialise Slider."""
         super(Slider, self).__init__(fig, gridspec)
         self.slider = mplSlider(self.ax, text, valmin, valmax, valinit=valinit,
                                 orientation=orientation)
         self.slider.on_changed(action)
 
     def set_text(self, text):
-        """ Set the text at the end of the slider.
+        """Set the text at the end of the slider.
 
-        Args:
-            text (str):
+        Parameters
+        ----------
+            text: str
                 Text to be chosen
+
         """
         self.slider.valtext.set_text(text)
 
     def reset_range(self, valmin=None, valmax=None):
-        """ Reset the range of the slider
+        """Reset the range of the slider.
 
         Kwargs:
-            valmin, valmax, (float), optional:
+            valmin, valmax: (float), optional:
                 The new limits to the slider.
+
         """
         if valmax is not None:
             self.slider.valmax = valmax
@@ -187,37 +210,37 @@ class Slider(Widget):
         self.slider.ax.set_xlim(self.slider.valmin, self.slider.valmax)
 
     def __call__(self):
-        """ Return the float value in the slider."""
+        """Return the float value in the slider."""
         return self.slider.val
 
 
 class TrianglePlot(Widget):
-    """ Triangle plot widget as exemplified by getdist and corner.py
+    """Triangle plot widget as exemplified by getdist and corner.py.
 
     For other examples of these plots, see:
     https://getdist.readthedocs.io
     https://corner.readthedocs.io
 
-    Attributes:
-        ax (dict{(str, str):matplotlib.axes.Axes}):
+    Attributes
+    ----------
+        ax: pandas.DataFrame(matplotlib.axes.Axes)
             Mapping from pairs of parameters to axes for plotting.
-            string pair is in x-y order.
-
-        points (dict{(str, str):matplotlib.lines.line2D}):
-            Mapping from pairs of parameters to points plotted on each axis.
-            string pair is in x-y order.
     """
+
     def __init__(self, fig, gridspec):
+        """Initialise triangle plot."""
         super(TrianglePlot, self).__init__(fig, gridspec)
         self.fig.delaxes(self.ax)
         _, self.ax = make_2D_axes([], fig=self.fig, subplot_spec=self.gridspec)
 
     def draw(self, labels):
-        """ Draw a new triangular grid for list of parameters labels.
+        """Draw a new triangular grid for list of parameters labels.
 
-        Args:
-            labels (list(str)):
+        Parameters
+        ----------
+            labels: list(str)
                 labels for the triangular grid.
+
         """
         # Remove any existing axes
         for y, row in self.ax.iterrows():
@@ -241,18 +264,20 @@ class TrianglePlot(Widget):
                         ax.plot([None], [None], 'k.')
 
     def update(self, f):
-        """ Update the points in the triangle plot using f function.
+        """Update the points in the triangle plot using f function.
 
-        Args:
-            f (func: str -> array(float)):
+        Parameters
+        ----------
+            f: func: str -> array(float)
                 this function should take in a parameter label i, and return an
                 array-like object of the i-coordinate of the samples
+
         """
         for y, row in self.ax.iterrows():
             for x, ax in row.iteritems():
                 if ax is not None:
                     if x == y:
-                        datx, daty = histogram(f(x), bins='auto', density=True)
+                        datx, daty = histogram(f(x), bins='auto')
                         ax.twin.lines[0].set_xdata(datx)
                         ax.twin.lines[0].set_ydata(daty)
                     else:
@@ -260,7 +285,7 @@ class TrianglePlot(Widget):
                         ax.lines[0].set_ydata(f(y))
 
     def reset_range(self):
-        """ Reset the range of each grid. """
+        """Reset the range of each grid."""
         for y, row in self.ax.iterrows():
             for x, ax in row.iteritems():
                 if ax is not None:

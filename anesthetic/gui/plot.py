@@ -1,4 +1,4 @@
-""" Main plotting tools."""
+"""Main plotting tools."""
 import numpy
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import (GridSpec as GS,
@@ -9,16 +9,20 @@ from anesthetic.gui.widgets import (Widget, Slider, Button,
 
 
 class Higson(Widget):
-    """ Higson plot as shown in https://arxiv.org/abs/1703.09701 .
+    """Higson plot as shown in https://arxiv.org/abs/1703.09701 .
 
-    Attributes:
-        curve (matplotlib.lines.Line2D):
+    Attributes
+    ----------
+        curve: matplotlib.lines.Line2D
             points currently plotted as a curve.
 
-        point (matplotlib.lines.Line2D):
+        point: matplotlib.lines.Line2D
             large indicator point currently plotted on the curve.
+
     """
+
     def __init__(self, fig, gridspec):
+        """Initialise higson plot."""
         super(Higson, self).__init__(fig, gridspec)
         self.ax.set_yticks([])
         self.ax.set_ylim(-0.1, 1.1)
@@ -29,17 +33,19 @@ class Higson(Widget):
         self.point, = self.ax.plot([None], [None], 'ko')
 
     def update(self, logX, LX, i):
-        """ Update the line and the point in the higson plot.
+        """Update the line and the point in the higson plot.
 
-        Args:
-            logX (array):
+        Parameters
+        ----------
+            logX: array-like
                 log-volume compression values to plot
 
-            LX (array):
+            LX: array-like
                 Likelihood * volume compression
 
-            i (int):
+            i: int
                 Current location of higson point
+
         """
         self.point.set_xdata(logX[i])
         self.point.set_ydata(LX[i])
@@ -47,99 +53,111 @@ class Higson(Widget):
         self.curve.set_ydata(LX)
 
     def reset_range(self):
-        """ Reset the ranges of the higson plot. """
+        """Reset the ranges of the higson plot."""
         xdata = self.curve.get_xdata()
         self.ax.set_xlim(max(xdata), min(xdata))
 
 
 class Evolution(Slider):
-    """ Slider controlling the evolution stage of the live points."""
+    """Slider controlling the evolution stage of the live points."""
+
     def __init__(self, fig, gridspec, action, valmax):
+        """Initialise evolution slider."""
         super(Evolution, self).__init__(fig, gridspec, action, '',
                                         0, valmax, 0, 'horizontal')
         self.slider.valtext.set_horizontalalignment('right')
         self.slider.valtext.set_position((0.98, 0.5))
 
     def __call__(self):
-        """ Return the current iteration as an integer. """
+        """Return the current iteration as an integer."""
         mx = self.slider.valmax-1
         val = int(super(Evolution, self).__call__())
         return min(val, mx)
 
     def set_text(self, logL, n):
-        """ Set the text at end of slider.
+        """Set the text at end of slider.
 
-        Args:
-            logL (float):
+        Parameters
+        ----------
+            logL: float
                 Current loglikelihood of evolution stage
 
-            n (float):
+            n: int
                 Current number of live points of evolution stage
+
         """
         text = r'$\log L$: %.6g, $n_\mathrm{live}$: %i' % (logL, n)
         return super(Evolution, self).set_text(text)
 
 
 class Temperature(Slider):
-    """ Logarithmic slider controlling temperature of the posterior points."""
+    """Logarithmic slider controlling temperature of the posterior points."""
+
     def __init__(self, fig, gridspec, action):
+        """Initialise temperature slider."""
         super(Temperature, self).__init__(fig, gridspec, action, r'$kT$',
                                           -1, 5, 0, 'vertical')
 
     def __call__(self):
-        """ Return the current temperature. """
+        """Return the current temperature."""
         return 10**super(Temperature, self).__call__()
 
     def set_text(self, kT):
-        """ Set the text at end of slider.
+        """Set the text at end of slider.
 
         Args:
-            kT (float):
+            kT: float
                 Current temperature of posterior points stage
+
         """
         text = r'%.2g' % kT
         return super(Temperature, self).set_text(text)
 
 
 class RunPlotter(object):
-    """ Construct a control panel of information on a nested sampling run.
+    """Construct a control panel of information on a nested sampling run.
 
-    Args:
-        root (str):
+    Parameters
+    ----------
+        root: str
             The root string for the chains files to be used.
 
-    Attributes:
-        run (anesthetic.samples.NestedSamples):
+    Attributes
+    ----------
+        run: anesthetic.samples.NestedSamples
             Object for extracting nested sampling data from chains files.
 
-        fig (matplotlib.figure.Figure):
+        fig: matplotlib.figure.Figure
             Reference to the underlying figure
 
-        triangle (anesthetic.gui.widgets.TrianglePlot):
+        triangle: anesthetic.gui.widgets.TrianglePlot
             Corner plot of live or posterior samples.
 
-        temperature (anesthetic.gui.plot.Temperature):
+        temperature: anesthetic.gui.plot.Temperature
             Slider selecting the posterior temperature.
 
-        evolution (anesthetic.gui.plot.Evolution):
+        evolution: anesthetic.gui.plot.Evolution
             Slider selecting the live iteration.
 
-        higson (anesthetic.gui.plot.Higson):
+        higson: anesthetic.gui.plot.Higson
             Higson plot of posterior weights.
 
-        reset (anesthetic.gui.widgets.Button):
+        reset: anesthetic.gui.widgets.Button
             Button that resets the parameter ranges.
 
-        reload (anesthetic.gui.widgets.Button):
+        reload: anesthetic.gui.widgets.Button
             Button that reloads the files.
 
-        type (anesthetic.gui.widgets.RadioButtons):
+        type: anesthetic.gui.widgets.RadioButtons
             Radio buttons that selects whether to plot live or posteriors.
 
-        param_choice (anesthetic.gui.widgets.CheckButtons):
+        param_choice: anesthetic.gui.widgets.CheckButtons
             Checkbox that selects which parameters to plot.
+
     """
+
     def __init__(self, root, labels=None):
+        """Initialise RunPlotter interface."""
         self.run = NestedSamples.read(root)
         if labels:
             self.labels = numpy.array(labels)
@@ -151,7 +169,7 @@ class RunPlotter(object):
         self.redraw(None)
 
     def _set_up(self):
-        """ Draw the control panel.
+        """Draw the control panel.
 
         We implement the control panel using sequential recursive gridspecs.
 
@@ -174,8 +192,8 @@ class RunPlotter(object):
 
         These variable names are included in the __init__ function, and are
         named with an intuitive Huffman coding.
-        """
 
+        """
         gs = GS(2, 1, height_ratios=[3, 1])
         gs0 = sGS(1, 2, width_ratios=[19, 1], subplot_spec=gs[0])
         gs1 = sGS(1, 3, width_ratios=[4, 1, 1], subplot_spec=gs[1])
@@ -197,7 +215,7 @@ class RunPlotter(object):
                                          self.labels, self.redraw)
 
     def redraw(self, _):
-        """ Redraw the triangle plot upon parameter updating."""
+        """Redraw the triangle plot upon parameter updating."""
         self.triangle.draw(self.param_choice())
         self.update(None)
         self.reset_range(None)
@@ -205,14 +223,18 @@ class RunPlotter(object):
         self.fig.canvas.draw()
 
     def points(self, label):
-        """ Get sample coordinates from nested sampling run.
+        """Get sample coordinates from nested sampling run.
 
-        Args:
-            label (str):
+        Parameters
+        ----------
+            label: str
                 label indicating the coordinate to extract.
-        Returns:
-            array(float):
+
+        Returns
+        -------
+            array-like:
                 sample 'label'-coordinates.
+
         """
         if self.type() == 'posterior':
             kT = self.temperature()
@@ -223,7 +245,7 @@ class RunPlotter(object):
             return self.run.live_points(logL)[label]
 
     def update(self, _):
-        """ Update all the plots upon slider changes."""
+        """Update all the plots upon slider changes."""
         logX = numpy.log(self.run.nlive/(self.run.nlive+1)).cumsum()
         kT = self.temperature()
         LX = self.run.logL/kT + logX
@@ -244,13 +266,13 @@ class RunPlotter(object):
         self.fig.canvas.draw()
 
     def reload_file(self, _):
-        """ Reload the data from file."""
+        """Reload the data from file."""
         self.run.reload_data()
         self.evolution.reset_range(valmax=len(self.run))
         self.update(None)
 
     def reset_range(self, _):
-        """ Reset the parameter ranges. """
+        """Reset the parameter ranges."""
         self.triangle.reset_range()
         self.higson.reset_range()
         self.fig.canvas.draw()

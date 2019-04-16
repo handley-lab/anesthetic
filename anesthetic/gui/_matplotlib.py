@@ -1,11 +1,11 @@
+"""Drop-in for earlier versions of matplotlib."""
 from matplotlib.widgets import AxesWidget
 import six
 import numpy as np
 
 
 class Slider(AxesWidget):
-    """
-    A slider representing a floating point range.
+    """A slider representing a floating point range.
 
     Create a slider from *valmin* to *valmax* in axes *ax*. For the slider to
     remain responsive you must maintain a reference to it. Call
@@ -15,12 +15,15 @@ class Slider(AxesWidget):
     ----------
     val : float
         Slider value.
+
     """
+
     def __init__(self, ax, label, valmin, valmax, valinit=0.5, valfmt='%1.2f',
                  closedmin=True, closedmax=True, slidermin=None,
                  slidermax=None, dragging=True, valstep=None,
                  orientation='horizontal', **kwargs):
-        """
+        """Initialisation.
+
         Parameters
         ----------
         ax : Axes
@@ -71,6 +74,7 @@ class Slider(AxesWidget):
         :class:`~matplotlib.patches.Rectangle` that draws the slider
         knob.  See the :class:`~matplotlib.patches.Rectangle` documentation for
         valid property names (e.g., `facecolor`, `edgecolor`, `alpha`).
+
         """
         AxesWidget.__init__(self, ax)
 
@@ -143,7 +147,7 @@ class Slider(AxesWidget):
         self.set_val(valinit)
 
     def _value_in_bounds(self, val):
-        """ Makes sure self.val is with given bounds."""
+        """Make sure self.val is with given bounds."""
         if self.valstep:
             val = np.round((val - self.valmin)/self.valstep)*self.valstep
             val += self.valmin
@@ -169,7 +173,7 @@ class Slider(AxesWidget):
         return val
 
     def _update(self, event):
-        """update the slider position"""
+        """Update the slider position."""
         if self.ignore(event):
             return
 
@@ -197,12 +201,12 @@ class Slider(AxesWidget):
             self.set_val(val)
 
     def set_val(self, val):
-        """
-        Set slider value to *val*
+        """Set slider value to *val*.
 
         Parameters
         ----------
         val : float
+
         """
         xy = self.poly.xy
         if self.orientation == 'vertical':
@@ -222,7 +226,8 @@ class Slider(AxesWidget):
             func(val)
 
     def on_changed(self, func):
-        """
+        """On changed.
+
         When the slider value is changed call *func* with the new
         slider value
 
@@ -236,6 +241,7 @@ class Slider(AxesWidget):
         -------
         cid : int
             Connection id (which can be used to disconnect *func*)
+
         """
         cid = self.cnt
         self.observers[cid] = func
@@ -243,13 +249,13 @@ class Slider(AxesWidget):
         return cid
 
     def disconnect(self, cid):
-        """
-        Remove the observer with connection id *cid*
+        """Remove the observer with connection id *cid*.
 
         Parameters
         ----------
         cid : int
             Connection id of the observer to be removed
+
         """
         try:
             del self.observers[cid]
@@ -257,6 +263,6 @@ class Slider(AxesWidget):
             pass
 
     def reset(self):
-        """Reset the slider to the initial value"""
+        """Reset the slider to the initial value."""
         if (self.val != self.valinit):
             self.set_val(self.valinit)

@@ -33,7 +33,7 @@ jobs:
           name: pydocstyle
           command: |
             . venv/bin/activate
-            pydocstyle anesthetic 
+            pydocstyle --convention=numpy anesthetic 
 
       - run: 
           name: tests
