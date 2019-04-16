@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 ===========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
-:Version: 0.7.0
+:Version: 0.8.0
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -31,6 +31,7 @@ This project is still in beta phase. It aims to bring together tools for process
 
 - numpy
 - scipy
+- matplotlib
 - pandas
 
 As well as the state-of-the-art KDE tool:
