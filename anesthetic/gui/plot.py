@@ -3,7 +3,6 @@ import numpy
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import (GridSpec as GS,
                                  GridSpecFromSubplotSpec as sGS)
-from anesthetic import NestedSamples
 from anesthetic.gui.widgets import (Widget, Slider, Button,
                                     RadioButtons, TrianglePlot, CheckButtons)
 
@@ -119,12 +118,13 @@ class RunPlotter(object):
 
     Parameters
     ----------
-        root: str
-            The root string for the chains files to be used.
+        samples: anesthetic.samples.NestedSamples
+            The root string for the chains files to be used, or a set of nested
+            samples.
 
     Attributes
     ----------
-        run: anesthetic.samples.NestedSamples
+        samples: anesthetic.samples.NestedSamples
             Object for extracting nested sampling data from chains files.
 
         fig: matplotlib.figure.Figure
@@ -156,14 +156,14 @@ class RunPlotter(object):
 
     """
 
-    def __init__(self, root, labels=None):
+    def __init__(self, samples, params=None):
         """Initialise RunPlotter interface."""
-        self.root = root
-        self.run = NestedSamples.read(self.root)
-        if labels:
-            self.labels = numpy.array(labels)
+        self.samples = samples
+
+        if params:
+            self.params = numpy.array(params)
         else:
-            self.labels = numpy.array(self.run.params[:10])
+            self.params = numpy.array(self.samples.params[:10])
 
         self.fig = plt.figure()
         self._set_up()
@@ -204,7 +204,7 @@ class RunPlotter(object):
         self.triangle = TrianglePlot(self.fig, gs0[0])
         self.temperature = Temperature(self.fig, gs0[1], self.update)
         self.evolution = Evolution(self.fig, gs10[0],
-                                   self.update, len(self.run))
+                                   self.update, len(self.samples))
         self.higson = Higson(self.fig, gs10[1])
         self.reset = Button(self.fig, gs11[0],
                             self.reset_range, 'Reset Range')
@@ -213,18 +213,18 @@ class RunPlotter(object):
         self.type = RadioButtons(self.fig, gs11[2],
                                  ('live', 'posterior'), self.update)
         self.param_choice = CheckButtons(self.fig, gs1[2],
-                                         self.labels, self.redraw)
+                                         self.params, self.redraw)
 
     def redraw(self, _):
         """Redraw the triangle plot upon parameter updating."""
-        self.triangle.draw(self.param_choice(), self.run.tex)
+        self.triangle.draw(self.param_choice(), self.samples.tex)
         self.update(None)
         self.reset_range(None)
         self.fig.tight_layout()
         self.fig.canvas.draw()
 
     def points(self, label):
-        """Get sample coordinates from nested sampling run.
+        """Get sample coordinates from nested sampling samples.
 
         Parameters
         ----------
@@ -239,22 +239,22 @@ class RunPlotter(object):
         """
         if self.type() == 'posterior':
             kT = self.temperature()
-            return self.run.posterior_points(1/kT)[label]
+            return self.samples.posterior_points(1/kT)[label]
         else:
             i = self.evolution()
-            logL = self.run.logL.iloc[i]
-            return self.run.live_points(logL)[label]
+            logL = self.samples.logL.iloc[i]
+            return self.samples.live_points(logL)[label]
 
     def update(self, _):
         """Update all the plots upon slider changes."""
-        logX = numpy.log(self.run.nlive/(self.run.nlive+1)).cumsum()
+        logX = numpy.log(self.samples.nlive/(self.samples.nlive+1)).cumsum()
         kT = self.temperature()
-        LX = self.run.logL/kT + logX
+        LX = self.samples.logL/kT + logX
         LX = numpy.exp(LX-LX.max())
         i = self.evolution()
-        logL = self.run.logL.iloc[i]
+        logL = self.samples.logL.iloc[i]
         try:
-            n = self.run.nlive.iloc[i]
+            n = self.samples.nlive.iloc[i]
         except IndexError:
             n = 0
 
@@ -268,8 +268,8 @@ class RunPlotter(object):
 
     def reload_file(self, _):
         """Reload the data from file."""
-        self.run = NestedSamples.read(self.root)
-        self.evolution.reset_range(valmax=len(self.run))
+        self.samples.reload()
+        self.evolution.reset_range(valmax=len(self.samples))
         self.update(None)
 
     def reset_range(self, _):

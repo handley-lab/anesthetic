@@ -1,8 +1,8 @@
-from anesthetic.gui import RunPlotter
+from anesthetic import NestedSamples
 
 
 def test_gui():
-    plotter = RunPlotter('./tests/example_data/ns/ns')
+    plotter = NestedSamples.read('./tests/example_data/ns/ns').gui()
 
     # Type buttons
     plotter.type.buttons.set_active(0)

@@ -112,8 +112,3 @@ Features
 - Both samples and plotting axes are stored as a ``pandas.DataFrame``, which makes for easy access and modification.
 - No overlapping tick labels in large plots.
 - Sensible color scheme for plotting nearly flat distributions.
-
-To Do
------
-- Fix nlive
-- Histograms as alternative to KDE

@@ -10,7 +10,8 @@ from anesthetic.plot import (make_1D_axes, make_2D_axes, plot_1d,
                              scatter_plot_2d, contour_plot_2d)
 from anesthetic.read.getdist import GetDistReader
 from anesthetic.read.nested import NestedReader
-from anesthetic.utils import compress_weights
+from anesthetic.utils import compress_weights, compute_nlive
+from anesthetic.gui.plot import RunPlotter
 
 
 class MCMCSamples(pandas.DataFrame):
@@ -360,12 +361,7 @@ class NestedSamples(MCMCSamples):
             data['nlive'][-nlive:] = numpy.arange(nlive, 0, -1)
         else:
             data['logL_birth'] = logL_birth
-            index = data.logL.searchsorted(data.logL_birth)-1
-            births = pandas.Series(+1, index=index).sort_index()
-            deaths = pandas.Series(-1, index=data.index)
-            nlive = pandas.concat([births, deaths]).sort_index().cumsum()
-            nlive = (nlive[~nlive.index.duplicated(keep='first')]+1)[1:]
-            data['nlive'] = nlive
+            data['nlive'] = compute_nlive(data.logL, data.logL_birth)
 
         data['logw'] = data._dlogX()
         return data
@@ -413,6 +409,14 @@ class NestedSamples(MCMCSamples):
     def posterior_points(self, beta):
         """Get the posterior points at temperature beta."""
         return self[self._weights(beta, nsamples=-1) > 0]
+
+    def gui(self, params=None):
+        """Construct a graphical user interface for viewing samples."""
+        return RunPlotter(self, params)
+
+    def reload(self):
+        """Reload the run from file."""
+        self = NestedSamples.read(self.root)
 
     def _weights(self, beta, nsamples=None):
         """Return the posterior weights for plotting."""

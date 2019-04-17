@@ -1,5 +1,6 @@
 """Data-processing utility functions."""
 import numpy
+import pandas
 
 
 def channel_capacity(w):
@@ -118,3 +119,15 @@ def histogram(a, **kwargs):
     if mx:
         ypath /= max(ypath)
     return xpath, ypath
+
+
+def compute_nlive(death, birth):
+    """Compute number of live points from birth and death contours."""
+    contours = numpy.concatenate(([birth[0]], death))
+    index = numpy.arange(death.size)
+    birth_index = contours.searchsorted(birth)-1
+    births = pandas.Series(+1, index=birth_index).sort_index()
+    deaths = pandas.Series(-1, index=index)
+    nlive = pandas.concat([births, deaths]).sort_index()
+    nlive = nlive.groupby(nlive.index).sum().cumsum()
+    return nlive.values[:-1]

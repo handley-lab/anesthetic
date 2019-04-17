@@ -1,6 +1,5 @@
 #| Download some example data from github
 
-
 import requests
 import tarfile
 
@@ -66,19 +65,9 @@ mcmc.plot_1d('omegab');
 
 #| Anethestic really comes to the fore for nested sampling. We can do all of
 #| the above, and more with the power that NS chains provide
-import matplotlib.pyplot as plt
-from matplotlib.collections import PathCollection
 
 from anesthetic import NestedSamples
 nested = NestedSamples.read('plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
-fig, axes = nested.plot_2d(['omegabh2','omegach2'])
-fig, axes = nested.plot_2d(axes)
-
-proxy = get_legend_proxy(axes)
-fig.legend(proxy, ["Sample 1", "Sample 2"])
-fig.tight_layout()
-plt.plot(numpy.linspace(0,1,10),color=colors[0])
-
 
 #| We can infer the evidence, KL divergence and Bayesian model dimensionality:
 
@@ -104,6 +93,7 @@ nested.plot_2d(axes=axes);
 
 #| With nested samples, we can plot the prior (or any temperature), by
 #| passing beta=0
+
 from anesthetic import get_legend_proxy
 
 fig, axes = nested.plot_2d(['ns','tau'], beta=0)
@@ -113,5 +103,5 @@ fig.legend(proxy, ['prior', 'posterior'])
 
 #| We can also set up an interactive plot, which allows us to replay a nested
 #| sampling run after the fact.
-from anesthetic.gui import RunPlotter
-RunPlotter('plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
+
+nested.gui()
