@@ -1,24 +1,16 @@
 anesthetic package
 ==================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    anesthetic.gui
+    anesthetic.read
+
 Submodules
 ----------
-
-anesthetic.anesthetic module
-----------------------------
-
-.. automodule:: anesthetic.anesthetic
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-anesthetic.information\_theory module
--------------------------------------
-
-.. automodule:: anesthetic.information_theory
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 anesthetic.kde module
 ---------------------
@@ -36,10 +28,10 @@ anesthetic.plot module
     :undoc-members:
     :show-inheritance:
 
-anesthetic.read module
-----------------------
+anesthetic.samples module
+-------------------------
 
-.. automodule:: anesthetic.read
+.. automodule:: anesthetic.samples
     :members:
     :undoc-members:
     :show-inheritance:

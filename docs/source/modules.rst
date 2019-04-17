@@ -1,8 +1,7 @@
-rhinestone
+anesthetic
 ==========
 
 .. toctree::
    :maxdepth: 4
 
    anesthetic
-   rhinestone
