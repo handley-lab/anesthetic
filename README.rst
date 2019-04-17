@@ -54,6 +54,8 @@ For an interactive view of a nested sampling run, you can use the ``anesthetic``
 
    $ anesthetic <ns file root>
 
+.. image:: images/anim_1.gif
+
 
 Installation
 ------------
