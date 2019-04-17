@@ -24,6 +24,7 @@ from anesthetic.utils import check_bounds, nest_level
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.collections import PathCollection
 
 
 def make_1D_axes(params, **kwargs):
@@ -311,6 +312,9 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
                        vmin=0, vmax=1.0, cmap=cmap, zorder=zorder+1,
                        *args, **kwargs)
+    for c in cbar.collections:
+        c.set_cmap(cmap)
+
     ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
                vmin=0, vmax=1.2, linewidths=0.5, colors='k', zorder=zorder+2,
                *args, **kwargs)
@@ -366,14 +370,26 @@ def get_legend_proxy(fig):
         >>> proxy = get_legend_proxy(fig)
         >>> fig.legend(proxy, ['A', 'B']
     """
-    colors = [line.get_color() for ax in fig.axes for line in ax.lines]
-    _, idx = numpy.unique(colors, return_index=True)
-    colors = numpy.array(colors)[idx]
-    cmaps = [basic_cmap(color) for color in colors]
+    cmaps = [coll.get_cmap() for ax in fig.axes for coll in ax.collections
+             if isinstance(coll, PathCollection)]
+    cmaps = unique(cmaps)
+    if not cmaps:
+        colors = [line.get_color() for ax in fig.axes for line in ax.lines]
+        colors = unique(colors)
+        cmaps = [basic_cmap(color) for color in colors]
     proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.999),
                            edgecolor=cmap(0.33), linewidth=2)
              for cmap in cmaps]
     return proxy
+
+
+def unique(a):
+    """Find unique elements, retaining order."""
+    b = []
+    for x in a:
+        if x not in b:
+            b.append(x)
+    return b
 
 
 def basic_cmap(color):
