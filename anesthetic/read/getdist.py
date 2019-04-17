@@ -36,7 +36,7 @@ class GetDistReader(ChainReader):
         except IOError:
             return super(GetDistReader, self).paramnames()
 
-    def read_limits(self):
+    def limits(self):
         """Read <root>.ranges in getdist format."""
         try:
             with open(self.ranges_file, 'r') as f:
