@@ -34,7 +34,7 @@ def compress_weights(w, u=None, nsamples=None):
 
     fraction, integer = numpy.modf(W)
     extra = (u < fraction).astype(int)
-    return integer + extra
+    return (integer + extra).astype(int)
 
 
 def check_bounds(d, xmin=None, xmax=None):
