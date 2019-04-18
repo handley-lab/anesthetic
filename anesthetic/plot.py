@@ -1,18 +1,13 @@
 """Lower-level plotting tools.
 
-Routines that may be of use to users wishing for more fine-grained analyses may
+Routines that may be of use to users wishing for more fine-grained control may
 wish to use.
 
 - ``make_1D_axes``
 - ``make_2D_axes``
+- ``get_legend_proxy``
 
-to create a set of axes for plotting on, or
-
-- ``plot_1d``
-- ``contour_plot_2d``
-- ``scatter_plot_2d``
-
-for directly plotting onto these axes.
+to create a set of axes and legend proxies.
 
 """
 import numpy
@@ -20,7 +15,7 @@ import pandas
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
 from anesthetic.kde import kde_1d, kde_2d
-from anesthetic.utils import check_bounds, nest_level
+from anesthetic.utils import check_bounds, nest_level, unique
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
@@ -363,33 +358,32 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 def get_legend_proxy(fig):
     """Extract a proxy for plotting onto a legend.
 
-    Example usage
-    -------------
+    Example usage:
         >>> fig, axes = modelA.plot_2d()
         >>> modelB.plot_2d(axes)
         >>> proxy = get_legend_proxy(fig)
         >>> fig.legend(proxy, ['A', 'B']
+
+    Parameters
+    ----------
+        fig: matplotlib.figure.Figure
+            Figure to extract colors from.
+
     """
     cmaps = [coll.get_cmap() for ax in fig.axes for coll in ax.collections
              if isinstance(coll, PathCollection)]
     cmaps = unique(cmaps)
+
     if not cmaps:
         colors = [line.get_color() for ax in fig.axes for line in ax.lines]
         colors = unique(colors)
         cmaps = [basic_cmap(color) for color in colors]
+
     proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.999),
                            edgecolor=cmap(0.33), linewidth=2)
              for cmap in cmaps]
+
     return proxy
-
-
-def unique(a):
-    """Find unique elements, retaining order."""
-    b = []
-    for x in a:
-        if x not in b:
-            b.append(x)
-    return b
 
 
 def basic_cmap(color):

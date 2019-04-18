@@ -1,6 +1,6 @@
 import numpy
 from numpy.testing import assert_array_equal
-from anesthetic.utils import nest_level, compute_nlive
+from anesthetic.utils import nest_level, compute_nlive, unique
 
 
 def test_nest_level():
@@ -36,3 +36,7 @@ def test_compute_nlive():
 
     # Check never more than nlive
     assert(nlives.max() <= nlive)
+
+
+def test_unique():
+    assert(unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4])

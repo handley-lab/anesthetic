@@ -131,3 +131,12 @@ def compute_nlive(death, birth):
     nlive = pandas.concat([births, deaths]).sort_index()
     nlive = nlive.groupby(nlive.index).sum().cumsum()
     return nlive.values[:-1]
+
+
+def unique(a):
+    """Find unique elements, retaining order."""
+    b = []
+    for x in a:
+        if x not in b:
+            b.append(x)
+    return b
