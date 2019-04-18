@@ -7,8 +7,8 @@ python:
     - "3.4"
     - "2.7"
 env:
-    - CONDA=1
     - CONDA=
+    - CONDA=1
 
 matrix:
     include:
