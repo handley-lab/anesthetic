@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 ===========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
-:Version: 0.9.0
+:Version: 1.0.0
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -15,28 +15,19 @@ anesthetic: nested sampling visualisation
 .. image:: https://codecov.io/gh/williamjameshandley/anesthetic/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/williamjameshandley/anesthetic
    :alt: Test Coverage Status
-.. image:: https://badge.fury.io/py/anesthetic.svg
-   :target: https://badge.fury.io/py/anesthetic
-   :alt: PyPi location
 .. image:: https://readthedocs.org/projects/anesthetic/badge/?version=latest
    :target: https://anesthetic.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
+.. image:: https://badge.fury.io/py/anesthetic.svg
+   :target: https://badge.fury.io/py/anesthetic
+   :alt: PyPi location
 .. image:: https://zenodo.org/badge/175663535.svg
    :target: https://zenodo.org/badge/latestdoi/175663535
    :alt: Permanent DOI for this release
 
 
 
-This project is still in beta phase. It aims to bring together tools for processing nested sampling chains, leveraging the standard python libraries:
-
-- numpy
-- scipy
-- matplotlib
-- pandas
-
-As well as the state-of-the-art KDE tool:
-
-- fastKDE
+``anesthetic`` bring together tools for processing nested sampling chains, leveraging standard scientific python libraries.
 
 You can see it in action in the `plot gallery <http://htmlpreview.github.io/?https://github.com/williamjameshandley/cosmo_example/blob/master/demos/demo.html>`__.
 
@@ -44,9 +35,9 @@ Current functionality includes:
 
 - Computation of Bayesian evidences, Kullback-Liebler divergences and Bayesian model dimensionalities.
 - Marginalised 1d and 2d plots.
-- Dynamic replaying of nested sampling run
+- Dynamic replaying of nested sampling.
 
-This tool was designed primarily for use with nested sampling, although it can be used for normal MCMC chains.
+This tool was designed primarily for use with nested sampling outputs, although it can be used for normal MCMC chains.
 
 For an interactive view of a nested sampling run, you can use the ``anesthetic`` script.
 
@@ -56,16 +47,28 @@ For an interactive view of a nested sampling run, you can use the ``anesthetic``
 
 .. image:: https://github.com/williamjameshandley/anesthetic/raw/master/images/anim_1.gif
 
-Installation
-------------
+Features
+--------
 
-anesthetic can be installed via pip
+- Both samples and plotting axes are stored as a ``pandas.DataFrame``, which makes for easy access and modification.
+- Sensible color scheme for plotting nearly flat distributions.
+- For easy extension/modification, uses the standard python libraries:
+    - numpy
+    - scipy
+    - matplotlib
+    - pandas
+
+
+Installation
+============
+
+``anesthetic`` can be installed via pip
 
 .. code:: bash
 
     pip install anesthetic
 
-Or via the setup.py
+or via the setup.py
 
 .. code:: bash
 
@@ -73,43 +76,109 @@ Or via the setup.py
     cd anesthetic
     python setup.py install --user
 
+You can check that things are working by running the test suite:
+
+.. code:: bash
+
+    python -m pytest
+    flake8 anesthetic tests
+    pydocstyle --convention=numpy anesthetic
+
+Dependencies
+------------ 
+
+Basic requirements:
+
+- Python 2.7+ or 3.4+
+- `matplotlib <https://pypi.org/project/matplotlib/>`__
+- `numpy <https://pypi.org/project/numpy/>`__
+- `scipy <https://pypi.org/project/scipy/>`__
+- `pandas <https://pypi.org/project/pandas/>`__
+- `fastKDE <https://pypi.org/project/fastkde/>`__
+
+Documentation:
+
+- `sphinx <https://pypi.org/project/Sphinx/>`__
+- `numpydoc <https://pypi.org/project/numpydoc/>`__
+
+Tests:
+
+- `pytest <https://pypi.org/project/pytest/>`__
+
+Documentation
+=============
+
+Full Documentation is hosted at
+`ReadTheDocs <http://anesthetic.readthedocs.io/>`__.
+To build your own local copy of the documentation you'll need to install
+`sphinx <https://pypi.org/project/Sphinx/>`__. You can then run:
+
+.. code:: bash
+
+   cd docs
+   make html
+
+
+Contributing
+============
+There are many ways you can contribute via the [GitHub repository](https://github.com/williamjameshandley/anesthetic).
+
+- You can [open an issue](https://github.com/williamjameshandley/anesthetic/issues) to report bugs or to propose new features.
+- Pull requests are very welcome. Note that if you are going to propose major changes, be sure to open an issue for discussion first, to make sure that your PR will be accepted before you spend effort coding it.
+
+FAQ
+===
+
 Another posterior plotting tool?
 --------------------------------
 
-::
-    
     This is my posterior plotter. There are many like it, but this one is mine.
 
 There are several excellent tools for plotting marginalised posteriors:
 
 - `getdist <http://getdist.readthedocs.io/en/latest/intro.html>`__ 
 - `corner <https://corner.readthedocs.io/en/latest/>`__
-- `MontePython <http://baudren.github.io/montepython.html>`__
 - `pygtc <https://pygtc.readthedocs.io/en/latest/>`__
+- `dynesty <https://dynesty.readthedocs.io/en/latest/>`__ 
+- `MontePython <http://baudren.github.io/montepython.html>`__
 
 Why create another one? In general, any dedicated user of software will find that there is some functionality that in their use case is lacking, and the designs of previous codes make such extensions challenging. In my case this was:
 
-1. For large numbers of samples, kernel density estimation is slow, or inaccurate. There are now better state-of-the-art kernel density estimators, such as `fastKDE <https://pypi.org/project/fastkde/>`__, which ameliorate many of these difficulties.
+1. For large numbers of samples, kernel density estimation is slow, or inaccurate (particularly for samples generated from nested sampling). There are kernel density estimators, such as `fastKDE <https://pypi.org/project/fastkde/>`__, which ameliorate many of these difficulties.
 
-2. Existing tools can make it painfully difficult to define new parameters. Take for example the default cosmomc chain, which defines ``omegabh2``, but not ``omegab``. The transformation is easy, since ``omegab = omegabh2/ (H0/100)**2``, but writing this simple transformation in code is not so trivial. anesthetic solves this issue by storing the samples as a pandas array, for which the relevant code for defining the above new parameter would be
+2. Existing tools can make it difficult to define new parameters. For example, the default cosmomc chain defines ``omegabh2``, but not ``omegab``. The transformation is easy, since ``omegab = omegabh2/ (H0/100)**2``, but implementing this transformation in existing packages is not so trivial. ``anesthetic`` solves this issue by storing the samples as a pandas array, for which the relevant code for defining the above new parameter would be
 
 .. code:: python
 
     from anesthetic import MCMCSamples
-
-    samples = MCMCSamples.read(file_root)          # Load the samples
-
-    h = samples['H0']/100                          # Define h
-    samples['omegab'] = samples.omegabh2/h**2      # Define omegab
-    samples.tex['omegab'] = '$\Omega_b$'           # Label omegab
-
-    samples.plot_1d('omegab')                      # Simple 1D plot
+    samples = MCMCSamples.read(file_root)                         # Load the samples
+    samples['omegab'] = samples.omegabh2/(samples.H0/100)**2      # Define omegab
+    samples.tex['omegab'] = '$\Omega_b$'                          # Label omegab
+    samples.plot_1d('omegab')                                     # Simple 1D plot
     
-3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which is a pain if you are trying to plot priors along with your posteriors. ``anesthetic`` has a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
+3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which presents a problem if you are trying to plot priors along with your posteriors. ``anesthetic`` has a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
 
-Features
---------
+What's in a name?
+-----------------
 
-- Both samples and plotting axes are stored as a ``pandas.DataFrame``, which makes for easy access and modification.
-- No overlapping tick labels in large plots.
-- Sensible color scheme for plotting nearly flat distributions.
+There is an emerging convent for naming nested sampling packages with words that have nest in them ([nestle and dynesty](https://dynesty.readthedocs.io/en/latest/), [nestorflow](https://github.com/tomcharnock/NestorFlow)). Doing a UNIX grep:
+
+.. code:: bash
+
+    cat /usr/share/dict/words | grep nest
+
+yields a lot of superlatives (e.g. greenest), but a few other cool names for future projects:
+
+- amnesty
+- defenestrate
+- dishonestly
+- inestimable
+- minestrone
+- rhinestone
+
+I chose anesthetic because of the soft 'th', and in spite of the US spelling (as oppose to British anaesthetic).
+
+
+Changelog
+=========
+:1.0.0:  End of beta testing
