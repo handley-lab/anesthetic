@@ -52,15 +52,11 @@ Features
 
 - Both samples and plotting axes are stored as a ``pandas.DataFrame``, which makes for easy access and modification.
 - Sensible color scheme for plotting nearly flat distributions.
-- For easy extension/modification, uses the standard python libraries:
-    - numpy
-    - scipy
-    - matplotlib
-    - pandas
+- For easy extension/modification, uses the standard python libraries: numpy, scipy, matplotlib, pandas.
 
 
 Installation
-============
+------------
 
 ``anesthetic`` can be installed via pip
 
@@ -106,12 +102,9 @@ Tests:
 - `pytest <https://pypi.org/project/pytest/>`__
 
 Documentation
-=============
+-------------
 
-Full Documentation is hosted at
-`ReadTheDocs <http://anesthetic.readthedocs.io/>`__.
-To build your own local copy of the documentation you'll need to install
-`sphinx <https://pypi.org/project/Sphinx/>`__. You can then run:
+Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>`__.  To build your own local copy of the documentation you'll need to install `sphinx <https://pypi.org/project/Sphinx/>`__. You can then run:
 
 .. code:: bash
 
@@ -120,14 +113,12 @@ To build your own local copy of the documentation you'll need to install
 
 
 Contributing
-============
+------------
 There are many ways you can contribute via the [GitHub repository](https://github.com/williamjameshandley/anesthetic).
 
 - You can [open an issue](https://github.com/williamjameshandley/anesthetic/issues) to report bugs or to propose new features.
 - Pull requests are very welcome. Note that if you are going to propose major changes, be sure to open an issue for discussion first, to make sure that your PR will be accepted before you spend effort coding it.
 
-FAQ
-===
 
 Another posterior plotting tool?
 --------------------------------
@@ -161,7 +152,7 @@ Why create another one? In general, any dedicated user of software will find tha
 What's in a name?
 -----------------
 
-There is an emerging convent for naming nested sampling packages with words that have nest in them ([nestle and dynesty](https://dynesty.readthedocs.io/en/latest/), [nestorflow](https://github.com/tomcharnock/NestorFlow)). Doing a UNIX grep:
+There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://github.com/tomcharnock/NestorFlow>`__). Doing a UNIX grep:
 
 .. code:: bash
 
@@ -176,9 +167,9 @@ yields a lot of superlatives (e.g. greenest), but a few other cool names for fut
 - minestrone
 - rhinestone
 
-I chose anesthetic because of the soft 'th', and in spite of the US spelling (as oppose to British anaesthetic).
+I chose anesthetic because of the soft 'th', and in spite of the US spelling.
 
 
 Changelog
-=========
+---------
 :1.0.0:  End of beta testing
