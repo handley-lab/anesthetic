@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo "Running PEP code style tests"
+flake8 anesthetic tests
+
+echo "Running docstring checks"
+pydocstyle --convention=numpy anesthetic
+
+echo "Running code tests"
+python -m pytest
