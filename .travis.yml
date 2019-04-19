@@ -26,10 +26,11 @@ matrix:
         # OSX
         - os: osx
           language: generic
+          env: MPLBACKEND=Agg
         # OSX conda
         - os: osx
           language: generic
-          env: CONDA=1
+          env: CONDA=1 MPLBACKEND=Agg 
 
 before_install:
     # OSX setup
@@ -58,8 +59,6 @@ install:
     - pip install flake8 pydocstyle sphinx sphinx_rtd_theme;
 
 before_script:
-    - "export MPLBACKEND=Agg"
-
     # Test for pep-compliance
     - flake8 anesthetic tests
 

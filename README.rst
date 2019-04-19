@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 =========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
-:Version: 0.9.1
+:Version: 1.0.0
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -83,6 +83,7 @@ You can check that things are working by running the test suite:
 
 .. code:: bash
 
+    export MPLBACKEND=Agg     # only necessary for OSX users
     python -m pytest
     flake8 anesthetic tests
     pydocstyle --convention=numpy anesthetic
@@ -138,9 +139,9 @@ Another posterior plotting tool?
 There are several excellent tools for plotting marginalised posteriors:
 
 - `getdist <http://getdist.readthedocs.io/en/latest/intro.html>`__ 
-- `corner <https://corner.readthedocs.io/en/latest/>`__
-- `pygtc <https://pygtc.readthedocs.io/en/latest/>`__
-- `dynesty <https://dynesty.readthedocs.io/en/latest/>`__ 
+- `corner <https://corner.readthedocs.io>`__
+- `pygtc <https://pygtc.readthedocs.io>`__
+- `dynesty <https://dynesty.readthedocs.io>`__ 
 - `MontePython <http://baudren.github.io/montepython.html>`__
 
 Why create another one? In general, any dedicated user of software will find that there is some functionality that in their use case is lacking, and the designs of previous codes make such extensions challenging. In my case this was:
