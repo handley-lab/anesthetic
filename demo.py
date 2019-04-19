@@ -1,4 +1,14 @@
-#| Download some example data from github
+#| # anesthetic plot gallery
+#| This functions as both some examples of plots that can be produced, and a tutorial.
+#| Any difficulties/issues/requests should be posted as a [GitHub issue](https://github.com/williamjameshandley/anesthetic/issues)
+
+#--------------------------
+
+#| ## Download example data
+#| Download some example data from github (or alternatively use your own chains files)
+#|
+#| This downloads the PLA chains for the planck baseline cosmology,
+#| and the equivalent nested sampling chains:
 
 import requests
 import tarfile
@@ -9,33 +19,24 @@ for filename in ["plikHM_TTTEEE_lowl_lowE_lensing.tar.gz","plikHM_TTTEEE_lowl_lo
     open('data/' + filename, 'wb').write(requests.get(url).content)
     tarfile.open('data/' + filename).extractall()
 
-#| This downloaded the PLA chains for the planck baseline cosmology
 
-import os
-os.listdir('data/plikHM_TTTEEE_lowl_lowE_lensing')
-
-#| And the equivalent nested sampling chains
-
-os.listdir('data/plikHM_TTTEEE_lowl_lowE_lensing_NS')
-
-#| Now import anesthetic and load the MCMC samples
+#| ## Marginalised posterior plotting
+#| Import anesthetic and load the MCMC samples:
 
 from anesthetic import MCMCSamples
-mcmc = MCMCSamples.read('plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing')
-
-#| You can see that these are stored as a pandas array
-
-print(mcmc[:6])
+mcmc_root = 'plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing'
+mcmc = MCMCSamples.read(mcmc_root)
 
 #| We have plotting tools for 1D plots ...
 
-fig, axes = mcmc.plot_1d('omegabh2');
+fig, axes = mcmc.plot_1d('omegabh2') ;
 
 #| ... multiple 1D plots ...
 
 fig, axes = mcmc.plot_1d(['omegabh2','omegach2','H0','tau','logA','ns']);
+fig.tight_layout()
 
-#| ... triangle plots (with the equivalent scatter plot filling up the left hand side) ...
+#| ... triangle plots ...
 
 mcmc.plot_2d(['omegabh2','omegach2','H0'], types=['kde']);
 
@@ -51,7 +52,13 @@ mcmc.plot_2d([['omegabh2','omegach2','H0'], ['logA', 'ns']]);
 
 mcmc.plot_2d([['omegabh2','omegach2','H0'], ['H0','omegach2']]);
 
-#| More importantly, since this is a pandas array, we can redefine new parameters with relative ease.
+#| ## Defining new parameters
+#|
+#| You can see that samples are stored as a pandas array
+
+print(mcmc[:6])
+
+#| We can define new parameters with relative ease.
 #| For example, the default cosmoMC setup does not include omegab, only omegabh2:
 
 'omegab' in mcmc
@@ -63,20 +70,24 @@ mcmc['omegab'] = mcmc['omegabh2']/h**2
 mcmc.tex['omegab'] = '$\Omega_b$'
 mcmc.plot_1d('omegab');
 
+#| ## Nested sampling plotting
 #| Anethestic really comes to the fore for nested sampling. We can do all of
 #| the above, and more with the power that NS chains provide
 
 from anesthetic import NestedSamples
-nested = NestedSamples.read('plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing')
+nested_root = 'plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing'
+nested = NestedSamples.read(nested_root)
 
 #| We can infer the evidence, KL divergence and Bayesian model dimensionality:
 
-ns_output = nested.ns_output(200)
+ns_output = nested.ns_output(1000)
 print(ns_output[:6])
 
 #| This is a set of MCMC samples that may be plotted as usual:
 
-ns_output.plot_1d();
+from anesthetic import make_1D_axes
+fig, axes = make_1D_axes(ns_output.params, ncols=3)
+ns_output.plot_1d(axes);
 
 #| We can also inspect the correlation between these inferences:
 
