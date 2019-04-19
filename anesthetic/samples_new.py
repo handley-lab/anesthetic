@@ -35,36 +35,17 @@ class MCMCSamples(pandas.DataFrame):
     """
 
     _metadata = (pandas.DataFrame._metadata +
-                 ['params', 'tex', 'limits', 'root', 'u'])
+                 ['params', 'tex', 'limits', 'root'])
 
 
-    @property
-    def _constructor(self):
-        return MCMCSamples
-
-    @classmethod
-    def read(cls, root):
-        """Read in data from file root."""
-        # Read in data
-        reader = GetDistReader(root)
-        w, logL, samples = reader.samples()
-        params, tex = reader.paramnames()
-        limits = reader.limits()
-
-        # Build class
-        data = cls.build(samples=samples, w=w, logL=logL, params=params,
-                         tex=tex, limits=limits)
-
-        # Record root
-        data.root = root
-        return data
-
-    @classmethod
-    def build(cls, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Build an augmented pandas array for MCMC samples.
 
         Parameters
         ----------
+        root: str, optional
+            File root to read chains from. Overrides all other parameters
+
         samples: numpy.array
             Coordinates of samples. shape = (nsamples, ndims).
 
@@ -84,35 +65,41 @@ class MCMCSamples(pandas.DataFrame):
             mapping from params to prior limits
 
         """
-        samples = kwargs.pop('samples', None)
-        logL = kwargs.pop('logL', None)
-        if samples is None and logL is None:
-            raise ValueError("You must provide either samples or logL")
-        elif samples is None:
-            samples = numpy.empty((len(logL), 0))
+        if 'root' in kwargs:
+            self.root = kwargs.pop('root')
+            reader = GetDistReader(self.root)
+            w, logL, samples = reader.samples()
+            params, tex = reader.paramnames()
+            limits = reader.limits()
+        else:
+            samples = kwargs.pop('samples', None)
+            logL = kwargs.pop('logL', None)
+            if samples is None and logL is None:
+                raise ValueError("You must provide either samples or logL")
+            elif samples is None:
+                samples = numpy.empty((len(logL), 0))
 
-        nsamples, nparams = numpy.atleast_2d(samples).shape
+            nsamples, nparams = numpy.atleast_2d(samples).shape
+            w = kwargs.pop('w', None)
+            params = kwargs.pop('params', ['x%i' % i for i in range(nparams)])
+            tex = kwargs.pop('tex', {})
+            limits = kwargs.pop('limits', {})
 
-        w = kwargs.pop('w', None)
-        params = kwargs.pop('params', ['x%i' % i for i in range(nparams)])
+        super(MCMCSamples, self).__init__(data=samples, columns=params)
 
-        tex = kwargs.pop('tex', {})
-        limits = kwargs.pop('limits', {})
-
-        data = cls(data=samples, columns=params)
         if w is not None:
-            data['w'] = w
+            self['w'] = w
             tex['w'] = r'MCMC weight'
         if logL is not None:
-            data['logL'] = logL
+            self['logL'] = logL
             tex['logL'] = r'$\log\mathcal{L}$'
 
-        data.u = numpy.random.rand(len(data))
-        data.tex = tex
-        data.params = params
-        data.limits = limits
-        data.root = None
-        return data
+        self['u'] = numpy.random.rand(len(self))
+
+        self.tex = tex
+        self.params = params
+        self.limits = limits
+        self.root = None
 
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
@@ -308,10 +295,6 @@ class NestedSamples(MCMCSamples):
     * ``NestedSamples.read('your/file/root')``
     * ``NestedSamples.build(keyword_arguments)``
     """
-
-    @property
-    def _constructor(self):
-        return NestedSamples
 
     @classmethod
     def read(cls, root):

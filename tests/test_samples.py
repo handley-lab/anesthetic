@@ -21,32 +21,32 @@ def test_build_mcmc():
     mcmc = MCMCSamples.build(samples=samples)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.params, ['x0', 'x1', 'x2'])
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'u'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2'])
 
     mcmc = MCMCSamples.build(logL=logL)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.params, [])
-    assert_array_equal(mcmc.columns, ['logL', 'u'])
+    assert_array_equal(mcmc.columns, ['logL'])
 
     mcmc = MCMCSamples.build(samples=samples, logL=logL)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.params, ['x0', 'x1', 'x2'])
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'logL', 'u'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'logL'])
 
     mcmc = MCMCSamples.build(samples=samples, w=w)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.params, ['x0', 'x1', 'x2'])
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'w', 'u'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'w'])
 
     mcmc = MCMCSamples.build(samples=samples, w=w, logL=logL)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.params, ['x0', 'x1', 'x2'])
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'w', 'logL', 'u'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'w', 'logL'])
 
     mcmc = MCMCSamples.build(samples=samples, params=params)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.params, ['A', 'B', 'C'])
-    assert_array_equal(mcmc.columns, ['A', 'B', 'C', 'u'])
+    assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
 
     mcmc = MCMCSamples.build(samples=samples, tex=tex)
     for p in params:
