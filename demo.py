@@ -80,13 +80,19 @@ nested = NestedSamples.read(nested_root)
 
 #| We can infer the evidence, KL divergence and Bayesian model dimensionality:
 
-ns_output = nested.ns_output(1000)
+ns_output = nested.ns_output()
+
+#| This is a set of ``MCMCSamples``, with columns yielding the log of the Bayesian evidence 
+#| (logZ), the Kullback-Leibler divergence (D) and the Bayesian model dimensionality (d).
+
 print(ns_output[:6])
 
-#| This is a set of MCMC samples that may be plotted as usual:
+#| Since ``ns_output`` is a set of ``MCMCSamples``, it may be plotted as usual. 
+#| Here we illustrate slightly more fine-grained control of the axes construction 
+#| (demanding three columns)
 
 from anesthetic import make_1d_axes
-fig, axes = make_1d_axes(ns_output.params, ncols=3)
+fig, axes = make_1d_axes(ns_output.params, ncols=3, tex=ns_output.tex)
 ns_output.plot_1d(axes);
 
 #| We can also inspect the correlation between these inferences:

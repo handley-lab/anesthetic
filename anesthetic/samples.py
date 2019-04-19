@@ -366,7 +366,7 @@ class NestedSamples(MCMCSamples):
         data['logw'] = data._dlogX()
         return data
 
-    def ns_output(self, nsamples=100):
+    def ns_output(self, nsamples=1000):
         """Compute Bayesian global quantities.
 
         Using nested sampling we can compute the evidence (logZ),

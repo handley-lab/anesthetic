@@ -1,6 +1,7 @@
 __pycache__
 *.pyc
 .eggs
+.ipynb_checkpoints
 dist
 anesthetic.egg-info/
 build
