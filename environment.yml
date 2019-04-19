@@ -1,0 +1,8 @@
+name: anesthetic
+
+dependencies:
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - fastkde
