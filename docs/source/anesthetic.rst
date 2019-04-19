@@ -44,6 +44,14 @@ anesthetic.utils module
     :undoc-members:
     :show-inheritance:
 
+anesthetic.weighted\_pandas module
+----------------------------------
+
+.. automodule:: anesthetic.weighted_pandas
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------
