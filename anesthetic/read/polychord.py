@@ -10,7 +10,7 @@ class PolyChordReader(GetDistReader):
         """Read ``<root>_dead-birth.txt`` in polychord format."""
         data = numpy.loadtxt(self.birth_file)
         samples, logL, logL_birth = numpy.split(data, [-2, -1], axis=1)
-        return samples, logL, logL_birth
+        return samples, logL.flatten(), logL_birth.flatten()
 
     @property
     def birth_file(self):

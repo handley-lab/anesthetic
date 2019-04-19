@@ -63,7 +63,7 @@ class GetDistReader(ChainReader):
                                   for chains_file in self.chains_files])
         weights, chi2, samples = numpy.split(data, [1, 2], axis=1)
         logL = chi2/-2.
-        return weights, logL, samples
+        return weights.flatten(), logL.flatten(), samples
 
     @property
     def paramnames_file(self):

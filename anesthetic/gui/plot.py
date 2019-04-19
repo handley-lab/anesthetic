@@ -163,7 +163,7 @@ class RunPlotter(object):
         if params:
             self.params = numpy.array(params)
         else:
-            self.params = numpy.array(self.samples.params[:10])
+            self.params = numpy.array(self.samples.columns[:10])
 
         self.fig = plt.figure()
         self._set_up()

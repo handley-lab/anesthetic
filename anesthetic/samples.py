@@ -12,9 +12,10 @@ from anesthetic.read.getdist import GetDistReader
 from anesthetic.read.nested import NestedReader
 from anesthetic.utils import compress_weights, compute_nlive
 from anesthetic.gui.plot import RunPlotter
+from anesthetic.weighted_pandas import WeightedDataFrame
 
 
-class MCMCSamples(pandas.DataFrame):
+class MCMCSamples(WeightedDataFrame):
     """Storage and plotting tools for MCMC samples.
 
     We extend the pandas.DataFrame by providing plotting methods and
@@ -28,15 +29,13 @@ class MCMCSamples(pandas.DataFrame):
 
     Example plotting commands include
 
-    - ``mcmc.plot_1d()``
+    - ``mcmc.plot_1d(['paramA', 'paramB'])``
     - ``mcmc.plot_2d(['paramA', 'paramB'])``
     - ``mcmc.plot_2d(['paramA', 'paramB'], ['paramC', 'paramD'])``
 
     """
 
-    _metadata = (pandas.DataFrame._metadata +
-                 ['params', 'tex', 'limits', 'root', 'u'])
-
+    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'u', 'root']
 
     @property
     def _constructor(self):
@@ -93,23 +92,23 @@ class MCMCSamples(pandas.DataFrame):
 
         nsamples, nparams = numpy.atleast_2d(samples).shape
 
-        w = kwargs.pop('w', None)
+        w = kwargs.pop('w', numpy.ones(nsamples))
         params = kwargs.pop('params', ['x%i' % i for i in range(nparams)])
 
         tex = kwargs.pop('tex', {})
         limits = kwargs.pop('limits', {})
 
-        data = cls(data=samples, columns=params)
-        if w is not None:
-            data['w'] = w
-            tex['w'] = r'MCMC weight'
+        data = cls(data=samples, columns=params, w=w)
+
+        data['weight'] = w
+        tex['weight'] = r'MCMC weight'
+
         if logL is not None:
             data['logL'] = logL
             tex['logL'] = r'$\log\mathcal{L}$'
 
         data.u = numpy.random.rand(len(data))
         data.tex = tex
-        data.params = params
         data.limits = limits
         data.root = None
         return data
@@ -176,19 +175,18 @@ class MCMCSamples(pandas.DataFrame):
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                     *args, **kwargs)
 
-    def plot_1d(self, axes=None, *args, **kwargs):
+    def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
 
         Parameters
         ----------
-        axes: plotting axes, optional
+        axes: plotting axes
             Can be either:
                 * list(str) or str
                 * pandas.Series(matplotlib.axes.Axes)
             If a pandas.Series is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
-            Default: self.params
 
         beta: float, optional
             Temperature to plot at. beta=0 corresponds to the prior, beta=1
@@ -204,8 +202,6 @@ class MCMCSamples(pandas.DataFrame):
 
         """
         beta = kwargs.pop('beta', 1)
-        if axes is None:
-            axes = self.params
 
         if not isinstance(axes, pandas.Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
@@ -218,7 +214,7 @@ class MCMCSamples(pandas.DataFrame):
 
         return fig, axes
 
-    def plot_2d(self, axes=None, *args, **kwargs):
+    def plot_2d(self, axes, *args, **kwargs):
         """Create an array of 2D plots.
 
         To avoid intefering with y-axis sharing, one-dimensional plots are
@@ -227,7 +223,7 @@ class MCMCSamples(pandas.DataFrame):
 
         Parameters
         ----------
-        axes: plotting axes, optional
+        axes: plotting axes
             Can be either:
                 * list(str) if the x and y axes are the same
                 * [list(str),list(str)] if the x and y axes are different
@@ -235,7 +231,6 @@ class MCMCSamples(pandas.DataFrame):
             If a pandas.DataFrame is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
-            Default: self.params
 
         types: list(str) or str, optional
             What type (or types) of plots to produce. If two types are provided
@@ -258,8 +253,6 @@ class MCMCSamples(pandas.DataFrame):
         """
         types = kwargs.pop('types', ['kde', 'scatter'])
         beta = kwargs.pop('beta', 1)
-        if axes is None:
-            axes = self.params
 
         if not isinstance(axes, pandas.DataFrame):
             upper = None if len(types) > 1 else False

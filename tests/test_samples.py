@@ -20,33 +20,27 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples.build(samples=samples)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.params, ['x0', 'x1', 'x2'])
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'weight'])
 
     mcmc = MCMCSamples.build(logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.params, [])
-    assert_array_equal(mcmc.columns, ['logL'])
+    assert_array_equal(mcmc.columns, ['weight', 'logL'])
 
     mcmc = MCMCSamples.build(samples=samples, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.params, ['x0', 'x1', 'x2'])
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'logL'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'weight', 'logL'])
 
     mcmc = MCMCSamples.build(samples=samples, w=w)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.params, ['x0', 'x1', 'x2'])
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'w'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'weight'])
 
     mcmc = MCMCSamples.build(samples=samples, w=w, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.params, ['x0', 'x1', 'x2'])
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'w', 'logL'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'weight', 'logL'])
 
     mcmc = MCMCSamples.build(samples=samples, params=params)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.params, ['A', 'B', 'C'])
-    assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
+    assert_array_equal(mcmc.columns, ['A', 'B', 'C', 'weight'])
 
     mcmc = MCMCSamples.build(samples=samples, tex=tex)
     for p in params:
@@ -61,12 +55,12 @@ def test_build_mcmc():
 
 def test_read_mcmc():
     mcmc = MCMCSamples.read('./tests/example_data/mcmc/mcmc')
-    mcmc.plot_2d()
-    mcmc.plot_1d()
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
 def test_plot_ns():
     ns = NestedSamples.read('./tests/example_data/ns/ns')
-    ns.plot_2d()
-    ns.plot_1d()
+    ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
     ns.ns_output()
