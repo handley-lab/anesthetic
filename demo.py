@@ -56,7 +56,12 @@ mcmc.plot_2d([['omegabh2','omegach2','H0'], ['H0','omegach2']]);
 #|
 #| You can see that samples are stored as a pandas array
 
-print(mcmc[:6])
+mcmc[:6]
+
+#| Since it's a (weighted) pandas array, we compute things like the mean and variance 
+#| of samples
+
+mcmc.mean()
 
 #| We can define new parameters with relative ease.
 #| For example, the default cosmoMC setup does not include omegab, only omegabh2:
@@ -85,14 +90,19 @@ ns_output = nested.ns_output()
 #| This is a set of ``MCMCSamples``, with columns yielding the log of the Bayesian evidence 
 #| (logZ), the Kullback-Leibler divergence (D) and the Bayesian model dimensionality (d).
 
-print(ns_output[:6])
+ns_output[:6]
+
+#| The evidence, KL divergence and Bayesian model dimensionality, with their corresponding errors, are:
+
+for x in ns_output:
+    print('%10s = %9.2f +/- %4.2f' % (x, ns_output[x].mean(), ns_output[x].std()))
 
 #| Since ``ns_output`` is a set of ``MCMCSamples``, it may be plotted as usual. 
 #| Here we illustrate slightly more fine-grained control of the axes construction 
 #| (demanding three columns)
 
 from anesthetic import make_1d_axes
-fig, axes = make_1d_axes(ns_output.params, ncols=3, tex=ns_output.tex)
+fig, axes = make_1d_axes(['logZ', 'D', 'd'], ncols=3, tex=ns_output.tex)
 ns_output.plot_1d(axes);
 
 #| We can also inspect the correlation between these inferences:
@@ -109,10 +119,10 @@ fig, axes = mcmc.plot_2d(['sigma8','omegab'])
 nested.plot_2d(axes=axes);
 
 #| With nested samples, we can plot the prior (or any temperature), by
-#| passing beta=0
+#| passing beta=0. We also introduce here the helper function ``get_legend_proxy``
+#| for creating figure legends.
 
 from anesthetic import get_legend_proxy
-
 fig, axes = nested.plot_2d(['ns','tau'], beta=0)
 nested.plot_2d(axes=axes)
 proxy = get_legend_proxy(fig)
