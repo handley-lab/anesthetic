@@ -30,7 +30,7 @@ archivePrefix = {arXiv},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 
-@article{Skilling2006,
+@article{skilling,
 author = "Skilling, John",
 doi = "10.1214/06-BA127",
 fjournal = "Bayesian Analysis",
@@ -45,7 +45,23 @@ volume = "1",
 year = "2006"
 }
 
-@ARTICLE{Feroz2008,
+@ARTICLE{trotta,
+   author = {{Trotta}, R.},
+    title = "{Bayes in the sky: Bayesian inference and model selection in cosmology}",
+  journal = {Contemporary Physics},
+archivePrefix = "arXiv",
+   eprint = {0803.4089},
+     year = 2008,
+    month = mar,
+   volume = 49,
+    pages = {71-104},
+      doi = {10.1080/00107510802066753},
+   adsurl = {http://adsabs.harvard.edu/abs/2008ConPh..49...71T},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+
+@ARTICLE{multinest,
    author = {{Feroz}, F. and {Hobson}, M.~P. and {Bridges}, M.},
     title = "{MULTINEST: an efficient and robust Bayesian inference tool for cosmology and particle physics}",
   journal = {\mnras},
@@ -61,7 +77,7 @@ archivePrefix = "arXiv",
   adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 
-@ARTICLE{PolyChord0,
+@ARTICLE{polychord0,
    author = {{Handley}, W.~J. and {Hobson}, M.~P. and {Lasenby}, A.~N.},
     title = "{POLYCHORD: nested sampling for cosmology}",
   journal = {\mnras},
@@ -78,7 +94,7 @@ archivePrefix = "arXiv",
 }
 
 
-@ARTICLE{PolyChord1,
+@ARTICLE{polychord1,
    author = {{Handley}, W.~J. and {Hobson}, M.~P. and {Lasenby}, A.~N.},
     title = "{POLYCHORD: next-generation nested sampling}",
   journal = {\mnras},
@@ -95,24 +111,13 @@ archivePrefix = "arXiv",
   adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 
-@ARTICLE{DNest,
-       author = {{Brewer}, Brendon J. and {P{\'a}rtay}, Livia B. and {Cs{\'a}nyi},
-        G{\'a}bor},
-        title = "{Diffusive Nested Sampling}",
-      journal = {arXiv e-prints},
-     keywords = {Statistics - Computation, Astrophysics - Instrumentation and Methods for Astrophysics, Physics - Data Analysis, Statistics and Probability},
-         year = 2009,
-        month = Dec,
-          eid = {arXiv:0912.2380},
-        pages = {arXiv:0912.2380},
-archivePrefix = {arXiv},
-       eprint = {0912.2380},
- primaryClass = {stat.CO},
-       adsurl = {https://ui.adsabs.harvard.edu/\#abs/2009arXiv0912.2380B},
-      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+@unpublished{aeons,
+   author = {{Handley}, W.~J. and {Speagle}, J. S.},
+    title = "{AEONS: Estimating the approximate end of nested sampling}",
+  journal = {In preparation}
 }
 
-@ARTICLE{DNest4,
+@ARTICLE{dnest,
        author = {{Brewer}, Brendon J. and {Foreman-Mackey}, Daniel},
         title = "{DNest4: Diffusive Nested Sampling in C++ and Python}",
       journal = {arXiv e-prints},
@@ -127,6 +132,38 @@ archivePrefix = {arXiv},
        adsurl = {https://ui.adsabs.harvard.edu/\#abs/2016arXiv160603757B},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
+
+@ARTICLE{dynesty,
+       author = {{Speagle}, Joshua S},
+        title = "{dynesty: A Dynamic Nested Sampling Package for Estimating Bayesian Posteriors and Evidences}",
+      journal = {arXiv e-prints},
+     keywords = {Astrophysics - Instrumentation and Methods for Astrophysics, Statistics - Computation},
+         year = "2019",
+        month = "Apr",
+          eid = {arXiv:1904.02180},
+        pages = {arXiv:1904.02180},
+archivePrefix = {arXiv},
+       eprint = {1904.02180},
+ primaryClass = {astro-ph.IM},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2019arXiv190402180S},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+
+@article{dypolychord,
+title={dyPolyChord: dynamic nested sampling with PolyChord},
+author={Higson, Edward},
+year={2018},
+journal={Journal of Open Source Software},
+number={29},
+pages={916},
+volume={3},
+doi={10.21105/joss.00965},
+url={http://joss.theoj.org/papers/10.21105/joss.00965}
+}
+
+
+
 
 
 @ARTICLE{Higson2017,
@@ -167,14 +204,6 @@ archivePrefix = {arXiv},
     Title = {anesthetic 1.0.0},
     Year = {2019},
     url = {http://dx.doi.org/XX.XXXX/zenodo.XXXXXXX}
-}
-
-@unpublished{Higson2018b,
-    author = {{Higson}, E. and {Handley}, W. and {Hobson}, M. and {Lasenby}, A.
-    },
-    title = "Bayesian Sparse Reconstruction: a brute-force approach to astronomical imaging and machine learning",
-    Year = {2018},
-    note = "In preparation",
 }
 
 @article{pygtc,
@@ -225,7 +254,7 @@ archivePrefix = {arXiv},
     address = {New York, NY, USA},
 } 
 
-@article{Kullback,
+@article{KL,
     author = "Kullback, S. and Leibler, R. A.",
     doi = "10.1214/aoms/1177729694",
     fjournal = "The Annals of Mathematical Statistics",
@@ -238,4 +267,86 @@ archivePrefix = {arXiv},
     url = "https://doi.org/10.1214/aoms/1177729694",
     volume = "22",
     year = "1951"
+}
+
+@ARTICLE{cosmosis,
+       author = {{Zuntz}, J. and {Paterno}, M. and {Jennings}, E. and {Rudd}, D. and
+         {Manzotti}, A. and {Dodelson}, S. and {Bridle}, S. and {Sehrish}, S. and
+         {Kowalkowski}, J.},
+        title = "{CosmoSIS: Modular cosmological parameter estimation}",
+      journal = {Astronomy and Computing},
+     keywords = {Cosmology:miscellaneous, Methods:data analysis, Methods:statistical, Astrophysics - Cosmology and Nongalactic Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
+         year = "2015",
+        month = "Sep",
+       volume = {12},
+        pages = {45-59},
+          doi = {10.1016/j.ascom.2015.05.005},
+archivePrefix = {arXiv},
+       eprint = {1409.3409},
+ primaryClass = {astro-ph.CO},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2015A&C....12...45Z},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+@ARTICLE{montepython,
+       author = {{Brinckmann}, Thejs and {Lesgourgues}, Julien},
+        title = "{MontePython 3: boosted MCMC sampler and other features}",
+      journal = {arXiv e-prints},
+     keywords = {Astrophysics - Cosmology and Nongalactic Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
+         year = "2018",
+        month = "Apr",
+          eid = {arXiv:1804.07261},
+        pages = {arXiv:1804.07261},
+archivePrefix = {arXiv},
+       eprint = {1804.07261},
+ primaryClass = {astro-ph.CO},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2018arXiv180407261B},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+@article{cosmomc,
+      author         = "Lewis, Antony and Bridle, Sarah",
+      title          = "{Cosmological parameters from CMB and other data: A Monte
+                        Carlo approach}",
+      journal        = "Phys. Rev.",
+      volume         = "D66",
+      year           = "2002",
+      pages          = "103511",
+      doi            = "10.1103/PhysRevD.66.103511",
+      eprint         = "astro-ph/0205436",
+      archivePrefix  = "arXiv",
+      primaryClass   = "astro-ph",
+      SLACcitation   = "%%CITATION = ASTRO-PH/0205436;%%"
+}
+
+@ARTICLE{gambit,
+       author = {{GAMBIT Scanner Workgroup}, The and {:} and {Martinez}, Gregory D. and
+         {McKay}, James and {Farmer}, Ben and {Scott}, Pat and
+         {Roebber}, Elinore and {Putze}, Antje and {Conrad}, Jan},
+        title = "{Comparison of statistical sampling methods with ScannerBit, the GAMBIT scanning module}",
+      journal = {arXiv e-prints},
+     keywords = {High Energy Physics - Phenomenology, Astrophysics - Cosmology and Nongalactic Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Physics - Data Analysis, Statistics and Probability, Statistics - Computation},
+         year = "2017",
+        month = "May",
+          eid = {arXiv:1705.07959},
+        pages = {arXiv:1705.07959},
+archivePrefix = {arXiv},
+       eprint = {1705.07959},
+ primaryClass = {hep-ph},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2017arXiv170507959G},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+
+@article{fastkde,
+title = "A fast and objective multidimensional kernel density estimation method: fastKDE",
+journal = "Computational Statistics & Data Analysis",
+volume = "101",
+pages = "148 - 160",
+year = "2016",
+issn = "0167-9473",
+doi = "https://doi.org/10.1016/j.csda.2016.02.014",
+url = "http://www.sciencedirect.com/science/article/pii/S0167947316300408",
+author = "Travis A. O’Brien and Karthik Kashinath and Nicholas R. Cavanaugh and William D. Collins and John P. O’Brien",
+keywords = "Empirical characteristic function, ECF, Kernel density estimation, Histogram, Nonuniform FFT, NuFFT, Multidimensional, KDE",
 }
