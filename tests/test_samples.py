@@ -20,15 +20,15 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples.build(samples=samples)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'weight'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2'])
 
     mcmc = MCMCSamples.build(logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['weight', 'logL'])
+    assert_array_equal(mcmc.columns, ['logL'])
 
     mcmc = MCMCSamples.build(samples=samples, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'weight', 'logL'])
+    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'logL'])
 
     mcmc = MCMCSamples.build(samples=samples, w=w)
     assert(len(mcmc) == nsamps)
@@ -40,7 +40,7 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples.build(samples=samples, params=params)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['A', 'B', 'C', 'weight'])
+    assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
 
     mcmc = MCMCSamples.build(samples=samples, tex=tex)
     for p in params:

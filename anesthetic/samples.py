@@ -92,7 +92,7 @@ class MCMCSamples(WeightedDataFrame):
 
         nsamples, nparams = numpy.atleast_2d(samples).shape
 
-        w = kwargs.pop('w', numpy.ones(nsamples))
+        w = kwargs.pop('w', None)
         params = kwargs.pop('params', ['x%i' % i for i in range(nparams)])
 
         tex = kwargs.pop('tex', {})
@@ -100,8 +100,9 @@ class MCMCSamples(WeightedDataFrame):
 
         data = cls(data=samples, columns=params, w=w)
 
-        data['weight'] = w
-        tex['weight'] = r'MCMC weight'
+        if w is not None:
+            data['weight'] = w
+            tex['weight'] = r'MCMC weight'
 
         if logL is not None:
             data['logL'] = logL
@@ -274,10 +275,10 @@ class MCMCSamples(WeightedDataFrame):
 
     def _weights(self, beta, nsamples=None):
         """Return the posterior weights for plotting."""
-        try:
-            return compress_weights(self.w, self.u, nsamples=nsamples)
-        except AttributeError:
+        if self.w is None:
             return numpy.ones(len(self), dtype=int)
+        else:
+            return compress_weights(self.w, self.u, nsamples=nsamples)
 
     def _limits(self, paramname):
         return self.limits.get(paramname, (None, None))
