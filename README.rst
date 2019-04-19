@@ -1,6 +1,6 @@
-===========================================
+=========================================
 anesthetic: nested sampling visualisation
-===========================================
+=========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
 :Version: 0.9.1
@@ -32,7 +32,7 @@ anesthetic: nested sampling visualisation
 
 ``anesthetic`` bring together tools for processing nested sampling chains, leveraging standard scientific python libraries.
 
-You can see it in action in the `plot gallery <http://htmlpreview.github.io/?https://github.com/williamjameshandley/cosmo_example/blob/master/demos/demo.html>`__.
+You can see example usage and plots in the `plot gallery <http://htmlpreview.github.io/?https://github.com/williamjameshandley/cosmo_example/blob/master/demos/demo.html>`__.
 
 Current functionality includes:
 
@@ -53,9 +53,13 @@ For an interactive view of a nested sampling run, you can use the ``anesthetic``
 Features
 --------
 
-- Both samples and plotting axes are stored as a ``pandas.DataFrame``, which makes for easy access and modification.
+- Both samples and plotting axes are stored as a ``pandas.DataFrame``, with parameter names as indices, which makes for easy access and modification.
 - Sensible color scheme for plotting nearly flat distributions.
-- For easy extension/modification, uses the standard python libraries: numpy, scipy, matplotlib, pandas.
+- For easy extension/modification, uses the standard python libraries:
+  `numpy <https://www.numpy.org/>`__, 
+  `scipy <https://www.scipy.org/>`__, 
+  `matplotlib <https://matplotlib.org/>`__ 
+  and `pandas <https://pandas.pydata.org/>`__.
 
 
 Installation
@@ -83,8 +87,9 @@ You can check that things are working by running the test suite:
     flake8 anesthetic tests
     pydocstyle --convention=numpy anesthetic
 
+
 Dependencies
------------- 
+~~~~~~~~~~~~ 
 
 Basic requirements:
 
@@ -117,14 +122,16 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
 
 Contributing
 ------------
-There are many ways you can contribute via the [GitHub repository](https://github.com/williamjameshandley/anesthetic).
+There are many ways you can contribute via the `GitHub repository <https://github.com/williamjameshandley/anesthetic>`__.
 
-- You can [open an issue](https://github.com/williamjameshandley/anesthetic/issues) to report bugs or to propose new features.
+- You can `open an issue <https://github.com/williamjameshandley/anesthetic/issues>`__ to report bugs or to propose new features.
 - Pull requests are very welcome. Note that if you are going to propose major changes, be sure to open an issue for discussion first, to make sure that your PR will be accepted before you spend effort coding it.
 
 
+Questions/Comments
+------------------
 Another posterior plotting tool?
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     This is my posterior plotter. There are many like it, but this one is mine.
 
@@ -153,13 +160,13 @@ Why create another one? In general, any dedicated user of software will find tha
 3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which presents a problem if you are trying to plot priors along with your posteriors. ``anesthetic`` has a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
 
 What's in a name?
------------------
+~~~~~~~~~~~~~~~~~
 
 There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://github.com/tomcharnock/NestorFlow>`__). Doing a UNIX grep:
 
 .. code:: bash
 
-    cat /usr/share/dict/words | grep nest
+    grep nest /usr/share/dict/words
 
 yields a lot of superlatives (e.g. greenest), but a few other cool names for future projects:
 
@@ -170,7 +177,7 @@ yields a lot of superlatives (e.g. greenest), but a few other cool names for fut
 - minestrone
 - rhinestone
 
-I chose anesthetic because of the soft 'th', and in spite of the US spelling.
+I chose ``anesthetic`` because I liked the soft 'th', and in spite of the US spelling.
 
 
 Changelog
