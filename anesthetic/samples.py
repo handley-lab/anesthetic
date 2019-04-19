@@ -6,7 +6,7 @@
 import numpy
 import pandas
 from scipy.special import logsumexp
-from anesthetic.plot import (make_1D_axes, make_2D_axes, plot_1d,
+from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
                              scatter_plot_2d, contour_plot_2d)
 from anesthetic.read.getdist import GetDistReader
 from anesthetic.read.nested import NestedReader
@@ -204,7 +204,7 @@ class MCMCSamples(pandas.DataFrame):
             axes = self.params
 
         if not isinstance(axes, pandas.Series):
-            fig, axes = make_1D_axes(axes, tex=self.tex)
+            fig, axes = make_1d_axes(axes, tex=self.tex)
         else:
             fig = axes.values[~axes.isna()][0].figure
 
@@ -259,7 +259,7 @@ class MCMCSamples(pandas.DataFrame):
 
         if not isinstance(axes, pandas.DataFrame):
             upper = None if len(types) > 1 else False
-            fig, axes = make_2D_axes(axes, tex=self.tex, upper=upper)
+            fig, axes = make_2d_axes(axes, tex=self.tex, upper=upper)
         else:
             fig = axes.values[~axes.isna()][0].figure
 

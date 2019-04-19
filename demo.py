@@ -85,8 +85,8 @@ print(ns_output[:6])
 
 #| This is a set of MCMC samples that may be plotted as usual:
 
-from anesthetic import make_1D_axes
-fig, axes = make_1D_axes(ns_output.params, ncols=3)
+from anesthetic import make_1d_axes
+fig, axes = make_1d_axes(ns_output.params, ncols=3)
 ns_output.plot_1d(axes);
 
 #| We can also inspect the correlation between these inferences:

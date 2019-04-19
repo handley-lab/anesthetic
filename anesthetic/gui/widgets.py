@@ -11,7 +11,7 @@ from matplotlib.widgets import CheckButtons as mplCheckButtons
 from matplotlib.widgets import RadioButtons as mplRadioButtons
 from anesthetic.gui._matplotlib import Slider as mplSlider
 from anesthetic.utils import histogram
-from anesthetic.plot import make_2D_axes
+from anesthetic.plot import make_2d_axes
 
 
 class Widget(object):
@@ -231,7 +231,7 @@ class TrianglePlot(Widget):
         """Initialise triangle plot."""
         super(TrianglePlot, self).__init__(fig, gridspec)
         self.fig.delaxes(self.ax)
-        _, self.ax = make_2D_axes([], fig=self.fig, subplot_spec=self.gridspec)
+        _, self.ax = make_2d_axes([], fig=self.fig, subplot_spec=self.gridspec)
 
     def draw(self, labels, tex={}):
         """Draw a new triangular grid for list of parameters labels.
@@ -251,7 +251,7 @@ class TrianglePlot(Widget):
                     self.fig.delaxes(ax)
 
         # Set up the axes
-        _, self.ax = make_2D_axes(labels, upper=False, tex=tex,
+        _, self.ax = make_2d_axes(labels, upper=False, tex=tex,
                                   fig=self.fig, subplot_spec=self.gridspec)
 
         # Plot no points  points.

@@ -3,8 +3,8 @@
 Routines that may be of use to users wishing for more fine-grained control may
 wish to use.
 
-- ``make_1D_axes``
-- ``make_2D_axes``
+- ``make_1d_axes``
+- ``make_2d_axes``
 - ``get_legend_proxy``
 
 to create a set of axes and legend proxies.
@@ -22,7 +22,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import PathCollection
 
 
-def make_1D_axes(params, **kwargs):
+def make_1d_axes(params, **kwargs):
     """Create a set of axes for plotting 1D marginalised posteriors.
 
     Parameters
@@ -82,7 +82,7 @@ def make_1D_axes(params, **kwargs):
     return fig, axes
 
 
-def make_2D_axes(params, **kwargs):
+def make_2d_axes(params, **kwargs):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
     Parameters
