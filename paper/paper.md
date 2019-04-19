@@ -112,10 +112,14 @@ The source code for ``anesthetic`` is available on
 [GitHub](https://github.com/williamjameshandley/anesthetic), with its
 automatically generated documentation at
 [ReadTheDocs](https://anesthetic.readthedocs.io/) and a pip-installable package
-on [PyPi](https://pypi.org/project/anesthetic/). Continuous integration is
-implemented with [Travis](https://travis-ci.org/williamjameshandley/anesthetic)
-and [Circle](https://circleci.com/gh/williamjameshandley/anesthetic). The
-source has been archived as version ``1.0.0`` on Zenodo [@zenodo].
+on [PyPi](https://pypi.org/project/anesthetic/). An example interactive Jupyter
+notebook is hosted on
+[Binder](https://mybinder.org/v2/gh/williamjameshandley/anesthetic/master?filepath=demo.ipynb)
+[@binder]. Continuous integration is implemented with
+[Travis](https://travis-ci.org/williamjameshandley/anesthetic) and
+[Circle](https://circleci.com/gh/williamjameshandley/anesthetic), and the
+``anesthetic`` source has been archived as version ``1.0.0`` on Zenodo
+[@zenodo].
 
 # Acknowledgements
 
