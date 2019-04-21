@@ -52,14 +52,25 @@ def test_build_mcmc():
     assert(mcmc.root is None)
 
 
-def test_read_mcmc():
-    mcmc = MCMCSamples(root='./tests/example_data/mcmc/mcmc')
+def test_read_getdist():
+    mcmc = MCMCSamples(root='./tests/example_data/gd')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
+    mcmc = MCMCSamples(root='./tests/example_data/gd_single')
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
-def test_plot_ns():
-    ns = NestedSamples(root='./tests/example_data/ns/ns')
+def test_read_multinest():
+    ns = NestedSamples(root='./tests/example_data/mn')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
-    ns.ns_output()
+
+    ns = NestedSamples(root='./tests/example_data/mn_old')
+    ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
+
+def test_read_polychord():
+    mcmc = NestedSamples(root='./tests/example_data/pc')
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])

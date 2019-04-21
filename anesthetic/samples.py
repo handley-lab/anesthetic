@@ -324,8 +324,9 @@ class NestedSamples(MCMCSamples):
 
                 self.tex['nlive'] = r'$n_{\rm live}$'
 
-            self['logw'] = self._dlogX()
-            self.w = numpy.exp(self.logw - self.logw.max()).values
+                self['dlogX'] = self._dlogX()
+                self.tex['dlogX'] = r'$\Delta\log X$'
+                self.w = numpy.exp(self.dlogX - self.dlogX.max()).values
 
     def ns_output(self, nsamples=200):
         """Compute Bayesian global quantities.
@@ -377,7 +378,7 @@ class NestedSamples(MCMCSamples):
 
     def _weights(self, beta, nsamples=None):
         """Return the posterior weights for plotting."""
-        logw = self.logw + beta*self.logL
+        logw = self.dlogX + beta*self.logL
         w = numpy.exp(logw - logw.max())
         return compress_weights(w, self.u, nsamples=nsamples)
 

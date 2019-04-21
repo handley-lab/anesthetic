@@ -1,10 +1,14 @@
 import numpy 
-from anesthetic.anesthetic import MCMCSamples, NestedSamples
+from anesthetic import MCMCSamples, NestedSamples
 
 def loglikelihood(x):
     sigma = 0.1
     return -(x-0.5) @ (x-0.5) / 2 / sigma**2
 
+ndims = 4
+columns = ['x%i' % i for i in range(ndims)]
+tex = {p: 'x_%i' % i  for i, p in enumerate(columns)}
+roots = []
 
 # MCMC
 # ----
@@ -27,22 +31,20 @@ def mcmc_sim(ndims=4):
     return x, l, w
 
 
-params, logL, w = mcmc_sim()
-mcmc = MCMCSamples.build(params=params, logL=logL, w=w)
+data, logL, w = mcmc_sim()
+mcmc = MCMCSamples(data=data, columns=columns, logL=logL, w=w, tex=tex)
 
-# Dead file
-root = './tests/example_data/mcmc/mcmc'
-mcmc[['w', 'logL'] + mcmc.paramnames].to_csv(root + '_1.txt', sep=' ', index=False, header=False)
+# MCMC multiple files
+root = './tests/example_data/gd'
+roots.append(root)
+mcmc[['weight', 'logL'] + columns][:len(mcmc)//2].to_csv(root + '_1.txt', sep=' ', index=False, header=False)
+mcmc[['weight', 'logL'] + columns][len(mcmc)//2:].to_csv(root + '_2.txt', sep=' ', index=False, header=False)
 
-# paramnames file
-with open(root + '.paramnames', 'w') as f:
-    for i in range(len(mcmc.paramnames)):
-        f.write('x%i\tx_%i\n' % (i, i))
+# MCMC single file
+root = './tests/example_data/gd_single'
+roots.append(root)
+mcmc[['weight', 'logL'] + columns].to_csv(root + '.txt', sep=' ', index=False, header=False)
 
-# ranges file
-with open(root + '.ranges', 'w') as f:
-    for i in range(len(mcmc.paramnames)):
-        f.write('x%i\t0\t1\n' % i)
 
 
 # NS
@@ -69,19 +71,41 @@ def ns_sim(ndims=4, nlive=50):
             live_points[i, :] = numpy.random.rand(ndims)
             live_likes[i] = loglikelihood(live_points[i])
     return dead_points, dead_likes, birth_likes
-params, logL, logL_birth = ns_sim()
-ns = NestedSamples.build(params=params, logL=logL, logL_birth=logL_birth)
 
-# Dead file
-root = './tests/example_data/ns/ns'
-ns[ns.paramnames + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
+data, logL, logL_birth = ns_sim()
 
-# paramnames file
-with open(root + '.paramnames', 'w') as f:
-    for i in range(len(ns.paramnames)):
-        f.write('x%i\tx_%i\n' % (i, i))
+ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
 
-# ranges file
-with open(root + '.ranges', 'w') as f:
-    for i in range(len(mcmc.paramnames)):
-        f.write('x%i\t0\t1\n' % i)
+# Dead file for polychord
+root = './tests/example_data/pc'
+roots.append(root)
+
+ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
+ns['cluster'] = 1
+
+# Dead file for multinest
+root = './tests/example_data/mn'
+roots.append(root)
+
+ns[columns + ['logL', 'logL_birth', 'dlogX', 'cluster']].to_csv(root + 'dead-birth.txt', sep=' ', index=False, header=False)
+ns[columns + ['logL', 'logL_birth']].to_csv(root + 'phys_live-birth.txt', sep=' ', index=False, header=False)
+
+
+# Dead file for old multinest
+root = './tests/example_data/mn_old'
+roots.append(root)
+
+ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
+ns[columns + ['logL', 'logL_birth']].to_csv(root + 'phys_live.points', sep=' ', index=False, header=False)
+
+for root in roots:
+    # paramnames file
+    with open(root + '.paramnames', 'w') as f:
+        for p in columns:
+            f.write('%s\t%s\n' % (p, tex[p]))
+
+    # ranges file
+    with open(root + '.ranges', 'w') as f:
+        for p in columns:
+            f.write('%s\t0\t1\n' % p)
+
