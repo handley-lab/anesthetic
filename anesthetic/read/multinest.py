@@ -2,7 +2,6 @@
 import numpy
 from anesthetic.read.getdist import GetDistReader
 
-
 class MultiNestReader(GetDistReader):
     """Read multinest files."""
 
@@ -26,7 +25,7 @@ class MultiNestReader(GetDistReader):
             logL_birth = numpy.concatenate((logL_birth, live_logL_birth[i]))
             return samples, logL, logL_birth
 
-        except OSError:
+        except IOError:
             data = numpy.loadtxt(self.ev_file)
             samples, logL, _ = numpy.split(data, [-3, -2], axis=1)
             logL = numpy.squeeze(logL)
