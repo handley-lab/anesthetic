@@ -2,6 +2,7 @@
 import numpy
 from anesthetic.read.getdist import GetDistReader
 
+
 class MultiNestReader(GetDistReader):
     """Read multinest files."""
 
