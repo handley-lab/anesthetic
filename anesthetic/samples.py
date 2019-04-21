@@ -18,20 +18,37 @@ from anesthetic.weighted_pandas import WeightedDataFrame
 class MCMCSamples(WeightedDataFrame):
     """Storage and plotting tools for MCMC samples.
 
-    We extend the pandas.DataFrame by providing plotting methods and
+    Extends the pandas.DataFrame by providing plotting methods and
     standardising sample storage.
-
-    Note that because of the design of pandas this does not override the
-    __init__ constructor. You should build the samples with either:
-
-    - ``mcmc = MCMCSamples.read('your/file/root')``
-    - ``mcmc = MCMCSamples.build(samples=samples, other_keyword_arguments)``
 
     Example plotting commands include
 
     - ``mcmc.plot_1d(['paramA', 'paramB'])``
     - ``mcmc.plot_2d(['paramA', 'paramB'])``
     - ``mcmc.plot_2d(['paramA', 'paramB'], ['paramC', 'paramD'])``
+
+    Parameters
+    ----------
+    root: str, optional
+        root for reading chains from file. Overrides all other arguments.
+
+    data: numpy.array
+        Coordinates of samples. shape = (nsamples, ndims).
+
+    columns: list(str)
+        reference names of parameters
+
+    w: numpy.array
+        weights of samples.
+
+    logL: numpy.array
+        loglikelihoods of samples.
+
+    tex: dict
+        mapping from coloumns to tex labels for plotting
+
+    limits: dict
+        mapping from coloumns to prior limits
 
     """
 
@@ -41,78 +58,32 @@ class MCMCSamples(WeightedDataFrame):
     def _constructor(self):
         return MCMCSamples
 
-    @classmethod
-    def read(cls, root):
-        """Read in data from file root."""
-        # Read in data
-        reader = GetDistReader(root)
-        w, logL, samples = reader.samples()
-        params, tex = reader.paramnames()
-        limits = reader.limits()
+    def __init__(self, *args, **kwargs):
+        self.root = kwargs.pop('root', None)
+        if self.root is not None:
+            reader = GetDistReader(self.root)
+            w, logL, samples = reader.samples()
+            params, tex = reader.paramnames()
+            limits = reader.limits()
+            self.__init__(data=samples, columns=params, w=w, logL=logL,
+                          tex=tex, limits=limits)
+        else:
+            logL = kwargs.pop('logL', None)
+            self.tex = kwargs.pop('tex', {})
+            self.limits = kwargs.pop('limits', {})
+            self.u = None
 
-        # Build class
-        data = cls.build(samples=samples, w=w, logL=logL, params=params,
-                         tex=tex, limits=limits)
+            super(MCMCSamples, self).__init__(*args, **kwargs)
 
-        # Record root
-        data.root = root
-        return data
+            self.u = numpy.random.rand(len(self))
 
-    @classmethod
-    def build(cls, **kwargs):
-        """Build an augmented pandas array for MCMC samples.
+            if self.w is not None:
+                self['weight'] = self.w
+                self.tex['weight'] = r'MCMC weight'
 
-        Parameters
-        ----------
-        samples: numpy.array
-            Coordinates of samples. shape = (nsamples, ndims).
-
-        logL: numpy.array
-            loglikelihoods of samples.
-
-        w: numpy.array
-            weights of samples.
-
-        params: list(str)
-            reference names of parameters
-
-        tex: dict
-            mapping from params to tex labels for plotting
-
-        limits: dict
-            mapping from params to prior limits
-
-        """
-        samples = kwargs.pop('samples', None)
-        logL = kwargs.pop('logL', None)
-        if samples is None and logL is None:
-            raise ValueError("You must provide either samples or logL")
-        elif samples is None:
-            samples = numpy.empty((len(logL), 0))
-
-        nsamples, nparams = numpy.atleast_2d(samples).shape
-
-        w = kwargs.pop('w', None)
-        params = kwargs.pop('params', ['x%i' % i for i in range(nparams)])
-
-        tex = kwargs.pop('tex', {})
-        limits = kwargs.pop('limits', {})
-
-        data = cls(data=samples, columns=params, w=w)
-
-        if w is not None:
-            data['weight'] = w
-            tex['weight'] = r'MCMC weight'
-
-        if logL is not None:
-            data['logL'] = logL
-            tex['logL'] = r'$\log\mathcal{L}$'
-
-        data.u = numpy.random.rand(len(data))
-        data.tex = tex
-        data.limits = limits
-        data.root = None
-        return data
+            if logL is not None:
+                self['logL'] = logL
+                self.tex['logL'] = r'$\log\mathcal{L}$'
 
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
@@ -274,7 +245,6 @@ class MCMCSamples(WeightedDataFrame):
         return fig, axes
 
     def _weights(self, beta, nsamples=None):
-        """Return the posterior weights for plotting."""
         if self.w is None:
             return numpy.ones(len(self), dtype=int)
         else:
@@ -284,7 +254,9 @@ class MCMCSamples(WeightedDataFrame):
         return self.limits.get(paramname, (None, None))
 
     def _reload_data(self):
-        self = type(self).read(self.root)
+        self.__init__(root=self.root)
+        return self
+
 
 
 class NestedSamples(MCMCSamples):
@@ -296,77 +268,64 @@ class NestedSamples(MCMCSamples):
     * ``self.live_points(logL)``
     * ``self.posterior_points(beta)``
 
-    Note that because of the design of pandas this does not override the
-    __init__ constructor. You should build the samples with either:
+    Parameters
+    ----------
+    root: str, optional
+        root for reading chains from file. Overrides all other arguments.
 
-    * ``NestedSamples.read('your/file/root')``
-    * ``NestedSamples.build(keyword_arguments)``
+    data: numpy.array
+        Coordinates of samples. shape = (nsamples, ndims).
+
+    columns: list(str)
+        reference names of parameters
+
+    logL: numpy.array
+        loglikelihoods of samples.
+
+    logL_birth: numpy.array or int
+        birth loglikelihoods, or number of live points.
+
+    tex: dict
+        mapping from coloumns to tex labels for plotting
+
+    limits: dict
+        mapping from coloumns to prior limits
+
     """
 
     @property
     def _constructor(self):
         return NestedSamples
 
-    @classmethod
-    def read(cls, root):
-        """Read in data from file root."""
-        # Read in data
-        reader = NestedReader(root)
-        params, tex = reader.paramnames()
-        limits = reader.limits()
-        samples, logL, logL_birth = reader.samples()
-
-        # Build class
-        data = cls.build(samples=samples, logL=logL, params=params,
-                         tex=tex, limits=limits, logL_birth=logL_birth)
-
-        # Record root
-        data.root = root
-        return data
-
-    @classmethod
-    def build(cls, **kwargs):
-        """Build an augmented pandas array for Nested samples.
-
-        Parameters
-        ----------
-        params: numpy.array
-            Coordinates of samples. shape = (nsamples, ndims).
-
-        logL: numpy.array
-            loglikelihoods of samples.
-
-        logL_birth: numpy.array
-            birth loglikelihoods of samples, or number of live points.
-
-        w: numpy.array
-            weights of samples.
-
-        params: list(str)
-            reference names of parameters
-
-        tex: dict
-            mapping from params to tex labels for plotting
-
-        limits: dict
-            mapping from params to prior limits
-
-        """
-        # Build pandas DataFrame
-        logL_birth = kwargs.pop('logL_birth', None)
-        data = super(NestedSamples, cls).build(**kwargs)
-
-        # Compute nlive
-        if isinstance(logL_birth, int):
-            nlive = logL_birth
-            data['nlive'] = nlive
-            data['nlive'][-nlive:] = numpy.arange(nlive, 0, -1)
+    def __init__(self, *args, **kwargs):
+        self.root = kwargs.pop('root', None)
+        if self.root is not None:
+            reader = NestedReader(self.root)
+            samples, logL, logL_birth = reader.samples()
+            params, tex = reader.paramnames()
+            limits = reader.limits()
+            self.__init__(data=samples, columns=params,
+                          logL=logL, logL_birth=logL_birth,
+                          tex=tex, limits=limits)
         else:
-            data['logL_birth'] = logL_birth
-            data['nlive'] = compute_nlive(data.logL, data.logL_birth)
+            logL_birth = kwargs.pop('logL_birth', None)
+            super(NestedSamples, self).__init__(*args, **kwargs)
 
-        data['logw'] = data._dlogX()
-        return data
+            # Compute nlive
+            if logL_birth is not None:
+                if isinstance(logL_birth, int):
+                    nlive = logL_birth
+                    self['nlive'] = nlive
+                    self['nlive'][-nlive:] = numpy.arange(nlive+1, 1, -1)
+                else:
+                    self['logL_birth'] = logL_birth
+                    self.tex['logL_birth'] = r'$\log\mathcal{L}_{\rm birth}$'
+                    self['nlive'] = compute_nlive(self.logL, self.logL_birth)
+
+                self.tex['nlive'] = r'$n_{\rm live}$'
+
+            self['logw'] = self._dlogX()
+            self.w = numpy.exp(self.logw - self.logw.max()).values
 
     def ns_output(self, nsamples=200):
         """Compute Bayesian global quantities.
@@ -402,7 +361,7 @@ class NestedSamples(MCMCSamples):
         tex = {'logZ': r'$\log\mathcal{Z}$',
                'D': r'$\mathcal{D}$',
                'd': r'$d$'}
-        return MCMCSamples.build(samples=samples, params=params, tex=tex)
+        return MCMCSamples(data=samples, columns=params, tex=tex)
 
     def live_points(self, logL):
         """Get the live points within logL."""
@@ -415,10 +374,6 @@ class NestedSamples(MCMCSamples):
     def gui(self, params=None):
         """Construct a graphical user interface for viewing samples."""
         return RunPlotter(self, params)
-
-    def reload(self):
-        """Reload the run from file."""
-        self = NestedSamples.read(self.root)
 
     def _weights(self, beta, nsamples=None):
         """Return the posterior weights for plotting."""

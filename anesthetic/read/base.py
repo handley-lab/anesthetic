@@ -5,7 +5,6 @@ class ChainReader(object):
     """Base class for reading chains files."""
 
     def __init__(self, root):
-        """Save file root for loading files."""
         self.root = root
 
     def paramnames(self):

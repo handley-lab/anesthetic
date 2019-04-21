@@ -46,7 +46,6 @@ class Widget(object):
     """
 
     def __init__(self, fig, gridspec):
-        """Initialise Widget."""
         self.fig = fig
         self.gridspec = gridspec
         self.ax = self.fig.add_subplot(self.gridspec)
@@ -68,7 +67,6 @@ class LabelsWidget(Widget):
     """
 
     def __init__(self, fig, gridspec, labels):
-        """Initialise LabelsWidget."""
         super(LabelsWidget, self).__init__(fig, gridspec)
         self.labels = labels
 
@@ -92,7 +90,6 @@ class Button(Widget):
     """
 
     def __init__(self, fig, gridspec, action, text):
-        """Initialise button widget."""
         super(Button, self).__init__(fig, gridspec)
         self.button = mplButton(self.ax, text)
         self.button.on_clicked(action)
@@ -116,7 +113,6 @@ class CheckButtons(LabelsWidget):
     """
 
     def __init__(self, fig, gridspec, labels, action):
-        """Initialise CheckButtons."""
         super(CheckButtons, self).__init__(fig, gridspec, labels)
         default = [i == 0 for i, _ in enumerate(self.labels)]
         self.buttons = mplCheckButtons(self.ax, self.labels, default)
@@ -142,7 +138,6 @@ class RadioButtons(LabelsWidget):
     """
 
     def __init__(self, fig, gridspec, labels, action):
-        """Initialise RadioButtons."""
         super(RadioButtons, self).__init__(fig, gridspec, labels)
         self.buttons = mplRadioButtons(self.ax, self.labels)
         self.buttons.on_clicked(action)
@@ -178,7 +173,6 @@ class Slider(Widget):
 
     def __init__(self, fig, gridspec, action, text,
                  valmin, valmax, valinit, orientation):
-        """Initialise Slider."""
         super(Slider, self).__init__(fig, gridspec)
         self.slider = mplSlider(self.ax, text, valmin, valmax, valinit=valinit,
                                 orientation=orientation)
@@ -228,7 +222,6 @@ class TrianglePlot(Widget):
     """
 
     def __init__(self, fig, gridspec):
-        """Initialise triangle plot."""
         super(TrianglePlot, self).__init__(fig, gridspec)
         self.fig.delaxes(self.ax)
         _, self.ax = make_2d_axes([], fig=self.fig, subplot_spec=self.gridspec)

@@ -25,8 +25,9 @@ for filename in ["plikHM_TTTEEE_lowl_lowE_lensing.tar.gz","plikHM_TTTEEE_lowl_lo
 
 %matplotlib notebook
 from anesthetic import MCMCSamples
+import numpy
 mcmc_root = 'plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing'
-mcmc = MCMCSamples.read(mcmc_root)
+mcmc = MCMCSamples(root=mcmc_root)
 
 #| We have plotting tools for 1D plots ...
 
@@ -82,7 +83,7 @@ mcmc.plot_1d('omegab');
 
 from anesthetic import NestedSamples
 nested_root = 'plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing'
-nested = NestedSamples.read(nested_root)
+nested = NestedSamples(root=nested_root)
 
 #| We can infer the evidence, KL divergence and Bayesian model dimensionality:
 

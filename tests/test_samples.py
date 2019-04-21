@@ -1,4 +1,3 @@
-import pytest
 import numpy
 from anesthetic import MCMCSamples, NestedSamples
 from numpy.testing import assert_array_equal
@@ -15,38 +14,38 @@ def test_build_mcmc():
     tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
     limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
 
-    with pytest.raises(ValueError):
-        mcmc = MCMCSamples.build()
-
-    mcmc = MCMCSamples.build(samples=samples)
+    mcmc = MCMCSamples(data=samples)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2'])
+    assert_array_equal(mcmc.columns, [0, 1, 2])
 
-    mcmc = MCMCSamples.build(logL=logL)
+    mcmc = MCMCSamples(logL=logL)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.columns, ['logL'])
 
-    mcmc = MCMCSamples.build(samples=samples, logL=logL)
+    mcmc = MCMCSamples(data=samples, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'logL'])
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL'],
+                                                 dtype=object))
 
-    mcmc = MCMCSamples.build(samples=samples, w=w)
+    mcmc = MCMCSamples(data=samples, w=w)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'weight'])
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'weight'],
+                                                 dtype=object))
 
-    mcmc = MCMCSamples.build(samples=samples, w=w, logL=logL)
+    mcmc = MCMCSamples(data=samples, w=w, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['x0', 'x1', 'x2', 'weight', 'logL'])
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'weight', 'logL'],
+                                                 dtype=object))
 
-    mcmc = MCMCSamples.build(samples=samples, params=params)
+    mcmc = MCMCSamples(data=samples, columns=params)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
 
-    mcmc = MCMCSamples.build(samples=samples, tex=tex)
+    mcmc = MCMCSamples(data=samples, tex=tex)
     for p in params:
         assert(mcmc.tex[p] == tex[p])
 
-    mcmc = MCMCSamples.build(samples=samples, limits=limits)
+    mcmc = MCMCSamples(data=samples, limits=limits)
     for p in params:
         assert(mcmc.limits[p] == limits[p])
 
@@ -54,13 +53,13 @@ def test_build_mcmc():
 
 
 def test_read_mcmc():
-    mcmc = MCMCSamples.read('./tests/example_data/mcmc/mcmc')
+    mcmc = MCMCSamples(root='./tests/example_data/mcmc/mcmc')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
 def test_plot_ns():
-    ns = NestedSamples.read('./tests/example_data/ns/ns')
+    ns = NestedSamples(root='./tests/example_data/ns/ns')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
     ns.ns_output()

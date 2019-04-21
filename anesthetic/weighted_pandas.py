@@ -14,7 +14,6 @@ class WeightedSeries(pandas.Series):
         return WeightedSeries
 
     def __init__(self, *args, **kwargs):
-        """Weighted constructor."""
         self.w = kwargs.pop('w', None)
         super(WeightedSeries, self).__init__(*args, **kwargs)
 
@@ -47,7 +46,6 @@ class WeightedDataFrame(pandas.DataFrame):
         return WeightedDataFrame
 
     def __init__(self, *args, **kwargs):
-        """Weighted constructor."""
         self.w = kwargs.pop('w', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
 

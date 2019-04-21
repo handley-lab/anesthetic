@@ -21,7 +21,6 @@ class Higson(Widget):
     """
 
     def __init__(self, fig, gridspec):
-        """Initialise higson plot."""
         super(Higson, self).__init__(fig, gridspec)
         self.ax.set_yticks([])
         self.ax.set_ylim(-0.1, 1.1)
@@ -61,7 +60,6 @@ class Evolution(Slider):
     """Slider controlling the evolution stage of the live points."""
 
     def __init__(self, fig, gridspec, action, valmax):
-        """Initialise evolution slider."""
         super(Evolution, self).__init__(fig, gridspec, action, '',
                                         0, valmax, 0, 'horizontal')
         self.slider.valtext.set_horizontalalignment('right')
@@ -93,7 +91,6 @@ class Temperature(Slider):
     """Logarithmic slider controlling temperature of the posterior points."""
 
     def __init__(self, fig, gridspec, action):
-        """Initialise temperature slider."""
         super(Temperature, self).__init__(fig, gridspec, action, r'$kT$',
                                           -1, 5, 0, 'vertical')
 
@@ -157,7 +154,6 @@ class RunPlotter(object):
     """
 
     def __init__(self, samples, params=None):
-        """Initialise RunPlotter interface."""
         self.samples = samples
 
         if params:
@@ -268,7 +264,7 @@ class RunPlotter(object):
 
     def reload_file(self, _):
         """Reload the data from file."""
-        self.samples.reload()
+        self.samples._reload_data()
         self.evolution.reset_range(valmax=len(self.samples))
         self.update(None)
 
