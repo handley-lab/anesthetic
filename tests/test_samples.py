@@ -73,6 +73,6 @@ def test_read_multinest():
 
 
 def test_read_polychord():
-    mcmc = NestedSamples(root='./tests/example_data/pc')
-    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
-    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    ns = NestedSamples(root='./tests/example_data/pc')
+    ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'])

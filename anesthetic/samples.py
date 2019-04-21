@@ -127,17 +127,17 @@ class MCMCSamples(WeightedDataFrame):
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
             return plot_1d(ax, numpy.repeat(self[paramname_x],
-                           self._weights(beta)), xmin=xmin, xmax=xmax,
+                           self._weights()), xmin=xmin, xmax=xmax,
                            *args, **kwargs)
 
         xmin, xmax = self._limits(paramname_x)
         ymin, ymax = self._limits(paramname_y)
 
         if plot_type == 'kde':
-            weights = self._weights(beta)
+            weights = self._weights()
             plot = contour_plot_2d
         elif plot_type == 'scatter':
-            weights = self._weights(beta, nsamples=500)
+            weights = self._weights(nsamples=500)
             plot = scatter_plot_2d
         else:
             raise ValueError("plot_type must be in {'kde', 'scatter'}")
@@ -244,7 +244,7 @@ class MCMCSamples(WeightedDataFrame):
 
         return fig, axes
 
-    def _weights(self, beta, nsamples=None):
+    def _weights(self, nsamples=None):
         if self.w is None:
             return numpy.ones(len(self), dtype=int)
         else:
@@ -292,12 +292,15 @@ class NestedSamples(MCMCSamples):
 
     """
 
+    _metadata = MCMCSamples._metadata + ['_beta']
+
     @property
     def _constructor(self):
         return NestedSamples
 
     def __init__(self, *args, **kwargs):
         self.root = kwargs.pop('root', None)
+        self._beta = kwargs.pop('beta', 1.)
         if self.root is not None:
             reader = NestedReader(self.root)
             samples, logL, logL_birth = reader.samples()
@@ -323,10 +326,22 @@ class NestedSamples(MCMCSamples):
                     self['nlive'] = compute_nlive(self.logL, self.logL_birth)
 
                 self.tex['nlive'] = r'$n_{\rm live}$'
+            
+            if 'nlive' in self:
+                self.beta = self._beta
 
-                self['dlogX'] = self._dlogX()
-                self.tex['dlogX'] = r'$\Delta\log X$'
-                self.w = numpy.exp(self.dlogX - self.dlogX.max()).values
+    @property
+    def beta(self):
+        return self._beta
+
+    @beta.setter
+    def beta(self, beta):
+        self._beta = beta
+        logw = self._dlogX() + self.beta*self.logL
+        self.w = numpy.exp(logw - logw.max())
+
+    def set_beta(self, beta):
+        return type(self)(self, beta=beta)
 
     def ns_output(self, nsamples=200):
         """Compute Bayesian global quantities.
@@ -370,17 +385,11 @@ class NestedSamples(MCMCSamples):
 
     def posterior_points(self, beta):
         """Get the posterior points at temperature beta."""
-        return self[self._weights(beta, nsamples=-1) > 0]
+        return self[self._weights(nsamples=-1) > 0]
 
     def gui(self, params=None):
         """Construct a graphical user interface for viewing samples."""
         return RunPlotter(self, params)
-
-    def _weights(self, beta, nsamples=None):
-        """Return the posterior weights for plotting."""
-        logw = self.dlogX + beta*self.logL
-        w = numpy.exp(logw - logw.max())
-        return compress_weights(w, self.u, nsamples=nsamples)
 
     def _dlogX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
