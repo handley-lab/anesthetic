@@ -2,7 +2,7 @@ from anesthetic import NestedSamples
 
 
 def test_gui():
-    plotter = NestedSamples(root='./tests/example_data/ns/ns').gui()
+    plotter = NestedSamples(root='./tests/example_data/pc').gui()
 
     # Type buttons
     plotter.type.buttons.set_active(0)

@@ -258,7 +258,6 @@ class MCMCSamples(WeightedDataFrame):
         return self
 
 
-
 class NestedSamples(MCMCSamples):
     """Storage and plotting tools for Nested Sampling samples.
 
@@ -316,7 +315,8 @@ class NestedSamples(MCMCSamples):
                 if isinstance(logL_birth, int):
                     nlive = logL_birth
                     self['nlive'] = nlive
-                    self['nlive'][-nlive:] = numpy.arange(nlive+1, 1, -1)
+                    descending = numpy.arange(nlive, 0, -1)
+                    self.loc[len(self)-nlive:, 'nlive'] = descending
                 else:
                     self['logL_birth'] = logL_birth
                     self.tex['logL_birth'] = r'$\log\mathcal{L}_{\rm birth}$'

@@ -61,6 +61,7 @@ def test_read_getdist():
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
+
 def test_read_multinest():
     ns = NestedSamples(root='./tests/example_data/mn')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
@@ -69,6 +70,7 @@ def test_read_multinest():
     ns = NestedSamples(root='./tests/example_data/mn_old')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
+
 
 def test_read_polychord():
     mcmc = NestedSamples(root='./tests/example_data/pc')

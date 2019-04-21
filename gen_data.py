@@ -70,25 +70,29 @@ def ns_sim(ndims=4, nlive=50):
         while live_likes[i] <= Lmin:
             live_points[i, :] = numpy.random.rand(ndims)
             live_likes[i] = loglikelihood(live_points[i])
-    return dead_points, dead_likes, birth_likes
+    return dead_points, dead_likes, birth_likes, live_points, live_likes, live_birth_likes
 
-data, logL, logL_birth = ns_sim()
+data, logL, logL_birth, live, live_logL, live_logL_birth = ns_sim()
 
 ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
+live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
 
 # Dead file for polychord
 root = './tests/example_data/pc'
 roots.append(root)
 
 ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
-ns['cluster'] = 1
 
 # Dead file for multinest
+ns['cluster'] = 1
+live_ns['cluster']=1
 root = './tests/example_data/mn'
 roots.append(root)
 
 ns[columns + ['logL', 'logL_birth', 'dlogX', 'cluster']].to_csv(root + 'dead-birth.txt', sep=' ', index=False, header=False)
-ns[columns + ['logL', 'logL_birth']].to_csv(root + 'phys_live-birth.txt', sep=' ', index=False, header=False)
+live_ns[columns + ['logL', 'logL_birth', 'cluster']].to_csv(root + 'phys_live-birth.txt', sep=' ', index=False, header=False)
+ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
+live_ns[columns + ['logL', 'cluster']].to_csv(root + 'phys_live.points', sep=' ', index=False, header=False)
 
 
 # Dead file for old multinest
@@ -96,7 +100,7 @@ root = './tests/example_data/mn_old'
 roots.append(root)
 
 ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
-ns[columns + ['logL', 'logL_birth']].to_csv(root + 'phys_live.points', sep=' ', index=False, header=False)
+ns[columns + ['logL', 'cluster']].to_csv(root + 'phys_live.points', sep=' ', index=False, header=False)
 
 for root in roots:
     # paramnames file
