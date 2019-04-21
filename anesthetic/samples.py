@@ -105,10 +105,6 @@ class MCMCSamples(WeightedDataFrame):
         plot_type: str, optional
             Must be in {'kde','scatter'}. (Default: 'kde')
 
-        beta: float, optional
-            Temperature to plot at. beta=0 corresponds to the prior, beta=1
-            corresponds to the posterior. (Default: 1)
-
         Returns
         -------
         fig: matplotlib.figure.Figure
@@ -119,10 +115,6 @@ class MCMCSamples(WeightedDataFrame):
 
         """
         plot_type = kwargs.pop('plot_type', 'kde')
-        beta = kwargs.pop('beta', 1)
-
-        if beta != 1 and not isinstance(self, NestedSamples):
-            raise ValueError("You cannot adjust temperature for MCMCSamples")
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
@@ -160,10 +152,6 @@ class MCMCSamples(WeightedDataFrame):
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
 
-        beta: float, optional
-            Temperature to plot at. beta=0 corresponds to the prior, beta=1
-            corresponds to the posterior. (Default: 1)
-
         Returns
         -------
         fig: matplotlib.figure.Figure
@@ -173,7 +161,6 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        beta = kwargs.pop('beta', 1)
 
         if not isinstance(axes, pandas.Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
@@ -182,7 +169,7 @@ class MCMCSamples(WeightedDataFrame):
 
         for x, ax in axes.iteritems():
             if ax is not None and x in self:
-                self.plot(ax, x, beta=beta, *args, **kwargs)
+                self.plot(ax, x, *args, **kwargs)
 
         return fig, axes
 
@@ -210,10 +197,6 @@ class MCMCSamples(WeightedDataFrame):
             each string must be one of {'kde', 'scatter'}.
             Default: ['kde', 'scatter']
 
-        beta: float, optional
-            Temperature to plot at. beta=0 corresponds to the prior, beta=1
-            corresponds to the posterior. (Default: 1)
-
         Returns
         -------
         fig: matplotlib.figure.Figure
@@ -224,7 +207,6 @@ class MCMCSamples(WeightedDataFrame):
 
         """
         types = kwargs.pop('types', ['kde', 'scatter'])
-        beta = kwargs.pop('beta', 1)
 
         if not isinstance(axes, pandas.DataFrame):
             upper = None if len(types) > 1 else False
@@ -239,8 +221,7 @@ class MCMCSamples(WeightedDataFrame):
                 if ax is not None and x in self and y in self:
                     plot_type = types[-1] if ax._upper else types[0]
                     ax_ = ax.twin if x == y else ax
-                    self.plot(ax_, x, y, plot_type=plot_type, beta=beta,
-                              *args, **kwargs)
+                    self.plot(ax_, x, y, plot_type=plot_type, *args, **kwargs)
 
         return fig, axes
 
@@ -341,7 +322,9 @@ class NestedSamples(MCMCSamples):
         self.w = numpy.exp(logw - logw.max())
 
     def set_beta(self, beta):
-        return type(self)(self, beta=beta)
+        data = self.copy()
+        data.beta = beta
+        return data
 
     def ns_output(self, nsamples=200):
         """Compute Bayesian global quantities.
@@ -385,7 +368,7 @@ class NestedSamples(MCMCSamples):
 
     def posterior_points(self, beta):
         """Get the posterior points at temperature beta."""
-        return self[self._weights(nsamples=-1) > 0]
+        return self.set_beta(beta)[self._weights(nsamples=-1) > 0]
 
     def gui(self, params=None):
         """Construct a graphical user interface for viewing samples."""
