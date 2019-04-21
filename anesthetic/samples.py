@@ -161,7 +161,6 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-
         if not isinstance(axes, pandas.Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
         else:
@@ -307,12 +306,17 @@ class NestedSamples(MCMCSamples):
                     self['nlive'] = compute_nlive(self.logL, self.logL_birth)
 
                 self.tex['nlive'] = r'$n_{\rm live}$'
-            
+
             if 'nlive' in self:
                 self.beta = self._beta
 
+            if self.w is not None:
+                self['weight'] = self.w
+                self.tex['weight'] = r'MCMC weight'
+
     @property
     def beta(self):
+        """Thermodynamic inverse temperature."""
         return self._beta
 
     @beta.setter
@@ -322,6 +326,7 @@ class NestedSamples(MCMCSamples):
         self.w = numpy.exp(logw - logw.max())
 
     def set_beta(self, beta):
+        """Return a new array with adjusted inverse temperature."""
         data = self.copy()
         data.beta = beta
         return data
