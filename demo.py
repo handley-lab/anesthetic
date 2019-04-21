@@ -125,7 +125,8 @@ nested.plot_2d(axes=axes);
 #| for creating figure legends.
 
 from anesthetic import get_legend_proxy
-fig, axes = nested.plot_2d(['ns','tau'], beta=0)
+prior = nested.set_beta(0)
+fig, axes = prior.plot_2d(['ns','tau'])
 nested.plot_2d(axes=axes)
 proxy = get_legend_proxy(fig)
 fig.legend(proxy, ['prior', 'posterior'])
