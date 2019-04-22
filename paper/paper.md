@@ -70,7 +70,7 @@ oscillations, large scale structure and the cosmic microwave background
 LSS and CMB are consistent with one another.](2d.png) 
 
 # aNESThetic
-``anesthetic`` acts on these outputs of nested sampling software packages. It can:
+``anesthetic`` acts on outputs of nested sampling software packages. It can:
 
 1. Compute inferences of the Bayesian evidence[@trotta], the Kullback-Leibler[@KL] divergence
   of the distribution, the Bayesian model dimensionality[@dimensionality] and
@@ -100,8 +100,8 @@ also provided by many other high-quality software packages, such as getdist
 
 - Performing kernel density estimation using the state-of-the-art
   [fastkde](https://pypi.org/project/fastkde/) [@fastkde] algorithm.
-- Storing samples and plotting grids as a ``pandas.DataFrame``, which is more
-  consistent with the scientific python canon, allows for unambiguous
+- Storing samples and plotting grids as a weighted ``pandas.DataFrame``, which
+  is more consistent with the scientific python canon, allows for unambiguous
   access to samples and plots via their reference names, and easy definition of
   new parameters.
 - Using a contour colour scheme that is better suited to plotting distributions

@@ -25,7 +25,6 @@ for filename in ["plikHM_TTTEEE_lowl_lowE_lensing.tar.gz","plikHM_TTTEEE_lowl_lo
 
 %matplotlib notebook
 from anesthetic import MCMCSamples
-import numpy
 mcmc_root = 'plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing'
 mcmc = MCMCSamples(root=mcmc_root)
 
