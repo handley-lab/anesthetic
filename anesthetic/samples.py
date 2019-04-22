@@ -10,7 +10,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
                              scatter_plot_2d, contour_plot_2d)
 from anesthetic.read.getdist import GetDistReader
 from anesthetic.read.nested import NestedReader
-from anesthetic.utils import compress_weights, compute_nlive
+from anesthetic.utils import compute_nlive
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame
 
@@ -118,24 +118,24 @@ class MCMCSamples(WeightedDataFrame):
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
-            return plot_1d(ax, numpy.repeat(self[paramname_x],
-                           self._weights()), xmin=xmin, xmax=xmax,
+            return plot_1d(ax, self[paramname_x].compress(),
+                           xmin=xmin, xmax=xmax,
                            *args, **kwargs)
 
         xmin, xmax = self._limits(paramname_x)
         ymin, ymax = self._limits(paramname_y)
 
         if plot_type == 'kde':
-            weights = self._weights()
+            nsamples = None
             plot = contour_plot_2d
         elif plot_type == 'scatter':
-            weights = self._weights(nsamples=500)
+            nsamples = 500
             plot = scatter_plot_2d
         else:
             raise ValueError("plot_type must be in {'kde', 'scatter'}")
 
-        return plot(ax, numpy.repeat(self[paramname_x], weights),
-                    numpy.repeat(self[paramname_y], weights),
+        return plot(ax, self[paramname_x].compress(nsamples),
+                    self[paramname_y].compress(nsamples),
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                     *args, **kwargs)
 
@@ -224,12 +224,6 @@ class MCMCSamples(WeightedDataFrame):
 
         return fig, axes
 
-    def _weights(self, nsamples=None):
-        if self.w is None:
-            return numpy.ones(len(self), dtype=int)
-        else:
-            return compress_weights(self.w, self.u, nsamples=nsamples)
-
     def _limits(self, paramname):
         return self.limits.get(paramname, (None, None))
 
@@ -269,6 +263,9 @@ class NestedSamples(MCMCSamples):
 
     limits: dict
         mapping from coloumns to prior limits
+
+    beta: float
+        thermodynamic temperature
 
     """
 
@@ -325,11 +322,25 @@ class NestedSamples(MCMCSamples):
         logw = self._dlogX() + self.beta*self.logL
         self.w = numpy.exp(logw - logw.max())
 
-    def set_beta(self, beta):
-        """Return a new array with adjusted inverse temperature."""
-        data = self.copy()
-        data.beta = beta
-        return data
+    def set_beta(self, beta, inplace=False):
+        """Change the inverse temperature.
+
+        Parameters
+        ----------
+        beta: float
+            Temperature to set
+
+        inplace: bool, optional
+            Indicates whether to modify the existing array, or return a copy
+            with the temperature changed. Default: False
+
+        """
+        if inplace:
+            self.beta = beta
+        else:
+            data = self.copy()
+            data.beta = beta
+            return data
 
     def ns_output(self, nsamples=200):
         """Compute Bayesian global quantities.
@@ -373,7 +384,7 @@ class NestedSamples(MCMCSamples):
 
     def posterior_points(self, beta):
         """Get the posterior points at temperature beta."""
-        return self.set_beta(beta)[self._weights(nsamples=-1) > 0]
+        return self.set_beta(beta).compress(0)
 
     def gui(self, params=None):
         """Construct a graphical user interface for viewing samples."""

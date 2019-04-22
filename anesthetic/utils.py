@@ -1,6 +1,7 @@
 """Data-processing utility functions."""
 import numpy
 import pandas
+from scipy.interpolate import interp1d
 
 
 def channel_capacity(w):
@@ -35,6 +36,17 @@ def compress_weights(w, u=None, nsamples=None):
     fraction, integer = numpy.modf(W)
     extra = (u < fraction).astype(int)
     return (integer + extra).astype(int)
+
+
+def quantile(a, q, w):
+    """Compute the weighted quantile for a one dimensional array."""
+    if w is None:
+        w = numpy.ones_like(a)
+    i = numpy.argsort(a)
+    c = numpy.cumsum(w[i])
+    c /= c[-1]
+    icdf = interp1d(c/c[-1], a[i])
+    return icdf(q)
 
 
 def check_bounds(d, xmin=None, xmax=None):
