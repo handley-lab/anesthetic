@@ -74,7 +74,7 @@ LSS and CMB are consistent with one another.](2d.png)
 
 1. Compute inferences of the Bayesian evidence[@trotta], the Kullback-Leibler[@KL] divergence
   of the distribution, the Bayesian model dimensionality[@dimensionality] and
-  the full partition function [@aeons].
+  the full partition function[@aeons].
 2. Dynamically replay nested sampling runs.
 3. Produce one and two-dimensional marginalised posterior plots (Figure 1).
 
