@@ -53,7 +53,7 @@ points drawn from the prior under a hard likelihood constraint which steadily
 increases, causing the live points to contract around the peak(s) of the
 likelihood. The history of the live-point evolution can be used to reconstruct
 both the evidence and posterior samples, as well as the density of states and
-consequently the full partition function [@aoens].
+consequently the full partition function [@aeons].
 
 Currently public available implementations of nested sampling include MultiNest
 [@multinest], PolyChord [@polychord0][@polychord1][@dypolychord], DNest
