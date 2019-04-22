@@ -156,7 +156,7 @@ Why create another one? In general, any dedicated user of software will find tha
 .. code:: python
 
     from anesthetic import MCMCSamples
-    samples = MCMCSamples.read(file_root)                         # Load the samples
+    samples = MCMCSamples(root=file_root)                         # Load the samples
     samples['omegab'] = samples.omegabh2/(samples.H0/100)**2      # Define omegab
     samples.tex['omegab'] = '$\Omega_b$'                          # Label omegab
     samples.plot_1d('omegab')                                     # Simple 1D plot
