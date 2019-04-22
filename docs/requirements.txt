@@ -1,4 +1,4 @@
 Cython
 sphinx
 sphinx_rtd_theme
-numpydoc
+numpydoc==0.8.0
