@@ -49,8 +49,8 @@ class WeightedSeries(pandas.Series):
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         neff: int, optional
             effective number of samples after compression. If not supplied,
             then reduce to the channel capacity (theoretical optimum
@@ -123,8 +123,8 @@ class WeightedDataFrame(pandas.DataFrame):
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         neff: int, optional
             effective number of samples after compression. If not supplied,
             then reduce to the channel capacity (theoretical optimum

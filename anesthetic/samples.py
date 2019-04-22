@@ -146,8 +146,10 @@ class MCMCSamples(WeightedDataFrame):
         ----------
         axes: plotting axes
             Can be either:
-                * list(str) or str
-                * pandas.Series(matplotlib.axes.Axes)
+
+            - list(str) or str
+            - pandas.Series(matplotlib.axes.Axes)
+
             If a pandas.Series is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
@@ -183,9 +185,11 @@ class MCMCSamples(WeightedDataFrame):
         ----------
         axes: plotting axes
             Can be either:
-                * list(str) if the x and y axes are the same
-                * [list(str),list(str)] if the x and y axes are different
-                * pandas.DataFrame(matplotlib.axes.Axes)
+
+            - list(str) if the x and y axes are the same
+            - [list(str),list(str)] if the x and y axes are different
+            - pandas.DataFrame(matplotlib.axes.Axes)
+
             If a pandas.DataFrame is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
