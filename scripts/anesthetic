@@ -12,6 +12,6 @@ parser.add_argument('--params', '-p', nargs='*', type=str,
 args = parser.parse_args()
 
 # Generate the rhinestone plotter
-samples = NestedSamples.read(args.file_root)
+samples = NestedSamples(root=args.file_root)
 plotter = samples.gui(args.params)
 plt.show()
