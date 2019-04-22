@@ -24,10 +24,15 @@ anesthetic: nested sampling visualisation
 .. image:: https://zenodo.org/badge/175663535.svg
    :target: https://zenodo.org/badge/latestdoi/175663535
    :alt: Permanent DOI for this release
+.. image:: http://joss.theoj.org/papers/8c51bffda75d122cf4a8b991e18d3e45/status.svg
+   :target: http://joss.theoj.org/papers/8c51bffda75d122cf4a8b991e18d3e45
+   :alt: Review Status
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
    :target: https://github.com/williamjameshandley/anesthetic/blob/master/LICENSE
+   :alt: License information
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/williamjameshandley/anesthetic/1.0.0?filepath=demo.ipynb
+   :alt: Online interactive notebook
 
 
 
