@@ -26,6 +26,9 @@ def compress_weights(w, u=None, nsamples=None):
     if u is None:
         u = numpy.random.rand(len(w))
 
+    if w is None:
+        w = numpy.ones_like(u)
+
     if nsamples is not None:
         W = w/w.max()
         if nsamples > 0 and sum(W) > nsamples:

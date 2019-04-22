@@ -41,7 +41,10 @@ class WeightedSeries(pandas.Series):
 
     def neff(self):
         """Effective number of samples."""
-        return channel_capacity(self.w)
+        if self.w is None:
+            return len(self)
+        else:
+            return channel_capacity(self.w)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
@@ -112,7 +115,10 @@ class WeightedDataFrame(pandas.DataFrame):
 
     def neff(self):
         """Effective number of samples."""
-        return channel_capacity(self.w)
+        if self.w is None:
+            return len(self)
+        else:
+            return channel_capacity(self.w)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.

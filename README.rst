@@ -27,7 +27,7 @@ anesthetic: nested sampling visualisation
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
    :target: https://github.com/williamjameshandley/anesthetic/blob/master/LICENSE
 .. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/williamjameshandley/anesthetic/master?filepath=demo.ipynb
+   :target: https://mybinder.org/v2/gh/williamjameshandley/anesthetic/1.0.0?filepath=demo.ipynb
 
 
 
