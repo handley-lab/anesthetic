@@ -24,7 +24,7 @@ bibliography: paper.bib
 ---
 
 # Summary
-``anesthetic`` is a Python package for processing nested sampling runs, and will be useful for any scientist or statistician who uses nested sampling software. ``anesthetic`` unifies many existing tools and techniques in an extensible framework which is intuitive for users familiar with the standard Python packages, namely [NumPy](https://www.numpy.org/), [SciPy](https://www.scipy.org/), [Matplotlib](https://matplotlib.org/) and [pandas](https://pandas.pydata.org/). It has been extensively used in the recent cosmological papers [@tension;@dimensionality].
+``anesthetic`` is a Python package for processing nested sampling runs, and will be useful for any scientist or statistician who uses nested sampling software. ``anesthetic`` unifies many existing tools and techniques in an extensible framework that is intuitive for users familiar with the standard Python packages, namely [NumPy](https://www.numpy.org/), [SciPy](https://www.scipy.org/), [Matplotlib](https://matplotlib.org/) and [pandas](https://pandas.pydata.org/). It has been extensively used in recent cosmological papers [@tension;@dimensionality].
 
 
 
@@ -43,9 +43,9 @@ Current publicly available implementations of nested sampling include MultiNest 
 # aNESThetic
 ``anesthetic`` acts on outputs of nested sampling software packages. It can:
 
-1. Compute inferences of the Bayesian evidence[@trotta], the Kullback-Leibler
+1. Compute inferences of the Bayesian evidence [@trotta], the Kullback-Leibler
    divergence [@KL] of the distribution, the Bayesian model
-   dimensionality[@dimensionality] and the full partition function.
+   dimensionality [@dimensionality] and the full partition function.
 2. Dynamically replay nested sampling runs.
 3. Produce one- and two-dimensional marginalised posterior plots (Figure 1).
 
