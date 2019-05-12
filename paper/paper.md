@@ -118,7 +118,7 @@ notebook is hosted on
 [@binder]. Continuous integration is implemented with
 [Travis](https://travis-ci.org/williamjameshandley/anesthetic) and
 [Circle](https://circleci.com/gh/williamjameshandley/anesthetic), and the
-``anesthetic`` source has been archived as version ``1.0.1`` on Zenodo
+``anesthetic`` source has been archived as version ``1.0.2`` on Zenodo
 [@zenodo].
 
 # Acknowledgements
