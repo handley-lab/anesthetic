@@ -24,7 +24,7 @@ bibliography: paper.bib
 ---
 
 # Summary
-``anesthetic`` is a Python package for processing nested sampling runs, and will be useful for any scientist or statistician who uses nested sampling software. ``anesthetic`` unifies many existing tools and techniques in an extensible framework which is intuitive for users familiar with the standard Python packages, namely [NumPy](https://www.numpy.org/), [SciPy](https://www.scipy.org/), [Matplotlib](https://matplotlib.org/) and [pandas](https://pandas.pydata.org/). It has been extensively used in the recent cosmological papers [@tension;@dimensionality].
+``anesthetic`` is a Python package for processing nested sampling runs, and will be useful for any scientist or statistician who uses nested sampling software. ``anesthetic`` unifies many existing tools and techniques in an extensible framework that is intuitive for users familiar with the standard Python packages, namely [NumPy](https://www.numpy.org/), [SciPy](https://www.scipy.org/), [Matplotlib](https://matplotlib.org/) and [pandas](https://pandas.pydata.org/). It has been extensively used in recent cosmological papers [@tension;@dimensionality].
 
 
 
@@ -36,16 +36,16 @@ $$ P(\theta|D) = \frac{P(D|\theta) P(\theta)}{P(D)}. $$
 
 Traditional MCMC approaches ignore the Bayesian evidence $P(D)$ and instead focus on the problem of generating samples from the posterior $P(\theta|D)$ using knowledge of the prior $P(\theta)$ and likelihood $P(D|\theta)$. Nested sampling reverses this priority, and instead computes the evidence $P(D)$ (the critical quantity in Bayesian model comparison [@trotta]), producing posterior samples as a by-product. Nested sampling does this by evolving a set of live points drawn from the prior under a hard likelihood constraint which steadily increases, causing the live points to contract around the peak(s) of the likelihood. The history of the live-point evolution can be used to reconstruct both the evidence and posterior samples, as well as the density of states and consequently the full partition function.
 
-Current publicly available implementations of nested sampling include MultiNest [@multinest], PolyChord [@polychord0;@polychord1][@dypolychord], DNest [@dnest] and dynesty [@dynesty], all of which have been incorporated into a wide range of cosmological [@cosmomc;@cosmosis;@montepython] and particle physics [@gambit] codes.
+Current publicly available implementations of nested sampling include MultiNest [@multinest], PolyChord [@polychord0;@polychord1;@dypolychord], DNest [@dnest] and dynesty [@dynesty], all of which have been incorporated into a wide range of cosmological [@cosmomc;@cosmosis;@montepython] and particle physics [@gambit] codes.
 
 ![Marginalised posterior plots produced by ``anesthetic``. The x axes indicate the fraction of normal matter, dark matter and dark energy respectively, whilst the y-axis is the amplitude of mass fluctuation in our late-time universe. The three measurements were performed using measurements of baryonic acoustic oscillations, large scale structure and the cosmic microwave background [@tension]. It is an open cosmological and statistical questions whether the LSS and CMB are consistent with one another.](2d.png) 
 
 # aNESThetic
 ``anesthetic`` acts on outputs of nested sampling software packages. It can:
 
-1. Compute inferences of the Bayesian evidence[@trotta], the Kullback-Leibler
+1. Compute inferences of the Bayesian evidence [@trotta], the Kullback-Leibler
    divergence [@KL] of the distribution, the Bayesian model
-   dimensionality[@dimensionality] and the full partition function.
+   dimensionality [@dimensionality] and the full partition function.
 2. Dynamically replay nested sampling runs.
 3. Produce one- and two-dimensional marginalised posterior plots (Figure 1).
 
