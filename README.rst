@@ -69,7 +69,6 @@ Features
   `matplotlib <https://matplotlib.org/>`__ 
   and `pandas <https://pandas.pydata.org/>`__.
 
-
 Installation
 ------------
 
@@ -127,6 +126,33 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
 
    cd docs
    make html
+
+
+Citation
+--------
+
+If you use ``fgivenx`` to generate plots for a publication, please cite
+as: ::
+
+   Handley, (2019). anesthetic: nested sampling visualisation. Journal of Open
+   Source Software, 4(37), 1414, https://doi.org/10.21105/joss.01414
+
+or using the BibTeX:
+
+.. code:: bibtex
+
+   @article{anesthetic,
+       doi = {10.21105/joss.01414},
+       url = {http://dx.doi.org/10.21105/joss.01414},
+       year  = {2019},
+       month = {Jun},
+       publisher = {The Open Journal},
+       volume = {4},
+       number = {37},
+       author = {Will Handley},
+       title = {anesthetic: nested sampling visualisation},
+       journal = {The Journal of Open Source Software}
+   }
 
 
 Contributing
