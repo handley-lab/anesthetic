@@ -38,7 +38,7 @@ anesthetic: nested sampling visualisation
 
 
 
-``anesthetic`` bring together tools for processing nested sampling chains, leveraging standard scientific python libraries.
+``anesthetic`` brings together tools for processing nested sampling chains, leveraging standard scientific python libraries.
 
 You can see example usage and plots in the `plot gallery <http://htmlpreview.github.io/?https://github.com/williamjameshandley/cosmo_example/blob/master/demos/demo.html>`_, or in the corresponding `Jupyter notebook <https://mybinder.org/v2/gh/williamjameshandley/anesthetic/master?filepath=demo.ipynb>`_.
 
