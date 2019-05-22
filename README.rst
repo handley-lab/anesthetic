@@ -131,7 +131,7 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
 Citation
 --------
 
-If you use ``fgivenx`` to generate plots for a publication, please cite
+If you use ``anesthetic`` to generate plots for a publication, please cite
 as: ::
 
    Handley, (2019). anesthetic: nested sampling visualisation. Journal of Open
