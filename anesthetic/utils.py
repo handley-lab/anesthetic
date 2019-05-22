@@ -29,12 +29,13 @@ def compress_weights(w, u=None, nsamples=None):
     if w is None:
         w = numpy.ones_like(u)
 
-    if nsamples is not None:
+    if nsamples is None:
+        nsamples = channel_capacity(w)
+
+    if nsamples < 0:
         W = w/w.max()
-        if nsamples > 0 and sum(W) > nsamples:
-            W = W/sum(W)*nsamples
     else:
-        W = w * channel_capacity(w) / w.sum()
+        W = w * nsamples / w.sum()
 
     fraction, integer = numpy.modf(W)
     extra = (u < fraction).astype(int)
