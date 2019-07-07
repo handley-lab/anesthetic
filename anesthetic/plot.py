@@ -20,6 +20,7 @@ except ImportError:
     from matplotlib.pyplot import hist
 from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds, nest_level, unique
+from anesthetic.utils import kwargs_in_func
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
@@ -252,7 +253,8 @@ def plot_1d(ax, data, *args, **kwargs):
     p /= p.max()
     i = (p >= 1e-2)
 
-    ans = ax.plot(x[i], p[i], *args, **kwargs)
+    plot_kwargs = kwargs_in_func(kwargs, plt.plot)
+    ans = ax.plot(x[i], p[i], *args, **plot_kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
@@ -300,14 +302,10 @@ def hist_1d(ax, data, *args, **kwargs):
         xmax = data.max()
     histtype = kwargs.pop('histtype', 'step')
 
-    # Non-exhaustive (to be expanded with usage...) list of kwargs that might
-    # be desired for the other triangle plots but that would clash with hist:
-    not_hist_kwargs = ['s', 'filled', 'linestyles']
-    for key in not_hist_kwargs:
-        _ = kwargs.pop(key, None)
-
+    hist_kwargs = kwargs_in_func(kwargs, plt.hist)
+    hist_kwargs.update(kwargs_in_func(kwargs, hist))
     h, edges, bars = hist(data, ax=ax, range=(xmin, xmax), histtype=histtype,
-                          *args, **kwargs)
+                          *args, **hist_kwargs)
     # As the y-axis on the diagonal 1D plots of the triangle plot won't
     # be labelled, we set the maximum bar height to 1:
     if histtype == 'bar':
@@ -379,15 +377,17 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     cmap = basic_cmap(color)
     zorder = max([child.zorder for child in ax.get_children()])
 
+    contourf_kwargs = kwargs_in_func(kwargs, plt.contourf)
     cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
                        vmin=0, vmax=1.0, cmap=cmap, zorder=zorder+1,
-                       *args, **kwargs)
+                       *args, **contourf_kwargs)
     for c in cbar.collections:
         c.set_cmap(cmap)
 
+    contour_kwargs = kwargs_in_func(kwargs, plt.contour)
     ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
                vmin=0, vmax=1.2, linewidths=0.5, colors='k', zorder=zorder+2,
-               *args, **kwargs)
+               *args, **contour_kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
     return cbar
@@ -424,7 +424,8 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
 
-    points = ax.plot(data_x, data_y, 'o', markersize=1, *args, **kwargs)
+    plot_kwargs = kwargs_in_func(kwargs, plt.plot)
+    points = ax.plot(data_x, data_y, 'o', markersize=1, *args, **plot_kwargs)
     ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
     return points
