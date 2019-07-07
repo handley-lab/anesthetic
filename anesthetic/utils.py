@@ -161,5 +161,5 @@ def unique(a):
 
 def kwargs_in_func(kwargs_dict, func):
     """ Find all kwargs that will be used by func. """
-    argspec = inspect.getargspec(func)
-    return {key: kwargs_dict[key] for key in kwargs_dict if key in argspec.args}
+    aspec = inspect.getargspec(func)
+    return {key: kwargs_dict[key] for key in kwargs_dict if key in aspec.args}
