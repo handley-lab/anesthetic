@@ -21,6 +21,7 @@ from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import PathCollection
+from matplotlib.transforms import Affine2D
 
 
 def make_1d_axes(params, **kwargs):
@@ -246,8 +247,52 @@ def plot_1d(ax, data, *args, **kwargs):
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
+
 def hist_1d(ax, data, *args, **kwargs):
-    """Plot a 1d histogram"""
+    """Plot a 1d histogram
+
+    This functions is a wrapper around matplotlib.axes.Axes.hist, with the
+    histogram being computed by astropy's hist() function which allows for
+    a more sophisticated calculation of the bins. All remaining keyword
+    arguments are passed onwards.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on
+
+    data: numpy.array
+        Uniformly weighted samples to generate kernel density estimator.
+
+    xmin, xmax: float
+        lower/upper prior bound
+        optional, default data.min() and data.max()
+        cannot be None (reverts to default in that case)
+
+    bins: int or list or str (optional)
+        If bins is a string, then it must be one of:
+        - 'blocks' : use bayesian blocks for dynamic bin widths
+        - 'knuth' : use Knuth's rule to determine bins
+        - 'scott' : use Scott's rule to determine bins
+        - 'freedman' : use the Freedman-Diaconis rule to determine bins
+
+    max_bins: int (optional)
+        Maximum number of bins allowed. With more than a few thousand bins
+        the performance of matplotlib will not be great. If the number of
+        bins is large *and* the number of input data points is large then
+        it will take a very long time to compute the histogram.
+
+    Returns
+    -------
+    patches : list or list of lists
+        Silent list of individual patches used to create the histogram
+        or list of such list if multiple input datasets.
+
+    Other Parameters
+    ---------------
+    **kwargs : `~matplotlib.axes.Axes.hist` properties
+
+    """
     if data.max()-data.min() <= 0:
         return
 
@@ -261,19 +306,21 @@ def hist_1d(ax, data, *args, **kwargs):
     histtype = kwargs.pop('histtype', 'step')
     density = kwargs.pop('density', True)
 
+    # Non-exhaustive (to be expanded with usage...) list of kwargs that might
+    # be desired for the other triangle plots but that would clash with hist:
     not_hist_kwargs = ['s', 'filled', 'linestyles']
     for key in not_hist_kwargs:
         _ = kwargs.pop(key, None)
 
-    h, edges, bars = hist(data, bins=bins, ax=ax, max_bins=1000,
-                          range=(xmin, xmax), histtype=histtype, density=density,
-                          alpha=alpha, **kwargs)
+    h, edges, bars = hist(data, bins=bins, ax=ax, range=(xmin, xmax),
+                          histtype=histtype, density=density,
+                          *args, **kwargs)
     # As the y-axis on the diagonal 1D plots of the triangle plot won't
     # be labelled, we set the maximum bar height to 1:
-    if histtype=='bar':
+    if histtype == 'bar':
         for b in bars:
             b.set_height(b.get_height() / h.max())
-    elif histtype=='step' or histtype=='stepfilled':
+    elif histtype == 'step' or histtype == 'stepfilled':
         trans = Affine2D().scale(sx=1, sy=1./h.max()) + ax.transData
         bars[0].set_transform(trans)
     ax.set_xlim(*check_bounds(edges, xmin, xmax), auto=True)

@@ -48,8 +48,8 @@ def quantile(a, q, w):
         w = numpy.ones_like(a)
     i = numpy.argsort(a)
     c = numpy.cumsum(w[i])
-    c /= c[-1]
-    icdf = interp1d(c/c[-1], a[i])
+    c /= c.values[-1]
+    icdf = interp1d(c/c.values[-1], a[i])
     return icdf(q)
 
 
