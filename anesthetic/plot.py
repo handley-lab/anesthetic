@@ -14,7 +14,10 @@ import numpy
 import pandas
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
-from astropy.visualization import hist
+try:
+    from astropy.visualization import hist
+except ImportError:
+    from matplotlib.pyplot import hist
 from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds, nest_level, unique
 from scipy.interpolate import interp1d
@@ -251,10 +254,10 @@ def plot_1d(ax, data, *args, **kwargs):
 def hist_1d(ax, data, *args, **kwargs):
     """Plot a 1d histogram
 
-    This functions is a wrapper around matplotlib.axes.Axes.hist, with the
-    histogram being computed by astropy's hist() function which allows for
-    a more sophisticated calculation of the bins. All remaining keyword
-    arguments are passed onwards.
+    This functions is a wrapper around matplotlib.axes.Axes.hist, or
+    astropy.visualization.hist if it is available. astropy's hist function
+    allows for a more sophisticated calculation of the bins. All remaining
+    keyword arguments are passed onwards.
 
     Parameters
     ----------
@@ -270,13 +273,14 @@ def hist_1d(ax, data, *args, **kwargs):
         cannot be None (reverts to default in that case)
 
     bins: int or list or str (optional)
-        If bins is a string, then it must be one of:
+        str only works with astropy's hist function. Then it must be one of:
         - 'blocks' : use bayesian blocks for dynamic bin widths
         - 'knuth' : use Knuth's rule to determine bins
         - 'scott' : use Scott's rule to determine bins
         - 'freedman' : use the Freedman-Diaconis rule to determine bins
 
     max_bins: int (optional)
+        Only used by astropy.visualization.hist().
         Maximum number of bins allowed. With more than a few thousand bins
         the performance of matplotlib will not be great. If the number of
         bins is large *and* the number of input data points is large then
@@ -302,9 +306,7 @@ def hist_1d(ax, data, *args, **kwargs):
         xmin = data.min()
     if xmax is None:
         xmax = data.max()
-    bins = kwargs.pop('bins', 'knuth')
     histtype = kwargs.pop('histtype', 'step')
-    density = kwargs.pop('density', True)
 
     # Non-exhaustive (to be expanded with usage...) list of kwargs that might
     # be desired for the other triangle plots but that would clash with hist:
@@ -312,8 +314,7 @@ def hist_1d(ax, data, *args, **kwargs):
     for key in not_hist_kwargs:
         _ = kwargs.pop(key, None)
 
-    h, edges, bars = hist(data, bins=bins, ax=ax, range=(xmin, xmax),
-                          histtype=histtype, density=density,
+    h, edges, bars = hist(data, ax=ax, range=(xmin, xmax), histtype=histtype,
                           *args, **kwargs)
     # As the y-axis on the diagonal 1D plots of the triangle plot won't
     # be labelled, we set the maximum bar height to 1:
