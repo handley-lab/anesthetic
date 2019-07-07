@@ -7,7 +7,7 @@ import numpy
 import pandas
 from scipy.special import logsumexp
 from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
-                             scatter_plot_2d, contour_plot_2d)
+                             hist_1d, scatter_plot_2d, contour_plot_2d)
 from anesthetic.read.getdist import GetDistReader
 from anesthetic.read.nested import NestedReader
 from anesthetic.utils import compute_nlive
@@ -118,9 +118,14 @@ class MCMCSamples(WeightedDataFrame):
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
-            return plot_1d(ax, self[paramname_x].compress(),
-                           xmin=xmin, xmax=xmax,
-                           *args, **kwargs)
+            plot_type_1d = kwargs.pop('plot_type_1d', 'kde')
+            if plot_type_1d == 'kde':
+                plot = plot_1d
+            elif plot_type_1d == 'hist':
+                plot = hist_1d
+            return plot(ax, self[paramname_x].compress(),
+                        xmin=xmin, xmax=xmax,
+                        *args, **kwargs)
 
         xmin, xmax = self._limits(paramname_x)
         ymin, ymax = self._limits(paramname_y)
