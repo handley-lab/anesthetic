@@ -87,7 +87,7 @@ def make_1d_axes(params, **kwargs):
     return fig, axes
 
 
-def make_2d_axes(params, types={'1d': 'kde', '2d':['kde', 'scatter']},
+def make_2d_axes(params, types={'1d': 'kde', '2d': ['kde', 'scatter']},
                  **kwargs):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
