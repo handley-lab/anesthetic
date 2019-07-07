@@ -3,6 +3,7 @@
 - ``MCMCSamples``
 - ``NestedSamples``
 """
+from copy import copy
 import numpy
 import pandas
 from scipy.special import logsumexp
@@ -114,15 +115,19 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        plot_type = kwargs.pop('plot_type', 'kde')
+        plot_type = kwargs.pop('plot_type', {'1d': 'kde', '2d': 'kde'})
 
-        if paramname_y is None or paramname_x == paramname_y:
+        if '1d' in plot_type and (paramname_y is None or
+                                  paramname_x == paramname_y):
             xmin, xmax = self._limits(paramname_x)
-            plot_type_1d = kwargs.pop('plot_type_1d', 'kde')
-            if plot_type_1d == 'kde':
+            if plot_type['1d'] == 'kde':
                 plot = plot_1d
-            elif plot_type_1d == 'hist':
+            elif plot_type['1d'] == 'hist':
                 plot = hist_1d
+            else:
+                raise NotImplementedError("'kde' and 'hist' are the only 1D "
+                                          "plot types at the moment. There is "
+                                          "no %s" % plot_type['1d'])
             return plot(ax, self[paramname_x].compress(),
                         xmin=xmin, xmax=xmax,
                         *args, **kwargs)
@@ -130,14 +135,15 @@ class MCMCSamples(WeightedDataFrame):
         xmin, xmax = self._limits(paramname_x)
         ymin, ymax = self._limits(paramname_y)
 
-        if plot_type == 'kde':
+        if plot_type['2d'] == 'kde':
             nsamples = None
             plot = contour_plot_2d
-        elif plot_type == 'scatter':
+        elif plot_type['2d'] == 'scatter':
             nsamples = 500
             plot = scatter_plot_2d
         else:
-            raise ValueError("plot_type must be in {'kde', 'scatter'}")
+            raise ValueError("plot_type['2d'] must be in {'kde', 'scatter'}, "
+                             "but is %s" % plot_type['2d'])
 
         return plot(ax, self[paramname_x].compress(nsamples),
                     self[paramname_y].compress(nsamples),
@@ -214,20 +220,20 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        types = kwargs.pop('types', ['kde', 'scatter'])
+        types = kwargs.pop('types', {'1d': 'kde', '2d': ['kde', 'scatter']})
+        types['2d'] = numpy.atleast_1d(types['2d'])
 
         if not isinstance(axes, pandas.DataFrame):
-            upper = None if len(types) > 1 else False
-            fig, axes = make_2d_axes(axes, tex=self.tex, upper=upper)
+            upper = None if len(types['2d']) > 1 else False
+            fig, axes = make_2d_axes(axes, types, tex=self.tex, upper=upper)
         else:
             fig = axes.values[~axes.isna()][0].figure
 
-        types = numpy.atleast_1d(types)
-
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
-                if ax is not None and x in self and y in self:
-                    plot_type = types[-1] if ax._upper else types[0]
+                if ax is not None and x in self and y in self and ax._upper is not None:
+                    plot_type = copy(types)
+                    plot_type['2d'] = types['2d'][-1] if ax._upper else types['2d'][0]
                     ax_ = ax.twin if x == y else ax
                     self.plot(ax_, x, y, plot_type=plot_type, *args, **kwargs)
 

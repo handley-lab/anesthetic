@@ -87,7 +87,7 @@ def make_1d_axes(params, **kwargs):
     return fig, axes
 
 
-def make_2d_axes(params, **kwargs):
+def make_2d_axes(params, types={'1d': 'kde', '2d':['kde', 'scatter']}, **kwargs):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
     Parameters
@@ -145,7 +145,6 @@ def make_2d_axes(params, **kwargs):
         grid = GS(*axes.shape, hspace=0, wspace=0)
 
     upper = kwargs.pop('upper', None)
-    diagonal = kwargs.pop('diagonal', True)
 
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
@@ -163,10 +162,10 @@ def make_2d_axes(params, **kwargs):
             lower = not (x in axes.index and y in axes.columns
                          and all_params.index(x) > all_params.index(y))
 
-            if x == y and not diagonal:
+            if x == y and '1d' not in types:
                 continue
 
-            if upper == lower and x != y:
+            if upper == lower and x != y and '1d' not in types:
                 continue
 
             if axes[x][y] is None:
@@ -176,6 +175,12 @@ def make_2d_axes(params, **kwargs):
                 sy = sy[0] if sy else None
                 axes[x][y] = fig.add_subplot(grid[j, i],
                                              sharex=sx, sharey=sy)
+
+            if upper == lower and x != y and '1d' in types:
+                axes[x][y].axis('off')
+                axes[x][y]._upper = None
+                continue
+
             if x == y:
                 axes[x][y].twin = axes[x][y].twinx()
                 axes[x][y].twin.set_yticks([])
@@ -252,7 +257,7 @@ def plot_1d(ax, data, *args, **kwargs):
 
 
 def hist_1d(ax, data, *args, **kwargs):
-    """Plot a 1d histogram
+    """Plot a 1d histogram.
 
     This functions is a wrapper around matplotlib.axes.Axes.hist, or
     astropy.visualization.hist if it is available. astropy's hist function
@@ -272,20 +277,6 @@ def hist_1d(ax, data, *args, **kwargs):
         optional, default data.min() and data.max()
         cannot be None (reverts to default in that case)
 
-    bins: int or list or str (optional)
-        str only works with astropy's hist function. Then it must be one of:
-        - 'blocks' : use bayesian blocks for dynamic bin widths
-        - 'knuth' : use Knuth's rule to determine bins
-        - 'scott' : use Scott's rule to determine bins
-        - 'freedman' : use the Freedman-Diaconis rule to determine bins
-
-    max_bins: int (optional)
-        Only used by astropy.visualization.hist().
-        Maximum number of bins allowed. With more than a few thousand bins
-        the performance of matplotlib will not be great. If the number of
-        bins is large *and* the number of input data points is large then
-        it will take a very long time to compute the histogram.
-
     Returns
     -------
     patches : list or list of lists
@@ -293,15 +284,15 @@ def hist_1d(ax, data, *args, **kwargs):
         or list of such list if multiple input datasets.
 
     Other Parameters
-    ---------------
+    ----------------
     **kwargs : `~matplotlib.axes.Axes.hist` properties
 
     """
     if data.max()-data.min() <= 0:
         return
 
-    xmin = kwargs.pop('xmin', data.min())
-    xmax = kwargs.pop('xmax', data.max())
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
     if xmin is None:
         xmin = data.min()
     if xmax is None:
