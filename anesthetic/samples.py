@@ -231,9 +231,13 @@ class MCMCSamples(WeightedDataFrame):
 
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
-                if ax is not None and x in self and y in self and ax._upper is not None:
+                if (ax is not None and x in self and y in self
+                        and ax._upper is not None):
                     plot_type = copy(types)
-                    plot_type['2d'] = types['2d'][-1] if ax._upper else types['2d'][0]
+                    if ax._upper:
+                        plot_type['2d'] = types['2d'][-1]
+                    else:
+                        plot_type['2d'] = types['2d'][0]
                     ax_ = ax.twin if x == y else ax
                     self.plot(ax_, x, y, plot_type=plot_type, *args, **kwargs)
 
