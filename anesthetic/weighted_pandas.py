@@ -41,7 +41,8 @@ class WeightedSeries(pandas.Series):
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedSeries, self).hist(weights=self.w, *args, **kwargs)
+        return super(WeightedSeries, self).hist(weights=self.w,
+                                                *args, **kwargs)
 
     def neff(self):
         """Effective number of samples."""
@@ -119,7 +120,8 @@ class WeightedDataFrame(pandas.DataFrame):
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedDataFrame, self).hist(weights=self.w, *args, **kwargs)
+        return super(WeightedDataFrame, self).hist(weights=self.w,
+                                                   *args, **kwargs)
 
     def neff(self):
         """Effective number of samples."""
