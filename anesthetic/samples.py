@@ -104,7 +104,8 @@ class MCMCSamples(WeightedDataFrame):
             If not provided, or the same as paramname_x, then 1D plot produced.
 
         plot_type: str, optional
-            Must be in {'kde','scatter'}. (Default: 'kde')
+            Must be in {'kde', 'scatter'} for 2D plots and in {'kde', 'hist'}
+            for 1D plots. (Default: 'kde')
 
         Returns
         -------
@@ -203,11 +204,20 @@ class MCMCSamples(WeightedDataFrame):
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
 
-        types: list(str) or str, optional
-            What type (or types) of plots to produce. If two types are provided
-            then pairs of parameters 'above the diagonal' have the second type.
-            each string must be one of {'kde', 'scatter'}.
-            Default: ['kde', 'scatter']
+        types: dict, optional
+            What type (or types) of plots to produce. Takes the keys 'diagonal'
+            for the 1D plots and 'lower' and 'upper' for the 2D plots.
+            The options for 'diagonal are either:
+
+                - 'kde'
+                - 'hist.
+
+            The options for 'lower' and 'upper' are either:
+
+                - 'kde'
+                - 'scatter'
+
+            Default: {'diagonal': 'kde', 'lower': 'kde'}
 
         Returns
         -------
