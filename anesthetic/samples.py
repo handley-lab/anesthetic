@@ -207,15 +207,11 @@ class MCMCSamples(WeightedDataFrame):
             What type (or types) of plots to produce. Takes the keys 'diagonal'
             for the 1D plots and 'lower' and 'upper' for the 2D plots.
             The options for 'diagonal are either:
-
                 - 'kde'
                 - 'hist.
-
             The options for 'lower' and 'upper' are either:
-
                 - 'kde'
                 - 'scatter'
-
             Default: {'diagonal': 'kde', 'lower': 'kde'}
 
         diagonal_kwargs: dict, optional
