@@ -10,6 +10,8 @@ wish to use.
 to create a set of axes and legend proxies.
 
 """
+#%load_ext autoreload
+#%autoreload 2
 import numpy
 import pandas
 import matplotlib.pyplot as plt
@@ -102,11 +104,15 @@ def make_2d_axes(params, **kwargs):
             Dictionary mapping params to tex plot labels.
             Default: params
 
-        upper: None or logical, optional
-            Whether to create plots in the upper triangle.
-            If None do both. Default: None
+        upper: logical, optional
+            Whether to create 2D marginalised plots above the diagonal.
+            Default: True
 
-        diagonal: True, optional
+        lower: logical, optional
+            Whether to create 2D marginalised plots below the diagonal.
+            Default: True
+
+        diagonal: logical, optional
             Whether to create 1D marginalised plots on the diagonal.
             Default: True
 
@@ -131,12 +137,35 @@ def make_2d_axes(params, **kwargs):
         xparams, yparams = params
     else:
         xparams = yparams = params
+
+    upper = kwargs.pop('upper', True)
+    lower = kwargs.pop('lower', True)
+    diagonal = kwargs.pop('diagonal', True)
+
     axes = pandas.DataFrame(index=numpy.atleast_1d(yparams),
                             columns=numpy.atleast_1d(xparams),
                             dtype=object)
     axes[:][:] = None
+    all_params = list(axes.index) + list(axes.columns)
+
+    for j, y in enumerate(axes.index):
+        for i, x in enumerate(axes.columns):
+            reflect = x in axes.index and y in axes.columns
+            if all_params.index(x) < all_params.index(y):
+                if lower:
+                    axes[x][y] = -1
+            elif all_params.index(x) > all_params.index(y):
+                if upper: 
+                    axes[x][y] = +1
+            elif diagonal:
+                axes[x][y] = 0
+
+    axes.dropna(axis=0, how='all', inplace=True)
+    axes.dropna(axis=1, how='all', inplace=True)
+
 
     tex = kwargs.pop('tex', {})
+    tex = {p: tex[p] if p in tex else p for p in all_params}
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     if 'subplot_spec' in kwargs:
         grid = SGS(*axes.shape, hspace=0, wspace=0,
@@ -144,44 +173,32 @@ def make_2d_axes(params, **kwargs):
     else:
         grid = GS(*axes.shape, hspace=0, wspace=0)
 
-    upper = kwargs.pop('upper', None)
-    diagonal = kwargs.pop('diagonal', True)
-
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
     if axes.size == 0:
         return fig, axes
-
-    tex = {p: tex[p] if p in tex else p
-           for p in numpy.concatenate((axes.index, axes.columns))}
-
-    all_params = list(axes.index) + list(axes.columns)
-
+    position = axes.copy()
+    axes[:][:] = None
     for j, y in enumerate(axes.index):
         for i, x in enumerate(axes.columns):
-            lower = not (x in axes.index and y in axes.columns
-                         and all_params.index(x) > all_params.index(y))
-
-            if x == y and not diagonal:
-                continue
-
-            if upper == lower and x != y:
-                continue
-
-            if axes[x][y] is None:
+            if position[x][y] is not None:
                 sx = list(axes[x].dropna())
                 sx = sx[0] if sx else None
                 sy = list(axes.T[y].dropna())
                 sy = sy[0] if sy else None
                 axes[x][y] = fig.add_subplot(grid[j, i],
                                              sharex=sx, sharey=sy)
-            if x == y:
-                axes[x][y].twin = axes[x][y].twinx()
-                axes[x][y].twin.set_yticks([])
-                axes[x][y].twin.set_ylim(0, 1.1)
 
-            axes[x][y]._upper = not lower
+                if position[x][y] == 0:
+                    axes[x][y].twin = axes[x][y].twinx()
+                    axes[x][y].twin.set_yticks([])
+                    axes[x][y].twin.set_ylim(0, 1.1)
+                    axes[x][y].position = 'diagonal'
+                elif position[x][y] == 1: 
+                    axes[x][y].position = 'upper'
+                elif position[x][y] == -1: 
+                    axes[x][y].position = 'lower'
 
     for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
         ax.set_ylabel(tex[y])

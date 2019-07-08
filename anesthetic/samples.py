@@ -262,16 +262,11 @@ class MCMCSamples(WeightedDataFrame):
 
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
-                if (ax is not None and x in self and y in self
-                        and ax._upper is not None):
+                if ax is not None:
                     ax_ = ax
+                    pos = ax.position
                     if x == y:
                         ax_ = ax.twin
-                        pos = 'diagonal'
-                    elif ax._upper:
-                        pos = 'upper'
-                    else:
-                        pos = 'lower'
 
                     self.plot(ax_, x, y, plot_type=types[pos], *args,
                               **local_kwargs[pos])
