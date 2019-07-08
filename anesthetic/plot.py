@@ -384,8 +384,8 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """Plot samples from a 2d marginalised distribution.
 
-    This functions as a wrapper around matplotlib.axes.Axes.plot, enforcing any
-    prior bounds. All remaining keyword arguments are passed onwards.
+    This functions as a wrapper around matplotlib.axes.Axes.scatter, enforcing
+    any prior bounds. All remaining keyword arguments are passed onwards.
 
     Parameters
     ----------
@@ -402,17 +402,18 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Returns
     -------
-    lines: matplotlib.lines.Line2D
-        A list of line objects representing the plotted data (same as
-        matplotlib matplotlib.axes.Axes.plot command)
+    matplotlib.collections.PathCollection object
+        A PathCollection object representing the plotted data (same as
+        matplotlib matplotlib.axes.Axes.scatter command)
 
     """
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    s = kwargs.pop('s', 3)
 
-    points = ax.plot(data_x, data_y, 'o', markersize=1, *args, **kwargs)
+    points = ax.scatter(data_x, data_y, s=s, *args, **kwargs)
     ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
     return points
