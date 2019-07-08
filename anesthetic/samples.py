@@ -206,33 +206,19 @@ class MCMCSamples(WeightedDataFrame):
         types: dict, optional
             What type (or types) of plots to produce. Takes the keys 'diagonal'
             for the 1D plots and 'lower' and 'upper' for the 2D plots.
-            The options for 'diagonal are either:
+            The options for 'diagonal are:
                 - 'kde'
                 - 'hist.
-            The options for 'lower' and 'upper' are either:
+            The options for 'lower' and 'upper' are:
                 - 'kde'
                 - 'scatter'
             Default: {'diagonal': 'kde', 'lower': 'kde'}
 
-        diagonal_kwargs: dict, optional
-            kwargs only for the diagonal (1D) plots. This is useful when there
-            is a conflict of kwargs for different types of plots.
-            Note that any kwargs directly passed to plot_2d will overwrite any
-            kwarg with the same key passed to diagonal_kwargs.
-            Default: {}
-
-        lower_kwargs: dict, optional
-            kwargs only for the lower 2D plots. This is useful when there
-            is a conflict of kwargs for different types of plots.
-            Note that any kwargs directly passed to plot_2d will overwrite any
-            kwarg with the same key passed to lower_kwargs.
-            Default: {}
-
-        upper_kwargs: dict, optional
-            kwargs only for the upper 2D plots. This is useful when there
-            is a conflict of kwargs for different types of plots.
-            Note that any kwargs directly passed to plot_2d will overwrite any
-            kwarg with the same key passed to upper_kwargs.
+        diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
+            kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
+            useful when there is a conflict of kwargs for different types of
+            plots.  Note that any kwargs directly passed to plot_2d will
+            overwrite any kwarg with the same key passed to diagonal_kwargs.
             Default: {}
 
         Returns
@@ -264,12 +250,11 @@ class MCMCSamples(WeightedDataFrame):
                          'upper': types[-1]}
             else:
                 types = {'lower': types[0], 'upper': types[-1]}
-        diagonal_kwargs = kwargs.pop('diagonal_kwargs', {})
-        lower_kwargs = kwargs.pop('lower_kwargs', {})
-        upper_kwargs = kwargs.pop('upper_kwargs', {})
-        diagonal_kwargs.update(kwargs)
-        lower_kwargs.update(kwargs)
-        upper_kwargs.update(kwargs)
+
+        local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
+                        for pos in ['lower', 'upper', 'diagonal']}
+        for pos in local_kwargs:
+            local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
             upper = None if 'upper' in types else False
@@ -282,18 +267,15 @@ class MCMCSamples(WeightedDataFrame):
             for x, ax in row.iteritems():
                 if (ax is not None and x in self and y in self
                         and ax._upper is not None):
-                    ax_ = ax
                     if x == y:
-                        plot_type = types['diagonal']
-                        kwargs = diagonal_kwargs
-                        ax_ = ax.twin
+                        pos = 'diagonal'
                     elif ax._upper:
-                        plot_type = types['upper']
-                        kwargs = upper_kwargs
+                        pos = 'upper'
                     else:
-                        plot_type = types['lower']
-                        kwargs = lower_kwargs
-                    self.plot(ax_, x, y, plot_type=plot_type, *args, **kwargs)
+                        pos = 'lower'
+                    ax_ = ax.twin if pos == 'diagonal' else ax
+                    self.plot(ax_, x, y, plot_type=types[pos], *args,
+                              **local_kwargs[pos])
 
         return fig, axes
 
