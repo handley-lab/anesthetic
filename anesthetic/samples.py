@@ -3,7 +3,6 @@
 - ``MCMCSamples``
 - ``NestedSamples``
 """
-from copy import copy
 import numpy
 import pandas
 from scipy.special import logsumexp
@@ -231,6 +230,15 @@ class MCMCSamples(WeightedDataFrame):
         types = kwargs.pop('types', {'diagonal': 'kde', 'lower': 'kde'})
         diagonal = kwargs.pop('diagonal', True)
         if isinstance(types, list) or isinstance(types, str):
+            from warnings import warn
+            warn("MCMCSamples.plot_2d's argument 'types' might stop accepting "
+                 "str or list(str) as input in the future. It takes a "
+                 "dictionary as input, now, with keys 'diagonal' for the 1D "
+                 "plots and 'lower' and 'upper' for the 2D plots. 'diagonal' "
+                 "accepts the values 'kde' or 'hist' and both 'lower' and "
+                 "'upper' accept the values 'kde' or 'scatter'. "
+                 "Default: {'diagonal': 'kde', 'lower': 'kde'}.",
+                 FutureWarning)
             if isinstance(types, str) and diagonal:
                 types = {'diagonal': types, 'lower': types}
             elif isinstance(types, list) and diagonal:
