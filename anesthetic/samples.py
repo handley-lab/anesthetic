@@ -24,7 +24,7 @@ class MCMCSamples(WeightedDataFrame):
     Example plotting commands include
         - ``mcmc.plot_1d(['paramA', 'paramB'])``
         - ``mcmc.plot_2d(['paramA', 'paramB'])``
-        - ``mcmc.plot_2d(['paramA', 'paramB'], ['paramC', 'paramD'])``
+        - ``mcmc.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD'])]``
 
     Parameters
     ----------
@@ -238,12 +238,14 @@ class MCMCSamples(WeightedDataFrame):
                  "Default: {'diagonal': 'kde', 'lower': 'kde'}.",
                  FutureWarning)
 
-            if isinstance(types, str) and diagonal:
-                types = {'diagonal': types, 'lower': types}
+            if isinstance(types, str):
+                types = {'lower': types}
+                if diagonal:
+                    types['diagonal'] = types['lower']
             elif isinstance(types, list):
                 types = {'lower': types[0], 'upper': types[-1]}
                 if diagonal:
-                    types['diagonal'] = types[0]
+                    types['diagonal'] = types['lower']
 
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in ['lower', 'upper', 'diagonal']}

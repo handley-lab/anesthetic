@@ -76,3 +76,22 @@ def test_read_polychord():
     ns = NestedSamples(root='./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
+
+
+def test_plot_2d_types():
+    ns = NestedSamples(root='./tests/example_data/pc')
+    params_x = ['x0', 'x1', 'x2', 'x3']
+    params_y = ['x0', 'x1', 'x2']
+    fig, axes = ns.plot_2d([params_x, params_y], types=['kde', 'scatter'])
+    assert(axes.isnull().sum().sum() == 0)
+
+    fig, axes = ns.plot_2d([params_x, params_y], types='kde')
+    assert(axes.isnull().sum().sum() == 3)
+
+    fig, axes = ns.plot_2d([params_x, params_y], types='kde', diagonal=False)
+    assert(axes.isnull().sum().sum() == 6)
+
+    fig, axes = ns.plot_2d([params_x, params_y], types={'lower': 'kde'})
+    assert(axes.isnull().sum().sum() == 6)
+#    fig, axes = ns.plot_2d([params_x, params_y],types={'diagonal':'kde'})
+#    fig, axes = ns.plot_2d([params_x, params_y],types={'upper':'kde'})
