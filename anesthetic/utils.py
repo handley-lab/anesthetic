@@ -1,5 +1,4 @@
 """Data-processing utility functions."""
-import inspect
 import numpy
 import pandas
 from scipy.interpolate import interp1d
