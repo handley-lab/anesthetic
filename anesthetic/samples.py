@@ -218,6 +218,21 @@ class MCMCSamples(WeightedDataFrame):
 
             Default: {'diagonal': 'kde', 'lower': 'kde'}
 
+        diagonal_kwargs: dict, optional
+            kwargs only for the diagonal (1D) plots. This is useful when there
+            is a conflict of kwargs for different types of plots.
+            Default: {}
+
+        lower_kwargs: dict, optional
+            kwargs only for the lower 2D plots. This is useful when there
+            is a conflict of kwargs for different types of plots.
+            Default: {}
+
+        upper_kwargs: dict, optional
+            kwargs only for the upper 2D plots. This is useful when there
+            is a conflict of kwargs for different types of plots.
+            Default: {}
+
         Returns
         -------
         fig: matplotlib.figure.Figure
@@ -247,6 +262,12 @@ class MCMCSamples(WeightedDataFrame):
                          'upper': types[-1]}
             else:
                 types = {'lower': types[0], 'upper': types[-1]}
+        diagonal_kwargs = kwargs.pop('diagonal_kwargs', {})
+        lower_kwargs = kwargs.pop('lower_kwargs', {})
+        upper_kwargs = kwargs.pop('upper_kwargs', {})
+        diagonal_kwargs.update(kwargs)
+        lower_kwargs.update(kwargs)
+        upper_kwargs.update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
             upper = None if 'upper' in types else False
@@ -262,11 +283,14 @@ class MCMCSamples(WeightedDataFrame):
                     ax_ = ax
                     if x == y:
                         plot_type = types['diagonal']
+                        kwargs = diagonal_kwargs
                         ax_ = ax.twin
                     elif ax._upper:
                         plot_type = types['upper']
+                        kwargs = upper_kwargs
                     else:
                         plot_type = types['lower']
+                        kwargs = lower_kwargs
                     self.plot(ax_, x, y, plot_type=plot_type, *args, **kwargs)
 
         return fig, axes
