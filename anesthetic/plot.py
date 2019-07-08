@@ -166,7 +166,7 @@ def make_2d_axes(params, **kwargs):
             if x == y and not diagonal:
                 continue
 
-            if upper == lower and x != y and not diagonal:
+            if upper == lower and x != y:
                 continue
 
             if axes[x][y] is None:
@@ -176,12 +176,6 @@ def make_2d_axes(params, **kwargs):
                 sy = sy[0] if sy else None
                 axes[x][y] = fig.add_subplot(grid[j, i],
                                              sharex=sx, sharey=sy)
-
-            if upper == lower and x != y and diagonal:
-                axes[x][y].axis('off')
-                axes[x][y]._upper = None
-                continue
-
             if x == y:
                 axes[x][y].twin = axes[x][y].twinx()
                 axes[x][y].twin.set_yticks([])
