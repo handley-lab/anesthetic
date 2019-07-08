@@ -384,8 +384,8 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """Plot samples from a 2d marginalised distribution.
 
-    This functions as a wrapper around matplotlib.axes.Axes.scatter, enforcing any
-    prior bounds. All remaining keyword arguments are passed onwards.
+    This functions as a wrapper around matplotlib.axes.Axes.scatter, enforcing
+    any prior bounds. All remaining keyword arguments are passed onwards.
 
     Parameters
     ----------
