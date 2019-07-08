@@ -7,7 +7,7 @@ import numpy
 import pandas
 from scipy.special import logsumexp
 from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
-                             scatter_plot_2d, contour_plot_2d)
+                             hist_1d, scatter_plot_2d, contour_plot_2d)
 from anesthetic.read.getdist import GetDistReader
 from anesthetic.read.nested import NestedReader
 from anesthetic.utils import compute_nlive
@@ -103,7 +103,8 @@ class MCMCSamples(WeightedDataFrame):
             If not provided, or the same as paramname_x, then 1D plot produced.
 
         plot_type: str, optional
-            Must be in {'kde','scatter'}. (Default: 'kde')
+            Must be in {'kde', 'scatter'} for 2D plots and in {'kde', 'hist'}
+            for 1D plots. (Default: 'kde')
 
         Returns
         -------
@@ -118,9 +119,16 @@ class MCMCSamples(WeightedDataFrame):
 
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
-            return plot_1d(ax, self[paramname_x].compress(),
-                           xmin=xmin, xmax=xmax,
-                           *args, **kwargs)
+            if plot_type == 'kde':
+                plot = plot_1d
+            elif plot_type == 'hist':
+                plot = hist_1d
+            else:
+                raise NotImplementedError("plot_type is '%s', but must be in "
+                                          "{'kde', 'hist'}." % plot_type)
+            return plot(ax, self[paramname_x].compress(),
+                        xmin=xmin, xmax=xmax,
+                        *args, **kwargs)
 
         xmin, xmax = self._limits(paramname_x)
         ymin, ymax = self._limits(paramname_y)
@@ -132,7 +140,8 @@ class MCMCSamples(WeightedDataFrame):
             nsamples = 500
             plot = scatter_plot_2d
         else:
-            raise ValueError("plot_type must be in {'kde', 'scatter'}")
+            raise NotImplementedError("plot_type is '%s', but must be in "
+                                      "{'kde', 'scatter'}." % plot_type)
 
         return plot(ax, self[paramname_x].compress(nsamples),
                     self[paramname_y].compress(nsamples),
@@ -194,11 +203,37 @@ class MCMCSamples(WeightedDataFrame):
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
 
-        types: list(str) or str, optional
-            What type (or types) of plots to produce. If two types are provided
-            then pairs of parameters 'above the diagonal' have the second type.
-            each string must be one of {'kde', 'scatter'}.
-            Default: ['kde', 'scatter']
+        types: dict, optional
+            What type (or types) of plots to produce. Takes the keys 'diagonal'
+            for the 1D plots and 'lower' and 'upper' for the 2D plots.
+            The options for 'diagonal are either:
+                - 'kde'
+                - 'hist.
+            The options for 'lower' and 'upper' are either:
+                - 'kde'
+                - 'scatter'
+            Default: {'diagonal': 'kde', 'lower': 'kde'}
+
+        diagonal_kwargs: dict, optional
+            kwargs only for the diagonal (1D) plots. This is useful when there
+            is a conflict of kwargs for different types of plots.
+            Note that any kwargs directly passed to plot_2d will overwrite any
+            kwarg with the same key passed to diagonal_kwargs.
+            Default: {}
+
+        lower_kwargs: dict, optional
+            kwargs only for the lower 2D plots. This is useful when there
+            is a conflict of kwargs for different types of plots.
+            Note that any kwargs directly passed to plot_2d will overwrite any
+            kwarg with the same key passed to lower_kwargs.
+            Default: {}
+
+        upper_kwargs: dict, optional
+            kwargs only for the upper 2D plots. This is useful when there
+            is a conflict of kwargs for different types of plots.
+            Note that any kwargs directly passed to plot_2d will overwrite any
+            kwarg with the same key passed to upper_kwargs.
+            Default: {}
 
         Returns
         -------
@@ -209,21 +244,55 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        types = kwargs.pop('types', ['kde', 'scatter'])
+        types = kwargs.pop('types', {'diagonal': 'kde', 'lower': 'kde'})
+        diagonal = kwargs.pop('diagonal', True)
+        if isinstance(types, list) or isinstance(types, str):
+            from warnings import warn
+            warn("MCMCSamples.plot_2d's argument 'types' might stop accepting "
+                 "str or list(str) as input in the future. It takes a "
+                 "dictionary as input, now, with keys 'diagonal' for the 1D "
+                 "plots and 'lower' and 'upper' for the 2D plots. 'diagonal' "
+                 "accepts the values 'kde' or 'hist' and both 'lower' and "
+                 "'upper' accept the values 'kde' or 'scatter'. "
+                 "Default: {'diagonal': 'kde', 'lower': 'kde'}.",
+                 FutureWarning)
+            if isinstance(types, str) and diagonal:
+                types = {'diagonal': types, 'lower': types}
+            elif isinstance(types, list) and diagonal:
+                types = {'diagonal': types[0],
+                         'lower': types[0],
+                         'upper': types[-1]}
+            else:
+                types = {'lower': types[0], 'upper': types[-1]}
+        diagonal_kwargs = kwargs.pop('diagonal_kwargs', {})
+        lower_kwargs = kwargs.pop('lower_kwargs', {})
+        upper_kwargs = kwargs.pop('upper_kwargs', {})
+        diagonal_kwargs.update(kwargs)
+        lower_kwargs.update(kwargs)
+        upper_kwargs.update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
-            upper = None if len(types) > 1 else False
-            fig, axes = make_2d_axes(axes, tex=self.tex, upper=upper)
+            upper = None if 'upper' in types else False
+            fig, axes = make_2d_axes(axes, diagonal=('diagonal' in types),
+                                     tex=self.tex, upper=upper)
         else:
             fig = axes.values[~axes.isna()][0].figure
 
-        types = numpy.atleast_1d(types)
-
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
-                if ax is not None and x in self and y in self:
-                    plot_type = types[-1] if ax._upper else types[0]
-                    ax_ = ax.twin if x == y else ax
+                if (ax is not None and x in self and y in self
+                        and ax._upper is not None):
+                    ax_ = ax
+                    if x == y:
+                        plot_type = types['diagonal']
+                        kwargs = diagonal_kwargs
+                        ax_ = ax.twin
+                    elif ax._upper:
+                        plot_type = types['upper']
+                        kwargs = upper_kwargs
+                    else:
+                        plot_type = types['lower']
+                        kwargs = lower_kwargs
                     self.plot(ax_, x, y, plot_type=plot_type, *args, **kwargs)
 
         return fig, axes

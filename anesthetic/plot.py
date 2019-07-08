@@ -14,12 +14,17 @@ import numpy
 import pandas
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
+try:
+    from astropy.visualization import hist
+except ImportError:
+    from matplotlib.pyplot import hist
 from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds, nest_level, unique
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import PathCollection
+from matplotlib.transforms import Affine2D
 
 
 def make_1d_axes(params, **kwargs):
@@ -244,6 +249,64 @@ def plot_1d(ax, data, *args, **kwargs):
     ans = ax.plot(x[i], p[i], *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
+
+
+def hist_1d(ax, data, *args, **kwargs):
+    """Plot a 1d histogram.
+
+    This functions is a wrapper around matplotlib.axes.Axes.hist, or
+    astropy.visualization.hist if it is available. astropy's hist function
+    allows for a more sophisticated calculation of the bins. All remaining
+    keyword arguments are passed onwards.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on
+
+    data: numpy.array
+        Uniformly weighted samples to generate kernel density estimator.
+
+    xmin, xmax: float
+        lower/upper prior bound
+        optional, default data.min() and data.max()
+        cannot be None (reverts to default in that case)
+
+    Returns
+    -------
+    patches : list or list of lists
+        Silent list of individual patches used to create the histogram
+        or list of such list if multiple input datasets.
+
+    Other Parameters
+    ----------------
+    **kwargs : `~matplotlib.axes.Axes.hist` properties
+
+    """
+    if data.max()-data.min() <= 0:
+        return
+
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
+    if xmin is None:
+        xmin = data.min()
+    if xmax is None:
+        xmax = data.max()
+    histtype = kwargs.pop('histtype', 'bar')
+
+    h, edges, bars = hist(data, ax=ax, range=(xmin, xmax), histtype=histtype,
+                          *args, **kwargs)
+    # As the y-axis on the diagonal 1D plots of the triangle plot won't
+    # be labelled, we set the maximum bar height to 1:
+    if histtype == 'bar':
+        for b in bars:
+            b.set_height(b.get_height() / h.max())
+    elif histtype == 'step' or histtype == 'stepfilled':
+        trans = Affine2D().scale(sx=1, sy=1./h.max()) + ax.transData
+        bars[0].set_transform(trans)
+    ax.set_xlim(*check_bounds(edges, xmin, xmax), auto=True)
+    ax.set_ylim(0, 1.1)
+    return bars
 
 
 def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
