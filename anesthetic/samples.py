@@ -217,16 +217,22 @@ class MCMCSamples(WeightedDataFrame):
         diagonal_kwargs: dict, optional
             kwargs only for the diagonal (1D) plots. This is useful when there
             is a conflict of kwargs for different types of plots.
+            Note that any kwargs directly passed to plot_2d will overwrite any
+            kwarg with the same key passed to diagonal_kwargs.
             Default: {}
 
         lower_kwargs: dict, optional
             kwargs only for the lower 2D plots. This is useful when there
             is a conflict of kwargs for different types of plots.
+            Note that any kwargs directly passed to plot_2d will overwrite any
+            kwarg with the same key passed to lower_kwargs.
             Default: {}
 
         upper_kwargs: dict, optional
             kwargs only for the upper 2D plots. This is useful when there
             is a conflict of kwargs for different types of plots.
+            Note that any kwargs directly passed to plot_2d will overwrite any
+            kwarg with the same key passed to upper_kwargs.
             Default: {}
 
         Returns
