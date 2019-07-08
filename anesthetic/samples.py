@@ -140,8 +140,8 @@ class MCMCSamples(WeightedDataFrame):
             nsamples = 500
             plot = scatter_plot_2d
         else:
-            raise ValueError("plot_type is '%s', but must be in "
-                             "{'kde', 'scatter'}." % plot_type)
+            raise NotImplementedError("plot_type is '%s', but must be in "
+                                      "{'kde', 'scatter'}." % plot_type)
 
         return plot(ax, self[paramname_x].compress(nsamples),
                     self[paramname_y].compress(nsamples),
