@@ -39,6 +39,10 @@ class WeightedSeries(pandas.Series):
         """Weighted quantile of the sampled distribution."""
         return quantile(self.values, q, self.w)
 
+    def hist(self, *args, **kwargs):
+        """Weighted histogram of the sampled distribution."""
+        return super(WeightedSeries, self).hist(weights=self.w, *args, **kwargs)
+
     def neff(self):
         """Effective number of samples."""
         if self.w is None:
@@ -112,6 +116,10 @@ class WeightedDataFrame(pandas.DataFrame):
             return pandas.Series(data, index=self.columns)
         else:
             return pandas.DataFrame(data.T, columns=self.columns, index=q)
+
+    def hist(self, *args, **kwargs):
+        """Weighted histogram of the sampled distribution."""
+        return super(WeightedDataFrame, self).hist(weights=self.w, *args, **kwargs)
 
     def neff(self):
         """Effective number of samples."""
