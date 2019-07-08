@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal
 
 from matplotlib.contour import QuadContourSet
 from matplotlib.lines import Line2D
-from matplotlib.collections import PatchCollection
+from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
 from pandas.core.series import Series
 from pandas.core.frame import DataFrame
@@ -210,7 +210,7 @@ def test_scatter_plot_2d():
     data_x = numpy.random.randn(1000)
     data_y = numpy.random.randn(1000)
     points = scatter_plot_2d(ax, data_x, data_y)
-    assert(isinstance(points, PatchCollection))
+    assert(isinstance(points, PathCollection))
 
     xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
     ax = plt.gca()
