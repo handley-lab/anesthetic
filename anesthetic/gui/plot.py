@@ -101,7 +101,6 @@ class Temperature(Slider):
     def set_text(self, kT):
         """Set the text at end of slider.
 
-
         Parameters
         ----------
             kT: float
