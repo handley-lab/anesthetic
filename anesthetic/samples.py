@@ -24,7 +24,7 @@ class MCMCSamples(WeightedDataFrame):
     Example plotting commands include
         - ``mcmc.plot_1d(['paramA', 'paramB'])``
         - ``mcmc.plot_2d(['paramA', 'paramB'])``
-        - ``mcmc.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD'])]``
+        - ``mcmc.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD']])``
 
     Parameters
     ----------
