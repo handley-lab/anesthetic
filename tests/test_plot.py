@@ -8,6 +8,7 @@ from numpy.testing import assert_array_equal
 
 from matplotlib.contour import QuadContourSet
 from matplotlib.lines import Line2D
+from matplotlib.collections import PatchCollection
 from matplotlib.figure import Figure
 from pandas.core.series import Series
 from pandas.core.frame import DataFrame
@@ -208,26 +209,26 @@ def test_scatter_plot_2d():
     numpy.random.seed(2)
     data_x = numpy.random.randn(1000)
     data_y = numpy.random.randn(1000)
-    lines, = scatter_plot_2d(ax, data_x, data_y)
-    assert(isinstance(lines, Line2D))
+    points = scatter_plot_2d(ax, data_x, data_y)
+    assert(isinstance(points, PatchCollection))
 
     xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
     ax = plt.gca()
-    contour_plot_2d(ax, data_x, data_y, xmin=xmin)
+    scatter_plot_2d(ax, data_x, data_y, xmin=xmin)
     assert(ax.get_xlim()[0] >= xmin)
     plt.close()
 
     ax = plt.gca()
-    contour_plot_2d(ax, data_x, data_y, xmax=xmax)
+    scatter_plot_2d(ax, data_x, data_y, xmax=xmax)
     assert(ax.get_xlim()[1] <= xmax)
     plt.close()
 
     ax = plt.gca()
-    contour_plot_2d(ax, data_x, data_y, ymin=ymin)
+    scatter_plot_2d(ax, data_x, data_y, ymin=ymin)
     assert(ax.get_ylim()[0] >= ymin)
     plt.close()
 
     ax = plt.gca()
-    contour_plot_2d(ax, data_x, data_y, ymax=ymax)
+    scatter_plot_2d(ax, data_x, data_y, ymax=ymax)
     assert(ax.get_ylim()[1] <= ymax)
     plt.close()
