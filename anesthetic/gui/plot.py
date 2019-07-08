@@ -101,8 +101,9 @@ class Temperature(Slider):
     def set_text(self, kT):
         """Set the text at end of slider.
 
-        Args
-        ----
+
+        Parameters
+        ----------
             kT: float
                 Current temperature of posterior points stage
 
