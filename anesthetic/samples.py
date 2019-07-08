@@ -115,19 +115,17 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        plot_type = kwargs.pop('plot_type', {'1d': 'kde', '2d': 'kde'})
+        plot_type = kwargs.pop('plot_type', 'kde')
 
-        if '1d' in plot_type and (paramname_y is None or
-                                  paramname_x == paramname_y):
+        if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
-            if plot_type['1d'] == 'kde':
+            if plot_type == 'kde':
                 plot = plot_1d
-            elif plot_type['1d'] == 'hist':
+            elif plot_type == 'hist':
                 plot = hist_1d
             else:
-                raise NotImplementedError("'kde' and 'hist' are the only 1D "
-                                          "plot types at the moment. There is "
-                                          "no %s" % plot_type['1d'])
+                raise NotImplementedError("plot_type is '%s', but must be in "
+                                          "{'kde', 'hist'}." % plot_type)
             return plot(ax, self[paramname_x].compress(),
                         xmin=xmin, xmax=xmax,
                         *args, **kwargs)
@@ -135,15 +133,15 @@ class MCMCSamples(WeightedDataFrame):
         xmin, xmax = self._limits(paramname_x)
         ymin, ymax = self._limits(paramname_y)
 
-        if plot_type['2d'] == 'kde':
+        if plot_type == 'kde':
             nsamples = None
             plot = contour_plot_2d
-        elif plot_type['2d'] == 'scatter':
+        elif plot_type == 'scatter':
             nsamples = 500
             plot = scatter_plot_2d
         else:
-            raise ValueError("plot_type['2d'] must be in {'kde', 'scatter'}, "
-                             "but is %s" % plot_type['2d'])
+            raise ValueError("plot_type is '%s', but must be in "
+                             "{'kde', 'scatter'}." % plot_type)
 
         return plot(ax, self[paramname_x].compress(nsamples),
                     self[paramname_y].compress(nsamples),
@@ -220,12 +218,22 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        types = kwargs.pop('types', {'1d': 'kde', '2d': ['kde', 'scatter']})
-        types['2d'] = numpy.atleast_1d(types['2d'])
+        types = kwargs.pop('types', {'diagonal': 'kde', 'lower': 'kde'})
+        diagonal = kwargs.pop('diagonal', True)
+        if isinstance(types, list) or isinstance(types, str):
+            if isinstance(types, str) and diagonal:
+                types = {'diagonal': types, 'lower': types}
+            elif isinstance(types, list) and diagonal:
+                types = {'diagonal': types[0],
+                         'lower': types[0],
+                         'upper': types[-1]}
+            else:
+                types = {'lower': types[0], 'upper': types[-1]}
 
         if not isinstance(axes, pandas.DataFrame):
-            upper = None if len(types['2d']) > 1 else False
-            fig, axes = make_2d_axes(axes, types, tex=self.tex, upper=upper)
+            upper = None if 'upper' in types else False
+            fig, axes = make_2d_axes(axes, diagonal=('diagonal' in types),
+                                     tex=self.tex, upper=upper)
         else:
             fig = axes.values[~axes.isna()][0].figure
 
@@ -233,12 +241,14 @@ class MCMCSamples(WeightedDataFrame):
             for x, ax in row.iteritems():
                 if (ax is not None and x in self and y in self
                         and ax._upper is not None):
-                    plot_type = copy(types)
-                    if ax._upper:
-                        plot_type['2d'] = types['2d'][-1]
+                    ax_ = ax
+                    if x == y:
+                        plot_type = types['diagonal']
+                        ax_ = ax.twin
+                    elif ax._upper:
+                        plot_type = types['upper']
                     else:
-                        plot_type['2d'] = types['2d'][0]
-                    ax_ = ax.twin if x == y else ax
+                        plot_type = types['lower']
                     self.plot(ax_, x, y, plot_type=plot_type, *args, **kwargs)
 
         return fig, axes

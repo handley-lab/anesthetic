@@ -88,8 +88,7 @@ def make_1d_axes(params, **kwargs):
     return fig, axes
 
 
-def make_2d_axes(params, types={'1d': 'kde', '2d': ['kde', 'scatter']},
-                 **kwargs):
+def make_2d_axes(params, **kwargs):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
     Parameters
@@ -147,6 +146,7 @@ def make_2d_axes(params, types={'1d': 'kde', '2d': ['kde', 'scatter']},
         grid = GS(*axes.shape, hspace=0, wspace=0)
 
     upper = kwargs.pop('upper', None)
+    diagonal = kwargs.pop('diagonal', True)
 
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
@@ -164,10 +164,10 @@ def make_2d_axes(params, types={'1d': 'kde', '2d': ['kde', 'scatter']},
             lower = not (x in axes.index and y in axes.columns
                          and all_params.index(x) > all_params.index(y))
 
-            if x == y and '1d' not in types:
+            if x == y and not diagonal:
                 continue
 
-            if upper == lower and x != y and '1d' not in types:
+            if upper == lower and x != y and not diagonal:
                 continue
 
             if axes[x][y] is None:
@@ -178,7 +178,7 @@ def make_2d_axes(params, types={'1d': 'kde', '2d': ['kde', 'scatter']},
                 axes[x][y] = fig.add_subplot(grid[j, i],
                                              sharex=sx, sharey=sy)
 
-            if upper == lower and x != y and '1d' in types:
+            if upper == lower and x != y and diagonal:
                 axes[x][y].axis('off')
                 axes[x][y]._upper = None
                 continue
@@ -300,7 +300,7 @@ def hist_1d(ax, data, *args, **kwargs):
         xmin = data.min()
     if xmax is None:
         xmax = data.max()
-    histtype = kwargs.pop('histtype', 'step')
+    histtype = kwargs.pop('histtype', 'bar')
 
     hist_kwargs = kwargs_in_func(kwargs, plt.hist)
     hist_kwargs.update(kwargs_in_func(kwargs, hist))
