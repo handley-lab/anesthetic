@@ -147,6 +147,7 @@ def test_make_2d_axes():
         assert(n001+n110 == n111)
 
 
+
 def test_plot_1d():
     fig, ax = plt.subplots()
     numpy.random.seed(0)
