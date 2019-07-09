@@ -1,5 +1,4 @@
-import matplotlib
-matplotlib.use('Agg')
+import matplotlib_agg
 from anesthetic import NestedSamples
 
 
