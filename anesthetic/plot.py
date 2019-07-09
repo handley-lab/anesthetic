@@ -102,16 +102,9 @@ def make_2d_axes(params, **kwargs):
             Dictionary mapping params to tex plot labels.
             Default: params
 
-        upper: logical, optional
-            Whether to create 2D marginalised plots above the diagonal.
-            Default: True
-
-        lower: logical, optional
-            Whether to create 2D marginalised plots below the diagonal.
-            Default: True
-
-        diagonal: logical, optional
-            Whether to create 1D marginalised plots on the diagonal.
+        upper, lower, diagonal: logical, optional
+            Whether to create 2D marginalised plots above or below the
+            diagonal, or to create a 1D marginalised plot on the diagonal.
             Default: True
 
         fig: matplotlib.figure.Figure, optional
