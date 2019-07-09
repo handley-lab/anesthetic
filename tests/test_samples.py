@@ -104,7 +104,7 @@ def test_plot_2d_types():
     fig, axes = ns.plot_2d(params, types={'upper': 'scatter'})
     assert((~axes.isnull()).sum().sum() == 6)
 
-    fig, axes = ns.plot_2d(params, types={'upper': 'kde', 'diagonal': 'hist'})
+    fig, axes = ns.plot_2d(params, types={'upper': 'kde', 'diagonal': 'kde'})
     assert((~axes.isnull()).sum().sum() == 9)
 
     fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde'})
