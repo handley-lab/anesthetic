@@ -56,13 +56,11 @@ matrix:
           env: CONDA=1 MPLBACKEND=Agg 
         # OSX montepython_master
         - os: osx
-          language: python
-          python: 2.7
+          language: generic
           env: MONTEPYTHONMASTER=1 MPLBACKEND=Agg
         # OSX montepython_master conda
         - os: osx
-          language: python
-          python: 2.7
+          language: generic
           env: MONTEPYTHONMASTER=1 CONDA=1 MPLBACKEND=Agg 
 
 before_install:
