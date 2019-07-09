@@ -1,9 +1,9 @@
 """Generic sampling reading tools."""
 import os
-from anesthetic.read.getdist import GetDistReader
+from anesthetic.read.getdistreader import GetDistReader
 from anesthetic.read.montepythonreader import MontePythonReader
-from anesthetic.read.polychord import PolyChordReader
-from anesthetic.read.multinest import MultiNestReader
+from anesthetic.read.polychordreader import PolyChordReader
+from anesthetic.read.multinestreader import MultiNestReader
 
 
 def SampleReader(root):

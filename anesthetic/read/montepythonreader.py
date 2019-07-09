@@ -3,7 +3,7 @@ import os
 import glob
 import warnings
 import numpy
-from anesthetic.read.base import ChainReader
+from anesthetic.read.chainreader import ChainReader
 try:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
