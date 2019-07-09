@@ -10,8 +10,6 @@ wish to use.
 to create a set of axes and legend proxies.
 
 """
-#%load_ext autoreload
-#%autoreload 2
 import numpy
 import pandas
 import matplotlib.pyplot as plt
@@ -150,19 +148,17 @@ def make_2d_axes(params, **kwargs):
 
     for j, y in enumerate(axes.index):
         for i, x in enumerate(axes.columns):
-            reflect = x in axes.index and y in axes.columns
             if all_params.index(x) < all_params.index(y):
                 if lower:
                     axes[x][y] = -1
             elif all_params.index(x) > all_params.index(y):
-                if upper: 
+                if upper:
                     axes[x][y] = +1
             elif diagonal:
                 axes[x][y] = 0
 
     axes.dropna(axis=0, how='all', inplace=True)
     axes.dropna(axis=1, how='all', inplace=True)
-
 
     tex = kwargs.pop('tex', {})
     tex = {p: tex[p] if p in tex else p for p in all_params}
@@ -195,9 +191,9 @@ def make_2d_axes(params, **kwargs):
                     axes[x][y].twin.set_yticks([])
                     axes[x][y].twin.set_ylim(0, 1.1)
                     axes[x][y].position = 'diagonal'
-                elif position[x][y] == 1: 
+                elif position[x][y] == 1:
                     axes[x][y].position = 'upper'
-                elif position[x][y] == -1: 
+                elif position[x][y] == -1:
                     axes[x][y].position = 'lower'
 
     for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():

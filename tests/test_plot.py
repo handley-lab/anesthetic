@@ -102,28 +102,49 @@ def test_make_2d_axes():
     for paramnames_y in [paramnames_y, paramnames_y[:-1]]:
         nx = len(paramnames_x)
         ny = len(paramnames_y)
-        m = len(set(paramnames_x).intersection(set(paramnames_y)))
         fig, axes = make_2d_axes(paramnames_x)
         assert((~axes.isna()).sum().sum() == nx**2)
-        fig, axes = make_2d_axes(paramnames_x, upper=True)
-        assert((~axes.isna()).sum().sum() == (nx*(nx+1))//2)
+
         fig, axes = make_2d_axes(paramnames_x, upper=False)
         assert((~axes.isna()).sum().sum() == (nx*(nx+1))//2)
-        fig, axes = make_2d_axes(paramnames_x, upper=True, diagonal=False)
-        assert((~axes.isna()).sum().sum() == ((nx-1)*nx)//2)
-        fig, axes = make_2d_axes(paramnames_x, upper=False, diagonal=False)
-        assert((~axes.isna()).sum().sum() == ((nx-1)*nx)//2)
-        plt.close('all')
+        fig, axes = make_2d_axes(paramnames_x, lower=False)
+        assert((~axes.isna()).sum().sum() == (nx*(nx+1))//2)
+        fig, axes = make_2d_axes(paramnames_x, diagonal=False)
+        assert((~axes.isna()).sum().sum() == (nx*(nx-1)))
 
-        fig, axes = make_2d_axes([paramnames_x, paramnames_y])
-        assert((~axes.isna()).sum().sum() == nx*ny)
-        fig, axes = make_2d_axes([paramnames_x, paramnames_y], diagonal=False)
-        assert((~axes.isna()).sum().sum() == nx*ny-m)
-        fig, axes = make_2d_axes([paramnames_x, paramnames_y], upper=False)
-        assert((~axes.isna()).sum().sum() == nx*ny-((m-1)*m)//2)
-        fig, axes = make_2d_axes([paramnames_x, paramnames_y], upper=True)
-        assert((~axes.isna()).sum().sum() == (m*(m+1))//2)
-        plt.close('all')
+        fig, axes = make_2d_axes(paramnames_x, upper=False, diagonal=False)
+        assert((~axes.isna()).sum().sum() == (nx*(nx-1))//2)
+        fig, axes = make_2d_axes(paramnames_x, lower=False, diagonal=False)
+        assert((~axes.isna()).sum().sum() == (nx*(nx-1))//2)
+        fig, axes = make_2d_axes(paramnames_x, lower=False, upper=False)
+        assert((~axes.isna()).sum().sum() == nx)
+
+        fig, axes = make_2d_axes(paramnames_x, lower=False, upper=False,
+                                 diagonal=False)
+        assert((~axes.isna()).sum().sum() == 0)
+
+        params = [paramnames_x, paramnames_y]
+        fig, axes111 = make_2d_axes(params)
+        fig, axes011 = make_2d_axes(params, upper=False)
+        fig, axes101 = make_2d_axes(params, diagonal=False)
+        fig, axes110 = make_2d_axes(params, lower=False)
+        fig, axes001 = make_2d_axes(params, upper=False, diagonal=False)
+        fig, axes100 = make_2d_axes(params, diagonal=False, lower=False)
+        fig, axes010 = make_2d_axes(params, upper=False, lower=False)
+
+        n111 = (~axes111.isna()).sum().sum()
+        n110 = (~axes110.isna()).sum().sum()
+        n101 = (~axes101.isna()).sum().sum()
+        n011 = (~axes011.isna()).sum().sum()
+        n100 = (~axes100.isna()).sum().sum()
+        n001 = (~axes001.isna()).sum().sum()
+        n010 = (~axes010.isna()).sum().sum()
+
+        assert(n111 == nx*ny)
+        assert(n100+n010+n001 == nx*ny)
+        assert(n100+n011 == n111)
+        assert(n010+n101 == n111)
+        assert(n001+n110 == n111)
 
 
 def test_plot_1d():

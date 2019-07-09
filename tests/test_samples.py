@@ -82,16 +82,30 @@ def test_plot_2d_types():
     ns = NestedSamples(root='./tests/example_data/pc')
     params_x = ['x0', 'x1', 'x2', 'x3']
     params_y = ['x0', 'x1', 'x2']
-    fig, axes = ns.plot_2d([params_x, params_y], types=['kde', 'scatter'])
-    assert(axes.isnull().sum().sum() == 0)
+    params = [params_x, params_y]
+    # Test old interface
+    fig, axes = ns.plot_2d(params, types=['kde', 'scatter'])
+    assert((~axes.isnull()).sum().sum() == 12)
 
-    fig, axes = ns.plot_2d([params_x, params_y], types='kde')
-    assert(axes.isnull().sum().sum() == 3)
+    fig, axes = ns.plot_2d(params, types='kde')
+    assert((~axes.isnull()).sum().sum() == 6)
 
-    fig, axes = ns.plot_2d([params_x, params_y], types='kde', diagonal=False)
-    assert(axes.isnull().sum().sum() == 6)
+    fig, axes = ns.plot_2d(params, types='kde', diagonal=False)
+    assert((~axes.isnull()).sum().sum() == 3)
 
-    fig, axes = ns.plot_2d([params_x, params_y], types={'lower': 'kde'})
-    assert(axes.isnull().sum().sum() == 6)
-#    fig, axes = ns.plot_2d([params_x, params_y],types={'diagonal':'kde'})
-#    fig, axes = ns.plot_2d([params_x, params_y],types={'upper':'kde'})
+    # Test new interface
+    fig, axes = ns.plot_2d(params, types={'lower': 'kde'})
+    assert((~axes.isnull()).sum().sum() == 3)
+
+    fig, axes = ns.plot_2d(params, types={'upper': 'scatter'})
+    assert((~axes.isnull()).sum().sum() == 6)
+
+    fig, axes = ns.plot_2d(params, types={'upper': 'kde', 'diagonal': 'hist'})
+    assert((~axes.isnull()).sum().sum() == 9)
+
+    fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde'})
+    assert((~axes.isnull()).sum().sum() == 6)
+
+    fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde',
+                                          'upper': 'scatter'})
+    assert((~axes.isnull()).sum().sum() == 12)

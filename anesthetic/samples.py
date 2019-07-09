@@ -254,9 +254,11 @@ class MCMCSamples(WeightedDataFrame):
             local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
-            upper = None if 'upper' in types else False
-            fig, axes = make_2d_axes(axes, diagonal=('diagonal' in types),
-                                     tex=self.tex, upper=upper)
+            diagonal = 'diagonal' in types
+            upper = 'upper' in types
+            lower = 'lower' in types
+            fig, axes = make_2d_axes(axes, tex=self.tex, upper=upper,
+                                     lower=lower, diagonal=diagonal)
         else:
             fig = axes.values[~axes.isna()][0].figure
 
