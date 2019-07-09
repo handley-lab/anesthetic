@@ -109,3 +109,4 @@ def test_plot_2d_types():
     fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde',
                                           'upper': 'scatter'})
     assert((~axes.isnull()).sum().sum() == 12)
+
