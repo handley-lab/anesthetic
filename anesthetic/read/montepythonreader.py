@@ -1,4 +1,6 @@
 """Tools for reading from MontePython chains files."""
+import os
+import glob
 import warnings
 import numpy
 from anesthetic.read.base import ChainReader
@@ -14,13 +16,10 @@ class MontePythonReader(ChainReader):
     """Read and process MontePython chain files using `montepython.analyze`."""
 
     def __init__(self, root):
-        """Prepare MontePython data.
+        """Initialise MontePythonReader.
 
-        Uses MontePython's `analyze` module to prepare the data:
-            * Extracts parameter names from MontePython's log.param file.
-            * Removes burn-in and non-markovian points from the data.
-            * Extract tex names.
-            * Extracts parameter limits from MontePython's log.param file.
+        Note how MontePython takes the _folder_ to the chain files as root,
+        different from the root for GetDist.
 
         Parameters
         ----------
@@ -29,15 +28,40 @@ class MontePythonReader(ChainReader):
             E.g. for the following two chain files:
             /path/to/chains/Planck2015_TTlowP/2019-04-29_100000__1.txt
                                               2019-04-29_100000__2.txt
-            you should pass the string "/path/to/chains/Planck2015_TTlowP"
-            Note how this is different from the root for GetDist.
-
+            you should pass the string "/path/to/chains/Planck2015_TTlowP".
+            No trailing '/'.
 
         """
-        super(MontePythonReader, self).__init__(root=root)
+        super(MontePythonReader, self).__init__(root)
+
+    @property
+    def log_param_file(self):
+        """File containing input parameter info."""
+        return self.root + '/log.param'
+
+    @property
+    def paramnames_file(self):
+        """File containing parameter names."""
+        return glob.glob(self.root + '/*_.paramnames')[-1]
+
+    @property
+    def log_file(self):
+        """File containing MontePython log data."""
+        return self.root + '/' + os.path.basename(self.root) + '.log'
+
+    def _init(self):
+        """Prepare MontePython data.
+
+        Uses MontePython's `analyze` module to prepare the data:
+            * Extracts parameter names from MontePython's log.param file.
+            * Removes burn-in and non-markovian points from the data.
+            * Extract tex names.
+            * Extracts parameter limits from MontePython's log.param file.
+
+        """
         # The variable and function names used here correspond to the ones
         # used in MontePython's analyze.py module.
-        command_line = Namespace(files=[root])
+        command_line = Namespace(files=[self.root])
         self.info = analyze.Information(command_line)
         analyze.prepare(files=command_line.files, info=self.info)
         analyze.extract_parameter_names(info=self.info)
