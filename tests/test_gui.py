@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 from anesthetic import NestedSamples
 
 

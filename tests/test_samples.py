@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import numpy
 from anesthetic import MCMCSamples, NestedSamples
 from numpy.testing import assert_array_equal
