@@ -1,4 +1,4 @@
-import matplotlib_agg
+import matplotlib_agg  # noqa: F401
 import numpy
 from anesthetic import MCMCSamples, NestedSamples
 from numpy.testing import assert_array_equal

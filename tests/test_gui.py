@@ -1,4 +1,4 @@
-import matplotlib_agg
+import matplotlib_agg  # noqa: F401
 from anesthetic import NestedSamples
 
 
