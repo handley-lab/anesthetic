@@ -1,0 +1,131 @@
+"""Tools for reading from MontePython chains files."""
+import warnings
+import numpy
+from anesthetic.read.base import ChainReader
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from montepython import analyze
+
+
+class MontePythonReader(ChainReader):
+    """Read and process MontePython chain files using `montepython.analyze`."""
+
+    def __init__(self, root):
+        """Prepare MontePython data.
+
+        Uses MontePython's `analyze` module to prepare the data:
+            * Extracts parameter names from MontePython's log.param file.
+            * Removes burn-in and non-markovian points from the data.
+            * Extract tex names.
+            * Extracts parameter limits from MontePython's log.param file.
+
+        Parameters
+        ----------
+        root: str
+            Path to _folder_ containing the MontePython .txt chain files.
+            E.g. for the following two chain files:
+            /path/to/chains/Planck2015_TTlowP/2019-04-29_100000__1.txt
+                                              2019-04-29_100000__2.txt
+            you should pass the string "/path/to/chains/Planck2015_TTlowP"
+            Note how this is different from the root for GetDist.
+
+
+        """
+        super(MontePythonReader, self).__init__(root=root)
+        # The variable and function names used here correspond to the ones
+        # used in MontePython's analyze.py module.
+        command_line = Namespace(files=[root])
+        self.info = analyze.Information(command_line)
+        analyze.prepare(files=command_line.files, info=self.info)
+        analyze.extract_parameter_names(info=self.info)
+        analyze.find_maximum_of_likelihood(info=self.info)
+        data_per_chain = analyze.remove_bad_points(info=self.info)
+        self.data = numpy.concatenate(data_per_chain, axis=0)
+
+    def paramnames(self):
+        """Return parameter labels and corresponding tex signs.
+
+        Returns
+        -------
+        params: numpy.ndarray
+            reference name for the sample, used as labels in the pandas array
+
+        tex: numpy.ndarray
+            axis labels, possibly in tex, with the understanding that it will
+            be surrounded by dollar signs
+
+        """
+        params = self.info.ref_names
+        tex = dict(zip(self.info.ref_names, self.info.tex_names))
+        return params, tex
+
+    def samples(self):
+        """Return weights, loglikelihood and samples.
+
+        Thew weights and samples are the ones after removal of burn-in points
+        and of non-markovian points as performed by MontePython's `analyze`
+        module.
+
+        Returns
+        -------
+        weights: numpy.ndarray
+            weights of each step in the sample
+
+        logL: numpy.ndarray
+            loglikelihood of each step in the sample
+
+        samples: numpy.ndarray
+            MontePython MCMC samples
+
+        """
+        weights = self.data[:, 0]
+        logL = -self.data[:, 1]
+        samples = self.data[:, 2:]
+        return weights, logL, samples
+
+    def limits(self):
+        """Return param limits as specified in MontePython's log.param file."""
+        limits = dict(zip(self.info.ref_names, self.info.boundaries))
+        return limits
+
+
+class Namespace(object):
+    """Input class for MontePython analyze module.
+
+    Essentially none of this will be needed for anesthetic, however, in order
+    to use MontePython's function `remove_bad_points` an instance of this
+    class is required as input.
+    """
+
+    def __init__(self, files):
+        self.bins = 20
+        self.center_fisher = False
+        self.contours_only = False
+        self.decimal = 3
+        self.extension = 'pdf'
+        self.files = files
+        self.fontsize = 16
+        self.gaussian_smoothing = 0.5
+        self.interpolation_smoothing = 4
+        self.keep_fraction = 1.0
+        self.legend_style = 'sides'
+        self.line_width = 4
+        self.markovian = True
+        self.mean_likelihood = True
+        self.minimal = False
+        self.num_columns_1d = None
+        self.only_markovian = False
+        self.optional_plot_file = ''
+        self.plot = False
+        self.plot_2d = False
+        self.plot_fisher = False
+        self.posterior_smoothing = 5
+        self.short_title_1d = False
+        self.silent = False
+        self.subparser_name = 'info'
+        self.subplot = False
+        self.temperature = 1.0
+        self.ticknumber = 3
+        self.ticksize = 14
+        self.verbose = True
+        self.want_covmat = False
