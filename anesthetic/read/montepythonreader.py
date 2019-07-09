@@ -2,9 +2,12 @@
 import warnings
 import numpy
 from anesthetic.read.base import ChainReader
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    from montepython import analyze
+try:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        from montepython import analyze
+except ImportError:
+    pass
 
 
 class MontePythonReader(ChainReader):
