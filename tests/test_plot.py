@@ -56,6 +56,7 @@ def test_make_1d_axes():
     # Check unexpected kwargs
     with pytest.raises(TypeError):
         make_1d_axes(paramnames, foo='bar')
+    plt.close("all")
 
 
 def test_make_2d_axes():
@@ -86,7 +87,7 @@ def test_make_2d_axes():
     assert(fig is not fig0)
     fig, axes = make_2d_axes(paramnames_x, fig=fig0)
     assert(fig is fig0)
-    plt.close('all')
+    plt.close("all")
 
     # Check gridspec argument
     grid = gs.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[3, 1])
@@ -122,6 +123,7 @@ def test_make_2d_axes():
         fig, axes = make_2d_axes(paramnames_x, lower=False, upper=False,
                                  diagonal=False)
         assert((~axes.isna()).sum().sum() == 0)
+        plt.close("all")
 
         params = [paramnames_x, paramnames_y]
         fig, axes111 = make_2d_axes(params)
@@ -145,6 +147,7 @@ def test_make_2d_axes():
         assert(n100+n011 == n111)
         assert(n010+n101 == n111)
         assert(n001+n110 == n111)
+        plt.close("all")
 
 
 def test_plot_1d():
@@ -175,6 +178,7 @@ def test_plot_1d():
     line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
     assert((line.get_xdata() <= xmax).all())
     assert((line.get_xdata() >= xmin).all())
+    plt.close("all")
 
 
 def test_contour_plot_2d():

@@ -1,4 +1,5 @@
 import numpy
+import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
 from numpy.testing import assert_array_equal
 
@@ -60,6 +61,7 @@ def test_read_getdist():
     mcmc = MCMCSamples(root='./tests/example_data/gd_single')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    plt.close("all")
 
 
 def test_read_multinest():
@@ -70,12 +72,14 @@ def test_read_multinest():
     ns = NestedSamples(root='./tests/example_data/mn_old')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    plt.close("all")
 
 
 def test_read_polychord():
     ns = NestedSamples(root='./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    plt.close("all")
 
 
 def test_plot_2d_types():
@@ -109,3 +113,4 @@ def test_plot_2d_types():
     fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde',
                                           'upper': 'scatter'})
     assert((~axes.isnull()).sum().sum() == 12)
+    plt.close("all")
