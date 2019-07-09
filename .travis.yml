@@ -8,6 +8,8 @@ python:
 env:
     - MPLBACKEND=Agg
     - CONDA=1 MPLBACKEND=Agg
+    - MONTEPYTHON=1 MPLBACKEND=Agg
+    - MONTEPYTHON=1 CONDA=1 MPLBACKEND=Agg
 
 matrix:
     include:
@@ -51,6 +53,12 @@ install:
           conda info -a;
           conda create -q -n test-env python=$TRAVIS_PYTHON_VERSION;
           source activate test-env;
+      fi;
+    - if [[ "$MONTEPYTHON" == 1 ]];
+      then
+          wget https://github.com/brinckmann/montepython_public/archive/3.1.0.tar.gz;
+          tar -xvf 3.1.0.tar.gz;
+          pip install montepython_public-3.1.0/;
       fi;
     - pip install Cython numpy;
     - pip install -r requirements.txt;
