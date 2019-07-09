@@ -22,10 +22,9 @@ class MCMCSamples(WeightedDataFrame):
     standardising sample storage.
 
     Example plotting commands include
-
-    - ``mcmc.plot_1d(['paramA', 'paramB'])``
-    - ``mcmc.plot_2d(['paramA', 'paramB'])``
-    - ``mcmc.plot_2d(['paramA', 'paramB'], ['paramC', 'paramD'])``
+        - ``mcmc.plot_1d(['paramA', 'paramB'])``
+        - ``mcmc.plot_2d(['paramA', 'paramB'])``
+        - ``mcmc.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD']])``
 
     Parameters
     ----------
@@ -154,11 +153,9 @@ class MCMCSamples(WeightedDataFrame):
         Parameters
         ----------
         axes: plotting axes
-            Can be either:
-
-            - list(str) or str
-            - pandas.Series(matplotlib.axes.Axes)
-
+            Can be:
+                - list(str) or str
+                - pandas.Series(matplotlib.axes.Axes)
             If a pandas.Series is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
@@ -193,12 +190,10 @@ class MCMCSamples(WeightedDataFrame):
         Parameters
         ----------
         axes: plotting axes
-            Can be either:
-
-            - list(str) if the x and y axes are the same
-            - [list(str),list(str)] if the x and y axes are different
-            - pandas.DataFrame(matplotlib.axes.Axes)
-
+            Can be:
+                - list(str) if the x and y axes are the same
+                - [list(str),list(str)] if the x and y axes are different
+                - pandas.DataFrame(matplotlib.axes.Axes)
             If a pandas.DataFrame is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
@@ -206,33 +201,19 @@ class MCMCSamples(WeightedDataFrame):
         types: dict, optional
             What type (or types) of plots to produce. Takes the keys 'diagonal'
             for the 1D plots and 'lower' and 'upper' for the 2D plots.
-            The options for 'diagonal are either:
+            The options for 'diagonal are:
                 - 'kde'
                 - 'hist.
-            The options for 'lower' and 'upper' are either:
+            The options for 'lower' and 'upper' are:
                 - 'kde'
                 - 'scatter'
             Default: {'diagonal': 'kde', 'lower': 'kde'}
 
-        diagonal_kwargs: dict, optional
-            kwargs only for the diagonal (1D) plots. This is useful when there
-            is a conflict of kwargs for different types of plots.
-            Note that any kwargs directly passed to plot_2d will overwrite any
-            kwarg with the same key passed to diagonal_kwargs.
-            Default: {}
-
-        lower_kwargs: dict, optional
-            kwargs only for the lower 2D plots. This is useful when there
-            is a conflict of kwargs for different types of plots.
-            Note that any kwargs directly passed to plot_2d will overwrite any
-            kwarg with the same key passed to lower_kwargs.
-            Default: {}
-
-        upper_kwargs: dict, optional
-            kwargs only for the upper 2D plots. This is useful when there
-            is a conflict of kwargs for different types of plots.
-            Note that any kwargs directly passed to plot_2d will overwrite any
-            kwarg with the same key passed to upper_kwargs.
+        diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
+            kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
+            useful when there is a conflict of kwargs for different types of
+            plots.  Note that any kwargs directly passed to plot_2d will
+            overwrite any kwarg with the same key passed to <sub>_kwargs.
             Default: {}
 
         Returns
@@ -256,20 +237,21 @@ class MCMCSamples(WeightedDataFrame):
                  "'upper' accept the values 'kde' or 'scatter'. "
                  "Default: {'diagonal': 'kde', 'lower': 'kde'}.",
                  FutureWarning)
-            if isinstance(types, str) and diagonal:
-                types = {'diagonal': types, 'lower': types}
-            elif isinstance(types, list) and diagonal:
-                types = {'diagonal': types[0],
-                         'lower': types[0],
-                         'upper': types[-1]}
-            else:
+
+            if isinstance(types, str):
+                types = {'lower': types}
+                if diagonal:
+                    types['diagonal'] = types['lower']
+            elif isinstance(types, list):
                 types = {'lower': types[0], 'upper': types[-1]}
-        diagonal_kwargs = kwargs.pop('diagonal_kwargs', {})
-        lower_kwargs = kwargs.pop('lower_kwargs', {})
-        upper_kwargs = kwargs.pop('upper_kwargs', {})
-        diagonal_kwargs.update(kwargs)
-        lower_kwargs.update(kwargs)
-        upper_kwargs.update(kwargs)
+                if diagonal:
+                    types['diagonal'] = types['lower']
+
+        local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
+                        for pos in ['lower', 'upper', 'diagonal']}
+
+        for pos in local_kwargs:
+            local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
             upper = None if 'upper' in types else False
@@ -284,16 +266,15 @@ class MCMCSamples(WeightedDataFrame):
                         and ax._upper is not None):
                     ax_ = ax
                     if x == y:
-                        plot_type = types['diagonal']
-                        kwargs = diagonal_kwargs
                         ax_ = ax.twin
+                        pos = 'diagonal'
                     elif ax._upper:
-                        plot_type = types['upper']
-                        kwargs = upper_kwargs
+                        pos = 'upper'
                     else:
-                        plot_type = types['lower']
-                        kwargs = lower_kwargs
-                    self.plot(ax_, x, y, plot_type=plot_type, *args, **kwargs)
+                        pos = 'lower'
+
+                    self.plot(ax_, x, y, plot_type=types[pos], *args,
+                              **local_kwargs[pos])
 
         return fig, axes
 
