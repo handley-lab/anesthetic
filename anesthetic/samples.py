@@ -263,7 +263,7 @@ class MCMCSamples(WeightedDataFrame):
 
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
-                if ax is not None:
+                if ax is not None and x in self and y in self:
                     ax_ = ax
                     pos = ax.position
                     if x == y:
