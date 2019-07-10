@@ -199,15 +199,17 @@ def test_hist_1d():
     polygon, = hist_1d(ax, data, histtype='step')
     assert(isinstance(polygon, Polygon))
     trans = polygon.get_transform() - ax.transData
-    assert(trans.transform(polygon.xy)[:, -1].max() == 1.)
-    numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.)
+    assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                         rtol=1e-10, atol=1e-10))
+    assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
 
     # Check heights for histtype 'stepfilled'
     polygon, = hist_1d(ax, data, histtype='stepfilled')
     assert(isinstance(polygon, Polygon))
     trans = polygon.get_transform() - ax.transData
-    assert(trans.transform(polygon.xy)[:, -1].max() == 1.)
-    numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.)
+    assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                         rtol=1e-10, atol=1e-10))
+    assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
 
     # Check arguments are passed onward to underlying function
     bars = hist_1d(ax, data, histtype='bar', color='r', alpha=0.5)
@@ -228,7 +230,7 @@ def test_hist_1d():
     bars = hist_1d(ax, data, histtype='bar', xmax=xmax)
     assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
     polygon, = hist_1d(ax, data, histtype='step', xmax=xmax)
-    assert((polygon.xy[:, -1] <= 0.5).all())
+    assert((polygon.xy[:, 0] <= 0.5).all())
 
     # Check xmin and xmax
     bars = hist_1d(ax, data, histtype='bar', xmin=xmin, xmax=xmax)
@@ -236,7 +238,7 @@ def test_hist_1d():
     assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
     polygon, = hist_1d(ax, data, histtype='step', xmin=xmin, xmax=xmax)
     assert((polygon.xy[:, 0] >= -0.5).all())
-    assert((polygon.xy[:, -1] <= 0.5).all())
+    assert((polygon.xy[:, 0] <= 0.5).all())
     plt.close("all")
 
 
