@@ -1,7 +1,13 @@
 import matplotlib_agg  # noqa: F401
+import sys
+import pytest
 import numpy
 from anesthetic import MCMCSamples, NestedSamples
 from numpy.testing import assert_array_equal
+try:
+    import montepython  # noqa: F401
+except ImportError:
+    pass
 
 
 def test_build_mcmc():
@@ -63,6 +69,8 @@ def test_read_getdist():
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
+@pytest.mark.skipif('montepython' not in sys.modules,
+                    reason="requires montepython package")
 def test_read_montepython():
     mcmc = MCMCSamples(root='./tests/example_data/mp')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
