@@ -78,6 +78,7 @@ def test_read_montepython():
     mcmc = MCMCSamples(root='./tests/example_data/mp')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    plt.close("all")
 
 
 def test_read_multinest():
