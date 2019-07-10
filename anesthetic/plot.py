@@ -442,7 +442,7 @@ def get_legend_proxy(fig):
 
     """
     cmaps = [coll.get_cmap() for ax in fig.axes for coll in ax.collections
-             if isinstance(coll, PathCollection)]
+             if isinstance(coll.get_cmap(), LinearSegmentedColormap)]
     cmaps = unique(cmaps)
 
     if not cmaps:
@@ -453,6 +453,17 @@ def get_legend_proxy(fig):
     proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.999),
                            edgecolor=cmap(0.33), linewidth=2)
              for cmap in cmaps]
+
+    if not cmaps:
+        colors = [coll.get_ec()[0]
+                  for ax in fig.axes
+                  for coll in ax.collections
+                  if isinstance(coll, LineCollection)]
+        colors = numpy.unique(colors, axis=0)
+        cmaps = [basic_cmap(color) for color in colors]
+        proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.0),
+                               edgecolor=cmap(0.999), linewidth=1)
+                 for cmap in cmaps]
 
     return proxy
 
