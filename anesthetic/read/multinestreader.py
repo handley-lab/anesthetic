@@ -1,6 +1,6 @@
 """Tools for reading from multinest chains files."""
 import numpy
-from anesthetic.read.getdist import GetDistReader
+from anesthetic.read.getdistreader import GetDistReader
 
 
 class MultiNestReader(GetDistReader):

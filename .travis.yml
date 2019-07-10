@@ -22,6 +22,30 @@ matrix:
           language: python
           python: 3.7
           env: CONDA=1 MPLBACKEND=Agg
+        # Linux 2.7 montepython_master
+        - os: linux
+          dist: xenial
+          language: python
+          python: 2.7
+          env: MONTEPYTHONMASTER=1 MPLBACKEND=Agg
+        # Linux 2.7 montepython_3.1.0
+        - os: linux
+          dist: xenial
+          language: python
+          python: 2.7
+          env: MONTEPYTHON310=1 MPLBACKEND=Agg
+        # Linux 2.7 montepython_master conda
+        - os: linux
+          dist: xenial
+          language: python
+          python: 2.7
+          env: MONTEPYTHONMASTER=1 CONDA=1 MPLBACKEND=Agg
+        # Linux 2.7 montepython_3.1.0 conda
+        - os: linux
+          dist: xenial
+          language: python
+          python: 2.7
+          env: MONTEPYTHON310=1 CONDA=1 MPLBACKEND=Agg
         # OSX
         - os: osx
           language: generic
@@ -51,6 +75,20 @@ install:
           conda info -a;
           conda create -q -n test-env python=$TRAVIS_PYTHON_VERSION;
           source activate test-env;
+      fi;
+    - if [[ "$MONTEPYTHON310" == 1 ]];
+      then
+          wget https://github.com/brinckmann/montepython_public/archive/3.1.0.tar.gz;
+          tar -xf 3.1.0.tar.gz;
+          pip install argparse;
+          pip install montepython_public-3.1.0/ --no-deps;
+      fi;
+    - if [[ "$MONTEPYTHONMASTER" == 1 ]];
+      then
+          wget https://github.com/brinckmann/montepython_public/tarball/master;
+          tar -xf master;
+          pip install argparse;
+          pip install brinckmann-montepython_public-*/ --no-deps;
       fi;
     - pip install Cython numpy;
     - pip install -r requirements.txt;
