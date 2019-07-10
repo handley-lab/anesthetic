@@ -55,25 +55,26 @@ matrix:
           language: generic
           env: CONDA=1 MPLBACKEND=Agg 
         # OSX montepython_master
-        - os: osx2
+        - os: osx
           language: generic
-          env: MONTEPYTHONMASTER=1 MPLBACKEND=Agg
+          env: PYTHON2=1 MONTEPYTHONMASTER=1 MPLBACKEND=Agg
         # OSX montepython_master conda
-        - os: osx2
+        - os: osx
           language: generic
-          env: MONTEPYTHONMASTER=1 CONDA=1 MPLBACKEND=Agg 
+          env: PYTHON2=1 MONTEPYTHONMASTER=1 CONDA=1 MPLBACKEND=Agg 
 
 before_install:
     # OSX setup
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
       then
-          python3 -m venv environment;
-          source environment/bin/activate;
-      fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx2" ]];
-      then
-          python2 -m venv environment;
-          source environment/bin/activate;
+          if [[ "$PYTHON2" == 1 ]];
+          then
+              python2 -m venv environment;
+              source environment/bin/activate;
+          else
+              python3 -m venv environment;
+              source environment/bin/activate;
+          fi
       fi
 
 install:
