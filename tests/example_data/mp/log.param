@@ -1,0 +1,131 @@
+#-----CLASS v2.7.0 (branch: externalpk, hash: 72c2fa846961862173ad1bfe1e3f3b4b1f0e230b)-----
+
+#------Experiments to test (separated with commas)-----
+
+data.experiments=['Planck_highl','Planck_lowl']
+
+#------ Settings for the over-sampling.
+# The first element will always be set to 1, for it is the sampling of the
+# cosmological parameters. The other numbers describe the over sampling of the
+# nuisance parameter space. This array must have the same dimension as the
+# number of blocks in your run (so, 1 for cosmological parameters, and then 1
+# for each experiment with varying nuisance parameters).
+# Note that when using Planck likelihoods, you definitely want to use [1, 4],
+# to oversample as much as possible the 14 nuisance parameters.
+# Remember to order manually the experiments from slowest to fastest (putting
+# Planck as the first set of experiments should be a safe bet, except if you
+# also have LSS experiments).
+# If you have experiments without nuisance, you do not need to specify an
+# additional entry in the over_sampling list (notice for instance that, out of
+# the three Planck likelihoods used, only Planck_highl requires nuisance
+# parameters, therefore over_sampling has a length of two (cosmology, plus one
+# set of nuisance).
+data.over_sampling=[1, 4]
+
+#------ Parameter list -------
+
+# data.parameters[class name] = [mean, min, max, 1-sigma, scale, role]
+# - if min max irrelevant, put to -1 or None (if you want a boundary of -1, use -1.0)
+# - if fixed, put 1-sigma to 0
+# - if scale irrelevant, put to 1, otherwise to the appropriate factor
+# - role is either 'cosmo', 'nuisance' or 'derived'. You should put the derived
+# parameters at the end, and in case you are using the `-j fast` Cholesky
+# decomposition, you should order your nuisance parameters from slowest to
+# fastest.
+
+# Cosmological parameters list
+
+data.parameters['x0']      = [ 2.2253,   None, None,  0.028, 0.01, 'cosmo']
+data.parameters['x1']    = [0.11919,   None, None, 0.0027,    1, 'cosmo']
+data.parameters['x2']  = [ 1.0418,   None, None,   3e-4,    1, 'cosmo']
+data.parameters['x3'] = [ 3.0753,   None, None, 0.0029,    1, 'cosmo']
+data.parameters['n_s']          = [0.96229,   None, None, 0.0074,    1, 'cosmo']
+data.parameters['tau_reio']     = [0.09463,   0.04, None,  0.013,    1, 'cosmo']
+
+# Nuisance parameter list, same call, except the name does not have to be a class name
+
+data.parameters['A_cib_217']         = [     61,    0,  200,     7,     1,'nuisance']   
+data.parameters['cib_index']         = [   -1.3, -1.3, -1.3,     0,     1,'nuisance']   
+data.parameters['xi_sz_cib']         = [   0.13,    0,    1,   0.3,     1,'nuisance']	 
+data.parameters['A_sz']              = [   6.86,    0,   10,   1.9,     1,'nuisance'] 			      
+data.parameters['ps_A_100_100']      = [  222.9,    0,  400,    30,     1,'nuisance'] 			      
+data.parameters['ps_A_143_143']      = [     38,    0,  400,     8,     1,'nuisance'] 			      
+data.parameters['ps_A_143_217']      = [   35.2,    0,  400,    10,     1,'nuisance'] 			      
+data.parameters['ps_A_217_217']      = [  102.6,    0,  400,    11,     1,'nuisance'] 			      
+data.parameters['ksz_norm']          = [      0,    0,   10,   4.2,     1,'nuisance'] 			      
+data.parameters['gal545_A_100']      = [   6.75,    0,   50,   1.8,     1,'nuisance']   
+data.parameters['gal545_A_143']      = [   9.41,    0,   50,   1.8,     1,'nuisance']   
+data.parameters['gal545_A_143_217']  = [  19.28,    0,  100,   4.2,     1,'nuisance']   
+data.parameters['gal545_A_217']      = [   81.7,    0,  400,   7.9,     1,'nuisance']   
+data.parameters['calib_100T']        = [ 998.59,    0, 3000,  0.73, 0.001,'nuisance']  
+data.parameters['calib_217T']        = [ 995.89,    0, 3000,   1.4, 0.001,'nuisance']  
+data.parameters['A_planck']          = [100.028,   90,  110,  0.25,  0.01,'nuisance']  
+
+# Derived parameters
+
+data.parameters['z_reio']          = [1, None, None, 0,     1,   'derived']
+data.parameters['Omega_Lambda']    = [1, None, None, 0,     1,   'derived']
+data.parameters['YHe']             = [1, None, None, 0,     1,   'derived']
+data.parameters['H0']              = [0, None, None, 0,     1,   'derived']
+data.parameters['A_s']             = [0, None, None, 0,  1e-9,   'derived']
+#data.parameters['sigma8']          = [0, None, None, 0,     1,   'derived']
+
+# Other cosmo parameters (fixed parameters, precision parameters, etc.)
+
+data.cosmo_arguments['sBBN file'] = data.path['cosmo']+'/bbn/sBBN.dat'
+data.cosmo_arguments['k_pivot'] = 0.05
+
+# The base model features two massless
+# and one massive neutrino with m=0.06eV.
+# The settings below ensures that Neff=3.046
+# and m/omega = 93.14 eV
+data.cosmo_arguments['N_ur'] = 2.0328
+data.cosmo_arguments['N_ncdm'] = 1
+data.cosmo_arguments['m_ncdm'] = 0.06
+data.cosmo_arguments['T_ncdm'] = 0.71611
+
+# These two are required to get sigma8 as a derived parameter 
+# (class must compute the P(k) until sufficient k)
+#data.cosmo_arguments['output'] = 'mPk'
+#data.cosmo_arguments['P_k_max_h/Mpc'] = 1.
+
+#------ Mcmc parameters ----
+# Number of steps taken, by default (overwritten by the -N command)
+data.N=10
+# Number of accepted steps before writing to file the chain. Larger means less
+# access to disc, but this is not so much time consuming.
+data.write_step=5
+
+
+#-----Likelihood-Planck_highl-----
+Planck_highl.calib_100T_prior_variance = 0.001
+Planck_highl.gal545_A_143_217_prior_center = 21
+Planck_highl.gal545_A_217_prior_center = 80
+Planck_highl.gal545_A_100_prior_variance = 2
+Planck_highl.calib_217T_prior_variance = 0.002
+Planck_highl.gal545_A_143_prior_center = 9
+Planck_highl.gal545_A_217_prior_variance = 20
+Planck_highl.A_planck_prior_variance = 0.0025
+Planck_highl.calib_217T_prior_center = 0.99501
+Planck_highl.path_clik = '/rds/user/lh561/hpc-work/data/PlanckData/plc-2.0/../plc-2.0/hi_l/plik/plik_dx11dr2_HM_v18_TT.clik'
+Planck_highl.calib_100T_prior_center = 0.9990004
+Planck_highl.gal545_A_143_217_prior_variance = 8.5
+Planck_highl.A_planck_prior_center = 1
+Planck_highl.gal545_A_100_prior_center = 7
+Planck_highl.gal545_A_143_prior_variance = 2
+
+
+#-----Likelihood-Planck_lowl-----
+Planck_lowl.path_clik = '/rds/user/lh561/hpc-work/data/PlanckData/plc-2.0/../plc-2.0/low_l/bflike/lowl_SMW_70_dx11d_2014_10_03_v5c_Ap.clik'
+
+
+#-----------Cosmological-arguments---------
+data.cosmo_arguments.update({'sBBN file': '/home/lh561/Documents/Projects/ClassPrj/class_public/bbn/sBBN.dat', 'output': ' tCl lCl pCl ', 'N_ur': 2.0328, 'l_max_scalars': 2508, 'm_ncdm': 0.06, 'k_pivot': 0.05, 'lensing': ' yes ', 'N_ncdm': 1, 'T_ncdm': 0.71611})
+
+
+#--------Default-Configuration------
+data.path['cosmo']	= '/home/lh561/Documents/Projects/ClassPrj/class_public'
+data.path['root']	= '/home/lh561/Documents/Projects/MontePythonPrj/montepython_public'
+data.path['data']	= '/rds/user/lh561/hpc-work/data/MontePythonData'
+data.path['clik']	= '/rds/user/lh561/hpc-work/data/PlanckData/plc-2.0'
+data.path['MontePython']	= '/home/lh561/Documents/Projects/MontePythonPrj/montepython_public/montepython'
