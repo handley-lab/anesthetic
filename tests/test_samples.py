@@ -62,6 +62,12 @@ def test_read_getdist():
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
+def test_read_montepython():
+    mcmc = MCMCSamples(root='./tests/example_data/mp')
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
+
+
 def test_read_multinest():
     ns = NestedSamples(root='./tests/example_data/mn')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
