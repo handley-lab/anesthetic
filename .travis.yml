@@ -70,8 +70,8 @@ before_install:
           if [[ "$PYTHON" == "2.7" ]];
           then
               brew update;
-              brew install python2.7;
-              virtualenv virtenv -p python2.7;
+              brew install python@2;
+              virtualenv virtenv -p python2;
               source virtenv/bin/activate;
           else
               python3 -m venv environment;
