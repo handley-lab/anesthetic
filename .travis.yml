@@ -57,25 +57,29 @@ matrix:
         # OSX montepython_master
         - os: osx
           language: generic
-          env: PYTHON=2.7 MONTEPYTHONMASTER=1 MPLBACKEND=Agg
+          env: PYTHON=2.7.10 MONTEPYTHONMASTER=1 MPLBACKEND=Agg
         # OSX montepython_master conda
         - os: osx
           language: generic
-          env: PYTHON=2.7 MONTEPYTHONMASTER=1 CONDA=1 MPLBACKEND=Agg 
+          env: PYTHON=2.7.10 MONTEPYTHONMASTER=1 CONDA=1 MPLBACKEND=Agg 
 
 before_install:
     # OSX setup
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
       then
-          if [[ "$PYTHON" == "2.7" ]];
+          if [[ "$PYTHON" == "2.7.10" ]];
           then
               brew update;
+              brew install openssl readline;
               brew install python@2;
               brew outdated pyenv || brew upgrade pyenv;
               brew install pyenv-virtualenv;
-              pyenv-virtualenv virtenv -p python2;
+              pyenv install $PYTHON;
+              export PYENV_VERSION=$PYTHON;
+              export PATH="/Users/travis/.pyenv/shims:${PATH}";
+              pyenv-virtualenv virtenv;
               source virtenv/bin/activate;
-              python --version
+              python --version;
           else
               python3 -m venv environment;
               source environment/bin/activate;
