@@ -71,8 +71,11 @@ before_install:
           then
               brew update;
               brew install python@2;
-              virtualenv virtenv -p python2;
+              brew outdated pyenv || brew upgrade pyenv;
+              brew install pyenv-virtualenv;
+              pyenv-virtualenv virtenv -p python2;
               source virtenv/bin/activate;
+              python --version
           else
               python3 -m venv environment;
               source environment/bin/activate;
