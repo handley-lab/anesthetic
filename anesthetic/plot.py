@@ -300,7 +300,8 @@ def hist_1d(ax, data, *args, **kwargs):
         xmax = data.max()
     histtype = kwargs.pop('histtype', 'bar')
 
-    h, edges, bars = hist(data, ax=ax, range=(xmin, xmax), histtype=histtype,
+    plt.sca(ax=ax)
+    h, edges, bars = hist(data, range=(xmin, xmax), histtype=histtype,
                           *args, **kwargs)
     # As the y-axis on the diagonal 1D plots of the triangle plot won't
     # be labelled, we set the maximum bar height to 1:
