@@ -2,13 +2,15 @@ import pytest
 import numpy
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
-from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
+from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d, hist_1d,
                              contour_plot_2d, scatter_plot_2d)
 from numpy.testing import assert_array_equal
 
 from matplotlib.contour import QuadContourSet
 from matplotlib.lines import Line2D
+from matplotlib.patches import Patch, Polygon
 from matplotlib.collections import PathCollection
+from matplotlib.colors import ColorConverter
 from matplotlib.figure import Figure
 from pandas.core.series import Series
 from pandas.core.frame import DataFrame
@@ -178,6 +180,62 @@ def test_plot_1d():
     line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
     assert((line.get_xdata() <= xmax).all())
     assert((line.get_xdata() >= xmin).all())
+    plt.close("all")
+
+
+def test_hist_1d():
+    fig, ax = plt.subplots()
+    numpy.random.seed(0)
+    data = numpy.random.randn(1000)
+
+    # Check heights for histtype 'bar'
+    bars = hist_1d(ax, data, histtype='bar')
+    assert(numpy.all([isinstance(b, Patch) for b in bars]))
+    assert(max([b.get_height() for b in bars]) == 1.)
+    assert(numpy.all(numpy.array([b.get_height() for b in bars]) <= 1.))
+
+    # Check heights for histtype 'step'
+    polygon, = hist_1d(ax, data, histtype='step')
+    assert(isinstance(polygon, Polygon))
+    trans = polygon.get_transform() - ax.transData
+    assert(trans.transform(polygon.xy)[:, -1].max() == 1.)
+    numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.)
+
+    # Check heights for histtype 'stepfilled'
+    polygon, = hist_1d(ax, data, histtype='stepfilled')
+    assert(isinstance(polygon, Polygon))
+    trans = polygon.get_transform() - ax.transData
+    assert(trans.transform(polygon.xy)[:, -1].max() == 1.)
+    numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.)
+
+    # Check arguments are passed onward to underlying function
+    bars = hist_1d(ax, data, histtype='bar', color='r', alpha=0.5)
+    assert(numpy.all([b.get_fc() == ColorConverter.to_rgba('r', alpha=0.5)
+                      for b in bars]))
+    polygon, = hist_1d(ax, data, histtype='step', color='r', alpha=0.5)
+    assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
+
+    # Check xmin
+    xmin = -0.5
+    bars = hist_1d(ax, data, histtype='bar', xmin=xmin)
+    assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
+    polygon, = hist_1d(ax, data, histtype='step', xmin=xmin)
+    assert((polygon.xy[:, 0] >= -0.5).all())
+
+    # Check xmax
+    xmax = 0.5
+    bars = hist_1d(ax, data, histtype='bar', xmax=xmax)
+    assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
+    polygon, = hist_1d(ax, data, histtype='step', xmax=xmax)
+    assert((polygon.xy[:, -1] <= 0.5).all())
+
+    # Check xmin and xmax
+    bars = hist_1d(ax, data, histtype='bar', xmin=xmin, xmax=xmax)
+    assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
+    assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
+    polygon, = hist_1d(ax, data, histtype='step', xmin=xmin, xmax=xmax)
+    assert((polygon.xy[:, 0] >= -0.5).all())
+    assert((polygon.xy[:, -1] <= 0.5).all())
     plt.close("all")
 
 
