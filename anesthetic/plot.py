@@ -23,7 +23,7 @@ from anesthetic.utils import check_bounds, nest_level, unique
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.collections import PathCollection
+from matplotlib.collections import LineCollection
 from matplotlib.transforms import Affine2D
 
 

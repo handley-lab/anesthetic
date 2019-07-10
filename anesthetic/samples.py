@@ -134,9 +134,11 @@ class MCMCSamples(WeightedDataFrame):
         if plot_type == 'kde':
             nsamples = None
             plot = contour_plot_2d
+            ax.scatter([], [])  # need this to increment color cycle
         elif plot_type == 'scatter':
             nsamples = 500
             plot = scatter_plot_2d
+            ax.plot([], [])  # need this to increment color cycle
         else:
             raise NotImplementedError("plot_type is '%s', but must be in "
                                       "{'kde', 'scatter'}." % plot_type)
@@ -271,6 +273,10 @@ class MCMCSamples(WeightedDataFrame):
 
                     self.plot(ax_, x, y, plot_type=types[pos], *args,
                               **local_kwargs[pos])
+                elif ax is not None:
+                    ax_ = ax.twin if x == y else ax
+                    ax_.plot([], [])  # need this to increment color cycle
+                    ax_.scatter([], [])  # need this to increment color cycle
 
         return fig, axes
 
