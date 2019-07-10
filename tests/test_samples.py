@@ -1,3 +1,4 @@
+import matplotlib_agg  # noqa: F401
 import numpy
 import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
