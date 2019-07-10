@@ -1,0 +1,26 @@
+x0 	 10^{-2}\omega_{b } 
+x1 	 \omega_{cdm } 
+x2 	 100\theta_{s } 
+x3 	 ln10^{10}A_{s } 
+n_s 	 n_{s } 
+tau_reio 	 \tau_{reio } 
+A_cib_217 	 A_{cib 217 } 
+xi_sz_cib 	 xi_{sz cib } 
+A_sz 	 A_{sz } 
+ps_A_100_100 	 ps_{A 100 100 } 
+ps_A_143_143 	 ps_{A 143 143 } 
+ps_A_143_217 	 ps_{A 143 217 } 
+ps_A_217_217 	 ps_{A 217 217 } 
+ksz_norm 	 ksz_{norm } 
+gal545_A_100 	 gal545_{A 100 } 
+gal545_A_143 	 gal545_{A 143 } 
+gal545_A_143_217 	 gal545_{A 143 217 } 
+gal545_A_217 	 gal545_{A 217 } 
+calib_100T 	 10^{-3}calib_{100T } 
+calib_217T 	 10^{-3}calib_{217T } 
+A_planck 	 10^{-2}A_{planck } 
+z_reio 	 z_{reio } 
+Omega_Lambda 	 \Omega_{\Lambda } 
+YHe 	 YHe 
+H0 	 H0 
+A_s 	 10^{-9}A_{s } 

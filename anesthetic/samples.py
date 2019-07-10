@@ -8,8 +8,7 @@ import pandas
 from scipy.special import logsumexp
 from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
                              hist_1d, scatter_plot_2d, contour_plot_2d)
-from anesthetic.read.getdist import GetDistReader
-from anesthetic.read.nested import NestedReader
+from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import compute_nlive
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame
@@ -60,7 +59,7 @@ class MCMCSamples(WeightedDataFrame):
     def __init__(self, *args, **kwargs):
         self.root = kwargs.pop('root', None)
         if self.root is not None:
-            reader = GetDistReader(self.root)
+            reader = SampleReader(self.root)
             w, logL, samples = reader.samples()
             params, tex = reader.paramnames()
             limits = reader.limits()
@@ -333,7 +332,7 @@ class NestedSamples(MCMCSamples):
         self.root = kwargs.pop('root', None)
         self._beta = kwargs.pop('beta', 1.)
         if self.root is not None:
-            reader = NestedReader(self.root)
+            reader = SampleReader(self.root)
             samples, logL, logL_birth = reader.samples()
             params, tex = reader.paramnames()
             limits = reader.limits()

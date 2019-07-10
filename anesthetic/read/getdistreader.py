@@ -1,7 +1,7 @@
 """Tools for reading from getdist chains files."""
 import numpy
 import glob
-from anesthetic.read.base import ChainReader
+from anesthetic.read.chainreader import ChainReader
 
 
 class GetDistReader(ChainReader):
