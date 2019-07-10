@@ -1,4 +1,5 @@
 """Tools for reading from MontePython chains files."""
+import sys
 import os
 import glob
 import warnings
@@ -59,6 +60,15 @@ class MontePythonReader(ChainReader):
             * Extracts parameter limits from MontePython's log.param file.
 
         """
+        if 'montepython' not in sys.modules:
+            raise ImportError(
+                "`montepython` not installed, but `MontePythonReader` needs "
+                "the `montepython` package as an extra requirement in order "
+                "to read the data folder. Alternatively you can pass the root "
+                "to the actual chain _files_ into `MCMCSamples` (omitting "
+                "_1.txt, _2.txt, etc.) in which case the files will be read "
+                "by the `GetDistReader` (with less functionality, though, "
+                "e.g. won't automatically detect limits).")
         # The variable and function names used here correspond to the ones
         # used in MontePython's analyze.py module.
         command_line = Namespace(files=[self.root])

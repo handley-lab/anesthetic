@@ -69,8 +69,9 @@ def test_read_getdist():
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
-@pytest.mark.skipif('montepython' not in sys.modules,
-                    reason="requires montepython package")
+@pytest.mark.xfail('montepython' not in sys.modules,
+                   raises=ImportError,
+                   reason="requires montepython package")
 def test_read_montepython():
     mcmc = MCMCSamples(root='./tests/example_data/mp')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
