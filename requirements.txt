@@ -3,4 +3,5 @@ numpy
 pandas
 matplotlib
 fastkde
+docrep
 astropy

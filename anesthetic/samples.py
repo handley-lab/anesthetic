@@ -6,12 +6,16 @@
 import numpy
 import pandas
 from scipy.special import logsumexp
+import docrep
 from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
                              hist_1d, scatter_plot_2d, contour_plot_2d)
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import compute_nlive
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame
+
+
+docstrings = docrep.DocstringProcessor()
 
 
 class MCMCSamples(WeightedDataFrame):
@@ -83,6 +87,8 @@ class MCMCSamples(WeightedDataFrame):
                 self['logL'] = logL
                 self.tex['logL'] = r'$\log\mathcal{L}$'
 
+    @docstrings.get_sectionsf('plot', sections=['Parameters'])
+    @docstrings.dedent
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
 
@@ -92,14 +98,11 @@ class MCMCSamples(WeightedDataFrame):
         ----------
         ax: matplotlib.axes.Axes
             Axes to plot on
-
         paramname_x: str
             Choice of parameter to plot on x-coordinate from self.columns.
-
         paramname_y: str
             Choice of parameter to plot on y-coordinate from self.columns.
             If not provided, or the same as paramname_x, then 1D plot produced.
-
         plot_type: str, optional
             Must be in {'kde', 'scatter'} for 2D plots and in {'kde', 'hist'}
             for 1D plots. (Default: 'kde')
@@ -148,6 +151,7 @@ class MCMCSamples(WeightedDataFrame):
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                     *args, **kwargs)
 
+    @docstrings.dedent
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
 
@@ -160,6 +164,7 @@ class MCMCSamples(WeightedDataFrame):
             If a pandas.Series is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
+        %(plot.parameters)s
 
         Returns
         -------
