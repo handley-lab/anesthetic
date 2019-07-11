@@ -15,30 +15,6 @@ env:
 
 matrix:
     include:
-        # Linux 2.7 montepython_master
-        - os: linux
-          dist: xenial
-          language: python
-          python: 2.7
-          env: MONTEPYTHONMASTER=1 
-        # Linux 2.7 montepython_3.1.0
-        - os: linux
-          dist: xenial
-          language: python
-          python: 2.7
-          env: MONTEPYTHON310=1 
-        # Linux 2.7 montepython_master conda
-        - os: linux
-          dist: xenial
-          language: python
-          python: 2.7
-          env: MONTEPYTHONMASTER=1 CONDA=1 
-        # Linux 2.7 montepython_3.1.0 conda
-        - os: linux
-          dist: xenial
-          language: python
-          python: 2.7
-          env: MONTEPYTHON310=1 CONDA=1 
         # OSX
         - os: osx
           language: generic
@@ -46,6 +22,14 @@ matrix:
         - os: osx
           language: generic
           env: CONDA=1 
+        # OSX extras
+        - os: osx
+          language: generic
+          env: EXTRAS=1
+        # OSX conda + extras
+        - os: osx
+          language: generic
+          env: CONDA=1 EXTRAS=1
 
 before_install:
     # OSX setup
@@ -68,22 +52,22 @@ install:
           conda create -q -n test-env python=$TRAVIS_PYTHON_VERSION;
           source activate test-env;
       fi;
-    - if [[ "$MONTEPYTHONMASTER" == 1 ]];
-      then
-          wget https://github.com/brinckmann/montepython_public/tarball/master;
-          tar -xf master;
-          pip install argparse;
-          pip install brinckmann-montepython_public-*/ --no-deps;
-      else
-          wget https://github.com/brinckmann/montepython_public/archive/3.1.0.tar.gz;
-          tar -xf 3.1.0.tar.gz;
-          pip install argparse;
-          pip install montepython_public-3.1.0/ --no-deps;
-      fi;
     - pip install Cython numpy;
     - if [[ "$EXTRAS" == 1 ]];
       then
           pip install -r requirements.txt;
+          if [[ "$MONTEPYTHONMASTER" == 1 ]];
+          then
+              wget https://github.com/brinckmann/montepython_public/tarball/master;
+              tar -xf master;
+              pip install argparse;
+              pip install brinckmann-montepython_public-*/ --no-deps;
+          else
+              wget https://github.com/brinckmann/montepython_public/archive/3.1.0.tar.gz;
+              tar -xf 3.1.0.tar.gz;
+              pip install argparse;
+              pip install montepython_public-3.1.0/ --no-deps;
+          fi;
       else
           pip install -r requirements_minimal.txt;
       fi
