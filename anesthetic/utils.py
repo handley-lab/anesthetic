@@ -2,6 +2,18 @@
 import numpy
 import pandas
 from scipy.interpolate import interp1d
+from docrep import DocstringProcessor
+
+
+class DocstringProcessorWithBlanks(DocstringProcessor):
+    """DocstringProcessor subclass working with blank lines between params."""
+
+    param_like_sections = [s for s in DocstringProcessor.param_like_sections
+                           if s != 'Parameters']
+    text_sections = ['Parameters'] + DocstringProcessor.text_sections
+
+
+docstrings = DocstringProcessorWithBlanks()
 
 
 def channel_capacity(w):
