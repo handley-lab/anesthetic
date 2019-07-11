@@ -114,8 +114,9 @@ class MCMCSamples(WeightedDataFrame):
 
         """
         plot_type = kwargs.pop('plot_type', 'kde')
+        do_1d_plot = paramname_y is None or paramname_x == paramname_y
 
-        if paramname_y is None or paramname_x == paramname_y:
+        if do_1d_plot:
             xmin, xmax = self._limits(paramname_x)
             if plot_type == 'kde':
                 plot = plot_1d
@@ -124,29 +125,36 @@ class MCMCSamples(WeightedDataFrame):
             else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'hist'}." % plot_type)
-            return plot(ax, self[paramname_x].compress(),
-                        xmin=xmin, xmax=xmax,
-                        *args, **kwargs)
+            if paramname_x in self:
+                x = self[paramname_x].compress()
+            else:
+                x = []
 
-        xmin, xmax = self._limits(paramname_x)
-        ymin, ymax = self._limits(paramname_y)
+            return plot(ax, x, xmin=xmin, xmax=xmax, *args, **kwargs)
 
-        if plot_type == 'kde':
-            nsamples = None
-            plot = contour_plot_2d
-            ax.scatter([], [])  # need this to increment color cycle
-        elif plot_type == 'scatter':
-            nsamples = 500
-            plot = scatter_plot_2d
-            ax.plot([], [])  # need this to increment color cycle
         else:
-            raise NotImplementedError("plot_type is '%s', but must be in "
-                                      "{'kde', 'scatter'}." % plot_type)
+            xmin, xmax = self._limits(paramname_x)
+            ymin, ymax = self._limits(paramname_y)
 
-        return plot(ax, self[paramname_x].compress(nsamples),
-                    self[paramname_y].compress(nsamples),
-                    xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
-                    *args, **kwargs)
+            if plot_type == 'kde':
+                nsamples = None
+                plot = contour_plot_2d
+            elif plot_type == 'scatter':
+                nsamples = 500
+                plot = scatter_plot_2d
+            else:
+                raise NotImplementedError("plot_type is '%s', but must be in "
+                                          "{'kde', 'scatter'}." % plot_type)
+
+            if paramname_x in self and paramname_y in self:
+                x = self[paramname_x].compress(nsamples)
+                y = self[paramname_y].compress(nsamples)
+            else:
+                x = []
+                y = []
+
+            return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
+                        *args, **kwargs)
 
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
@@ -256,11 +264,10 @@ class MCMCSamples(WeightedDataFrame):
             local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
-            diagonal = 'diagonal' in types
-            upper = 'upper' in types
-            lower = 'lower' in types
-            fig, axes = make_2d_axes(axes, tex=self.tex, upper=upper,
-                                     lower=lower, diagonal=diagonal)
+            fig, axes = make_2d_axes(axes, tex=self.tex,
+                                     upper=('upper' in types),
+                                     lower=('lower' in types),
+                                     diagonal=('diagonal' in types))
         else:
             fig = axes.values[~axes.isna()][0].figure
 
@@ -269,12 +276,8 @@ class MCMCSamples(WeightedDataFrame):
                 if ax is not None:
                     pos = ax.position
                     ax_ = ax.twin if x == y else ax
-                    if x in self and y in self:
-                        self.plot(ax_, x, y, plot_type=types[pos], *args,
-                                  **local_kwargs[pos])
-                    else:  # need this to increment color cycle
-                        ax_.plot([], [])
-                        ax_.scatter([], [])
+                    self.plot(ax_, x, y, plot_type=types[pos], *args,
+                              **local_kwargs[pos])
 
         return fig, axes
 
