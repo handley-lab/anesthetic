@@ -134,9 +134,11 @@ class MCMCSamples(WeightedDataFrame):
         if plot_type == 'kde':
             nsamples = None
             plot = contour_plot_2d
+            ax.scatter([], [])  # need this to increment color cycle
         elif plot_type == 'scatter':
             nsamples = 500
             plot = scatter_plot_2d
+            ax.plot([], [])  # need this to increment color cycle
         else:
             raise NotImplementedError("plot_type is '%s', but must be in "
                                       "{'kde', 'scatter'}." % plot_type)
@@ -224,7 +226,8 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        types = kwargs.pop('types', {'diagonal': 'kde', 'lower': 'kde'})
+        default_types = {'diagonal': 'kde', 'lower': 'kde', 'upper': 'scatter'}
+        types = kwargs.pop('types', default_types)
         diagonal = kwargs.pop('diagonal', True)
         if isinstance(types, list) or isinstance(types, str):
             from warnings import warn
@@ -253,27 +256,25 @@ class MCMCSamples(WeightedDataFrame):
             local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
-            upper = None if 'upper' in types else False
-            fig, axes = make_2d_axes(axes, diagonal=('diagonal' in types),
-                                     tex=self.tex, upper=upper)
+            diagonal = 'diagonal' in types
+            upper = 'upper' in types
+            lower = 'lower' in types
+            fig, axes = make_2d_axes(axes, tex=self.tex, upper=upper,
+                                     lower=lower, diagonal=diagonal)
         else:
             fig = axes.values[~axes.isna()][0].figure
 
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
-                if (ax is not None and x in self and y in self
-                        and ax._upper is not None):
-                    ax_ = ax
-                    if x == y:
-                        ax_ = ax.twin
-                        pos = 'diagonal'
-                    elif ax._upper:
-                        pos = 'upper'
-                    else:
-                        pos = 'lower'
-
-                    self.plot(ax_, x, y, plot_type=types[pos], *args,
-                              **local_kwargs[pos])
+                if ax is not None:
+                    pos = ax.position
+                    ax_ = ax.twin if x == y else ax
+                    if x in self and y in self:
+                        self.plot(ax_, x, y, plot_type=types[pos], *args,
+                                  **local_kwargs[pos])
+                    else:  # need this to increment color cycle
+                        ax_.plot([], [])
+                        ax_.scatter([], [])
 
         return fig, axes
 

@@ -7,7 +7,9 @@ python:
     - "2.7"
 env:
     - MPLBACKEND=Agg
-    - CONDA=1 MPLBACKEND=Agg
+    - MPLBACKEND=Agg CONDA=1
+    - MPLBACKEND=Agg EXTRAS=1
+    - MPLBACKEND=Agg CONDA=1 EXTRAS=1
 
 matrix:
     include:
@@ -91,7 +93,12 @@ install:
           pip install brinckmann-montepython_public-*/ --no-deps;
       fi;
     - pip install Cython numpy;
-    - pip install -r requirements.txt;
+    - if [[ "$EXTRAS" == 1 ]];
+      then
+          pip install -r requirements.txt;
+      else
+          pip install -r requirements_minimal.txt;
+      fi
     - pip install pytest-cov codecov;
     - pip install flake8 pydocstyle sphinx sphinx_rtd_theme;
 

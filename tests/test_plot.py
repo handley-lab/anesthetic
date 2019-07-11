@@ -3,13 +3,15 @@ import pytest
 import numpy
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
-from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
+from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d, hist_1d,
                              contour_plot_2d, scatter_plot_2d)
 from numpy.testing import assert_array_equal
 
 from matplotlib.contour import QuadContourSet
 from matplotlib.lines import Line2D
+from matplotlib.patches import Patch, Polygon
 from matplotlib.collections import PathCollection
+from matplotlib.colors import ColorConverter
 from matplotlib.figure import Figure
 from pandas.core.series import Series
 from pandas.core.frame import DataFrame
@@ -57,9 +59,10 @@ def test_make_1d_axes():
     # Check unexpected kwargs
     with pytest.raises(TypeError):
         make_1d_axes(paramnames, foo='bar')
+    plt.close("all")
 
 
-def test_make_2d_axes():
+def test_make_2d_axes_inputs_outputs():
     paramnames_x = ['A', 'B', 'C', 'D']
     paramnames_y = ['B', 'A', 'D', 'E']
 
@@ -87,7 +90,7 @@ def test_make_2d_axes():
     assert(fig is not fig0)
     fig, axes = make_2d_axes(paramnames_x, fig=fig0)
     assert(fig is fig0)
-    plt.close('all')
+    plt.close("all")
 
     # Check gridspec argument
     grid = gs.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[3, 1])
@@ -99,32 +102,70 @@ def test_make_2d_axes():
     with pytest.raises(TypeError):
         make_2d_axes(paramnames_x, foo='bar')
 
-    # Check upper and diagonal arguments
-    for paramnames_y in [paramnames_y, paramnames_y[:-1]]:
-        nx = len(paramnames_x)
-        ny = len(paramnames_y)
-        m = len(set(paramnames_x).intersection(set(paramnames_y)))
-        fig, axes = make_2d_axes(paramnames_x)
-        assert((~axes.isna()).sum().sum() == nx**2)
-        fig, axes = make_2d_axes(paramnames_x, upper=True)
-        assert((~axes.isna()).sum().sum() == (nx*(nx+1))//2)
-        fig, axes = make_2d_axes(paramnames_x, upper=False)
-        assert((~axes.isna()).sum().sum() == (nx*(nx+1))//2)
-        fig, axes = make_2d_axes(paramnames_x, upper=True, diagonal=False)
-        assert((~axes.isna()).sum().sum() == ((nx-1)*nx)//2)
-        fig, axes = make_2d_axes(paramnames_x, upper=False, diagonal=False)
-        assert((~axes.isna()).sum().sum() == ((nx-1)*nx)//2)
-        plt.close('all')
 
-        fig, axes = make_2d_axes([paramnames_x, paramnames_y])
-        assert((~axes.isna()).sum().sum() == nx*ny)
-        fig, axes = make_2d_axes([paramnames_x, paramnames_y], diagonal=False)
-        assert((~axes.isna()).sum().sum() == nx*ny-m)
-        fig, axes = make_2d_axes([paramnames_x, paramnames_y], upper=False)
-        assert((~axes.isna()).sum().sum() == nx*ny-((m-1)*m)//2)
-        fig, axes = make_2d_axes([paramnames_x, paramnames_y], upper=True)
-        assert((~axes.isna()).sum().sum() == (m*(m+1))//2)
-        plt.close('all')
+def test_make_2d_axes_behaviour():
+    numpy.random.seed(0)
+
+    def calc_n(axes):
+        """Compute the number of upper, lower and diagonal plots."""
+        n = {'upper': 0, 'lower': 0, 'diagonal': 0}
+        for y, row in axes.iterrows():
+            for x, ax in row.iteritems():
+                if ax is not None:
+                    n[ax.position] += 1
+        return n
+
+    # Check for only paramnames_x
+    paramnames_x = ['A', 'B', 'C', 'D']
+    nx = len(paramnames_x)
+    for upper in [True, False]:
+        for lower in [True, False]:
+            for diagonal in [True, False]:
+                fig, axes = make_2d_axes(paramnames_x,
+                                         upper=upper,
+                                         lower=lower,
+                                         diagonal=diagonal)
+                ns = calc_n(axes)
+                assert(ns['upper'] == upper * nx*(nx-1)//2)
+                assert(ns['lower'] == lower * nx*(nx-1)//2)
+                assert(ns['diagonal'] == diagonal * nx)
+
+    plt.close("all")
+
+    for paramnames_y in [['A', 'B', 'C', 'D'],
+                         ['A', 'C', 'B', 'D'],
+                         ['D', 'C', 'B', 'A'],
+                         ['C', 'B', 'A'],
+                         ['E', 'F', 'G', 'H'],
+                         ['A', 'B', 'E', 'F'],
+                         ['B', 'E', 'A', 'F'],
+                         ['B', 'F', 'A', 'H', 'G'],
+                         ['B', 'A', 'H', 'G']]:
+        params = [paramnames_x, paramnames_y]
+        all_params = paramnames_x + paramnames_y
+
+        nu, nl, nd = 0, 0, 0
+        for x in paramnames_x:
+            for y in paramnames_y:
+                if x == y:
+                    nd += 1
+                elif all_params.index(x) < all_params.index(y):
+                    nl += 1
+                elif all_params.index(x) > all_params.index(y):
+                    nu += 1
+
+        for upper in [True, False]:
+            for lower in [True, False]:
+                for diagonal in [True, False]:
+                    fig, axes = make_2d_axes(params,
+                                             upper=upper,
+                                             lower=lower,
+                                             diagonal=diagonal)
+                    ns = calc_n(axes)
+                    assert(ns['upper'] == upper * nu)
+                    assert(ns['lower'] == lower * nl)
+                    assert(ns['diagonal'] == diagonal * nd)
+        plt.close("all")
 
 
 def test_plot_1d():
@@ -155,6 +196,65 @@ def test_plot_1d():
     line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
     assert((line.get_xdata() <= xmax).all())
     assert((line.get_xdata() >= xmin).all())
+    plt.close("all")
+
+
+def test_hist_1d():
+    fig, ax = plt.subplots()
+    numpy.random.seed(0)
+    data = numpy.random.randn(1000)
+
+    # Check heights for histtype 'bar'
+    bars = hist_1d(ax, data, histtype='bar')
+    assert(numpy.all([isinstance(b, Patch) for b in bars]))
+    assert(max([b.get_height() for b in bars]) == 1.)
+    assert(numpy.all(numpy.array([b.get_height() for b in bars]) <= 1.))
+
+    # Check heights for histtype 'step'
+    polygon, = hist_1d(ax, data, histtype='step')
+    assert(isinstance(polygon, Polygon))
+    trans = polygon.get_transform() - ax.transData
+    assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                         rtol=1e-10, atol=1e-10))
+    assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
+
+    # Check heights for histtype 'stepfilled'
+    polygon, = hist_1d(ax, data, histtype='stepfilled')
+    assert(isinstance(polygon, Polygon))
+    trans = polygon.get_transform() - ax.transData
+    assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                         rtol=1e-10, atol=1e-10))
+    assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
+
+    # Check arguments are passed onward to underlying function
+    bars = hist_1d(ax, data, histtype='bar', color='r', alpha=0.5)
+    assert(numpy.all([b.get_fc() == ColorConverter.to_rgba('r', alpha=0.5)
+                      for b in bars]))
+    polygon, = hist_1d(ax, data, histtype='step', color='r', alpha=0.5)
+    assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
+
+    # Check xmin
+    xmin = -0.5
+    bars = hist_1d(ax, data, histtype='bar', xmin=xmin)
+    assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
+    polygon, = hist_1d(ax, data, histtype='step', xmin=xmin)
+    assert((polygon.xy[:, 0] >= -0.5).all())
+
+    # Check xmax
+    xmax = 0.5
+    bars = hist_1d(ax, data, histtype='bar', xmax=xmax)
+    assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
+    polygon, = hist_1d(ax, data, histtype='step', xmax=xmax)
+    assert((polygon.xy[:, 0] <= 0.5).all())
+
+    # Check xmin and xmax
+    bars = hist_1d(ax, data, histtype='bar', xmin=xmin, xmax=xmax)
+    assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
+    assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
+    polygon, = hist_1d(ax, data, histtype='step', xmin=xmin, xmax=xmax)
+    assert((polygon.xy[:, 0] >= -0.5).all())
+    assert((polygon.xy[:, 0] <= 0.5).all())
+    plt.close("all")
 
 
 def test_contour_plot_2d():

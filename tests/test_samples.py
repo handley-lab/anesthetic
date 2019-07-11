@@ -2,6 +2,7 @@ import matplotlib_agg  # noqa: F401
 import sys
 import pytest
 import numpy
+import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
 from numpy.testing import assert_array_equal
 try:
@@ -67,6 +68,7 @@ def test_read_getdist():
     mcmc = MCMCSamples(root='./tests/example_data/gd_single')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    plt.close("all")
 
 
 @pytest.mark.xfail('montepython' not in sys.modules,
@@ -76,6 +78,7 @@ def test_read_montepython():
     mcmc = MCMCSamples(root='./tests/example_data/mp')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    plt.close("all")
 
 
 def test_read_multinest():
@@ -86,28 +89,45 @@ def test_read_multinest():
     ns = NestedSamples(root='./tests/example_data/mn_old')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    plt.close("all")
 
 
 def test_read_polychord():
     ns = NestedSamples(root='./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    plt.close("all")
 
 
 def test_plot_2d_types():
     ns = NestedSamples(root='./tests/example_data/pc')
     params_x = ['x0', 'x1', 'x2', 'x3']
     params_y = ['x0', 'x1', 'x2']
-    fig, axes = ns.plot_2d([params_x, params_y], types=['kde', 'scatter'])
-    assert(axes.isnull().sum().sum() == 0)
+    params = [params_x, params_y]
+    # Test old interface
+    fig, axes = ns.plot_2d(params, types=['kde', 'scatter'])
+    assert((~axes.isnull()).sum().sum() == 12)
 
-    fig, axes = ns.plot_2d([params_x, params_y], types='kde')
-    assert(axes.isnull().sum().sum() == 3)
+    fig, axes = ns.plot_2d(params, types='kde')
+    assert((~axes.isnull()).sum().sum() == 6)
 
-    fig, axes = ns.plot_2d([params_x, params_y], types='kde', diagonal=False)
-    assert(axes.isnull().sum().sum() == 6)
+    fig, axes = ns.plot_2d(params, types='kde', diagonal=False)
+    assert((~axes.isnull()).sum().sum() == 3)
 
-    fig, axes = ns.plot_2d([params_x, params_y], types={'lower': 'kde'})
-    assert(axes.isnull().sum().sum() == 6)
-#    fig, axes = ns.plot_2d([params_x, params_y],types={'diagonal':'kde'})
-#    fig, axes = ns.plot_2d([params_x, params_y],types={'upper':'kde'})
+    # Test new interface
+    fig, axes = ns.plot_2d(params, types={'lower': 'kde'})
+    assert((~axes.isnull()).sum().sum() == 3)
+
+    fig, axes = ns.plot_2d(params, types={'upper': 'scatter'})
+    assert((~axes.isnull()).sum().sum() == 6)
+
+    fig, axes = ns.plot_2d(params, types={'upper': 'kde', 'diagonal': 'kde'})
+    assert((~axes.isnull()).sum().sum() == 9)
+
+    fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde'})
+    assert((~axes.isnull()).sum().sum() == 6)
+
+    fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde',
+                                          'upper': 'scatter'})
+    assert((~axes.isnull()).sum().sum() == 12)
+    plt.close("all")

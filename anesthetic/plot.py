@@ -23,7 +23,7 @@ from anesthetic.utils import check_bounds, nest_level, unique
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.collections import PathCollection
+from matplotlib.collections import LineCollection
 from matplotlib.transforms import Affine2D
 
 
@@ -102,12 +102,9 @@ def make_2d_axes(params, **kwargs):
             Dictionary mapping params to tex plot labels.
             Default: params
 
-        upper: None or logical, optional
-            Whether to create plots in the upper triangle.
-            If None do both. Default: None
-
-        diagonal: True, optional
-            Whether to create 1D marginalised plots on the diagonal.
+        upper, lower, diagonal: logical, optional
+            Whether to create 2D marginalised plots above or below the
+            diagonal, or to create a 1D marginalised plot on the diagonal.
             Default: True
 
         fig: matplotlib.figure.Figure, optional
@@ -131,12 +128,33 @@ def make_2d_axes(params, **kwargs):
         xparams, yparams = params
     else:
         xparams = yparams = params
+
+    upper = kwargs.pop('upper', True)
+    lower = kwargs.pop('lower', True)
+    diagonal = kwargs.pop('diagonal', True)
+
     axes = pandas.DataFrame(index=numpy.atleast_1d(yparams),
                             columns=numpy.atleast_1d(xparams),
                             dtype=object)
     axes[:][:] = None
+    all_params = list(axes.columns) + list(axes.index)
+
+    for j, y in enumerate(axes.index):
+        for i, x in enumerate(axes.columns):
+            if all_params.index(x) < all_params.index(y):
+                if lower:
+                    axes[x][y] = -1
+            elif all_params.index(x) > all_params.index(y):
+                if upper:
+                    axes[x][y] = +1
+            elif diagonal:
+                axes[x][y] = 0
+
+    axes.dropna(axis=0, how='all', inplace=True)
+    axes.dropna(axis=1, how='all', inplace=True)
 
     tex = kwargs.pop('tex', {})
+    tex = {p: tex[p] if p in tex else p for p in all_params}
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     if 'subplot_spec' in kwargs:
         grid = SGS(*axes.shape, hspace=0, wspace=0,
@@ -144,44 +162,32 @@ def make_2d_axes(params, **kwargs):
     else:
         grid = GS(*axes.shape, hspace=0, wspace=0)
 
-    upper = kwargs.pop('upper', None)
-    diagonal = kwargs.pop('diagonal', True)
-
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
     if axes.size == 0:
         return fig, axes
-
-    tex = {p: tex[p] if p in tex else p
-           for p in numpy.concatenate((axes.index, axes.columns))}
-
-    all_params = list(axes.index) + list(axes.columns)
-
+    position = axes.copy()
+    axes[:][:] = None
     for j, y in enumerate(axes.index):
         for i, x in enumerate(axes.columns):
-            lower = not (x in axes.index and y in axes.columns
-                         and all_params.index(x) > all_params.index(y))
-
-            if x == y and not diagonal:
-                continue
-
-            if upper == lower and x != y:
-                continue
-
-            if axes[x][y] is None:
+            if position[x][y] is not None:
                 sx = list(axes[x].dropna())
                 sx = sx[0] if sx else None
                 sy = list(axes.T[y].dropna())
                 sy = sy[0] if sy else None
                 axes[x][y] = fig.add_subplot(grid[j, i],
                                              sharex=sx, sharey=sy)
-            if x == y:
-                axes[x][y].twin = axes[x][y].twinx()
-                axes[x][y].twin.set_yticks([])
-                axes[x][y].twin.set_ylim(0, 1.1)
 
-            axes[x][y]._upper = not lower
+                if position[x][y] == 0:
+                    axes[x][y].twin = axes[x][y].twinx()
+                    axes[x][y].twin.set_yticks([])
+                    axes[x][y].twin.set_ylim(0, 1.1)
+                    axes[x][y].position = 'diagonal'
+                elif position[x][y] == 1:
+                    axes[x][y].position = 'upper'
+                elif position[x][y] == -1:
+                    axes[x][y].position = 'lower'
 
     for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
         ax.set_ylabel(tex[y])
@@ -294,7 +300,8 @@ def hist_1d(ax, data, *args, **kwargs):
         xmax = data.max()
     histtype = kwargs.pop('histtype', 'bar')
 
-    h, edges, bars = hist(data, ax=ax, range=(xmin, xmax), histtype=histtype,
+    plt.sca(ax=ax)
+    h, edges, bars = hist(data, range=(xmin, xmax), histtype=histtype,
                           *args, **kwargs)
     # As the y-axis on the diagonal 1D plots of the triangle plot won't
     # be labelled, we set the maximum bar height to 1:
@@ -435,7 +442,7 @@ def get_legend_proxy(fig):
 
     """
     cmaps = [coll.get_cmap() for ax in fig.axes for coll in ax.collections
-             if isinstance(coll, PathCollection)]
+             if isinstance(coll.get_cmap(), LinearSegmentedColormap)]
     cmaps = unique(cmaps)
 
     if not cmaps:
@@ -446,6 +453,17 @@ def get_legend_proxy(fig):
     proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.999),
                            edgecolor=cmap(0.33), linewidth=2)
              for cmap in cmaps]
+
+    if not cmaps:
+        colors = [coll.get_ec()[0]
+                  for ax in fig.axes
+                  for coll in ax.collections
+                  if isinstance(coll, LineCollection)]
+        colors = numpy.unique(colors, axis=0)
+        cmaps = [basic_cmap(color) for color in colors]
+        proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.0),
+                               edgecolor=cmap(0.999), linewidth=1)
+                 for cmap in cmaps]
 
     return proxy
 
