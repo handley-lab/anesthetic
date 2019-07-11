@@ -8,7 +8,7 @@ python:
     - "3.5"
     - "2.7"
 env:
-    - 
+    - ""
     - CONDA=1
     - EXTRAS=1
     - CONDA=1 EXTRAS=1
