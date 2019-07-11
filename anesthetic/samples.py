@@ -226,7 +226,8 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        types = kwargs.pop('types', {'diagonal': 'kde', 'lower': 'kde'})
+        default_types = {'diagonal': 'kde', 'lower': 'kde', 'upper': 'scatter'}
+        types = kwargs.pop('types', default_types)
         diagonal = kwargs.pop('diagonal', True)
         if isinstance(types, list) or isinstance(types, str):
             from warnings import warn
@@ -271,9 +272,9 @@ class MCMCSamples(WeightedDataFrame):
                     if x in self and y in self:
                         self.plot(ax_, x, y, plot_type=types[pos], *args,
                                   **local_kwargs[pos])
-                    else:
-                        ax_.plot([], [])  # need this to increment color cycle
-                        ax_.scatter([], [])  # need this to increment color cycle
+                    else:  # need this to increment color cycle
+                        ax_.plot([], [])
+                        ax_.scatter([], [])
 
         return fig, axes
 
