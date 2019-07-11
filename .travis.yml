@@ -34,10 +34,6 @@ matrix:
         - os: linux
           python: 3.6
           env: EXTRAS=1 MONTEPYTHONMASTER=1
-      allow_failures:
-        - os: linux
-          python: 3.6
-          env: EXTRAS=1 MONTEPYTHONMASTER=1
 
 before_install:
     # OSX setup
