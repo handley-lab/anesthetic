@@ -62,7 +62,7 @@ def test_make_1d_axes():
     plt.close("all")
 
 
-def test_make_2d_axes():
+def test_make_2d_axes_inputs_outputs():
     paramnames_x = ['A', 'B', 'C', 'D']
     paramnames_y = ['B', 'A', 'D', 'E']
 
@@ -102,54 +102,69 @@ def test_make_2d_axes():
     with pytest.raises(TypeError):
         make_2d_axes(paramnames_x, foo='bar')
 
-    # Check upper and diagonal arguments
-    for paramnames_y in [paramnames_y, paramnames_y[:-1]]:
-        nx = len(paramnames_x)
-        ny = len(paramnames_y)
-        fig, axes = make_2d_axes(paramnames_x)
-        assert((~axes.isna()).sum().sum() == nx**2)
 
-        fig, axes = make_2d_axes(paramnames_x, upper=False)
-        assert((~axes.isna()).sum().sum() == (nx*(nx+1))//2)
-        fig, axes = make_2d_axes(paramnames_x, lower=False)
-        assert((~axes.isna()).sum().sum() == (nx*(nx+1))//2)
-        fig, axes = make_2d_axes(paramnames_x, diagonal=False)
-        assert((~axes.isna()).sum().sum() == (nx*(nx-1)))
+def test_make_2d_axes_behaviour():
+    numpy.random.seed(0)
 
-        fig, axes = make_2d_axes(paramnames_x, upper=False, diagonal=False)
-        assert((~axes.isna()).sum().sum() == (nx*(nx-1))//2)
-        fig, axes = make_2d_axes(paramnames_x, lower=False, diagonal=False)
-        assert((~axes.isna()).sum().sum() == (nx*(nx-1))//2)
-        fig, axes = make_2d_axes(paramnames_x, lower=False, upper=False)
-        assert((~axes.isna()).sum().sum() == nx)
+    def calc_n(axes):
+        """Compute the number of upper, lower and diagonal plots."""
+        n = {'upper': 0, 'lower': 0, 'diagonal': 0}
+        for y, row in axes.iterrows():
+            for x, ax in row.iteritems():
+                if ax is not None:
+                    n[ax.position] += 1
+        return n
 
-        fig, axes = make_2d_axes(paramnames_x, lower=False, upper=False,
-                                 diagonal=False)
-        assert((~axes.isna()).sum().sum() == 0)
-        plt.close("all")
+    # Check for only paramnames_x
+    paramnames_x = ['A', 'B', 'C', 'D']
+    nx = len(paramnames_x)
+    for upper in [True, False]:
+        for lower in [True, False]:
+            for diagonal in [True, False]:
+                fig, axes = make_2d_axes(paramnames_x,
+                                         upper=upper,
+                                         lower=lower,
+                                         diagonal=diagonal)
+                ns = calc_n(axes)
+                assert(ns['upper'] == upper * nx*(nx-1)//2)
+                assert(ns['lower'] == lower * nx*(nx-1)//2)
+                assert(ns['diagonal'] == diagonal * nx)
 
+    plt.close("all")
+
+    for paramnames_y in [['A', 'B', 'C', 'D'],
+                         ['A', 'C', 'B', 'D'],
+                         ['D', 'C', 'B', 'A'],
+                         ['C', 'B', 'A'],
+                         ['E', 'F', 'G', 'H'],
+                         ['A', 'B', 'E', 'F'],
+                         ['B', 'E', 'A', 'F'],
+                         ['B', 'F', 'A', 'H', 'G'],
+                         ['B', 'A', 'H', 'G']]:
         params = [paramnames_x, paramnames_y]
-        fig, axes111 = make_2d_axes(params)
-        fig, axes011 = make_2d_axes(params, upper=False)
-        fig, axes101 = make_2d_axes(params, diagonal=False)
-        fig, axes110 = make_2d_axes(params, lower=False)
-        fig, axes001 = make_2d_axes(params, upper=False, diagonal=False)
-        fig, axes100 = make_2d_axes(params, diagonal=False, lower=False)
-        fig, axes010 = make_2d_axes(params, upper=False, lower=False)
+        all_params = paramnames_x + paramnames_y
 
-        n111 = (~axes111.isna()).sum().sum()
-        n110 = (~axes110.isna()).sum().sum()
-        n101 = (~axes101.isna()).sum().sum()
-        n011 = (~axes011.isna()).sum().sum()
-        n100 = (~axes100.isna()).sum().sum()
-        n001 = (~axes001.isna()).sum().sum()
-        n010 = (~axes010.isna()).sum().sum()
+        nu, nl, nd = 0, 0, 0
+        for x in paramnames_x:
+            for y in paramnames_y:
+                if x == y:
+                    nd += 1
+                elif all_params.index(x) < all_params.index(y):
+                    nl += 1
+                elif all_params.index(x) > all_params.index(y):
+                    nu += 1
 
-        assert(n111 == nx*ny)
-        assert(n100+n010+n001 == nx*ny)
-        assert(n100+n011 == n111)
-        assert(n010+n101 == n111)
-        assert(n001+n110 == n111)
+        for upper in [True, False]:
+            for lower in [True, False]:
+                for diagonal in [True, False]:
+                    fig, axes = make_2d_axes(params,
+                                             upper=upper,
+                                             lower=lower,
+                                             diagonal=diagonal)
+                    ns = calc_n(axes)
+                    assert(ns['upper'] == upper * nu)
+                    assert(ns['lower'] == lower * nl)
+                    assert(ns['diagonal'] == diagonal * nd)
         plt.close("all")
 
 

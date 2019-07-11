@@ -137,7 +137,7 @@ def make_2d_axes(params, **kwargs):
                             columns=numpy.atleast_1d(xparams),
                             dtype=object)
     axes[:][:] = None
-    all_params = list(axes.index) + list(axes.columns)
+    all_params = list(axes.columns) + list(axes.index)
 
     for j, y in enumerate(axes.index):
         for i, x in enumerate(axes.columns):
