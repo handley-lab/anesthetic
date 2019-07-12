@@ -122,10 +122,10 @@ class MCMCSamples(WeightedDataFrame):
                 plot = plot_1d
             elif plot_type == 'hist':
                 plot = hist_1d
-            else:
+            elif plot_type is not None:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'hist'}." % plot_type)
-            if paramname_x in self:
+            if paramname_x in self and plot_type is not None:
                 x = self[paramname_x].compress()
             else:
                 x = []
@@ -142,11 +142,12 @@ class MCMCSamples(WeightedDataFrame):
             elif plot_type == 'scatter':
                 nsamples = 500
                 plot = scatter_plot_2d
-            else:
+            elif plot_type is not None:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'scatter'}." % plot_type)
 
-            if paramname_x in self and paramname_y in self:
+            if ((paramname_x in self and paramname_y in self)
+               and plot_type is not None):
                 x = self[paramname_x].compress(nsamples)
                 y = self[paramname_y].compress(nsamples)
             else:
@@ -271,17 +272,19 @@ class MCMCSamples(WeightedDataFrame):
         else:
             fig = axes.values[~axes.isna()][0].figure
 
+        for pos in default_types:
+            if pos not in types:
+                types[pos] = None
+            if pos not in local_kwargs:
+                local_kwargs[pos] = {}
+
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
                 if ax is not None:
                     pos = ax.position
                     ax_ = ax.twin if x == y else ax
-                    if pos in types:
-                        self.plot(ax_, x, y, plot_type=types[pos], *args,
-                                  **local_kwargs[pos])
-                    else:  # need this to increment color cycle
-                        ax_.plot([], [])
-                        ax_.scatter([], [])
+                    self.plot(ax_, x, y, plot_type=types[pos], *args,
+                              **local_kwargs[pos])
 
         return fig, axes
 
