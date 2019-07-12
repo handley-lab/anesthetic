@@ -136,13 +136,12 @@ class MCMCSamples(WeightedDataFrame):
             xmin, xmax = self._limits(paramname_x)
             ymin, ymax = self._limits(paramname_y)
 
-            if plot_type == 'kde':
-                nsamples = None
-                plot = contour_plot_2d
-            elif plot_type == 'scatter':
+            nsamples = None
+            plot = contour_plot_2d
+            if plot_type == 'scatter':
                 nsamples = 500
                 plot = scatter_plot_2d
-            elif plot_type is not None:
+            elif plot_type != 'kde' and plot_type is not None:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'scatter'}." % plot_type)
 
