@@ -148,7 +148,7 @@ def kde_1d(d, xmin=None, xmax=None):
 def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
     """Perform a two-dimensional kernel density estimation.
 
-    Wrapper round scipy.stats.gaussiankde.
+    Wrapper round scipy.stats.gaussian_kde.
 
     @todo Implement boundary corrections.
 

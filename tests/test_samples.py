@@ -3,7 +3,7 @@ import sys
 import pytest
 import numpy
 import matplotlib.pyplot as plt
-from anesthetic import MCMCSamples, NestedSamples
+from anesthetic import MCMCSamples, NestedSamples, make_2d_axes, get_legend_proxy
 from numpy.testing import assert_array_equal
 try:
     import montepython  # noqa: F401
@@ -94,6 +94,12 @@ def test_read_multinest():
 
 def test_read_polychord():
     ns = NestedSamples(root='./tests/example_data/pc')
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'])
+    ns.plot_2d(axes, types={'upper':'kde','diagonal':'kde'})
+    ns.plot_2d(axes, types={'lower':'fastkde','diagonal':'fastkde'})
+    proxy = get_legend_proxy(fig)
+    fig.legend([proxy[0], proxy[3]], ['kde', 'fastkde'])
+
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")
