@@ -6,6 +6,11 @@
 import numpy
 import pandas
 from scipy.special import logsumexp
+from matplotlib.pyplot import hist as plt_hist
+try:
+    from astropy.visualization import hist as astropy_hist
+except ImportError:
+    pass
 from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
                              hist_1d, scatter_plot_2d, contour_plot_2d)
 from anesthetic.read.samplereader import SampleReader
@@ -153,6 +158,13 @@ class MCMCSamples(WeightedDataFrame):
                     *args, **kwargs)
 
     docstrings.keep_params('plot.parameters', 'plot_type')
+    docstrings.get_sections(docstrings.dedent(plt_hist).__doc__,
+                            'plt.hist', sections=['Parameters'])
+    docstrings.delete_params('plt.hist.parameters',
+                             'x', 'orientation', 'log', 'stacked', 'normed')
+    docstrings.get_sections(docstrings.dedent(astropy_hist).__doc__,
+                            'astropy.hist', sections=['Parameters'])
+    docstrings.delete_params('astropy.hist.parameters', 'x', 'ax')
 
     @docstrings.dedent
     def plot_1d(self, axes, *args, **kwargs):
@@ -177,6 +189,16 @@ class MCMCSamples(WeightedDataFrame):
 
         axes: pandas.Series of matplotlib.axes.Axes
             Pandas array of axes objects
+
+        Other Parameters
+        ----------------
+        Parameters for plot_type='hist'
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        **Parameters from astropy.hist** (if astropy is installed)
+        %(astropy.hist.parameters.no_x|ax)s
+
+        **Parameters from plt.hist**
+        %(plt.hist.parameters.no_x|orientation|log|stacked|normed)s
 
         """
         if not isinstance(axes, pandas.Series):
