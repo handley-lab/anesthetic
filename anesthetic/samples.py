@@ -118,11 +118,11 @@ class MCMCSamples(WeightedDataFrame):
 
         if do_1d_plot:
             xmin, xmax = self._limits(paramname_x)
-            if plot_type == 'kde':
+            if plot_type == 'kde' or plot_type is None:
                 plot = plot_1d
             elif plot_type == 'hist':
                 plot = hist_1d
-            elif plot_type is not None:
+            else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'hist'}." % plot_type)
             if paramname_x in self and plot_type is not None:
@@ -136,12 +136,13 @@ class MCMCSamples(WeightedDataFrame):
             xmin, xmax = self._limits(paramname_x)
             ymin, ymax = self._limits(paramname_y)
 
-            nsamples = None
-            plot = contour_plot_2d
-            if plot_type == 'scatter':
+            if plot_type == 'kde' or plot_type is None:
+                nsamples = None
+                plot = contour_plot_2d
+            elif plot_type == 'scatter':
                 nsamples = 500
                 plot = scatter_plot_2d
-            elif plot_type != 'kde' and plot_type is not None:
+            else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'scatter'}." % plot_type)
 
@@ -260,16 +261,12 @@ class MCMCSamples(WeightedDataFrame):
 
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in default_types}
-        for pos in default_types:
-            local_kwargs[pos].update(kwargs)
-            if pos not in types:
-                types[pos] = None
 
         if not isinstance(axes, pandas.DataFrame):
             fig, axes = make_2d_axes(axes, tex=self.tex,
-                                     upper=(types['upper'] is not None),
-                                     lower=(types['lower'] is not None),
-                                     diagonal=(types['diagonal'] is not None))
+                                     upper=('upper' in types),
+                                     lower=('lower' in types),
+                                     diagonal=('diagonal' in types))
         else:
             fig = axes.values[~axes.isna()][0].figure
 
@@ -278,8 +275,8 @@ class MCMCSamples(WeightedDataFrame):
                 if ax is not None:
                     pos = ax.position
                     ax_ = ax.twin if x == y else ax
-                    self.plot(ax_, x, y, plot_type=types[pos], *args,
-                              **local_kwargs[pos])
+                    self.plot(ax_, x, y, plot_type=types.get(pos, None),
+                              *args, **local_kwargs.get(pos, {}))
 
         return fig, axes
 
