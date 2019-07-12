@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 =========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
-:Version: 1.0.3
+:Version: 1.1.0
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -213,8 +213,3 @@ yields a lot of superlatives (e.g. greenest), but a few other cool names for fut
 - rhinestone
 
 I chose ``anesthetic`` because I liked the soft 'th', and in spite of the US spelling.
-
-
-Changelog
----------
-:1.0.0:  End of beta testing
