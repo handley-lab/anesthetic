@@ -14,6 +14,8 @@ from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame
 
 
+@docstrings.get_sectionsf('MCMCSamples')
+@docstrings.dedent
 class MCMCSamples(WeightedDataFrame):
     """Storage and plotting tools for MCMC samples.
 
@@ -293,6 +295,7 @@ class MCMCSamples(WeightedDataFrame):
         return self
 
 
+@docstrings.dedent
 class NestedSamples(MCMCSamples):
     """Storage and plotting tools for Nested Sampling samples.
 
@@ -304,23 +307,10 @@ class NestedSamples(MCMCSamples):
 
     Parameters
     ----------
-    root: str, optional
-        root for reading chains from file. Overrides all other arguments.
-
-    data: numpy.array
-        Coordinates of samples. shape = (nsamples, ndims).
-
-    columns: list(str)
-        reference names of parameters
-
-    logL: numpy.array
-        loglikelihoods of samples.
+    %(MCMCSamples.parameters)s
 
     logL_birth: numpy.array or int
         birth loglikelihoods, or number of live points.
-
-    tex: dict
-        mapping from coloumns to tex labels for plotting
 
     limits: dict
         mapping from coloumns to prior limits
