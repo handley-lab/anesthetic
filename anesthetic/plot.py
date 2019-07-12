@@ -242,7 +242,10 @@ def plot_1d(ax, data, *args, **kwargs):
         matplotlib matplotlib.axes.Axes.plot command)
 
     """
-    if data.max()-data.min() <= 0:
+    if len(data) == 0:
+        return numpy.zeros(0), numpy.zeros(0)
+
+    if max(data)-min(data) <= 0:
         return
 
     xmin = kwargs.pop('xmin', None)
@@ -348,6 +351,8 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    if len(data_x) == 0 or len(data_y) == 0:
+        return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
 
     x, y, pdf = kde_2d(data_x, data_y,
                        xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)

@@ -3,7 +3,7 @@ import sys
 import pytest
 import numpy
 import matplotlib.pyplot as plt
-from anesthetic import MCMCSamples, NestedSamples
+from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from numpy.testing import assert_array_equal
 try:
     import montepython  # noqa: F401
@@ -97,6 +97,20 @@ def test_read_polychord():
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")
+
+
+def test_different_parameters():
+    params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
+    params_y = ['x0', 'x1', 'x2']
+    fig, axes = make_1d_axes(params_x)
+    ns = NestedSamples(root='./tests/example_data/pc')
+    ns.plot_1d(axes)
+    fig, axes = make_2d_axes(params_y)
+    ns.plot_2d(axes)
+    fig, axes = make_2d_axes(params_x)
+    ns.plot_2d(axes)
+    fig, axes = make_2d_axes([params_x, params_y])
+    ns.plot_2d(axes)
 
 
 def test_plot_2d_types():

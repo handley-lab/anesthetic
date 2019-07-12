@@ -26,9 +26,7 @@ def test_make_1d_axes():
     assert(isinstance(fig, Figure))
     assert(isinstance(axes, Series))
     assert_array_equal(axes.index, paramnames)
-    print(axes)
     for p, ax in axes.iteritems():
-        print(ax, p)
         assert(ax.get_xlabel() == p)
 
     # Check tex argument
