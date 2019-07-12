@@ -105,6 +105,10 @@ def test_different_parameters():
     fig, axes = make_1d_axes(params_x)
     ns = NestedSamples(root='./tests/example_data/pc')
     ns.plot_1d(axes)
+    fig, axes = make_2d_axes(params_y)
+    ns.plot_2d(axes)
+    fig, axes = make_2d_axes(params_x)
+    ns.plot_2d(axes)
     fig, axes = make_2d_axes([params_x, params_y])
     ns.plot_2d(axes)
 
