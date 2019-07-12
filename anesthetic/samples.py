@@ -6,8 +6,11 @@
 import numpy
 import pandas
 from scipy.special import logsumexp
-from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
-                             hist_1d, scatter_plot_2d, contour_plot_2d)
+from anesthetic.plot import (make_1d_axes, make_2d_axes,
+                             grid_kde_plot_1d, sample_kde_plot_1d,
+                             grid_kde_plot_2d, sample_kde_plot_2d,
+                             hist_plot_1d, scatter_plot_2d
+                             )
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import compute_nlive
 from anesthetic.gui.plot import RunPlotter
@@ -118,12 +121,15 @@ class MCMCSamples(WeightedDataFrame):
         if paramname_y is None or paramname_x == paramname_y:
             xmin, xmax = self._limits(paramname_x)
             if plot_type == 'kde':
-                plot = plot_1d
+                plot = sample_kde_plot_1d
+            elif plot_type == 'fastkde':
+                plot = grid_kde_plot_1d
             elif plot_type == 'hist':
-                plot = hist_1d
+                plot = hist_plot_1d
             else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
-                                          "{'kde', 'hist'}." % plot_type)
+                                          "{'kde', 'fastkde', 'hist'}." %
+                                          plot_type)
             return plot(ax, self[paramname_x].compress(),
                         xmin=xmin, xmax=xmax,
                         *args, **kwargs)
@@ -133,7 +139,11 @@ class MCMCSamples(WeightedDataFrame):
 
         if plot_type == 'kde':
             nsamples = None
-            plot = contour_plot_2d
+            plot = sample_kde_plot_2d
+            ax.scatter([], [])  # need this to increment color cycle
+        elif plot_type == 'fastkde':
+            nsamples = None
+            plot = grid_kde_plot_2d
             ax.scatter([], [])  # need this to increment color cycle
         elif plot_type == 'scatter':
             nsamples = 500
@@ -141,7 +151,8 @@ class MCMCSamples(WeightedDataFrame):
             ax.plot([], [])  # need this to increment color cycle
         else:
             raise NotImplementedError("plot_type is '%s', but must be in "
-                                      "{'kde', 'scatter'}." % plot_type)
+                                      "{'kde', 'fastkde', 'scatter'}." %
+                                      plot_type)
 
         return plot(ax, self[paramname_x].compress(nsamples),
                     self[paramname_y].compress(nsamples),

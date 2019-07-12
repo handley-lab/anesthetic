@@ -18,7 +18,7 @@ try:
     from astropy.visualization import hist
 except ImportError:
     from matplotlib.pyplot import hist
-from anesthetic.kde import kde_1d, kde_2d
+from anesthetic.kde import fastkde_1d, fastkde_2d, kde_1d, kde_2d
 from anesthetic.utils import check_bounds, nest_level, unique
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
@@ -216,12 +216,57 @@ def make_2d_axes(params, **kwargs):
     return fig, axes
 
 
-def plot_1d(ax, data, *args, **kwargs):
+def grid_kde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
     density estimation computation in between. All remaining keyword arguments
     are passed onwards.
+
+    Kernel density estimates are on a uniform grid determined by the algorithm.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on
+
+    data: numpy.array
+        Uniformly weighted samples to generate kernel density estimator.
+
+    xmin, xmax: float
+        lower/upper prior bound
+        optional, default None
+
+    Returns
+    -------
+    lines: matplotlib.lines.Line2D
+        A list of line objects representing the plotted data (same as
+        matplotlib matplotlib.axes.Axes.plot command)
+
+    """
+    if data.max()-data.min() <= 0:
+        return
+
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
+
+    x, p = fastkde_1d(data, xmin, xmax)
+    p /= p.max()
+    i = (p >= 1e-2)
+
+    ans = ax.plot(x[i], p[i], *args, **kwargs)
+    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
+    return ans
+
+
+def sample_kde_plot_1d(ax, data, *args, **kwargs):
+    """Plot a 1d marginalised distribution.
+
+    This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
+    density estimation computation in between. All remaining keyword arguments
+    are passed onwards.
+
+    Kernel density estimates are on a the set of samples provided.
 
     Parameters
     ----------
@@ -250,14 +295,13 @@ def plot_1d(ax, data, *args, **kwargs):
 
     x, p = kde_1d(data, xmin, xmax)
     p /= p.max()
-    i = (p >= 1e-2)
 
-    ans = ax.plot(x[i], p[i], *args, **kwargs)
-    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
+    ans = ax.plot(x, p, *args, **kwargs)
+    ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
     return ans
 
 
-def hist_1d(ax, data, *args, **kwargs):
+def hist_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d histogram.
 
     This functions is a wrapper around matplotlib.axes.Axes.hist, or
@@ -316,8 +360,8 @@ def hist_1d(ax, data, *args, **kwargs):
     return bars
 
 
-def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
-    """Plot a 2d marginalised distribution as contours.
+def grid_kde_plot_2d(ax, data_x, data_y, *args, **kwargs):
+    """Plot a 2d marginalised distribution as contours on a grid.
 
     This functions as a wrapper around matplotlib.axes.Axes.contour, and
     matplotlib.axes.Axes.contourf with a kernel density estimation computation
@@ -349,8 +393,8 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymax = kwargs.pop('ymax', None)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
 
-    x, y, pdf = kde_2d(data_x, data_y,
-                       xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    x, y, pdf = fastkde_2d(data_x, data_y,
+                           xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
     pdf /= pdf.max()
     p = sorted(pdf.flatten())
     m = numpy.cumsum(p)
@@ -385,6 +429,76 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
+    return cbar
+
+
+def sample_kde_plot_2d(ax, data_x, data_y, *args, **kwargs):
+    """Plot a 2d marginalised distribution as tricontours.
+
+    This functions as a wrapper around matplotlib.axes.Axes.tricontour, and
+    matplotlib.axes.Axes.tricontourf with a kernel density estimation
+    computation in between. All remaining keyword arguments are passed onwards
+    to both functions.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on
+
+    data_x, data_y: numpy.array
+        x and y coordinates of uniformly weighted samples to generate kernel
+        density estimator.
+
+    xmin, xmax, ymin, ymax: float
+        lower/upper prior bounds in x/y coordinates
+        optional, default None
+
+    Returns
+    -------
+    c: matplotlib.contour.TriContourSet
+        A set of contourlines or filled regions
+
+    """
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
+    ymin = kwargs.pop('ymin', None)
+    ymax = kwargs.pop('ymax', None)
+    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+
+    x, y, pdf = kde_2d(data_x, data_y, xmin=xmin, xmax=xmax,
+                       ymin=ymin, ymax=ymax)
+    pdf /= pdf.max()
+    p = sorted(pdf.flatten())
+    m = numpy.cumsum(p)
+    m /= m[-1]
+    interp = interp1d([0]+list(m)+[1], [0]+list(p)+[1])
+    contours = list(interp([0.05, 0.33]))+[1]
+
+    # Correct non-zero edges
+    if min(p) != 0:
+        contours = [min(p)] + contours
+
+    # Correct level sets
+    for i in range(1, len(contours)):
+        if contours[i-1] == contours[i]:
+            for j in range(i):
+                contours[j] = contours[j] - 1e-5
+
+    cmap = basic_cmap(color)
+    zorder = max([child.zorder for child in ax.get_children()])
+    contours = contours[1:]
+
+    cbar = ax.tricontourf(x, y, pdf, contours,
+                          vmin=0, vmax=1.0, cmap=cmap, zorder=zorder+1,
+                          *args, **kwargs)
+    for c in cbar.collections:
+        c.set_cmap(cmap)
+
+    ax.tricontour(x, y, pdf, contours,
+                  vmin=0, vmax=1.2, linewidths=0.5, colors='k',
+                  zorder=zorder+2, *args, **kwargs)
+    ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
+    ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)
     return cbar
 
 

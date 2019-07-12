@@ -4,11 +4,13 @@ These act as a wrapper around fastKDE, but could be replaced in future by
 alternative kernel density estimators
 """
 import warnings
+import numpy
 from fastkde import fastKDE
 from anesthetic.utils import check_bounds, mirror_1d, mirror_2d
+from scipy.stats import gaussian_kde
 
 
-def kde_1d(d, xmin=None, xmax=None):
+def fastkde_1d(d, xmin=None, xmax=None):
     """Perform a one-dimensional kernel density estimation.
 
     Wrapper round fastkde.fastKDE. Boundary corrections implemented by
@@ -51,7 +53,7 @@ def kde_1d(d, xmin=None, xmax=None):
     return x, p
 
 
-def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
+def fastkde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
     """Perform a two-dimensional kernel density estimation.
 
     Wrapper round fastkde.fastKDE. Boundary corrections implemented by
@@ -101,6 +103,95 @@ def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
 
     if ymax is not None:
         p = p[y <= ymax, :]
+        y = y[y <= ymax]
+
+    return x, y, p
+
+
+def kde_1d(d, xmin=None, xmax=None):
+    """Perform a one-dimensional kernel density estimation.
+
+    Wrapper round scipy.stats.gaussian_kde.
+
+    @todo Implement boundary corrections.
+
+    Parameters
+    ----------
+    d: numpy.array
+        Data to perform kde on
+
+    xmin, xmax: float
+        lower/upper prior bounds
+        optional, default None
+
+    Returns
+    -------
+    x: numpy.array
+        sorted x-coordinates data
+    p: numpy.array
+        kernel density estimates evaluated at samples
+
+    """
+    x = numpy.sort(d)
+    p = gaussian_kde(x)(x)
+    if xmin is not None:
+        p = p[x >= xmin]
+        x = x[x >= xmin]
+
+    if xmax is not None:
+        p = p[x <= xmax]
+        x = x[x <= xmax]
+
+    return x, p
+
+
+def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
+    """Perform a two-dimensional kernel density estimation.
+
+    Wrapper round scipy.stats.gaussiankde.
+
+    @todo Implement boundary corrections.
+
+    Parameters
+    ----------
+    d_x, d_y: numpy.array
+        x/y coordinates of data to perform kde on
+
+    xmin, xmax, ymin, ymax: float
+        lower/upper prior bounds in x/y coordinates
+        optional, default None
+
+    Returns
+    -------
+    x,y: numpy.array
+        x/y-coordinates of kernel density estimates. One-dimensional array
+        subset of d_x and d_y
+    p: numpy.array
+        kernel density estimates. one-dimensional array
+
+    """
+    x = d_x.copy()
+    y = d_y.copy()
+    p = gaussian_kde([x, y])([x, y])
+
+    if xmin is not None:
+        p = p[x >= xmin]
+        y = y[x >= xmin]
+        x = x[x >= xmin]
+
+    if xmax is not None:
+        p = p[x <= xmax]
+        y = y[x <= xmax]
+        x = x[x <= xmax]
+
+    if ymin is not None:
+        p = p[y >= ymin]
+        x = x[y >= ymin]
+        y = y[y >= ymin]
+
+    if ymax is not None:
+        p = p[y <= ymax]
+        x = x[y <= ymax]
         y = y[y <= ymax]
 
     return x, y, p
