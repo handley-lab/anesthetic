@@ -276,8 +276,12 @@ class MCMCSamples(WeightedDataFrame):
                 if ax is not None:
                     pos = ax.position
                     ax_ = ax.twin if x == y else ax
-                    self.plot(ax_, x, y, plot_type=types[pos], *args,
-                              **local_kwargs[pos])
+                    if pos in types:
+                        self.plot(ax_, x, y, plot_type=types[pos], 
+                                  *args, **local_kwargs[pos])
+                    else:  # need this to increment color cycle
+                        ax_.plot([], [])
+                        ax_.scatter([], [])
 
         return fig, axes
 
