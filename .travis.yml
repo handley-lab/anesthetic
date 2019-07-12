@@ -106,8 +106,8 @@ before_script:
 
 # Run tests
 script:
-    - CPU_COUNT=$(python -c 'import multiprocessing; print(multiprocessing.cpu_count())'); echo $(CPU_COUNT)
-    - python -m pytest -n $(CPU_COUNT) tests --cov=anesthetic; echo $(CPU_COUNT)
+    - CPU_COUNT=$(python -c 'import multiprocessing; print(multiprocessing.cpu_count())'); echo $CPU_COUNT
+    - python -m pytest -n $CPU_COUNT tests --cov=anesthetic; echo $CPU_COUNT
 
 # Run coverage summary
 after_success:
