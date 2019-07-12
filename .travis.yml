@@ -14,31 +14,37 @@ env:
     - EXTRAS=1
     - CONDA=1 EXTRAS=1
 
+# OSX and MontePython master
 matrix:
     include:
         # OSX
         - os: osx
           language: generic
           cache: pip
+
         # OSX conda
         - os: osx
           language: generic
           env: CONDA=1 
+
         # OSX extras
         - os: osx
           language: generic
           cache: pip
           env: EXTRAS=1
+
         # OSX conda + extras
         - os: osx
           language: generic
           cache: pip
           env: CONDA=1 EXTRAS=1
+
         # MontePython master branch check
         - os: linux
           python: 2.7
           cache: pip
           env: EXTRAS=1 MONTEPYTHONMASTER=1
+
     allow_failures:
         - os: linux
           python: 2.7
