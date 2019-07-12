@@ -265,7 +265,7 @@ docstrings.delete_params('plt.hist.parameters',
 if 'astropy.visualization.hist' in sys.modules:
     docstrings.get_sections(docstrings.dedent(hist).__doc__,
                             'astropy.hist', sections=['Parameters'])
-docstrings.delete_params('astropy.hist.parameters', 'x', 'ax')
+    docstrings.delete_params('astropy.hist.parameters', 'x', 'ax')
 
 
 @docstrings.get_sectionsf('hist_1d', sections=['Other Parameters'])
