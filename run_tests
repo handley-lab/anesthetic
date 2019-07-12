@@ -7,4 +7,5 @@ echo "Running docstring checks"
 pydocstyle --convention=numpy anesthetic
 
 echo "Running code tests"
-python -m pytest
+CPU_COUNT=$(python -c 'import multiprocessing; print(multiprocessing.cpu_count())')
+python -m pytest -n $CPU_COUNT
