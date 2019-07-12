@@ -107,7 +107,7 @@ before_script:
 
 # Run tests
 script:
-      python -m pytest --cov=anesthetic -n 2 tests/;
+      python -m pytest --cov=anesthetic -n auto tests/;
 
 # Run coverage summary
 after_success:
