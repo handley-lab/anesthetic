@@ -145,8 +145,8 @@ class MCMCSamples(WeightedDataFrame):
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'scatter'}." % plot_type)
 
-            if ((paramname_x in self and paramname_y in self)
-               and plot_type is not None):
+            if (paramname_x in self and paramname_y in self
+                    and plot_type is not None):
                 x = self[paramname_x].compress(nsamples)
                 y = self[paramname_y].compress(nsamples)
             else:
