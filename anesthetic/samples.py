@@ -150,8 +150,7 @@ class MCMCSamples(WeightedDataFrame):
                     xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                     *args, **kwargs)
 
-    docstrings.delete_params('plot.parameters',
-                             'ax', 'paramname_x', 'paramname_y')
+    docstrings.keep_params('plot.parameters', 'plot_type')
 
     @docstrings.dedent
     def plot_1d(self, axes, *args, **kwargs):
@@ -167,7 +166,7 @@ class MCMCSamples(WeightedDataFrame):
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
 
-        %(plot.parameters.no_ax|paramname_x|paramname_y)s
+        %(plot.parameters.plot_type)s
 
         Returns
         -------
