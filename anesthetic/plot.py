@@ -10,6 +10,7 @@ wish to use.
 to create a set of axes and legend proxies.
 
 """
+import sys
 import numpy
 import pandas
 import matplotlib.pyplot as plt
@@ -19,7 +20,7 @@ try:
 except ImportError:
     from matplotlib.pyplot import hist
 from anesthetic.kde import kde_1d, kde_2d
-from anesthetic.utils import check_bounds, nest_level, unique
+from anesthetic.utils import check_bounds, nest_level, unique, docstrings
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
@@ -257,6 +258,18 @@ def plot_1d(ax, data, *args, **kwargs):
     return ans
 
 
+docstrings.get_sections(docstrings.dedent(plt.hist).__doc__,
+                        'plt.hist', sections=['Parameters'])
+docstrings.delete_params('plt.hist.parameters',
+                         'x', 'orientation', 'log', 'stacked', 'normed')
+if 'astropy.visualization.hist' in sys.modules:
+    docstrings.get_sections(docstrings.dedent(hist).__doc__,
+                            'astropy.hist', sections=['Parameters'])
+docstrings.delete_params('astropy.hist.parameters', 'x', 'ax')
+
+
+@docstrings.get_sectionsf('hist_1d', sections=['Other Parameters'])
+@docstrings.dedent
 def hist_1d(ax, data, *args, **kwargs):
     """Plot a 1d histogram.
 
@@ -286,7 +299,11 @@ def hist_1d(ax, data, *args, **kwargs):
 
     Other Parameters
     ----------------
-    **kwargs : `~matplotlib.axes.Axes.hist` properties
+    **Parameters from `~astropy.visualization.hist`** (if astropy is installed)
+    %(astropy.hist.parameters.no_x|ax)s
+
+    **Parameters from `~matplotlib.axes.Axes.hist`**
+    %(plt.hist.parameters.no_x|orientation|log|stacked|normed)s
 
     """
     if data.max()-data.min() <= 0:

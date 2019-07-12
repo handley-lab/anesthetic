@@ -9,8 +9,9 @@ class DocstringProcessorWithBlanks(DocstringProcessor):
     """DocstringProcessor subclass working with blank lines between params."""
 
     param_like_sections = [s for s in DocstringProcessor.param_like_sections
-                           if s != 'Parameters']
-    text_sections = ['Parameters'] + DocstringProcessor.text_sections
+                           if s != 'Parameters' or s != 'Other Parameters']
+    text_sections = (['Parameters', 'Other Parameters']
+                     + DocstringProcessor.text_sections)
 
 
 docstrings = DocstringProcessorWithBlanks()
