@@ -94,7 +94,7 @@ install:
       else
           pip install -r requirements_minimal.txt;
       fi
-    - pip install pytest-cov pytest-xdist codecov;
+    - pip install pytest-cov codecov;
     - pip install flake8 pydocstyle sphinx sphinx_rtd_theme;
 
 before_script:
@@ -106,8 +106,7 @@ before_script:
 
 # Run tests
 script:
-    - CPU_COUNT=$(python -c 'import multiprocessing; print(multiprocessing.cpu_count())')
-    - python -m pytest -n $CPU_COUNT tests --cov=anesthetic
+      python -m pytest -n 2 tests --cov=anesthetic;
 
 # Run coverage summary
 after_success:
