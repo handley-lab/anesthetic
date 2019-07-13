@@ -70,10 +70,11 @@ def quantile(a, q, w):
 
 def check_bounds(d, xmin=None, xmax=None):
     """Check if we need to apply strict bounds."""
-    if xmin is not None and (d.min() - xmin)/(d.max()-d.min()) > 1e-2:
-        xmin = None
-    if xmax is not None and (xmax - d.max())/(d.max()-d.min()) > 1e-2:
-        xmax = None
+    if len(d) > 0:
+        if xmin is not None and (min(d) - xmin)/(max(d)-min(d)) > 1e-2:
+            xmin = None
+        if xmax is not None and (xmax - max(d))/(max(d)-min(d)) > 1e-2:
+            xmax = None
     return xmin, xmax
 
 
