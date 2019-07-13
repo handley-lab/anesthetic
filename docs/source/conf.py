@@ -10,6 +10,8 @@
 
 import sys
 import os
+import matplotlib
+matplotlib.use('Agg')
 sys.path.append(os.path.abspath('../../'))
 
 def get_version(short=False):
