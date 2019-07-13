@@ -121,17 +121,27 @@ class MCMCSamples(WeightedDataFrame):
 
         if do_1d_plot:
             xmin, xmax = self._limits(paramname_x)
-            if plot_type == 'kde'or plot_type is None:
+<<<<<<< HEAD
+            if plot_type == 'kde':
                 plot = sample_kde_plot_1d
             elif plot_type == 'fastkde':
                 plot = grid_kde_plot_1d
+=======
+            if plot_type == 'kde' or plot_type is None:
+                plot = plot_1d
+>>>>>>> master
             elif plot_type == 'hist':
                 plot = hist_plot_1d
             else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
+<<<<<<< HEAD
                                           "{'kde', 'fastkde', 'hist'}." %
                                           plot_type)
+            if paramname_x in self:
+=======
+                                          "{'kde', 'hist'}." % plot_type)
             if paramname_x in self and plot_type is not None:
+>>>>>>> master
                 x = self[paramname_x].compress()
             else:
                 x = []
