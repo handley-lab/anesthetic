@@ -7,36 +7,48 @@ python:
     - "3.5"
     - "2.7"
     - "3.7"
+cache: pip
 env:
     - 
     - CONDA=1
     - EXTRAS=1
     - CONDA=1 EXTRAS=1
 
+# OSX and MontePython master
 matrix:
     include:
         # OSX
         - os: osx
           language: generic
+          cache: pip
+
         # OSX conda
         - os: osx
           language: generic
           env: CONDA=1 
+
         # OSX extras
         - os: osx
           language: generic
+          cache: pip
           env: EXTRAS=1
+
         # OSX conda + extras
         - os: osx
           language: generic
+          cache: pip
           env: CONDA=1 EXTRAS=1
+
         # MontePython master branch check
         - os: linux
           python: 2.7
+          cache: pip
           env: EXTRAS=1 MONTEPYTHONMASTER=1
+
     allow_failures:
         - os: linux
           python: 2.7
+          cache: pip
           env: EXTRAS=1 MONTEPYTHONMASTER=1
 
 before_install:
@@ -82,7 +94,8 @@ install:
       else
           pip install -r requirements_minimal.txt;
       fi
-    - pip install pytest-cov codecov;
+    - pip install --upgrade pytest;
+    - pip install pytest-cov pytest-xdist codecov;
     - pip install flake8 pydocstyle sphinx sphinx_rtd_theme;
 
 before_script:
@@ -94,7 +107,7 @@ before_script:
 
 # Run tests
 script:
-      python -m pytest tests --cov=anesthetic;
+      python -m pytest --cov=anesthetic -n auto tests/;
 
 # Run coverage summary
 after_success:
