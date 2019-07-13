@@ -300,10 +300,8 @@ def hist_1d(ax, data, *args, **kwargs):
 
     Other Parameters
     ----------------
-    **Parameters from `~astropy.visualization.hist`** (if astropy is installed)
     %(astropy.hist.parameters.no_x|ax)s
 
-    **Parameters from `~matplotlib.axes.Axes.hist`**
     %(plt.hist.parameters.no_x|orientation|log|stacked|normed)s
 
     """

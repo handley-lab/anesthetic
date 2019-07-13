@@ -106,8 +106,14 @@ class MCMCSamples(WeightedDataFrame):
             If not provided, or the same as paramname_x, then 1D plot produced.
 
         plot_type: str, optional
-            Must be in {'kde', 'scatter'} for 2D plots and in {'kde', 'hist'}
-            for 1D plots. (Default: 'kde')
+            What type of plot to produce.
+            The options for 1D plots are:
+                - 'kde'
+                - 'hist'
+            The options for 2D plots are:
+                - 'kde'
+                - 'scatter'
+            Default: 'kde'
 
         Returns
         -------
@@ -181,8 +187,9 @@ class MCMCSamples(WeightedDataFrame):
 
         Other Parameters
         ----------------
-        Parameters for plot_type='hist'
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        plot_type='hist'
+            **Other Parameters for histogram option**
+
         %(hist_1d.other_parameters)s
 
         """
@@ -218,9 +225,9 @@ class MCMCSamples(WeightedDataFrame):
         types: dict, optional
             What type (or types) of plots to produce. Takes the keys 'diagonal'
             for the 1D plots and 'lower' and 'upper' for the 2D plots.
-            The options for 'diagonal are:
+            The options for 'diagonal' are:
                 - 'kde'
-                - 'hist.
+                - 'hist'
             The options for 'lower' and 'upper' are:
                 - 'kde'
                 - 'scatter'
