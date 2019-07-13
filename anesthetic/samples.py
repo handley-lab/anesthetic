@@ -261,6 +261,8 @@ class MCMCSamples(WeightedDataFrame):
 
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in default_types}
+        for pos in default_types:
+            local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
             fig, axes = make_2d_axes(axes, tex=self.tex,
@@ -273,10 +275,11 @@ class MCMCSamples(WeightedDataFrame):
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
                 if ax is not None:
-                    pos = ax.position
                     ax_ = ax.twin if x == y else ax
-                    self.plot(ax_, x, y, plot_type=types.get(pos, None),
-                              *args, **local_kwargs.get(pos, {}))
+                    pos = ax.position
+                    plot_type = types.get(pos, None)
+                    lkwargs = local_kwargs.get(pos, {})
+                    self.plot(ax_, x, y, plot_type=plot_type, *args, **lkwargs)
 
         return fig, axes
 
