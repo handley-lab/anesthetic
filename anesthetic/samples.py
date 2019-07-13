@@ -107,12 +107,19 @@ class MCMCSamples(WeightedDataFrame):
 
         plot_type: str, optional
             What type of plot to produce.
+
             The options for 1D plots are:
-                - 'kde'
-                - 'hist'
+
+            - 'kde'
+
+            - 'hist'
+
             The options for 2D plots are:
-                - 'kde'
-                - 'scatter'
+
+            - 'kde'
+
+            - 'scatter'
+
             Default: 'kde'
 
         Returns
@@ -169,8 +176,11 @@ class MCMCSamples(WeightedDataFrame):
         ----------
         axes: plotting axes
             Can be:
+
                 - list(str) or str
+
                 - pandas.Series(matplotlib.axes.Axes)
+
             If a pandas.Series is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
@@ -215,9 +225,13 @@ class MCMCSamples(WeightedDataFrame):
         ----------
         axes: plotting axes
             Can be:
+
                 - list(str) if the x and y axes are the same
+
                 - [list(str),list(str)] if the x and y axes are different
+
                 - pandas.DataFrame(matplotlib.axes.Axes)
+
             If a pandas.DataFrame is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
@@ -225,12 +239,19 @@ class MCMCSamples(WeightedDataFrame):
         types: dict, optional
             What type (or types) of plots to produce. Takes the keys 'diagonal'
             for the 1D plots and 'lower' and 'upper' for the 2D plots.
+
             The options for 'diagonal' are:
+
                 - 'kde'
+
                 - 'hist'
+
             The options for 'lower' and 'upper' are:
+
                 - 'kde'
+
                 - 'scatter'
+
             Default: {'diagonal': 'kde', 'lower': 'kde'}
 
         diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
