@@ -111,6 +111,7 @@ def test_different_parameters():
     ns.plot_2d(axes)
     fig, axes = make_2d_axes([params_x, params_y])
     ns.plot_2d(axes)
+    plt.close('all')
 
 
 def test_plot_2d_types():
@@ -145,3 +146,19 @@ def test_plot_2d_types():
                                           'upper': 'scatter'})
     assert((~axes.isnull()).sum().sum() == 12)
     plt.close("all")
+
+
+def test_plot_2d_types_multiple_calls():
+    ns = NestedSamples(root='./tests/example_data/pc')
+    params = ['x0', 'x1', 'x2', 'x3']
+
+    fig, axes = ns.plot_2d(params, types={'diagonal': 'kde',
+                                          'lower': 'kde',
+                                          'upper': 'scatter'})
+    ns.plot_2d(axes, types={'diagonal': 'hist'})
+
+    fig, axes = ns.plot_2d(params, types={'diagonal': 'hist'})
+    ns.plot_2d(axes, types={'diagonal': 'kde',
+                            'lower': 'kde',
+                            'upper': 'scatter'})
+    plt.close('all')
