@@ -237,7 +237,6 @@ class MCMCSamples(WeightedDataFrame):
         """
         default_types = {'diagonal': 'kde', 'lower': 'kde', 'upper': 'scatter'}
         types = kwargs.pop('types', default_types)
-
         diagonal = kwargs.pop('diagonal', True)
         if isinstance(types, list) or isinstance(types, str):
             from warnings import warn
@@ -261,7 +260,8 @@ class MCMCSamples(WeightedDataFrame):
 
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in default_types}
-        for pos in default_types:
+
+        for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
@@ -275,8 +275,8 @@ class MCMCSamples(WeightedDataFrame):
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
                 if ax is not None:
-                    ax_ = ax.twin if x == y else ax
                     pos = ax.position
+                    ax_ = ax.twin if x == y else ax
                     plot_type = types.get(pos, None)
                     lkwargs = local_kwargs.get(pos, {})
                     self.plot(ax_, x, y, plot_type=plot_type, *args, **lkwargs)
