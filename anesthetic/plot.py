@@ -20,7 +20,8 @@ try:
 except ImportError:
     from matplotlib.pyplot import hist
 from anesthetic.kde import kde_1d, kde_2d
-from anesthetic.utils import check_bounds, nest_level, unique, docstrings
+from anesthetic.utils import (check_bounds, nest_level, unique,
+                              docstrings, get_docstring, set_docstring)
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
@@ -268,8 +269,8 @@ if 'astropy.visualization.hist' in sys.modules:
     docstrings.delete_params('astropy.hist.parameters', 'x', 'ax')
 
 
-@docstrings.get_sectionsf('hist_1d', sections=['Other Parameters'])
-@docstrings.dedent
+@get_docstring('hist_1d', sections=['Other Parameters'])
+@set_docstring
 def hist_1d(ax, data, *args, **kwargs):
     """Plot a 1d histogram.
 

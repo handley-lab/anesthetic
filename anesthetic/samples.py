@@ -6,7 +6,8 @@
 import numpy
 import pandas
 from scipy.special import logsumexp
-from anesthetic.plot import (docstrings, make_1d_axes, make_2d_axes, plot_1d,
+from anesthetic.plot import (docstrings, get_docstring, set_docstring,
+                             make_1d_axes, make_2d_axes, plot_1d,
                              hist_1d, scatter_plot_2d, contour_plot_2d)
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import compute_nlive
@@ -14,8 +15,8 @@ from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame
 
 
-@docstrings.get_sectionsf('MCMCSamples')
-@docstrings.dedent
+@get_docstring('MCMCSamples')
+@set_docstring
 class MCMCSamples(WeightedDataFrame):
     """Storage and plotting tools for MCMC samples.
 
@@ -85,8 +86,8 @@ class MCMCSamples(WeightedDataFrame):
                 self['logL'] = logL
                 self.tex['logL'] = r'$\log\mathcal{L}$'
 
-    @docstrings.get_sectionsf('plot', sections=['Parameters'])
-    @docstrings.dedent
+    @get_docstring('plot', sections=['Parameters'])
+    @set_docstring
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
 
@@ -154,7 +155,7 @@ class MCMCSamples(WeightedDataFrame):
 
     docstrings.keep_params('plot.parameters', 'plot_type')
 
-    @docstrings.dedent
+    @set_docstring
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
 
@@ -301,7 +302,7 @@ class MCMCSamples(WeightedDataFrame):
         return self
 
 
-@docstrings.dedent
+@set_docstring
 class NestedSamples(MCMCSamples):
     """Storage and plotting tools for Nested Sampling samples.
 

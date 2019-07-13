@@ -15,6 +15,8 @@ class DocstringProcessorWithBlanks(DocstringProcessor):
 
 
 docstrings = DocstringProcessorWithBlanks()
+get_docstring = docstrings.get_sectionsf
+set_docstring = docstrings.dedent
 
 
 def channel_capacity(w):
