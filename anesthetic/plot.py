@@ -351,7 +351,7 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
-    label = kwargs.pop('label')
+    label = kwargs.pop('label', None)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
