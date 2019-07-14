@@ -154,8 +154,8 @@ class MCMCSamples(WeightedDataFrame):
                     and plot_type is not None):
                 x = self[paramname_x].compress(nsamples)
                 y = self[paramname_y].compress(nsamples)
-                return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
-                        *args, **kwargs)
+                return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin,
+                            ymax=ymax, *args, **kwargs)
 
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
