@@ -183,6 +183,7 @@ def make_2d_axes(params, **kwargs):
                     axes[x][y].twin = axes[x][y].twinx()
                     axes[x][y].twin.set_yticks([])
                     axes[x][y].twin.set_ylim(0, 1.1)
+                    axes[x][y].twin.position = 'diagonal'
                     axes[x][y].position = 'diagonal'
                 elif position[x][y] == 1:
                     axes[x][y].position = 'upper'
