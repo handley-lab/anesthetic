@@ -451,6 +451,12 @@ def get_legend_proxy(fig):
             Figure to extract colors from.
 
     """
+    from warnings import warn
+    warn("`get_legend_proxy` is deprecated and might be deleted in the "
+         "future. You can now simply use `axes[x][y].legend()` or do "
+         "`handles, labels = axes[x][y].get_legend_handles_labels()` "
+         "and pass the handles and labels to the figure legend "
+         "`fig.legend(handles, labels)`.", FutureWarning)
     cmaps = [coll.get_cmap() for ax in fig.axes for coll in ax.collections
              if isinstance(coll.get_cmap(), LinearSegmentedColormap)]
     cmaps = unique(cmaps)
