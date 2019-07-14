@@ -351,6 +351,7 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    label = kwargs.pop('label')
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
@@ -389,6 +390,9 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
                vmin=0, vmax=1.2, linewidths=0.5, colors='k', zorder=zorder+2,
                *args, **kwargs)
+    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
+                                 lw=2, label=label)]
+
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
     return cbar
