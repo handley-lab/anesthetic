@@ -118,30 +118,34 @@ class MCMCSamples(WeightedDataFrame):
 
         if do_1d_plot:
             xmin, xmax = self._limits(paramname_x)
-            if plot_type == 'kde' or plot_type is None:
+            if plot_type == 'kde':
                 plot = plot_1d
             elif plot_type == 'hist':
                 plot = hist_1d
+            elif plot_type is None:
+                ax.plot([], [])
             else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'hist'}." % plot_type)
             if paramname_x in self and plot_type is not None:
                 x = self[paramname_x].compress()
-            else:
-                x = []
-
-            return plot(ax, x, xmin=xmin, xmax=xmax, *args, **kwargs)
+                return plot(ax, x, xmin=xmin, xmax=xmax, *args, **kwargs)
 
         else:
             xmin, xmax = self._limits(paramname_x)
             ymin, ymax = self._limits(paramname_y)
 
-            if plot_type == 'kde' or plot_type is None:
+            if plot_type == 'kde':
                 nsamples = None
                 plot = contour_plot_2d
+                ax.scatter([], [])
             elif plot_type == 'scatter':
                 nsamples = 500
                 plot = scatter_plot_2d
+                ax.plot([], [])
+            elif plot_type is None:
+                ax.plot([], [])
+                ax.scatter([], [])
             else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'scatter'}." % plot_type)
@@ -150,11 +154,7 @@ class MCMCSamples(WeightedDataFrame):
                     and plot_type is not None):
                 x = self[paramname_x].compress(nsamples)
                 y = self[paramname_y].compress(nsamples)
-            else:
-                x = []
-                y = []
-
-            return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
+                return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                         *args, **kwargs)
 
     def plot_1d(self, axes, *args, **kwargs):
