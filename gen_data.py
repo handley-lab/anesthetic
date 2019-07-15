@@ -11,6 +11,8 @@ def loglikelihood(x):
     """
    
     x0, x1, x2, x3 = x[:]
+    if x2 < 0 or x3 > 1 or x3 < 0:
+        return -numpy.inf
     eps = 0.9
     sigma0, sigma1, sigma2 = 0.1, 0.1, 0.1
     mu0, mu1 = 0.5, 0.5
