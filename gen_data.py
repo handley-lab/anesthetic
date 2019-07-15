@@ -130,6 +130,8 @@ for root in roots:
 
     # ranges file
     with open(root + '.ranges', 'w') as f:
-        for p in columns:
-            f.write('%s\t0\t1\n' % p)
+        f.write('%s\tNone\tNone\n' % columns[0])
+        f.write('%s\tNone\tNone\n' % columns[1])
+        f.write('%s\t0\tNone\n' % columns[2])
+        f.write('%s\t0\t1\n' % columns[3])
 
