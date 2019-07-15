@@ -281,14 +281,6 @@ class MCMCSamples(WeightedDataFrame):
                     lkwargs = local_kwargs.get(pos, {})
                     self.plot(ax_, x, y, plot_type=plot_type, *args, **lkwargs)
 
-        for y, row in axes.iterrows():
-            for x, ax in row.iteritems():
-                if x == y and ax is not None:
-                    ax.lines = ax.twin.lines
-                    ax.patches = ax.twin.patches
-                    ax.collections = ax.twin.collections
-                    ax.containers = ax.twin.containers
-
         return fig, axes
 
     def _limits(self, paramname):

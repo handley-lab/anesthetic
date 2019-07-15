@@ -184,6 +184,10 @@ def make_2d_axes(params, **kwargs):
                     axes[x][y].twin.set_yticks([])
                     axes[x][y].twin.set_ylim(0, 1.1)
                     axes[x][y].set_zorder(axes[x][y].twin.get_zorder() + 1)
+                    axes[x][y].lines = axes[x][y].twin.lines
+                    axes[x][y].patches = axes[x][y].twin.patches
+                    axes[x][y].collections = axes[x][y].twin.collections
+                    axes[x][y].containers = axes[x][y].twin.containers
                     axes[x][y].position = 'diagonal'
                 elif position[x][y] == 1:
                     axes[x][y].position = 'upper'
