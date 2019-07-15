@@ -122,15 +122,14 @@ class MCMCSamples(WeightedDataFrame):
                 plot = plot_1d
             elif plot_type == 'hist':
                 plot = hist_1d
+            elif plot_type is None:
+                ax.plot([], [])
             else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'hist'}." % plot_type)
-            if paramname_x in self:
+            if paramname_x in self and plot_type is not None:
                 x = self[paramname_x].compress()
-            else:
-                x = []
-
-            return plot(ax, x, xmin=xmin, xmax=xmax, *args, **kwargs)
+                return plot(ax, x, xmin=xmin, xmax=xmax, *args, **kwargs)
 
         else:
             xmin, xmax = self._limits(paramname_x)
@@ -139,22 +138,24 @@ class MCMCSamples(WeightedDataFrame):
             if plot_type == 'kde':
                 nsamples = None
                 plot = contour_plot_2d
+                ax.scatter([], [])
             elif plot_type == 'scatter':
                 nsamples = 500
                 plot = scatter_plot_2d
+                ax.plot([], [])
+            elif plot_type is None:
+                ax.plot([], [])
+                ax.scatter([], [])
             else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'scatter'}." % plot_type)
 
-            if paramname_x in self and paramname_y in self:
+            if (paramname_x in self and paramname_y in self
+                    and plot_type is not None):
                 x = self[paramname_x].compress(nsamples)
                 y = self[paramname_y].compress(nsamples)
-            else:
-                x = []
-                y = []
-
-            return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
-                        *args, **kwargs)
+                return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin,
+                            ymax=ymax, *args, **kwargs)
 
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
@@ -258,7 +259,7 @@ class MCMCSamples(WeightedDataFrame):
                     types['diagonal'] = types['lower']
 
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
-                        for pos in ['lower', 'upper', 'diagonal']}
+                        for pos in default_types}
 
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
@@ -276,8 +277,9 @@ class MCMCSamples(WeightedDataFrame):
                 if ax is not None:
                     pos = ax.position
                     ax_ = ax.twin if x == y else ax
-                    self.plot(ax_, x, y, plot_type=types[pos], *args,
-                              **local_kwargs[pos])
+                    plot_type = types.get(pos, None)
+                    lkwargs = local_kwargs.get(pos, {})
+                    self.plot(ax_, x, y, plot_type=plot_type, *args, **lkwargs)
 
         return fig, axes
 
