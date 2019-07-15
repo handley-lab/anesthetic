@@ -286,6 +286,8 @@ class MCMCSamples(WeightedDataFrame):
                 if x == y and ax is not None:
                     ax.lines = ax.twin.lines
                     ax.patches = ax.twin.patches
+                    ax.collections = ax.twin.collections
+                    ax.containers = ax.twin.containers
 
         return fig, axes
 
