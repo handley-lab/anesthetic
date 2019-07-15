@@ -2,8 +2,28 @@ import numpy
 from anesthetic import MCMCSamples, NestedSamples
 
 def loglikelihood(x):
-    sigma = 0.1
-    return -(x-0.5) @ (x-0.5) / 2 / sigma**2
+    """Example non-trivial loglikelihood
+
+    - Constrained correlated parameters x0 and x1,
+    - half-constrained x2 
+    - uncostrained x3.
+
+    """
+   
+    x0, x1, x2, x3 = x[:]
+    eps = 0.9
+    sigma0, sigma1, sigma2 = 0.1, 0.1, 0.1
+    mu0, mu1 = 0.5, 0.5
+    x0 = (x0-0.5)/sigma0
+    x1 = (x1-0.5)/sigma1
+
+    logl = 0
+    logl -= numpy.log(2*numpy.pi*sigma0*sigma1*(1-eps**2)**0.5)
+    logl -= (x0**2 - 2*eps*x0*x1 + x1**2)/(1-eps**2)/2
+
+    logl -= numpy.log(numpy.sqrt(numpy.pi/2)*sigma2) 
+    logl -= x2**2/sigma2
+    return logl
 
 ndims = 4
 columns = ['x%i' % i for i in range(ndims)]
@@ -88,7 +108,7 @@ ns['cluster'] = 1
 live_ns['cluster']=1
 root = './tests/example_data/mn'
 roots.append(root)
-
+ns['dlogX'] = ns._dlogX()
 ns[columns + ['logL', 'logL_birth', 'dlogX', 'cluster']].to_csv(root + 'dead-birth.txt', sep=' ', index=False, header=False)
 live_ns[columns + ['logL', 'logL_birth', 'cluster']].to_csv(root + 'phys_live-birth.txt', sep=' ', index=False, header=False)
 ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
