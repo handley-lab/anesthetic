@@ -19,6 +19,7 @@ anesthetic: nested sampling visualisation
    :target: https://anesthetic.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+
 .. image:: https://badge.fury.io/py/anesthetic.svg
    :target: https://badge.fury.io/py/anesthetic
    :alt: PyPi location
@@ -28,6 +29,7 @@ anesthetic: nested sampling visualisation
 .. image:: http://joss.theoj.org/papers/8c51bffda75d122cf4a8b991e18d3e45/status.svg
    :target: http://joss.theoj.org/papers/8c51bffda75d122cf4a8b991e18d3e45
    :alt: Review Status
+
 
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
    :target: https://github.com/williamjameshandley/anesthetic/blob/master/LICENSE
