@@ -352,6 +352,7 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
+    zorder = kwargs.pop('zorder', 1)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
@@ -380,12 +381,12 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     cmap = basic_cmap(color)
 
-    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
-                       vmin=0, vmax=1.0, cmap=cmap, *args, **kwargs)
+    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours, cmap=cmap,
+                       zorder=zorder, vmin=0, vmax=1.0, *args, **kwargs)
     for c in cbar.collections:
         c.set_cmap(cmap)
 
-    ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
+    ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours, zorder=zorder,
                vmin=0, vmax=1.2, linewidths=0.5, colors='k', *args, **kwargs)
     ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
                                  lw=2, label=label)]
