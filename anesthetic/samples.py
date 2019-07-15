@@ -284,8 +284,8 @@ class MCMCSamples(WeightedDataFrame):
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
                 if x == y and ax is not None:
-                    axes[x][y] = axes[x][y].twin
-                    axes[x][y].twin = axes[x][y]
+                    ax.lines = ax.twin.lines
+                    ax.patches = ax.twin.patches
 
         return fig, axes
 
