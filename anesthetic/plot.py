@@ -183,6 +183,7 @@ def make_2d_axes(params, **kwargs):
                     axes[x][y].twin = axes[x][y].twinx()
                     axes[x][y].twin.set_yticks([])
                     axes[x][y].twin.set_ylim(0, 1.1)
+                    axes[x][y].set_zorder(axes[x][y].twin.get_zorder() + 1)
                     axes[x][y].position = 'diagonal'
                 elif position[x][y] == 1:
                     axes[x][y].position = 'upper'
@@ -378,17 +379,14 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     j = (pdf >= 1e-2).any(axis=1)
 
     cmap = basic_cmap(color)
-    zorder = max([child.zorder for child in ax.get_children()])
 
     cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
-                       vmin=0, vmax=1.0, cmap=cmap, zorder=zorder+1,
-                       *args, **kwargs)
+                       vmin=0, vmax=1.0, cmap=cmap, *args, **kwargs)
     for c in cbar.collections:
         c.set_cmap(cmap)
 
     ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
-               vmin=0, vmax=1.2, linewidths=0.5, colors='k', zorder=zorder+2,
-               *args, **kwargs)
+               vmin=0, vmax=1.2, linewidths=0.5, colors='k', *args, **kwargs)
     ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
                                  lw=2, label=label)]
 
