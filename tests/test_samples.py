@@ -3,6 +3,9 @@ import sys
 import pytest
 import numpy
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib.patches import Rectangle
+from matplotlib.collections import PathCollection
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from numpy.testing import assert_array_equal
 try:
@@ -161,4 +164,41 @@ def test_plot_2d_types_multiple_calls():
     ns.plot_2d(axes, types={'diagonal': 'kde',
                             'lower': 'kde',
                             'upper': 'scatter'})
+    plt.close('all')
+
+
+def test_plot_2d_legend():
+    ns1 = NestedSamples(root='./tests/example_data/pc')
+    ns2 = NestedSamples(root='./tests/example_data/pc')
+    params = ['x0', 'x1', 'x2', 'x3']
+
+    fig, axes = make_2d_axes(params, upper=False)
+    ns1.plot_2d(axes, label='l1', types=dict(diagonal='kde', lower='kde'))
+    ns2.plot_2d(axes, label='l2', types=dict(diagonal='kde', lower='kde'))
+
+    for y, row in axes.iterrows():
+        for x, ax in row.iteritems():
+            if ax is not None:
+                handles, labels = ax.get_legend_handles_labels()
+                assert(labels == ['l1', 'l2'])
+                if x == y:
+                    assert(all([isinstance(h, Line2D) for h in handles]))
+                else:
+                    assert(all([isinstance(h, Rectangle) for h in handles]))
+    plt.close('all')
+
+    fig, axes = make_2d_axes(params, lower=False)
+    ns1.plot_2d(axes, label='l1', types=dict(diagonal='hist', upper='scatter'))
+    ns2.plot_2d(axes, label='l2', types=dict(diagonal='hist', upper='scatter'))
+
+    for y, row in axes.iterrows():
+        for x, ax in row.iteritems():
+            if ax is not None:
+                handles, labels = ax.get_legend_handles_labels()
+                assert(labels == ['l1', 'l2'])
+                if x == y:
+                    assert(all([isinstance(h, Rectangle) for h in handles]))
+                else:
+                    assert(all([isinstance(h, PathCollection)
+                                for h in handles]))
     plt.close('all')

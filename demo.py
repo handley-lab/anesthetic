@@ -39,7 +39,7 @@ fig.tight_layout()
 
 #| ... triangle plots ...
 
-mcmc.plot_2d(['omegabh2','omegach2','H0'], types=['kde']);
+mcmc.plot_2d(['omegabh2','omegach2','H0'], types={'lower':'kde','diagonal':'kde'});
 
 #| ... triangle plots (with the equivalent scatter plot filling up the left hand side) ...
 
@@ -123,12 +123,12 @@ nested.plot_2d(axes=axes);
 #| passing beta=0. We also introduce here the helper function ``get_legend_proxy``
 #| for creating figure legends.
 
-from anesthetic import get_legend_proxy
 prior = nested.set_beta(0)
-fig, axes = prior.plot_2d(['ns','tau'])
-nested.plot_2d(axes=axes)
-proxy = get_legend_proxy(fig)
-fig.legend(proxy, ['prior', 'posterior'])
+fig, axes = prior.plot_2d(['ns','tau'], label='prior')
+nested.plot_2d(axes=axes, label='posterior')
+handles, labels = axes['ns']['tau'].get_legend_handles_labels()
+leg = fig.legend(handles, labels)
+fig.tight_layout()
 
 #| We can also set up an interactive plot, which allows us to replay a nested
 #| sampling run after the fact.
