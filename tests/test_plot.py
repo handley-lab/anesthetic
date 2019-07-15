@@ -273,7 +273,8 @@ def test_contour_plot_2d():
     c = contour_plot_2d_sample_kde(ax, data_x, data_y)
     assert(isinstance(c, TriContourSet))
 
-    for contour_plot_2d in [contour_plot_2d_grid_kde, contour_plot_2d_sample_kde]:
+    for contour_plot_2d in [contour_plot_2d_grid_kde,
+                            contour_plot_2d_sample_kde]:
         xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
 
         # Check xmin
