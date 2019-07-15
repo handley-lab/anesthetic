@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              scatter_plot_2d, hist_plot_1d,
-                             sample_kde_plot_1d, sample_kde_plot_2d,
-                             grid_kde_plot_1d, grid_kde_plot_2d)
+                             contour_plot_1d_sample_kde,
+                             contour_plot_2d_sample_kde,
+                             contour_plot_1d_grid_kde,
+                             contour_plot_2d_grid_kde)
 from numpy.testing import assert_array_equal
 
 from matplotlib.contour import QuadContourSet
@@ -174,7 +176,7 @@ def test_plot_1d():
     numpy.random.seed(0)
     data = numpy.random.randn(1000)
 
-    for plot_1d in [grid_kde_plot_1d, sample_kde_plot_1d]:
+    for plot_1d in [contour_plot_1d_grid_kde, contour_plot_1d_sample_kde]:
         # Check height
         line, = plot_1d(ax, data)
         assert(isinstance(line, Line2D))
@@ -265,13 +267,13 @@ def test_contour_plot_2d():
     data_x = numpy.random.randn(1000)
     data_y = numpy.random.randn(1000)
 
-    c = grid_kde_plot_2d(ax, data_x, data_y)
+    c = contour_plot_2d_grid_kde(ax, data_x, data_y)
     assert(isinstance(c, QuadContourSet))
 
-    c = sample_kde_plot_2d(ax, data_x, data_y)
+    c = contour_plot_2d_sample_kde(ax, data_x, data_y)
     assert(isinstance(c, TriContourSet))
 
-    for contour_plot_2d in [grid_kde_plot_2d, sample_kde_plot_2d]:
+    for contour_plot_2d in [contour_plot_2d_grid_kde, contour_plot_2d_sample_kde]:
         xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
 
         # Check xmin

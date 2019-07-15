@@ -216,7 +216,7 @@ def make_2d_axes(params, **kwargs):
     return fig, axes
 
 
-def grid_kde_plot_1d(ax, data, *args, **kwargs):
+def contour_plot_1d_grid_kde(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
@@ -262,7 +262,7 @@ def grid_kde_plot_1d(ax, data, *args, **kwargs):
     return ans
 
 
-def sample_kde_plot_1d(ax, data, *args, **kwargs):
+def contour_plot_1d_sample_kde(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
@@ -366,7 +366,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     return bars
 
 
-def grid_kde_plot_2d(ax, data_x, data_y, *args, **kwargs):
+def contour_plot_2d_grid_kde(ax, data_x, data_y, *args, **kwargs):
     """Plot a 2d marginalised distribution as contours on a grid.
 
     This functions as a wrapper around matplotlib.axes.Axes.contour, and
@@ -440,7 +440,7 @@ def grid_kde_plot_2d(ax, data_x, data_y, *args, **kwargs):
     return cbar
 
 
-def sample_kde_plot_2d(ax, data_x, data_y, *args, **kwargs):
+def contour_plot_2d_sample_kde(ax, data_x, data_y, *args, **kwargs):
     """Plot a 2d marginalised distribution as tricontours.
 
     This functions as a wrapper around matplotlib.axes.Axes.tricontour, and

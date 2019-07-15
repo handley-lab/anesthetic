@@ -7,8 +7,10 @@ import numpy
 import pandas
 from scipy.special import logsumexp
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
-                             grid_kde_plot_1d, sample_kde_plot_1d,
-                             grid_kde_plot_2d, sample_kde_plot_2d,
+                             contour_plot_1d_grid_kde,
+                             contour_plot_1d_sample_kde,
+                             contour_plot_2d_grid_kde,
+                             contour_plot_2d_sample_kde,
                              hist_plot_1d, scatter_plot_2d
                              )
 from anesthetic.read.samplereader import SampleReader
@@ -122,9 +124,9 @@ class MCMCSamples(WeightedDataFrame):
         if do_1d_plot:
             xmin, xmax = self._limits(paramname_x)
             if plot_type == 'kde'or plot_type is None:
-                plot = sample_kde_plot_1d
+                plot = contour_plot_1d_sample_kde
             elif plot_type == 'fastkde':
-                plot = grid_kde_plot_1d
+                plot = contour_plot_1d_grid_kde
             elif plot_type == 'hist':
                 plot = hist_plot_1d
             else:
@@ -144,10 +146,10 @@ class MCMCSamples(WeightedDataFrame):
 
             if plot_type == 'kde' or plot_type is None:
                 nsamples = None
-                plot = sample_kde_plot_2d
+                plot = contour_plot_2d_sample_kde
             elif plot_type == 'fastkde':
                 nsamples = None
-                plot = grid_kde_plot_2d
+                plot = contour_plot_2d_grid_kde
             elif plot_type == 'scatter':
                 nsamples = 500
                 plot = scatter_plot_2d
