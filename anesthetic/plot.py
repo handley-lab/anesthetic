@@ -488,8 +488,7 @@ def contour_plot_2d_sample_kde(ax, data_x, data_y, *args, **kwargs):
                        ymin=ymin, ymax=ymax)
     pdf /= pdf.max()
     p = sorted(pdf.flatten())
-    m = numpy.cumsum(p)
-    m /= m[-1]
+    m = numpy.arange(1, len(p)+1)/(len(p)+1)
     interp = interp1d([0]+list(m)+[1], [0]+list(p)+[1])
     contours = list(interp([0.05, 0.33]))+[1]
 
