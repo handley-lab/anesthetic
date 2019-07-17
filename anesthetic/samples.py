@@ -7,8 +7,8 @@ import numpy
 import pandas
 from scipy.special import logsumexp
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
-                             contour_plot_1d_grid_kde,
-                             contour_plot_1d_sample_kde,
+                             line_plot_1d_grid_kde,
+                             line_plot_1d_sample_kde,
                              contour_plot_2d_grid_kde,
                              contour_plot_2d_sample_kde,
                              hist_plot_1d, scatter_plot_2d
@@ -124,9 +124,9 @@ class MCMCSamples(WeightedDataFrame):
         if do_1d_plot:
             xmin, xmax = self._limits(paramname_x)
             if plot_type == 'kde':
-                plot = contour_plot_1d_sample_kde
+                plot = line_plot_1d_sample_kde
             elif plot_type == 'fastkde':
-                plot = contour_plot_1d_grid_kde
+                plot = line_plot_1d_grid_kde
             elif plot_type == 'hist':
                 plot = hist_plot_1d
             elif plot_type is None:

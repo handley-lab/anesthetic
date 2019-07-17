@@ -221,7 +221,7 @@ def make_2d_axes(params, **kwargs):
     return fig, axes
 
 
-def contour_plot_1d_grid_kde(ax, data, *args, **kwargs):
+def line_plot_1d_grid_kde(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
@@ -267,7 +267,7 @@ def contour_plot_1d_grid_kde(ax, data, *args, **kwargs):
     return ans
 
 
-def contour_plot_1d_sample_kde(ax, data, *args, **kwargs):
+def line_plot_1d_sample_kde(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
