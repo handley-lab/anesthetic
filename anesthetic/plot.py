@@ -479,6 +479,7 @@ def contour_plot_2d_sample_kde(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
+    zorder = kwargs.pop('zorder', 1)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
@@ -503,18 +504,16 @@ def contour_plot_2d_sample_kde(ax, data_x, data_y, *args, **kwargs):
                 contours[j] = contours[j] - 1e-5
 
     cmap = basic_cmap(color)
-    zorder = max([child.zorder for child in ax.get_children()])
     contours = contours[1:]
 
-    cbar = ax.tricontourf(x, y, pdf, contours,
-                          vmin=0, vmax=1.0, cmap=cmap, zorder=zorder+1,
-                          *args, **kwargs)
+    cbar = ax.tricontourf(x, y, pdf, contours, vmin=0, vmax=1.0, cmap=cmap,
+                          zorder=zorder, *args, **kwargs)
     for c in cbar.collections:
         c.set_cmap(cmap)
 
-    ax.tricontour(x, y, pdf, contours,
-                  vmin=0, vmax=1.2, linewidths=0.5, colors='k',
-                  zorder=zorder+2, *args, **kwargs)
+    ax.tricontour(x, y, pdf, contours, vmin=0, vmax=1.2,
+                  linewidths=0.5, colors='k',
+                  zorder=zorder, *args, **kwargs)
 
     ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
                                  lw=2, label=label)]
