@@ -123,14 +123,21 @@ class MCMCSamples(WeightedDataFrame):
 
         if do_1d_plot:
             xmin, xmax = self._limits(paramname_x)
-            if plot_type == 'kde':
+<<<<<<< HEAD
+            if plot_type == 'kde'or plot_type is None:
                 plot = contour_plot_1d_sample_kde
             elif plot_type == 'fastkde':
                 plot = contour_plot_1d_grid_kde
             elif plot_type == 'hist':
                 plot = hist_plot_1d
+=======
+            if plot_type == 'kde':
+                plot = plot_1d
+            elif plot_type == 'hist':
+                plot = hist_1d
             elif plot_type is None:
                 ax.plot([], [])
+>>>>>>> master
             else:
                 raise NotImplementedError("plot_type is '%s', but must be in "
                                           "{'kde', 'fastkde', 'hist'}." %
@@ -145,12 +152,15 @@ class MCMCSamples(WeightedDataFrame):
 
             if plot_type == 'kde':
                 nsamples = None
+<<<<<<< HEAD
                 plot = contour_plot_2d_sample_kde
-                ax.scatter([], [])
             elif plot_type == 'fastkde':
                 nsamples = None
                 plot = contour_plot_2d_grid_kde
+=======
+                plot = contour_plot_2d
                 ax.scatter([], [])
+>>>>>>> master
             elif plot_type == 'scatter':
                 nsamples = 500
                 plot = scatter_plot_2d

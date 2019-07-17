@@ -183,6 +183,11 @@ def make_2d_axes(params, **kwargs):
                     axes[x][y].twin = axes[x][y].twinx()
                     axes[x][y].twin.set_yticks([])
                     axes[x][y].twin.set_ylim(0, 1.1)
+                    axes[x][y].set_zorder(axes[x][y].twin.get_zorder() + 1)
+                    axes[x][y].lines = axes[x][y].twin.lines
+                    axes[x][y].patches = axes[x][y].twin.patches
+                    axes[x][y].collections = axes[x][y].twin.collections
+                    axes[x][y].containers = axes[x][y].twin.containers
                     axes[x][y].position = 'diagonal'
                 elif position[x][y] == 1:
                     axes[x][y].position = 'upper'
@@ -397,6 +402,8 @@ def contour_plot_2d_grid_kde(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    label = kwargs.pop('label', None)
+    zorder = kwargs.pop('zorder', 1)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
@@ -424,17 +431,17 @@ def contour_plot_2d_grid_kde(ax, data_x, data_y, *args, **kwargs):
     j = (pdf >= 1e-2).any(axis=1)
 
     cmap = basic_cmap(color)
-    zorder = max([child.zorder for child in ax.get_children()])
 
-    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
-                       vmin=0, vmax=1.0, cmap=cmap, zorder=zorder+1,
-                       *args, **kwargs)
+    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours, cmap=cmap,
+                       zorder=zorder, vmin=0, vmax=1.0, *args, **kwargs)
     for c in cbar.collections:
         c.set_cmap(cmap)
 
-    ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours,
-               vmin=0, vmax=1.2, linewidths=0.5, colors='k', zorder=zorder+2,
-               *args, **kwargs)
+    ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours, zorder=zorder,
+               vmin=0, vmax=1.2, linewidths=0.5, colors='k', *args, **kwargs)
+    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
+                                 lw=2, label=label)]
+
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
     return cbar
@@ -471,6 +478,7 @@ def contour_plot_2d_sample_kde(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    label = kwargs.pop('label', None)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
@@ -507,6 +515,10 @@ def contour_plot_2d_sample_kde(ax, data_x, data_y, *args, **kwargs):
     ax.tricontour(x, y, pdf, contours,
                   vmin=0, vmax=1.2, linewidths=0.5, colors='k',
                   zorder=zorder+2, *args, **kwargs)
+
+    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
+                                 lw=2, label=label)]
+
     ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)
     return cbar
@@ -565,6 +577,12 @@ def get_legend_proxy(fig):
             Figure to extract colors from.
 
     """
+    from warnings import warn
+    warn("`get_legend_proxy` is deprecated and might be deleted in the "
+         "future. You can now simply use `axes[x][y].legend()` or do "
+         "`handles, labels = axes[x][y].get_legend_handles_labels()` "
+         "and pass the handles and labels to the figure legend "
+         "`fig.legend(handles, labels)`.", FutureWarning)
     cmaps = [coll.get_cmap() for ax in fig.axes for coll in ax.collections
              if isinstance(coll.get_cmap(), LinearSegmentedColormap)]
     cmaps = unique(cmaps)
