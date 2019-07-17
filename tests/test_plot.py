@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              scatter_plot_2d, hist_plot_1d,
-                             contour_plot_1d_sample_kde,
+                             line_plot_1d_sample_kde,
                              contour_plot_2d_sample_kde,
-                             contour_plot_1d_grid_kde,
+                             line_plot_1d_grid_kde,
                              contour_plot_2d_grid_kde)
 from numpy.testing import assert_array_equal
 
@@ -176,7 +176,7 @@ def test_plot_1d():
     numpy.random.seed(0)
     data = numpy.random.randn(1000)
 
-    for plot_1d in [contour_plot_1d_grid_kde, contour_plot_1d_sample_kde]:
+    for plot_1d in [line_plot_1d_grid_kde, line_plot_1d_sample_kde]:
         # Check height
         line, = plot_1d(ax, data)
         assert(isinstance(line, Line2D))
