@@ -149,6 +149,7 @@ or using the BibTeX:
        publisher = {The Open Journal},
        volume = {4},
        number = {37},
+       pages = {1414},
        author = {Will Handley},
        title = {anesthetic: nested sampling visualisation},
        journal = {The Journal of Open Source Software}
