@@ -4,44 +4,49 @@ from anesthetic import MCMCSamples, NestedSamples
 def loglikelihood(x):
     """Example non-trivial loglikelihood
 
-    - Constrained correlated parameters x0 and x1,
-    - half-constrained x2 
-    - uncostrained x3.
+    - Constrained zero-centered correlated parameters x0 and x1,
+    - half-constrained x2 (exponential).
+    - unconstrained x3 between 0 and 1
+    - x4 is a slanted top-hat distribution between 2 and 4
 
     """
    
-    x0, x1, x2, x3 = x[:]
-    if x2 < 0 or x3 > 1 or x3 < 0:
+    x0, x1, x2, x3, x4 = x[:]
+    if x2 < 0 or x3 > 1 or x3 < 0 or x4 < 2 or x4 > 4:
         return -numpy.inf
     eps = 0.9
     sigma0, sigma1, sigma2 = 0.1, 0.1, 0.1
-    mu0, mu1 = 0.5, 0.5
-    x0 = (x0-0.5)/sigma0
-    x1 = (x1-0.5)/sigma1
+    mu0, mu1 = 0, 0
+    x0 /= sigma0
+    x1 /= sigma1
 
     logl = 0
     logl -= numpy.log(2*numpy.pi*sigma0*sigma1*(1-eps**2)**0.5)
     logl -= (x0**2 - 2*eps*x0*x1 + x1**2)/(1-eps**2)/2
 
-    logl -= numpy.log(numpy.sqrt(numpy.pi/2)*sigma2) 
-    logl -= x2**2/sigma2
+    logl -= numpy.log(sigma2) 
+    logl -= x2/sigma2
+
+    logl -= numpy.log(3)
+    logl += numpy.log(x4-1)
     return logl
 
-ndims = 4
+
+ndims = 5
 columns = ['x%i' % i for i in range(ndims)]
-tex = {p: 'x_%i' % i  for i, p in enumerate(columns)}
+tex = {p: '$x_%i$' % i  for i, p in enumerate(columns)}
 roots = []
 
 # MCMC
 # ----
-def mcmc_sim(ndims=4):
+def mcmc_sim(ndims=5):
     """ Simple Metropolis Hastings algorithm. """
     numpy.random.seed(0)
-    x = [numpy.random.normal(0.5, 0.1, ndims)]
+    x = [numpy.array([0, 0, 0.1, 0.5, 3])]
     l = [loglikelihood(x[-1])]
     w = [1]
 
-    for _ in range(10000):
+    while len(x) < 10000:
         x1 = x[-1] + numpy.random.randn(ndims)*0.1
         l1 = loglikelihood(x1)
         if numpy.random.rand() < numpy.exp(l1-l[-1]):
@@ -50,11 +55,12 @@ def mcmc_sim(ndims=4):
             w.append(1)
         else:
             w[-1]+=1
-    return x, l, w
+    return numpy.array(x), numpy.array(l), numpy.array(w)
 
 
 data, logL, w = mcmc_sim()
 mcmc = MCMCSamples(data=data, columns=columns, logL=logL, w=w, tex=tex)
+
 
 # MCMC multiple files
 root = './tests/example_data/gd'
@@ -72,10 +78,12 @@ mcmc[['weight', 'logL'] + columns].to_csv(root + '.txt', sep=' ', index=False, h
 # NS
 # --
 
-def ns_sim(ndims=4, nlive=50):
+def ns_sim(ndims=5, nlive=125):
     """Brute force Nested Sampling run"""
     numpy.random.seed(0)
-    live_points = numpy.random.rand(nlive, ndims)
+    low=(-1,-1,0,0,2)
+    high=(1,1,1,1,4)
+    live_points = numpy.random.uniform(low=low, high=high, size=(nlive, ndims))
     live_likes = numpy.array([loglikelihood(x) for x in live_points])
     live_birth_likes = numpy.ones(nlive) * -numpy.inf
 
@@ -90,7 +98,7 @@ def ns_sim(ndims=4, nlive=50):
         birth_likes.append(live_birth_likes[i])
         live_birth_likes[i] = Lmin
         while live_likes[i] <= Lmin:
-            live_points[i, :] = numpy.random.rand(ndims)
+            live_points[i, :] = numpy.random.uniform(low=low, high=high, size=ndims) 
             live_likes[i] = loglikelihood(live_points[i])
     return dead_points, dead_likes, birth_likes, live_points, live_likes, live_birth_likes
 
