@@ -166,6 +166,24 @@ def test_make_2d_axes_behaviour():
         plt.close("all")
 
 
+def test_2d_axes_limits():
+    numpy.random.seed(0)
+    paramnames = ['A', 'B', 'C', 'D']
+    fig, axes = make_2d_axes(paramnames)
+    for x in paramnames:
+        for y in paramnames:
+            a, b, c, d = numpy.random.rand(4)
+            axes[x][y].set_xlim(a, b)
+            for z in paramnames:
+                assert(axes[x][z].get_xlim() == (a, b))
+                assert(axes[z][x].get_ylim() == (a, b))
+
+            axes[x][y].set_ylim(c, d)
+            for z in paramnames:
+                assert(axes[y][z].get_xlim() == (c, d))
+                assert(axes[z][y].get_ylim() == (c, d))
+
+
 def test_plot_1d():
     fig, ax = plt.subplots()
     numpy.random.seed(0)
