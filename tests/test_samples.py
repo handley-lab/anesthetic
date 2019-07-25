@@ -206,7 +206,7 @@ def test_plot_2d_legend():
                     assert(all([isinstance(h, Rectangle) for h in handles]))
     plt.close('all')
 
-    # Test label kwarg label kwarg for hist and scatter
+    # Test label kwarg for hist and scatter
     fig, axes = make_2d_axes(params, lower=False)
     ns.plot_2d(axes, label='l1', types=dict(diagonal='hist', upper='scatter'))
     mc.plot_2d(axes, label='l2', types=dict(diagonal='hist', upper='scatter'))
