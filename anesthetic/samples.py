@@ -43,10 +43,13 @@ class MCMCSamples(WeightedDataFrame):
         loglikelihoods of samples.
 
     tex: dict
-        mapping from coloumns to tex labels for plotting
+        mapping from columns to tex labels for plotting
 
     limits: dict
-        mapping from coloumns to prior limits
+        mapping from columns to prior limits
+
+    label: str
+        Legend label
 
     """
 
@@ -57,18 +60,20 @@ class MCMCSamples(WeightedDataFrame):
         return MCMCSamples
 
     def __init__(self, *args, **kwargs):
-        self.root = kwargs.pop('root', None)
-        if self.root is not None:
-            reader = SampleReader(self.root)
+        root = kwargs.pop('root', None)
+        if root is not None:
+            reader = SampleReader(root)
             w, logL, samples = reader.samples()
             params, tex = reader.paramnames()
             limits = reader.limits()
             self.__init__(data=samples, columns=params, w=w, logL=logL,
                           tex=tex, limits=limits)
+            self.root = root
         else:
             logL = kwargs.pop('logL', None)
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
+            self.root = None
             self.u = None
 
             super(MCMCSamples, self).__init__(*args, **kwargs)
@@ -335,17 +340,18 @@ class NestedSamples(MCMCSamples):
         return NestedSamples
 
     def __init__(self, *args, **kwargs):
-        self.root = kwargs.pop('root', None)
-        self._beta = kwargs.pop('beta', 1.)
-        if self.root is not None:
-            reader = SampleReader(self.root)
+        root = kwargs.pop('root', None)
+        if root is not None:
+            reader = SampleReader(root)
             samples, logL, logL_birth = reader.samples()
             params, tex = reader.paramnames()
             limits = reader.limits()
             self.__init__(data=samples, columns=params,
                           logL=logL, logL_birth=logL_birth,
                           tex=tex, limits=limits)
+            self.root = root
         else:
+            self._beta = kwargs.pop('beta', 1.)
             logL_birth = kwargs.pop('logL_birth', None)
             super(NestedSamples, self).__init__(*args, **kwargs)
 
