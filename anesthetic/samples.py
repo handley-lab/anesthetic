@@ -3,6 +3,7 @@
 - ``MCMCSamples``
 - ``NestedSamples``
 """
+import os
 import numpy
 import pandas
 from scipy.special import logsumexp
@@ -53,7 +54,8 @@ class MCMCSamples(WeightedDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'u', 'root']
+    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'u',
+                                               'root', 'label']
 
     @property
     def _constructor(self):
@@ -66,13 +68,15 @@ class MCMCSamples(WeightedDataFrame):
             w, logL, samples = reader.samples()
             params, tex = reader.paramnames()
             limits = reader.limits()
+            kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=params, w=w, logL=logL,
-                          tex=tex, limits=limits)
+                          tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
             logL = kwargs.pop('logL', None)
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
+            self.label = kwargs.pop('label', None)
             self.root = None
             self.u = None
 
@@ -120,6 +124,7 @@ class MCMCSamples(WeightedDataFrame):
         """
         plot_type = kwargs.pop('plot_type', 'kde')
         do_1d_plot = paramname_y is None or paramname_x == paramname_y
+        kwargs['label'] = kwargs.get('label', self.label)
 
         if do_1d_plot:
             xmin, xmax = self._limits(paramname_x)
@@ -328,6 +333,9 @@ class NestedSamples(MCMCSamples):
     limits: dict
         mapping from coloumns to prior limits
 
+    label: str
+        Legend label
+
     beta: float
         thermodynamic temperature
 
@@ -346,9 +354,10 @@ class NestedSamples(MCMCSamples):
             samples, logL, logL_birth = reader.samples()
             params, tex = reader.paramnames()
             limits = reader.limits()
+            kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=params,
                           logL=logL, logL_birth=logL_birth,
-                          tex=tex, limits=limits)
+                          tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
             self._beta = kwargs.pop('beta', 1.)
