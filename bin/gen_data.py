@@ -15,7 +15,7 @@ def loglikelihood(x):
     sigma0, sigma1 = 0.1, 0.1 
     eps = 0.9                     # x0 and x1 parameters
     sigma2 = 0.1                  # x2 parameter
-    a, b, c, d = 2., 4., 1., 2.   # x4 parameters
+    a, b, m = 2., 4., 0.5         # x4 parameters
     if x2 < 0 or x3 > 1 or x3 < 0 or x4 < a or x4 > b:
         return -numpy.inf
     x0 /= sigma0
@@ -28,8 +28,7 @@ def loglikelihood(x):
     logl -= numpy.log(sigma2) 
     logl -= x2/sigma2
 
-    logl -= numpy.log((b-a)*(c+d)/2)
-    logl += numpy.log(d*(x4-a)/(b-a) + c*(b-x4)/(b-a))
+    logl += numpy.log(1/(b-a) + m * (x-(b+a)/2.))
     return logl
 
 

@@ -6,7 +6,7 @@ fig, axes = ns.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
 sigma0, sigma1 = 0.1, 0.1 
 eps = 0.9                     # x0 and x1 parameters
 sigma2 = 0.1                  # x2 parameter
-a, b, c, d = 2., 4., 1., 2.   # x4 parameters
+a, b, m = 2., 4., 0.5         # x4 parameters
 
 n = 1000
 ls = 'r--'
@@ -70,10 +70,20 @@ for p in [0.66, 0.95]:
     axes['x0']['x1'].plot(r*x1, r*x0, ls)
 
 x3 = numpy.linspace(0,1,n)
-x4 = numpy.ones_like(x3)
-
 for p in [0.66, 0.95]:
-    #x = (b*(c+(c**2*(1-p)+d**2*p)**0.5) - a*(d+(c**2*(1-p)+d**2*p)**0.5))/(c-d)
-    x = (b*c-a*d + (a-b)*(c**2*(1-p)+d**2*p)**0.5)/(c-d)
-    axes['x3']['x4'].plot(x3, x*x4, ls)
+    x4 = 1/(a-b)/m + (a+b)/2 + (((m*(a-b)**2+2)/(a-b))**2 - 8*m*p)**0.5/2/m
+    x4 = x4 * numpy.ones_like(x3)
+    axes['x3']['x4'].plot(x3, x4, ls)
+
+
+x4 = numpy.linspace(a,b,n)
+for p in [0.66, 0.95]:
+    k = 1/(b-a) + m/2 * (b-a - numpy.sqrt(8*p/m))
+    x4 = numpy.linspace((a+b)/2+(k/m + 1/(a-b)/m), b,n)
+    x2 = sigma2*(-numpy.log(k) + numpy.log(1/(b-a) + m * (x4-(b+a)/2)))
+    axes['x2']['x4'].plot(x2, x4, ls)
+
+axes['x2']['x4'].plot(numpy.zeros_like(x4), x4, ls)
+axes['x2']['x4'].plot(x2, b*numpy.ones_like(x2), ls)
+
 
