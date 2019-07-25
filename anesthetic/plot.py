@@ -10,6 +10,7 @@ wish to use.
 to create a set of axes and legend proxies.
 
 """
+import sys
 import numpy
 import pandas
 import matplotlib.pyplot as plt
@@ -188,6 +189,7 @@ def make_2d_axes(params, **kwargs):
                     axes[x][y].patches = axes[x][y].twin.patches
                     axes[x][y].collections = axes[x][y].twin.collections
                     axes[x][y].containers = axes[x][y].twin.containers
+                    make_diagonal(axes[x][y])
                     axes[x][y].position = 'diagonal'
                 elif position[x][y] == 1:
                     axes[x][y].position = 'upper'
@@ -489,3 +491,49 @@ def get_legend_proxy(fig):
 def basic_cmap(color):
     """Construct basic colormap a single color."""
     return LinearSegmentedColormap.from_list(color, ['#ffffff', color])
+
+
+if sys.version_info > (3, 0):
+    def make_diagonal(ax):
+        """Link x and y axes limits."""
+        class DiagonalAxes(type(ax)):
+            def set_xlim(self, left=None, right=None, emit=True, auto=False,
+                         xmin=None, xmax=None):
+                super(type(ax), self).set_ylim(bottom=left, top=right,
+                                               emit=True, auto=auto,
+                                               ymin=xmin, ymax=xmax)
+                return super(type(ax), self).set_xlim(left=left, right=right,
+                                                      emit=emit, auto=auto,
+                                                      xmin=xmin, xmax=xmax)
+
+            def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
+                         ymin=None, ymax=None):
+                super(type(ax), self).set_xlim(left=bottom, right=top,
+                                               emit=True, auto=auto,
+                                               xmin=ymin, xmax=ymax)
+                return super(type(ax), self).set_ylim(bottom=bottom, top=top,
+                                                      emit=emit, auto=auto,
+                                                      ymin=ymin, ymax=ymax)
+        ax.__class__ = DiagonalAxes
+else:
+    def make_diagonal(ax):
+        """Link x and y axes limits."""
+        class DiagonalAxes(type(ax)):
+            def set_xlim(self, left=None, right=None, emit=True, auto=False,
+                         **kwargs):
+                super(type(ax), self).set_ylim(bottom=left, top=right,
+                                               emit=True, auto=auto,
+                                               **kwargs)
+                return super(type(ax), self).set_xlim(left=left, right=right,
+                                                      emit=emit, auto=auto,
+                                                      **kwargs)
+
+            def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
+                         **kwargs):
+                super(type(ax), self).set_xlim(left=bottom, right=top,
+                                               emit=True, auto=auto,
+                                               **kwargs)
+                return super(type(ax), self).set_ylim(bottom=bottom, top=top,
+                                                      emit=emit, auto=auto,
+                                                      **kwargs)
+        ax.__class__ = DiagonalAxes
