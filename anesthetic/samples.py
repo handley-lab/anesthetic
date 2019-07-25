@@ -3,6 +3,7 @@
 - ``MCMCSamples``
 - ``NestedSamples``
 """
+import os
 import numpy
 import pandas
 from scipy.special import logsumexp
@@ -43,32 +44,40 @@ class MCMCSamples(WeightedDataFrame):
         loglikelihoods of samples.
 
     tex: dict
-        mapping from coloumns to tex labels for plotting
+        mapping from columns to tex labels for plotting
 
     limits: dict
-        mapping from coloumns to prior limits
+        mapping from columns to prior limits
+
+    label: str
+        Legend label
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'u', 'root']
+    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'u',
+                                               'root', 'label']
 
     @property
     def _constructor(self):
         return MCMCSamples
 
     def __init__(self, *args, **kwargs):
-        self.root = kwargs.pop('root', None)
-        if self.root is not None:
-            reader = SampleReader(self.root)
+        root = kwargs.pop('root', None)
+        if root is not None:
+            reader = SampleReader(root)
             w, logL, samples = reader.samples()
             params, tex = reader.paramnames()
             limits = reader.limits()
+            kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=params, w=w, logL=logL,
-                          tex=tex, limits=limits)
+                          tex=tex, limits=limits, *args, **kwargs)
+            self.root = root
         else:
             logL = kwargs.pop('logL', None)
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
+            self.label = kwargs.pop('label', None)
+            self.root = None
             self.u = None
 
             super(MCMCSamples, self).__init__(*args, **kwargs)
@@ -115,6 +124,7 @@ class MCMCSamples(WeightedDataFrame):
         """
         plot_type = kwargs.pop('plot_type', 'kde')
         do_1d_plot = paramname_y is None or paramname_x == paramname_y
+        kwargs['label'] = kwargs.get('label', self.label)
 
         if do_1d_plot:
             xmin, xmax = self._limits(paramname_x)
@@ -318,10 +328,13 @@ class NestedSamples(MCMCSamples):
         birth loglikelihoods, or number of live points.
 
     tex: dict
-        mapping from coloumns to tex labels for plotting
+        mapping from columns to tex labels for plotting
 
     limits: dict
-        mapping from coloumns to prior limits
+        mapping from columns to prior limits
+
+    label: str
+        Legend label
 
     beta: float
         thermodynamic temperature
@@ -335,17 +348,19 @@ class NestedSamples(MCMCSamples):
         return NestedSamples
 
     def __init__(self, *args, **kwargs):
-        self.root = kwargs.pop('root', None)
-        self._beta = kwargs.pop('beta', 1.)
-        if self.root is not None:
-            reader = SampleReader(self.root)
+        root = kwargs.pop('root', None)
+        if root is not None:
+            reader = SampleReader(root)
             samples, logL, logL_birth = reader.samples()
             params, tex = reader.paramnames()
             limits = reader.limits()
+            kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=params,
                           logL=logL, logL_birth=logL_birth,
-                          tex=tex, limits=limits)
+                          tex=tex, limits=limits, *args, **kwargs)
+            self.root = root
         else:
+            self._beta = kwargs.pop('beta', 1.)
             logL_birth = kwargs.pop('logL_birth', None)
             super(NestedSamples, self).__init__(*args, **kwargs)
 
