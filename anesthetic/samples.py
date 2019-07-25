@@ -328,10 +328,10 @@ class NestedSamples(MCMCSamples):
         birth loglikelihoods, or number of live points.
 
     tex: dict
-        mapping from coloumns to tex labels for plotting
+        mapping from columns to tex labels for plotting
 
     limits: dict
-        mapping from coloumns to prior limits
+        mapping from columns to prior limits
 
     label: str
         Legend label
