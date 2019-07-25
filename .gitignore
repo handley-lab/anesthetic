@@ -12,3 +12,4 @@ plikHM_TTTEEE_lowl_lowE_lensing_NS/
 .idea/*
 *~
 .pytest_cache/*
+.coverage
