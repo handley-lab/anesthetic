@@ -127,45 +127,46 @@ class MCMCSamples(WeightedDataFrame):
         kwargs['label'] = kwargs.get('label', self.label)
 
         if do_1d_plot:
-            xmin, xmax = self._limits(paramname_x)
-            if plot_type == 'kde':
-                plot = plot_1d
-            elif plot_type == 'hist':
-                plot = hist_1d
-            elif plot_type is None:
-                ax.plot([], [])
-            else:
-                raise NotImplementedError("plot_type is '%s', but must be in "
-                                          "{'kde', 'hist'}." % plot_type)
             if paramname_x in self and plot_type is not None:
                 x = self[paramname_x].compress()
+                xmin, xmax = self._limits(paramname_x)
+                if plot_type == 'kde':
+                    plot = plot_1d
+                elif plot_type == 'hist':
+                    plot = hist_1d
+                else:
+                    raise NotImplementedError("plot_type is '%s', but must be"
+                                              " in {'kde', 'hist'}."
+                                              % plot_type)
                 return plot(ax, x, xmin=xmin, xmax=xmax, *args, **kwargs)
+            else:
+                ax.plot([], [])
 
         else:
-            xmin, xmax = self._limits(paramname_x)
-            ymin, ymax = self._limits(paramname_y)
-
-            if plot_type == 'kde':
-                nsamples = None
-                plot = contour_plot_2d
-                ax.scatter([], [])
-            elif plot_type == 'scatter':
-                nsamples = 500
-                plot = scatter_plot_2d
-                ax.plot([], [])
-            elif plot_type is None:
-                ax.plot([], [])
-                ax.scatter([], [])
-            else:
-                raise NotImplementedError("plot_type is '%s', but must be in "
-                                          "{'kde', 'scatter'}." % plot_type)
-
             if (paramname_x in self and paramname_y in self
                     and plot_type is not None):
+                if plot_type == 'kde':
+                    nsamples = None
+                    plot = contour_plot_2d
+                    ax.scatter([], [])
+                elif plot_type == 'scatter':
+                    nsamples = 500
+                    plot = scatter_plot_2d
+                    ax.plot([], [])
+                else:
+                    raise NotImplementedError("plot_type is '%s', but must be"
+                                              "in {'kde', 'scatter'}."
+                                              % plot_type)
+                xmin, xmax = self._limits(paramname_x)
+                ymin, ymax = self._limits(paramname_y)
                 x = self[paramname_x].compress(nsamples)
                 y = self[paramname_y].compress(nsamples)
                 return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin,
                             ymax=ymax, *args, **kwargs)
+
+            else:
+                ax.plot([], [])
+                ax.scatter([], [])
 
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
@@ -195,8 +196,7 @@ class MCMCSamples(WeightedDataFrame):
             fig = axes.values[~axes.isna()][0].figure
 
         for x, ax in axes.iteritems():
-            if ax is not None and x in self:
-                self.plot(ax, x, *args, **kwargs)
+            self.plot(ax, x, *args, **kwargs)
 
         return fig, axes
 
