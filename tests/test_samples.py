@@ -311,31 +311,32 @@ def test_plot_1d_colours():
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
-    fig = plt.figure()
-    fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
-    gd.plot_1d(axes, label="gd")
-    pc.plot_1d(axes, label="pc")
-    mn.plot_1d(axes, label="mn")
-    gd_colors = []
-    pc_colors = []
-    mn_colors = []
-    for x, ax in axes.iteritems():
-        handles, labels = ax.get_legend_handles_labels()
-        for handle, label in zip(handles, labels):
-            if isinstance(handle, Rectangle):
-                color = to_hex(handle.get_facecolor())
-            elif isinstance(handle, PathCollection):
-                color = to_hex(handle.get_facecolor()[0])
-            else:
-                color = handle.get_color()
+    for types in ['kde', 'hist']:
+        fig = plt.figure()
+        fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
+        gd.plot_1d(axes, types=types, label="gd")
+        pc.plot_1d(axes, types=types, label="pc")
+        mn.plot_1d(axes, types=types, label="mn")
+        gd_colors = []
+        pc_colors = []
+        mn_colors = []
+        for x, ax in axes.iteritems():
+            handles, labels = ax.get_legend_handles_labels()
+            for handle, label in zip(handles, labels):
+                if isinstance(handle, Rectangle):
+                    color = to_hex(handle.get_facecolor())
+                elif isinstance(handle, PathCollection):
+                    color = to_hex(handle.get_facecolor()[0])
+                else:
+                    color = handle.get_color()
 
-            if label == 'gd':
-                gd_colors.append(color)
-            elif label == 'pc':
-                pc_colors.append(color)
-            elif label == 'mn':
-                mn_colors.append(color)
+                if label == 'gd':
+                    gd_colors.append(color)
+                elif label == 'pc':
+                    pc_colors.append(color)
+                elif label == 'mn':
+                    mn_colors.append(color)
 
-    assert(len(set(gd_colors)) == 1)
-    assert(len(set(mn_colors)) == 1)
-    assert(len(set(pc_colors)) == 1)
+        assert(len(set(gd_colors)) == 1)
+        assert(len(set(mn_colors)) == 1)
+        assert(len(set(pc_colors)) == 1)
