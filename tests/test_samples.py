@@ -311,12 +311,12 @@ def test_plot_1d_colours():
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
-    for types in ['kde', 'hist']:
+    for plot_type in ['kde', 'hist']:
         fig = plt.figure()
         fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
-        gd.plot_1d(axes, types=types, label="gd")
-        pc.plot_1d(axes, types=types, label="pc")
-        mn.plot_1d(axes, types=types, label="mn")
+        gd.plot_1d(axes, plot_type=plot_type, label="gd")
+        pc.plot_1d(axes, plot_type=plot_type, label="pc")
+        mn.plot_1d(axes, plot_type=plot_type, label="mn")
         gd_colors = []
         pc_colors = []
         mn_colors = []

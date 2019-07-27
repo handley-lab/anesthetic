@@ -181,9 +181,6 @@ class MCMCSamples(WeightedDataFrame):
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
 
-        types: str
-            What types of plots to produce. Options are {'kde', 'hist'}
-
         Returns
         -------
         fig: matplotlib.figure.Figure
@@ -193,15 +190,13 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        plot_type = kwargs.pop('types', 'kde')
-
         if not isinstance(axes, pandas.Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
         else:
             fig = axes.values[~axes.isna()][0].figure
 
         for x, ax in axes.iteritems():
-            self.plot(ax, x, plot_type=plot_type, *args, **kwargs)
+            self.plot(ax, x, *args, **kwargs)
 
         return fig, axes
 
