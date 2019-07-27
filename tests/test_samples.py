@@ -262,7 +262,7 @@ def test_plot_2d_legend():
     plt.close('all')
 
 
-def test_plot_colours():
+def test_plot_2d_colours():
     numpy.random.seed(3)
     gd = MCMCSamples(root="./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True)
@@ -270,6 +270,7 @@ def test_plot_colours():
     pc.drop(columns='x4', inplace=True)
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
+
     fig = plt.figure()
     fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
     gd.plot_2d(axes, label="gd")
@@ -299,6 +300,16 @@ def test_plot_colours():
     assert(len(set(gd_colors)) == 1)
     assert(len(set(mn_colors)) == 1)
     assert(len(set(pc_colors)) == 1)
+
+
+def test_plot_1d_colours():
+    numpy.random.seed(3)
+    gd = MCMCSamples(root="./tests/example_data/gd")
+    gd.drop(columns='x3', inplace=True)
+    pc = NestedSamples(root="./tests/example_data/pc")
+    pc.drop(columns='x4', inplace=True)
+    mn = NestedSamples(root="./tests/example_data/mn")
+    mn.drop(columns='x2', inplace=True)
 
     fig = plt.figure()
     fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
