@@ -264,14 +264,20 @@ def test_plot_2d_legend():
 
 def test_plot_colours():
     numpy.random.seed(3)
-    mp = MCMCSamples(root="./tests/example_data/mp/2019-01-24_200000_")
+    gd = MCMCSamples(root="./tests/example_data/gd")
+    gd.drop(columns='x3',inplace=True)
     pc = NestedSamples(root="./tests/example_data/pc")
+    pc.drop(columns='x4',inplace=True)
+    mn = NestedSamples(root="./tests/example_data/mn")
+    mn.drop(columns='x2',inplace=True)
     fig = plt.figure()
     fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
-    mp.plot_2d(axes, label="mp")
+    gd.plot_2d(axes, label="gd")
     pc.plot_2d(axes, label="pc")
-    mp_colors = []
+    mn.plot_2d(axes, label="mn")
+    gd_colors = []
     pc_colors = []
+    mn_colors = []
     for y, rows in axes.iterrows():
         for x, ax in rows.iteritems():
             handles, labels = ax.get_legend_handles_labels()
@@ -283,10 +289,13 @@ def test_plot_colours():
                 else:
                     color = handle.get_color()
 
-                if label == 'pc':
+                if label == 'gd':
+                    gd_colors.append(color)
+                elif label == 'pc':
                     pc_colors.append(color)
-                elif label == 'mp':
-                    mp_colors.append(color)
+                elif label == 'mn':
+                    mn_colors.append(color)
 
+    assert(len(set(gd_colors)) == 1)
+    assert(len(set(mn_colors)) == 1)
     assert(len(set(pc_colors)) == 1)
-    assert(len(set(mp_colors)) == 1)
