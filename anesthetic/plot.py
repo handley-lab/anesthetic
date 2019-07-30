@@ -21,7 +21,7 @@ except ImportError:
     from matplotlib.pyplot import hist
 from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds, nest_level, unique
-from scipy.interpolate import interp1d
+from anesthetic.utils import iso_probability_contours
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import LineCollection
@@ -260,7 +260,9 @@ def plot_1d(ax, data, *args, **kwargs):
 
     x, p = kde_1d(data, xmin, xmax)
     p /= p.max()
-    i = (p >= 1e-2)
+    c = p.cumsum()
+    c /= c[-1]
+    i = (c>0.005) & (c<0.995) | (p > 0.1)
 
     ans = ax.plot(x[i], p[i], *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -359,41 +361,29 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
+    linewidths = kwargs.pop('linewidths', 0.5)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
 
     x, y, pdf = kde_2d(data_x, data_y,
                        xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
-    pdf /= pdf.max()
-    p = sorted(pdf.flatten())
-    m = numpy.cumsum(p)
-    m /= m[-1]
-    interp = interp1d([0]+list(m)+[1], [0]+list(p)+[1])
-    contours = list(interp([0.05, 0.33]))+[1]
 
-    # Correct non-zero edges
-    if min(p) != 0:
-        contours = [min(p)] + contours
-
-    # Correct level sets
-    for i in range(1, len(contours)):
-        if contours[i-1] == contours[i]:
-            for j in range(i):
-                contours[j] = contours[j] - 1e-5
-
-    i = (pdf >= 1e-2).any(axis=0)
-    j = (pdf >= 1e-2).any(axis=1)
-
+    contours = iso_probability_contours(pdf)
     cmap = basic_cmap(color)
 
+    i = (pdf >= contours[0]*0.5).any(axis=0)
+    j = (pdf >= contours[0]*0.5).any(axis=1)
+
     cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours, cmap=cmap,
-                       zorder=zorder, vmin=0, vmax=1.0, *args, **kwargs)
+                       zorder=zorder, vmin=0, vmax=pdf.max(), *args, **kwargs)
     for c in cbar.collections:
         c.set_cmap(cmap)
 
     ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours, zorder=zorder,
-               vmin=0, vmax=1.2, linewidths=0.5, colors='k', *args, **kwargs)
+               vmin=0, vmax=pdf.max(), linewidths=linewidths, colors='k',
+               *args, **kwargs)
     ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
                                  lw=2, label=label)]
 

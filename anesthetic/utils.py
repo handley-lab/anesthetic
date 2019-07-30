@@ -157,3 +157,24 @@ def unique(a):
         if x not in b:
             b.append(x)
     return b
+
+
+def iso_probability_contours(pdf, contours=[0.05, 0.33]):
+    """Compute the iso-probability contour values."""
+    p = sorted(numpy.array(pdf).flatten())
+    m = numpy.cumsum(p)
+    m /= m[-1]
+    interp = interp1d([0]+list(m), [0]+list(p))
+    c = list(interp(contours))+[max(p)]
+
+    # Correct non-zero edges
+    if min(p) != 0:
+        c = [min(p)] + c
+
+    # Correct level sets
+    for i in range(1, len(c)):
+        if c[i-1] == c[i]:
+            for j in range(i):
+                c[j] = c[j] - 1e-5
+
+    return c
