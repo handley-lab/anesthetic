@@ -262,7 +262,7 @@ def plot_1d(ax, data, *args, **kwargs):
     p /= p.max()
     c = p.cumsum()
     c /= c[-1]
-    i = (c>0.005) & (c<0.995) | (p > 0.1)
+    i = (c > 0.005) & (c < 0.995) | (p > 0.1)
 
     ans = ax.plot(x[i], p[i], *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -390,6 +390,57 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
     return cbar
+
+
+def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
+    """Plot a 2d marginalised distribution as a histogram.
+
+    This functions as a wrapper around matplotlib.axes.Axes.hist2d
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on
+
+    data_x, data_y: numpy.array
+        x and y coordinates of uniformly weighted samples to generate kernel
+        density estimator.
+
+    xmin, xmax, ymin, ymax: float
+        lower/upper prior bounds in x/y coordinates
+        optional, default None
+
+    Returns
+    -------
+    c: matplotlib.collections.QuadMesh
+        A set of colors
+
+    """
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
+    ymin = kwargs.pop('ymin', None)
+    ymax = kwargs.pop('ymax', None)
+    label = kwargs.pop('label', None)
+    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+
+    if len(data_x) == 0 or len(data_y) == 0:
+        return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
+
+    pdf, x, y = numpy.histogram2d(data_x, data_y, density=True)
+    contours = iso_probability_contours(pdf)
+    pdf = numpy.digitize(pdf, contours, right=True)
+    pdf = numpy.array(contours)[pdf]
+    pdf = numpy.ma.masked_array(pdf, pdf < contours[1])
+    cmap = basic_cmap(color)
+    image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=0, vmax=pdf.max(),
+                          *args, **kwargs)
+
+    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
+                                 lw=2, label=label)]
+
+    ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
+    ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)
+    return image
 
 
 def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):

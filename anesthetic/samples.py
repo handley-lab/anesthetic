@@ -8,7 +8,8 @@ import numpy
 import pandas
 from scipy.special import logsumexp
 from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
-                             hist_1d, scatter_plot_2d, contour_plot_2d)
+                             hist_1d, scatter_plot_2d, contour_plot_2d,
+                             hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import compute_nlive
 from anesthetic.gui.plot import RunPlotter
@@ -110,8 +111,8 @@ class MCMCSamples(WeightedDataFrame):
             If not provided, or the same as paramname_x, then 1D plot produced.
 
         plot_type: str, optional
-            Must be in {'kde', 'scatter'} for 2D plots and in {'kde', 'hist'}
-            for 1D plots. (Default: 'kde')
+            Must be in {'kde', 'scatter', 'hist'} for 2D plots and in
+            {'kde', 'hist'} for 1D plots. (Default: 'kde')
 
         Returns
         -------
@@ -153,9 +154,13 @@ class MCMCSamples(WeightedDataFrame):
                     nsamples = 500
                     plot = scatter_plot_2d
                     ax.plot([], [])
+                elif plot_type == 'hist':
+                    nsamples = None
+                    plot = hist_plot_2d
+                    ax.scatter([], [])
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
-                                              "in {'kde', 'scatter'}."
+                                              "in {'kde', 'scatter', 'hist'}."
                                               % plot_type)
                 xmin, xmax = self._limits(paramname_x)
                 ymin, ymax = self._limits(paramname_y)
@@ -227,7 +232,8 @@ class MCMCSamples(WeightedDataFrame):
             The options for 'lower' and 'upper' are:
                 - 'kde'
                 - 'scatter'
-            Default: {'diagonal': 'kde', 'lower': 'kde'}
+                - 'hist'
+            Default: {'diagonal': 'kde', 'lower': 'kde', 'upper':'scatter'}
 
         diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
             kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
