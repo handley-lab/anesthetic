@@ -413,7 +413,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     contours: list
         amount of mass within each iso-probability contour.
         If None defaults to hist2d.
-        Default [0.05, 0.33]
+        Default [0.68, 0.95]
 
     Returns
     -------
@@ -426,7 +426,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
-    contours = kwargs.pop('contours', [0.05, 0.33])
+    contours = kwargs.pop('contours', [0.68, 0.95])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
 
     if len(data_x) == 0 or len(data_y) == 0:
