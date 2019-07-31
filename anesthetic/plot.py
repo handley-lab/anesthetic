@@ -310,19 +310,19 @@ def hist_1d(ax, data, *args, **kwargs):
         xmin = data.min()
     if xmax is None:
         xmax = data.max()
+    weights = kwargs.pop('weights', None)
     histtype = kwargs.pop('histtype', 'bar')
 
     plt.sca(ax=ax)
     h, edges, bars = hist(data, range=(xmin, xmax), histtype=histtype,
-                          *args, **kwargs)
-    # As the y-axis on the diagonal 1D plots of the triangle plot won't
-    # be labelled, we set the maximum bar height to 1:
+                          weights=weights, *args, **kwargs)
     if histtype == 'bar':
         for b in bars:
             b.set_height(b.get_height() / h.max())
     elif histtype == 'step' or histtype == 'stepfilled':
         trans = Affine2D().scale(sx=1, sy=1./h.max()) + ax.transData
         bars[0].set_transform(trans)
+
     ax.set_xlim(*check_bounds(edges, xmin, xmax), auto=True)
     ax.set_ylim(0, 1.1)
     return bars

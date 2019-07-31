@@ -129,45 +129,51 @@ class MCMCSamples(WeightedDataFrame):
 
         if do_1d_plot:
             if paramname_x in self and plot_type is not None:
-                x = self[paramname_x].compress()
                 xmin, xmax = self._limits(paramname_x)
                 if plot_type == 'kde':
-                    plot = plot_1d
+                    x = self[paramname_x].compress()
+                    return plot_1d(ax, x, xmin=xmin, xmax=xmax,
+                                   *args, **kwargs)
                 elif plot_type == 'hist':
-                    plot = hist_1d
+                    return hist_1d(ax, self[paramname_x], weights=self.w,
+                                   xmin=xmin, xmax=xmax, *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
                                               " in {'kde', 'hist'}."
                                               % plot_type)
-                return plot(ax, x, xmin=xmin, xmax=xmax, *args, **kwargs)
             else:
                 ax.plot([], [])
 
         else:
             if (paramname_x in self and paramname_y in self
                     and plot_type is not None):
+                xmin, xmax = self._limits(paramname_x)
+                ymin, ymax = self._limits(paramname_y)
                 if plot_type == 'kde':
-                    nsamples = None
-                    plot = contour_plot_2d
+                    x = self[paramname_x].compress()
+                    y = self[paramname_y].compress()
                     ax.scatter([], [])
+                    return contour_plot_2d(ax, x, y, xmin=xmin, xmax=xmax,
+                                           ymin=ymin, ymax=ymax,
+                                           *args, **kwargs)
                 elif plot_type == 'scatter':
-                    nsamples = 500
-                    plot = scatter_plot_2d
+                    x = self[paramname_x].compress(500)
+                    y = self[paramname_y].compress(500)
                     ax.plot([], [])
+                    return scatter_plot_2d(ax, x, y, xmin=xmin, xmax=xmax,
+                                           ymin=ymin, ymax=ymax,
+                                           *args, **kwargs)
                 elif plot_type == 'hist':
-                    nsamples = None
-                    plot = hist_plot_2d
+                    x = self[paramname_x]
+                    y = self[paramname_y]
                     ax.scatter([], [])
+                    return hist_plot_2d(ax, x, y, weights=self.w, xmin=xmin,
+                                        xmax=xmax, ymin=ymin, ymax=ymax,
+                                        *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
                                               "in {'kde', 'scatter', 'hist'}."
                                               % plot_type)
-                xmin, xmax = self._limits(paramname_x)
-                ymin, ymax = self._limits(paramname_y)
-                x = self[paramname_x].compress(nsamples)
-                y = self[paramname_y].compress(nsamples)
-                return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin,
-                            ymax=ymax, *args, **kwargs)
 
             else:
                 ax.plot([], [])
