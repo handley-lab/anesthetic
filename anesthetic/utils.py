@@ -161,11 +161,11 @@ def unique(a):
 
 def iso_probability_contours(pdf, contours=[0.68, 0.95]):
     """Compute the iso-probability contour values."""
+    contours = [1-p for p in reversed(contours)]
     p = sorted(numpy.array(pdf).flatten())
     m = numpy.cumsum(p)
     m /= m[-1]
     interp = interp1d([0]+list(m), [0]+list(p))
-    contours = [1-p for p in reversed(contours)]
     c = list(interp(contours))+[max(p)]
 
     # Correct non-zero edges
