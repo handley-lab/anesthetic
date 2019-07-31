@@ -410,6 +410,11 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         lower/upper prior bounds in x/y coordinates
         optional, default None
 
+    contours: list
+        amount of mass within each iso-probability contour.
+        If None defaults to hist2d.
+        Default [0.05, 0.33]
+
     Returns
     -------
     c: matplotlib.collections.QuadMesh
@@ -421,19 +426,36 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
+    contours = kwargs.pop('contours', [0.05, 0.33])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
 
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
 
-    pdf, x, y = numpy.histogram2d(data_x, data_y, density=True)
-    contours = iso_probability_contours(pdf)
-    pdf = numpy.digitize(pdf, contours, right=True)
-    pdf = numpy.array(contours)[pdf]
-    pdf = numpy.ma.masked_array(pdf, pdf < contours[1])
     cmap = basic_cmap(color)
-    image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=0, vmax=pdf.max(),
-                          *args, **kwargs)
+
+    if contours is None:
+        pdf, x, y, image = ax.hist2d(data_x, data_y, cmap=cmap,
+                                     *args, **kwargs)
+    else:
+        bins = kwargs.pop('bins', 10)
+        range = kwargs.pop('range', None)
+        density = kwargs.pop('density', False)
+        weights = kwargs.pop('weights', None)
+        cmin = kwargs.pop('cmin', None)
+        cmax = kwargs.pop('cmax', None)
+        pdf, x, y = numpy.histogram2d(data_x, data_y, bins, range,
+                                      density, weights)
+        contours = iso_probability_contours(pdf, contours)
+        pdf = numpy.digitize(pdf, contours, right=True)
+        pdf = numpy.array(contours)[pdf]
+        pdf = numpy.ma.masked_array(pdf, pdf < contours[1])
+        if cmin is not None:
+            pdf[pdf < cmin] = numpy.ma.masked
+        if cmax is not None:
+            pdf[pdf > cmax] = numpy.ma.masked
+        image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=0, vmax=pdf.max(),
+                              *args, **kwargs)
 
     ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
                                  lw=2, label=label)]
