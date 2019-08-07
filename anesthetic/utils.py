@@ -42,14 +42,16 @@ def compress_weights(w, u=None, nsamples=None):
     return (integer + extra).astype(int)
 
 
-def quantile(a, q, w):
+def quantile(a, q, w=None):
     """Compute the weighted quantile for a one dimensional array."""
     if w is None:
         w = numpy.ones_like(a)
+    w = numpy.array(list(w))  # Necessary to convert pandas arrays
     i = numpy.argsort(a)
-    c = numpy.cumsum(w[i])
-    c /= c.values[-1]
-    icdf = interp1d(c/c.values[-1], a[i])
+    c = numpy.cumsum(w[i[1:]]+w[i[:-1]])
+    c /= c[-1]
+    c = numpy.concatenate(([0.], c))
+    icdf = interp1d(c, a[i])
     return icdf(q)
 
 

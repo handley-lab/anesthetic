@@ -15,10 +15,6 @@ import numpy
 import pandas
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
-try:
-    from astropy.visualization import hist
-except ImportError:
-    from matplotlib.pyplot import hist
 from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds, nest_level, unique
 from anesthetic.utils import iso_probability_contours
@@ -26,6 +22,7 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import LineCollection
 from matplotlib.transforms import Affine2D
+from anesthetic.utils import quantile
 
 
 def make_1d_axes(params, **kwargs):
@@ -260,9 +257,7 @@ def plot_1d(ax, data, *args, **kwargs):
 
     x, p = kde_1d(data, xmin, xmax)
     p /= p.max()
-    c = p.cumsum()
-    c /= c[-1]
-    i = (c > 0.005) & (c < 0.995) | (p > 0.1)
+    i = (x < quantile(x, 0.99, p)) & (x > quantile(x, 0.01, p)) | (p > 0.1)
 
     ans = ax.plot(x[i], p[i], *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -306,16 +301,15 @@ def hist_1d(ax, data, *args, **kwargs):
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
-    if xmin is None:
-        xmin = data.min()
-    if xmax is None:
-        xmax = data.max()
     weights = kwargs.pop('weights', None)
+    if xmin is None:
+        xmin = quantile(data, 0.01, weights)
+    if xmax is None:
+        xmax = quantile(data, 0.99, weights)
     histtype = kwargs.pop('histtype', 'bar')
 
-    plt.sca(ax=ax)
-    h, edges, bars = hist(data, range=(xmin, xmax), histtype=histtype,
-                          weights=weights, *args, **kwargs)
+    h, edges, bars = ax.hist(data, range=(xmin, xmax), histtype=histtype,
+                             weights=weights, *args, **kwargs)
     if histtype == 'bar':
         for b in bars:
             b.set_height(b.get_height() / h.max())
