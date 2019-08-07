@@ -35,7 +35,6 @@ setup(name='anesthetic',
       setup_requires=['pytest-runner'],
       extras_require={
           'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc'],
-          'automated bins calculation': ['astropy'],
           },
       tests_require=['pytest'],
       include_package_data=True,

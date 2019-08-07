@@ -267,9 +267,7 @@ def plot_1d(ax, data, *args, **kwargs):
 def hist_1d(ax, data, *args, **kwargs):
     """Plot a 1d histogram.
 
-    This functions is a wrapper around matplotlib.axes.Axes.hist, or
-    astropy.visualization.hist if it is available. astropy's hist function
-    allows for a more sophisticated calculation of the bins. All remaining
+    This functions is a wrapper around matplotlib.axes.Axes.hist. All remaining
     keyword arguments are passed onwards.
 
     Parameters
