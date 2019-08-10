@@ -337,6 +337,11 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         x and y coordinates of uniformly weighted samples to generate kernel
         density estimator.
 
+    contours: list
+        amount of mass within each iso-probability contour.
+        If None defaults to hist2d.
+        Default [0.68, 0.95]
+
     xmin, xmax, ymin, ymax: float
         lower/upper prior bounds in x/y coordinates
         optional, default None
@@ -354,6 +359,7 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     linewidths = kwargs.pop('linewidths', 0.5)
+    contours = kwargs.pop('contours', [0.68, 0.95])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -362,7 +368,7 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     x, y, pdf = kde_2d(data_x, data_y,
                        xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
-    contours = iso_probability_contours(pdf)
+    contours = iso_probability_contours(pdf, contours=contours)
     cmap = basic_cmap(color)
 
     i = (pdf >= contours[0]*0.5).any(axis=0)
@@ -376,7 +382,7 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours, zorder=zorder,
                vmin=0, vmax=pdf.max(), linewidths=linewidths, colors='k',
                *args, **kwargs)
-    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
+    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.32),
                                  lw=2, label=label)]
 
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -449,7 +455,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=0, vmax=pdf.max(),
                               *args, **kwargs)
 
-    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.33),
+    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.32),
                                  lw=2, label=label)]
 
     ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
@@ -526,7 +532,7 @@ def get_legend_proxy(fig):
         cmaps = [basic_cmap(color) for color in colors]
 
     proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.999),
-                           edgecolor=cmap(0.33), linewidth=2)
+                           edgecolor=cmap(0.32), linewidth=2)
              for cmap in cmaps]
 
     if not cmaps:
