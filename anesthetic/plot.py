@@ -408,8 +408,8 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         optional, default None
 
     levels: list
-        amount of mass within each iso-probability contour.
-        If None defaults to hist2d.
+        Shade iso-probability contours containing these levels of probability
+        mass. If None defaults to usual matplotlib.axes.Axes.hist2d colouring.
         optional, default None
 
     Returns
