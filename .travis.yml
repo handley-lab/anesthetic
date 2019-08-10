@@ -21,11 +21,23 @@ matrix:
         - os: osx
           language: generic
           cache: pip
-          env:
-              -
-              - CONDA=1 
-              - EXTRAS=1
-              - CONDA=1 EXTRAS=1
+
+        # OSX conda
+        - os: osx
+          language: generic
+          env: CONDA=1 
+
+        # OSX extras
+        - os: osx
+          language: generic
+          cache: pip
+          env: EXTRAS=1
+
+        # OSX conda + extras
+        - os: osx
+          language: generic
+          cache: pip
+          env: CONDA=1 EXTRAS=1
 
         # MontePython master branch check
         - os: linux
