@@ -52,11 +52,13 @@ matrix:
           env: EXTRAS=1 MONTEPYTHONMASTER=1
 
         - os: linux
+          dist: xenial
           python: 3.7
           cache: pip
           env: CONDA=1
 
         - os: linux
+          dist: xenial
           python: 3.7
           cache: pip
           env: CONDA=1 EXTRAS=1
