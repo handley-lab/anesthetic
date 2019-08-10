@@ -6,7 +6,6 @@ python:
     - "3.6"
     - "3.5"
     - "2.7"
-    - "3.7"
 cache: pip
 env:
     - 
@@ -38,6 +37,16 @@ matrix:
           language: generic
           cache: pip
           env: CONDA=1 EXTRAS=1
+
+        # Python 3.7
+        - os: linux
+          python: 3.7
+          cache: pip
+
+        # Python 3.7
+        - os: linux
+          python: 3.7
+          env: EXTRAS=1
 
         # MontePython master branch check
         - os: linux
@@ -71,9 +80,8 @@ install:
           conda info -a;
           conda create -q -n test-env python=$TRAVIS_PYTHON_VERSION;
           source activate test-env;
-          conda install cython numpy;
       fi;
-    - pip install cython numpy;
+    - pip install Cython numpy;
     - if [[ "$EXTRAS" == 1 ]];
       then
           pip install -r requirements.txt;
