@@ -242,7 +242,7 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
     cov = numpy.cov(x, y, aweights=w)
     L = numpy.linalg.cholesky(cov)
     Linv = numpy.linalg.inv(L)
-    x_, y_ = Linv @ [x[i], y[i]]
+    x_, y_ = Linv.dot([x[i], y[i]])
     tri = Triangulation(x_, y_)
 
     # Mask out triangles with unreasonably large perimeters
@@ -255,7 +255,7 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
 
     # For each point find corresponding triangles
     trifinder = tri.get_trifinder()
-    j = trifinder(*(Linv @ [x, y]))
+    j = trifinder(*(Linv.dot([x, y])))
     k = tri.triangles[j[j != -1]]
 
     # Compute mass in each triangle, and add it to each corner
@@ -263,7 +263,7 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
     for i in range(3):
         numpy.add.at(w_, k[:, i], w[j != -1])
 
-    return (*(L @ [x_, y_]), w_, tri.get_masked_triangles())
+    return (*(L.dot([x_, y_])), w_, tri.get_masked_triangles())
 
 
 def sample_compression_1d(x, w=None, n=1000):
