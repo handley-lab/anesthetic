@@ -138,8 +138,8 @@ class MCMCSamples(WeightedDataFrame):
                     return hist_plot_1d(ax, self[paramname_x], weights=self.w,
                                         xmin=xmin, xmax=xmax, *args, **kwargs)
                 elif plot_type == 'astropyhist':
-                    return hist_plot_1d(ax, self[paramname_x],
-                                        plotter='astropyhist',
+                    x = self[paramname_x].compress()
+                    return hist_plot_1d(ax, x, plotter='astropyhist',
                                         xmin=xmin, xmax=xmax, *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
