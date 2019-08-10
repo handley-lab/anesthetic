@@ -29,7 +29,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import LineCollection
 from matplotlib.transforms import Affine2D
 from anesthetic.utils import check_bounds, nest_level, unique
-from anesthetic.utils import (sample_compression_1d, quantile
+from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               iso_probability_contours_from_samples)
