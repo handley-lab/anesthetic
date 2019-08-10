@@ -7,8 +7,9 @@ import os
 import numpy
 import pandas
 from scipy.special import logsumexp
-from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
-                             hist_1d, scatter_plot_2d, contour_plot_2d)
+from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
+                             hist_plot_1d, scatter_plot_2d, contour_plot_2d,
+                             hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import compute_nlive
 from anesthetic.gui.plot import RunPlotter
@@ -110,8 +111,8 @@ class MCMCSamples(WeightedDataFrame):
             If not provided, or the same as paramname_x, then 1D plot produced.
 
         plot_type: str, optional
-            Must be in {'kde', 'scatter'} for 2D plots and in {'kde', 'hist'}
-            for 1D plots. (Default: 'kde')
+            Must be in {'kde', 'scatter', 'hist'} for 2D plots and in
+            {'kde', 'hist', 'astropyhist'} for 1D plots. (Default: 'kde')
 
         Returns
         -------
@@ -128,41 +129,55 @@ class MCMCSamples(WeightedDataFrame):
 
         if do_1d_plot:
             if paramname_x in self and plot_type is not None:
-                x = self[paramname_x].compress()
                 xmin, xmax = self._limits(paramname_x)
                 if plot_type == 'kde':
-                    plot = plot_1d
+                    x = self[paramname_x].compress()
+                    return kde_plot_1d(ax, x, xmin=xmin, xmax=xmax,
+                                       *args, **kwargs)
                 elif plot_type == 'hist':
-                    plot = hist_1d
+                    return hist_plot_1d(ax, self[paramname_x], weights=self.w,
+                                        xmin=xmin, xmax=xmax, *args, **kwargs)
+                elif plot_type == 'astropyhist':
+                    x = self[paramname_x].compress()
+                    return hist_plot_1d(ax, x, plotter='astropyhist',
+                                        xmin=xmin, xmax=xmax, *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
-                                              " in {'kde', 'hist'}."
-                                              % plot_type)
-                return plot(ax, x, xmin=xmin, xmax=xmax, *args, **kwargs)
+                                              " one of {'kde', 'hist',"
+                                              "'astropyhist'}." % plot_type)
             else:
                 ax.plot([], [])
 
         else:
             if (paramname_x in self and paramname_y in self
                     and plot_type is not None):
-                if plot_type == 'kde':
-                    nsamples = None
-                    plot = contour_plot_2d
-                    ax.scatter([], [])
-                elif plot_type == 'scatter':
-                    nsamples = 500
-                    plot = scatter_plot_2d
-                    ax.plot([], [])
-                else:
-                    raise NotImplementedError("plot_type is '%s', but must be"
-                                              "in {'kde', 'scatter'}."
-                                              % plot_type)
                 xmin, xmax = self._limits(paramname_x)
                 ymin, ymax = self._limits(paramname_y)
-                x = self[paramname_x].compress(nsamples)
-                y = self[paramname_y].compress(nsamples)
-                return plot(ax, x, y, xmin=xmin, xmax=xmax, ymin=ymin,
-                            ymax=ymax, *args, **kwargs)
+                if plot_type == 'kde':
+                    x = self[paramname_x].compress()
+                    y = self[paramname_y].compress()
+                    ax.scatter([], [])
+                    return contour_plot_2d(ax, x, y, xmin=xmin, xmax=xmax,
+                                           ymin=ymin, ymax=ymax,
+                                           *args, **kwargs)
+                elif plot_type == 'scatter':
+                    x = self[paramname_x].compress(500)
+                    y = self[paramname_y].compress(500)
+                    ax.plot([], [])
+                    return scatter_plot_2d(ax, x, y, xmin=xmin, xmax=xmax,
+                                           ymin=ymin, ymax=ymax,
+                                           *args, **kwargs)
+                elif plot_type == 'hist':
+                    x = self[paramname_x]
+                    y = self[paramname_y]
+                    ax.scatter([], [])
+                    return hist_plot_2d(ax, x, y, weights=self.w, xmin=xmin,
+                                        xmax=xmax, ymin=ymin, ymax=ymax,
+                                        *args, **kwargs)
+                else:
+                    raise NotImplementedError("plot_type is '%s', but must be"
+                                              "in {'kde', 'scatter', 'hist'}."
+                                              % plot_type)
 
             else:
                 ax.plot([], [])
@@ -224,10 +239,12 @@ class MCMCSamples(WeightedDataFrame):
             The options for 'diagonal are:
                 - 'kde'
                 - 'hist.
+                - 'astropyhist.
             The options for 'lower' and 'upper' are:
                 - 'kde'
                 - 'scatter'
-            Default: {'diagonal': 'kde', 'lower': 'kde'}
+                - 'hist'
+            Default: {'diagonal': 'kde', 'lower': 'kde', 'upper':'scatter'}
 
         diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
             kwargs for the diagonal (1D)/lower or upper (2D) plots. This is

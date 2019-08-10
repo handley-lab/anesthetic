@@ -1,12 +1,10 @@
 # linux matrix
-language: python
-dist: xenial
 os: linux
+language: python
 python:
     - "3.6"
     - "3.5"
     - "2.7"
-    - "3.7"
 cache: pip
 env:
     - 
@@ -16,6 +14,7 @@ env:
 
 # OSX and MontePython master
 matrix:
+    fast_finish: true
     include:
         # OSX
         - os: osx
@@ -45,11 +44,53 @@ matrix:
           cache: pip
           env: EXTRAS=1 MONTEPYTHONMASTER=1
 
+        # Python 3.7
+        - os: linux
+          dist: xenial
+          python: 3.7
+          cache: pip
+
+        # Python 3.7 extras
+        - os: linux
+          dist: xenial
+          python: 3.7
+          cache: pip
+          env: EXTRAS=1
+
+        # Python 3.7 conda
+        - os: linux
+          dist: xenial
+          python: 3.7
+          cache: pip
+          env: CONDA=1
+
+        # Python 3.7 conda + extras
+        - os: linux
+          dist: xenial
+          python: 3.7
+          cache: pip
+          env: CONDA=1 EXTRAS=1
+
     allow_failures:
+        # The master branch of montepython is unstable
         - os: linux
           python: 2.7
           cache: pip
           env: EXTRAS=1 MONTEPYTHONMASTER=1
+
+        # Conda has been historically difficult for python 3.7
+        - os: linux
+          dist: xenial
+          python: 3.7
+          cache: pip
+          env: CONDA=1
+
+        # Conda has been historically difficult for python 3.7
+        - os: linux
+          dist: xenial
+          python: 3.7
+          cache: pip
+          env: CONDA=1 EXTRAS=1
 
 before_install:
     # OSX setup
