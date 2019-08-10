@@ -14,9 +14,8 @@ env:
 
 # OSX and MontePython master
 matrix:
+    fast_finish: true
     include:
-        fast_finish: true
-
         # OSX
         - os: osx
           language: generic
