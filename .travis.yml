@@ -6,6 +6,7 @@ python:
     - "3.6"
     - "3.5"
     - "2.7"
+    - "3.7"
 cache: pip
 env:
     - 
@@ -38,16 +39,6 @@ matrix:
           cache: pip
           env: CONDA=1 EXTRAS=1
 
-        # Python 3.7
-        - os: linux
-          python: 3.7
-          cache: pip
-
-        # Python 3.7
-        - os: linux
-          python: 3.7
-          env: EXTRAS=1
-
         # MontePython master branch check
         - os: linux
           python: 2.7
@@ -59,6 +50,16 @@ matrix:
           python: 2.7
           cache: pip
           env: EXTRAS=1 MONTEPYTHONMASTER=1
+
+        - os: linux
+          python: 3.7
+          cache: pip
+          env: CONDA=1
+
+        - os: linux
+          python: 3.7
+          cache: pip
+          env: CONDA=1 EXTRAS=1
 
 before_install:
     # OSX setup
