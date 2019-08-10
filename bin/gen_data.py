@@ -28,7 +28,7 @@ def loglikelihood(x):
     logl -= numpy.log(sigma2) 
     logl -= x2/sigma2
 
-    logl += numpy.log(1/(b-a) + m * (x-(b+a)/2.))
+    logl += numpy.log(1/(b-a) + m * (x4-(b+a)/2.))
     return logl
 
 
@@ -60,19 +60,19 @@ def mcmc_sim(ndims=5):
 
 data, logL, w = mcmc_sim()
 mcmc = MCMCSamples(data=data, columns=columns, logL=logL, w=w, tex=tex)
+mcmc['chi2'] = -2*mcmc.logL
 
 
 # MCMC multiple files
 root = './tests/example_data/gd'
 roots.append(root)
-mcmc[['weight', 'logL'] + columns][:len(mcmc)//2].to_csv(root + '_1.txt', sep=' ', index=False, header=False)
-mcmc[['weight', 'logL'] + columns][len(mcmc)//2:].to_csv(root + '_2.txt', sep=' ', index=False, header=False)
+mcmc[['weight', 'chi2'] + columns][:len(mcmc)//2].to_csv(root + '_1.txt', sep=' ', index=False, header=False)
+mcmc[['weight', 'chi2'] + columns][len(mcmc)//2:].to_csv(root + '_2.txt', sep=' ', index=False, header=False)
 
 # MCMC single file
 root = './tests/example_data/gd_single'
 roots.append(root)
-mcmc[['weight', 'logL'] + columns].to_csv(root + '.txt', sep=' ', index=False, header=False)
-
+mcmc[['weight', 'chi2'] + columns].to_csv(root + '.txt', sep=' ', index=False, header=False)
 
 
 # NS
@@ -90,7 +90,7 @@ def ns_sim(ndims=5, nlive=125):
     dead_points = []
     dead_likes = []
     birth_likes = []
-    for _ in range(nlive*9):
+    for _ in range(nlive*11):
         i = numpy.argmin(live_likes)
         Lmin = live_likes[i]
         dead_points.append(live_points[i].copy())
@@ -136,7 +136,7 @@ for root in roots:
     # paramnames file
     with open(root + '.paramnames', 'w') as f:
         for p in columns:
-            f.write('%s\t%s\n' % (p, tex[p]))
+            f.write('%s\t%s\n' % (p, tex[p].replace('$','')))
 
     # ranges file
     with open(root + '.ranges', 'w') as f:
