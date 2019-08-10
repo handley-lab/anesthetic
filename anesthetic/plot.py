@@ -20,11 +20,14 @@ try:
     from astropy.visualization import hist
 except ImportError:
     pass
+try:
+    from anesthetic.fastkde import fastkde_1d, fastkde_2d
+except ImportError:
+    pass
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import LineCollection
 from matplotlib.transforms import Affine2D
-from anesthetic.fastkde import fastkde_1d, fastkde_2d
 from anesthetic.utils import check_bounds, nest_level, unique
 from anesthetic.utils import (sample_compression_1d, quantile
                               triangular_sample_compression_2d,
@@ -262,7 +265,10 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
 
-    x, p = fastkde_1d(data, xmin, xmax)
+    try:
+        x, p = fastkde_1d(data, xmin, xmax)
+    except NameError:
+        raise ImportError("You need to install fastkde to use fastkde")
     p /= p.max()
     i = (x < quantile(x, 0.99, p)) & (x > quantile(x, 0.01, p)) | (p > 0.1)
 
@@ -441,8 +447,11 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
 
-    x, y, pdf = fastkde_2d(data_x, data_y,
-                           xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    try:
+        x, y, pdf = fastkde_2d(data_x, data_y,
+                               xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    except NameError:
+        raise ImportError("You need to install fastkde to use fastkde")
 
     levels = iso_probability_contours(pdf, contours=levels)
     cmap = basic_cmap(color)
