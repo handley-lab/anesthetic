@@ -46,6 +46,7 @@ def quantile(a, q, w=None):
     """Compute the weighted quantile for a one dimensional array."""
     if w is None:
         w = numpy.ones_like(a)
+    a = numpy.array(list(a))  # Necessary to convert pandas arrays
     w = numpy.array(list(w))  # Necessary to convert pandas arrays
     i = numpy.argsort(a)
     c = numpy.cumsum(w[i[1:]]+w[i[:-1]])

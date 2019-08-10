@@ -344,3 +344,28 @@ def test_plot_1d_colours():
         assert(len(set(mn_colors)) == 1)
         assert(len(set(pc_colors)) == 1)
         plt.close("all")
+
+
+@pytest.mark.xfail('astropy' not in sys.modules,
+                   raises=ImportError,
+                   reason="requires astropy package")
+def test_astropyhist():
+    numpy.random.seed(3)
+    mcmc = NestedSamples(root='./tests/example_data/pc')
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'diagonal': 'astropyhist'})
+    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'], plot_type='astropyhist')
+    plt.close("all")
+
+
+def test_hist_levels():
+    numpy.random.seed(3)
+    mcmc = NestedSamples(root='./tests/example_data/pc')
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'lower':'hist'},
+                 levels=[0.68, 0.95], bins=20)
+    plt.close("all")
+
+
+def test_ns_output():
+    numpy.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    pc.ns_output(1000)

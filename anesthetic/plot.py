@@ -304,7 +304,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     plotter = kwargs.pop('plotter', '')
-    weights = kwargs.pop('weights', numpy.ones_like(data))
+    weights = kwargs.pop('weights', None)
     if xmin is None:
         xmin = quantile(data, 0.01, weights)
     if xmax is None:
@@ -313,6 +313,9 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     if plotter == 'astropyhist':
         try:
+            print(xmin, xmax)
+            print(data)
+            print(weights)
             h, edges, bars = hist(data, ax=ax, range=(xmin, xmax),
                                   histtype=histtype, *args, **kwargs)
         except NameError:
