@@ -71,9 +71,9 @@ install:
           conda info -a;
           conda create -q -n test-env python=$TRAVIS_PYTHON_VERSION;
           source activate test-env;
-          conda install numpy;
+          conda install cython numpy;
       fi;
-    - pip install Cython numpy;
+    - pip install cython numpy;
     - if [[ "$EXTRAS" == 1 ]];
       then
           pip install -r requirements.txt;
