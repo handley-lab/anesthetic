@@ -339,7 +339,6 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     levels: list
         amount of mass within each iso-probability contour.
-        If None defaults to hist2d.
         optional, default [0.68, 0.95]
 
     xmin, xmax, ymin, ymax: float
