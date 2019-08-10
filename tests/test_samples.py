@@ -270,7 +270,11 @@ def test_plot_2d_colours():
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
-    for types in ['hist', 'kde']:
+    plot_types = ['kde', 'hist']
+    if 'fastkde' in sys.modules:
+        plot_types += ['fastkde']
+
+    for types in plot_types:
         fig = plt.figure()
         fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
         types = {'diagonal': types, 'lower': types, 'upper': 'scatter'}
@@ -311,7 +315,13 @@ def test_plot_1d_colours():
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
-    for plot_type in ['kde', 'hist']:
+    plot_types = ['kde', 'hist']
+    if 'astropy' in sys.modules:
+        plot_types += ['astropyhist']
+    if 'fastkde' in sys.modules:
+        plot_types += ['fastkde']
+
+    for plot_type in plot_types:
         fig = plt.figure()
         fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
         gd.plot_1d(axes, plot_type=plot_type, label="gd")
