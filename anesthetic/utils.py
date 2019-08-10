@@ -263,7 +263,8 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
     for i in range(3):
         numpy.add.at(w_, k[:, i], w[j != -1])
 
-    return (*(L.dot([x_, y_])), w_, tri.get_masked_triangles())
+    x_, y_ = L.dot([x_, y_])
+    return (x_, y_, w_, tri.get_masked_triangles())
 
 
 def sample_compression_1d(x, w=None, n=1000):
