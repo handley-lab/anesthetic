@@ -28,7 +28,7 @@ p = (x<1) & (x>0)
 axes['x3']['x3'].twin.plot(x, p/p.max(), ls)
 
 x = numpy.linspace(a-0.1,b+0.1,n)
-p = ((x<b) & (x>a)) * (d*(x-a)/(b-a) + c*(b-x)/(b-a))/((b-a)*(c+d)/2)
+p = ((x<b) & (x>a)) * (1/(b-a) + m * (x-(b+a)/2.))
 axes['x4']['x4'].twin.plot(x, p/p.max(), ls)
 
 

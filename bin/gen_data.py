@@ -90,7 +90,7 @@ def ns_sim(ndims=5, nlive=125):
     dead_points = []
     dead_likes = []
     birth_likes = []
-    for _ in range(nlive*9):
+    for _ in range(nlive*11):
         i = numpy.argmin(live_likes)
         Lmin = live_likes[i]
         dead_points.append(live_points[i].copy())
