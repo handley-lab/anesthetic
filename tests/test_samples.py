@@ -271,35 +271,38 @@ def test_plot_2d_colours():
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
-    fig = plt.figure()
-    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
-    gd.plot_2d(axes, label="gd")
-    pc.plot_2d(axes, label="pc")
-    mn.plot_2d(axes, label="mn")
-    gd_colors = []
-    pc_colors = []
-    mn_colors = []
-    for y, rows in axes.iterrows():
-        for x, ax in rows.iteritems():
-            handles, labels = ax.get_legend_handles_labels()
-            for handle, label in zip(handles, labels):
-                if isinstance(handle, Rectangle):
-                    color = to_hex(handle.get_facecolor())
-                elif isinstance(handle, PathCollection):
-                    color = to_hex(handle.get_facecolor()[0])
-                else:
-                    color = handle.get_color()
+    for types in ['hist', 'kde']:
+        fig = plt.figure()
+        fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
+        types = {'diagonal': types, 'lower': types, 'upper': 'scatter'}
+        gd.plot_2d(axes, types=types, label="gd")
+        pc.plot_2d(axes, types=types, label="pc")
+        mn.plot_2d(axes, types=types, label="mn")
+        gd_colors = []
+        pc_colors = []
+        mn_colors = []
+        for y, rows in axes.iterrows():
+            for x, ax in rows.iteritems():
+                handles, labels = ax.get_legend_handles_labels()
+                for handle, label in zip(handles, labels):
+                    if isinstance(handle, Rectangle):
+                        color = to_hex(handle.get_facecolor())
+                    elif isinstance(handle, PathCollection):
+                        color = to_hex(handle.get_facecolor()[0])
+                    else:
+                        color = handle.get_color()
 
-                if label == 'gd':
-                    gd_colors.append(color)
-                elif label == 'pc':
-                    pc_colors.append(color)
-                elif label == 'mn':
-                    mn_colors.append(color)
+                    if label == 'gd':
+                        gd_colors.append(color)
+                    elif label == 'pc':
+                        pc_colors.append(color)
+                    elif label == 'mn':
+                        mn_colors.append(color)
 
-    assert(len(set(gd_colors)) == 1)
-    assert(len(set(mn_colors)) == 1)
-    assert(len(set(pc_colors)) == 1)
+        assert(len(set(gd_colors)) == 1)
+        assert(len(set(mn_colors)) == 1)
+        assert(len(set(pc_colors)) == 1)
+        plt.close("all")
 
 
 def test_plot_1d_colours():
@@ -340,3 +343,29 @@ def test_plot_1d_colours():
         assert(len(set(gd_colors)) == 1)
         assert(len(set(mn_colors)) == 1)
         assert(len(set(pc_colors)) == 1)
+        plt.close("all")
+
+
+@pytest.mark.xfail('astropy' not in sys.modules,
+                   raises=ImportError,
+                   reason="requires astropy package")
+def test_astropyhist():
+    numpy.random.seed(3)
+    mcmc = NestedSamples(root='./tests/example_data/pc')
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'diagonal': 'astropyhist'})
+    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'], plot_type='astropyhist')
+    plt.close("all")
+
+
+def test_hist_levels():
+    numpy.random.seed(3)
+    mcmc = NestedSamples(root='./tests/example_data/pc')
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'lower': 'hist'},
+                 levels=[0.68, 0.95], bins=20)
+    plt.close("all")
+
+
+def test_ns_output():
+    numpy.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    pc.ns_output(1000)
