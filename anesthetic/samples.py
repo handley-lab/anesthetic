@@ -7,8 +7,8 @@ import os
 import numpy
 import pandas
 from scipy.special import logsumexp
-from anesthetic.plot import (make_1d_axes, make_2d_axes, plot_1d,
-                             hist_1d, scatter_plot_2d, contour_plot_2d,
+from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
+                             hist_plot_1d, scatter_plot_2d, contour_plot_2d,
                              hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import compute_nlive
@@ -132,11 +132,11 @@ class MCMCSamples(WeightedDataFrame):
                 xmin, xmax = self._limits(paramname_x)
                 if plot_type == 'kde':
                     x = self[paramname_x].compress()
-                    return plot_1d(ax, x, xmin=xmin, xmax=xmax,
-                                   *args, **kwargs)
+                    return kde_plot_1d(ax, x, xmin=xmin, xmax=xmax,
+                                       *args, **kwargs)
                 elif plot_type == 'hist':
-                    return hist_1d(ax, self[paramname_x], weights=self.w,
-                                   xmin=xmin, xmax=xmax, *args, **kwargs)
+                    return hist_plot_1d(ax, self[paramname_x], weights=self.w,
+                                        xmin=xmin, xmax=xmax, *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
                                               " in {'kde', 'hist'}."

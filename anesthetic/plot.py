@@ -220,7 +220,7 @@ def make_2d_axes(params, **kwargs):
     return fig, axes
 
 
-def plot_1d(ax, data, *args, **kwargs):
+def kde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
@@ -264,7 +264,7 @@ def plot_1d(ax, data, *args, **kwargs):
     return ans
 
 
-def hist_1d(ax, data, *args, **kwargs):
+def hist_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d histogram.
 
     This functions is a wrapper around matplotlib.axes.Axes.hist. All remaining
@@ -337,10 +337,10 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         x and y coordinates of uniformly weighted samples to generate kernel
         density estimator.
 
-    contours: list
+    levels: list
         amount of mass within each iso-probability contour.
         If None defaults to hist2d.
-        Default [0.68, 0.95]
+        optional, default [0.68, 0.95]
 
     xmin, xmax, ymin, ymax: float
         lower/upper prior bounds in x/y coordinates
@@ -359,7 +359,7 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     linewidths = kwargs.pop('linewidths', 0.5)
-    contours = kwargs.pop('contours', [0.68, 0.95])
+    levels = kwargs.pop('levels', [0.68, 0.95])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -368,18 +368,18 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     x, y, pdf = kde_2d(data_x, data_y,
                        xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
-    contours = iso_probability_contours(pdf, contours=contours)
+    levels = iso_probability_contours(pdf, contours=levels)
     cmap = basic_cmap(color)
 
-    i = (pdf >= contours[0]*0.5).any(axis=0)
-    j = (pdf >= contours[0]*0.5).any(axis=1)
+    i = (pdf >= levels[0]*0.5).any(axis=0)
+    j = (pdf >= levels[0]*0.5).any(axis=1)
 
-    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], contours, cmap=cmap,
+    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], levels, cmap=cmap,
                        zorder=zorder, vmin=0, vmax=pdf.max(), *args, **kwargs)
     for c in cbar.collections:
         c.set_cmap(cmap)
 
-    ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], contours, zorder=zorder,
+    ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], levels, zorder=zorder,
                vmin=0, vmax=pdf.max(), linewidths=linewidths, colors='k',
                *args, **kwargs)
     ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.32),
@@ -408,10 +408,10 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         lower/upper prior bounds in x/y coordinates
         optional, default None
 
-    contours: list
+    levels: list
         amount of mass within each iso-probability contour.
         If None defaults to hist2d.
-        Default [0.68, 0.95]
+        optional, default None
 
     Returns
     -------
@@ -424,7 +424,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
-    contours = kwargs.pop('contours', [0.68, 0.95])
+    levels = kwargs.pop('levels', None)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -432,7 +432,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     cmap = basic_cmap(color)
 
-    if contours is None:
+    if levels is None:
         pdf, x, y, image = ax.hist2d(data_x, data_y, cmap=cmap,
                                      *args, **kwargs)
     else:
@@ -444,10 +444,10 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         cmax = kwargs.pop('cmax', None)
         pdf, x, y = numpy.histogram2d(data_x, data_y, bins, range,
                                       density, weights)
-        contours = iso_probability_contours(pdf, contours)
-        pdf = numpy.digitize(pdf, contours, right=True)
-        pdf = numpy.array(contours)[pdf]
-        pdf = numpy.ma.masked_array(pdf, pdf < contours[1])
+        levels = iso_probability_contours(pdf, levels)
+        pdf = numpy.digitize(pdf, levels, right=True)
+        pdf = numpy.array(levels)[pdf]
+        pdf = numpy.ma.masked_array(pdf, pdf < levels[1])
         if cmin is not None:
             pdf[pdf < cmin] = numpy.ma.masked
         if cmax is not None:
