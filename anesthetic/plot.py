@@ -15,6 +15,10 @@ import numpy
 import pandas
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
+try:
+    from astropy.visualization import hist
+except ImportError:
+    pass
 from anesthetic.kde import kde_1d, kde_2d
 from anesthetic.utils import check_bounds, nest_level, unique
 from anesthetic.utils import iso_probability_contours
@@ -299,15 +303,24 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
-    weights = kwargs.pop('weights', None)
+    plotter = kwargs.pop('plotter', '')
+    weights = kwargs.pop('weights', numpy.ones_like(data))
     if xmin is None:
         xmin = quantile(data, 0.01, weights)
     if xmax is None:
         xmax = quantile(data, 0.99, weights)
     histtype = kwargs.pop('histtype', 'bar')
 
-    h, edges, bars = ax.hist(data, range=(xmin, xmax), histtype=histtype,
-                             weights=weights, *args, **kwargs)
+    if plotter == 'astropyhist':
+        try:
+            h, edges, bars = hist(data, ax=ax, range=(xmin, xmax),
+                                  histtype=histtype, *args, **kwargs)
+        except NameError:
+            raise ImportError("You need to install astropy to use astropyhist")
+    else:
+        h, edges, bars = ax.hist(data, range=(xmin, xmax), histtype=histtype,
+                                 weights=weights, *args, **kwargs)
+
     if histtype == 'bar':
         for b in bars:
             b.set_height(b.get_height() / h.max())

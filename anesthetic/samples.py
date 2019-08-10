@@ -112,7 +112,7 @@ class MCMCSamples(WeightedDataFrame):
 
         plot_type: str, optional
             Must be in {'kde', 'scatter', 'hist'} for 2D plots and in
-            {'kde', 'hist'} for 1D plots. (Default: 'kde')
+            {'kde', 'hist', 'astropyhist'} for 1D plots. (Default: 'kde')
 
         Returns
         -------
@@ -137,10 +137,14 @@ class MCMCSamples(WeightedDataFrame):
                 elif plot_type == 'hist':
                     return hist_plot_1d(ax, self[paramname_x], weights=self.w,
                                         xmin=xmin, xmax=xmax, *args, **kwargs)
+                elif plot_type == 'astropyhist':
+                    return hist_plot_1d(ax, self[paramname_x],
+                                        plotter='astropyhist',
+                                        xmin=xmin, xmax=xmax, *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
-                                              " in {'kde', 'hist'}."
-                                              % plot_type)
+                                              " one of {'kde', 'hist',"
+                                              "'astropyhist'}." % plot_type)
             else:
                 ax.plot([], [])
 
@@ -235,6 +239,7 @@ class MCMCSamples(WeightedDataFrame):
             The options for 'diagonal are:
                 - 'kde'
                 - 'hist.
+                - 'astropyhist.
             The options for 'lower' and 'upper' are:
                 - 'kde'
                 - 'scatter'

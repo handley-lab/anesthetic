@@ -1,6 +1,7 @@
 import matplotlib_agg  # noqa: F401
 import pytest
 import numpy
+import sys
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
@@ -219,58 +220,68 @@ def test_hist_plot_1d():
     fig, ax = plt.subplots()
     numpy.random.seed(0)
     data = numpy.random.randn(1000)
+    for p in ['', 'astropyhist']:
+        try:
+            # Check heights for histtype 'bar'
+            bars = hist_plot_1d(ax, data, histtype='bar', plotter=p)
+            assert(numpy.all([isinstance(b, Patch) for b in bars]))
+            assert(max([b.get_height() for b in bars]) == 1.)
+            assert(numpy.all(numpy.array([b.get_height() for b in bars])
+                             <= 1.))
 
-    # Check heights for histtype 'bar'
-    bars = hist_plot_1d(ax, data, histtype='bar')
-    assert(numpy.all([isinstance(b, Patch) for b in bars]))
-    assert(max([b.get_height() for b in bars]) == 1.)
-    assert(numpy.all(numpy.array([b.get_height() for b in bars]) <= 1.))
+            # Check heights for histtype 'step'
+            polygon, = hist_plot_1d(ax, data, histtype='step', plotter=p)
+            assert(isinstance(polygon, Polygon))
+            trans = polygon.get_transform() - ax.transData
+            assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                                 rtol=1e-10, atol=1e-10))
+            assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
 
-    # Check heights for histtype 'step'
-    polygon, = hist_plot_1d(ax, data, histtype='step')
-    assert(isinstance(polygon, Polygon))
-    trans = polygon.get_transform() - ax.transData
-    assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
-                         rtol=1e-10, atol=1e-10))
-    assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
+            # Check heights for histtype 'stepfilled'
+            polygon, = hist_plot_1d(ax, data, histtype='stepfilled', plotter=p)
+            assert(isinstance(polygon, Polygon))
+            trans = polygon.get_transform() - ax.transData
+            assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                                 rtol=1e-10, atol=1e-10))
+            assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
 
-    # Check heights for histtype 'stepfilled'
-    polygon, = hist_plot_1d(ax, data, histtype='stepfilled')
-    assert(isinstance(polygon, Polygon))
-    trans = polygon.get_transform() - ax.transData
-    assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
-                         rtol=1e-10, atol=1e-10))
-    assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
+            # Check arguments are passed onward to underlying function
+            bars = hist_plot_1d(ax, data, histtype='bar',
+                                color='r', alpha=0.5, plotter=p)
+            cc = ColorConverter.to_rgba('r', alpha=0.5)
+            assert(numpy.all([b.get_fc() == cc for b in bars]))
+            polygon, = hist_plot_1d(ax, data, histtype='step',
+                                    color='r', alpha=0.5, plotter=p)
+            assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
 
-    # Check arguments are passed onward to underlying function
-    bars = hist_plot_1d(ax, data, histtype='bar', color='r', alpha=0.5)
-    assert(numpy.all([b.get_fc() == ColorConverter.to_rgba('r', alpha=0.5)
-                      for b in bars]))
-    polygon, = hist_plot_1d(ax, data, histtype='step', color='r', alpha=0.5)
-    assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
+            # Check xmin
+            xmin = -0.5
+            bars = hist_plot_1d(ax, data, histtype='bar', xmin=xmin, plotter=p)
+            assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
+            polygon, = hist_plot_1d(ax, data, histtype='step', xmin=xmin)
+            assert((polygon.xy[:, 0] >= -0.5).all())
 
-    # Check xmin
-    xmin = -0.5
-    bars = hist_plot_1d(ax, data, histtype='bar', xmin=xmin)
-    assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
-    polygon, = hist_plot_1d(ax, data, histtype='step', xmin=xmin)
-    assert((polygon.xy[:, 0] >= -0.5).all())
+            # Check xmax
+            xmax = 0.5
+            bars = hist_plot_1d(ax, data, histtype='bar', xmax=xmax, plotter=p)
+            assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
+            polygon, = hist_plot_1d(ax, data, histtype='step',
+                                    xmax=xmax, plotter=p)
+            assert((polygon.xy[:, 0] <= 0.5).all())
 
-    # Check xmax
-    xmax = 0.5
-    bars = hist_plot_1d(ax, data, histtype='bar', xmax=xmax)
-    assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
-    polygon, = hist_plot_1d(ax, data, histtype='step', xmax=xmax)
-    assert((polygon.xy[:, 0] <= 0.5).all())
-
-    # Check xmin and xmax
-    bars = hist_plot_1d(ax, data, histtype='bar', xmin=xmin, xmax=xmax)
-    assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
-    assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
-    polygon, = hist_plot_1d(ax, data, histtype='step', xmin=xmin, xmax=xmax)
-    assert((polygon.xy[:, 0] >= -0.5).all())
-    assert((polygon.xy[:, 0] <= 0.5).all())
-    plt.close("all")
+            # Check xmin and xmax
+            bars = hist_plot_1d(ax, data, histtype='bar',
+                                xmin=xmin, xmax=xmax, plotter=p)
+            assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
+            assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
+            polygon, = hist_plot_1d(ax, data, histtype='step',
+                                    xmin=xmin, xmax=xmax, plotter=p)
+            assert((polygon.xy[:, 0] >= -0.5).all())
+            assert((polygon.xy[:, 0] <= 0.5).all())
+            plt.close("all")
+        except ImportError:
+            if p == 'astropyhist' and 'astropy' not in sys.modules:
+                pass
 
 
 def test_contour_plot_2d():
