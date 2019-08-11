@@ -21,7 +21,7 @@ try:
 except ImportError:
     pass
 try:
-    from anesthetic.fastkde import fastkde_1d, fastkde_2d
+    from anesthetic.kde import fastkde_1d, fastkde_2d
 except ImportError:
     pass
 from matplotlib.ticker import MaxNLocator
