@@ -380,9 +380,6 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     if plotter == 'astropyhist':
         try:
-            print(xmin, xmax)
-            print(data)
-            print(weights)
             h, edges, bars = hist(data, ax=ax, range=(xmin, xmax),
                                   histtype=histtype, *args, **kwargs)
         except NameError:
