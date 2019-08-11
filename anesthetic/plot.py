@@ -318,8 +318,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
-    n = kwargs.pop('ncompress', 1000)
-    x, w = sample_compression_1d(data, weights, n)
+    ncompress = kwargs.pop('ncompress', 1000)
+    x, w = sample_compression_1d(data, weights, ncompress)
     p = gaussian_kde(x, weights=w)(x)
     p /= p.max()
     i = ((x < quantile(x, 0.999, w)) & (x > quantile(x, 0.001, w))) | (p > 0.1)
@@ -513,7 +513,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     weights = kwargs.pop('weights', None)
-    n = kwargs.pop('ncompress', 1000)
+    ncompress = kwargs.pop('ncompress', 1000)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     linewidths = kwargs.pop('linewidths', 0.5)
@@ -523,7 +523,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
 
     x, y, w, triangles = triangular_sample_compression_2d(data_x, data_y,
-                                                          weights, n)
+                                                          weights, ncompress)
     kde = gaussian_kde([x, y], weights=w)
     p = kde([x, y])
     contours = iso_probability_contours_from_samples(p, weights=w)
