@@ -148,8 +148,9 @@ class MCMCSamples(WeightedDataFrame):
                                         xmin=xmin, xmax=xmax, *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
-                                              " one of {'kde', 'hist',"
-                                              "'astropyhist'}." % plot_type)
+                                              " one of {'kde', 'fastkde', "
+                                              "'hist', 'astropyhist'}."
+                                              % plot_type)
             else:
                 ax.plot([], [])
 
