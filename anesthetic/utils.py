@@ -206,7 +206,7 @@ def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
     return c
 
 
-def triangular_sample_compression_2d(x, y, w=None, n=1000):
+def triangular_sample_compression_2d(x, y, w=None, n=None):
     """Histogram a 2D set of weighted samples via triangulation.
 
     This defines bins via a triangulation of the subsamples, sums weights
@@ -231,6 +231,9 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
     """
     if w is None:
         w = numpy.ones_like(x)
+
+    if n is None:
+        n = 1000
 
     # Select samples for triangulation
     if sum(w != 0) < n:
@@ -267,7 +270,7 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
     return (x_, y_, w_, tri.get_masked_triangles())
 
 
-def sample_compression_1d(x, w=None, n=1000):
+def sample_compression_1d(x, w=None, n=None):
     """Histogram a 1D set of weighted samples via subsampling.
 
     This compresses the number of samples, combining weights.
@@ -290,6 +293,9 @@ def sample_compression_1d(x, w=None, n=1000):
     """
     if w is None:
         w = numpy.ones_like(x)
+
+    if n is None:
+        n = 1000
 
     # Select inner samples for triangulation
     if sum(w != 0) < n:

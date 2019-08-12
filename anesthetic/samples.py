@@ -109,12 +109,17 @@ class MCMCSamples(WeightedDataFrame):
 
         paramname_y: str
             Choice of parameter to plot on y-coordinate from self.columns.
-            If not provided, or the same as paramname_x, then 1D plot produced.
+            optional, if not provided, or the same as paramname_x, then 1D plot
+            produced.
 
-        plot_type: str, optional
+        plot_type: str
             Must be in {'kde', 'scatter', 'hist', 'fastkde'} for 2D plots and
             in {'kde', 'hist', 'fastkde', 'astropyhist'} for 1D plots.
-            (Default: 'kde')
+            optional, (Default: 'kde')
+
+        ncompress: int
+            Number of samples to use in plotting routines.
+            optional, Default dynamically chosen
 
         Returns
         -------
@@ -128,22 +133,25 @@ class MCMCSamples(WeightedDataFrame):
         plot_type = kwargs.pop('plot_type', 'kde')
         do_1d_plot = paramname_y is None or paramname_x == paramname_y
         kwargs['label'] = kwargs.get('label', self.label)
+        ncompress = kwargs.pop('ncompress', None)
 
         if do_1d_plot:
             if paramname_x in self and plot_type is not None:
                 xmin, xmax = self._limits(paramname_x)
                 if plot_type == 'kde':
                     return kde_plot_1d(ax, self[paramname_x], weights=self.w,
-                                       xmin=xmin, xmax=xmax, *args, **kwargs)
+                                       ncompress=ncompress,
+                                       xmin=xmin, xmax=xmax,
+                                       *args, **kwargs)
                 elif plot_type == 'fastkde':
-                    x = self[paramname_x].compress()
+                    x = self[paramname_x].compress(ncompress)
                     return fastkde_plot_1d(ax, x, xmin=xmin, xmax=xmax,
                                            *args, **kwargs)
                 elif plot_type == 'hist':
                     return hist_plot_1d(ax, self[paramname_x], weights=self.w,
                                         xmin=xmin, xmax=xmax, *args, **kwargs)
                 elif plot_type == 'astropyhist':
-                    x = self[paramname_x].compress()
+                    x = self[paramname_x].compress(ncompress)
                     return hist_plot_1d(ax, x, plotter='astropyhist',
                                         xmin=xmin, xmax=xmax, *args, **kwargs)
                 else:
@@ -165,17 +173,20 @@ class MCMCSamples(WeightedDataFrame):
                     return kde_contour_plot_2d(ax, x, y, weights=self.w,
                                                xmin=xmin, xmax=xmax,
                                                ymin=ymin, ymax=ymax,
+                                               ncompress=ncompress,
                                                *args, **kwargs)
                 elif plot_type == 'fastkde':
-                    x = self[paramname_x].compress()
-                    y = self[paramname_y].compress()
+                    x = self[paramname_x].compress(ncompress)
+                    y = self[paramname_y].compress(ncompress)
                     return fastkde_contour_plot_2d(ax, x, y,
                                                    xmin=xmin, xmax=xmax,
                                                    ymin=ymin, ymax=ymax,
                                                    *args, **kwargs)
                 elif plot_type == 'scatter':
-                    x = self[paramname_x].compress(500)
-                    y = self[paramname_y].compress(500)
+                    if ncompress is None:
+                        ncompress = 500
+                    x = self[paramname_x].compress(ncompress)
+                    y = self[paramname_y].compress(ncompress)
                     return scatter_plot_2d(ax, x, y, xmin=xmin, xmax=xmax,
                                            ymin=ymin, ymax=ymax,
                                            *args, **kwargs)

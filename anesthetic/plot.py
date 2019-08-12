@@ -493,7 +493,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Sample weights.
 
     ncompress: int, optional
-        Degree of compression. Default 1000
+        Degree of compression.
+        optional, Default 1000
 
     xmin, xmax, ymin, ymax: float
         lower/upper prior bounds in x/y coordinates.
@@ -510,7 +511,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     weights = kwargs.pop('weights', None)
-    ncompress = kwargs.pop('ncompress', 1000)
+    ncompress = kwargs.pop('ncompress', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     linewidths = kwargs.pop('linewidths', 0.5)
