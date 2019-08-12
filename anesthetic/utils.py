@@ -2,6 +2,7 @@
 import numpy
 import pandas
 from scipy.interpolate import interp1d
+from scipy.stats import zscore, norm
 from matplotlib.tri import Triangulation
 
 
@@ -253,8 +254,9 @@ def triangular_sample_compression_2d(x, y, w=None, n=None):
     s = (numpy.linalg.norm(vec[1, :, :] - vec[0, :, :], axis=1) +
          numpy.linalg.norm(vec[2, :, :] - vec[1, :, :], axis=1) +
          numpy.linalg.norm(vec[0, :, :] - vec[2, :, :], axis=1))
-    A = s**2
-    tri.set_mask(A > 25*A.mean())
+
+    # Mask out triangles with a perimeter zscore smaller than expected
+    tri.set_mask(zscore(s) > -norm.ppf(1/len(s)))
 
     # For each point find corresponding triangles
     trifinder = tri.get_trifinder()
