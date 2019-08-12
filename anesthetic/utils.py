@@ -256,7 +256,7 @@ def triangular_sample_compression_2d(x, y, w=None, n=None):
          numpy.linalg.norm(vec[0, :, :] - vec[2, :, :], axis=1))
 
     # Mask out triangles with a perimeter zscore smaller than expected
-    tri.set_mask(zscore(s) > -norm.ppf(1/len(s)))
+    tri.set_mask(zscore(numpy.log(s)) > -norm.ppf(1/len(s)))
 
     # For each point find corresponding triangles
     trifinder = tri.get_trifinder()
