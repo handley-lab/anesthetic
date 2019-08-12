@@ -139,6 +139,8 @@ class MCMCSamples(WeightedDataFrame):
             if paramname_x in self and plot_type is not None:
                 xmin, xmax = self._limits(paramname_x)
                 if plot_type == 'kde':
+                    if ncompress is None:
+                        ncompress = 1000
                     return kde_plot_1d(ax, self[paramname_x], weights=self.w,
                                        ncompress=ncompress,
                                        xmin=xmin, xmax=xmax,
@@ -168,6 +170,8 @@ class MCMCSamples(WeightedDataFrame):
                 xmin, xmax = self._limits(paramname_x)
                 ymin, ymax = self._limits(paramname_y)
                 if plot_type == 'kde':
+                    if ncompress is None:
+                        ncompress = 1000
                     x = self[paramname_x]
                     y = self[paramname_y]
                     return kde_contour_plot_2d(ax, x, y, weights=self.w,

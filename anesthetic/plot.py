@@ -511,7 +511,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     weights = kwargs.pop('weights', None)
-    ncompress = kwargs.pop('ncompress', None)
+    ncompress = kwargs.pop('ncompress', 1000)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     linewidths = kwargs.pop('linewidths', 0.5)
