@@ -2,6 +2,8 @@
 import numpy
 import pandas
 from scipy.interpolate import interp1d
+from scipy.stats import zscore, norm
+from matplotlib.tri import Triangulation
 
 
 def channel_capacity(w):
@@ -42,14 +44,17 @@ def compress_weights(w, u=None, nsamples=None):
     return (integer + extra).astype(int)
 
 
-def quantile(a, q, w):
+def quantile(a, q, w=None):
     """Compute the weighted quantile for a one dimensional array."""
     if w is None:
         w = numpy.ones_like(a)
+    a = numpy.array(list(a))  # Necessary to convert pandas arrays
+    w = numpy.array(list(w))  # Necessary to convert pandas arrays
     i = numpy.argsort(a)
-    c = numpy.cumsum(w[i])
-    c /= c.values[-1]
-    icdf = interp1d(c/c.values[-1], a[i])
+    c = numpy.cumsum(w[i[1:]]+w[i[:-1]])
+    c /= c[-1]
+    c = numpy.concatenate(([0.], c))
+    icdf = interp1d(c, a[i])
     return icdf(q)
 
 
@@ -157,3 +162,154 @@ def unique(a):
         if x not in b:
             b.append(x)
     return b
+
+
+def iso_probability_contours(pdf, contours=[0.68, 0.95]):
+    """Compute the iso-probability contour values."""
+    contours = [1-p for p in reversed(contours)]
+    p = sorted(numpy.array(pdf).flatten())
+    m = numpy.cumsum(p)
+    m /= m[-1]
+    interp = interp1d([0]+list(m), [0]+list(p))
+    c = list(interp(contours))+[max(p)]
+
+    # Correct non-zero edges
+    if min(p) != 0:
+        c = [min(p)] + c
+
+    # Correct level sets
+    for i in range(1, len(c)):
+        if c[i-1] == c[i]:
+            for j in range(i):
+                c[j] = c[j] - 1e-5
+
+    return c
+
+
+def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
+                                          weights=None):
+    """Compute the iso-probability contour values."""
+    if weights is None:
+        weights = numpy.ones_like(pdf)
+    contours = [1-p for p in reversed(contours)]
+    i = numpy.argsort(pdf)
+    m = numpy.cumsum(weights[i])
+    m /= m[-1]
+    interp = interp1d([0]+list(m), [0]+list(pdf[i]))
+    c = list(interp(contours))+[max(pdf)]
+
+    # Correct level sets
+    for i in range(1, len(c)):
+        if c[i-1] == c[i]:
+            for j in range(i):
+                c[j] = c[j] - 1e-5
+
+    return c
+
+
+def triangular_sample_compression_2d(x, y, w=None, n=1000):
+    """Histogram a 2D set of weighted samples via triangulation.
+
+    This defines bins via a triangulation of the subsamples, sums weights
+    within triangles, and computes weighted centroids of triangles.
+
+    Parameters
+    ----------
+    x, y: array-like
+        x and y coordinates of samples for compressing
+
+    w: array-like, optional
+        weights of samples
+
+    n: int, optional
+        number of samples returned. Default 1000
+
+    Returns
+    -------
+    x, y, w, array-like
+        Compressed samples and weights
+
+    """
+    if w is None:
+        w = numpy.ones_like(x)
+
+    # Select samples for triangulation
+    if sum(w != 0) < n:
+        i = numpy.arange(len(w))
+    else:
+        i = numpy.random.choice(len(w), size=n, replace=False, p=w/w.sum())
+
+    # Generate triangulation
+    cov = numpy.cov(x, y, aweights=w)
+    L = numpy.linalg.cholesky(cov)
+    Linv = numpy.linalg.inv(L)
+    x_, y_ = Linv.dot([x[i], y[i]])
+    tri = Triangulation(x_, y_)
+
+    # Mask out triangles with unreasonably large perimeters
+    vec = numpy.array([x_[tri.triangles], y_[tri.triangles]]).transpose()
+    s = (numpy.linalg.norm(vec[1, :, :] - vec[0, :, :], axis=1) +
+         numpy.linalg.norm(vec[2, :, :] - vec[1, :, :], axis=1) +
+         numpy.linalg.norm(vec[0, :, :] - vec[2, :, :], axis=1))
+
+    # Mask out triangles with a perimeter zscore smaller than expected
+    tri.set_mask(zscore(numpy.log(s)) > -norm.ppf(1/len(s)))
+
+    # For each point find corresponding triangles
+    trifinder = tri.get_trifinder()
+    j = trifinder(*(Linv.dot([x, y])))
+    k = tri.triangles[j[j != -1]]
+
+    # Compute mass in each triangle, and add it to each corner
+    w_ = numpy.zeros_like(x_)
+    for i in range(3):
+        numpy.add.at(w_, k[:, i], w[j != -1])
+
+    x_, y_ = L.dot([x_, y_])
+    return (x_, y_, w_, tri.get_masked_triangles())
+
+
+def sample_compression_1d(x, w=None, n=1000):
+    """Histogram a 1D set of weighted samples via subsampling.
+
+    This compresses the number of samples, combining weights.
+
+    Parameters
+    ----------
+    x: array-like
+        x coordinate of samples for compressing
+
+    w: array-like, optional
+        weights of samples
+
+    n: int, optional
+        number of samples returned. Default 1000
+
+    Returns
+    -------
+    x, w, array-like
+        Compressed samples and weights
+    """
+    if w is None:
+        w = numpy.ones_like(x)
+
+    # Select inner samples for triangulation
+    if sum(w != 0) < n:
+        i = numpy.arange(len(w))
+    else:
+        i = numpy.random.choice(len(w), size=n, replace=False, p=w/w.sum())
+
+    # Define sub-samples
+    x_ = numpy.sort(x[i])
+
+    # Compress mass onto these subsamples
+    j1 = numpy.digitize(x, x_) - 1
+    k1 = (j1 > -1) & (j1 < n)
+    j2 = numpy.digitize(x, x_, right=True) - 1
+    k2 = (j2 > -1) & (j2 < n)
+
+    w_ = numpy.zeros_like(x_)
+    numpy.add.at(w_, j1[k1], w[k1])
+    numpy.add.at(w_, j2[k2], w[k2])
+
+    return x_, w_

@@ -5,9 +5,9 @@ import numpy
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from matplotlib.collections import PathCollection
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from numpy.testing import assert_array_equal
+from matplotlib.colors import to_hex
 try:
     import montepython  # noqa: F401
 except ImportError:
@@ -64,6 +64,7 @@ def test_build_mcmc():
 
 
 def test_read_getdist():
+    numpy.random.seed(3)
     mcmc = MCMCSamples(root='./tests/example_data/gd')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -78,6 +79,7 @@ def test_read_getdist():
                    raises=ImportError,
                    reason="requires montepython package")
 def test_read_montepython():
+    numpy.random.seed(3)
     mcmc = MCMCSamples(root='./tests/example_data/mp')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -85,6 +87,7 @@ def test_read_montepython():
 
 
 def test_read_multinest():
+    numpy.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/mn')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -96,6 +99,7 @@ def test_read_multinest():
 
 
 def test_read_polychord():
+    numpy.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -103,6 +107,7 @@ def test_read_polychord():
 
 
 def test_different_parameters():
+    numpy.random.seed(3)
     params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
     params_y = ['x0', 'x1', 'x2']
     fig, axes = make_1d_axes(params_x)
@@ -118,6 +123,7 @@ def test_different_parameters():
 
 
 def test_plot_2d_types():
+    numpy.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     params_x = ['x0', 'x1', 'x2', 'x3']
     params_y = ['x0', 'x1', 'x2']
@@ -152,6 +158,7 @@ def test_plot_2d_types():
 
 
 def test_plot_2d_types_multiple_calls():
+    numpy.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     params = ['x0', 'x1', 'x2', 'x3']
 
@@ -168,6 +175,7 @@ def test_plot_2d_types_multiple_calls():
 
 
 def test_root_and_label():
+    numpy.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     assert(ns.root == './tests/example_data/pc')
     assert(ns.label == 'pc')
@@ -186,6 +194,7 @@ def test_root_and_label():
 
 
 def test_plot_2d_legend():
+    numpy.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     mc = MCMCSamples(root='./tests/example_data/gd')
     params = ['x0', 'x1', 'x2', 'x3']
@@ -219,7 +228,7 @@ def test_plot_2d_legend():
                 if x == y:
                     assert(all([isinstance(h, Rectangle) for h in handles]))
                 else:
-                    assert(all([isinstance(h, PathCollection)
+                    assert(all([isinstance(h, Line2D)
                                 for h in handles]))
     plt.close('all')
 
@@ -250,3 +259,118 @@ def test_plot_2d_legend():
                 handles, labels = ax.get_legend_handles_labels()
                 assert(labels == ['l1', 'l2'])
     plt.close('all')
+
+
+def test_plot_2d_colours():
+    numpy.random.seed(3)
+    gd = MCMCSamples(root="./tests/example_data/gd")
+    gd.drop(columns='x3', inplace=True)
+    pc = NestedSamples(root="./tests/example_data/pc")
+    pc.drop(columns='x4', inplace=True)
+    mn = NestedSamples(root="./tests/example_data/mn")
+    mn.drop(columns='x2', inplace=True)
+
+    plot_types = ['kde', 'hist']
+    if 'fastkde' in sys.modules:
+        plot_types += ['fastkde']
+
+    for types in plot_types:
+        fig = plt.figure()
+        fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
+        types = {'diagonal': types, 'lower': types, 'upper': 'scatter'}
+        gd.plot_2d(axes, types=types, label="gd")
+        pc.plot_2d(axes, types=types, label="pc")
+        mn.plot_2d(axes, types=types, label="mn")
+        gd_colors = []
+        pc_colors = []
+        mn_colors = []
+        for y, rows in axes.iterrows():
+            for x, ax in rows.iteritems():
+                handles, labels = ax.get_legend_handles_labels()
+                for handle, label in zip(handles, labels):
+                    if isinstance(handle, Rectangle):
+                        color = to_hex(handle.get_facecolor())
+                    else:
+                        color = handle.get_color()
+
+                    if label == 'gd':
+                        gd_colors.append(color)
+                    elif label == 'pc':
+                        pc_colors.append(color)
+                    elif label == 'mn':
+                        mn_colors.append(color)
+
+        assert(len(set(gd_colors)) == 1)
+        assert(len(set(mn_colors)) == 1)
+        assert(len(set(pc_colors)) == 1)
+        plt.close("all")
+
+
+def test_plot_1d_colours():
+    numpy.random.seed(3)
+    gd = MCMCSamples(root="./tests/example_data/gd")
+    gd.drop(columns='x3', inplace=True)
+    pc = NestedSamples(root="./tests/example_data/pc")
+    pc.drop(columns='x4', inplace=True)
+    mn = NestedSamples(root="./tests/example_data/mn")
+    mn.drop(columns='x2', inplace=True)
+
+    plot_types = ['kde', 'hist']
+    if 'astropy' in sys.modules:
+        plot_types += ['astropyhist']
+    if 'fastkde' in sys.modules:
+        plot_types += ['fastkde']
+
+    for plot_type in plot_types:
+        fig = plt.figure()
+        fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
+        gd.plot_1d(axes, plot_type=plot_type, label="gd")
+        pc.plot_1d(axes, plot_type=plot_type, label="pc")
+        mn.plot_1d(axes, plot_type=plot_type, label="mn")
+        gd_colors = []
+        pc_colors = []
+        mn_colors = []
+        for x, ax in axes.iteritems():
+            handles, labels = ax.get_legend_handles_labels()
+            for handle, label in zip(handles, labels):
+                if isinstance(handle, Rectangle):
+                    color = to_hex(handle.get_facecolor())
+                else:
+                    color = handle.get_color()
+
+                if label == 'gd':
+                    gd_colors.append(color)
+                elif label == 'pc':
+                    pc_colors.append(color)
+                elif label == 'mn':
+                    mn_colors.append(color)
+
+        assert(len(set(gd_colors)) == 1)
+        assert(len(set(mn_colors)) == 1)
+        assert(len(set(pc_colors)) == 1)
+        plt.close("all")
+
+
+@pytest.mark.xfail('astropy' not in sys.modules,
+                   raises=ImportError,
+                   reason="requires astropy package")
+def test_astropyhist():
+    numpy.random.seed(3)
+    mcmc = NestedSamples(root='./tests/example_data/pc')
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'diagonal': 'astropyhist'})
+    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'], plot_type='astropyhist')
+    plt.close("all")
+
+
+def test_hist_levels():
+    numpy.random.seed(3)
+    mcmc = NestedSamples(root='./tests/example_data/pc')
+    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'lower': 'hist'},
+                 levels=[0.68, 0.95], bins=20)
+    plt.close("all")
+
+
+def test_ns_output():
+    numpy.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    pc.ns_output(1000)

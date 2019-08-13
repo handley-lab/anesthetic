@@ -36,6 +36,7 @@ setup(name='anesthetic',
       extras_require={
           'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc'],
           'automated bins calculation': ['astropy'],
+          'fast kernel density estimation': ['fastkde'],
           },
       tests_require=['pytest'],
       include_package_data=True,
