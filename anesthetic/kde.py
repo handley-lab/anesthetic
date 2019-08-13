@@ -8,7 +8,7 @@ from fastkde import fastKDE
 from anesthetic.utils import check_bounds, mirror_1d, mirror_2d
 
 
-def kde_1d(d, xmin=None, xmax=None):
+def fastkde_1d(d, xmin=None, xmax=None):
     """Perform a one-dimensional kernel density estimation.
 
     Wrapper round fastkde.fastKDE. Boundary corrections implemented by
@@ -51,7 +51,7 @@ def kde_1d(d, xmin=None, xmax=None):
     return x, p
 
 
-def kde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
+def fastkde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
     """Perform a two-dimensional kernel density estimation.
 
     Wrapper round fastkde.fastKDE. Boundary corrections implemented by

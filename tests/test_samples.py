@@ -5,7 +5,6 @@ import numpy
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from matplotlib.collections import PathCollection
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from numpy.testing import assert_array_equal
 from matplotlib.colors import to_hex
@@ -229,7 +228,7 @@ def test_plot_2d_legend():
                 if x == y:
                     assert(all([isinstance(h, Rectangle) for h in handles]))
                 else:
-                    assert(all([isinstance(h, PathCollection)
+                    assert(all([isinstance(h, Line2D)
                                 for h in handles]))
     plt.close('all')
 
@@ -271,7 +270,11 @@ def test_plot_2d_colours():
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
-    for types in ['hist', 'kde']:
+    plot_types = ['kde', 'hist']
+    if 'fastkde' in sys.modules:
+        plot_types += ['fastkde']
+
+    for types in plot_types:
         fig = plt.figure()
         fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
         types = {'diagonal': types, 'lower': types, 'upper': 'scatter'}
@@ -287,8 +290,6 @@ def test_plot_2d_colours():
                 for handle, label in zip(handles, labels):
                     if isinstance(handle, Rectangle):
                         color = to_hex(handle.get_facecolor())
-                    elif isinstance(handle, PathCollection):
-                        color = to_hex(handle.get_facecolor()[0])
                     else:
                         color = handle.get_color()
 
@@ -314,7 +315,13 @@ def test_plot_1d_colours():
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
-    for plot_type in ['kde', 'hist']:
+    plot_types = ['kde', 'hist']
+    if 'astropy' in sys.modules:
+        plot_types += ['astropyhist']
+    if 'fastkde' in sys.modules:
+        plot_types += ['fastkde']
+
+    for plot_type in plot_types:
         fig = plt.figure()
         fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
         gd.plot_1d(axes, plot_type=plot_type, label="gd")
@@ -328,8 +335,6 @@ def test_plot_1d_colours():
             for handle, label in zip(handles, labels):
                 if isinstance(handle, Rectangle):
                     color = to_hex(handle.get_facecolor())
-                elif isinstance(handle, PathCollection):
-                    color = to_hex(handle.get_facecolor()[0])
                 else:
                     color = handle.get_color()
 

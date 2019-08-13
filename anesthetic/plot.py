@@ -14,19 +14,25 @@ import sys
 import numpy
 import pandas
 import matplotlib.pyplot as plt
+from scipy.stats import gaussian_kde
 from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
 try:
     from astropy.visualization import hist
 except ImportError:
     pass
-from anesthetic.kde import kde_1d, kde_2d
-from anesthetic.utils import check_bounds, nest_level, unique
-from anesthetic.utils import iso_probability_contours
+try:
+    from anesthetic.kde import fastkde_1d, fastkde_2d
+except ImportError:
+    pass
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import LineCollection
 from matplotlib.transforms import Affine2D
-from anesthetic.utils import quantile
+from anesthetic.utils import check_bounds, nest_level, unique
+from anesthetic.utils import (sample_compression_1d, quantile,
+                              triangular_sample_compression_2d,
+                              iso_probability_contours,
+                              iso_probability_contours_from_samples)
 
 
 def make_1d_axes(params, **kwargs):
@@ -224,12 +230,12 @@ def make_2d_axes(params, **kwargs):
     return fig, axes
 
 
-def kde_plot_1d(ax, data, *args, **kwargs):
+def fastkde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
-    density estimation computation in between. All remaining keyword arguments
-    are passed onwards.
+    density estimation computation provided by the package fastkde in between.
+    All remaining keyword arguments are passed onwards.
 
     Parameters
     ----------
@@ -259,10 +265,68 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
 
-    x, p = kde_1d(data, xmin, xmax)
+    try:
+        x, p = fastkde_1d(data, xmin, xmax)
+    except NameError:
+        raise ImportError("You need to install fastkde to use fastkde")
     p /= p.max()
     i = (x < quantile(x, 0.99, p)) & (x > quantile(x, 0.01, p)) | (p > 0.1)
 
+    ans = ax.plot(x[i], p[i], *args, **kwargs)
+    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
+    return ans
+
+
+def kde_plot_1d(ax, data, *args, **kwargs):
+    """Plot a 1d marginalised distribution.
+
+    This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
+    density estimation computation provided by scipy.stats.gaussian_kde in
+    between. All remaining keyword arguments are passed onwards.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on.
+
+    data: numpy.array
+        Samples to generate kernel density estimator.
+
+    weights: numpy.array, optional
+        Sample weights.
+
+    ncompress: int, optional
+        Degree of compression. Default 1000
+
+    xmin, xmax: float
+        lower/upper prior bound.
+        optional, default None
+
+    Returns
+    -------
+    lines: matplotlib.lines.Line2D
+        A list of line objects representing the plotted data (same as
+        matplotlib matplotlib.axes.Axes.plot command)
+
+    """
+    if len(data) == 0:
+        return numpy.zeros(0), numpy.zeros(0)
+
+    if max(data)-min(data) <= 0:
+        return
+
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
+    weights = kwargs.pop('weights', None)
+    ncompress = kwargs.pop('ncompress', 1000)
+    x, w = sample_compression_1d(data, weights, ncompress)
+    p = gaussian_kde(x, weights=w)(x)
+    p /= p.max()
+    i = ((x < quantile(x, 0.999, w)) & (x > quantile(x, 0.001, w))) | (p > 0.1)
+    if xmin is not None:
+        i = i & (x > xmin)
+    if xmax is not None:
+        i = i & (x < xmax)
     ans = ax.plot(x[i], p[i], *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
@@ -280,10 +344,13 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         axis object to plot on
 
     data: numpy.array
-        Uniformly weighted samples to generate kernel density estimator.
+        Samples to generate histogram from
+
+    weights: numpy.array, optional
+        Sample weights.
 
     xmin, xmax: float
-        lower/upper prior bound
+        lower/upper prior bound.
         optional, default data.min() and data.max()
         cannot be None (reverts to default in that case)
 
@@ -333,7 +400,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     return bars
 
 
-def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
+def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """Plot a 2d marginalised distribution as contours.
 
     This functions as a wrapper around matplotlib.axes.Axes.contour, and
@@ -377,8 +444,11 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
 
-    x, y, pdf = kde_2d(data_x, data_y,
-                       xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    try:
+        x, y, pdf = fastkde_2d(data_x, data_y,
+                               xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    except NameError:
+        raise ImportError("You need to install fastkde to use fastkde")
 
     levels = iso_probability_contours(pdf, contours=levels)
     cmap = basic_cmap(color)
@@ -399,6 +469,78 @@ def contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
+    return cbar
+
+
+def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
+    """Plot a 2d marginalised distribution as contours.
+
+    This functions as a wrapper around matplotlib.axes.Axes.tricontour, and
+    matplotlib.axes.Axes.tricontourf with a kernel density estimation
+    computation provided by scipy.stats.gaussian_kde in between. All remaining
+    keyword arguments are passed onwards to both functions.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on.
+
+    data_x, data_y: numpy.array
+        x and y coordinates of uniformly weighted samples to generate kernel
+        density estimator.
+
+    weights: numpy.array, optional
+        Sample weights.
+
+    ncompress: int, optional
+        Degree of compression.
+        optional, Default 1000
+
+    xmin, xmax, ymin, ymax: float
+        lower/upper prior bounds in x/y coordinates.
+        optional, default None
+
+    Returns
+    -------
+    c: matplotlib.contour.QuadContourSet
+        A set of contourlines or filled regions
+
+    """
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
+    ymin = kwargs.pop('ymin', None)
+    ymax = kwargs.pop('ymax', None)
+    weights = kwargs.pop('weights', None)
+    ncompress = kwargs.pop('ncompress', 1000)
+    label = kwargs.pop('label', None)
+    zorder = kwargs.pop('zorder', 1)
+    linewidths = kwargs.pop('linewidths', 0.5)
+    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+
+    if len(data_x) == 0 or len(data_y) == 0:
+        return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
+
+    x, y, w, triangles = triangular_sample_compression_2d(data_x, data_y,
+                                                          weights, ncompress)
+    kde = gaussian_kde([x, y], weights=w)
+    p = kde([x, y])
+    contours = iso_probability_contours_from_samples(p, weights=w)
+
+    cmap = basic_cmap(color)
+
+    cbar = ax.tricontourf(x, y, triangles, p, contours, cmap=cmap,
+                          zorder=zorder, vmin=0, vmax=p.max(), *args, **kwargs)
+    for c in cbar.collections:
+        c.set_cmap(cmap)
+
+    ax.tricontour(x, y, triangles, p, contours, zorder=zorder,
+                  vmin=0, vmax=p.max(), linewidths=linewidths, colors='k',
+                  *args, **kwargs)
+    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.32),
+                                 lw=2, label=label)]
+
+    ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
+    ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)
     return cbar
 
 
@@ -478,8 +620,8 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """Plot samples from a 2d marginalised distribution.
 
-    This functions as a wrapper around matplotlib.axes.Axes.scatter, enforcing
-    any prior bounds. All remaining keyword arguments are passed onwards.
+    This functions as a wrapper around matplotlib.axes.Axes.plot, enforcing any
+    prior bounds. All remaining keyword arguments are passed onwards.
 
     Parameters
     ----------
@@ -487,8 +629,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
         axis object to plot on
 
     data_x, data_y: numpy.array
-        x and y coordinates of uniformly weighted samples to generate kernel
-        density estimator.
+        x and y coordinates of uniformly weighted samples to plot.
 
     xmin, xmax, ymin, ymax: float
         lower/upper prior bounds in x/y coordinates
@@ -496,18 +637,19 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Returns
     -------
-    matplotlib.collections.PathCollection object
-        A PathCollection object representing the plotted data (same as
-        matplotlib matplotlib.axes.Axes.scatter command)
+    lines: matplotlib.lines.Line2D
+        A list of line objects representing the plotted data (same as
+        matplotlib matplotlib.axes.Axes.plot command)
 
     """
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
-    s = kwargs.pop('s', 3)
+    markersize = kwargs.pop('markersize', 1)
 
-    points = ax.scatter(data_x, data_y, s=s, *args, **kwargs)
+    points = ax.plot(data_x, data_y, 'o', markersize=markersize,
+                     *args, **kwargs)
     ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
     return points

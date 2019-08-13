@@ -2,4 +2,3 @@ scipy
 numpy
 pandas
 matplotlib
-fastkde
