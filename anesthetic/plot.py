@@ -33,6 +33,7 @@ from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               iso_probability_contours_from_samples)
+from anesthetic.boundary import cut_and_normalise_gaussian
 
 
 def make_1d_axes(params, **kwargs):
@@ -320,14 +321,18 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
     x, w = sample_compression_1d(data, weights, ncompress)
-    p = gaussian_kde(x, weights=w)(x)
+    kde = gaussian_kde(x, weights=w)
+    p = kde(x)
     p /= p.max()
     i = ((x < quantile(x, 0.999, w)) & (x > quantile(x, 0.001, w))) | (p > 0.1)
     if xmin is not None:
         i = i & (x > xmin)
     if xmax is not None:
         i = i & (x < xmax)
-    ans = ax.plot(x[i], p[i], *args, **kwargs)
+    sigma = numpy.sqrt(kde.covariance[0, 0])
+    pp = cut_and_normalise_gaussian(x[i], p[i], sigma, xmin, xmax)
+    pp /= pp.max()
+    ans = ax.plot(x[i], pp, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
@@ -524,6 +529,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                                           weights, ncompress)
     kde = gaussian_kde([x, y], weights=w)
     p = kde([x, y])
+    sigmax = numpy.sqrt(kde.covariance[0, 0])
+    p = cut_and_normalise_gaussian(x, p, sigmax, xmin, xmax)
+    sigmay = numpy.sqrt(kde.covariance[1, 1])
+    p = cut_and_normalise_gaussian(y, p, sigmay, ymin, ymax)
+
     contours = iso_probability_contours_from_samples(p, weights=w)
 
     cmap = basic_cmap(color)
