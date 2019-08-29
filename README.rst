@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 =========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
-:Version: 1.1.0
+:Version: 1.2.0
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -149,6 +149,7 @@ or using the BibTeX:
        publisher = {The Open Journal},
        volume = {4},
        number = {37},
+       pages = {1414},
        author = {Will Handley},
        title = {anesthetic: nested sampling visualisation},
        journal = {The Journal of Open Source Software}
