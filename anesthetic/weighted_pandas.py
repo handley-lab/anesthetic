@@ -8,16 +8,24 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile)
 class WeightedSeries(pandas.Series):
     """Weighted version of pandas.Series."""
 
-    _metadata = ['w', 'u']
+    _metadata = ['_w', '_u']
 
     @property
     def _constructor(self):
         return WeightedSeries
 
     def __init__(self, *args, **kwargs):
-        self.w = kwargs.pop('w', None)
-        self.u = kwargs.pop('u', None)
+        self._w = pandas.Series(kwargs.pop('w', None))
+        self._u = kwargs.pop('u', None)
         super(WeightedSeries, self).__init__(*args, **kwargs)
+
+    @property
+    def w(self):
+        return self._w[self.index]
+
+    @property
+    def u(self):
+        return self._u[self.index]
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
@@ -37,7 +45,7 @@ class WeightedSeries(pandas.Series):
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
-        return quantile(self.values, q, self.w)
+        return quantile(self.values, q, self.w.values)
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
@@ -69,21 +77,29 @@ class WeightedSeries(pandas.Series):
 class WeightedDataFrame(pandas.DataFrame):
     """Weighted version of pandas.DataFrame."""
 
-    _metadata = ['w', 'u']
+    _metadata = ['_w', '_u']
 
     @property
     def _constructor_sliced(self):
         def __constructor_sliced(*args, **kwargs):
-            return WeightedSeries(*args, w=self.w, u=self.u, **kwargs)
+            return WeightedSeries(*args, w=self._w, u=self._u, **kwargs)
         return __constructor_sliced
 
     @property
     def _constructor(self):
         return WeightedDataFrame
 
+    @property
+    def w(self):
+        return self._w[self.index]
+
+    @property
+    def u(self):
+        return self._u[self.index]
+
     def __init__(self, *args, **kwargs):
-        self.w = kwargs.pop('w', None)
-        self.u = kwargs.pop('u', None)
+        self._w = pandas.Series(kwargs.pop('w', None))
+        self._u = kwargs.pop('u', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
 
     def mean(self):
