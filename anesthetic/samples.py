@@ -141,7 +141,8 @@ class MCMCSamples(WeightedDataFrame):
                 if plot_type == 'kde':
                     if ncompress is None:
                         ncompress = 1000
-                    return kde_plot_1d(ax, self[paramname_x], weights=self.w,
+                    return kde_plot_1d(ax, self[paramname_x],
+                                       weights=self['weight'],
                                        ncompress=ncompress,
                                        xmin=xmin, xmax=xmax,
                                        *args, **kwargs)
@@ -150,7 +151,8 @@ class MCMCSamples(WeightedDataFrame):
                     return fastkde_plot_1d(ax, x, xmin=xmin, xmax=xmax,
                                            *args, **kwargs)
                 elif plot_type == 'hist':
-                    return hist_plot_1d(ax, self[paramname_x], weights=self.w,
+                    return hist_plot_1d(ax, self[paramname_x],
+                                        weights=self['weight'],
                                         xmin=xmin, xmax=xmax, *args, **kwargs)
                 elif plot_type == 'astropyhist':
                     x = self[paramname_x].compress(ncompress)
@@ -174,10 +176,11 @@ class MCMCSamples(WeightedDataFrame):
                         ncompress = 1000
                     x = self[paramname_x]
                     y = self[paramname_y]
-                    return kde_contour_plot_2d(ax, x, y, weights=self.w,
+                    return kde_contour_plot_2d(ax, x, y,
+                                               weights=self['weight'],
+                                               ncompress=ncompress,
                                                xmin=xmin, xmax=xmax,
                                                ymin=ymin, ymax=ymax,
-                                               ncompress=ncompress,
                                                *args, **kwargs)
                 elif plot_type == 'fastkde':
                     x = self[paramname_x].compress(ncompress)
@@ -197,8 +200,9 @@ class MCMCSamples(WeightedDataFrame):
                 elif plot_type == 'hist':
                     x = self[paramname_x]
                     y = self[paramname_y]
-                    return hist_plot_2d(ax, x, y, weights=self.w, xmin=xmin,
-                                        xmax=xmax, ymin=ymin, ymax=ymax,
+                    return hist_plot_2d(ax, x, y, weights=self['weight'],
+                                        xmin=xmin, xmax=xmax,
+                                        ymin=ymin, ymax=ymax,
                                         *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
