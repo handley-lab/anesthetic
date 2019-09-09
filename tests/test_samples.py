@@ -374,3 +374,16 @@ def test_ns_output():
     numpy.random.seed(3)
     pc = NestedSamples(root='./tests/example_data/pc')
     pc.ns_output(1000)
+
+
+def test_masking():
+    pc = NestedSamples(root="./tests/example_data/pc")
+    mask = pc['x0'] > 0
+
+    for ptype in ['kde', 'fastkde', 'hist']:
+        fig, axes = make_1d_axes(['x0', 'x1', 'x2'])
+        pc[mask].plot_1d(axes=axes, plot_type=ptype)
+
+    for ptype in ['kde', 'fastkde', 'hist', 'scatter']:
+        fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
+        pc[mask].plot_2d(axes=axes, types=dict(lower=ptype, diagonal='hist'))

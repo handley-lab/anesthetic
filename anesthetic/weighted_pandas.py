@@ -62,7 +62,7 @@ class WeightedSeries(pandas.Series):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.w, self.u, nsamples)
+        i = compress_weights(self.w[self.index], self.u[self.index], nsamples)
         return self.repeat(i)
 
 
