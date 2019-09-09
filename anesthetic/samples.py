@@ -85,6 +85,7 @@ class MCMCSamples(WeightedDataFrame):
             super(MCMCSamples, self).__init__(*args, **kwargs)
 
             self.u = numpy.random.rand(len(self))
+            self['rand'] = self.u
 
             if self.w is not None:
                 self['weight'] = self.w
@@ -142,7 +143,7 @@ class MCMCSamples(WeightedDataFrame):
                     if ncompress is None:
                         ncompress = 1000
                     return kde_plot_1d(ax, self[paramname_x],
-                                       weights=self['weight'],
+                                       weights=self.weight,
                                        ncompress=ncompress,
                                        xmin=xmin, xmax=xmax,
                                        *args, **kwargs)
@@ -152,7 +153,7 @@ class MCMCSamples(WeightedDataFrame):
                                            *args, **kwargs)
                 elif plot_type == 'hist':
                     return hist_plot_1d(ax, self[paramname_x],
-                                        weights=self['weight'],
+                                        weights=self.weight,
                                         xmin=xmin, xmax=xmax, *args, **kwargs)
                 elif plot_type == 'astropyhist':
                     x = self[paramname_x].compress(ncompress)
@@ -177,7 +178,7 @@ class MCMCSamples(WeightedDataFrame):
                     x = self[paramname_x]
                     y = self[paramname_y]
                     return kde_contour_plot_2d(ax, x, y,
-                                               weights=self['weight'],
+                                               weights=self.weight,
                                                ncompress=ncompress,
                                                xmin=xmin, xmax=xmax,
                                                ymin=ymin, ymax=ymax,
@@ -200,7 +201,7 @@ class MCMCSamples(WeightedDataFrame):
                 elif plot_type == 'hist':
                     x = self[paramname_x]
                     y = self[paramname_y]
-                    return hist_plot_2d(ax, x, y, weights=self['weight'],
+                    return hist_plot_2d(ax, x, y, weights=self.weight,
                                         xmin=xmin, xmax=xmax,
                                         ymin=ymin, ymax=ymax,
                                         *args, **kwargs)
