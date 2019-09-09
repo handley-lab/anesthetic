@@ -380,10 +380,14 @@ def test_masking():
     pc = NestedSamples(root="./tests/example_data/pc")
     mask = pc['x0'] > 0
 
-    for ptype in ['kde', 'fastkde', 'hist']:
+    plot_types = ['kde', 'hist']
+    if 'fastkde' in sys.modules:
+        plot_types += ['fastkde']
+
+    for ptype in plot_types:
         fig, axes = make_1d_axes(['x0', 'x1', 'x2'])
         pc[mask].plot_1d(axes=axes, plot_type=ptype)
 
-    for ptype in ['kde', 'fastkde', 'hist', 'scatter']:
+    for ptype in plot_types + ['scatter']:
         fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
         pc[mask].plot_2d(axes=axes, types=dict(lower=ptype, diagonal='hist'))
