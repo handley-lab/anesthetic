@@ -16,15 +16,20 @@ class WeightedSeries(pandas.Series):
 
     def __init__(self, *args, **kwargs):
         self._w = pandas.Series(kwargs.pop('w', None))
-        self._u = kwargs.pop('u', None)
         super(WeightedSeries, self).__init__(*args, **kwargs)
+        self._u = numpy.random.rand(len(self))
 
     @property
     def w(self):
-        return self._w[self.index]
+        """Sample weights."""
+        if self._w is not None:
+            return self._w[self.index]
+        else:
+            return None
 
     @property
     def u(self):
+        """Random number for consistent compression."""
         return self._u[self.index]
 
     def mean(self):
@@ -82,7 +87,9 @@ class WeightedDataFrame(pandas.DataFrame):
     @property
     def _constructor_sliced(self):
         def __constructor_sliced(*args, **kwargs):
-            return WeightedSeries(*args, w=self._w, u=self._u, **kwargs)
+            series = WeightedSeries(*args, w=self._w, **kwargs)
+            series._u = self._u
+            return series
         return __constructor_sliced
 
     @property
@@ -91,16 +98,21 @@ class WeightedDataFrame(pandas.DataFrame):
 
     @property
     def w(self):
-        return self._w[self.index]
+        """Sample weights."""
+        if self._w is not None:
+            return self._w[self.index]
+        else:
+            return None
 
     @property
     def u(self):
+        """Random number for consistent compression."""
         return self._u[self.index]
 
     def __init__(self, *args, **kwargs):
         self._w = pandas.Series(kwargs.pop('w', None))
-        self._u = kwargs.pop('u', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
+        self._u = numpy.random.rand(len(self))
 
     def mean(self):
         """Weighted mean of the sampled distribution."""

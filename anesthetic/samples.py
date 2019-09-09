@@ -56,7 +56,7 @@ class MCMCSamples(WeightedDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'u',
+    _metadata = WeightedDataFrame._metadata + ['tex', 'limits',
                                                'root', 'label']
 
     @property
@@ -80,15 +80,7 @@ class MCMCSamples(WeightedDataFrame):
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
             self.root = None
-            self.u = None
-
             super(MCMCSamples, self).__init__(*args, **kwargs)
-
-            self.u = numpy.random.rand(len(self))
-
-            if self.w is not None:
-                self['weight'] = self.w
-                self.tex['weight'] = r'MCMC weight'
 
             if logL is not None:
                 self['logL'] = logL
@@ -425,10 +417,6 @@ class NestedSamples(MCMCSamples):
             if 'nlive' in self:
                 self.beta = self._beta
 
-            if self.w is not None:
-                self['weight'] = self.w
-                self.tex['weight'] = r'MCMC weight'
-
     @property
     def beta(self):
         """Thermodynamic inverse temperature."""
@@ -438,7 +426,7 @@ class NestedSamples(MCMCSamples):
     def beta(self, beta):
         self._beta = beta
         logw = self._dlogX() + self.beta*self.logL
-        self.w = numpy.exp(logw - logw.max())
+        self._w = numpy.exp(logw - logw.max())
 
     def set_beta(self, beta, inplace=False):
         """Change the inverse temperature.
