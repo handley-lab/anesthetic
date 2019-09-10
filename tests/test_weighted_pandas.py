@@ -26,4 +26,4 @@ def test_WeightedDataFrame_slice():
     assert isinstance(df['A'],  WeightedSeries)
     assert df[:10].shape == (10, 3)
     assert df[:10].weight.shape == (10,)
-    assert df[:10]._u.shape == (10,)
+    assert df[:10]._rand.shape == (10,)

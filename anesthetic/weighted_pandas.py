@@ -8,7 +8,7 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile)
 class WeightedSeries(pandas.Series):
     """Weighted version of pandas.Series."""
 
-    _metadata = ['_w', '_u_']
+    _metadata = ['_w', '_rand_']
 
     @property
     def _constructor(self):
@@ -21,7 +21,8 @@ class WeightedSeries(pandas.Series):
             self._w = pandas.Series(index=self.index, data=w)
         else:
             self._w = None
-        self._u_ = numpy.random.rand(len(self))
+        self._rand_ = pandas.Series(index=self.index,
+                                    data=numpy.random.rand(len(self)))
 
     @property
     def weight(self):
@@ -32,9 +33,9 @@ class WeightedSeries(pandas.Series):
             return None
 
     @property
-    def _u(self):
+    def _rand(self):
         """Random number for consistent compression."""
-        return self._u_[self.index]
+        return self._rand_[self.index]
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
@@ -79,20 +80,20 @@ class WeightedSeries(pandas.Series):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.weight, self._u, nsamples)
+        i = compress_weights(self.weight, self._rand, nsamples)
         return self.repeat(i)
 
 
 class WeightedDataFrame(pandas.DataFrame):
     """Weighted version of pandas.DataFrame."""
 
-    _metadata = ['_w', '_u_']
+    _metadata = ['_w', '_rand_']
 
     @property
     def _constructor_sliced(self):
         def __constructor_sliced(*args, **kwargs):
             series = WeightedSeries(*args, w=self._w, **kwargs)
-            series._u_ = self._u_
+            series._rand_ = self._rand_
             return series
         return __constructor_sliced
 
@@ -109,9 +110,9 @@ class WeightedDataFrame(pandas.DataFrame):
             return None
 
     @property
-    def _u(self):
+    def _rand(self):
         """Random number for consistent compression."""
-        return self._u_[self.index]
+        return self._rand_[self.index]
 
     def __init__(self, *args, **kwargs):
         w = kwargs.pop('w', None)
@@ -120,7 +121,8 @@ class WeightedDataFrame(pandas.DataFrame):
             self._w = pandas.Series(index=self.index, data=w)
         else:
             self._w = None
-        self._u_ = numpy.random.rand(len(self))
+        self._rand_ = pandas.Series(index=self.index,
+                                    data=numpy.random.rand(len(self)))
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
@@ -177,7 +179,7 @@ class WeightedDataFrame(pandas.DataFrame):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.weight, self._u, nsamples)
+        i = compress_weights(self.weight, self._rand, nsamples)
         data = numpy.repeat(self.values, i, axis=0)
         index = numpy.repeat(self.index.values, i)
         return pandas.DataFrame(data=data, index=index, columns=self.columns)
