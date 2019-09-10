@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 from matplotlib.colors import to_hex
 try:
     import montepython  # noqa: F401
@@ -391,3 +391,29 @@ def test_masking():
     for ptype in plot_types + ['scatter']:
         fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
         pc[mask].plot_2d(axes=axes, types=dict(lower=ptype, diagonal='hist'))
+
+
+def test_beta():
+    pc = NestedSamples(root="./tests/example_data/pc")
+    weight = pc.weight
+    assert_array_equal(pc['weight'], pc.weight)
+    assert pc.beta == 1
+
+    prior = pc.set_beta(0)
+    assert prior.beta == 0
+    assert_array_equal(prior['weight'], prior.weight)
+    assert pc.beta == 1
+    assert_array_equal(pc['weight'], pc.weight)
+    assert_array_almost_equal(sorted(prior.weight, reverse=True), prior.weight)
+
+    for beta in numpy.linspace(0, 2, 10):
+        pc.set_beta(beta, inplace=True)
+        assert pc.beta == beta
+        assert_array_equal(pc['weight'], pc.weight)
+        assert not numpy.array_equal(pc['weight'], weight)
+
+    for beta in numpy.linspace(0, 2, 10):
+        pc.beta = beta
+        assert pc.beta == beta
+        assert_array_equal(pc['weight'], pc.weight)
+        assert not numpy.array_equal(pc['weight'], weight)
