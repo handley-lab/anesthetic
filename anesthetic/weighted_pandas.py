@@ -110,8 +110,12 @@ class WeightedDataFrame(pandas.DataFrame):
         return self._u[self.index]
 
     def __init__(self, *args, **kwargs):
-        self._w = pandas.Series(kwargs.pop('w', None))
+        w = kwargs.pop('w', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
+        if w is None:
+            self._w = pandas.Series(numpy.ones(len(self)))
+        else:
+            self._w = pandas.Series(w)
         self._u = numpy.random.rand(len(self))
 
     def mean(self):
