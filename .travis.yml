@@ -153,3 +153,4 @@ script:
 # Run coverage summary
 after_success:
     - codecov
+    - bash <(curl -s https://codecov.io/bash)
