@@ -8,12 +8,6 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile)
 class WeightedSeries(pandas.Series):
     """Weighted version of pandas.Series."""
 
-    _metadata = ['_w', '_rand_']
-
-    @property
-    def _constructor(self):
-        return WeightedSeries
-
     def __init__(self, *args, **kwargs):
         w = kwargs.pop('w', None)
         super(WeightedSeries, self).__init__(*args, **kwargs)
@@ -83,23 +77,15 @@ class WeightedSeries(pandas.Series):
         i = compress_weights(self.weight, self._rand, nsamples)
         return self.repeat(i)
 
-
-class WeightedDataFrame(pandas.DataFrame):
-    """Weighted version of pandas.DataFrame."""
-
     _metadata = ['_w', '_rand_']
 
     @property
-    def _constructor_sliced(self):
-        def __constructor_sliced(*args, **kwargs):
-            series = WeightedSeries(*args, w=self._w, **kwargs)
-            series._rand_ = self._rand_
-            return series
-        return __constructor_sliced
-
-    @property
     def _constructor(self):
-        return WeightedDataFrame
+        return WeightedSeries
+
+
+class WeightedDataFrame(pandas.DataFrame):
+    """Weighted version of pandas.DataFrame."""
 
     def __init__(self, *args, **kwargs):
         w = kwargs.pop('w', None)
@@ -183,3 +169,17 @@ class WeightedDataFrame(pandas.DataFrame):
         data = numpy.repeat(self.values, i, axis=0)
         index = numpy.repeat(self.index.values, i)
         return pandas.DataFrame(data=data, index=index, columns=self.columns)
+
+    _metadata = ['_w', '_rand_']
+
+    @property
+    def _constructor_sliced(self):
+        def __constructor_sliced(*args, **kwargs):
+            series = WeightedSeries(*args, w=self._w, **kwargs)
+            series._rand_ = self._rand_
+            return series
+        return __constructor_sliced
+
+    @property
+    def _constructor(self):
+        return WeightedDataFrame
