@@ -12,17 +12,17 @@ class WeightedSeries(pandas.Series):
         w = kwargs.pop('w', None)
         super(WeightedSeries, self).__init__(*args, **kwargs)
         if w is not None:
-            self._w = pandas.Series(index=self.index, data=w)
+            self._weight = pandas.Series(index=self.index, data=w)
         else:
-            self._w = None
+            self._weight = None
         self._rand_ = pandas.Series(index=self.index,
                                     data=numpy.random.rand(len(self)))
 
     @property
     def weight(self):
         """Sample weights."""
-        if self._w is not None:
-            return self._w[self.index]
+        if self._weight is not None:
+            return self._weight[self.index]
         else:
             return None
 
@@ -77,7 +77,7 @@ class WeightedSeries(pandas.Series):
         i = compress_weights(self.weight, self._rand, nsamples)
         return self.repeat(i)
 
-    _metadata = ['_w', '_rand_']
+    _metadata = ['_weight', '_rand_']
 
     @property
     def _constructor(self):
@@ -91,17 +91,17 @@ class WeightedDataFrame(pandas.DataFrame):
         w = kwargs.pop('w', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
         if w is not None:
-            self._w = pandas.Series(index=self.index, data=w)
+            self._weight = pandas.Series(index=self.index, data=w)
         else:
-            self._w = None
+            self._weight = None
         self._rand_ = pandas.Series(index=self.index,
                                     data=numpy.random.rand(len(self)))
 
     @property
     def weight(self):
         """Sample weights."""
-        if self._w is not None:
-            return self._w[self.index]
+        if self._weight is not None:
+            return self._weight[self.index]
         else:
             return None
 
@@ -170,12 +170,12 @@ class WeightedDataFrame(pandas.DataFrame):
         index = numpy.repeat(self.index.values, i)
         return pandas.DataFrame(data=data, index=index, columns=self.columns)
 
-    _metadata = ['_w', '_rand_']
+    _metadata = ['_weight', '_rand_']
 
     @property
     def _constructor_sliced(self):
         def __constructor_sliced(*args, **kwargs):
-            series = WeightedSeries(*args, w=self._w, **kwargs)
+            series = WeightedSeries(*args, w=self._weight, **kwargs)
             series._rand_ = self._rand_
             return series
         return __constructor_sliced
