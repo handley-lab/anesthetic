@@ -15,8 +15,12 @@ class WeightedSeries(pandas.Series):
         return WeightedSeries
 
     def __init__(self, *args, **kwargs):
-        self._w = pandas.Series(kwargs.pop('w', None))
+        w = kwargs.pop('w', None)
         super(WeightedSeries, self).__init__(*args, **kwargs)
+        if w is not None:
+            self._w = pandas.Series(index=self.index, data=w)
+        else:
+            self._w = None
         self._u = numpy.random.rand(len(self))
 
     @property
@@ -112,10 +116,10 @@ class WeightedDataFrame(pandas.DataFrame):
     def __init__(self, *args, **kwargs):
         w = kwargs.pop('w', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
-        if w is None:
-            self._w = pandas.Series(numpy.ones(len(self)))
+        if w is not None:
+            self._w = pandas.Series(index=self.index, data=w)
         else:
-            self._w = pandas.Series(w)
+            self._w = None
         self._u = numpy.random.rand(len(self))
 
     def mean(self):

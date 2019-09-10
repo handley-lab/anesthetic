@@ -230,8 +230,9 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
         Compressed samples and weights
 
     """
+    x = pandas.Series(x)
     if w is None:
-        w = pandas.Series(numpy.ones_like(x))
+        w = pandas.Series(index=x.index, data=numpy.ones_like(x))
 
     # Select samples for triangulation
     if sum(w != 0) < n:
@@ -290,8 +291,9 @@ def sample_compression_1d(x, w=None, n=1000):
     x, w, array-like
         Compressed samples and weights
     """
+    x = pandas.Series(x)
     if w is None:
-        w = pandas.Series(numpy.ones_like(x))
+        w = pandas.Series(index=x.index, data=numpy.ones_like(x))
 
     # Select inner samples for triangulation
     if sum(w != 0) < n:

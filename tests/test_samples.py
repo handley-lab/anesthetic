@@ -40,12 +40,12 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples(data=samples, w=w)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2],
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'weight'],
                                                  dtype=object))
 
     mcmc = MCMCSamples(data=samples, w=w, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL'],
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'weight', 'logL'],
                                                  dtype=object))
 
     mcmc = MCMCSamples(data=samples, columns=params)
