@@ -218,7 +218,7 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
     x, y: array-like
         x and y coordinates of samples for compressing
 
-    w: array-like, optional
+    w: pandas.Series, optional
         weights of samples
 
     n: int, optional
@@ -230,14 +230,15 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
         Compressed samples and weights
 
     """
+    x = pandas.Series(x)
     if w is None:
-        w = numpy.ones_like(x)
+        w = pandas.Series(index=x.index, data=numpy.ones_like(x))
 
     # Select samples for triangulation
     if sum(w != 0) < n:
-        i = numpy.arange(len(w))
+        i = w.index
     else:
-        i = numpy.random.choice(len(w), size=n, replace=False, p=w/w.sum())
+        i = numpy.random.choice(w.index, size=n, replace=False, p=w/w.sum())
 
     # Generate triangulation
     cov = numpy.cov(x, y, aweights=w)
@@ -266,7 +267,7 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
         numpy.add.at(w_, k[:, i], w[j != -1])
 
     x_, y_ = L.dot([x_, y_])
-    return (x_, y_, w_, tri.get_masked_triangles())
+    return x_, y_, w_, tri.get_masked_triangles()
 
 
 def sample_compression_1d(x, w=None, n=1000):
@@ -279,7 +280,7 @@ def sample_compression_1d(x, w=None, n=1000):
     x: array-like
         x coordinate of samples for compressing
 
-    w: array-like, optional
+    w: pandas.Series, optional
         weights of samples
 
     n: int, optional
@@ -290,14 +291,15 @@ def sample_compression_1d(x, w=None, n=1000):
     x, w, array-like
         Compressed samples and weights
     """
+    x = pandas.Series(x)
     if w is None:
-        w = numpy.ones_like(x)
+        w = pandas.Series(index=x.index, data=numpy.ones_like(x))
 
     # Select inner samples for triangulation
     if sum(w != 0) < n:
-        i = numpy.arange(len(w))
+        i = w.index
     else:
-        i = numpy.random.choice(len(w), size=n, replace=False, p=w/w.sum())
+        i = numpy.random.choice(w.index, size=n, replace=False, p=w/w.sum())
 
     # Define sub-samples
     x_ = numpy.sort(x[i])

@@ -56,13 +56,6 @@ class MCMCSamples(WeightedDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'u',
-                                               'root', 'label']
-
-    @property
-    def _constructor(self):
-        return MCMCSamples
-
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
         if root is not None:
@@ -80,14 +73,10 @@ class MCMCSamples(WeightedDataFrame):
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
             self.root = None
-            self.u = None
-
             super(MCMCSamples, self).__init__(*args, **kwargs)
 
-            self.u = numpy.random.rand(len(self))
-
-            if self.w is not None:
-                self['weight'] = self.w
+            if self.weight is not None:
+                self['weight'] = self.weight
                 self.tex['weight'] = r'MCMC weight'
 
             if logL is not None:
@@ -141,7 +130,8 @@ class MCMCSamples(WeightedDataFrame):
                 if plot_type == 'kde':
                     if ncompress is None:
                         ncompress = 1000
-                    return kde_plot_1d(ax, self[paramname_x], weights=self.w,
+                    return kde_plot_1d(ax, self[paramname_x],
+                                       weights=self.weight,
                                        ncompress=ncompress,
                                        xmin=xmin, xmax=xmax,
                                        *args, **kwargs)
@@ -150,7 +140,8 @@ class MCMCSamples(WeightedDataFrame):
                     return fastkde_plot_1d(ax, x, xmin=xmin, xmax=xmax,
                                            *args, **kwargs)
                 elif plot_type == 'hist':
-                    return hist_plot_1d(ax, self[paramname_x], weights=self.w,
+                    return hist_plot_1d(ax, self[paramname_x],
+                                        weights=self.weight,
                                         xmin=xmin, xmax=xmax, *args, **kwargs)
                 elif plot_type == 'astropyhist':
                     x = self[paramname_x].compress(ncompress)
@@ -174,7 +165,7 @@ class MCMCSamples(WeightedDataFrame):
                         ncompress = 1000
                     x = self[paramname_x]
                     y = self[paramname_y]
-                    return kde_contour_plot_2d(ax, x, y, weights=self.w,
+                    return kde_contour_plot_2d(ax, x, y, weights=self.weight,
                                                xmin=xmin, xmax=xmax,
                                                ymin=ymin, ymax=ymax,
                                                ncompress=ncompress,
@@ -197,8 +188,9 @@ class MCMCSamples(WeightedDataFrame):
                 elif plot_type == 'hist':
                     x = self[paramname_x]
                     y = self[paramname_y]
-                    return hist_plot_2d(ax, x, y, weights=self.w, xmin=xmin,
-                                        xmax=xmax, ymin=ymin, ymax=ymax,
+                    return hist_plot_2d(ax, x, y, weights=self.weight,
+                                        xmin=xmin, xmax=xmax,
+                                        ymin=ymin, ymax=ymax,
                                         *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
@@ -344,6 +336,13 @@ class MCMCSamples(WeightedDataFrame):
         self.__init__(root=self.root)
         return self
 
+    _metadata = WeightedDataFrame._metadata + ['tex', 'limits',
+                                               'root', 'label']
+
+    @property
+    def _constructor(self):
+        return MCMCSamples
+
 
 class NestedSamples(MCMCSamples):
     """Storage and plotting tools for Nested Sampling samples.
@@ -385,12 +384,6 @@ class NestedSamples(MCMCSamples):
 
     """
 
-    _metadata = MCMCSamples._metadata + ['_beta']
-
-    @property
-    def _constructor(self):
-        return NestedSamples
-
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
         if root is not None:
@@ -425,8 +418,8 @@ class NestedSamples(MCMCSamples):
             if 'nlive' in self:
                 self.beta = self._beta
 
-            if self.w is not None:
-                self['weight'] = self.w
+            if self.weight is not None:
+                self['weight'] = self.weight
                 self.tex['weight'] = r'MCMC weight'
 
     @property
@@ -438,7 +431,7 @@ class NestedSamples(MCMCSamples):
     def beta(self, beta):
         self._beta = beta
         logw = self._dlogX() + self.beta*self.logL
-        self.w = numpy.exp(logw - logw.max())
+        self._weight = numpy.exp(logw - logw.max())
 
     def set_beta(self, beta, inplace=False):
         """Change the inverse temperature.
@@ -533,3 +526,9 @@ class NestedSamples(MCMCSamples):
                           b=[numpy.ones_like(t), -numpy.ones_like(t)], axis=0)
         dlogX -= numpy.log(2)
         return numpy.squeeze(dlogX)
+
+    _metadata = MCMCSamples._metadata + ['_beta']
+
+    @property
+    def _constructor(self):
+        return NestedSamples
