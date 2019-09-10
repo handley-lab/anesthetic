@@ -24,7 +24,7 @@ class WeightedSeries(pandas.Series):
         self._u_ = numpy.random.rand(len(self))
 
     @property
-    def w(self):
+    def weight(self):
         """Sample weights."""
         if self._w is not None:
             return self._w[self.index]
@@ -38,7 +38,7 @@ class WeightedSeries(pandas.Series):
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        return numpy.average(self, weights=self.w)
+        return numpy.average(self, weights=self.weight)
 
     def std(self):
         """Weighted standard deviation of the sampled distribution."""
@@ -46,7 +46,7 @@ class WeightedSeries(pandas.Series):
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        return numpy.average((self-self.mean())**2, weights=self.w)
+        return numpy.average((self-self.mean())**2, weights=self.weight)
 
     def median(self):
         """Weighted median of the sampled distribution."""
@@ -54,19 +54,19 @@ class WeightedSeries(pandas.Series):
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
-        return quantile(self.values, q, self.w.values)
+        return quantile(self.values, q, self.weight.values)
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedSeries, self).hist(weights=self.w,
+        return super(WeightedSeries, self).hist(weights=self.weight,
                                                 *args, **kwargs)
 
     def neff(self):
         """Effective number of samples."""
-        if self.w is None:
+        if self.weight is None:
             return len(self)
         else:
-            return channel_capacity(self.w)
+            return channel_capacity(self.weight)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
@@ -79,7 +79,7 @@ class WeightedSeries(pandas.Series):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.w, self._u, nsamples)
+        i = compress_weights(self.weight, self._u, nsamples)
         return self.repeat(i)
 
 
@@ -101,7 +101,7 @@ class WeightedDataFrame(pandas.DataFrame):
         return WeightedDataFrame
 
     @property
-    def w(self):
+    def weight(self):
         """Sample weights."""
         if self._w is not None:
             return self._w[self.index]
@@ -124,7 +124,7 @@ class WeightedDataFrame(pandas.DataFrame):
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        return pandas.Series(numpy.average(self, weights=self.w, axis=0),
+        return pandas.Series(numpy.average(self, weights=self.weight, axis=0),
                              index=self.columns)
 
     def std(self):
@@ -134,12 +134,12 @@ class WeightedDataFrame(pandas.DataFrame):
     def var(self):
         """Weighted variance of the sampled distribution."""
         return pandas.Series(numpy.average((self-self.mean())**2,
-                                           weights=self.w, axis=0),
+                                           weights=self.weight, axis=0),
                              index=self.columns)
 
     def cov(self):
         """Weighted covariance of the sampled distribution."""
-        return pandas.DataFrame(numpy.cov(self.T, aweights=self.w),
+        return pandas.DataFrame(numpy.cov(self.T, aweights=self.weight),
                                 index=self.columns, columns=self.columns)
 
     def median(self):
@@ -156,15 +156,15 @@ class WeightedDataFrame(pandas.DataFrame):
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedDataFrame, self).hist(weights=self.w,
+        return super(WeightedDataFrame, self).hist(weights=self.weight,
                                                    *args, **kwargs)
 
     def neff(self):
         """Effective number of samples."""
-        if self.w is None:
+        if self.weight is None:
             return len(self)
         else:
-            return channel_capacity(self.w)
+            return channel_capacity(self.weight)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
@@ -177,7 +177,7 @@ class WeightedDataFrame(pandas.DataFrame):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.w, self._u, nsamples)
+        i = compress_weights(self.weight, self._u, nsamples)
         data = numpy.repeat(self.values, i, axis=0)
         index = numpy.repeat(self.index.values, i)
         return pandas.DataFrame(data=data, index=index, columns=self.columns)
