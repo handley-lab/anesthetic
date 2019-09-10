@@ -101,6 +101,16 @@ class WeightedDataFrame(pandas.DataFrame):
     def _constructor(self):
         return WeightedDataFrame
 
+    def __init__(self, *args, **kwargs):
+        w = kwargs.pop('w', None)
+        super(WeightedDataFrame, self).__init__(*args, **kwargs)
+        if w is not None:
+            self._w = pandas.Series(index=self.index, data=w)
+        else:
+            self._w = None
+        self._rand_ = pandas.Series(index=self.index,
+                                    data=numpy.random.rand(len(self)))
+
     @property
     def weight(self):
         """Sample weights."""
@@ -113,16 +123,6 @@ class WeightedDataFrame(pandas.DataFrame):
     def _rand(self):
         """Random number for consistent compression."""
         return self._rand_[self.index]
-
-    def __init__(self, *args, **kwargs):
-        w = kwargs.pop('w', None)
-        super(WeightedDataFrame, self).__init__(*args, **kwargs)
-        if w is not None:
-            self._w = pandas.Series(index=self.index, data=w)
-        else:
-            self._w = None
-        self._rand_ = pandas.Series(index=self.index,
-                                    data=numpy.random.rand(len(self)))
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
