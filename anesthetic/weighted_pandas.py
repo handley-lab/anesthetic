@@ -90,7 +90,6 @@ class WeightedSeries(_WeightedObject, pandas.Series):
         return __constructor_expanddim
 
 
-
 class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
     """Weighted version of pandas.DataFrame."""
 
