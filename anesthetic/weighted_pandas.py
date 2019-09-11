@@ -133,7 +133,8 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         i = compress_weights(self.weight, self._rand, nsamples)
         data = numpy.repeat(self.values, i, axis=0)
         index = numpy.repeat(self.index.values, i)
-        return pandas.DataFrame(data=data, index=index, columns=self.columns)
+        df = pandas.DataFrame(data=data, index=index, columns=self.columns)
+        return df.drop(columns='weight')
 
     _metadata = ['_weight', '_rand_']
 
