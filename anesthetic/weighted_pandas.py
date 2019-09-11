@@ -9,10 +9,7 @@ class _WeightedObject(object):
     @property
     def weight(self):
         """Sample weights."""
-        if self._weight is not None:
-            return self._weight[self.index]
-        else:
-            return None
+        return self._weight[self.index]
 
     @property
     def _rand(self):
@@ -20,12 +17,11 @@ class _WeightedObject(object):
         return self._rand_[self.index]
 
     def _construct_weights(self, w):
-        if w is not None:
-            self._weight = pandas.Series(index=self.index, data=w)
-        else:
-            self._weight = None
-        self._rand_ = pandas.Series(index=self.index,
-                                    data=numpy.random.rand(len(self)))
+        if w is None:
+            w = numpy.ones(len(self))
+        self._weight = pandas.Series(index=self.index, data=w)
+        rand = numpy.random.rand(len(self))
+        self._rand_ = pandas.Series(index=self.index, data=rand)
 
     def std(self):
         """Weighted standard deviation of the sampled distribution."""
@@ -37,10 +33,7 @@ class _WeightedObject(object):
 
     def neff(self):
         """Effective number of samples."""
-        if self.weight is None:
-            return len(self)
-        else:
-            return channel_capacity(self.weight)
+        return channel_capacity(self.weight)
 
 
 class WeightedSeries(_WeightedObject, pandas.Series):
