@@ -2,22 +2,10 @@
 
 import numpy
 import pandas
-from anesthetic.utils import (compress_weights, channel_capacity, quantile)
+from anesthetic.utils import compress_weights, channel_capacity, quantile
 
 
-class WeightedSeries(pandas.Series):
-    """Weighted version of pandas.Series."""
-
-    def __init__(self, *args, **kwargs):
-        w = kwargs.pop('w', None)
-        super(WeightedSeries, self).__init__(*args, **kwargs)
-        if w is not None:
-            self._weight = pandas.Series(index=self.index, data=w)
-        else:
-            self._weight = None
-        self._rand_ = pandas.Series(index=self.index,
-                                    data=numpy.random.rand(len(self)))
-
+class _WeightedObject(object):
     @property
     def weight(self):
         """Sample weights."""
@@ -31,21 +19,45 @@ class WeightedSeries(pandas.Series):
         """Random number for consistent compression."""
         return self._rand_[self.index]
 
-    def mean(self):
-        """Weighted mean of the sampled distribution."""
-        return numpy.average(self, weights=self.weight)
+    def _construct_weights(self, w):
+        if w is not None:
+            self._weight = pandas.Series(index=self.index, data=w)
+        else:
+            self._weight = None
+        self._rand_ = pandas.Series(index=self.index,
+                                    data=numpy.random.rand(len(self)))
 
     def std(self):
         """Weighted standard deviation of the sampled distribution."""
         return numpy.sqrt(self.var())
 
+    def median(self):
+        """Weighted median of the sampled distribution."""
+        return self.quantile()
+
+    def neff(self):
+        """Effective number of samples."""
+        if self.weight is None:
+            return len(self)
+        else:
+            return channel_capacity(self.weight)
+
+
+class WeightedSeries(_WeightedObject, pandas.Series):
+    """Weighted version of pandas.Series."""
+
+    def __init__(self, *args, **kwargs):
+        w = kwargs.pop('w', None)
+        super(WeightedSeries, self).__init__(*args, **kwargs)
+        self._construct_weights(w)
+
+    def mean(self):
+        """Weighted mean of the sampled distribution."""
+        return numpy.average(self, weights=self.weight)
+
     def var(self):
         """Weighted variance of the sampled distribution."""
         return numpy.average((self-self.mean())**2, weights=self.weight)
-
-    def median(self):
-        """Weighted median of the sampled distribution."""
-        return float(self.quantile())
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
@@ -55,13 +67,6 @@ class WeightedSeries(pandas.Series):
         """Weighted histogram of the sampled distribution."""
         return super(WeightedSeries, self).hist(weights=self.weight,
                                                 *args, **kwargs)
-
-    def neff(self):
-        """Effective number of samples."""
-        if self.weight is None:
-            return len(self)
-        else:
-            return channel_capacity(self.weight)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
@@ -84,40 +89,18 @@ class WeightedSeries(pandas.Series):
         return WeightedSeries
 
 
-class WeightedDataFrame(pandas.DataFrame):
+class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
     """Weighted version of pandas.DataFrame."""
 
     def __init__(self, *args, **kwargs):
         w = kwargs.pop('w', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
-        if w is not None:
-            self._weight = pandas.Series(index=self.index, data=w)
-        else:
-            self._weight = None
-        self._rand_ = pandas.Series(index=self.index,
-                                    data=numpy.random.rand(len(self)))
-
-    @property
-    def weight(self):
-        """Sample weights."""
-        if self._weight is not None:
-            return self._weight[self.index]
-        else:
-            return None
-
-    @property
-    def _rand(self):
-        """Random number for consistent compression."""
-        return self._rand_[self.index]
+        self._construct_weights(w)
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
         return pandas.Series(numpy.average(self, weights=self.weight, axis=0),
                              index=self.columns)
-
-    def std(self):
-        """Weighted standard deviation of the sampled distribution."""
-        return numpy.sqrt(self.var())
 
     def var(self):
         """Weighted variance of the sampled distribution."""
@@ -129,10 +112,6 @@ class WeightedDataFrame(pandas.DataFrame):
         """Weighted covariance of the sampled distribution."""
         return pandas.DataFrame(numpy.cov(self.T, aweights=self.weight),
                                 index=self.columns, columns=self.columns)
-
-    def median(self):
-        """Weighted median of the sampled distribution."""
-        return self.quantile()
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
@@ -146,13 +125,6 @@ class WeightedDataFrame(pandas.DataFrame):
         """Weighted histogram of the sampled distribution."""
         return super(WeightedDataFrame, self).hist(weights=self.weight,
                                                    *args, **kwargs)
-
-    def neff(self):
-        """Effective number of samples."""
-        if self.weight is None:
-            return len(self)
-        else:
-            return channel_capacity(self.weight)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.

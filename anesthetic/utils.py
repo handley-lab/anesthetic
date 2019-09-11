@@ -55,7 +55,10 @@ def quantile(a, q, w=None):
     c /= c[-1]
     c = numpy.concatenate(([0.], c))
     icdf = interp1d(c, a[i])
-    return icdf(q)
+    quant = icdf(q)
+    if isinstance(q, float):
+        quant = float(quant)
+    return quant
 
 
 def check_bounds(d, xmin=None, xmax=None):
