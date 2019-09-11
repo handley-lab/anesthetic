@@ -15,6 +15,8 @@ def test_WeightedSeries_constructor():
     assert isinstance(series.weight, Series)
     assert_array_equal(series, data)
     assert_array_equal(series.weight, weights)
+    assert isinstance(series.to_frame(), WeightedDataFrame)
+    assert_array_equal(series.to_frame().weight, weights)
     return series
 
 

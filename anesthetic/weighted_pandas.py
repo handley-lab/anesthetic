@@ -81,6 +81,15 @@ class WeightedSeries(_WeightedObject, pandas.Series):
     def _constructor(self):
         return WeightedSeries
 
+    @property
+    def _constructor_expanddim(self):
+        def __constructor_expanddim(*args, **kwargs):
+            frame = WeightedDataFrame(*args, w=self._weight, **kwargs)
+            frame._rand_ = self._rand_
+            return frame
+        return __constructor_expanddim
+
+
 
 class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
     """Weighted version of pandas.DataFrame."""
