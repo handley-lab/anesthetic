@@ -34,7 +34,7 @@ def compress_weights(w, u=None, nsamples=None):
     if nsamples is None:
         nsamples = channel_capacity(w)
 
-    if nsamples < 0:
+    if nsamples <= 0:
         W = w/w.max()
     else:
         W = w * nsamples / w.sum()

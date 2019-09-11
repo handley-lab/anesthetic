@@ -134,7 +134,10 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         data = numpy.repeat(self.values, i, axis=0)
         index = numpy.repeat(self.index.values, i)
         df = pandas.DataFrame(data=data, index=index, columns=self.columns)
-        return df.drop(columns='weight')
+        if 'weight' in self:
+            return df.drop(columns='weight')
+        else:
+            return df
 
     _metadata = ['_weight', '_rand_']
 

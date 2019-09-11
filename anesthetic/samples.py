@@ -417,9 +417,6 @@ class NestedSamples(MCMCSamples):
             if 'nlive' in self:
                 self.beta = self._beta
 
-            self['weight'] = self.weight
-            self.tex['weight'] = r'MCMC weight'
-
     @property
     def beta(self):
         """Thermodynamic inverse temperature."""

@@ -87,6 +87,15 @@ def test_WeightedDataFrame_neff():
     assert neff > len(df) * numpy.exp(-0.25)
 
 
+def test_WeightedDataFrame_compress():
+    df = test_WeightedDataFrame_constructor()
+    assert_allclose(df.neff(), len(df.compress()), rtol=1e-2)
+    for i in numpy.logspace(3, 5, 10):
+        assert_allclose(i, len(df.compress(i)), rtol=1e-1)
+    unit_weights = df.compress(0)
+    assert(len(numpy.unique(unit_weights.index)) == len(unit_weights))
+
+
 def test_WeightedSeries_mean():
     series = test_WeightedSeries_constructor()
     mean = series.mean()
@@ -122,3 +131,12 @@ def test_WeightedSeries_neff():
     assert isinstance(neff, float)
     assert neff < len(series)
     assert neff > len(series) * numpy.exp(-0.25)
+
+
+def test_WeightedSeries_compress():
+    series = test_WeightedSeries_constructor()
+    assert_allclose(series.neff(), len(series.compress()), rtol=1e-2)
+    for i in numpy.logspace(3, 5, 10):
+        assert_allclose(i, len(series.compress(i)), rtol=1e-1)
+    unit_weights = series.compress(0)
+    assert(len(numpy.unique(unit_weights.index)) == len(unit_weights))
