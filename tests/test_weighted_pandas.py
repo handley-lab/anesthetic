@@ -8,8 +8,19 @@ def test_WeightedSeries_constructor():
     numpy.random.seed(0)
     N = 100000
     data = numpy.random.rand(N)
+
+    series = WeightedSeries(data)
+    assert_array_equal(series.weight, 1)
+    assert_array_equal(series, data)
+
+    series = WeightedSeries(data, w=None)
+    assert_array_equal(series.weight, 1)
+    assert_array_equal(series, data)
+
     weights = numpy.random.rand(N)
     series = WeightedSeries(data, w=weights)
+    assert_array_equal(series, data)
+
     assert series.weight.shape == (N,)
     assert series.shape == (N,)
     assert isinstance(series.weight, Series)
@@ -17,6 +28,7 @@ def test_WeightedSeries_constructor():
     assert_array_equal(series.weight, weights)
     assert isinstance(series.to_frame(), WeightedDataFrame)
     assert_array_equal(series.to_frame().weight, weights)
+
     return series
 
 
@@ -25,9 +37,19 @@ def test_WeightedDataFrame_constructor():
     N = 100000
     m = 3
     data = numpy.random.rand(N, m)
-    weights = numpy.random.rand(N)
     cols = ['A', 'B', 'C']
+
+    df = WeightedDataFrame(data, columns=cols)
+    assert_array_equal(df.weight, 1)
+    assert_array_equal(df, data)
+
+    df = WeightedDataFrame(data, w=None, columns=cols)
+    assert_array_equal(df.weight, 1)
+    assert_array_equal(df, data)
+
+    weights = numpy.random.rand(N)
     df = WeightedDataFrame(data, w=weights, columns=cols)
+
     assert df.weight.shape == (N,)
     assert df.shape == (N, m)
     assert isinstance(df.weight, Series)
