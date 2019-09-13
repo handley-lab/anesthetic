@@ -3,12 +3,6 @@ import numpy
 from anesthetic.read.getdistreader import GetDistReader
 
 
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
-
-
 class PolyChordReader(GetDistReader):
     """Read polychord files."""
 
@@ -19,7 +13,9 @@ class PolyChordReader(GetDistReader):
             _data = numpy.loadtxt(self.phys_live_birth_file)
             data = numpy.concatenate([data, _data])
             data = numpy.unique(data, axis=0)
-        except FileNotFoundError:
+            i = numpy.argsort(data[:, -2])
+            data = data[i, :]
+        except OSError:
             pass
         samples, logL, logL_birth = numpy.split(data, [-2, -1], axis=1)
         return samples, logL.flatten(), logL_birth.flatten()
