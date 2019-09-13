@@ -15,7 +15,7 @@ class PolyChordReader(GetDistReader):
             data = numpy.unique(data, axis=0)
             i = numpy.argsort(data[:, -2])
             data = data[i, :]
-        except OSError:
+        except (OSError, IOError):
             pass
         samples, logL, logL_birth = numpy.split(data, [-2, -1], axis=1)
         return samples, logL.flatten(), logL_birth.flatten()
