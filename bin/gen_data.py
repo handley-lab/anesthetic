@@ -112,6 +112,7 @@ root = './tests/example_data/pc'
 roots.append(root)
 
 ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
+live_ns[columns + ['logL', 'logL_birth']].to_csv(root + '_phys_live-birth.txt', sep=' ', index=False, header=False)
 
 # Dead file for multinest
 ns['cluster'] = 1

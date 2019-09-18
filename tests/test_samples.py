@@ -1,4 +1,5 @@
 import matplotlib_agg  # noqa: F401
+import os
 import sys
 import pytest
 import numpy
@@ -101,6 +102,15 @@ def test_read_polychord():
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")
+
+    os.rename('./tests/example_data/pc_phys_live-birth.txt',
+              './tests/example_data/pc_phys_live-birth.txt_')
+    ns_nolive = NestedSamples(root='./tests/example_data/pc')
+    os.rename('./tests/example_data/pc_phys_live-birth.txt_',
+              './tests/example_data/pc_phys_live-birth.txt')
+
+    cols = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth']
+    assert_array_equal(ns_nolive[cols], ns[cols][:ns_nolive.shape[0]])
 
 
 def test_different_parameters():
