@@ -400,27 +400,8 @@ class NestedSamples(MCMCSamples):
             self._beta = kwargs.pop('beta', 1.)
             logL_birth = kwargs.pop('logL_birth', None)
             super(NestedSamples, self).__init__(*args, **kwargs)
-
-            # Compute nlive
             if logL_birth is not None:
-                if isinstance(logL_birth, int):
-                    nlive = logL_birth
-                    self['nlive'] = nlive
-                    descending = numpy.arange(nlive, 0, -1)
-                    self.loc[len(self)-nlive:, 'nlive'] = descending
-                else:
-                    self['logL_birth'] = logL_birth
-                    self.tex['logL_birth'] = r'$\log\mathcal{L}_{\rm birth}$'
-                    self['nlive'] = compute_nlive(self.logL, self.logL_birth)
-
-                self.tex['nlive'] = r'$n_{\rm live}$'
-
-            if 'nlive' in self:
-                self.beta = self._beta
-
-            if self.weight is not None:
-                self['weight'] = self.weight
-                self.tex['weight'] = r'MCMC weight'
+                self._compute_nlive(logL_birth)
 
     @property
     def beta(self):
@@ -432,6 +413,8 @@ class NestedSamples(MCMCSamples):
         self._beta = beta
         logw = self.dlogX() + self.beta*self.logL
         self._weight = numpy.exp(logw - logw.max())
+        self['weight'] = self.weight
+        self.tex['weight'] = r'MCMC weight'
 
     def set_beta(self, beta, inplace=False):
         """Change the inverse temperature.
@@ -545,8 +528,41 @@ class NestedSamples(MCMCSamples):
         else:
             return WeightedDataFrame(dlogX, self.index, w=self.weight)
 
+    def _compute_nlive(self, logL_birth):
+        if isinstance(logL_birth, int):
+            nlive = logL_birth
+            self['nlive'] = nlive
+            descending = numpy.arange(nlive, 0, -1)
+            self.loc[len(self)-nlive:, 'nlive'] = descending
+        else:
+            self['logL_birth'] = logL_birth
+            self.tex['logL_birth'] = r'$\log\mathcal{L}_{\rm birth}$'
+            self['nlive'] = compute_nlive(self.logL, self.logL_birth)
+
+        self.tex['nlive'] = r'$n_{\rm live}$'
+        self.beta = self._beta
+
     _metadata = MCMCSamples._metadata + ['_beta']
 
     @property
     def _constructor(self):
         return NestedSamples
+
+
+def merge_nested_samples(runs):
+    """Merge two or more nested sampling runs.
+
+    Parameters
+    ----------
+    runs: list(NestedSamples)
+        list or array-like of nested sampling runs.
+
+    Returns
+    -------
+    samples: NestedSamples
+        Merged run.
+    """
+    samples = pandas.concat(runs, ignore_index=True)
+    samples = samples.sort_values('logL').reset_index(drop=True)
+    samples._compute_nlive(samples.logL_birth)
+    return samples
