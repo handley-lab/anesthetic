@@ -373,8 +373,10 @@ def test_hist_levels():
 def test_ns_output():
     numpy.random.seed(3)
     pc = NestedSamples(root='./tests/example_data/pc')
-    pc.ns_output(1000)
-
+    PC = pc.ns_output(1000)
+    assert abs(pc.logZ() - PC['logZ'].mean() ) < PC['logZ'].std()
+    assert PC['d'].mean() < 5
+    assert PC.cov()['D']['logZ'] < 0
 
 def test_masking():
     pc = NestedSamples(root="./tests/example_data/pc")

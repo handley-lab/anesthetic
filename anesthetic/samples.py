@@ -14,7 +14,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import compute_nlive
 from anesthetic.gui.plot import RunPlotter
-from anesthetic.weighted_pandas import WeightedDataFrame
+from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
 
 class MCMCSamples(WeightedDataFrame):
@@ -430,7 +430,7 @@ class NestedSamples(MCMCSamples):
     @beta.setter
     def beta(self, beta):
         self._beta = beta
-        logw = self._dlogX() + self.beta*self.logL
+        logw = self.dlogX() + self.beta*self.logL
         self._weight = numpy.exp(logw - logw.max())
 
     def set_beta(self, beta, inplace=False):
@@ -472,22 +472,34 @@ class NestedSamples(MCMCSamples):
             Samples from the P(logZ, D, d) distribution
 
         """
-        dlogX = self._dlogX(nsamples)
+        dlogX = self.dlogX(nsamples)
+        samples = MCMCSamples(index=dlogX.columns)
+        samples['logZ'] = self.logZ(dlogX)
 
-        logZ = logsumexp(self.logL.values + dlogX, axis=1)
-        logw = ((self.logL.values + dlogX).T - logZ).T
-        S = ((self.logL.values + numpy.zeros_like(dlogX)).T
-             - logZ).T
+        logw = dlogX.add(self.logL, axis=0)
+        logw -= samples.logZ
+        S = (dlogX*0).add(self.logL, axis=0) - samples.logZ
 
-        D = numpy.exp(logsumexp(logw, b=S, axis=1))
-        d = numpy.exp(logsumexp(logw, b=(S.T-D).T**2, axis=1))*2
+        samples['D'] = numpy.exp(logsumexp(logw, b=S, axis=0))
+        samples['d'] = numpy.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
 
-        samples = numpy.vstack((logZ, D, d)).T
-        params = ['logZ', 'D', 'd']
-        tex = {'logZ': r'$\log\mathcal{Z}$',
-               'D': r'$\mathcal{D}$',
-               'd': r'$d$'}
-        return MCMCSamples(data=samples, columns=params, tex=tex)
+        samples.tex = {'logZ': r'$\log\mathcal{Z}$',
+                       'D': r'$\mathcal{D}$',
+                       'd': r'$d$'}
+        samples.label = self.label
+        return samples
+
+    def logZ(self, nsamples=None):
+        """Log-Evidence.
+
+        - If nsamples is not supplied, return mean log evidence
+        - If nsamples is integer, return nsamples from the distribution
+        - If nsamples is array, use nsamples as volumes of evidence shells
+
+        """
+        dlogX = self.dlogX(nsamples)
+        logw = dlogX.add(self.logL, axis=0)
+        return logsumexp(logw, axis=0)
 
     def live_points(self, logL):
         """Get the live points within logL."""
@@ -501,7 +513,7 @@ class NestedSamples(MCMCSamples):
         """Construct a graphical user interface for viewing samples."""
         return RunPlotter(self, params)
 
-    def _dlogX(self, nsamples=None):
+    def dlogX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
 
         Parameters
@@ -512,20 +524,26 @@ class NestedSamples(MCMCSamples):
             distribution. (Default: None)
 
         """
-        if nsamples is None:
-            t = numpy.atleast_2d(numpy.log(self.nlive/(self.nlive+1)))
-            nsamples = 1
+        if numpy.ndim(nsamples) > 0:
+            return nsamples
+        elif nsamples is None:
+            t = numpy.log(self.nlive/(self.nlive+1)).to_frame()
         else:
-            t = numpy.log(numpy.random.rand(nsamples, len(self))
-                          )/self.nlive.values
-        logX = numpy.concatenate((numpy.zeros((nsamples, 1)),
-                                  t.cumsum(axis=1),
-                                  -numpy.inf*numpy.ones((nsamples, 1))
-                                  ), axis=1)
-        dlogX = logsumexp([logX[:, :-2], logX[:, 2:]],
-                          b=[numpy.ones_like(t), -numpy.ones_like(t)], axis=0)
-        dlogX -= numpy.log(2)
-        return numpy.squeeze(dlogX)
+            rand = numpy.log(numpy.random.rand(len(self), nsamples))
+            t = pandas.DataFrame(rand, self.index).divide(self.nlive, axis=0)
+
+        logX = t.cumsum()
+        logXp = logX.shift(1, fill_value=0)
+        logXm = logX.shift(-1, fill_value=-numpy.inf)
+        dlogX = logsumexp([logXp.values, logXm.values],
+                          b=[numpy.ones_like(logXp), -numpy.ones_like(logXm)],
+                          axis=0) - numpy.log(2)
+
+        if nsamples is None:
+            dlogX = numpy.squeeze(dlogX)
+            return WeightedSeries(dlogX, self.index, w=self.weight)
+        else:
+            return WeightedDataFrame(dlogX, self.index, w=self.weight)
 
     _metadata = MCMCSamples._metadata + ['_beta']
 
