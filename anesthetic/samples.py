@@ -494,7 +494,7 @@ class NestedSamples(MCMCSamples):
 
     def posterior_points(self, beta):
         """Get the posterior points at temperature beta."""
-        return self.set_beta(beta).compress(0)
+        return self.set_beta(beta).compress(-1)
 
     def gui(self, params=None):
         """Construct a graphical user interface for viewing samples."""
