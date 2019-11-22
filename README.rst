@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 =========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
-:Version: 1.2.1
+:Version: 1.2.2
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
