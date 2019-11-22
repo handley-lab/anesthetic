@@ -34,7 +34,7 @@ def compress_weights(w, u=None, nsamples=None):
     if nsamples is None:
         nsamples = channel_capacity(w)
 
-    if nsamples < 0:
+    if nsamples <= 0:
         W = w/w.max()
     else:
         W = w * nsamples / w.sum()
@@ -55,7 +55,10 @@ def quantile(a, q, w=None):
     c /= c[-1]
     c = numpy.concatenate(([0.], c))
     icdf = interp1d(c, a[i])
-    return icdf(q)
+    quant = icdf(q)
+    if isinstance(q, float):
+        quant = float(quant)
+    return quant
 
 
 def check_bounds(d, xmin=None, xmax=None):

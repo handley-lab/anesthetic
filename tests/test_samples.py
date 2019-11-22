@@ -29,15 +29,12 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples(data=samples)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, [0, 1, 2])
-
-    mcmc = MCMCSamples(logL=logL)
-    assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['logL'])
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'weight'],
+                                                 dtype=object))
 
     mcmc = MCMCSamples(data=samples, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL'],
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
                                                  dtype=object))
 
     mcmc = MCMCSamples(data=samples, w=w)
@@ -47,12 +44,12 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples(data=samples, w=w, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'weight', 'logL'],
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
                                                  dtype=object))
 
     mcmc = MCMCSamples(data=samples, columns=params)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
+    assert_array_equal(mcmc.columns, ['A', 'B', 'C', 'weight'])
 
     mcmc = MCMCSamples(data=samples, tex=tex)
     for p in params:
