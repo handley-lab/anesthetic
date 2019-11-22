@@ -75,13 +75,12 @@ class MCMCSamples(WeightedDataFrame):
             self.root = None
             super(MCMCSamples, self).__init__(*args, **kwargs)
 
-            if self.weight is not None:
-                self['weight'] = self.weight
-                self.tex['weight'] = r'MCMC weight'
-
             if logL is not None:
                 self['logL'] = logL
                 self.tex['logL'] = r'$\log\mathcal{L}$'
+
+            self['weight'] = self.weight
+            self.tex['weight'] = r'MCMC weight'
 
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
@@ -418,9 +417,8 @@ class NestedSamples(MCMCSamples):
             if 'nlive' in self:
                 self.beta = self._beta
 
-            if self.weight is not None:
-                self['weight'] = self.weight
-                self.tex['weight'] = r'MCMC weight'
+            self['weight'] = self.weight
+            self.tex['weight'] = r'MCMC weight'
 
     @property
     def beta(self):
