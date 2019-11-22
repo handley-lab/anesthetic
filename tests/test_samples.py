@@ -141,14 +141,19 @@ def test_different_parameters():
 
 
 def test_manual_columns():
-    old_params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth', 'nlive', 'weight']
+    old_params = ['x0', 'x1', 'x2', 'x3', 'x4']
+    mcmc_params = ['weight', 'logL']
+    ns_params = ['logL', 'logL_birth', 'nlive', 'weight']
+    mcmc = MCMCSamples(root='./tests/example_data/gd')
     ns = NestedSamples(root='./tests/example_data/pc')
-    assert_array_equal(ns.columns, old_params)
+    assert_array_equal(mcmc.columns, old_params + mcmc_params)
+    assert_array_equal(ns.columns, old_params + ns_params)
 
     new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
+    mcmc = MCMCSamples(root='./tests/example_data/gd', columns=new_params)
     ns = NestedSamples(root='./tests/example_data/pc', columns=new_params)
-    new_params += ['logL', 'logL_birth', 'nlive', 'weight']
-    assert_array_equal(ns.columns, new_params)
+    assert_array_equal(mcmc.columns, new_params + mcmc_params)
+    assert_array_equal(ns.columns, new_params + ns_params)
 
 
 def test_plot_2d_types():
