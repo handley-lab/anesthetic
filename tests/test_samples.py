@@ -10,6 +10,7 @@ from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from anesthetic.samples import merge_nested_samples
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from matplotlib.colors import to_hex
+from scipy.stats import ks_2samp
 try:
     import montepython  # noqa: F401
 except ImportError:
@@ -29,12 +30,11 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples(data=samples)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'weight'],
-                                                 dtype=object))
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2], dtype=object))
 
     mcmc = MCMCSamples(data=samples, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL'],
                                                  dtype=object))
 
     mcmc = MCMCSamples(data=samples, w=w)
@@ -49,7 +49,7 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples(data=samples, columns=params)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['A', 'B', 'C', 'weight'])
+    assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
 
     mcmc = MCMCSamples(data=samples, tex=tex)
     for p in params:
@@ -385,6 +385,12 @@ def test_ns_output():
     assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
     assert PC['d'].mean() < 5
     assert PC.cov()['D']['logZ'] < 0
+    assert(abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std())
+    assert(abs(PC.D.mean() - pc.D()) < PC.D.std())
+    assert(abs(PC.d.mean() - pc.d()) < PC.d.std())
+    assert(ks_2samp(pc.logZ(100), PC.logZ).pvalue > 0.05)
+    assert(ks_2samp(pc.D(100), PC.D).pvalue > 0.05)
+    assert(ks_2samp(pc.d(100), PC.d).pvalue > 0.05)
 
 
 def test_masking():

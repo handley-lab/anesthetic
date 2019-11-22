@@ -79,8 +79,9 @@ class MCMCSamples(WeightedDataFrame):
                 self['logL'] = logL
                 self.tex['logL'] = r'$\log\mathcal{L}$'
 
-            self['weight'] = self.weight
-            self.tex['weight'] = r'MCMC weight'
+            if self._weight is not None:
+                self['weight'] = self.weight
+                self.tex['weight'] = r'MCMC weight'
 
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
@@ -400,9 +401,7 @@ class NestedSamples(MCMCSamples):
             logL_birth = kwargs.pop('logL_birth', None)
             super(NestedSamples, self).__init__(*args, **kwargs)
             if logL_birth is not None:
-
                 self._compute_nlive(logL_birth)
-
 
     @property
     def beta(self):
@@ -415,7 +414,7 @@ class NestedSamples(MCMCSamples):
         logw = self.dlogX() + self.beta*self.logL
         self._weight = numpy.exp(logw - logw.max())
 
-        if self.weight is not None:
+        if self._weight is not None:
             self['weight'] = self.weight
             self.tex['weight'] = r'MCMC weight'
 
@@ -486,6 +485,35 @@ class NestedSamples(MCMCSamples):
         dlogX = self.dlogX(nsamples)
         logw = dlogX.add(self.logL, axis=0)
         return logsumexp(logw, axis=0)
+
+    def D(self, nsamples=None):
+        """Kullback-Leibler divergence.
+
+        - If nsamples is not supplied, return mean KL divergence
+        - If nsamples is integer, return nsamples from the distribution
+        - If nsamples is array, use nsamples as volumes of evidence shells
+
+        """
+        dlogX = self.dlogX(nsamples)
+        logZ = self.logZ(dlogX)
+        logw = dlogX.add(self.logL, axis=0) - logZ
+        S = (dlogX*0).add(self.logL, axis=0) - logZ
+        return numpy.exp(logsumexp(logw, b=S, axis=0))
+
+    def d(self, nsamples=None):
+        """Bayesian model dimensionality.
+
+        - If nsamples is not supplied, return mean BMD
+        - If nsamples is integer, return nsamples from the distribution
+        - If nsamples is array, use nsamples as volumes of evidence shells
+
+        """
+        dlogX = self.dlogX(nsamples)
+        logZ = self.logZ(dlogX)
+        D = self.D(dlogX)
+        logw = dlogX.add(self.logL, axis=0) - logZ
+        S = (dlogX*0).add(self.logL, axis=0) - logZ
+        return numpy.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
     def live_points(self, logL):
         """Get the live points within logL."""

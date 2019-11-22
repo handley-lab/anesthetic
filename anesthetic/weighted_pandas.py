@@ -9,7 +9,10 @@ class _WeightedObject(object):
     @property
     def weight(self):
         """Sample weights."""
-        return self._weight[self.index]
+        if self._weight is None:
+            return pandas.Series(index=self.index, data=1.)
+        else:
+            return self._weight[self.index]
 
     @property
     def _rand(self):
@@ -17,9 +20,10 @@ class _WeightedObject(object):
         return self._rand_[self.index]
 
     def _construct_weights(self, w):
-        if w is None:
-            w = numpy.ones(len(self))
-        self._weight = pandas.Series(index=self.index, data=w)
+        if w is not None:
+            self._weight = pandas.Series(index=self.index, data=w)
+        else:
+            self._weight = None
         rand = numpy.random.rand(len(self))
         self._rand_ = pandas.Series(index=self.index, data=rand)
 
