@@ -141,7 +141,7 @@ def test_different_parameters():
 def test_manual_columns():
     old_params = ['x0', 'x1', 'x2', 'x3', 'x4']
     mcmc_params = ['logL', 'weight']
-    ns_params = ['logL', 'weight', 'logL_birth', 'nlive']
+    ns_params = ['logL', 'logL_birth', 'nlive', 'weight']
     mcmc = MCMCSamples(root='./tests/example_data/gd')
     ns = NestedSamples(root='./tests/example_data/pc')
     assert_array_equal(mcmc.columns, old_params + mcmc_params)
