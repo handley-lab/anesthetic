@@ -116,6 +116,15 @@ def test_read_polychord():
     assert_array_equal(ns_nolive[cols], ns[cols][:ns_nolive.shape[0]])
 
 
+def test_NS_input_fails_in_MCMCSamples():
+    numpy.random.seed(3)
+    with pytest.raises(ValueError) as excinfo:
+        MCMCSamples(root='./tests/example_data/pc')
+    assert "Please use NestedSamples instead which has the same features as " \
+           "MCMCSamples and more. MCMCSamples should be used for MCMC " \
+           "chains only." in str(excinfo.value)
+
+
 def test_different_parameters():
     numpy.random.seed(3)
     params_x = ['x0', 'x1', 'x2', 'x3', 'x4']

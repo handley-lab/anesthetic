@@ -60,7 +60,7 @@ class MCMCSamples(WeightedDataFrame):
         root = kwargs.pop('root', None)
         if root is not None:
             reader = SampleReader(root)
-            if os.path.isfile(reader.birth_file) or os.path.isfile(reader.ev_file):
+            if hasattr(reader, 'birth_file') or hasattr(reader, 'ev_file'):
                 raise ValueError("The file root %s seems to point to a Nested "
                               "Sampling chain. Please use NestedSamples "
                               "instead which has the same features as "
