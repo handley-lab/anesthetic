@@ -400,7 +400,9 @@ class NestedSamples(MCMCSamples):
             logL_birth = kwargs.pop('logL_birth', None)
             super(NestedSamples, self).__init__(*args, **kwargs)
             if logL_birth is not None:
+
                 self._compute_nlive(logL_birth)
+
 
     @property
     def beta(self):
@@ -412,8 +414,10 @@ class NestedSamples(MCMCSamples):
         self._beta = beta
         logw = self.dlogX() + self.beta*self.logL
         self._weight = numpy.exp(logw - logw.max())
-        self['weight'] = self.weight
-        self.tex['weight'] = r'MCMC weight'
+
+        if self.weight is not None:
+            self['weight'] = self.weight
+            self.tex['weight'] = r'MCMC weight'
 
     def set_beta(self, beta, inplace=False):
         """Change the inverse temperature.
@@ -489,7 +493,7 @@ class NestedSamples(MCMCSamples):
 
     def posterior_points(self, beta):
         """Get the posterior points at temperature beta."""
-        return self.set_beta(beta).compress(0)
+        return self.set_beta(beta).compress(-1)
 
     def gui(self, params=None):
         """Construct a graphical user interface for viewing samples."""
