@@ -117,7 +117,6 @@ def test_read_polychord():
 
 
 def test_NS_input_fails_in_MCMCSamples():
-    numpy.random.seed(3)
     with pytest.raises(ValueError) as excinfo:
         MCMCSamples(root='./tests/example_data/pc')
     assert "Please use NestedSamples instead which has the same features as " \
@@ -139,6 +138,17 @@ def test_different_parameters():
     fig, axes = make_2d_axes([params_x, params_y])
     ns.plot_2d(axes)
     plt.close('all')
+
+
+def test_manual_columns():
+    old_params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth', 'nlive', 'weight']
+    ns = NestedSamples(root='./tests/example_data/pc')
+    assert_array_equal(ns.columns, old_params)
+
+    new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
+    ns = NestedSamples(root='./tests/example_data/pc', columns=new_params)
+    new_params += ['logL', 'logL_birth', 'nlive', 'weight']
+    assert_array_equal(ns.columns, new_params)
 
 
 def test_plot_2d_types():
