@@ -114,6 +114,14 @@ def test_read_polychord():
     assert_array_equal(ns_nolive[cols], ns[cols][:ns_nolive.shape[0]])
 
 
+def test_NS_input_fails_in_MCMCSamples():
+    with pytest.raises(ValueError) as excinfo:
+        MCMCSamples(root='./tests/example_data/pc')
+    assert "Please use NestedSamples instead which has the same features as " \
+           "MCMCSamples and more. MCMCSamples should be used for MCMC " \
+           "chains only." in str(excinfo.value)
+
+
 def test_different_parameters():
     numpy.random.seed(3)
     params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
@@ -128,6 +136,22 @@ def test_different_parameters():
     fig, axes = make_2d_axes([params_x, params_y])
     ns.plot_2d(axes)
     plt.close('all')
+
+
+def test_manual_columns():
+    old_params = ['x0', 'x1', 'x2', 'x3', 'x4']
+    mcmc_params = ['logL', 'weight']
+    ns_params = ['logL', 'weight', 'logL_birth', 'nlive']
+    mcmc = MCMCSamples(root='./tests/example_data/gd')
+    ns = NestedSamples(root='./tests/example_data/pc')
+    assert_array_equal(mcmc.columns, old_params + mcmc_params)
+    assert_array_equal(ns.columns, old_params + ns_params)
+
+    new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
+    mcmc = MCMCSamples(root='./tests/example_data/gd', columns=new_params)
+    ns = NestedSamples(root='./tests/example_data/pc', columns=new_params)
+    assert_array_equal(mcmc.columns, new_params + mcmc_params)
+    assert_array_equal(ns.columns, new_params + ns_params)
 
 
 def test_plot_2d_types():
