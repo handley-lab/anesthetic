@@ -60,11 +60,18 @@ class MCMCSamples(WeightedDataFrame):
         root = kwargs.pop('root', None)
         if root is not None:
             reader = SampleReader(root)
+            if os.path.isfile(reader.birth_file) or os.path.isfile(reader.ev_file):
+                raise ValueError("The file root %s seems to point to a Nested "
+                              "Sampling chain. Please use NestedSamples "
+                              "instead which has the same features as "
+                              "MCMCSamples and more. MCMCSamples should be "
+                              "used for MCMC chains only." % root)
             w, logL, samples = reader.samples()
             params, tex = reader.paramnames()
+            columns = kwargs.pop('columns', params)
             limits = reader.limits()
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
-            self.__init__(data=samples, columns=params, w=w, logL=logL,
+            self.__init__(data=samples, columns=columns, w=w, logL=logL,
                           tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
@@ -390,9 +397,10 @@ class NestedSamples(MCMCSamples):
             reader = SampleReader(root)
             samples, logL, logL_birth = reader.samples()
             params, tex = reader.paramnames()
+            columns = kwargs.pop('columns', params)
             limits = reader.limits()
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
-            self.__init__(data=samples, columns=params,
+            self.__init__(data=samples, columns=columns,
                           logL=logL, logL_birth=logL_birth,
                           tex=tex, limits=limits, *args, **kwargs)
             self.root = root
