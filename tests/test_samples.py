@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
+from anesthetic.samples import merge_nested_samples
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from matplotlib.colors import to_hex
+from scipy.stats import ks_2samp
 try:
     import montepython  # noqa: F401
 except ImportError:
@@ -28,12 +30,11 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples(data=samples)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'weight'],
-                                                 dtype=object))
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2], dtype=object))
 
     mcmc = MCMCSamples(data=samples, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL'],
                                                  dtype=object))
 
     mcmc = MCMCSamples(data=samples, w=w)
@@ -48,7 +49,7 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples(data=samples, columns=params)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, ['A', 'B', 'C', 'weight'])
+    assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
 
     mcmc = MCMCSamples(data=samples, tex=tex)
     for p in params:
@@ -140,7 +141,7 @@ def test_different_parameters():
 def test_manual_columns():
     old_params = ['x0', 'x1', 'x2', 'x3', 'x4']
     mcmc_params = ['logL', 'weight']
-    ns_params = ['logL', 'weight', 'logL_birth', 'nlive']
+    ns_params = ['logL', 'logL_birth', 'nlive', 'weight']
     mcmc = MCMCSamples(root='./tests/example_data/gd')
     ns = NestedSamples(root='./tests/example_data/pc')
     assert_array_equal(mcmc.columns, old_params + mcmc_params)
@@ -404,7 +405,16 @@ def test_hist_levels():
 def test_ns_output():
     numpy.random.seed(3)
     pc = NestedSamples(root='./tests/example_data/pc')
-    pc.ns_output(1000)
+    PC = pc.ns_output(1000)
+    assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
+    assert PC['d'].mean() < 5
+    assert PC.cov()['D']['logZ'] < 0
+    assert(abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std())
+    assert(abs(PC.D.mean() - pc.D()) < PC.D.std())
+    assert(abs(PC.d.mean() - pc.d()) < PC.d.std())
+    assert(ks_2samp(pc.logZ(100), PC.logZ).pvalue > 0.05)
+    assert(ks_2samp(pc.D(100), PC.D).pvalue > 0.05)
+    assert(ks_2samp(pc.d(100), PC.d).pvalue > 0.05)
 
 
 def test_masking():
@@ -422,6 +432,23 @@ def test_masking():
     for ptype in plot_types + ['scatter']:
         fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
         pc[mask].plot_2d(axes=axes, types=dict(lower=ptype, diagonal='hist'))
+
+
+def test_merging():
+    numpy.random.seed(3)
+    samples_1 = NestedSamples(root='./tests/example_data/pc')
+    samples_2 = NestedSamples(root='./tests/example_data/pc_250')
+    samples = merge_nested_samples([samples_1, samples_2])
+    nlive_1 = samples_1.nlive.mode()[0]
+    nlive_2 = samples_2.nlive.mode()[0]
+    nlive = samples.nlive.mode()[0]
+    assert nlive_1 == 125
+    assert nlive_2 == 250
+    assert nlive == nlive_1 + nlive_2
+    assert (samples.logZ() < samples_1.logZ()
+            and samples.logZ() > samples_2.logZ()
+            or samples.logZ() > samples_1.logZ()
+            and samples.logZ() < samples_2.logZ())
 
 
 def test_beta():

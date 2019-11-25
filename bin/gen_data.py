@@ -1,5 +1,6 @@
 import numpy 
 from anesthetic import MCMCSamples, NestedSamples
+import tqdm
 
 def loglikelihood(x):
     """Example non-trivial loglikelihood
@@ -41,7 +42,6 @@ roots = []
 # ----
 def mcmc_sim(ndims=5):
     """ Simple Metropolis Hastings algorithm. """
-    numpy.random.seed(0)
     x = [numpy.array([0, 0, 0.1, 0.5, 3])]
     l = [loglikelihood(x[-1])]
     w = [1]
@@ -58,6 +58,7 @@ def mcmc_sim(ndims=5):
     return numpy.array(x), numpy.array(l), numpy.array(w)
 
 
+numpy.random.seed(0)
 data, logL, w = mcmc_sim()
 mcmc = MCMCSamples(data=data, columns=columns, logL=logL, w=w, tex=tex)
 mcmc['chi2'] = -2*mcmc.logL
@@ -80,7 +81,6 @@ mcmc[['weight', 'chi2'] + columns].to_csv(root + '.txt', sep=' ', index=False, h
 
 def ns_sim(ndims=5, nlive=125):
     """Brute force Nested Sampling run"""
-    numpy.random.seed(0)
     low=(-1,-1,0,0,2)
     high=(1,1,1,1,4)
     live_points = numpy.random.uniform(low=low, high=high, size=(nlive, ndims))
@@ -90,7 +90,7 @@ def ns_sim(ndims=5, nlive=125):
     dead_points = []
     dead_likes = []
     birth_likes = []
-    for _ in range(nlive*11):
+    for _ in tqdm.tqdm(range(nlive*11)):
         i = numpy.argmin(live_likes)
         Lmin = live_likes[i]
         dead_points.append(live_points[i].copy())
@@ -102,6 +102,7 @@ def ns_sim(ndims=5, nlive=125):
             live_likes[i] = loglikelihood(live_points[i])
     return dead_points, dead_likes, birth_likes, live_points, live_likes, live_birth_likes
 
+numpy.random.seed(0)
 data, logL, logL_birth, live, live_logL, live_logL_birth = ns_sim()
 
 ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
@@ -119,7 +120,7 @@ ns['cluster'] = 1
 live_ns['cluster']=1
 root = './tests/example_data/mn'
 roots.append(root)
-ns['dlogX'] = ns._dlogX()
+ns['dlogX'] = ns.dlogX()
 ns[columns + ['logL', 'logL_birth', 'dlogX', 'cluster']].to_csv(root + 'dead-birth.txt', sep=' ', index=False, header=False)
 live_ns[columns + ['logL', 'logL_birth', 'cluster']].to_csv(root + 'phys_live-birth.txt', sep=' ', index=False, header=False)
 ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
@@ -133,6 +134,20 @@ roots.append(root)
 ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
 ns[columns + ['logL', 'cluster']].to_csv(root + 'phys_live.points', sep=' ', index=False, header=False)
 
+
+# Second run with different live points
+data, logL, logL_birth, live, live_logL, live_logL_birth = ns_sim(nlive=250)
+ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
+live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
+
+# Dead file for polychord
+root = './tests/example_data/pc_250'
+roots.append(root)
+
+ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
+live_ns[columns + ['logL', 'logL_birth']].to_csv(root + '_phys_live-birth.txt', sep=' ', index=False, header=False)
+
+
 for root in roots:
     # paramnames file
     with open(root + '.paramnames', 'w') as f:
@@ -145,4 +160,5 @@ for root in roots:
         f.write('%s\tNone\tNone\n' % columns[1])
         f.write('%s\t0\tNone\n' % columns[2])
         f.write('%s\t0\t1\n' % columns[3])
+
 

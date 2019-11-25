@@ -64,9 +64,9 @@ def quantile(a, q, w=None):
 def check_bounds(d, xmin=None, xmax=None):
     """Check if we need to apply strict bounds."""
     if len(d) > 0:
-        if xmin is not None and (min(d) - xmin)/(max(d)-min(d)) > 1e-2:
+        if xmin is not None and (min(d) - xmin) > 1e-2*(max(d)-min(d)):
             xmin = None
-        if xmax is not None and (xmax - max(d))/(max(d)-min(d)) > 1e-2:
+        if xmax is not None and (xmax - max(d)) > 1e-2*(max(d)-min(d)):
             xmax = None
     return xmin, xmax
 
