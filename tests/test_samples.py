@@ -442,6 +442,8 @@ def test_merging():
     nlive_1 = samples_1.nlive.mode()[0]
     nlive_2 = samples_2.nlive.mode()[0]
     nlive = samples.nlive.mode()[0]
+    assert nlive_1 == 125
+    assert nlive_2 == 250
     assert nlive == nlive_1 + nlive_2
     assert (samples.logZ() < samples_1.logZ()
             and samples.logZ() > samples_2.logZ()
