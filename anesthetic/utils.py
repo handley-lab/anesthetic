@@ -159,7 +159,6 @@ def compute_nlive(death, birth):
     nlive: numpy.array
         number of live points at each contour
     """
-    # List 
     birth_index = death.searchsorted(birth)
     births = pandas.Series(+1, index=birth_index).sort_index()
     index = numpy.arange(death.size)

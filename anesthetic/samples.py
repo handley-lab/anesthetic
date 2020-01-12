@@ -566,13 +566,14 @@ class NestedSamples(MCMCSamples):
             distribution. (Default: None)
 
         """
-        if numpy.ndim(nsamples) > 0:
-            return nsamples
-        elif nsamples is None:
-            t = numpy.log(self.nlive/(self.nlive+1)).to_frame()
-        else:
-            rand = numpy.log(numpy.random.rand(len(self), nsamples))
-            t = pandas.DataFrame(rand, self.index).divide(self.nlive, axis=0)
+        with numpy.errstate(divide='ignore'):
+            if numpy.ndim(nsamples) > 0:
+                return nsamples
+            elif nsamples is None:
+                t = numpy.log(self.nlive/(self.nlive+1)).to_frame()
+            else:
+                r = numpy.log(numpy.random.rand(len(self), nsamples))
+                t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
 
         logX = t.cumsum()
         logXp = logX.shift(1, fill_value=0)
