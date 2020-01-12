@@ -475,3 +475,13 @@ def test_beta():
         assert pc.beta == beta
         assert_array_equal(pc['weight'], pc.weight)
         assert not numpy.array_equal(pc['weight'], weight)
+
+def test_live_points():
+    numpy.random.seed(4)
+    pc = NestedSamples(root="./tests/example_data/pc")
+    
+    for i in numpy.random.choice(pc.index, 100):
+        live_points = pc.live_points(pc.logL[i])
+        assert len(live_points) == pc.nlive[i]
+        live_points_from_int = pc.live_points(i)
+        assert (live_points_from_int == live_points).all().all()

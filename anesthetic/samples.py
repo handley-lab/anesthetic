@@ -524,11 +524,27 @@ class NestedSamples(MCMCSamples):
         return numpy.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
     def live_points(self, logL):
-        """Get the live points within logL."""
+        """Get the live points within logL.
+
+        Parameters
+        ----------
+        logL: float or int
+            Loglikelihood or iteration number to return live points
+
+        Returns
+        -------
+        live_points: NestedSamples
+            Live points at either:
+                - contour logL (if integer is input)
+                - contour i (if integer is input)
+        """
+        if isinstance(logL, int) or isinstance(logL, numpy.integer):
+            logL = self.logL[logL]
+
         return self[(self.logL > logL) & (self.logL_birth <= logL)]
 
-    def posterior_points(self, beta):
-        """Get the posterior points at temperature beta."""
+    def posterior_points(self, beta=1):
+        """Get equally weighted posterior points at temperature beta."""
         return self.set_beta(beta).compress(-1)
 
     def gui(self, params=None):
