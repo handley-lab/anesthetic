@@ -147,15 +147,26 @@ def histogram(a, **kwargs):
 
 
 def compute_nlive(death, birth):
-    """Compute number of live points from birth and death contours."""
-    contours = numpy.concatenate(([birth[0]], death))
-    index = numpy.arange(death.size)
-    birth_index = contours.searchsorted(birth)-1
+    """Compute number of live points from birth and death contours.
+
+    Parameters
+    ----------
+    death, birth : array-like
+        list of birth and death contours
+
+    Returns
+    -------
+    nlive: numpy.array
+        number of live points at each contour
+    """
+    # List 
+    birth_index = death.searchsorted(birth)
     births = pandas.Series(+1, index=birth_index).sort_index()
+    index = numpy.arange(death.size)
     deaths = pandas.Series(-1, index=index)
     nlive = pandas.concat([births, deaths]).sort_index()
     nlive = nlive.groupby(nlive.index).sum().cumsum()
-    return nlive.values[:-1]
+    return nlive.values
 
 
 def unique(a):
@@ -318,3 +329,8 @@ def sample_compression_1d(x, w=None, n=1000):
     numpy.add.at(w_, j2[k2], w[k2])
 
     return x_, w_
+
+
+def is_int(x):
+    """Test whether x is an integer."""
+    return isinstance(x, int) or isinstance(x, numpy.integer)

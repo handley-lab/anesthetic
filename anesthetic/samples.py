@@ -12,7 +12,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              fastkde_contour_plot_2d,
                              kde_contour_plot_2d, hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
-from anesthetic.utils import compute_nlive
+from anesthetic.utils import compute_nlive, is_int
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
@@ -523,22 +523,26 @@ class NestedSamples(MCMCSamples):
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
         return numpy.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
-    def live_points(self, logL):
+    def live_points(self, logL=None):
         """Get the live points within logL.
 
         Parameters
         ----------
-        logL: float or int
-            Loglikelihood or iteration number to return live points
+        logL: float or int, optional
+            Loglikelihood or iteration number to return live points.
+            If not provided, return the last set of active live points.
 
         Returns
         -------
         live_points: NestedSamples
             Live points at either:
-                - contour logL (if integer is input)
-                - contour i (if integer is input)
+                - contour logL (if input is float)
+                - ith contour (if input is integer)
+                - last generation contour if logL not provided
         """
-        if isinstance(logL, int) or isinstance(logL, numpy.integer):
+        if logL is None:
+            logL = self.logL_birth.max()
+        elif is_int(logL):
             logL = self.logL[logL]
 
         return self[(self.logL > logL) & (self.logL_birth <= logL)]
@@ -584,7 +588,7 @@ class NestedSamples(MCMCSamples):
             return WeightedDataFrame(dlogX, self.index, w=self.weight)
 
     def _compute_nlive(self, logL_birth):
-        if isinstance(logL_birth, int):
+        if is_int(logL_birth):
             nlive = logL_birth
             self['nlive'] = nlive
             descending = numpy.arange(nlive, 0, -1)

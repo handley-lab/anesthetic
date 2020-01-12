@@ -1,6 +1,6 @@
 import numpy
 from numpy.testing import assert_array_equal
-from anesthetic.utils import nest_level, compute_nlive, unique
+from anesthetic.utils import nest_level, compute_nlive, unique, isint
 
 
 def test_nest_level():
@@ -40,3 +40,9 @@ def test_compute_nlive():
 
 def test_unique():
     assert(unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4])
+
+def test_is_int():
+    assert isint(1)
+    assert isint(numpy.int64(1))
+    assert not isint(1.)
+    assert not isint(numpy.float64(1.))
