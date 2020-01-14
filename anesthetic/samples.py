@@ -474,6 +474,7 @@ class NestedSamples(MCMCSamples):
         S = (dlogX*0).add(self.logL, axis=0) - samples.logZ
 
         samples['D'] = numpy.exp(logsumexp(logw, b=S, axis=0))
+        S = S.where(S > -1e150, -1e150)
         samples['d'] = numpy.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
 
         samples.tex = {'logZ': r'$\log\mathcal{Z}$',
@@ -521,6 +522,8 @@ class NestedSamples(MCMCSamples):
         D = self.D(dlogX)
         logw = dlogX.add(self.logL, axis=0) - logZ
         S = (dlogX*0).add(self.logL, axis=0) - logZ
+        S = S.where(S > -1e150, -1e150)
+        print(S)
         return numpy.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
     def live_points(self, logL):
