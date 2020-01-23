@@ -30,8 +30,10 @@ def cut_and_normalise_gaussian(x, p, sigma, xmin=None, xmax=None):
     """
     correction = numpy.ones_like(x)
 
-    if xmin is not None and (x >= xmin).all():
+    if xmin is not None:
         correction *= 0.5*(1 + erf((x - xmin)/sigma/numpy.sqrt(2)))
-    if xmax is not None and (x <= xmax).all():
+        correction[x<xmin] = numpy.inf
+    if xmax is not None:
         correction *= 0.5*(1 + erf((xmax - x)/sigma/numpy.sqrt(2)))
+        correction[x>xmax] = numpy.inf
     return p/correction
