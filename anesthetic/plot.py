@@ -33,9 +33,7 @@ from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
-                              sample_triangulation,
-                              scaled_triangulation,
-                              add_jitter)
+                              scaled_triangulation)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
@@ -534,15 +532,12 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kde = gaussian_kde([tri.x, tri.y], weights=w)
 
     x, y = kde.resample(ncompress)
-    #x, y = sample_triangulation(tri, ncompress)
     x = numpy.concatenate([tri.x, x])
     y = numpy.concatenate([tri.y, y])
     w = numpy.concatenate([w, numpy.zeros(ncompress)])
     tri = scaled_triangulation(x, y, cov)
+
     p = kde([tri.x, tri.y])
-    #import matplotlib.pyplot as plt
-    #plt.subplots()
-    #plt.triplot(tri)
 
     sigmax = numpy.sqrt(kde.covariance[0, 0])
     p = cut_and_normalise_gaussian(tri.x, p, sigmax, xmin, xmax)

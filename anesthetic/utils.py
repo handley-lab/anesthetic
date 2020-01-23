@@ -3,7 +3,6 @@ import numpy
 import pandas
 from scipy.interpolate import interp1d
 from matplotlib.tri import Triangulation
-from numpy.linalg import LinAlgError
 
 
 def channel_capacity(w):
@@ -213,9 +212,6 @@ def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
 def scaled_triangulation(x, y, cov):
     """Triangulation scaled by a covariance matrix.
 
-    Algorithm adds jitter to the x and y coordinates in the triangulation if
-    this is helpful.
-
     Parameters
     ----------
     x, y: array-like
@@ -229,34 +225,11 @@ def scaled_triangulation(x, y, cov):
     matplotlib.tri.Triangulation
         Triangulation with the appropriate scaling
     """
-    try:
-        L = numpy.linalg.cholesky(cov)
-        Linv = numpy.linalg.inv(L)
-        x_, y_ = Linv.dot([x, y])
-        tri = Triangulation(x_, y_)
-        return Triangulation(x, y, tri.triangles)
-
-    except LinAlgError:
-        cov_new= cov.copy()
-        if cov[0,0] != 0:
-            x_new = x + 1e-4 * cov[0,0] * numpy.random.randn(len(x))
-            cov_new[0, 0] *= (1+1e-8)
-        else:
-            cov_new[0, 0] = 1e-8
-            x_new = x + 1e-4 * numpy.random.randn(len(x))
-
-        if cov[1,1] != 0:
-            y_new = y + 1e-4 * cov[1,1] * numpy.random.randn(len(y))
-            cov_new[1, 1] *= (1+1e-8)
-        else:
-            y_new = y + 1e-4 * numpy.random.randn(len(y))
-            cov_new[1, 1] = 1e-8
-
-        L = numpy.linalg.cholesky(cov_new)
-        Linv = numpy.linalg.inv(L)
-        x_, y_ = Linv.dot([x_new, y_new])
-        tri = Triangulation(x_, y_)
-        return Triangulation(x_new, y_new, tri.triangles)
+    L = numpy.linalg.cholesky(cov)
+    Linv = numpy.linalg.inv(L)
+    x_, y_ = Linv.dot([x, y])
+    tri = Triangulation(x_, y_)
+    return Triangulation(x, y, tri.triangles)
 
 
 def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
@@ -301,60 +274,16 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     tri = scaled_triangulation(x[i], y[i], cov)
 
     # For each point find corresponding triangles
-    try:
-        trifinder = tri.get_trifinder()
-        j = trifinder(x, y)
-        k = tri.triangles[j[j != -1]]
+    trifinder = tri.get_trifinder()
+    j = trifinder(x, y)
+    k = tri.triangles[j[j != -1]]
 
-        # Compute mass in each triangle, and add it to each corner
-        w_ = numpy.zeros(len(i))
-        for l in range(3):
-            numpy.add.at(w_, k[:, l], w[j != -1])
+    # Compute mass in each triangle, and add it to each corner
+    w_ = numpy.zeros(len(i))
+    for i in range(3):
+        numpy.add.at(w_, k[:, i], w[j != -1])
 
-        return tri, w_
-    except RuntimeError as e:
-        if str(e) == "In initialize: Triangulation is invalid":
-            return tri, w[i]
-        else:
-            raise e
-        
-
-
-def sample_triangulation(tri, size=None):
-    """Generate random points in a triangulation.
-
-    Parameters
-    ----------
-    tri: matplotlib.tri.Triangulation
-        Triangulation to generate samples from
-
-    size: optional
-        number/shape of points to generate
-
-    Returns
-    -------
-    x, y: array-like
-        Coordinates of sampled points, of shape size
-    """
-    # Extract locations of triangle corners
-    t = tri.triangles
-    x = tri.x[t]
-    y = tri.y[t]
-
-    # Compute areas of triangles using cross product
-    areas = numpy.abs((x[:, 1]-x[:, 0])*(y[:, 2]-y[:, 0]) -
-                      (y[:, 1]-y[:, 0])*(x[:, 2]-x[:, 0]))
-
-    # Select triangles in proportion to their area
-    p = areas/areas.sum()
-    i = numpy.random.choice(len(t), size=size, p=p)
-
-    # Simplex sample uniformly within selected triangles
-    s, u = numpy.sort([numpy.random.uniform(size=size),
-                       numpy.random.uniform(size=size)], axis=0)
-    x = s * x[i, 0] + (u-s)*x[i, 1] + (1-u)*x[i, 2]
-    y = s * y[i, 0] + (u-s)*y[i, 1] + (1-u)*y[i, 2]
-    return x, y
+    return tri, w_
 
 
 def sample_compression_1d(x, w=None, n=1000):
@@ -402,11 +331,3 @@ def sample_compression_1d(x, w=None, n=1000):
     numpy.add.at(w_, j2[k2], w[k2])
 
     return x_, w_
-
-
-def add_jitter(x, scale):
-    """Add jitter to samples to avoid singular matrices."""
-    if scale != 0:
-        return x + 1e-5 * scale * numpy.random.randn(len(x))
-    else:
-        return x + 1e-5 * numpy.random.randn(len(x))
