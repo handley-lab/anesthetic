@@ -8,7 +8,7 @@ from matplotlib.tri import Triangulation
 
 
 def logsumexpinf(a, b, **kwargs):
-    """Handles -inf in weighted logsumexp.
+    """Handle -inf in weighted logsumexp.
 
     If a=-inf in `log(sum(b * exp(a))` then we can set b=0, using:
 
