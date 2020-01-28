@@ -101,7 +101,7 @@ Dependencies
 
 Basic requirements:
 
-- Python 2.7 or 3.5+
+- Python 3.6+
 - `matplotlib <https://pypi.org/project/matplotlib/>`__
 - `numpy <https://pypi.org/project/numpy/>`__
 - `scipy <https://pypi.org/project/scipy/>`__
