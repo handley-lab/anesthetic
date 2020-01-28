@@ -1,3 +1,4 @@
+import warnings
 import numpy
 from numpy.testing import assert_array_equal
 from anesthetic.utils import nest_level, compute_nlive, unique
@@ -51,5 +52,9 @@ def test_logsumexpinf():
     a[0] = -numpy.inf
     assert logsumexp(a, b=b) == logsumexpinf(a, b=b)
     b[0] = -numpy.inf
-    assert numpy.isnan(logsumexp(a, b=b))
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore',
+                                'invalid value encountered in multiply',
+                                RuntimeWarning)
+        assert numpy.isnan(logsumexp(a, b=b))
     assert numpy.isfinite(logsumexpinf(a, b=b))
