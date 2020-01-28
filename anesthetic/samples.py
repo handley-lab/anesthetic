@@ -404,8 +404,7 @@ class NestedSamples(MCMCSamples):
             logL = numpy.where(logL <= logzero, -numpy.inf, logL)
             if not isinstance(logL_birth, int):
                 logL_birth = numpy.where(logL_birth <= logzero,
-                                         -numpy.inf,
-                                         logL_birth)
+                                         -numpy.inf, logL_birth)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
             limits = reader.limits()
