@@ -6,13 +6,12 @@
 import os
 import numpy
 import pandas
-from scipy.special import logsumexp
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
                              fastkde_contour_plot_2d,
                              kde_contour_plot_2d, hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
-from anesthetic.utils import compute_nlive, is_int, logsumexpinf
+from anesthetic.utils import compute_nlive, is_int, logsumexp
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
@@ -479,9 +478,8 @@ class NestedSamples(MCMCSamples):
         logw -= samples.logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
 
-        samples['D'] = numpy.exp(logsumexpinf(logw, b=S, axis=0))
-        samples['d'] = numpy.exp(
-            logsumexpinf(logw, b=(S-samples.D)**2, axis=0))*2
+        samples['D'] = numpy.exp(logsumexp(logw, b=S, axis=0))
+        samples['d'] = numpy.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
 
         samples.tex = {'logZ': r'$\log\mathcal{Z}$',
                        'D': r'$\mathcal{D}$',

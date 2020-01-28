@@ -1,21 +1,29 @@
 """Data-processing utility functions."""
 import numpy
 import pandas
-from scipy.special import logsumexp
+from scipy import special as sp
 from scipy.interpolate import interp1d
 from matplotlib.tri import Triangulation
 
 
-def logsumexpinf(a, b, **kwargs):
-    """Handle -inf in weighted logsumexp.
+def logsumexp(a, b=None, **kwargs):
+    r"""Compute the log of the sum of exponentials of input elements.
 
-    If a=-inf in `log(sum(b * exp(a))` then we can set b=0, using:
+    This function has the same call signature as `scipy.special.logsumexp`
+    and mirrors scipy's behaviour except for `-numpy.inf` input. If a and b
+    are both -inf then scipy's function will output `nan` whereas here we use:
 
-    limit x->-oo: x * exp(x) = 0
+    .. math::
 
+        \lim_{x \to -\infty} x \exp(x) = 0
+
+    Thus, if a=-inf in `log(sum(b * exp(a))` then we can set b=0 such that
+    that term is ignored in the sum.
     """
+    if b is None:
+        b = numpy.ones_like(a)
     b = numpy.where(a == -numpy.inf, 0, b)
-    return logsumexp(a, b=b, **kwargs)
+    return sp.logsumexp(a, b=b, **kwargs)
 
 
 def channel_capacity(w):
