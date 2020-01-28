@@ -64,9 +64,9 @@ def quantile(a, q, w=None):
 def check_bounds(d, xmin=None, xmax=None):
     """Check if we need to apply strict bounds."""
     if len(d) > 0:
-        if xmin is not None and (min(d) - xmin) > 1e-2*(max(d)-min(d)):
+        if xmin is not None and (d.min() - xmin) > 1e-2*(d.max()-d.min()):
             xmin = None
-        if xmax is not None and (xmax - max(d)) > 1e-2*(max(d)-min(d)):
+        if xmax is not None and (xmax - d.max()) > 1e-2*(d.max()-d.min()):
             xmax = None
     return xmin, xmax
 
@@ -180,15 +180,15 @@ def unique(a):
 def iso_probability_contours(pdf, contours=[0.68, 0.95]):
     """Compute the iso-probability contour values."""
     contours = [1-p for p in reversed(contours)]
-    p = sorted(numpy.array(pdf).flatten())
+    p = numpy.sort(numpy.array(pdf).flatten())
     m = numpy.cumsum(p)
     m /= m[-1]
     interp = interp1d([0]+list(m), [0]+list(p))
     c = list(interp(contours))+[max(p)]
 
     # Correct non-zero edges
-    if min(p) != 0:
-        c = [min(p)] + c
+    if p.min() != 0:
+        c = [p.max()] + c
 
     # Correct level sets
     for i in range(1, len(c)):
