@@ -236,7 +236,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     """Histogram a 2D set of weighted samples via triangulation.
 
     This defines bins via a triangulation of the subsamples and sums weights
-    within triangles surrounding point each point
+    within triangles surrounding each point
 
     Parameters
     ----------
@@ -281,7 +281,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     # Compute mass in each triangle, and add it to each corner
     w_ = numpy.zeros(len(i))
     for i in range(3):
-        numpy.add.at(w_, k[:, i], w[j != -1])
+        numpy.add.at(w_, k[:, i], w[j != -1]/3)
 
     return tri, w_
 
