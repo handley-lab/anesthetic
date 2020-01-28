@@ -469,9 +469,9 @@ class NestedSamples(MCMCSamples):
         samples = MCMCSamples(index=dlogX.columns)
         samples['logZ'] = self.logZ(dlogX)
 
-        logw = dlogX.add(self.logL, axis=0)
+        logw = dlogX.add(self.beta * self.logL, axis=0)
         logw -= samples.logZ
-        S = (dlogX*0).add(self.logL, axis=0) - samples.logZ
+        S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
 
         samples['D'] = numpy.exp(logsumexp(logw, b=S, axis=0))
         samples['d'] = numpy.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
@@ -491,7 +491,7 @@ class NestedSamples(MCMCSamples):
 
         """
         dlogX = self.dlogX(nsamples)
-        logw = dlogX.add(self.logL, axis=0)
+        logw = dlogX.add(self.beta * self.logL, axis=0)
         return logsumexp(logw, axis=0)
 
     def D(self, nsamples=None):
@@ -504,8 +504,8 @@ class NestedSamples(MCMCSamples):
         """
         dlogX = self.dlogX(nsamples)
         logZ = self.logZ(dlogX)
-        logw = dlogX.add(self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.logL, axis=0) - logZ
+        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
+        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
         return numpy.exp(logsumexp(logw, b=S, axis=0))
 
     def d(self, nsamples=None):
@@ -519,8 +519,8 @@ class NestedSamples(MCMCSamples):
         dlogX = self.dlogX(nsamples)
         logZ = self.logZ(dlogX)
         D = self.D(dlogX)
-        logw = dlogX.add(self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.logL, axis=0) - logZ
+        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
+        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
         return numpy.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
     def live_points(self, logL=None):
