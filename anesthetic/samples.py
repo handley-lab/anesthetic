@@ -393,12 +393,15 @@ class NestedSamples(MCMCSamples):
 
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
+        logzero = kwargs.pop('logzero', -numpy.inf)
         if root is not None:
             reader = SampleReader(root)
             samples, logL, logL_birth = reader.samples()
-            logzero = kwargs.pop('logzero', -numpy.inf)
             logL = numpy.where(logL <= logzero, -numpy.inf, logL)
-            logL_birth = numpy.where(logL_birth <= logzero, -numpy.inf, logL_birth)
+            if not isinstance(logL_birth, int):
+                logL_birth = numpy.where(logL_birth <= logzero,
+                                         -numpy.inf,
+                                         logL_birth)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
             limits = reader.limits()
@@ -477,7 +480,8 @@ class NestedSamples(MCMCSamples):
         S = (dlogX*0).add(self.logL, axis=0) - samples.logZ
 
         samples['D'] = numpy.exp(logsumexpinf(logw, b=S, axis=0))
-        samples['d'] = numpy.exp(logsumexpinf(logw, b=(S-samples.D)**2, axis=0))*2
+        samples['d'] = numpy.exp(
+            logsumexpinf(logw, b=(S-samples.D)**2, axis=0))*2
 
         samples.tex = {'logZ': r'$\log\mathcal{Z}$',
                        'D': r'$\mathcal{D}$',
