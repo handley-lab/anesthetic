@@ -12,7 +12,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              fastkde_contour_plot_2d,
                              kde_contour_plot_2d, hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
-from anesthetic.utils import compute_nlive
+from anesthetic.utils import compute_nlive, logsumexpinf
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
@@ -396,6 +396,9 @@ class NestedSamples(MCMCSamples):
         if root is not None:
             reader = SampleReader(root)
             samples, logL, logL_birth = reader.samples()
+            logzero = kwargs.pop('logzero', -numpy.inf)
+            logL = numpy.where(logL <= logzero, -numpy.inf, logL)
+            logL_birth = numpy.where(logL_birth <= logzero, -numpy.inf, logL_birth)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
             limits = reader.limits()
@@ -473,9 +476,8 @@ class NestedSamples(MCMCSamples):
         logw -= samples.logZ
         S = (dlogX*0).add(self.logL, axis=0) - samples.logZ
 
-        samples['D'] = numpy.exp(logsumexp(logw, b=S, axis=0))
-        S = S.where(S > -1e150, -1e150)
-        samples['d'] = numpy.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
+        samples['D'] = numpy.exp(logsumexpinf(logw, b=S, axis=0))
+        samples['d'] = numpy.exp(logsumexpinf(logw, b=(S-samples.D)**2, axis=0))*2
 
         samples.tex = {'logZ': r'$\log\mathcal{Z}$',
                        'D': r'$\mathcal{D}$',
@@ -522,8 +524,6 @@ class NestedSamples(MCMCSamples):
         D = self.D(dlogX)
         logw = dlogX.add(self.logL, axis=0) - logZ
         S = (dlogX*0).add(self.logL, axis=0) - logZ
-        S = S.where(S > -1e150, -1e150)
-        print(S)
         return numpy.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
     def live_points(self, logL):

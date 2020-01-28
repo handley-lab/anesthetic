@@ -1,9 +1,22 @@
 """Data-processing utility functions."""
 import numpy
 import pandas
+from scipy.special import logsumexp
 from scipy.interpolate import interp1d
 from scipy.stats import zscore, norm
 from matplotlib.tri import Triangulation
+
+
+def logsumexpinf(a, b, **kwargs):
+    """Handles -inf in weighted logsumexp.
+
+    If a=-inf in `log(sum(b * exp(a))` then we can set b=0, using:
+
+    limit x->-oo: x * exp(x) = 0
+
+    """
+    b = numpy.where(a == -numpy.inf, 0, b)
+    return logsumexp(a, b=b, **kwargs)
 
 
 def channel_capacity(w):
