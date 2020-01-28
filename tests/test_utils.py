@@ -1,6 +1,6 @@
 import numpy
 from numpy.testing import assert_array_equal
-from anesthetic.utils import (nest_level, compute_nlive, unique,
+from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               triangular_sample_compression_2d)
 
 
@@ -32,8 +32,8 @@ def test_compute_nlive():
     # Check the first half are constant
     assert_array_equal(nlives[:len(nlives)//2], nlive)
 
-    # Check one points at the end
-    assert(nlives[-1] == 1)
+    # Check no points at the end
+    assert(nlives[-1] == 0)
 
     # Check never more than nlive
     assert(nlives.max() <= nlive)
@@ -53,3 +53,10 @@ def test_triangular_sample_compression_2d():
     tri, W = triangular_sample_compression_2d(x, y, cov, w)
     assert len(W) == 1000
     assert numpy.isclose(sum(W), sum(w), rtol=1e-1)
+
+
+def test_is_int():
+    assert is_int(1)
+    assert is_int(numpy.int64(1))
+    assert not is_int(1.)
+    assert not is_int(numpy.float64(1.))
