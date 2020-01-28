@@ -12,7 +12,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              fastkde_contour_plot_2d,
                              kde_contour_plot_2d, hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
-from anesthetic.utils import compute_nlive, logsumexpinf
+from anesthetic.utils import compute_nlive, is_int, logsumexpinf
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
@@ -475,9 +475,9 @@ class NestedSamples(MCMCSamples):
         samples = MCMCSamples(index=dlogX.columns)
         samples['logZ'] = self.logZ(dlogX)
 
-        logw = dlogX.add(self.logL, axis=0)
+        logw = dlogX.add(self.beta * self.logL, axis=0)
         logw -= samples.logZ
-        S = (dlogX*0).add(self.logL, axis=0) - samples.logZ
+        S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
 
         samples['D'] = numpy.exp(logsumexpinf(logw, b=S, axis=0))
         samples['d'] = numpy.exp(
@@ -498,7 +498,7 @@ class NestedSamples(MCMCSamples):
 
         """
         dlogX = self.dlogX(nsamples)
-        logw = dlogX.add(self.logL, axis=0)
+        logw = dlogX.add(self.beta * self.logL, axis=0)
         return logsumexp(logw, axis=0)
 
     def D(self, nsamples=None):
@@ -511,8 +511,8 @@ class NestedSamples(MCMCSamples):
         """
         dlogX = self.dlogX(nsamples)
         logZ = self.logZ(dlogX)
-        logw = dlogX.add(self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.logL, axis=0) - logZ
+        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
+        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
         return numpy.exp(logsumexp(logw, b=S, axis=0))
 
     def d(self, nsamples=None):
@@ -526,16 +526,36 @@ class NestedSamples(MCMCSamples):
         dlogX = self.dlogX(nsamples)
         logZ = self.logZ(dlogX)
         D = self.D(dlogX)
-        logw = dlogX.add(self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.logL, axis=0) - logZ
+        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
+        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
         return numpy.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
-    def live_points(self, logL):
-        """Get the live points within logL."""
+    def live_points(self, logL=None):
+        """Get the live points within logL.
+
+        Parameters
+        ----------
+        logL: float or int, optional
+            Loglikelihood or iteration number to return live points.
+            If not provided, return the last set of active live points.
+
+        Returns
+        -------
+        live_points: NestedSamples
+            Live points at either:
+                - contour logL (if input is float)
+                - ith contour (if input is integer)
+                - last generation contour if logL not provided
+        """
+        if logL is None:
+            logL = self.logL_birth.max()
+        elif is_int(logL):
+            logL = self.logL[logL]
+
         return self[(self.logL > logL) & (self.logL_birth <= logL)]
 
-    def posterior_points(self, beta):
-        """Get the posterior points at temperature beta."""
+    def posterior_points(self, beta=1):
+        """Get equally weighted posterior points at temperature beta."""
         return self.set_beta(beta).compress(-1)
 
     def gui(self, params=None):
@@ -553,13 +573,14 @@ class NestedSamples(MCMCSamples):
             distribution. (Default: None)
 
         """
-        if numpy.ndim(nsamples) > 0:
-            return nsamples
-        elif nsamples is None:
-            t = numpy.log(self.nlive/(self.nlive+1)).to_frame()
-        else:
-            rand = numpy.log(numpy.random.rand(len(self), nsamples))
-            t = pandas.DataFrame(rand, self.index).divide(self.nlive, axis=0)
+        with numpy.errstate(divide='ignore'):
+            if numpy.ndim(nsamples) > 0:
+                return nsamples
+            elif nsamples is None:
+                t = numpy.log(self.nlive/(self.nlive+1)).to_frame()
+            else:
+                r = numpy.log(numpy.random.rand(len(self), nsamples))
+                t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
 
         logX = t.cumsum()
         logXp = logX.shift(1, fill_value=0)
@@ -575,7 +596,7 @@ class NestedSamples(MCMCSamples):
             return WeightedDataFrame(dlogX, self.index, w=self.weight)
 
     def _compute_nlive(self, logL_birth):
-        if isinstance(logL_birth, int):
+        if is_int(logL_birth):
             nlive = logL_birth
             self['nlive'] = nlive
             descending = numpy.arange(nlive, 0, -1)

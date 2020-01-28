@@ -53,7 +53,8 @@ class Higson(Widget):
     def reset_range(self):
         """Reset the ranges of the higson plot."""
         xdata = self.curve.get_xdata()
-        self.ax.set_xlim(max(xdata), min(xdata))
+        xdata = xdata[numpy.isfinite(xdata)]
+        self.ax.set_xlim(xdata.max(), xdata.min())
 
 
 class Evolution(Slider):
@@ -244,7 +245,9 @@ class RunPlotter(object):
 
     def update(self, _):
         """Update all the plots upon slider changes."""
-        logX = numpy.log(self.samples.nlive/(self.samples.nlive+1)).cumsum()
+        with numpy.errstate(divide='ignore'):
+            logX = numpy.log(self.samples.nlive /
+                             (self.samples.nlive+1)).cumsum()
         kT = self.temperature()
         LX = self.samples.logL/kT + logX
         LX = numpy.exp(LX-LX.max())

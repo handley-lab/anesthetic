@@ -1,7 +1,7 @@
 import warnings
 import numpy
 from numpy.testing import assert_array_equal
-from anesthetic.utils import nest_level, compute_nlive, unique
+from anesthetic.utils import nest_level, compute_nlive, unique, is_int
 from anesthetic.utils import logsumexp, logsumexpinf
 
 
@@ -33,8 +33,8 @@ def test_compute_nlive():
     # Check the first half are constant
     assert_array_equal(nlives[:len(nlives)//2], nlive)
 
-    # Check one points at the end
-    assert(nlives[-1] == 1)
+    # Check no points at the end
+    assert(nlives[-1] == 0)
 
     # Check never more than nlive
     assert(nlives.max() <= nlive)
@@ -42,6 +42,13 @@ def test_compute_nlive():
 
 def test_unique():
     assert(unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4])
+
+
+def test_is_int():
+    assert is_int(1)
+    assert is_int(numpy.int64(1))
+    assert not is_int(1.)
+    assert not is_int(numpy.float64(1.))
 
 
 def test_logsumexpinf():

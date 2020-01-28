@@ -405,16 +405,24 @@ def test_hist_levels():
 def test_ns_output():
     numpy.random.seed(3)
     pc = NestedSamples(root='./tests/example_data/pc')
-    PC = pc.ns_output(1000)
-    assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
-    assert PC['d'].mean() < 5
-    assert PC.cov()['D']['logZ'] < 0
-    assert(abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std())
-    assert(abs(PC.D.mean() - pc.D()) < PC.D.std())
-    assert(abs(PC.d.mean() - pc.d()) < PC.d.std())
-    assert(ks_2samp(pc.logZ(100), PC.logZ).pvalue > 0.05)
-    assert(ks_2samp(pc.D(100), PC.D).pvalue > 0.05)
-    assert(ks_2samp(pc.d(100), PC.d).pvalue > 0.05)
+    for beta in [1., 0., 0.5]:
+        pc.beta = beta
+        n = 1000
+        PC = pc.ns_output(n)
+        assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
+        assert PC['d'].mean() < 5
+        assert PC.cov()['D']['logZ'] < 0
+        assert(abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * n**0.5 * 2)
+        assert(abs(PC.D.mean() - pc.D()) < PC.D.std() * n**0.5 * 2)
+        assert(abs(PC.d.mean() - pc.d()) < PC.d.std() * n**0.5 * 2)
+
+        n = 100
+        assert(ks_2samp(pc.logZ(n), PC.logZ).pvalue > 0.05)
+        assert(ks_2samp(pc.D(n), PC.D).pvalue > 0.05)
+        assert(ks_2samp(pc.d(n), PC.d).pvalue > 0.05)
+
+    assert abs(pc.set_beta(0.0).logZ()) < 1e-2
+    assert pc.set_beta(0.9).logZ() < pc.set_beta(1.0).logZ()
 
 
 def test_masking():
@@ -475,3 +483,20 @@ def test_beta():
         assert pc.beta == beta
         assert_array_equal(pc['weight'], pc.weight)
         assert not numpy.array_equal(pc['weight'], weight)
+
+
+def test_live_points():
+    numpy.random.seed(4)
+    pc = NestedSamples(root="./tests/example_data/pc")
+
+    for i, logL in pc.logL.iteritems():
+        live_points = pc.live_points(logL)
+        assert len(live_points) == pc.nlive[i]
+
+        live_points_from_int = pc.live_points(i)
+        assert_array_equal(live_points_from_int, live_points)
+
+    last_live_points = pc.live_points()
+    logL = pc.logL_birth.max()
+    assert (last_live_points.logL > logL).all()
+    assert len(last_live_points) == pc.nlive.mode()[0]

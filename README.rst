@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 =========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley
-:Version: 1.2.3
+:Version: 1.2.4
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -101,7 +101,7 @@ Dependencies
 
 Basic requirements:
 
-- Python 2.7 or 3.5+
+- Python 3.6+
 - `matplotlib <https://pypi.org/project/matplotlib/>`__
 - `numpy <https://pypi.org/project/numpy/>`__
 - `scipy <https://pypi.org/project/scipy/>`__

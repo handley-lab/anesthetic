@@ -77,9 +77,9 @@ def quantile(a, q, w=None):
 def check_bounds(d, xmin=None, xmax=None):
     """Check if we need to apply strict bounds."""
     if len(d) > 0:
-        if xmin is not None and (min(d) - xmin) > 1e-2*(max(d)-min(d)):
+        if xmin is not None and (d.min() - xmin) > 1e-2*(d.max()-d.min()):
             xmin = None
-        if xmax is not None and (xmax - max(d)) > 1e-2*(max(d)-min(d)):
+        if xmax is not None and (xmax - d.max()) > 1e-2*(d.max()-d.min()):
             xmax = None
     return xmin, xmax
 
@@ -160,15 +160,25 @@ def histogram(a, **kwargs):
 
 
 def compute_nlive(death, birth):
-    """Compute number of live points from birth and death contours."""
-    contours = numpy.concatenate(([birth[0]], death))
-    index = numpy.arange(death.size)
-    birth_index = contours.searchsorted(birth)-1
+    """Compute number of live points from birth and death contours.
+
+    Parameters
+    ----------
+    death, birth : array-like
+        list of birth and death contours
+
+    Returns
+    -------
+    nlive: numpy.array
+        number of live points at each contour
+    """
+    birth_index = death.searchsorted(birth)
     births = pandas.Series(+1, index=birth_index).sort_index()
+    index = numpy.arange(death.size)
     deaths = pandas.Series(-1, index=index)
     nlive = pandas.concat([births, deaths]).sort_index()
     nlive = nlive.groupby(nlive.index).sum().cumsum()
-    return nlive.values[:-1]
+    return nlive.values
 
 
 def unique(a):
@@ -183,15 +193,15 @@ def unique(a):
 def iso_probability_contours(pdf, contours=[0.68, 0.95]):
     """Compute the iso-probability contour values."""
     contours = [1-p for p in reversed(contours)]
-    p = sorted(numpy.array(pdf).flatten())
+    p = numpy.sort(numpy.array(pdf).flatten())
     m = numpy.cumsum(p)
     m /= m[-1]
     interp = interp1d([0]+list(m), [0]+list(p))
     c = list(interp(contours))+[max(p)]
 
     # Correct non-zero edges
-    if min(p) != 0:
-        c = [min(p)] + c
+    if p.min() != 0:
+        c = [p.max()] + c
 
     # Correct level sets
     for i in range(1, len(c)):
@@ -331,3 +341,8 @@ def sample_compression_1d(x, w=None, n=1000):
     numpy.add.at(w_, j2[k2], w[k2])
 
     return x_, w_
+
+
+def is_int(x):
+    """Test whether x is an integer."""
+    return isinstance(x, int) or isinstance(x, numpy.integer)
