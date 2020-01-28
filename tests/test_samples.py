@@ -59,6 +59,10 @@ def test_build_mcmc():
     for p in params:
         assert(mcmc.limits[p] == limits[p])
 
+    ns = NestedSamples(data=samples, logzero=-1e25)
+    assert(len(ns) == nsamps)
+    assert_array_equal(ns.columns, numpy.array([0, 1, 2], dtype=object))
+
     assert(mcmc.root is None)
 
 
