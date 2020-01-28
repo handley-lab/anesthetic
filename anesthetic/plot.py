@@ -32,7 +32,8 @@ from anesthetic.utils import check_bounds, nest_level, unique
 from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
-                              iso_probability_contours_from_samples)
+                              iso_probability_contours_from_samples,
+                              scaled_triangulation)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
@@ -525,32 +526,41 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
 
-    x, y, w, triangles = triangular_sample_compression_2d(data_x, data_y,
-                                                          weights, ncompress)
-    kde = gaussian_kde([x, y], weights=w)
-    p = kde([x, y])
+    cov = numpy.cov(data_x, data_y, aweights=weights)
+    tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
+                                              weights, ncompress)
+    kde = gaussian_kde([tri.x, tri.y], weights=w)
+
+    x, y = kde.resample(ncompress)
+    x = numpy.concatenate([tri.x, x])
+    y = numpy.concatenate([tri.y, y])
+    w = numpy.concatenate([w, numpy.zeros(ncompress)])
+    tri = scaled_triangulation(x, y, cov)
+
+    p = kde([tri.x, tri.y])
+
     sigmax = numpy.sqrt(kde.covariance[0, 0])
-    p = cut_and_normalise_gaussian(x, p, sigmax, xmin, xmax)
+    p = cut_and_normalise_gaussian(tri.x, p, sigmax, xmin, xmax)
     sigmay = numpy.sqrt(kde.covariance[1, 1])
-    p = cut_and_normalise_gaussian(y, p, sigmay, ymin, ymax)
+    p = cut_and_normalise_gaussian(tri.y, p, sigmay, ymin, ymax)
 
     contours = iso_probability_contours_from_samples(p, weights=w)
 
     cmap = basic_cmap(color)
 
-    cbar = ax.tricontourf(x, y, triangles, p, contours, cmap=cmap,
+    cbar = ax.tricontourf(tri, p, contours, cmap=cmap,
                           zorder=zorder, vmin=0, vmax=p.max(), *args, **kwargs)
     for c in cbar.collections:
         c.set_cmap(cmap)
 
-    ax.tricontour(x, y, triangles, p, contours, zorder=zorder,
+    ax.tricontour(tri, p, contours, zorder=zorder,
                   vmin=0, vmax=p.max(), linewidths=linewidths, colors='k',
                   *args, **kwargs)
     ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.32),
                                  lw=2, label=label)]
 
-    ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
-    ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)
+    ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
+    ax.set_ylim(*check_bounds(tri.y, ymin, ymax), auto=True)
     return cbar
 
 

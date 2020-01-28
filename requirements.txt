@@ -1,4 +1,4 @@
 scipy
 numpy
 pandas
-matplotlib
+matplotlib>=3.1.2
