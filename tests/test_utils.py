@@ -1,6 +1,7 @@
 import numpy
 from numpy.testing import assert_array_equal
 from anesthetic.utils import nest_level, compute_nlive, unique
+from anesthetic.utils import logsumexp, logsumexpinf
 
 
 def test_nest_level():
@@ -40,3 +41,15 @@ def test_compute_nlive():
 
 def test_unique():
     assert(unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4])
+
+
+def test_logsumexpinf():
+    a = numpy.random.rand(10)
+    b = numpy.random.rand(10)
+    assert logsumexpinf(-numpy.inf, b=[-numpy.inf]) == -numpy.inf
+    assert logsumexp(a, b=b) == logsumexpinf(a, b=b)
+    a[0] = -numpy.inf
+    assert logsumexp(a, b=b) == logsumexpinf(a, b=b)
+    b[0] = -numpy.inf
+    assert numpy.isnan(logsumexp(a, b=b))
+    assert numpy.isfinite(logsumexpinf(a, b=b))
