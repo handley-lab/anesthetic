@@ -53,7 +53,8 @@ class Higson(Widget):
     def reset_range(self):
         """Reset the ranges of the higson plot."""
         xdata = self.curve.get_xdata()
-        self.ax.set_xlim(max(xdata), min(xdata[xdata != -numpy.inf]))
+        xdata = xdata[numpy.isfinite(xdata)]
+        self.ax.set_xlim(xdata.max(), xdata.min())
 
 
 class Evolution(Slider):
