@@ -388,6 +388,11 @@ class NestedSamples(MCMCSamples):
     beta: float
         thermodynamic temperature
 
+    logzero: float
+        The threshold for `log(0)` values assigned to rejected sample points.
+        Anything equal or below this value is set to `-numpy.inf`.
+        default: -numpy.inf
+
     """
 
     def __init__(self, *args, **kwargs):
