@@ -6,7 +6,7 @@ from scipy.interpolate import interp1d
 from matplotlib.tri import Triangulation
 
 
-def logsumexp(a, b=None, **kwargs):
+def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
     r"""Compute the log of the sum of exponentials of input elements.
 
     This function has the same call signature as `scipy.special.logsumexp`
@@ -23,7 +23,8 @@ def logsumexp(a, b=None, **kwargs):
     if b is None:
         b = numpy.ones_like(a)
     b = numpy.where(a == -numpy.inf, 0, b)
-    return special.logsumexp(a, b=b, **kwargs)
+    return special.logsumexp(a, axis=axis, b=b, keepdims=keepdims,
+                             return_sign=return_sign)
 
 
 def channel_capacity(w):
