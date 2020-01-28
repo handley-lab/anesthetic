@@ -1,8 +1,9 @@
 import warnings
 import numpy
 from numpy.testing import assert_array_equal
-from anesthetic.utils import nest_level, compute_nlive, unique, is_int
-from anesthetic.utils import logsumexp, logsumexpinf
+from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
+                              triangular_sample_compression_2d, 
+                              logsumexp, logsumexpinf)
 
 
 def test_nest_level():
@@ -42,6 +43,18 @@ def test_compute_nlive():
 
 def test_unique():
     assert(unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4])
+
+
+def test_triangular_sample_compression_2d():
+    numpy.random.seed(0)
+    n = 5000
+    x = numpy.random.rand(n)
+    y = numpy.random.rand(n)
+    w = numpy.random.rand(n)
+    cov = numpy.identity(2)
+    tri, W = triangular_sample_compression_2d(x, y, cov, w)
+    assert len(W) == 1000
+    assert numpy.isclose(sum(W), sum(w), rtol=1e-1)
 
 
 def test_is_int():

@@ -3,7 +3,6 @@ import numpy
 import pandas
 from scipy.special import logsumexp
 from scipy.interpolate import interp1d
-from scipy.stats import zscore, norm
 from matplotlib.tri import Triangulation
 
 
@@ -233,16 +232,42 @@ def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
     return c
 
 
-def triangular_sample_compression_2d(x, y, w=None, n=1000):
+def scaled_triangulation(x, y, cov):
+    """Triangulation scaled by a covariance matrix.
+
+    Parameters
+    ----------
+    x, y: array-like
+        x and y coordinates of samples
+
+    cov: array-like, 2d
+        Covariance matrix for scaling
+
+    Returns
+    -------
+    matplotlib.tri.Triangulation
+        Triangulation with the appropriate scaling
+    """
+    L = numpy.linalg.cholesky(cov)
+    Linv = numpy.linalg.inv(L)
+    x_, y_ = Linv.dot([x, y])
+    tri = Triangulation(x_, y_)
+    return Triangulation(x, y, tri.triangles)
+
+
+def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     """Histogram a 2D set of weighted samples via triangulation.
 
-    This defines bins via a triangulation of the subsamples, sums weights
-    within triangles, and computes weighted centroids of triangles.
+    This defines bins via a triangulation of the subsamples and sums weights
+    within triangles surrounding each point
 
     Parameters
     ----------
     x, y: array-like
         x and y coordinates of samples for compressing
+
+    cov: array-like, 2d
+        Covariance matrix for scaling
 
     w: pandas.Series, optional
         weights of samples
@@ -252,48 +277,36 @@ def triangular_sample_compression_2d(x, y, w=None, n=1000):
 
     Returns
     -------
-    x, y, w, array-like
-        Compressed samples and weights
+    tri:
+        matplotlib.tri.Triangulation with an appropriate scaling
 
+    w: array-like
+        Compressed samples and weights
     """
     x = pandas.Series(x)
     if w is None:
         w = pandas.Series(index=x.index, data=numpy.ones_like(x))
 
     # Select samples for triangulation
-    if sum(w != 0) < n:
-        i = w.index
+    if (w != 0).sum() < n:
+        i = x.index
     else:
-        i = numpy.random.choice(w.index, size=n, replace=False, p=w/w.sum())
+        i = numpy.random.choice(x.index, size=n, replace=False, p=w/w.sum())
 
     # Generate triangulation
-    cov = numpy.cov(x, y, aweights=w)
-    L = numpy.linalg.cholesky(cov)
-    Linv = numpy.linalg.inv(L)
-    x_, y_ = Linv.dot([x[i], y[i]])
-    tri = Triangulation(x_, y_)
-
-    # Mask out triangles with unreasonably large perimeters
-    vec = numpy.array([x_[tri.triangles], y_[tri.triangles]]).transpose()
-    s = (numpy.linalg.norm(vec[1, :, :] - vec[0, :, :], axis=1) +
-         numpy.linalg.norm(vec[2, :, :] - vec[1, :, :], axis=1) +
-         numpy.linalg.norm(vec[0, :, :] - vec[2, :, :], axis=1))
-
-    # Mask out triangles with a perimeter zscore smaller than expected
-    tri.set_mask(zscore(numpy.log(s)) > -norm.ppf(1/len(s)))
+    tri = scaled_triangulation(x[i], y[i], cov)
 
     # For each point find corresponding triangles
     trifinder = tri.get_trifinder()
-    j = trifinder(*(Linv.dot([x, y])))
+    j = trifinder(x, y)
     k = tri.triangles[j[j != -1]]
 
     # Compute mass in each triangle, and add it to each corner
-    w_ = numpy.zeros_like(x_)
+    w_ = numpy.zeros(len(i))
     for i in range(3):
-        numpy.add.at(w_, k[:, i], w[j != -1])
+        numpy.add.at(w_, k[:, i], w[j != -1]/3)
 
-    x_, y_ = L.dot([x_, y_])
-    return x_, y_, w_, tri.get_masked_triangles()
+    return tri, w_
 
 
 def sample_compression_1d(x, w=None, n=1000):
