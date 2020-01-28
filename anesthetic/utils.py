@@ -266,9 +266,9 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
 
     # Select samples for triangulation
     if (w != 0).sum() < n:
-        i = w.index
+        i = x.index
     else:
-        i = numpy.random.choice(w.index, size=n, replace=False, p=w/w.sum())
+        i = numpy.random.choice(x.index, size=n, replace=False, p=w/w.sum())
 
     # Generate triangulation
     tri = scaled_triangulation(x[i], y[i], cov)
