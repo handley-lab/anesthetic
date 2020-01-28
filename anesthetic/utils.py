@@ -1,7 +1,7 @@
 """Data-processing utility functions."""
 import numpy
 import pandas
-from scipy import special as sp
+from scipy import special
 from scipy.interpolate import interp1d
 from matplotlib.tri import Triangulation
 
@@ -23,7 +23,7 @@ def logsumexp(a, b=None, **kwargs):
     if b is None:
         b = numpy.ones_like(a)
     b = numpy.where(a == -numpy.inf, 0, b)
-    return sp.logsumexp(a, b=b, **kwargs)
+    return special.logsumexp(a, b=b, **kwargs)
 
 
 def channel_capacity(w):
