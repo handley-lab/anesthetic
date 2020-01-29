@@ -391,13 +391,13 @@ class NestedSamples(MCMCSamples):
     logzero: float
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-numpy.inf`.
-        default: -numpy.inf
+        default: -1e30
 
     """
 
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
-        logzero = kwargs.pop('logzero', -numpy.inf)
+        logzero = kwargs.pop('logzero', -1e30)
         if root is not None:
             reader = SampleReader(root)
             samples, logL, logL_birth = reader.samples()
