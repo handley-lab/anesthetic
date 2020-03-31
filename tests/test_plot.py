@@ -5,7 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
-                             fastkde_plot_1d, hist_plot_1d,
+                             fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d)
 from numpy.testing import assert_array_equal
@@ -289,6 +289,23 @@ def test_hist_plot_1d():
         except ImportError:
             if p == 'astropyhist' and 'astropy' not in sys.modules:
                 pass
+
+
+def test_hist_plot_2d():
+    fig, ax = plt.subplots()
+    numpy.random.seed(0)
+    data_x, data_y = numpy.random.randn(2, 10000)
+    hist_plot_2d(ax, data_x, data_y)
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
+
+    data_x, data_y = numpy.random.uniform(-10, 10, (2, 1000000))
+    weights = numpy.exp(-(data_x**2 + data_y**2)/2)
+    hist_plot_2d(ax, data_x, data_y, weights=weights, bins=30)
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
 
 def test_contour_plot_2d():
