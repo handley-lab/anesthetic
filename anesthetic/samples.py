@@ -53,6 +53,11 @@ class MCMCSamples(WeightedDataFrame):
     label: str
         Legend label
 
+    logzero: float
+        The threshold for `log(0)` values assigned to rejected sample points.
+        Anything equal or below this value is set to `-numpy.inf`.
+        default: -1e30
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -74,7 +79,10 @@ class MCMCSamples(WeightedDataFrame):
                           tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
+            logzero = kwargs.pop('logzero', -1e30)
             logL = kwargs.pop('logL', None)
+            if logL is not None:
+                logL = numpy.where(logL <= logzero, -numpy.inf, logL)
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
@@ -397,7 +405,6 @@ class NestedSamples(MCMCSamples):
 
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
-        logzero = kwargs.pop('logzero', -1e30)
         if root is not None:
             reader = SampleReader(root)
             samples, logL, logL_birth = reader.samples()
@@ -410,15 +417,15 @@ class NestedSamples(MCMCSamples):
                           tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
+            logzero = kwargs.pop('logzero', -1e30)
             self._beta = kwargs.pop('beta', 1.)
-            logL = kwargs.pop('logL', None)
             logL_birth = kwargs.pop('logL_birth', None)
-            if logL is not None:
-                logL = numpy.where(logL <= logzero, -numpy.inf, logL)
             if not isinstance(logL_birth, int) and logL_birth is not None:
                 logL_birth = numpy.where(logL_birth <= logzero,
                                          -numpy.inf, logL_birth)
-            super(NestedSamples, self).__init__(logL=logL, *args, **kwargs)
+
+            super(NestedSamples, self).__init__(logzero=logzero,
+                                                *args, **kwargs)
             if logL_birth is not None:
                 self._compute_nlive(logL_birth)
 

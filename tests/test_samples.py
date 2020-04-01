@@ -59,10 +59,12 @@ def test_build_mcmc():
     for p in params:
         assert(mcmc.limits[p] == limits[p])
 
+    ns = NestedSamples(data=samples, logL=logL, w=w)
+    assert(len(ns) == nsamps)
+    assert(numpy.all(numpy.isfinite(ns.logL)))
     logL[:10] = -1e300
     w[:10] = 0.
     ns = NestedSamples(data=samples, logL=logL, w=w, logzero=-1e29)
-    assert(len(ns) == nsamps)
     assert_array_equal(ns.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
                                                dtype=object))
     assert(numpy.all(ns.logL[:10] == -numpy.inf))
