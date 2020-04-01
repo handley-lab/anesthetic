@@ -207,10 +207,6 @@ def iso_probability_contours(pdf, contours=[0.68, 0.95]):
     interp = interp1d([0]+list(m), [0]+list(p))
     c = list(interp(contours))+[max(p)]
 
-    # Correct non-zero edges
-    if p.min() != 0:
-        c = [p.max()] + c
-
     # Correct level sets
     for i in range(1, len(c)):
         if c[i-1] == c[i]:

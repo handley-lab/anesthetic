@@ -378,9 +378,9 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     plotter = kwargs.pop('plotter', '')
     weights = kwargs.pop('weights', None)
-    if xmin is None:
+    if xmin is None or not numpy.isfinite(xmin):
         xmin = quantile(data, 0.01, weights)
-    if xmax is None:
+    if xmax is None or not numpy.isfinite(xmax):
         xmax = quantile(data, 0.99, weights)
     histtype = kwargs.pop('histtype', 'bar')
 
@@ -600,6 +600,18 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     label = kwargs.pop('label', None)
     levels = kwargs.pop('levels', None)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    weights = kwargs.pop('weights', None)
+
+    if xmin is None or not numpy.isfinite(xmin):
+        xmin = quantile(data_x, 0.01, weights)
+    if xmax is None or not numpy.isfinite(xmax):
+        xmax = quantile(data_x, 0.99, weights)
+    if ymin is None or not numpy.isfinite(ymin):
+        ymin = quantile(data_y, 0.01, weights)
+    if ymax is None or not numpy.isfinite(ymax):
+        ymax = quantile(data_y, 0.99, weights)
+
+    range = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
     if len(data_x) == 0 or len(data_y) == 0:
         return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
@@ -607,13 +619,12 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     cmap = basic_cmap(color)
 
     if levels is None:
-        pdf, x, y, image = ax.hist2d(data_x, data_y, cmap=cmap,
+        pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
+                                     cmap=cmap, range=range,
                                      *args, **kwargs)
     else:
         bins = kwargs.pop('bins', 10)
-        range = kwargs.pop('range', None)
         density = kwargs.pop('density', False)
-        weights = kwargs.pop('weights', None)
         cmin = kwargs.pop('cmin', None)
         cmax = kwargs.pop('cmax', None)
         pdf, x, y = numpy.histogram2d(data_x, data_y, bins, range,
