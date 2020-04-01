@@ -67,7 +67,7 @@ def test_build_mcmc():
     mcmc = MCMCSamples(data=samples, logL=logL, w=w, logzero=-1e29)
     ns = NestedSamples(data=samples, logL=logL, w=w, logzero=-1e29)
     assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
-                                               dtype=object))
+                                                 dtype=object))
     assert_array_equal(ns.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
                                                dtype=object))
     assert(numpy.all(mcmc.logL[:10] == -numpy.inf))
