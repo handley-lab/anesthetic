@@ -5,7 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
-                             fastkde_plot_1d, hist_plot_1d,
+                             fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d)
 from numpy.testing import assert_array_equal
@@ -262,19 +262,21 @@ def test_hist_plot_1d():
             assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
 
             # Check xmin
-            xmin = -0.5
-            bars = hist_plot_1d(ax, data, histtype='bar', xmin=xmin, plotter=p)
-            assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
-            polygon, = hist_plot_1d(ax, data, histtype='step', xmin=xmin)
-            assert((polygon.xy[:, 0] >= -0.5).all())
+            for xmin in [-numpy.inf, -0.5]:
+                bars = hist_plot_1d(ax, data, histtype='bar',
+                                    xmin=xmin, plotter=p)
+                assert((numpy.array([b.xy[0] for b in bars]) >= xmin).all())
+                polygon, = hist_plot_1d(ax, data, histtype='step', xmin=xmin)
+                assert((polygon.xy[:, 0] >= xmin).all())
 
             # Check xmax
-            xmax = 0.5
-            bars = hist_plot_1d(ax, data, histtype='bar', xmax=xmax, plotter=p)
-            assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
-            polygon, = hist_plot_1d(ax, data, histtype='step',
+            for xmax in [numpy.inf, 0.5]:
+                bars = hist_plot_1d(ax, data, histtype='bar',
                                     xmax=xmax, plotter=p)
-            assert((polygon.xy[:, 0] <= 0.5).all())
+                assert((numpy.array([b.xy[-1] for b in bars]) <= xmax).all())
+                polygon, = hist_plot_1d(ax, data, histtype='step',
+                                        xmax=xmax, plotter=p)
+                assert((polygon.xy[:, 0] <= xmax).all())
 
             # Check xmin and xmax
             bars = hist_plot_1d(ax, data, histtype='bar',
@@ -289,6 +291,29 @@ def test_hist_plot_1d():
         except ImportError:
             if p == 'astropyhist' and 'astropy' not in sys.modules:
                 pass
+
+
+def test_hist_plot_2d():
+    fig, ax = plt.subplots()
+    numpy.random.seed(0)
+    data_x, data_y = numpy.random.randn(2, 10000)
+    hist_plot_2d(ax, data_x, data_y)
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
+
+    hist_plot_2d(ax, data_x, data_y, xmin=-numpy.inf)
+    hist_plot_2d(ax, data_x, data_y, xmax=numpy.inf)
+    hist_plot_2d(ax, data_x, data_y, ymin=-numpy.inf)
+    hist_plot_2d(ax, data_x, data_y, ymax=numpy.inf)
+    assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
+
+    data_x, data_y = numpy.random.uniform(-10, 10, (2, 1000000))
+    weights = numpy.exp(-(data_x**2 + data_y**2)/2)
+    hist_plot_2d(ax, data_x, data_y, weights=weights, bins=30)
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
 
 def test_contour_plot_2d():
