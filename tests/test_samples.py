@@ -59,6 +59,29 @@ def test_build_mcmc():
     for p in params:
         assert(mcmc.limits[p] == limits[p])
 
+    ns = NestedSamples(data=samples, logL=logL, w=w)
+    assert(len(ns) == nsamps)
+    assert(numpy.all(numpy.isfinite(ns.logL)))
+    logL[:10] = -1e300
+    w[:10] = 0.
+    mcmc = MCMCSamples(data=samples, logL=logL, w=w, logzero=-1e29)
+    ns = NestedSamples(data=samples, logL=logL, w=w, logzero=-1e29)
+    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
+                                                 dtype=object))
+    assert_array_equal(ns.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
+                                               dtype=object))
+    assert(numpy.all(mcmc.logL[:10] == -numpy.inf))
+    assert(numpy.all(ns.logL[:10] == -numpy.inf))
+    assert(numpy.all(mcmc.logL[10:] == logL[10:]))
+    assert(numpy.all(ns.logL[10:] == logL[10:]))
+
+    mcmc = MCMCSamples(data=samples, logL=logL, w=w, logzero=-1e301)
+    ns = NestedSamples(data=samples, logL=logL, w=w, logzero=-1e301)
+    assert(numpy.all(numpy.isfinite(mcmc.logL)))
+    assert(numpy.all(numpy.isfinite(ns.logL)))
+    assert(numpy.all(mcmc.logL == logL))
+    assert(numpy.all(ns.logL == logL))
+
     assert(mcmc.root is None)
 
 

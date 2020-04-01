@@ -1,8 +1,30 @@
 """Data-processing utility functions."""
 import numpy
 import pandas
+from scipy import special
 from scipy.interpolate import interp1d
 from matplotlib.tri import Triangulation
+
+
+def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
+    r"""Compute the log of the sum of exponentials of input elements.
+
+    This function has the same call signature as `scipy.special.logsumexp`
+    and mirrors scipy's behaviour except for `-numpy.inf` input. If a and b
+    are both -inf then scipy's function will output `nan` whereas here we use:
+
+    .. math::
+
+        \lim_{x \to -\infty} x \exp(x) = 0
+
+    Thus, if a=-inf in `log(sum(b * exp(a))` then we can set b=0 such that
+    that term is ignored in the sum.
+    """
+    if b is None:
+        b = numpy.ones_like(a)
+    b = numpy.where(a == -numpy.inf, 0, b)
+    return special.logsumexp(a, axis=axis, b=b, keepdims=keepdims,
+                             return_sign=return_sign)
 
 
 def channel_capacity(w):
