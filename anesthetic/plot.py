@@ -602,13 +602,13 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     weights = kwargs.pop('weights', None)
 
-    if xmin is None:
+    if xmin is None or ~numpy.isfinite(xmin):
         xmin = quantile(data_x, 0.01, weights)
-    if xmax is None:
+    if xmax is None or ~numpy.isfinite(xmax):
         xmax = quantile(data_x, 0.99, weights)
-    if ymin is None:
+    if ymin is None or ~numpy.isfinite(ymin):
         ymin = quantile(data_y, 0.01, weights)
-    if ymax is None:
+    if ymax is None or ~numpy.isfinite(ymax):
         ymax = quantile(data_y, 0.99, weights)
 
     range = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))

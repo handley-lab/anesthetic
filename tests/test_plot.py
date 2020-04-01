@@ -301,6 +301,9 @@ def test_hist_plot_2d():
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
     hist_plot_2d(ax, data_x, data_y, xmin=-numpy.inf)
+    hist_plot_2d(ax, data_x, data_y, xmax=numpy.inf)
+    hist_plot_2d(ax, data_x, data_y, ymin=-numpy.inf)
+    hist_plot_2d(ax, data_x, data_y, ymax=numpy.inf)
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
     data_x, data_y = numpy.random.uniform(-10, 10, (2, 1000000))
