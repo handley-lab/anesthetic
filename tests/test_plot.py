@@ -262,19 +262,21 @@ def test_hist_plot_1d():
             assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
 
             # Check xmin
-            xmin = -0.5
-            bars = hist_plot_1d(ax, data, histtype='bar', xmin=xmin, plotter=p)
-            assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
-            polygon, = hist_plot_1d(ax, data, histtype='step', xmin=xmin)
-            assert((polygon.xy[:, 0] >= -0.5).all())
+            for xmin in [-numpy.inf, -0.5]:
+                bars = hist_plot_1d(ax, data, histtype='bar',
+                                    xmin=xmin, plotter=p)
+                assert((numpy.array([b.xy[0] for b in bars]) >= xmin).all())
+                polygon, = hist_plot_1d(ax, data, histtype='step', xmin=xmin)
+                assert((polygon.xy[:, 0] >= xmin).all())
 
             # Check xmax
-            xmax = 0.5
-            bars = hist_plot_1d(ax, data, histtype='bar', xmax=xmax, plotter=p)
-            assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
-            polygon, = hist_plot_1d(ax, data, histtype='step',
+            for xmax in [numpy.inf, 0.5]:
+                bars = hist_plot_1d(ax, data, histtype='bar',
                                     xmax=xmax, plotter=p)
-            assert((polygon.xy[:, 0] <= 0.5).all())
+                assert((numpy.array([b.xy[-1] for b in bars]) <= xmax).all())
+                polygon, = hist_plot_1d(ax, data, histtype='step',
+                                        xmax=xmax, plotter=p)
+                assert((polygon.xy[:, 0] <= xmax).all())
 
             # Check xmin and xmax
             bars = hist_plot_1d(ax, data, histtype='bar',
