@@ -378,9 +378,9 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     plotter = kwargs.pop('plotter', '')
     weights = kwargs.pop('weights', None)
-    if xmin is None:
+    if xmin is None or not numpy.isfinite(xmin):
         xmin = quantile(data, 0.01, weights)
-    if xmax is None:
+    if xmax is None or not numpy.isfinite(xmax):
         xmax = quantile(data, 0.99, weights)
     histtype = kwargs.pop('histtype', 'bar')
 
