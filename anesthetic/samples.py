@@ -91,8 +91,6 @@ class MCMCSamples(WeightedDataFrame):
 
             for param in self.columns:
                 if param not in self.limits:
-                    print(param)
-                    print(self[param])
                     self.limits[param] = (self[param].min(), self[param].max())
 
             if logL is not None:
