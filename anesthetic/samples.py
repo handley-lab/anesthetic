@@ -97,9 +97,13 @@ class MCMCSamples(WeightedDataFrame):
                 self['weight'] = self.weight
                 self.tex['weight'] = r'MCMC weight'
 
-            for param in self.columns:
-                if param not in self.limits:
-                    self.limits[param] = (self[param].min(), self[param].max())
+            self.set_automatic_limits()
+
+    def set_automatic_limits(self):
+        """Set all unassigned limits to min and max of sample."""
+        for param in self.columns:
+            if param not in self.limits:
+                self.limits[param] = (self[param].min(), self[param].max())
 
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
@@ -433,9 +437,7 @@ class NestedSamples(MCMCSamples):
             if logL_birth is not None:
                 self._compute_nlive(logL_birth)
 
-            for param in self.columns:
-                if param not in self.limits:
-                    self.limits[param] = (self[param].min(), self[param].max())
+            self.set_automatic_limits()
 
     @property
     def beta(self):
