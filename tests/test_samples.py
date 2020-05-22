@@ -523,3 +523,27 @@ def test_live_points():
     logL = pc.logL_birth.max()
     assert (last_live_points.logL > logL).all()
     assert len(last_live_points) == pc.nlive.mode()[0]
+
+
+def test_limit_assignment():
+    numpy.random.seed(3)
+    ns = NestedSamples(root='./tests/example_data/pc')
+    # `None` in .ranges file:
+    assert ns.limits['x0'][0] is None
+    assert ns.limits['x0'][1] is None
+    # parameter not listed in .ranges file:
+    assert ns.limits['x1'][0] == ns.x1.min()
+    assert ns.limits['x1'][1] == ns.x1.max()
+    # `None` for only one limit in .ranges file:
+    assert ns.limits['x2'][0] == 0
+    assert ns.limits['x2'][1] is None
+    # both limits specified in .ranges file:
+    assert ns.limits['x3'][0] == 0
+    assert ns.limits['x3'][1] == 1
+    # limits for logL, weight, nlive
+    assert ns.limits['logL'][0] == -777.0115456428716
+    assert ns.limits['logL'][1] == 5.748335384373301
+    assert ns.limits['weight'][0] == 0
+    assert ns.limits['weight'][1] == 1
+    assert ns.limits['nlive'][0] == 0
+    assert ns.limits['nlive'][1] == 125
