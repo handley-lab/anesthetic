@@ -97,9 +97,9 @@ class MCMCSamples(WeightedDataFrame):
                 self['weight'] = self.weight
                 self.tex['weight'] = r'MCMC weight'
 
-            self.set_automatic_limits()
+            self._set_automatic_limits()
 
-    def set_automatic_limits(self):
+    def _set_automatic_limits(self):
         """Set all unassigned limits to min and max of sample."""
         for param in self.columns:
             if param not in self.limits:
@@ -437,7 +437,7 @@ class NestedSamples(MCMCSamples):
             if logL_birth is not None:
                 self._compute_nlive(logL_birth)
 
-            self.set_automatic_limits()
+            self._set_automatic_limits()
 
     @property
     def beta(self):
