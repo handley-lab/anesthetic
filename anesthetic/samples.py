@@ -574,6 +574,16 @@ class NestedSamples(MCMCSamples):
         return RunPlotter(self, params)
 
     def logX(self, nsamples=None):
+    	"""Compute volume within a loglikelihood.
+
+        Parameters
+        ----------
+        nsamples: int, optional
+            Number of samples to generate. optional. If None, then compute the
+            statistical average. If integer, generate samples from the
+            distribution. (Default: None)
+
+        """
     	with numpy.errstate(divide='ignore'):
             if numpy.ndim(nsamples) > 0:
                 return nsamples
