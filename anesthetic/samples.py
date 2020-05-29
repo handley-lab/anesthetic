@@ -573,6 +573,19 @@ class NestedSamples(MCMCSamples):
         """Construct a graphical user interface for viewing samples."""
         return RunPlotter(self, params)
 
+    def logX(self, nsamples=None):
+    	with numpy.errstate(divide='ignore'):
+            if numpy.ndim(nsamples) > 0:
+                return nsamples
+            elif nsamples is None:
+                t = numpy.log(self.nlive/(self.nlive+1)).to_frame()
+            else:
+                r = numpy.log(numpy.random.rand(len(self), nsamples))
+                t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
+
+        logX = t.cumsum()
+        return logX
+
     def dlogX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
 
