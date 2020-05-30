@@ -508,6 +508,16 @@ def test_beta():
         assert not numpy.array_equal(pc['weight'], weight)
 
 
+def test_beta_with_logL_infinities():
+    ns = NestedSamples(root="./tests/example_data/pc")
+    for i in range(10):
+        ns['logL'][i] = -numpy.inf
+    prior = ns.set_beta(0)
+    assert numpy.all(prior.logL[:10] == -numpy.inf)
+    assert numpy.all(prior.weight[:10] == 0)
+    ns.plot_1d(['x0', 'x1'])
+
+
 def test_live_points():
     numpy.random.seed(4)
     pc = NestedSamples(root="./tests/example_data/pc")
