@@ -447,7 +447,8 @@ class NestedSamples(MCMCSamples):
     @beta.setter
     def beta(self, beta):
         self._beta = beta
-        logw = self.dlogX() + self.beta*self.logL
+        logw = self.dlogX() + numpy.where(self.logL == -numpy.inf,
+                                          -numpy.inf, self.beta * self.logL)
         self._weight = numpy.exp(logw - logw.max())
 
         if self._weight is not None:
