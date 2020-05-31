@@ -3,7 +3,7 @@ import sys
 import os
 import glob
 import warnings
-import numpy
+import numpy as np
 from anesthetic.read.chainreader import ChainReader
 try:
     with warnings.catch_warnings():
@@ -77,17 +77,17 @@ class MontePythonReader(ChainReader):
         analyze.extract_parameter_names(info=self.info)
         analyze.find_maximum_of_likelihood(info=self.info)
         data_per_chain = analyze.remove_bad_points(info=self.info)
-        self.data = numpy.concatenate(data_per_chain, axis=0)
+        self.data = np.concatenate(data_per_chain, axis=0)
 
     def paramnames(self):
         """Return parameter labels and corresponding tex signs.
 
         Returns
         -------
-        params: numpy.ndarray
+        params: np.ndarray
             reference name for the sample, used as labels in the pandas array
 
-        tex: numpy.ndarray
+        tex: np.ndarray
             axis labels, possibly in tex, with the understanding that it will
             be surrounded by dollar signs
 
@@ -105,13 +105,13 @@ class MontePythonReader(ChainReader):
 
         Returns
         -------
-        weights: numpy.ndarray
+        weights: np.ndarray
             weights of each step in the sample
 
-        logL: numpy.ndarray
+        logL: np.ndarray
             loglikelihood of each step in the sample
 
-        samples: numpy.ndarray
+        samples: np.ndarray
             MontePython MCMC samples
 
         """

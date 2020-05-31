@@ -1,6 +1,6 @@
 """Pandas DataFrame and Series with weighted samples."""
 
-import numpy
+import numpy as np
 import pandas
 from anesthetic.utils import compress_weights, channel_capacity, quantile
 
@@ -24,12 +24,12 @@ class _WeightedObject(object):
             self._weight = pandas.Series(index=self.index, data=w)
         else:
             self._weight = None
-        rand = numpy.random.rand(len(self))
+        rand = np.random.rand(len(self))
         self._rand_ = pandas.Series(index=self.index, data=rand)
 
     def std(self):
         """Weighted standard deviation of the sampled distribution."""
-        return numpy.sqrt(self.var())
+        return np.sqrt(self.var())
 
     def median(self):
         """Weighted median of the sampled distribution."""
@@ -50,11 +50,11 @@ class WeightedSeries(_WeightedObject, pandas.Series):
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        return numpy.average(self, weights=self.weight)
+        return np.average(self, weights=self.weight)
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        return numpy.average((self-self.mean())**2, weights=self.weight)
+        return np.average((self-self.mean())**2, weights=self.weight)
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
@@ -104,24 +104,24 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        return pandas.Series(numpy.average(self, weights=self.weight, axis=0),
+        return pandas.Series(np.average(self, weights=self.weight, axis=0),
                              index=self.columns)
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        return pandas.Series(numpy.average((self-self.mean())**2,
-                                           weights=self.weight, axis=0),
+        return pandas.Series(np.average((self-self.mean())**2,
+                                        weights=self.weight, axis=0),
                              index=self.columns)
 
     def cov(self):
         """Weighted covariance of the sampled distribution."""
-        return pandas.DataFrame(numpy.cov(self.T, aweights=self.weight),
+        return pandas.DataFrame(np.cov(self.T, aweights=self.weight),
                                 index=self.columns, columns=self.columns)
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
-        data = numpy.array([c.quantile(q) for _, c in self.iteritems()])
-        if numpy.isscalar(q):
+        data = np.array([c.quantile(q) for _, c in self.iteritems()])
+        if np.isscalar(q):
             return pandas.Series(data, index=self.columns)
         else:
             return pandas.DataFrame(data.T, columns=self.columns, index=q)
@@ -143,8 +143,8 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
         """
         i = compress_weights(self.weight, self._rand, nsamples)
-        data = numpy.repeat(self.values, i, axis=0)
-        index = numpy.repeat(self.index.values, i)
+        data = np.repeat(self.values, i, axis=0)
+        index = np.repeat(self.index.values, i)
         df = pandas.DataFrame(data=data, index=index, columns=self.columns)
         if 'weight' in self:
             return df.drop(columns='weight')

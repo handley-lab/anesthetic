@@ -2,7 +2,7 @@ import matplotlib_agg  # noqa: F401
 import os
 import sys
 import pytest
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
@@ -18,34 +18,33 @@ except ImportError:
 
 
 def test_build_mcmc():
-    numpy.random.seed(3)
+    np.random.seed(3)
     nsamps = 1000
     ndims = 3
-    samples = numpy.random.randn(nsamps, ndims)
-    logL = numpy.random.rand(nsamps)
-    w = numpy.random.randint(1, 20, size=nsamps)
+    samples = np.random.randn(nsamps, ndims)
+    logL = np.random.rand(nsamps)
+    w = np.random.randint(1, 20, size=nsamps)
     params = ['A', 'B', 'C']
     tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
     limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
 
     mcmc = MCMCSamples(data=samples)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2], dtype=object))
+    assert_array_equal(mcmc.columns, np.array([0, 1, 2], dtype=object))
 
     mcmc = MCMCSamples(data=samples, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL'],
-                                                 dtype=object))
+    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
 
     mcmc = MCMCSamples(data=samples, w=w)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'weight'],
-                                                 dtype=object))
+    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'weight'],
+                                              dtype=object))
 
     mcmc = MCMCSamples(data=samples, w=w, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
-                                                 dtype=object))
+    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL', 'weight'],
+                                              dtype=object))
 
     mcmc = MCMCSamples(data=samples, columns=params)
     assert(len(mcmc) == nsamps)
@@ -61,32 +60,32 @@ def test_build_mcmc():
 
     ns = NestedSamples(data=samples, logL=logL, w=w)
     assert(len(ns) == nsamps)
-    assert(numpy.all(numpy.isfinite(ns.logL)))
+    assert(np.all(np.isfinite(ns.logL)))
     logL[:10] = -1e300
     w[:10] = 0.
     mcmc = MCMCSamples(data=samples, logL=logL, w=w, logzero=-1e29)
     ns = NestedSamples(data=samples, logL=logL, w=w, logzero=-1e29)
-    assert_array_equal(mcmc.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
-                                                 dtype=object))
-    assert_array_equal(ns.columns, numpy.array([0, 1, 2, 'logL', 'weight'],
-                                               dtype=object))
-    assert(numpy.all(mcmc.logL[:10] == -numpy.inf))
-    assert(numpy.all(ns.logL[:10] == -numpy.inf))
-    assert(numpy.all(mcmc.logL[10:] == logL[10:]))
-    assert(numpy.all(ns.logL[10:] == logL[10:]))
+    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL', 'weight'],
+                                              dtype=object))
+    assert_array_equal(ns.columns, np.array([0, 1, 2, 'logL', 'weight'],
+                                            dtype=object))
+    assert(np.all(mcmc.logL[:10] == -np.inf))
+    assert(np.all(ns.logL[:10] == -np.inf))
+    assert(np.all(mcmc.logL[10:] == logL[10:]))
+    assert(np.all(ns.logL[10:] == logL[10:]))
 
     mcmc = MCMCSamples(data=samples, logL=logL, w=w, logzero=-1e301)
     ns = NestedSamples(data=samples, logL=logL, w=w, logzero=-1e301)
-    assert(numpy.all(numpy.isfinite(mcmc.logL)))
-    assert(numpy.all(numpy.isfinite(ns.logL)))
-    assert(numpy.all(mcmc.logL == logL))
-    assert(numpy.all(ns.logL == logL))
+    assert(np.all(np.isfinite(mcmc.logL)))
+    assert(np.all(np.isfinite(ns.logL)))
+    assert(np.all(mcmc.logL == logL))
+    assert(np.all(ns.logL == logL))
 
     assert(mcmc.root is None)
 
 
 def test_read_getdist():
-    numpy.random.seed(3)
+    np.random.seed(3)
     mcmc = MCMCSamples(root='./tests/example_data/gd')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -101,7 +100,7 @@ def test_read_getdist():
                    raises=ImportError,
                    reason="requires montepython package")
 def test_read_montepython():
-    numpy.random.seed(3)
+    np.random.seed(3)
     mcmc = MCMCSamples(root='./tests/example_data/mp')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -109,7 +108,7 @@ def test_read_montepython():
 
 
 def test_read_multinest():
-    numpy.random.seed(3)
+    np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/mn')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -121,7 +120,7 @@ def test_read_multinest():
 
 
 def test_read_polychord():
-    numpy.random.seed(3)
+    np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -146,7 +145,7 @@ def test_NS_input_fails_in_MCMCSamples():
 
 
 def test_different_parameters():
-    numpy.random.seed(3)
+    np.random.seed(3)
     params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
     params_y = ['x0', 'x1', 'x2']
     fig, axes = make_1d_axes(params_x)
@@ -178,7 +177,7 @@ def test_manual_columns():
 
 
 def test_plot_2d_types():
-    numpy.random.seed(3)
+    np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     params_x = ['x0', 'x1', 'x2', 'x3']
     params_y = ['x0', 'x1', 'x2']
@@ -213,7 +212,7 @@ def test_plot_2d_types():
 
 
 def test_plot_2d_types_multiple_calls():
-    numpy.random.seed(3)
+    np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     params = ['x0', 'x1', 'x2', 'x3']
 
@@ -230,7 +229,7 @@ def test_plot_2d_types_multiple_calls():
 
 
 def test_root_and_label():
-    numpy.random.seed(3)
+    np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     assert(ns.root == './tests/example_data/pc')
     assert(ns.label == 'pc')
@@ -249,7 +248,7 @@ def test_root_and_label():
 
 
 def test_plot_2d_legend():
-    numpy.random.seed(3)
+    np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     mc = MCMCSamples(root='./tests/example_data/gd')
     params = ['x0', 'x1', 'x2', 'x3']
@@ -317,7 +316,7 @@ def test_plot_2d_legend():
 
 
 def test_plot_2d_colours():
-    numpy.random.seed(3)
+    np.random.seed(3)
     gd = MCMCSamples(root="./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True)
     pc = NestedSamples(root="./tests/example_data/pc")
@@ -362,7 +361,7 @@ def test_plot_2d_colours():
 
 
 def test_plot_1d_colours():
-    numpy.random.seed(3)
+    np.random.seed(3)
     gd = MCMCSamples(root="./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True)
     pc = NestedSamples(root="./tests/example_data/pc")
@@ -410,7 +409,7 @@ def test_plot_1d_colours():
                    raises=ImportError,
                    reason="requires astropy package")
 def test_astropyhist():
-    numpy.random.seed(3)
+    np.random.seed(3)
     mcmc = NestedSamples(root='./tests/example_data/pc')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'diagonal': 'astropyhist'})
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'], plot_type='astropyhist')
@@ -418,7 +417,7 @@ def test_astropyhist():
 
 
 def test_hist_levels():
-    numpy.random.seed(3)
+    np.random.seed(3)
     mcmc = NestedSamples(root='./tests/example_data/pc')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'lower': 'hist'},
                  levels=[0.68, 0.95], bins=20)
@@ -426,7 +425,7 @@ def test_hist_levels():
 
 
 def test_ns_output():
-    numpy.random.seed(3)
+    np.random.seed(3)
     pc = NestedSamples(root='./tests/example_data/pc')
     for beta in [1., 0., 0.5]:
         pc.beta = beta
@@ -466,7 +465,7 @@ def test_masking():
 
 
 def test_merging():
-    numpy.random.seed(3)
+    np.random.seed(3)
     samples_1 = NestedSamples(root='./tests/example_data/pc')
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
     samples = merge_nested_samples([samples_1, samples_2])
@@ -495,31 +494,31 @@ def test_beta():
     assert_array_equal(pc['weight'], pc.weight)
     assert_array_almost_equal(sorted(prior.weight, reverse=True), prior.weight)
 
-    for beta in numpy.linspace(0, 2, 10):
+    for beta in np.linspace(0, 2, 10):
         pc.set_beta(beta, inplace=True)
         assert pc.beta == beta
         assert_array_equal(pc['weight'], pc.weight)
-        assert not numpy.array_equal(pc['weight'], weight)
+        assert not np.array_equal(pc['weight'], weight)
 
-    for beta in numpy.linspace(0, 2, 10):
+    for beta in np.linspace(0, 2, 10):
         pc.beta = beta
         assert pc.beta == beta
         assert_array_equal(pc['weight'], pc.weight)
-        assert not numpy.array_equal(pc['weight'], weight)
+        assert not np.array_equal(pc['weight'], weight)
 
 
 def test_beta_with_logL_infinities():
     ns = NestedSamples(root="./tests/example_data/pc")
     for i in range(10):
-        ns['logL'][i] = -numpy.inf
+        ns['logL'][i] = -np.inf
     prior = ns.set_beta(0)
-    assert numpy.all(prior.logL[:10] == -numpy.inf)
-    assert numpy.all(prior.weight[:10] == 0)
+    assert np.all(prior.logL[:10] == -np.inf)
+    assert np.all(prior.weight[:10] == 0)
     ns.plot_1d(['x0', 'x1'])
 
 
 def test_live_points():
-    numpy.random.seed(4)
+    np.random.seed(4)
     pc = NestedSamples(root="./tests/example_data/pc")
 
     for i, logL in pc.logL.iteritems():
@@ -536,7 +535,7 @@ def test_live_points():
 
 
 def test_limit_assignment():
-    numpy.random.seed(3)
+    np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     # `None` in .ranges file:
     assert ns.limits['x0'][0] is None

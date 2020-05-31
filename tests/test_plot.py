@@ -1,6 +1,6 @@
 import matplotlib_agg  # noqa: F401
 import pytest
-import numpy
+import numpy as np
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
@@ -105,7 +105,7 @@ def test_make_2d_axes_inputs_outputs():
 
 
 def test_make_2d_axes_behaviour():
-    numpy.random.seed(0)
+    np.random.seed(0)
 
     def calc_n(axes):
         """Compute the number of upper, lower and diagonal plots."""
@@ -170,12 +170,12 @@ def test_make_2d_axes_behaviour():
 
 
 def test_2d_axes_limits():
-    numpy.random.seed(0)
+    np.random.seed(0)
     paramnames = ['A', 'B', 'C', 'D']
     fig, axes = make_2d_axes(paramnames)
     for x in paramnames:
         for y in paramnames:
-            a, b, c, d = numpy.random.rand(4)
+            a, b, c, d = np.random.rand(4)
             axes[x][y].set_xlim(a, b)
             for z in paramnames:
                 assert(axes[x][z].get_xlim() == (a, b))
@@ -189,8 +189,8 @@ def test_2d_axes_limits():
 
 def test_kde_plot_1d():
     fig, ax = plt.subplots()
-    numpy.random.seed(0)
-    data = numpy.random.randn(1000)
+    np.random.seed(0)
+    data = np.random.randn(1000)
 
     for plot_1d in [kde_plot_1d, fastkde_plot_1d]:
         try:
@@ -225,55 +225,54 @@ def test_kde_plot_1d():
 
 def test_hist_plot_1d():
     fig, ax = plt.subplots()
-    numpy.random.seed(0)
-    data = numpy.random.randn(1000)
+    np.random.seed(0)
+    data = np.random.randn(1000)
     for p in ['', 'astropyhist']:
         try:
             # Check heights for histtype 'bar'
             bars = hist_plot_1d(ax, data, histtype='bar', plotter=p)
-            assert(numpy.all([isinstance(b, Patch) for b in bars]))
+            assert(np.all([isinstance(b, Patch) for b in bars]))
             assert(max([b.get_height() for b in bars]) == 1.)
-            assert(numpy.all(numpy.array([b.get_height() for b in bars])
-                             <= 1.))
+            assert(np.all(np.array([b.get_height() for b in bars]) <= 1.))
 
             # Check heights for histtype 'step'
             polygon, = hist_plot_1d(ax, data, histtype='step', plotter=p)
             assert(isinstance(polygon, Polygon))
             trans = polygon.get_transform() - ax.transData
-            assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
-                                 rtol=1e-10, atol=1e-10))
-            assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
+            assert(np.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                              rtol=1e-10, atol=1e-10))
+            assert(np.all(trans.transform(polygon.xy)[:, -1] <= 1.))
 
             # Check heights for histtype 'stepfilled'
             polygon, = hist_plot_1d(ax, data, histtype='stepfilled', plotter=p)
             assert(isinstance(polygon, Polygon))
             trans = polygon.get_transform() - ax.transData
-            assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
-                                 rtol=1e-10, atol=1e-10))
-            assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
+            assert(np.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                              rtol=1e-10, atol=1e-10))
+            assert(np.all(trans.transform(polygon.xy)[:, -1] <= 1.))
 
             # Check arguments are passed onward to underlying function
             bars = hist_plot_1d(ax, data, histtype='bar',
                                 color='r', alpha=0.5, plotter=p)
             cc = ColorConverter.to_rgba('r', alpha=0.5)
-            assert(numpy.all([b.get_fc() == cc for b in bars]))
+            assert(np.all([b.get_fc() == cc for b in bars]))
             polygon, = hist_plot_1d(ax, data, histtype='step',
                                     color='r', alpha=0.5, plotter=p)
             assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
 
             # Check xmin
-            for xmin in [-numpy.inf, -0.5]:
+            for xmin in [-np.inf, -0.5]:
                 bars = hist_plot_1d(ax, data, histtype='bar',
                                     xmin=xmin, plotter=p)
-                assert((numpy.array([b.xy[0] for b in bars]) >= xmin).all())
+                assert((np.array([b.xy[0] for b in bars]) >= xmin).all())
                 polygon, = hist_plot_1d(ax, data, histtype='step', xmin=xmin)
                 assert((polygon.xy[:, 0] >= xmin).all())
 
             # Check xmax
-            for xmax in [numpy.inf, 0.5]:
+            for xmax in [np.inf, 0.5]:
                 bars = hist_plot_1d(ax, data, histtype='bar',
                                     xmax=xmax, plotter=p)
-                assert((numpy.array([b.xy[-1] for b in bars]) <= xmax).all())
+                assert((np.array([b.xy[-1] for b in bars]) <= xmax).all())
                 polygon, = hist_plot_1d(ax, data, histtype='step',
                                         xmax=xmax, plotter=p)
                 assert((polygon.xy[:, 0] <= xmax).all())
@@ -281,8 +280,8 @@ def test_hist_plot_1d():
             # Check xmin and xmax
             bars = hist_plot_1d(ax, data, histtype='bar',
                                 xmin=xmin, xmax=xmax, plotter=p)
-            assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
-            assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
+            assert((np.array([b.xy[0] for b in bars]) >= -0.5).all())
+            assert((np.array([b.xy[-1] for b in bars]) <= 0.5).all())
             polygon, = hist_plot_1d(ax, data, histtype='step',
                                     xmin=xmin, xmax=xmax, plotter=p)
             assert((polygon.xy[:, 0] >= -0.5).all())
@@ -295,21 +294,21 @@ def test_hist_plot_1d():
 
 def test_hist_plot_2d():
     fig, ax = plt.subplots()
-    numpy.random.seed(0)
-    data_x, data_y = numpy.random.randn(2, 10000)
+    np.random.seed(0)
+    data_x, data_y = np.random.randn(2, 10000)
     hist_plot_2d(ax, data_x, data_y)
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
-    hist_plot_2d(ax, data_x, data_y, xmin=-numpy.inf)
-    hist_plot_2d(ax, data_x, data_y, xmax=numpy.inf)
-    hist_plot_2d(ax, data_x, data_y, ymin=-numpy.inf)
-    hist_plot_2d(ax, data_x, data_y, ymax=numpy.inf)
+    hist_plot_2d(ax, data_x, data_y, xmin=-np.inf)
+    hist_plot_2d(ax, data_x, data_y, xmax=np.inf)
+    hist_plot_2d(ax, data_x, data_y, ymin=-np.inf)
+    hist_plot_2d(ax, data_x, data_y, ymax=np.inf)
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
-    data_x, data_y = numpy.random.uniform(-10, 10, (2, 1000000))
-    weights = numpy.exp(-(data_x**2 + data_y**2)/2)
+    data_x, data_y = np.random.uniform(-10, 10, (2, 1000000))
+    weights = np.exp(-(data_x**2 + data_y**2)/2)
     hist_plot_2d(ax, data_x, data_y, weights=weights, bins=30)
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
@@ -320,9 +319,9 @@ def test_contour_plot_2d():
     for contour_plot_2d in [kde_contour_plot_2d, fastkde_contour_plot_2d]:
         try:
             ax = plt.gca()
-            numpy.random.seed(1)
-            data_x = numpy.random.randn(1000)
-            data_y = numpy.random.randn(1000)
+            np.random.seed(1)
+            data_x = np.random.randn(1000)
+            data_y = np.random.randn(1000)
             c = contour_plot_2d(ax, data_x, data_y)
             if contour_plot_2d is fastkde_contour_plot_2d:
                 assert(isinstance(c, QuadContourSet))
@@ -375,9 +374,9 @@ def test_contour_plot_2d():
 
 def test_scatter_plot_2d():
     fig, ax = plt.subplots()
-    numpy.random.seed(2)
-    data_x = numpy.random.randn(1000)
-    data_y = numpy.random.randn(1000)
+    np.random.seed(2)
+    data_x = np.random.randn(1000)
+    data_y = np.random.randn(1000)
     lines, = scatter_plot_2d(ax, data_x, data_y)
     assert(isinstance(lines, Line2D))
 

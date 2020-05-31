@@ -1,5 +1,5 @@
 """Tools for reading from polychord chains files."""
-import numpy
+import numpy as np
 from anesthetic.read.getdistreader import GetDistReader
 
 
@@ -8,16 +8,16 @@ class PolyChordReader(GetDistReader):
 
     def samples(self):
         """Read ``<root>_dead-birth.txt`` in polychord format."""
-        data = numpy.loadtxt(self.birth_file)
+        data = np.loadtxt(self.birth_file)
         try:
-            _data = numpy.loadtxt(self.phys_live_birth_file)
-            data = numpy.concatenate([data, _data])
-            data = numpy.unique(data, axis=0)
-            i = numpy.argsort(data[:, -2])
+            _data = np.loadtxt(self.phys_live_birth_file)
+            data = np.concatenate([data, _data])
+            data = np.unique(data, axis=0)
+            i = np.argsort(data[:, -2])
             data = data[i, :]
         except (OSError, IOError):
             pass
-        samples, logL, logL_birth = numpy.split(data, [-2, -1], axis=1)
+        samples, logL, logL_birth = np.split(data, [-2, -1], axis=1)
         return samples, logL.flatten(), logL_birth.flatten()
 
     @property
