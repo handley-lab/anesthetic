@@ -4,15 +4,14 @@
 - ``NestedSamples``
 """
 import os
-import numpy
+import numpy as np
 import pandas
-from scipy.special import logsumexp
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
                              fastkde_contour_plot_2d,
                              kde_contour_plot_2d, hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
-from anesthetic.utils import compute_nlive, is_int
+from anesthetic.utils import compute_nlive, is_int, logsumexp
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
@@ -33,16 +32,16 @@ class MCMCSamples(WeightedDataFrame):
     root: str, optional
         root for reading chains from file. Overrides all other arguments.
 
-    data: numpy.array
+    data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
     columns: list(str)
         reference names of parameters
 
-    w: numpy.array
+    w: np.array
         weights of samples.
 
-    logL: numpy.array
+    logL: np.array
         loglikelihoods of samples.
 
     tex: dict
@@ -53,6 +52,11 @@ class MCMCSamples(WeightedDataFrame):
 
     label: str
         Legend label
+
+    logzero: float
+        The threshold for `log(0)` values assigned to rejected sample points.
+        Anything equal or below this value is set to `-np.inf`.
+        default: -1e30
 
     """
 
@@ -75,7 +79,10 @@ class MCMCSamples(WeightedDataFrame):
                           tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
+            logzero = kwargs.pop('logzero', -1e30)
             logL = kwargs.pop('logL', None)
+            if logL is not None:
+                logL = np.where(logL <= logzero, -np.inf, logL)
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
@@ -89,6 +96,14 @@ class MCMCSamples(WeightedDataFrame):
             if self._weight is not None:
                 self['weight'] = self.weight
                 self.tex['weight'] = r'MCMC weight'
+
+            self._set_automatic_limits()
+
+    def _set_automatic_limits(self):
+        """Set all unassigned limits to min and max of sample."""
+        for param in self.columns:
+            if param not in self.limits:
+                self.limits[param] = (self[param].min(), self[param].max())
 
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
@@ -365,16 +380,16 @@ class NestedSamples(MCMCSamples):
     root: str, optional
         root for reading chains from file. Overrides all other arguments.
 
-    data: numpy.array
+    data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
     columns: list(str)
         reference names of parameters
 
-    logL: numpy.array
+    logL: np.array
         loglikelihoods of samples.
 
-    logL_birth: numpy.array or int
+    logL_birth: np.array or int
         birth loglikelihoods, or number of live points.
 
     tex: dict
@@ -388,6 +403,11 @@ class NestedSamples(MCMCSamples):
 
     beta: float
         thermodynamic temperature
+
+    logzero: float
+        The threshold for `log(0)` values assigned to rejected sample points.
+        Anything equal or below this value is set to `-np.inf`.
+        default: -1e30
 
     """
 
@@ -405,11 +425,19 @@ class NestedSamples(MCMCSamples):
                           tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
+            logzero = kwargs.pop('logzero', -1e30)
             self._beta = kwargs.pop('beta', 1.)
             logL_birth = kwargs.pop('logL_birth', None)
-            super(NestedSamples, self).__init__(*args, **kwargs)
+            if not isinstance(logL_birth, int) and logL_birth is not None:
+                logL_birth = np.where(logL_birth <= logzero, -np.inf,
+                                      logL_birth)
+
+            super(NestedSamples, self).__init__(logzero=logzero,
+                                                *args, **kwargs)
             if logL_birth is not None:
                 self._compute_nlive(logL_birth)
+
+            self._set_automatic_limits()
 
     @property
     def beta(self):
@@ -419,8 +447,9 @@ class NestedSamples(MCMCSamples):
     @beta.setter
     def beta(self, beta):
         self._beta = beta
-        logw = self.dlogX() + self.beta*self.logL
-        self._weight = numpy.exp(logw - logw.max())
+        logw = self.dlogX() + np.where(self.logL == -np.inf, -np.inf,
+                                       self.beta * self.logL)
+        self._weight = np.exp(logw - logw.max())
 
         if self._weight is not None:
             self['weight'] = self.weight
@@ -473,8 +502,8 @@ class NestedSamples(MCMCSamples):
         logw -= samples.logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
 
-        samples['D'] = numpy.exp(logsumexp(logw, b=S, axis=0))
-        samples['d'] = numpy.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
+        samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
+        samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
 
         samples.tex = {'logZ': r'$\log\mathcal{Z}$',
                        'D': r'$\mathcal{D}$',
@@ -506,7 +535,7 @@ class NestedSamples(MCMCSamples):
         logZ = self.logZ(dlogX)
         logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
-        return numpy.exp(logsumexp(logw, b=S, axis=0))
+        return np.exp(logsumexp(logw, b=S, axis=0))
 
     def d(self, nsamples=None):
         """Bayesian model dimensionality.
@@ -521,7 +550,7 @@ class NestedSamples(MCMCSamples):
         D = self.D(dlogX)
         logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
-        return numpy.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
+        return np.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
     def live_points(self, logL=None):
         """Get the live points within logL.
@@ -566,24 +595,24 @@ class NestedSamples(MCMCSamples):
             distribution. (Default: None)
 
         """
-        with numpy.errstate(divide='ignore'):
-            if numpy.ndim(nsamples) > 0:
+        with np.errstate(divide='ignore'):
+            if np.ndim(nsamples) > 0:
                 return nsamples
             elif nsamples is None:
-                t = numpy.log(self.nlive/(self.nlive+1)).to_frame()
+                t = np.log(self.nlive/(self.nlive+1)).to_frame()
             else:
-                r = numpy.log(numpy.random.rand(len(self), nsamples))
+                r = np.log(np.random.rand(len(self), nsamples))
                 t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
 
         logX = t.cumsum()
         logXp = logX.shift(1, fill_value=0)
-        logXm = logX.shift(-1, fill_value=-numpy.inf)
+        logXm = logX.shift(-1, fill_value=-np.inf)
         dlogX = logsumexp([logXp.values, logXm.values],
-                          b=[numpy.ones_like(logXp), -numpy.ones_like(logXm)],
-                          axis=0) - numpy.log(2)
+                          b=[np.ones_like(logXp), -np.ones_like(logXm)],
+                          axis=0) - np.log(2)
 
         if nsamples is None:
-            dlogX = numpy.squeeze(dlogX)
+            dlogX = np.squeeze(dlogX)
             return WeightedSeries(dlogX, self.index, w=self.weight)
         else:
             return WeightedDataFrame(dlogX, self.index, w=self.weight)
@@ -592,7 +621,7 @@ class NestedSamples(MCMCSamples):
         if is_int(logL_birth):
             nlive = logL_birth
             self['nlive'] = nlive
-            descending = numpy.arange(nlive, 0, -1)
+            descending = np.arange(nlive, 0, -1)
             self.loc[len(self)-nlive:, 'nlive'] = descending
         else:
             self['logL_birth'] = logL_birth

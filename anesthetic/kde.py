@@ -16,7 +16,7 @@ def fastkde_1d(d, xmin=None, xmax=None):
 
     Parameters
     ----------
-    d: numpy.array
+    d: np.array
         Data to perform kde on
 
     xmin, xmax: float
@@ -25,9 +25,9 @@ def fastkde_1d(d, xmin=None, xmax=None):
 
     Returns
     -------
-    x: numpy.array
+    x: np.array
         x-coordinates of kernel density estimates
-    p: numpy.array
+    p: np.array
         kernel density estimates
 
     """
@@ -59,7 +59,7 @@ def fastkde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
 
     Parameters
     ----------
-    d_x, d_y: numpy.array
+    d_x, d_y: np.array
         x/y coordinates of data to perform kde on
 
     xmin, xmax, ymin, ymax: float
@@ -68,9 +68,9 @@ def fastkde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
 
     Returns
     -------
-    x,y: numpy.array
+    x,y: np.array
         x/y-coordinates of kernel density estimates. One-dimensional array
-    p: numpy.array
+    p: np.array
         kernel density estimates. Two-dimensional array
 
     """
