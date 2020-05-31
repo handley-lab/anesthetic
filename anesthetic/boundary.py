@@ -1,6 +1,6 @@
 """Boundary correction utilities."""
 
-import numpy
+import numpy as np
 from scipy.special import erf
 
 
@@ -9,10 +9,10 @@ def cut_and_normalise_gaussian(x, p, sigma, xmin=None, xmax=None):
 
     Parameters
     ----------
-    x: numpy.array
+    x: np.array
         locations for normalisation correction
 
-    p: numpy.array
+    p: np.array
         probability densities for normalisation correction
 
     sigma: float
@@ -24,16 +24,16 @@ def cut_and_normalise_gaussian(x, p, sigma, xmin=None, xmax=None):
 
     Returns
     -------
-    p: numpy.array
+    p: np.array
         corrected probabilities
 
     """
-    correction = numpy.ones_like(x)
+    correction = np.ones_like(x)
 
     if xmin is not None:
-        correction *= 0.5*(1 + erf((x - xmin)/sigma/numpy.sqrt(2)))
-        correction[x < xmin] = numpy.inf
+        correction *= 0.5*(1 + erf((x - xmin)/sigma/np.sqrt(2)))
+        correction[x < xmin] = np.inf
     if xmax is not None:
-        correction *= 0.5*(1 + erf((xmax - x)/sigma/numpy.sqrt(2)))
-        correction[x > xmax] = numpy.inf
+        correction *= 0.5*(1 + erf((xmax - x)/sigma/np.sqrt(2)))
+        correction[x > xmax] = np.inf
     return p/correction

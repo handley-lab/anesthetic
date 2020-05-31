@@ -1,5 +1,5 @@
 """Tools for reading from getdist chains files."""
-import numpy
+import numpy as np
 import glob
 from anesthetic.read.chainreader import ChainReader
 
@@ -59,9 +59,9 @@ class GetDistReader(ChainReader):
 
     def samples(self):
         """Read <root>_1.txt in getdist format."""
-        data = numpy.concatenate([numpy.loadtxt(chains_file)
-                                  for chains_file in self.chains_files])
-        weights, chi2, samples = numpy.split(data, [1, 2], axis=1)
+        data = np.concatenate([np.loadtxt(chains_file)
+                               for chains_file in self.chains_files])
+        weights, chi2, samples = np.split(data, [1, 2], axis=1)
         logL = chi2/-2.
         return weights.flatten(), logL.flatten(), samples
 
