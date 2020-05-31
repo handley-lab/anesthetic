@@ -510,7 +510,7 @@ def test_beta():
 def test_beta_with_logL_infinities():
     ns = NestedSamples(root="./tests/example_data/pc")
     for i in range(10):
-        ns['logL'][i] = -np.inf
+        ns.loc[i, 'logL'] = -np.inf
     prior = ns.set_beta(0)
     assert np.all(prior.logL[:10] == -np.inf)
     assert np.all(prior.weight[:10] == 0)
