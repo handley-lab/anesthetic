@@ -460,7 +460,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         raise ImportError("You need to install fastkde to use fastkde")
 
     levels = iso_probability_contours(pdf, contours=levels)
-    cmap = basic_cmap(color)
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     i = (pdf >= levels[0]*0.5).any(axis=0)
     j = (pdf >= levels[0]*0.5).any(axis=1)
@@ -549,7 +549,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     contours = iso_probability_contours_from_samples(p, weights=w)
 
-    cmap = basic_cmap(color)
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     cbar = ax.tricontourf(tri, p, contours, cmap=cmap,
                           zorder=zorder, vmin=0, vmax=p.max(), *args, **kwargs)
