@@ -382,16 +382,17 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         xmin = quantile(data, 0.01, weights)
     if xmax is None or not np.isfinite(xmax):
         xmax = quantile(data, 0.99, weights)
+    range = kwargs.pop('range', (xmin, xmax))
     histtype = kwargs.pop('histtype', 'bar')
 
     if plotter == 'astropyhist':
         try:
-            h, edges, bars = hist(data, ax=ax, range=(xmin, xmax),
+            h, edges, bars = hist(data, ax=ax, range=range,
                                   histtype=histtype, *args, **kwargs)
         except NameError:
             raise ImportError("You need to install astropy to use astropyhist")
     else:
-        h, edges, bars = ax.hist(data, range=(xmin, xmax), histtype=histtype,
+        h, edges, bars = ax.hist(data, range=range, histtype=histtype,
                                  weights=weights, *args, **kwargs)
 
     if histtype == 'bar':
