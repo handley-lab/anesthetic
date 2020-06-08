@@ -24,6 +24,8 @@ try:
     from anesthetic.kde import fastkde_1d, fastkde_2d
 except ImportError:
     pass
+import matplotlib.cbook as cbook
+import matplotlib.lines as mlines
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import LineCollection
@@ -382,16 +384,17 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         xmin = quantile(data, 0.01, weights)
     if xmax is None or not np.isfinite(xmax):
         xmax = quantile(data, 0.99, weights)
+    range = kwargs.pop('range', (xmin, xmax))
     histtype = kwargs.pop('histtype', 'bar')
 
     if plotter == 'astropyhist':
         try:
-            h, edges, bars = hist(data, ax=ax, range=(xmin, xmax),
+            h, edges, bars = hist(data, ax=ax, range=range,
                                   histtype=histtype, *args, **kwargs)
         except NameError:
             raise ImportError("You need to install astropy to use astropyhist")
     else:
-        h, edges, bars = ax.hist(data, range=(xmin, xmax), histtype=histtype,
+        h, edges, bars = ax.hist(data, range=range, histtype=histtype,
                                  weights=weights, *args, **kwargs)
 
     if histtype == 'bar':
@@ -457,7 +460,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         raise ImportError("You need to install fastkde to use fastkde")
 
     levels = iso_probability_contours(pdf, contours=levels)
-    cmap = basic_cmap(color)
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     i = (pdf >= levels[0]*0.5).any(axis=0)
     j = (pdf >= levels[0]*0.5).any(axis=1)
@@ -546,7 +549,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     contours = iso_probability_contours_from_samples(p, weights=w)
 
-    cmap = basic_cmap(color)
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     cbar = ax.tricontourf(tri, p, contours, cmap=cmap,
                           zorder=zorder, vmin=0, vmax=p.max(), *args, **kwargs)
@@ -616,7 +619,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if len(data_x) == 0 or len(data_y) == 0:
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
-    cmap = basic_cmap(color)
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     if levels is None:
         pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
@@ -677,6 +680,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     markersize = kwargs.pop('markersize', 1)
 
     points = ax.plot(data_x, data_y, 'o', markersize=markersize,
