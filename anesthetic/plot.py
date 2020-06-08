@@ -617,7 +617,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if len(data_x) == 0 or len(data_y) == 0:
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
-    cmap = basic_cmap(color)
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     if levels is None:
         pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
