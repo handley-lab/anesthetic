@@ -24,6 +24,8 @@ try:
     from anesthetic.kde import fastkde_1d, fastkde_2d
 except ImportError:
     pass
+import matplotlib.cbook as cbook
+import matplotlib.lines as mlines
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import LineCollection
@@ -678,6 +680,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     markersize = kwargs.pop('markersize', 1)
 
     points = ax.plot(data_x, data_y, 'o', markersize=markersize,
