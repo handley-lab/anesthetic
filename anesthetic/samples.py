@@ -93,14 +93,14 @@ class MCMCSamples(WeightedDataFrame):
             self.label = kwargs.pop('label', None)
             self.root = None
 
-            data = kwargs.pop('data')
-            w = kwargs.pop('w', None)
             discard_burnin = kwargs.pop('discard_burnin', False)
             if discard_burnin:
-                if discard_burnin > len(data):
-                    raise IOError("`discard_burnin` = %g > %g = len(data), "
-                                  "but needs to be smaller than the number of "
-                                  "samples." % (discard_burnin, len(data)))
+                if discard_burnin > len(kwargs['data']):
+                    raise IOError(
+                        "`discard_burnin` = %g > %g = len(data), but needs to "
+                        "be smaller than the number of samples."
+                        % (discard_burnin, len(kwargs['data']))
+                        )
                 if 0 < discard_burnin < 1:
                     index = int(len(logL) * discard_burnin)
                 elif discard_burnin > 1 and type(discard_burnin) is int:
@@ -111,11 +111,11 @@ class MCMCSamples(WeightedDataFrame):
                                   "and 1." % discard_burnin)
                 if logL is not None:
                     logL = logL[index:]
-                data = data[index:]
-                if w is not None:
-                    w = w[index:]
+                kwargs['data'] = kwargs['data'][index:]
+                if 'w' in kwargs and kwargs['w'] is not None:
+                    kwargs['w'] = kwargs['w'][index:]
 
-            super(MCMCSamples, self).__init__(data=data, w=w, *args, **kwargs)
+            super(MCMCSamples, self).__init__(*args, **kwargs)
 
             if logL is not None:
                 self['logL'] = logL
