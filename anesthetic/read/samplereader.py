@@ -17,7 +17,7 @@ def SampleReader(root):
         return pc
 
     gd = GetDistReader(root)
-    if (os.path.isfile(gd.paramnames_file)
+    if ((os.path.isfile(gd.paramnames_file) or os.path.isfile(gd.yaml_file))
             and os.path.isfile(gd.chains_files[0])
             and os.path.isfile(gd.chains_files[-1])):
         return gd
