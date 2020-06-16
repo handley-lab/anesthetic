@@ -58,6 +58,11 @@ class MCMCSamples(WeightedDataFrame):
         Anything equal or below this value is set to `-np.inf`.
         default: -1e30
 
+    discard_burnin: int or float
+        discard the first integer number of nsamples (int)
+        or the first fraction of nsamples (float).
+        default: False
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -87,7 +92,30 @@ class MCMCSamples(WeightedDataFrame):
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
             self.root = None
-            super(MCMCSamples, self).__init__(*args, **kwargs)
+
+            data = kwargs.pop('data')
+            w = kwargs.pop('w', None)
+            discard_burnin = kwargs.pop('discard_burnin', False)
+            if discard_burnin:
+                if discard_burnin > len(data):
+                    raise IOError("`discard_burnin` = %g > %g = len(data), "
+                                  "but needs to be smaller than the number of "
+                                  "samples." % (discard_burnin, len(data)))
+                if 0 < discard_burnin < 1:
+                    index = int(len(logL) * discard_burnin)
+                elif discard_burnin > 1 and type(discard_burnin) is int:
+                    index = discard_burnin
+                else:
+                    raise IOError("`discard_burnin` is %s, but should be an "
+                                  "integer greater 1 or a float between zero "
+                                  "and 1." % discard_burnin)
+                if logL is not None:
+                    logL = logL[index:]
+                data = data[index:]
+                if w is not None:
+                    w = w[index:]
+
+            super(MCMCSamples, self).__init__(data=data, w=w, *args, **kwargs)
 
             if logL is not None:
                 self['logL'] = logL
