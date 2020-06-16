@@ -57,10 +57,24 @@ class GetDistReader(ChainReader):
         except IOError:
             return super(GetDistReader, self).limits()
 
-    def samples(self):
+    def samples(self, discard_burnin=False):
         """Read <root>_1.txt in getdist format."""
-        data = np.concatenate([np.loadtxt(chains_file)
-                               for chains_file in self.chains_files])
+        data = np.array([])
+        for chains_file in self.chains_files:
+            data_i = np.loadtxt(chains_file)
+            if discard_burnin:
+                if 0 < discard_burnin < 1:
+                    index = int(len(data_i) * discard_burnin)
+                elif (type(discard_burnin) is int
+                      and 1 < discard_burnin < len(data_i)):
+                    index = discard_burnin
+                else:
+                    raise ValueError(
+                        "`discard_burnin` is %s, but should be an integer "
+                        "greater 1 and smaller len(data) or a float between "
+                        "0 and 1." % discard_burnin)
+                data_i = data_i[index:]
+            data = np.concatenate((data, data_i)) if data.size else data_i
         weights, chi2, samples = np.split(data, [1, 2], axis=1)
         logL = chi2/-2.
         return weights.flatten(), logL.flatten(), samples

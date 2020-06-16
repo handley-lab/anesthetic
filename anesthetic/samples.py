@@ -59,8 +59,9 @@ class MCMCSamples(WeightedDataFrame):
         default: -1e30
 
     discard_burnin: int or float
-        discard the first integer number of nsamples (int)
+        Discard the first integer number of nsamples (int)
         or the first fraction of nsamples (float).
+        Only works if `root` provided and if chains are GetDist compatible.
         default: False
 
     """
@@ -75,7 +76,8 @@ class MCMCSamples(WeightedDataFrame):
                                  "instead which has the same features as "
                                  "MCMCSamples and more. MCMCSamples should be "
                                  "used for MCMC chains only." % root)
-            w, logL, samples = reader.samples()
+            discard_burnin = kwargs.pop('discard_burnin', False)
+            w, logL, samples = reader.samples(discard_burnin=discard_burnin)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
             limits = reader.limits()
@@ -92,28 +94,6 @@ class MCMCSamples(WeightedDataFrame):
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
             self.root = None
-
-            discard_burnin = kwargs.pop('discard_burnin', False)
-            if discard_burnin:
-                if discard_burnin > len(kwargs['data']):
-                    raise IOError(
-                        "`discard_burnin` = %g > %g = len(data), but needs to "
-                        "be smaller than the number of samples."
-                        % (discard_burnin, len(kwargs['data']))
-                        )
-                if 0 < discard_burnin < 1:
-                    index = int(len(logL) * discard_burnin)
-                elif discard_burnin > 1 and type(discard_burnin) is int:
-                    index = discard_burnin
-                else:
-                    raise IOError("`discard_burnin` is %s, but should be an "
-                                  "integer greater 1 or a float between zero "
-                                  "and 1." % discard_burnin)
-                if logL is not None:
-                    logL = logL[index:]
-                kwargs['data'] = kwargs['data'][index:]
-                if 'w' in kwargs and kwargs['w'] is not None:
-                    kwargs['w'] = kwargs['w'][index:]
 
             super(MCMCSamples, self).__init__(*args, **kwargs)
 
