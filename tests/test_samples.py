@@ -96,15 +96,15 @@ def test_read_getdist():
     plt.close("all")
 
 
-def test_read_getdist_discard_burnin():
+def test_read_getdist_discard_burn_in():
     np.random.seed(3)
-    mcmc = MCMCSamples(discard_burnin=0.3, root='./tests/example_data/gd')
+    mcmc = MCMCSamples(burn_in=0.3, root='./tests/example_data/gd')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
     # for 2 getdist chains of length 5000
     mcmc0 = MCMCSamples(root='./tests/example_data/gd')
-    mcmc1 = MCMCSamples(discard_burnin=1000, root='./tests/example_data/gd')
+    mcmc1 = MCMCSamples(burn_in=1000, root='./tests/example_data/gd')
     for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
         assert_array_equal(mcmc0[key][1000:5000], mcmc1[key][:4000])
     mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
