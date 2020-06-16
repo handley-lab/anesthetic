@@ -152,16 +152,17 @@ class MCMCSamples(WeightedDataFrame):
         do_1d_plot = paramname_y is None or paramname_x == paramname_y
         kwargs['label'] = kwargs.get('label', self.label)
         ncompress = kwargs.pop('ncompress', None)
+        ncompress_1d = kwargs.pop('ncompress_1d', ncompress)
 
         if do_1d_plot:
             if paramname_x in self and plot_type is not None:
                 xmin, xmax = self._limits(paramname_x)
                 if plot_type == 'kde':
-                    if ncompress is None:
-                        ncompress = 1000
+                    if ncompress_1d is None:
+                        ncompress_1d = 1000
                     return kde_plot_1d(ax, self[paramname_x],
                                        weights=self.weight,
-                                       ncompress=ncompress,
+                                       ncompress=ncompress_1d,
                                        xmin=xmin, xmax=xmax,
                                        *args, **kwargs)
                 elif plot_type == 'fastkde':

@@ -340,7 +340,11 @@ def sample_compression_1d(x, w=None, n=1000):
         w = pandas.Series(index=x.index, data=np.ones_like(x))
 
     # Select inner samples for triangulation
-    if sum(w != 0) < n:
+    if n == 0:
+        x_ = np.sort(x)
+        w_ = w[x.argsort()]
+        return x_, w_
+    elif sum(w != 0) < n:
         i = w.index
     else:
         i = np.random.choice(w.index, size=n, replace=False, p=w/w.sum())
