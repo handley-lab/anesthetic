@@ -94,7 +94,6 @@ class MCMCSamples(WeightedDataFrame):
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
             self.root = None
-
             super(MCMCSamples, self).__init__(*args, **kwargs)
 
             if logL is not None:
