@@ -529,6 +529,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if len(data_x) == 0 or len(data_y) == 0:
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
+    if weights is not None:
+        data_x = data_x[weights != 0]
+        data_y = data_y[weights != 0]
+        weights = weights[weights != 0]
+
     cov = np.cov(data_x, data_y, aweights=weights)
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
                                               weights, ncompress)
