@@ -23,7 +23,7 @@ for filename in ["plikHM_TTTEEE_lowl_lowE_lensing.tar.gz","plikHM_TTTEEE_lowl_lo
 #| ## Marginalised posterior plotting
 #| Import anesthetic and load the MCMC samples:
 
-%matplotlib notebook
+%matplotlib inline
 from anesthetic import MCMCSamples
 mcmc_root = 'plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing'
 mcmc = MCMCSamples(root=mcmc_root)
@@ -134,3 +134,9 @@ fig.tight_layout()
 #| sampling run after the fact.
 
 nested.gui()
+
+#| There are also tools for converting to alternative formats, in case you have
+#| pipelines in other plotters:
+
+from anesthetic.convert import to_getdist
+getdist_samples = to_getdist(nested)
