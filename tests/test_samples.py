@@ -571,3 +571,17 @@ def test_limit_assignment():
     assert ns.limits['weight'][1] == 1
     assert ns.limits['nlive'][0] == 0
     assert ns.limits['nlive'][1] == 125
+
+
+def test_contour_plot_2d_nan():
+    """Contour plots with nans arising from issue #96"""
+    np.random.seed(3)
+    ns = NestedSamples(root='./tests/example_data/pc')
+
+    ns.loc[:9, 'x0'] = np.nan
+    with pytest.raises((np.linalg.LinAlgError, RuntimeError)):
+        ns.plot_2d(['x0', 'x1'])
+
+    # Check this error is removed in the case of zero weights
+    ns._weight[:10] = 0
+    ns.plot_2d(['x0', 'x1'])
