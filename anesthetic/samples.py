@@ -400,16 +400,20 @@ class NestedSamples(MCMCSamples):
         birth loglikelihoods, or number of live points.
 
     tex: dict
-        mapping from columns to tex labels for plotting
+        optional mapping from column names to tex labels for plotting
 
     limits: dict
-        mapping from columns to prior limits
+        mapping from columns to prior limits.
+        Defaults defined by .ranges file (if it exists)
+        otherwise defined by minimum and maximum of the nested sampling data
 
     label: str
         Legend label
+        default: basename of root
 
     beta: float
         thermodynamic temperature
+        default: 1.
 
     logzero: float
         The threshold for `log(0)` values assigned to rejected sample points.
