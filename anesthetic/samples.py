@@ -38,7 +38,7 @@ class MCMCSamples(WeightedDataFrame):
     columns: list(str)
         reference names of parameters
 
-    w: np.array
+    weight: np.array
         weights of samples.
 
     logL: np.array

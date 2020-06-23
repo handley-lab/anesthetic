@@ -17,17 +17,24 @@ def test_WeightedSeries_constructor():
     assert_array_equal(series.weight, 1)
     assert_array_equal(series, data)
 
-    weights = np.random.rand(N)
-    series = WeightedSeries(data, w=weights)
+    series = WeightedSeries(data, weight=None)
+    assert_array_equal(series.weight, 1)
+    assert_array_equal(series, data)
+
+    weight = np.random.rand(N)
+    series = WeightedSeries(data, w=weight)
+    assert_array_equal(series, data)
+
+    series = WeightedSeries(data, weight=weight)
     assert_array_equal(series, data)
 
     assert series.weight.shape == (N,)
     assert series.shape == (N,)
     assert isinstance(series.weight, Series)
     assert_array_equal(series, data)
-    assert_array_equal(series.weight, weights)
+    assert_array_equal(series.weight, weight)
     assert isinstance(series.to_frame(), WeightedDataFrame)
-    assert_array_equal(series.to_frame().weight, weights)
+    assert_array_equal(series.to_frame().weight, weight)
 
     return series
 
@@ -47,15 +54,29 @@ def test_WeightedDataFrame_constructor():
     assert_array_equal(df.weight, 1)
     assert_array_equal(df, data)
 
-    weights = np.random.rand(N)
-    df = WeightedDataFrame(data, w=weights, columns=cols)
+    df = WeightedDataFrame(data, weight=None, columns=cols)
+    assert_array_equal(df.weight, 1)
+    assert_array_equal(df, data)
 
+    weight = np.random.rand(N)
+    df = WeightedDataFrame(data, w=weight, columns=cols)
     assert df.weight.shape == (N,)
     assert df.shape == (N, m)
     assert isinstance(df.weight, Series)
     assert_array_equal(df, data)
-    assert_array_equal(df.weight, weights)
+    assert_array_equal(df.weight, weight)
     assert_array_equal(df.columns, cols)
+
+    weight = np.random.rand(N)
+    df = WeightedDataFrame(data, weight=weight, columns=cols)
+    assert df.weight.shape == (N,)
+    assert df.shape == (N, m)
+    assert isinstance(df.weight, Series)
+    assert_array_equal(df, data)
+    assert_array_equal(df.weight, weight)
+    assert_array_equal(df.columns, cols)
+    return df
+
     return df
 
 

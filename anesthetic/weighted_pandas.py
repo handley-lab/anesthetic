@@ -45,6 +45,7 @@ class WeightedSeries(_WeightedObject, pandas.Series):
 
     def __init__(self, *args, **kwargs):
         w = kwargs.pop('w', None)
+        w = kwargs.pop('weight', w)
         super(WeightedSeries, self).__init__(*args, **kwargs)
         self._construct_weights(w)
 
@@ -99,6 +100,7 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
     def __init__(self, *args, **kwargs):
         w = kwargs.pop('w', None)
+        w = kwargs.pop('weight', w)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
         self._construct_weights(w)
 
