@@ -355,7 +355,10 @@ class MCMCSamples(WeightedDataFrame):
         return fig, axes
 
     def _limits(self, paramname):
-        return self.limits.get(paramname, (None, None))
+        limits = self.limits.get(paramname, (None, None))
+        if limits[0] == limits[1]:
+            limits = (None, None)
+        return limits
 
     def _reload_data(self):
         self.__init__(root=self.root)
