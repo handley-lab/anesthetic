@@ -592,3 +592,17 @@ def test_equal_min_max():
 
     ns.limits['x0'] = (3, 3)
     ns.plot_2d(['x0', 'x1', 'x2'])
+
+    
+def test_contour_plot_2d_nan():
+    """Contour plots with nans arising from issue #96"""
+    np.random.seed(3)
+    ns = NestedSamples(root='./tests/example_data/pc')
+
+    ns.loc[:9, 'x0'] = np.nan
+    with pytest.raises((np.linalg.LinAlgError, RuntimeError)):
+        ns.plot_2d(['x0', 'x1'])
+
+    # Check this error is removed in the case of zero weights
+    ns._weight[:10] = 0
+    ns.plot_2d(['x0', 'x1'])
