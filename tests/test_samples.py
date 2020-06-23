@@ -593,7 +593,7 @@ def test_equal_min_max():
     ns.limits['x0'] = (3, 3)
     ns.plot_2d(['x0', 'x1', 'x2'])
 
-    
+
 def test_contour_plot_2d_nan():
     """Contour plots with nans arising from issue #96"""
     np.random.seed(3)
