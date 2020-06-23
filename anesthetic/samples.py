@@ -77,13 +77,13 @@ class MCMCSamples(WeightedDataFrame):
                                  "MCMCSamples and more. MCMCSamples should be "
                                  "used for MCMC chains only." % root)
             burn_in = kwargs.pop('burn_in', False)
-            w, logL, samples = reader.samples(burn_in=burn_in)
+            weight, logL, samples = reader.samples(burn_in=burn_in)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
             limits = reader.limits()
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
-            self.__init__(data=samples, columns=columns, w=w, logL=logL,
-                          tex=tex, limits=limits, *args, **kwargs)
+            self.__init__(data=samples, columns=columns, weight=weight,
+                          logL=logL, tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
             logzero = kwargs.pop('logzero', -1e30)
@@ -624,9 +624,9 @@ class NestedSamples(MCMCSamples):
 
         if nsamples is None:
             dlogX = np.squeeze(dlogX)
-            return WeightedSeries(dlogX, self.index, w=self.weight)
+            return WeightedSeries(dlogX, self.index, weight=self.weight)
         else:
-            return WeightedDataFrame(dlogX, self.index, w=self.weight)
+            return WeightedDataFrame(dlogX, self.index, weight=self.weight)
 
     def _compute_nlive(self, logL_birth):
         if is_int(logL_birth):
