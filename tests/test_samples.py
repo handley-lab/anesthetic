@@ -578,7 +578,7 @@ def test_contour_plot_2d_nan():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
 
-    ns.loc[:10, 'x0'] = np.nan
+    ns.loc[:9, 'x0'] = np.nan
     with pytest.raises(np.linalg.LinAlgError):
         ns.plot_2d(['x0', 'x1'])
 
