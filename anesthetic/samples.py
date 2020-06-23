@@ -156,26 +156,26 @@ class MCMCSamples(WeightedDataFrame):
         if do_1d_plot:
             if paramname_x in self and plot_type is not None:
                 xmin, xmax = self._limits(paramname_x)
+                kwargs['xmin'] = kwargs.get('xmin', xmin)
+                kwargs['xmax'] = kwargs.get('xmax', xmax)
                 if plot_type == 'kde':
                     if ncompress is None:
                         ncompress = 1000
                     return kde_plot_1d(ax, self[paramname_x],
                                        weights=self.weight,
                                        ncompress=ncompress,
-                                       xmin=xmin, xmax=xmax,
                                        *args, **kwargs)
                 elif plot_type == 'fastkde':
                     x = self[paramname_x].compress(ncompress)
-                    return fastkde_plot_1d(ax, x, xmin=xmin, xmax=xmax,
-                                           *args, **kwargs)
+                    return fastkde_plot_1d(ax, x, *args, **kwargs)
                 elif plot_type == 'hist':
                     return hist_plot_1d(ax, self[paramname_x],
                                         weights=self.weight,
-                                        xmin=xmin, xmax=xmax, *args, **kwargs)
+                                        *args, **kwargs)
                 elif plot_type == 'astropyhist':
                     x = self[paramname_x].compress(ncompress)
                     return hist_plot_1d(ax, x, plotter='astropyhist',
-                                        xmin=xmin, xmax=xmax, *args, **kwargs)
+                                        *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
                                               " one of {'kde', 'fastkde', "
@@ -188,38 +188,34 @@ class MCMCSamples(WeightedDataFrame):
             if (paramname_x in self and paramname_y in self
                     and plot_type is not None):
                 xmin, xmax = self._limits(paramname_x)
+                kwargs['xmin'] = kwargs.get('xmin', xmin)
+                kwargs['xmax'] = kwargs.get('xmax', xmax)
                 ymin, ymax = self._limits(paramname_y)
+                kwargs['ymin'] = kwargs.get('ymin', ymin)
+                kwargs['ymax'] = kwargs.get('ymax', ymax)
                 if plot_type == 'kde':
                     if ncompress is None:
                         ncompress = 1000
                     x = self[paramname_x]
                     y = self[paramname_y]
                     return kde_contour_plot_2d(ax, x, y, weights=self.weight,
-                                               xmin=xmin, xmax=xmax,
-                                               ymin=ymin, ymax=ymax,
                                                ncompress=ncompress,
                                                *args, **kwargs)
                 elif plot_type == 'fastkde':
                     x = self[paramname_x].compress(ncompress)
                     y = self[paramname_y].compress(ncompress)
                     return fastkde_contour_plot_2d(ax, x, y,
-                                                   xmin=xmin, xmax=xmax,
-                                                   ymin=ymin, ymax=ymax,
                                                    *args, **kwargs)
                 elif plot_type == 'scatter':
                     if ncompress is None:
                         ncompress = 500
                     x = self[paramname_x].compress(ncompress)
                     y = self[paramname_y].compress(ncompress)
-                    return scatter_plot_2d(ax, x, y, xmin=xmin, xmax=xmax,
-                                           ymin=ymin, ymax=ymax,
-                                           *args, **kwargs)
+                    return scatter_plot_2d(ax, x, y, *args, **kwargs)
                 elif plot_type == 'hist':
                     x = self[paramname_x]
                     y = self[paramname_y]
                     return hist_plot_2d(ax, x, y, weights=self.weight,
-                                        xmin=xmin, xmax=xmax,
-                                        ymin=ymin, ymax=ymax,
                                         *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
