@@ -573,6 +573,27 @@ def test_limit_assignment():
     assert ns.limits['nlive'][1] == 125
 
 
+def test_xmin_xmax_1d():
+    """Test to provide a solution to #89"""
+    np.random.seed(3)
+    ns = NestedSamples(root='./tests/example_data/pc')
+    fig, ax = ns.plot_1d('x0', plot_type='hist')
+    assert ax['x0'].get_xlim() != (-1, 1)
+    fig, ax = ns.plot_1d('x0', plot_type='hist', xmin=-1, xmax=1)
+    assert ax['x0'].get_xlim() == (-1, 1)
+
+
+def test_equal_min_max():
+    """Test to provide a solution to #89"""
+    np.random.seed(3)
+    ns = NestedSamples(root='./tests/example_data/pc')
+    with pytest.raises(ValueError):
+        ns.plot_2d(['x0', 'x1', 'x2'], xmin=3, xmax=3)
+
+    ns.limits['x0'] = (3, 3)
+    ns.plot_2d(['x0', 'x1', 'x2'])
+
+
 def test_contour_plot_2d_nan():
     """Contour plots with nans arising from issue #96"""
     np.random.seed(3)
