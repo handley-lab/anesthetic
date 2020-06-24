@@ -323,19 +323,18 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
-    percentile = kwargs.pop('percentile', '5sigma')
-    if isinstance(percentile, str):
+    q = kwargs.pop('q', '5sigma')
+    if isinstance(q, str):
         sigmas = {'1sigma': 0.682689492137086,
                   '2sigma': 0.954499736103642,
                   '3sigma': 0.997300203936740,
                   '4sigma': 0.999936657516334,
                   '5sigma': 0.999999426696856}
-        percentile = sigmas[percentile]
-    if isinstance(percentile, float) or isinstance((percentile, int)):
-        if percentile < 0.5:
-            percentile = 1 - percentile
-        percentile = (1-percentile, percentile)
-        print(percentile)
+        q = (1 - sigmas[q]) / 2
+    if isinstance(q, float) or isinstance(q, int):
+        if q > 0.5:
+            q = 1 - q
+        q = (q, 1-q)
 
     if weights is not None:
         data = data[weights != 0]
@@ -345,8 +344,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     kde = gaussian_kde(x, weights=w)
     p = kde(x)
     p /= p.max()
-    i = ((x > quantile(x, percentile[0], w)) &
-         (x < quantile(x, percentile[1], w))) | (p > 0.1)
+    i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[1], w)))
     if xmin is not None:
         i = i & (x > xmin)
     if xmax is not None:
