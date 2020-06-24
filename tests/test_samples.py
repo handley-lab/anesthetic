@@ -579,7 +579,7 @@ def test_contour_plot_2d_nan():
     ns = NestedSamples(root='./tests/example_data/pc')
 
     ns.loc[:9, 'x0'] = np.nan
-    with pytest.raises((np.linalg.LinAlgError, RuntimeError)):
+    with pytest.raises((np.linalg.LinAlgError, RuntimeError, ValueError)):
         ns.plot_2d(['x0', 'x1'])
 
     # Check this error is removed in the case of zero weights

@@ -323,6 +323,11 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
+
+    if weights is not None:
+        data = data[weights != 0]
+        weights = weights[weights != 0]
+
     x, w = sample_compression_1d(data, weights, ncompress)
     kde = gaussian_kde(x, weights=w)
     p = kde(x)
