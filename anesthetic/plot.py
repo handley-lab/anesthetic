@@ -345,7 +345,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     kde = gaussian_kde(x, weights=w)
     p = kde(x)
     p /= p.max()
-    i = ((x > quantile(x, percentile[0], w)) & (x < quantile(x, percentile[1], w))) | (p > 0.1)
+    i = ((x > quantile(x, percentile[0], w)) &
+         (x < quantile(x, percentile[1], w))) | (p > 0.1)
     if xmin is not None:
         i = i & (x > xmin)
     if xmax is not None:
