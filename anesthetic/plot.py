@@ -804,6 +804,7 @@ else:
 
 
 def quantile_plot_interval(q):
+    """Interpret quantile q input to quantile plot range tuple."""
     if isinstance(q, str):
         sigmas = {'1sigma': 0.682689492137086,
                   '2sigma': 0.954499736103642,
