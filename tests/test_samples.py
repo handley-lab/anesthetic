@@ -23,7 +23,7 @@ def test_build_mcmc():
     ndims = 3
     samples = np.random.randn(nsamps, ndims)
     logL = np.random.rand(nsamps)
-    w = np.random.randint(1, 20, size=nsamps)
+    weight = np.random.randint(1, 20, size=nsamps)
     params = ['A', 'B', 'C']
     tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
     limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
@@ -36,12 +36,12 @@ def test_build_mcmc():
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
 
-    mcmc = MCMCSamples(data=samples, w=w)
+    mcmc = MCMCSamples(data=samples, weight=weight)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'weight'],
                                               dtype=object))
 
-    mcmc = MCMCSamples(data=samples, w=w, logL=logL)
+    mcmc = MCMCSamples(data=samples, weight=weight, logL=logL)
     assert(len(mcmc) == nsamps)
     assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL', 'weight'],
                                               dtype=object))
@@ -58,13 +58,13 @@ def test_build_mcmc():
     for p in params:
         assert(mcmc.limits[p] == limits[p])
 
-    ns = NestedSamples(data=samples, logL=logL, w=w)
+    ns = NestedSamples(data=samples, logL=logL, weight=weight)
     assert(len(ns) == nsamps)
     assert(np.all(np.isfinite(ns.logL)))
     logL[:10] = -1e300
-    w[:10] = 0.
-    mcmc = MCMCSamples(data=samples, logL=logL, w=w, logzero=-1e29)
-    ns = NestedSamples(data=samples, logL=logL, w=w, logzero=-1e29)
+    weight[:10] = 0.
+    mcmc = MCMCSamples(data=samples, logL=logL, weight=weight, logzero=-1e29)
+    ns = NestedSamples(data=samples, logL=logL, weight=weight, logzero=-1e29)
     assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL', 'weight'],
                                               dtype=object))
     assert_array_equal(ns.columns, np.array([0, 1, 2, 'logL', 'weight'],
@@ -74,8 +74,8 @@ def test_build_mcmc():
     assert(np.all(mcmc.logL[10:] == logL[10:]))
     assert(np.all(ns.logL[10:] == logL[10:]))
 
-    mcmc = MCMCSamples(data=samples, logL=logL, w=w, logzero=-1e301)
-    ns = NestedSamples(data=samples, logL=logL, w=w, logzero=-1e301)
+    mcmc = MCMCSamples(data=samples, logL=logL, weight=weight, logzero=-1e301)
+    ns = NestedSamples(data=samples, logL=logL, weight=weight, logzero=-1e301)
     assert(np.all(np.isfinite(mcmc.logL)))
     assert(np.all(np.isfinite(ns.logL)))
     assert(np.all(mcmc.logL == logL))

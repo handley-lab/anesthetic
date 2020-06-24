@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas
+from warnings import warn
 from anesthetic.utils import compress_weights, channel_capacity, quantile
 
 
@@ -19,9 +20,9 @@ class _WeightedObject(object):
         """Random number for consistent compression."""
         return self._rand_[self.index]
 
-    def _construct_weights(self, w):
-        if w is not None:
-            self._weight = pandas.Series(index=self.index, data=w)
+    def _construct_weights(self, weight):
+        if weight is not None:
+            self._weight = pandas.Series(index=self.index, data=weight)
         else:
             self._weight = None
         rand = np.random.rand(len(self))
@@ -44,9 +45,13 @@ class WeightedSeries(_WeightedObject, pandas.Series):
     """Weighted version of pandas.Series."""
 
     def __init__(self, *args, **kwargs):
-        w = kwargs.pop('w', None)
+        if 'w' in kwargs:
+            warn("'w' as a kwarg will be deprecated in the future. "
+                 "Please use 'weight'", FutureWarning)
+        weight = kwargs.pop('w', None)
+        weight = kwargs.pop('weight', weight)
         super(WeightedSeries, self).__init__(*args, **kwargs)
-        self._construct_weights(w)
+        self._construct_weights(weight)
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
@@ -88,7 +93,7 @@ class WeightedSeries(_WeightedObject, pandas.Series):
     @property
     def _constructor_expanddim(self):
         def __constructor_expanddim(*args, **kwargs):
-            frame = WeightedDataFrame(*args, w=self._weight, **kwargs)
+            frame = WeightedDataFrame(*args, weight=self._weight, **kwargs)
             frame._rand_ = self._rand_
             return frame
         return __constructor_expanddim
@@ -98,9 +103,13 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
     """Weighted version of pandas.DataFrame."""
 
     def __init__(self, *args, **kwargs):
-        w = kwargs.pop('w', None)
+        if 'w' in kwargs:
+            warn("'w' as a kwarg will be deprecated in the future. "
+                 "Please use 'weight'", FutureWarning)
+        weight = kwargs.pop('w', None)
+        weight = kwargs.pop('weight', weight)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
-        self._construct_weights(w)
+        self._construct_weights(weight)
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
@@ -156,7 +165,7 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
     @property
     def _constructor_sliced(self):
         def __constructor_sliced(*args, **kwargs):
-            series = WeightedSeries(*args, w=self._weight, **kwargs)
+            series = WeightedSeries(*args, weight=self._weight, **kwargs)
             series._rand_ = self._rand_
             return series
         return __constructor_sliced
