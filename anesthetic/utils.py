@@ -335,28 +335,23 @@ def sample_compression_1d(x, w=None, n=1000):
     x, w, array-like
         Compressed samples and weights
     """
-    x = pandas.Series(x)
+    x = np.array(x)
     if w is None:
-        w = pandas.Series(index=x.index, data=np.ones_like(x))
+        w = np.ones_like(x)
+    w = np.array(w)
 
     # Select inner samples for triangulation
-    if sum(w != 0) < n:
-        i = w.index
+    if len(x) > n:
+        x_ = np.random.choice(x, size=n, replace=False)
     else:
-        i = np.random.choice(w.index, size=n, replace=False, p=w/w.sum())
-
-    # Define sub-samples
-    x_ = np.sort(x[i])
+        x_ = x.copy()
+    x_.sort()
 
     # Compress mass onto these subsamples
-    j1 = np.digitize(x, x_) - 1
-    k1 = (j1 > -1) & (j1 < n)
-    j2 = np.digitize(x, x_, right=True) - 1
-    k2 = (j2 > -1) & (j2 < n)
-
+    centers = (x_[1:] + x_[:-1])/2
+    j = np.digitize(x, centers)
     w_ = np.zeros_like(x_)
-    np.add.at(w_, j1[k1], w[k1])
-    np.add.at(w_, j2[k2], w[k2])
+    np.add.at(w_, j, w)
 
     return x_, w_
 

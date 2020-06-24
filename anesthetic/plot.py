@@ -268,13 +268,15 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
+    q = kwargs.pop('q', '5sigma')
+    q = quantile_plot_interval(q=q)
 
     try:
         x, p = fastkde_1d(data, xmin, xmax)
     except NameError:
         raise ImportError("You need to install fastkde to use fastkde")
     p /= p.max()
-    i = (x < quantile(x, 0.99, p)) & (x > quantile(x, 0.01, p)) | (p > 0.1)
+    i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[1], p)))
 
     ans = ax.plot(x[i], p[i], *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -323,11 +325,18 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
+    q = kwargs.pop('q', '5sigma')
+    q = quantile_plot_interval(q=q)
+
+    if weights is not None:
+        data = data[weights != 0]
+        weights = weights[weights != 0]
+
     x, w = sample_compression_1d(data, weights, ncompress)
     kde = gaussian_kde(x, weights=w)
     p = kde(x)
     p /= p.max()
-    i = ((x < quantile(x, 0.999, w)) & (x > quantile(x, 0.001, w))) | (p > 0.1)
+    i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[1], w)))
     if xmin is not None:
         i = i & (x > xmin)
     if xmax is not None:
@@ -792,3 +801,19 @@ else:
                                                       emit=emit, auto=auto,
                                                       **kwargs)
         ax.__class__ = DiagonalAxes
+
+
+def quantile_plot_interval(q):
+    """Interpret quantile q input to quantile plot range tuple."""
+    if isinstance(q, str):
+        sigmas = {'1sigma': 0.682689492137086,
+                  '2sigma': 0.954499736103642,
+                  '3sigma': 0.997300203936740,
+                  '4sigma': 0.999936657516334,
+                  '5sigma': 0.999999426696856}
+        q = (1 - sigmas[q]) / 2
+    if isinstance(q, float) or isinstance(q, int):
+        if q > 0.5:
+            q = 1 - q
+        q = (q, 1-q)
+    return q

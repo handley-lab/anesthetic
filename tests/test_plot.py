@@ -7,7 +7,7 @@ import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
-                             scatter_plot_2d)
+                             scatter_plot_2d, quantile_plot_interval)
 from numpy.testing import assert_array_equal
 
 from matplotlib.contour import QuadContourSet
@@ -187,40 +187,49 @@ def test_2d_axes_limits():
                 assert(axes[z][y].get_ylim() == (c, d))
 
 
-def test_kde_plot_1d():
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
+def test_kde_plot_1d(plot_1d):
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(1000)
 
-    for plot_1d in [kde_plot_1d, fastkde_plot_1d]:
-        try:
-            # Check height
-            line, = plot_1d(ax, data)
-            assert(isinstance(line, Line2D))
-            assert(line.get_ydata().max() <= 1)
+    try:
+        # Check height
+        line, = plot_1d(ax, data)
+        assert(isinstance(line, Line2D))
+        assert(line.get_ydata().max() <= 1)
 
-            # Check arguments are passed onward to underlying function
-            line, = plot_1d(ax, data, color='r')
-            assert(line.get_color() == 'r')
+        # Check arguments are passed onward to underlying function
+        line, = plot_1d(ax, data, color='r')
+        assert(line.get_color() == 'r')
 
-            # Check xmin
-            xmin = -0.5
-            line, = plot_1d(ax, data, xmin=xmin)
-            assert((line.get_xdata() >= xmin).all())
+        # Check xmin
+        xmin = -0.5
+        line, = plot_1d(ax, data, xmin=xmin)
+        assert((line.get_xdata() >= xmin).all())
 
-            # Check xmax
-            xmax = 0.5
-            line, = plot_1d(ax, data, xmax=xmax)
-            assert((line.get_xdata() <= xmax).all())
+        # Check xmax
+        xmax = 0.5
+        line, = plot_1d(ax, data, xmax=xmax)
+        assert((line.get_xdata() <= xmax).all())
 
-            # Check xmin and xmax
-            line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
-            assert((line.get_xdata() <= xmax).all())
-            assert((line.get_xdata() >= xmin).all())
-            plt.close("all")
-        except ImportError:
-            if 'fastkde' not in sys.modules:
-                pass
+        # Check xmin and xmax
+        line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
+        assert((line.get_xdata() <= xmax).all())
+        assert((line.get_xdata() >= xmin).all())
+        plt.close("all")
+
+        # Check q
+        plot_1d(ax, data, q='1sigma')
+        plot_1d(ax, data, q=0)
+        plot_1d(ax, data, q=1)
+        plot_1d(ax, data, q=0.1)
+        plot_1d(ax, data, q=0.9)
+        plot_1d(ax, data, q=(0.1, 0.9))
+
+    except ImportError:
+        if 'fastkde' not in sys.modules:
+            pass
 
 
 def test_hist_plot_1d():
@@ -400,3 +409,28 @@ def test_scatter_plot_2d():
     scatter_plot_2d(ax, data_x, data_y, ymax=ymax)
     assert(ax.get_ylim()[1] <= ymax)
     plt.close()
+
+
+@pytest.mark.parametrize('sigmas', [('1sigma', 0.682689492137086),
+                                    ('2sigma', 0.954499736103642),
+                                    ('3sigma', 0.997300203936740),
+                                    ('4sigma', 0.999936657516334),
+                                    ('5sigma', 0.999999426696856)])
+def test_quantile_plot_interval_str(sigmas):
+    q1, q2 = quantile_plot_interval(q=sigmas[0])
+    assert q1 == 0.5 - sigmas[1] / 2
+    assert q2 == 0.5 + sigmas[1] / 2
+
+
+@pytest.mark.parametrize('floats', [0, 1, 0.1, 0.9])
+def test_quantile_plot_interval_float(floats):
+    q1, q2 = quantile_plot_interval(q=floats)
+    assert q1 == min(floats, 1 - floats)
+    assert q2 == max(floats, 1 - floats)
+
+
+@pytest.mark.parametrize('q1, q2', [(0, 1), (0.1, 0.9), (0, 0.9), (0.1, 1)])
+def test_quantile_plot_interval_tuple(q1, q2):
+    _q1, _q2 = quantile_plot_interval(q=(q1, q2))
+    assert _q1 == q1
+    assert _q2 == q2

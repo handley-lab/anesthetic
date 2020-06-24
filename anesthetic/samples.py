@@ -139,6 +139,17 @@ class MCMCSamples(WeightedDataFrame):
             Number of samples to use in plotting routines.
             optional, Default dynamically chosen
 
+        q: str, float, (float, float)
+            Plot the `q` inner posterior quantiles in 1d 'kde' plots. To plot
+            the full range, set `q=0` or `q=1`.
+            * if str: any of {'1sigma', '2sigma', '3sigma', '4sigma', '5sigma'}
+                Plot within mean +/- #sigma of posterior.
+            * if float: Plot within the symmetric confidence interval
+                `(1-q, q)`  or `(q, 1-q)`.
+            * if tuple:  Plot within the (possibly asymmetric) confidence
+                interval `q`.
+            optional, (Default: '5sigma')
+
         Returns
         -------
         fig: matplotlib.figure.Figure
