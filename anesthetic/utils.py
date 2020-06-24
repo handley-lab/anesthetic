@@ -341,10 +341,11 @@ def sample_compression_1d(x, w=None, n=1000):
     w = np.array(w)
 
     # Select inner samples for triangulation
-    x_ = x.copy()
-    if len(x_) > n:
-        x_ = np.random.choice(x_, size=n, replace=False)
-    x_ = np.sort(x_)
+    if len(x) > n:
+        x_ = np.random.choice(x, size=n, replace=False)
+    else:
+        x_ = x.copy()
+    x_.sort()
 
     # Compress mass onto these subsamples
     centers = (x_[1:] + x_[:-1])/2
