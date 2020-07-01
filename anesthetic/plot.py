@@ -530,6 +530,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymax = kwargs.pop('ymax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
+    _ = kwargs.pop('q', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     linewidths = kwargs.pop('linewidths', 0.5)
@@ -694,6 +695,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    _ = kwargs.pop('q', None)
     kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     markersize = kwargs.pop('markersize', 1)
 
