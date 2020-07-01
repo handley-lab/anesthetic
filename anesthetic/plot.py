@@ -458,7 +458,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     linewidths = kwargs.pop('linewidths', 0.5)
     levels = kwargs.pop('levels', [0.68, 0.95])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
-    _ = kwargs.pop('q', None)
+    kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
@@ -531,11 +531,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymax = kwargs.pop('ymax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
-    _ = kwargs.pop('q', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     linewidths = kwargs.pop('linewidths', 0.5)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
@@ -696,7 +696,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
-    _ = kwargs.pop('q', None)
+    kwargs.pop('q', None)
     kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     markersize = kwargs.pop('markersize', 1)
 
