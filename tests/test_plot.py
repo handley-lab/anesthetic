@@ -324,61 +324,66 @@ def test_hist_plot_2d():
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
 
-def test_contour_plot_2d():
-    for contour_plot_2d in [kde_contour_plot_2d, fastkde_contour_plot_2d]:
-        try:
-            ax = plt.gca()
-            np.random.seed(1)
-            data_x = np.random.randn(1000)
-            data_y = np.random.randn(1000)
-            c = contour_plot_2d(ax, data_x, data_y)
-            if contour_plot_2d is fastkde_contour_plot_2d:
-                assert(isinstance(c, QuadContourSet))
-            elif contour_plot_2d is kde_contour_plot_2d:
-                assert(isinstance(c, TriContourSet))
+@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d, fastkde_contour_plot_2d])
+def test_contour_plot_2d(contour_plot_2d):
+    try:
+        ax = plt.gca()
+        np.random.seed(1)
+        data_x = np.random.randn(1000)
+        data_y = np.random.randn(1000)
+        c = contour_plot_2d(ax, data_x, data_y)
+        if contour_plot_2d is fastkde_contour_plot_2d:
+            assert(isinstance(c, QuadContourSet))
+        elif contour_plot_2d is kde_contour_plot_2d:
+            assert(isinstance(c, TriContourSet))
 
-            xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
+        xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
 
-            # Check xmin
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, xmin=xmin)
-            assert(ax.get_xlim()[0] >= xmin)
-            plt.close()
+        # Check xmin
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, xmin=xmin)
+        assert(ax.get_xlim()[0] >= xmin)
+        plt.close()
 
-            # Check xmax
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, xmax=xmax)
-            assert(ax.get_xlim()[1] <= xmax)
-            plt.close()
+        # Check xmax
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, xmax=xmax)
+        assert(ax.get_xlim()[1] <= xmax)
+        plt.close()
 
-            # Check xmin and xmax
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, xmin=xmin, xmax=xmax)
-            assert(ax.get_xlim()[1] <= xmax)
-            assert(ax.get_xlim()[0] >= xmin)
-            plt.close()
+        # Check xmin and xmax
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, xmin=xmin, xmax=xmax)
+        assert(ax.get_xlim()[1] <= xmax)
+        assert(ax.get_xlim()[0] >= xmin)
+        plt.close()
 
-            # Check ymin
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, ymin=ymin)
-            assert(ax.get_ylim()[0] >= ymin)
-            plt.close()
+        # Check ymin
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, ymin=ymin)
+        assert(ax.get_ylim()[0] >= ymin)
+        plt.close()
 
-            # Check ymax
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, ymax=ymax)
-            assert(ax.get_ylim()[1] <= ymax)
-            plt.close()
+        # Check ymax
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, ymax=ymax)
+        assert(ax.get_ylim()[1] <= ymax)
+        plt.close()
 
-            # Check ymin and ymax
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, ymin=ymin, ymax=ymax)
-            assert(ax.get_ylim()[1] <= ymax)
-            assert(ax.get_ylim()[0] >= ymin)
-            plt.close()
-        except ImportError:
-            if 'fastkde' not in sys.modules:
-                pass
+        # Check ymin and ymax
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, ymin=ymin, ymax=ymax)
+        assert(ax.get_ylim()[1] <= ymax)
+        assert(ax.get_ylim()[0] >= ymin)
+        plt.close()
+
+        # Check q
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, q=0)
+        plt.close()
+    except ImportError:
+        if 'fastkde' not in sys.modules:
+            pass
 
 
 def test_scatter_plot_2d():
@@ -408,6 +413,11 @@ def test_scatter_plot_2d():
     ax = plt.gca()
     scatter_plot_2d(ax, data_x, data_y, ymax=ymax)
     assert(ax.get_ylim()[1] <= ymax)
+    plt.close()
+
+    # Check q
+    ax = plt.gca()
+    scatter_plot_2d(ax, data_x, data_y, q=0)
     plt.close()
 
 
