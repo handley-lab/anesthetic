@@ -324,7 +324,8 @@ def test_hist_plot_2d():
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
 
-@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d, fastkde_contour_plot_2d])
+@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
+                                             fastkde_contour_plot_2d])
 def test_contour_plot_2d(contour_plot_2d):
     try:
         ax = plt.gca()
