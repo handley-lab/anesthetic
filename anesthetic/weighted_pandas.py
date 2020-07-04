@@ -55,15 +55,11 @@ class WeightedSeries(_WeightedObject, pandas.Series):
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        if self.weight is None:
-            return np.average(self)
         nonzero = self.weight != 0
         return np.average(self[nonzero], weights=self.weight[nonzero])
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        if self.weight is None:
-            return np.average((self-self.mean())**2)
         nonzero = self.weight != 0
         return np.average((self[nonzero]-self.mean())**2,
                           weights=self.weight[nonzero])
@@ -120,17 +116,12 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        if self.weight is None:
-            return pandas.Series(np.average(self, axis=0), index=self.columns)
         nonzero = self.weight != 0
         mean = np.average(self[nonzero], weights=self.weight[nonzero], axis=0)
         return pandas.Series(mean, index=self.columns)
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        if self.weight is None:
-            return pandas.Series(np.average((self-self.mean())**2, axis=0),
-                                 index=self.columns)
         nonzero = self.weight != 0
         var = np.average((self[nonzero]-self.mean())**2,
                          weights=self.weight[nonzero], axis=0)
@@ -138,9 +129,6 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
     def cov(self):
         """Weighted covariance of the sampled distribution."""
-        if self.weight is None:
-            return pandas.DataFrame(np.cov(self.T), index=self.columns,
-                                    columns=self.columns)
         nonzero = self.weight != 0
         cov = np.cov(self[nonzero].T, aweights=self.weight[nonzero])
         return pandas.DataFrame(cov, index=self.columns, columns=self.columns)
