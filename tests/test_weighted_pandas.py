@@ -81,8 +81,6 @@ def test_WeightedDataFrame_constructor():
     assert_array_equal(df.columns, cols)
     return df
 
-    return df
-
 
 def test_WeightedDataFrame_slice():
     df = test_WeightedDataFrame_constructor()
@@ -145,6 +143,22 @@ def test_WeightedDataFrame_compress():
     assert(len(np.unique(unit_weights.index)) == len(unit_weights))
 
 
+def test_WeightedDataFrame_nan():
+    df = test_WeightedDataFrame_constructor()
+
+    df['A'][0] = np.nan
+    df['B'][0] = np.nan
+    df['C'][0] = np.nan
+    assert (np.all(np.isnan(df.mean())))
+    assert (np.all(np.isnan(df.std())))
+    assert (np.all(np.isnan(df.cov())))
+
+    df._weight[0] = 0
+    assert_allclose(df.mean(), 0.5, atol=1e-2)
+    assert_allclose(df.std(), (1./12)**0.5, atol=1e-2)
+    assert_allclose(df.cov(), (1./12)*np.identity(3), atol=1e-2)
+
+
 def test_WeightedSeries_mean():
     series = test_WeightedSeries_constructor()
     mean = series.mean()
@@ -189,3 +203,17 @@ def test_WeightedSeries_compress():
         assert_allclose(i, len(series.compress(i)), rtol=1e-1)
     unit_weights = series.compress(0)
     assert(len(np.unique(unit_weights.index)) == len(unit_weights))
+
+
+def test_WeightedSeries_nan():
+    series = test_WeightedSeries_constructor()
+
+    series[0] = np.nan
+    assert np.isnan(series.mean())
+    assert np.isnan(series.std())
+    assert np.isnan(series.var())
+
+    series._weight[0] = 0
+    assert_allclose(series.mean(), 0.5, atol=1e-2)
+    assert_allclose(series.var(), 1./12, atol=1e-2)
+    assert_allclose(series.std(), (1./12)**0.5, atol=1e-2)

@@ -55,11 +55,14 @@ class WeightedSeries(_WeightedObject, pandas.Series):
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        return np.average(self, weights=self.weight)
+        nonzero = self.weight != 0
+        return np.average(self[nonzero], weights=self.weight[nonzero])
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        return np.average((self-self.mean())**2, weights=self.weight)
+        nonzero = self.weight != 0
+        return np.average((self[nonzero]-self.mean())**2,
+                          weights=self.weight[nonzero])
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
@@ -113,19 +116,22 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        return pandas.Series(np.average(self, weights=self.weight, axis=0),
-                             index=self.columns)
+        nonzero = self.weight != 0
+        mean = np.average(self[nonzero], weights=self.weight[nonzero], axis=0)
+        return pandas.Series(mean, index=self.columns)
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        return pandas.Series(np.average((self-self.mean())**2,
-                                        weights=self.weight, axis=0),
-                             index=self.columns)
+        nonzero = self.weight != 0
+        var = np.average((self[nonzero]-self.mean())**2,
+                         weights=self.weight[nonzero], axis=0)
+        return pandas.Series(var, index=self.columns)
 
     def cov(self):
         """Weighted covariance of the sampled distribution."""
-        return pandas.DataFrame(np.cov(self.T, aweights=self.weight),
-                                index=self.columns, columns=self.columns)
+        nonzero = self.weight != 0
+        cov = np.cov(self[nonzero].T, aweights=self.weight[nonzero])
+        return pandas.DataFrame(cov, index=self.columns, columns=self.columns)
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
