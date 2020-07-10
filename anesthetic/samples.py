@@ -4,7 +4,7 @@
 - ``NestedSamples``
 """
 import os
-import numpy
+import numpy as np
 import pandas
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
@@ -32,16 +32,16 @@ class MCMCSamples(WeightedDataFrame):
     root: str, optional
         root for reading chains from file. Overrides all other arguments.
 
-    data: numpy.array
+    data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
     columns: list(str)
         reference names of parameters
 
-    w: numpy.array
+    weight: np.array
         weights of samples.
 
-    logL: numpy.array
+    logL: np.array
         loglikelihoods of samples.
 
     tex: dict
@@ -55,8 +55,14 @@ class MCMCSamples(WeightedDataFrame):
 
     logzero: float
         The threshold for `log(0)` values assigned to rejected sample points.
-        Anything equal or below this value is set to `-numpy.inf`.
+        Anything equal or below this value is set to `-np.inf`.
         default: -1e30
+
+    burn_in: int or float
+        Discards the first integer number of nsamples if int
+        or the first fraction of nsamples if float.
+        Only works if `root` provided and if chains are GetDist compatible.
+        default: False
 
     """
 
@@ -70,19 +76,20 @@ class MCMCSamples(WeightedDataFrame):
                                  "instead which has the same features as "
                                  "MCMCSamples and more. MCMCSamples should be "
                                  "used for MCMC chains only." % root)
-            w, logL, samples = reader.samples()
+            burn_in = kwargs.pop('burn_in', False)
+            weight, logL, samples = reader.samples(burn_in=burn_in)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
             limits = reader.limits()
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
-            self.__init__(data=samples, columns=columns, w=w, logL=logL,
-                          tex=tex, limits=limits, *args, **kwargs)
+            self.__init__(data=samples, columns=columns, weight=weight,
+                          logL=logL, tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
             logzero = kwargs.pop('logzero', -1e30)
             logL = kwargs.pop('logL', None)
             if logL is not None:
-                logL = numpy.where(logL <= logzero, -numpy.inf, logL)
+                logL = np.where(logL <= logzero, -np.inf, logL)
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
@@ -96,6 +103,14 @@ class MCMCSamples(WeightedDataFrame):
             if self._weight is not None:
                 self['weight'] = self.weight
                 self.tex['weight'] = r'MCMC weight'
+
+            self._set_automatic_limits()
+
+    def _set_automatic_limits(self):
+        """Set all unassigned limits to min and max of sample."""
+        for param in self.columns:
+            if param not in self.limits:
+                self.limits[param] = (self[param].min(), self[param].max())
 
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
@@ -124,6 +139,17 @@ class MCMCSamples(WeightedDataFrame):
             Number of samples to use in plotting routines.
             optional, Default dynamically chosen
 
+        q: str, float, (float, float)
+            Plot the `q` inner posterior quantiles in 1d 'kde' plots. To plot
+            the full range, set `q=0` or `q=1`.
+            * if str: any of {'1sigma', '2sigma', '3sigma', '4sigma', '5sigma'}
+                Plot within mean +/- #sigma of posterior.
+            * if float: Plot within the symmetric confidence interval
+                `(1-q, q)`  or `(q, 1-q)`.
+            * if tuple:  Plot within the (possibly asymmetric) confidence
+                interval `q`.
+            optional, (Default: '5sigma')
+
         Returns
         -------
         fig: matplotlib.figure.Figure
@@ -141,26 +167,26 @@ class MCMCSamples(WeightedDataFrame):
         if do_1d_plot:
             if paramname_x in self and plot_type is not None:
                 xmin, xmax = self._limits(paramname_x)
+                kwargs['xmin'] = kwargs.get('xmin', xmin)
+                kwargs['xmax'] = kwargs.get('xmax', xmax)
                 if plot_type == 'kde':
                     if ncompress is None:
                         ncompress = 1000
                     return kde_plot_1d(ax, self[paramname_x],
                                        weights=self.weight,
                                        ncompress=ncompress,
-                                       xmin=xmin, xmax=xmax,
                                        *args, **kwargs)
                 elif plot_type == 'fastkde':
                     x = self[paramname_x].compress(ncompress)
-                    return fastkde_plot_1d(ax, x, xmin=xmin, xmax=xmax,
-                                           *args, **kwargs)
+                    return fastkde_plot_1d(ax, x, *args, **kwargs)
                 elif plot_type == 'hist':
                     return hist_plot_1d(ax, self[paramname_x],
                                         weights=self.weight,
-                                        xmin=xmin, xmax=xmax, *args, **kwargs)
+                                        *args, **kwargs)
                 elif plot_type == 'astropyhist':
                     x = self[paramname_x].compress(ncompress)
                     return hist_plot_1d(ax, x, plotter='astropyhist',
-                                        xmin=xmin, xmax=xmax, *args, **kwargs)
+                                        *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
                                               " one of {'kde', 'fastkde', "
@@ -173,38 +199,34 @@ class MCMCSamples(WeightedDataFrame):
             if (paramname_x in self and paramname_y in self
                     and plot_type is not None):
                 xmin, xmax = self._limits(paramname_x)
+                kwargs['xmin'] = kwargs.get('xmin', xmin)
+                kwargs['xmax'] = kwargs.get('xmax', xmax)
                 ymin, ymax = self._limits(paramname_y)
+                kwargs['ymin'] = kwargs.get('ymin', ymin)
+                kwargs['ymax'] = kwargs.get('ymax', ymax)
                 if plot_type == 'kde':
                     if ncompress is None:
                         ncompress = 1000
                     x = self[paramname_x]
                     y = self[paramname_y]
                     return kde_contour_plot_2d(ax, x, y, weights=self.weight,
-                                               xmin=xmin, xmax=xmax,
-                                               ymin=ymin, ymax=ymax,
                                                ncompress=ncompress,
                                                *args, **kwargs)
                 elif plot_type == 'fastkde':
                     x = self[paramname_x].compress(ncompress)
                     y = self[paramname_y].compress(ncompress)
                     return fastkde_contour_plot_2d(ax, x, y,
-                                                   xmin=xmin, xmax=xmax,
-                                                   ymin=ymin, ymax=ymax,
                                                    *args, **kwargs)
                 elif plot_type == 'scatter':
                     if ncompress is None:
                         ncompress = 500
                     x = self[paramname_x].compress(ncompress)
                     y = self[paramname_y].compress(ncompress)
-                    return scatter_plot_2d(ax, x, y, xmin=xmin, xmax=xmax,
-                                           ymin=ymin, ymax=ymax,
-                                           *args, **kwargs)
+                    return scatter_plot_2d(ax, x, y, *args, **kwargs)
                 elif plot_type == 'hist':
                     x = self[paramname_x]
                     y = self[paramname_y]
                     return hist_plot_2d(ax, x, y, weights=self.weight,
-                                        xmin=xmin, xmax=xmax,
-                                        ymin=ymin, ymax=ymax,
                                         *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
@@ -344,7 +366,10 @@ class MCMCSamples(WeightedDataFrame):
         return fig, axes
 
     def _limits(self, paramname):
-        return self.limits.get(paramname, (None, None))
+        limits = self.limits.get(paramname, (None, None))
+        if limits[0] == limits[1]:
+            limits = (None, None)
+        return limits
 
     def _reload_data(self):
         self.__init__(root=self.root)
@@ -372,33 +397,37 @@ class NestedSamples(MCMCSamples):
     root: str, optional
         root for reading chains from file. Overrides all other arguments.
 
-    data: numpy.array
+    data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
     columns: list(str)
         reference names of parameters
 
-    logL: numpy.array
+    logL: np.array
         loglikelihoods of samples.
 
-    logL_birth: numpy.array or int
+    logL_birth: np.array or int
         birth loglikelihoods, or number of live points.
 
     tex: dict
-        mapping from columns to tex labels for plotting
+        optional mapping from column names to tex labels for plotting
 
     limits: dict
-        mapping from columns to prior limits
+        mapping from columns to prior limits.
+        Defaults defined by .ranges file (if it exists)
+        otherwise defined by minimum and maximum of the nested sampling data
 
     label: str
         Legend label
+        default: basename of root
 
     beta: float
         thermodynamic temperature
+        default: 1.
 
     logzero: float
         The threshold for `log(0)` values assigned to rejected sample points.
-        Anything equal or below this value is set to `-numpy.inf`.
+        Anything equal or below this value is set to `-np.inf`.
         default: -1e30
 
     """
@@ -421,13 +450,15 @@ class NestedSamples(MCMCSamples):
             self._beta = kwargs.pop('beta', 1.)
             logL_birth = kwargs.pop('logL_birth', None)
             if not isinstance(logL_birth, int) and logL_birth is not None:
-                logL_birth = numpy.where(logL_birth <= logzero,
-                                         -numpy.inf, logL_birth)
+                logL_birth = np.where(logL_birth <= logzero, -np.inf,
+                                      logL_birth)
 
             super(NestedSamples, self).__init__(logzero=logzero,
                                                 *args, **kwargs)
             if logL_birth is not None:
                 self._compute_nlive(logL_birth)
+
+            self._set_automatic_limits()
 
     @property
     def beta(self):
@@ -437,8 +468,9 @@ class NestedSamples(MCMCSamples):
     @beta.setter
     def beta(self, beta):
         self._beta = beta
-        logw = self.dlogX() + self.beta*self.logL
-        self._weight = numpy.exp(logw - logw.max())
+        logw = self.dlogX() + np.where(self.logL == -np.inf, -np.inf,
+                                       self.beta * self.logL)
+        self._weight = np.exp(logw - logw.max())
 
         if self._weight is not None:
             self['weight'] = self.weight
@@ -491,8 +523,8 @@ class NestedSamples(MCMCSamples):
         logw -= samples.logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
 
-        samples['D'] = numpy.exp(logsumexp(logw, b=S, axis=0))
-        samples['d'] = numpy.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
+        samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
+        samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
 
         samples.tex = {'logZ': r'$\log\mathcal{Z}$',
                        'D': r'$\mathcal{D}$',
@@ -524,7 +556,7 @@ class NestedSamples(MCMCSamples):
         logZ = self.logZ(dlogX)
         logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
-        return numpy.exp(logsumexp(logw, b=S, axis=0))
+        return np.exp(logsumexp(logw, b=S, axis=0))
 
     def d(self, nsamples=None):
         """Bayesian model dimensionality.
@@ -539,7 +571,7 @@ class NestedSamples(MCMCSamples):
         D = self.D(dlogX)
         logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
-        return numpy.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
+        return np.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
     def live_points(self, logL=None):
         """Get the live points within logL.
@@ -607,33 +639,33 @@ class NestedSamples(MCMCSamples):
             distribution. (Default: None)
 
         """
-        with numpy.errstate(divide='ignore'):
-            if numpy.ndim(nsamples) > 0:
+        with np.errstate(divide='ignore'):
+            if np.ndim(nsamples) > 0:
                 return nsamples
             elif nsamples is None:
-                t = numpy.log(self.nlive/(self.nlive+1)).to_frame()
+                t = np.log(self.nlive/(self.nlive+1)).to_frame()
             else:
-                r = numpy.log(numpy.random.rand(len(self), nsamples))
+                r = np.log(np.random.rand(len(self), nsamples))
                 t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
 
         logX = t.cumsum()
         logXp = logX.shift(1, fill_value=0)
-        logXm = logX.shift(-1, fill_value=-numpy.inf)
+        logXm = logX.shift(-1, fill_value=-np.inf)
         dlogX = logsumexp([logXp.values, logXm.values],
-                          b=[numpy.ones_like(logXp), -numpy.ones_like(logXm)],
-                          axis=0) - numpy.log(2)
+                          b=[np.ones_like(logXp), -np.ones_like(logXm)],
+                          axis=0) - np.log(2)
 
         if nsamples is None:
-            dlogX = numpy.squeeze(dlogX)
-            return WeightedSeries(dlogX, self.index, w=self.weight)
+            dlogX = np.squeeze(dlogX)
+            return WeightedSeries(dlogX, self.index, weight=self.weight)
         else:
-            return WeightedDataFrame(dlogX, self.index, w=self.weight)
+            return WeightedDataFrame(dlogX, self.index, weight=self.weight)
 
     def _compute_nlive(self, logL_birth):
         if is_int(logL_birth):
             nlive = logL_birth
             self['nlive'] = nlive
-            descending = numpy.arange(nlive, 0, -1)
+            descending = np.arange(nlive, 0, -1)
             self.loc[len(self)-nlive:, 'nlive'] = descending
         else:
             self['logL_birth'] = logL_birth

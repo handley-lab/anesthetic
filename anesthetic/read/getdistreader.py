@@ -1,5 +1,5 @@
 """Tools for reading from getdist chains files."""
-import numpy
+import numpy as np
 import glob
 from anesthetic.read.chainreader import ChainReader
 
@@ -57,11 +57,23 @@ class GetDistReader(ChainReader):
         except IOError:
             return super(GetDistReader, self).limits()
 
-    def samples(self):
+    def samples(self, burn_in=False):
         """Read <root>_1.txt in getdist format."""
-        data = numpy.concatenate([numpy.loadtxt(chains_file)
-                                  for chains_file in self.chains_files])
-        weights, chi2, samples = numpy.split(data, [1, 2], axis=1)
+        data = np.array([])
+        for chains_file in self.chains_files:
+            data_i = np.loadtxt(chains_file)
+            if burn_in:
+                if 0 < burn_in < 1:
+                    index = int(len(data_i) * burn_in)
+                elif type(burn_in) is int and 1 < burn_in < len(data_i):
+                    index = burn_in
+                else:
+                    raise ValueError("`burn_in` is %s, but should be an "
+                                     "integer greater 1 and smaller len(data) "
+                                     "or a float between 0 and 1." % burn_in)
+                data_i = data_i[index:]
+            data = np.concatenate((data, data_i)) if data.size else data_i
+        weights, chi2, samples = np.split(data, [1, 2], axis=1)
         logL = chi2/-2.
         return weights.flatten(), logL.flatten(), samples
 
@@ -69,6 +81,11 @@ class GetDistReader(ChainReader):
     def paramnames_file(self):
         """File containing parameter names."""
         return self.root + '.paramnames'
+
+    @property
+    def yaml_file(self):
+        """Cobaya parameter file."""
+        return self.root + '.updated.yaml'
 
     @property
     def ranges_file(self):
@@ -79,6 +96,8 @@ class GetDistReader(ChainReader):
     def chains_files(self):
         """File containing parameter names."""
         files = glob.glob(self.root + '_[0-9].txt')
+        if not files:
+            files = glob.glob(self.root + '.[0-9].txt')
         if not files:
             files = [self.root + '.txt']
 

@@ -1,13 +1,13 @@
 import matplotlib_agg  # noqa: F401
 import pytest
-import numpy
+import numpy as np
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
-                             scatter_plot_2d)
+                             scatter_plot_2d, quantile_plot_interval)
 from numpy.testing import assert_array_equal
 
 from matplotlib.contour import QuadContourSet
@@ -105,7 +105,7 @@ def test_make_2d_axes_inputs_outputs():
 
 
 def test_make_2d_axes_behaviour():
-    numpy.random.seed(0)
+    np.random.seed(0)
 
     def calc_n(axes):
         """Compute the number of upper, lower and diagonal plots."""
@@ -170,12 +170,12 @@ def test_make_2d_axes_behaviour():
 
 
 def test_2d_axes_limits():
-    numpy.random.seed(0)
+    np.random.seed(0)
     paramnames = ['A', 'B', 'C', 'D']
     fig, axes = make_2d_axes(paramnames)
     for x in paramnames:
         for y in paramnames:
-            a, b, c, d = numpy.random.rand(4)
+            a, b, c, d = np.random.rand(4)
             axes[x][y].set_xlim(a, b)
             for z in paramnames:
                 assert(axes[x][z].get_xlim() == (a, b))
@@ -187,93 +187,101 @@ def test_2d_axes_limits():
                 assert(axes[z][y].get_ylim() == (c, d))
 
 
-def test_kde_plot_1d():
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
+def test_kde_plot_1d(plot_1d):
     fig, ax = plt.subplots()
-    numpy.random.seed(0)
-    data = numpy.random.randn(1000)
+    np.random.seed(0)
+    data = np.random.randn(1000)
 
-    for plot_1d in [kde_plot_1d, fastkde_plot_1d]:
-        try:
-            # Check height
-            line, = plot_1d(ax, data)
-            assert(isinstance(line, Line2D))
-            assert(line.get_ydata().max() <= 1)
+    try:
+        # Check height
+        line, = plot_1d(ax, data)
+        assert(isinstance(line, Line2D))
+        assert(line.get_ydata().max() <= 1)
 
-            # Check arguments are passed onward to underlying function
-            line, = plot_1d(ax, data, color='r')
-            assert(line.get_color() == 'r')
+        # Check arguments are passed onward to underlying function
+        line, = plot_1d(ax, data, color='r')
+        assert(line.get_color() == 'r')
 
-            # Check xmin
-            xmin = -0.5
-            line, = plot_1d(ax, data, xmin=xmin)
-            assert((line.get_xdata() >= xmin).all())
+        # Check xmin
+        xmin = -0.5
+        line, = plot_1d(ax, data, xmin=xmin)
+        assert((line.get_xdata() >= xmin).all())
 
-            # Check xmax
-            xmax = 0.5
-            line, = plot_1d(ax, data, xmax=xmax)
-            assert((line.get_xdata() <= xmax).all())
+        # Check xmax
+        xmax = 0.5
+        line, = plot_1d(ax, data, xmax=xmax)
+        assert((line.get_xdata() <= xmax).all())
 
-            # Check xmin and xmax
-            line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
-            assert((line.get_xdata() <= xmax).all())
-            assert((line.get_xdata() >= xmin).all())
-            plt.close("all")
-        except ImportError:
-            if 'fastkde' not in sys.modules:
-                pass
+        # Check xmin and xmax
+        line, = plot_1d(ax, data, xmin=xmin, xmax=xmax)
+        assert((line.get_xdata() <= xmax).all())
+        assert((line.get_xdata() >= xmin).all())
+        plt.close("all")
+
+        # Check q
+        plot_1d(ax, data, q='1sigma')
+        plot_1d(ax, data, q=0)
+        plot_1d(ax, data, q=1)
+        plot_1d(ax, data, q=0.1)
+        plot_1d(ax, data, q=0.9)
+        plot_1d(ax, data, q=(0.1, 0.9))
+
+    except ImportError:
+        if 'fastkde' not in sys.modules:
+            pass
 
 
 def test_hist_plot_1d():
     fig, ax = plt.subplots()
-    numpy.random.seed(0)
-    data = numpy.random.randn(1000)
+    np.random.seed(0)
+    data = np.random.randn(1000)
     for p in ['', 'astropyhist']:
         try:
             # Check heights for histtype 'bar'
             bars = hist_plot_1d(ax, data, histtype='bar', plotter=p)
-            assert(numpy.all([isinstance(b, Patch) for b in bars]))
+            assert(np.all([isinstance(b, Patch) for b in bars]))
             assert(max([b.get_height() for b in bars]) == 1.)
-            assert(numpy.all(numpy.array([b.get_height() for b in bars])
-                             <= 1.))
+            assert(np.all(np.array([b.get_height() for b in bars]) <= 1.))
 
             # Check heights for histtype 'step'
             polygon, = hist_plot_1d(ax, data, histtype='step', plotter=p)
             assert(isinstance(polygon, Polygon))
             trans = polygon.get_transform() - ax.transData
-            assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
-                                 rtol=1e-10, atol=1e-10))
-            assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
+            assert(np.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                              rtol=1e-10, atol=1e-10))
+            assert(np.all(trans.transform(polygon.xy)[:, -1] <= 1.))
 
             # Check heights for histtype 'stepfilled'
             polygon, = hist_plot_1d(ax, data, histtype='stepfilled', plotter=p)
             assert(isinstance(polygon, Polygon))
             trans = polygon.get_transform() - ax.transData
-            assert(numpy.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
-                                 rtol=1e-10, atol=1e-10))
-            assert(numpy.all(trans.transform(polygon.xy)[:, -1] <= 1.))
+            assert(np.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
+                              rtol=1e-10, atol=1e-10))
+            assert(np.all(trans.transform(polygon.xy)[:, -1] <= 1.))
 
             # Check arguments are passed onward to underlying function
             bars = hist_plot_1d(ax, data, histtype='bar',
                                 color='r', alpha=0.5, plotter=p)
             cc = ColorConverter.to_rgba('r', alpha=0.5)
-            assert(numpy.all([b.get_fc() == cc for b in bars]))
+            assert(np.all([b.get_fc() == cc for b in bars]))
             polygon, = hist_plot_1d(ax, data, histtype='step',
                                     color='r', alpha=0.5, plotter=p)
             assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
 
             # Check xmin
-            for xmin in [-numpy.inf, -0.5]:
+            for xmin in [-np.inf, -0.5]:
                 bars = hist_plot_1d(ax, data, histtype='bar',
                                     xmin=xmin, plotter=p)
-                assert((numpy.array([b.xy[0] for b in bars]) >= xmin).all())
+                assert((np.array([b.xy[0] for b in bars]) >= xmin).all())
                 polygon, = hist_plot_1d(ax, data, histtype='step', xmin=xmin)
                 assert((polygon.xy[:, 0] >= xmin).all())
 
             # Check xmax
-            for xmax in [numpy.inf, 0.5]:
+            for xmax in [np.inf, 0.5]:
                 bars = hist_plot_1d(ax, data, histtype='bar',
                                     xmax=xmax, plotter=p)
-                assert((numpy.array([b.xy[-1] for b in bars]) <= xmax).all())
+                assert((np.array([b.xy[-1] for b in bars]) <= xmax).all())
                 polygon, = hist_plot_1d(ax, data, histtype='step',
                                         xmax=xmax, plotter=p)
                 assert((polygon.xy[:, 0] <= xmax).all())
@@ -281,8 +289,8 @@ def test_hist_plot_1d():
             # Check xmin and xmax
             bars = hist_plot_1d(ax, data, histtype='bar',
                                 xmin=xmin, xmax=xmax, plotter=p)
-            assert((numpy.array([b.xy[0] for b in bars]) >= -0.5).all())
-            assert((numpy.array([b.xy[-1] for b in bars]) <= 0.5).all())
+            assert((np.array([b.xy[0] for b in bars]) >= -0.5).all())
+            assert((np.array([b.xy[-1] for b in bars]) <= 0.5).all())
             polygon, = hist_plot_1d(ax, data, histtype='step',
                                     xmin=xmin, xmax=xmax, plotter=p)
             assert((polygon.xy[:, 0] >= -0.5).all())
@@ -295,89 +303,95 @@ def test_hist_plot_1d():
 
 def test_hist_plot_2d():
     fig, ax = plt.subplots()
-    numpy.random.seed(0)
-    data_x, data_y = numpy.random.randn(2, 10000)
+    np.random.seed(0)
+    data_x, data_y = np.random.randn(2, 10000)
     hist_plot_2d(ax, data_x, data_y)
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
-    hist_plot_2d(ax, data_x, data_y, xmin=-numpy.inf)
-    hist_plot_2d(ax, data_x, data_y, xmax=numpy.inf)
-    hist_plot_2d(ax, data_x, data_y, ymin=-numpy.inf)
-    hist_plot_2d(ax, data_x, data_y, ymax=numpy.inf)
+    hist_plot_2d(ax, data_x, data_y, xmin=-np.inf)
+    hist_plot_2d(ax, data_x, data_y, xmax=np.inf)
+    hist_plot_2d(ax, data_x, data_y, ymin=-np.inf)
+    hist_plot_2d(ax, data_x, data_y, ymax=np.inf)
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
-    data_x, data_y = numpy.random.uniform(-10, 10, (2, 1000000))
-    weights = numpy.exp(-(data_x**2 + data_y**2)/2)
+    data_x, data_y = np.random.uniform(-10, 10, (2, 1000000))
+    weights = np.exp(-(data_x**2 + data_y**2)/2)
     hist_plot_2d(ax, data_x, data_y, weights=weights, bins=30)
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
 
-def test_contour_plot_2d():
-    for contour_plot_2d in [kde_contour_plot_2d, fastkde_contour_plot_2d]:
-        try:
-            ax = plt.gca()
-            numpy.random.seed(1)
-            data_x = numpy.random.randn(1000)
-            data_y = numpy.random.randn(1000)
-            c = contour_plot_2d(ax, data_x, data_y)
-            if contour_plot_2d is fastkde_contour_plot_2d:
-                assert(isinstance(c, QuadContourSet))
-            elif contour_plot_2d is kde_contour_plot_2d:
-                assert(isinstance(c, TriContourSet))
+@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
+                                             fastkde_contour_plot_2d])
+def test_contour_plot_2d(contour_plot_2d):
+    try:
+        ax = plt.gca()
+        np.random.seed(1)
+        data_x = np.random.randn(1000)
+        data_y = np.random.randn(1000)
+        c = contour_plot_2d(ax, data_x, data_y)
+        if contour_plot_2d is fastkde_contour_plot_2d:
+            assert(isinstance(c, QuadContourSet))
+        elif contour_plot_2d is kde_contour_plot_2d:
+            assert(isinstance(c, TriContourSet))
 
-            xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
+        xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
 
-            # Check xmin
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, xmin=xmin)
-            assert(ax.get_xlim()[0] >= xmin)
-            plt.close()
+        # Check xmin
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, xmin=xmin)
+        assert(ax.get_xlim()[0] >= xmin)
+        plt.close()
 
-            # Check xmax
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, xmax=xmax)
-            assert(ax.get_xlim()[1] <= xmax)
-            plt.close()
+        # Check xmax
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, xmax=xmax)
+        assert(ax.get_xlim()[1] <= xmax)
+        plt.close()
 
-            # Check xmin and xmax
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, xmin=xmin, xmax=xmax)
-            assert(ax.get_xlim()[1] <= xmax)
-            assert(ax.get_xlim()[0] >= xmin)
-            plt.close()
+        # Check xmin and xmax
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, xmin=xmin, xmax=xmax)
+        assert(ax.get_xlim()[1] <= xmax)
+        assert(ax.get_xlim()[0] >= xmin)
+        plt.close()
 
-            # Check ymin
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, ymin=ymin)
-            assert(ax.get_ylim()[0] >= ymin)
-            plt.close()
+        # Check ymin
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, ymin=ymin)
+        assert(ax.get_ylim()[0] >= ymin)
+        plt.close()
 
-            # Check ymax
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, ymax=ymax)
-            assert(ax.get_ylim()[1] <= ymax)
-            plt.close()
+        # Check ymax
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, ymax=ymax)
+        assert(ax.get_ylim()[1] <= ymax)
+        plt.close()
 
-            # Check ymin and ymax
-            ax = plt.gca()
-            contour_plot_2d(ax, data_x, data_y, ymin=ymin, ymax=ymax)
-            assert(ax.get_ylim()[1] <= ymax)
-            assert(ax.get_ylim()[0] >= ymin)
-            plt.close()
-        except ImportError:
-            if 'fastkde' not in sys.modules:
-                pass
+        # Check ymin and ymax
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, ymin=ymin, ymax=ymax)
+        assert(ax.get_ylim()[1] <= ymax)
+        assert(ax.get_ylim()[0] >= ymin)
+        plt.close()
+
+        # Check q
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, q=0)
+        plt.close()
+    except ImportError:
+        if 'fastkde' not in sys.modules:
+            pass
 
 
 def test_scatter_plot_2d():
     fig, ax = plt.subplots()
-    numpy.random.seed(2)
-    data_x = numpy.random.randn(1000)
-    data_y = numpy.random.randn(1000)
+    np.random.seed(2)
+    data_x = np.random.randn(1000)
+    data_y = np.random.randn(1000)
     lines, = scatter_plot_2d(ax, data_x, data_y)
     assert(isinstance(lines, Line2D))
 
@@ -401,3 +415,33 @@ def test_scatter_plot_2d():
     scatter_plot_2d(ax, data_x, data_y, ymax=ymax)
     assert(ax.get_ylim()[1] <= ymax)
     plt.close()
+
+    # Check q
+    ax = plt.gca()
+    scatter_plot_2d(ax, data_x, data_y, q=0)
+    plt.close()
+
+
+@pytest.mark.parametrize('sigmas', [('1sigma', 0.682689492137086),
+                                    ('2sigma', 0.954499736103642),
+                                    ('3sigma', 0.997300203936740),
+                                    ('4sigma', 0.999936657516334),
+                                    ('5sigma', 0.999999426696856)])
+def test_quantile_plot_interval_str(sigmas):
+    q1, q2 = quantile_plot_interval(q=sigmas[0])
+    assert q1 == 0.5 - sigmas[1] / 2
+    assert q2 == 0.5 + sigmas[1] / 2
+
+
+@pytest.mark.parametrize('floats', [0, 1, 0.1, 0.9])
+def test_quantile_plot_interval_float(floats):
+    q1, q2 = quantile_plot_interval(q=floats)
+    assert q1 == min(floats, 1 - floats)
+    assert q2 == max(floats, 1 - floats)
+
+
+@pytest.mark.parametrize('q1, q2', [(0, 1), (0.1, 0.9), (0, 0.9), (0.1, 1)])
+def test_quantile_plot_interval_tuple(q1, q2):
+    _q1, _q2 = quantile_plot_interval(q=(q1, q2))
+    assert _q1 == q1
+    assert _q2 == q2

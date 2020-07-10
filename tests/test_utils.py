@@ -1,10 +1,10 @@
 import warnings
-import numpy
+import numpy as np
 from scipy import special as sp
 from numpy.testing import assert_array_equal
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
-                              triangular_sample_compression_2d,
-                              logsumexp)
+                              logsumexp, sample_compression_1d,
+                              triangular_sample_compression_2d)
 
 
 def test_nest_level():
@@ -19,13 +19,13 @@ def test_nest_level():
 
 def test_compute_nlive():
     # Generate a 'pure' nested sampling run
-    numpy.random.seed(0)
+    np.random.seed(0)
     nlive = 500
     ncompress = 100
-    logL = numpy.cumsum(numpy.random.rand(nlive, ncompress), axis=1)
-    logL_birth = numpy.concatenate((numpy.ones((nlive, 1))*-1e30,
-                                    logL[:, :-1]), axis=1)
-    i = numpy.argsort(logL.flatten())
+    logL = np.cumsum(np.random.rand(nlive, ncompress), axis=1)
+    logL_birth = np.concatenate((np.ones((nlive, 1))*-1e30, logL[:, :-1]),
+                                axis=1)
+    i = np.argsort(logL.flatten())
     logL = logL.flatten()[i]
     logL_birth = logL_birth.flatten()[i]
 
@@ -47,35 +47,47 @@ def test_unique():
 
 
 def test_triangular_sample_compression_2d():
-    numpy.random.seed(0)
+    np.random.seed(0)
     n = 5000
-    x = numpy.random.rand(n)
-    y = numpy.random.rand(n)
-    w = numpy.random.rand(n)
-    cov = numpy.identity(2)
+    x = np.random.rand(n)
+    y = np.random.rand(n)
+    w = np.random.rand(n)
+    cov = np.identity(2)
     tri, W = triangular_sample_compression_2d(x, y, cov, w)
     assert len(W) == 1000
-    assert numpy.isclose(sum(W), sum(w), rtol=1e-1)
+    assert np.isclose(sum(W), sum(w), rtol=1e-1)
+
+
+def test_sample_compression_1d():
+    np.random.seed(0)
+    N = 10000
+    x_ = np.random.rand(N)
+    w_ = np.random.rand(N)
+    n = 1000
+    x, w = sample_compression_1d(x_, w_, n)
+    assert len(x) == n
+    assert len(w) == n
+    assert np.isclose(w.sum(), w_.sum())
 
 
 def test_is_int():
     assert is_int(1)
-    assert is_int(numpy.int64(1))
+    assert is_int(np.int64(1))
     assert not is_int(1.)
-    assert not is_int(numpy.float64(1.))
+    assert not is_int(np.float64(1.))
 
 
 def test_logsumexpinf():
-    a = numpy.random.rand(10)
-    b = numpy.random.rand(10)
-    assert logsumexp(-numpy.inf, b=[-numpy.inf]) == -numpy.inf
+    a = np.random.rand(10)
+    b = np.random.rand(10)
+    assert logsumexp(-np.inf, b=[-np.inf]) == -np.inf
     assert logsumexp(a, b=b) == sp.logsumexp(a, b=b)
-    a[0] = -numpy.inf
+    a[0] = -np.inf
     assert logsumexp(a, b=b) == sp.logsumexp(a, b=b)
-    b[0] = -numpy.inf
+    b[0] = -np.inf
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore',
                                 'invalid value encountered in multiply',
                                 RuntimeWarning)
-        assert numpy.isnan(sp.logsumexp(a, b=b))
-    assert numpy.isfinite(logsumexp(a, b=b))
+        assert np.isnan(sp.logsumexp(a, b=b))
+    assert np.isfinite(logsumexp(a, b=b))

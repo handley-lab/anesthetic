@@ -1,4 +1,4 @@
-import numpy 
+import numpy as np 
 from anesthetic import MCMCSamples, NestedSamples
 import tqdm
 
@@ -18,18 +18,18 @@ def loglikelihood(x):
     sigma2 = 0.1                  # x2 parameter
     a, b, m = 2., 4., 0.5         # x4 parameters
     if x2 < 0 or x3 > 1 or x3 < 0 or x4 < a or x4 > b:
-        return -numpy.inf
+        return -np.inf
     x0 /= sigma0
     x1 /= sigma1
 
     logl = 0
-    logl -= numpy.log(2*numpy.pi*sigma0*sigma1*(1-eps**2)**0.5)
+    logl -= np.log(2*np.pi*sigma0*sigma1*(1-eps**2)**0.5)
     logl -= (x0**2 - 2*eps*x0*x1 + x1**2)/(1-eps**2)/2
 
-    logl -= numpy.log(sigma2) 
+    logl -= np.log(sigma2) 
     logl -= x2/sigma2
 
-    logl += numpy.log(1/(b-a) + m * (x4-(b+a)/2.))
+    logl += np.log(1/(b-a) + m * (x4-(b+a)/2.))
     return logl
 
 
@@ -42,23 +42,23 @@ roots = []
 # ----
 def mcmc_sim(ndims=5):
     """ Simple Metropolis Hastings algorithm. """
-    x = [numpy.array([0, 0, 0.1, 0.5, 3])]
+    x = [np.array([0, 0, 0.1, 0.5, 3])]
     l = [loglikelihood(x[-1])]
     w = [1]
 
     while len(x) < 10000:
-        x1 = x[-1] + numpy.random.randn(ndims)*0.1
+        x1 = x[-1] + np.random.randn(ndims)*0.1
         l1 = loglikelihood(x1)
-        if numpy.random.rand() < numpy.exp(l1-l[-1]):
+        if np.random.rand() < np.exp(l1-l[-1]):
             x.append(x1)
             l.append(l1)
             w.append(1)
         else:
             w[-1]+=1
-    return numpy.array(x), numpy.array(l), numpy.array(w)
+    return np.array(x), np.array(l), np.array(w)
 
 
-numpy.random.seed(0)
+np.random.seed(0)
 data, logL, w = mcmc_sim()
 mcmc = MCMCSamples(data=data, columns=columns, logL=logL, w=w, tex=tex)
 mcmc['chi2'] = -2*mcmc.logL
@@ -83,26 +83,26 @@ def ns_sim(ndims=5, nlive=125):
     """Brute force Nested Sampling run"""
     low=(-1,-1,0,0,2)
     high=(1,1,1,1,4)
-    live_points = numpy.random.uniform(low=low, high=high, size=(nlive, ndims))
-    live_likes = numpy.array([loglikelihood(x) for x in live_points])
-    live_birth_likes = numpy.ones(nlive) * -numpy.inf
+    live_points = np.random.uniform(low=low, high=high, size=(nlive, ndims))
+    live_likes = np.array([loglikelihood(x) for x in live_points])
+    live_birth_likes = np.ones(nlive) * -np.inf
 
     dead_points = []
     dead_likes = []
     birth_likes = []
     for _ in tqdm.tqdm(range(nlive*11)):
-        i = numpy.argmin(live_likes)
+        i = np.argmin(live_likes)
         Lmin = live_likes[i]
         dead_points.append(live_points[i].copy())
         dead_likes.append(live_likes[i])
         birth_likes.append(live_birth_likes[i])
         live_birth_likes[i] = Lmin
         while live_likes[i] <= Lmin:
-            live_points[i, :] = numpy.random.uniform(low=low, high=high, size=ndims) 
+            live_points[i, :] = np.random.uniform(low=low, high=high, size=ndims) 
             live_likes[i] = loglikelihood(live_points[i])
     return dead_points, dead_likes, birth_likes, live_points, live_likes, live_birth_likes
 
-numpy.random.seed(0)
+np.random.seed(0)
 data, logL, logL_birth, live, live_logL, live_logL_birth = ns_sim()
 
 ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)

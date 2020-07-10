@@ -11,7 +11,7 @@ to create a set of axes and legend proxies.
 
 """
 import sys
-import numpy
+import numpy as np
 import pandas
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
@@ -24,6 +24,8 @@ try:
     from anesthetic.kde import fastkde_1d, fastkde_2d
 except ImportError:
     pass
+import matplotlib.cbook as cbook
+import matplotlib.lines as mlines
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.collections import LineCollection
@@ -69,12 +71,12 @@ def make_1d_axes(params, **kwargs):
         Pandas array of axes objects
 
     """
-    axes = pandas.Series(index=numpy.atleast_1d(params), dtype=object)
+    axes = pandas.Series(index=np.atleast_1d(params), dtype=object)
     axes[:] = None
     tex = kwargs.pop('tex', {})
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
-    ncols = kwargs.pop('ncols', int(numpy.ceil(numpy.sqrt(len(axes)))))
-    nrows = int(numpy.ceil(len(axes)/float(ncols)))
+    ncols = kwargs.pop('ncols', int(np.ceil(np.sqrt(len(axes)))))
+    nrows = int(np.ceil(len(axes)/float(ncols)))
     if 'subplot_spec' in kwargs:
         grid = SGS(nrows, ncols, wspace=0,
                    subplot_spec=kwargs.pop('subplot_spec'))
@@ -143,8 +145,8 @@ def make_2d_axes(params, **kwargs):
     lower = kwargs.pop('lower', True)
     diagonal = kwargs.pop('diagonal', True)
 
-    axes = pandas.DataFrame(index=numpy.atleast_1d(yparams),
-                            columns=numpy.atleast_1d(xparams),
+    axes = pandas.DataFrame(index=np.atleast_1d(yparams),
+                            columns=np.atleast_1d(xparams),
                             dtype=object)
     axes[:][:] = None
     all_params = list(axes.columns) + list(axes.index)
@@ -244,7 +246,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     ax: matplotlib.axes.Axes
         axis object to plot on
 
-    data: numpy.array
+    data: np.array
         Uniformly weighted samples to generate kernel density estimator.
 
     xmin, xmax: float
@@ -259,20 +261,22 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     """
     if len(data) == 0:
-        return numpy.zeros(0), numpy.zeros(0)
+        return np.zeros(0), np.zeros(0)
 
     if data.max()-data.min() <= 0:
         return
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
+    q = kwargs.pop('q', '5sigma')
+    q = quantile_plot_interval(q=q)
 
     try:
         x, p = fastkde_1d(data, xmin, xmax)
     except NameError:
         raise ImportError("You need to install fastkde to use fastkde")
     p /= p.max()
-    i = (x < quantile(x, 0.99, p)) & (x > quantile(x, 0.01, p)) | (p > 0.1)
+    i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[1], p)))
 
     ans = ax.plot(x[i], p[i], *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -291,10 +295,10 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ax: matplotlib.axes.Axes
         axis object to plot on.
 
-    data: numpy.array
+    data: np.array
         Samples to generate kernel density estimator.
 
-    weights: numpy.array, optional
+    weights: np.array, optional
         Sample weights.
 
     ncompress: int, optional
@@ -312,7 +316,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     """
     if len(data) == 0:
-        return numpy.zeros(0), numpy.zeros(0)
+        return np.zeros(0), np.zeros(0)
 
     if data.max()-data.min() <= 0:
         return
@@ -321,16 +325,23 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
+    q = kwargs.pop('q', '5sigma')
+    q = quantile_plot_interval(q=q)
+
+    if weights is not None:
+        data = data[weights != 0]
+        weights = weights[weights != 0]
+
     x, w = sample_compression_1d(data, weights, ncompress)
     kde = gaussian_kde(x, weights=w)
     p = kde(x)
     p /= p.max()
-    i = ((x < quantile(x, 0.999, w)) & (x > quantile(x, 0.001, w))) | (p > 0.1)
+    i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[1], w)))
     if xmin is not None:
         i = i & (x > xmin)
     if xmax is not None:
         i = i & (x < xmax)
-    sigma = numpy.sqrt(kde.covariance[0, 0])
+    sigma = np.sqrt(kde.covariance[0, 0])
     pp = cut_and_normalise_gaussian(x[i], p[i], sigma, xmin, xmax)
     pp /= pp.max()
     ans = ax.plot(x[i], pp, *args, **kwargs)
@@ -349,10 +360,10 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     ax: matplotlib.axes.Axes
         axis object to plot on
 
-    data: numpy.array
+    data: np.array
         Samples to generate histogram from
 
-    weights: numpy.array, optional
+    weights: np.array, optional
         Sample weights.
 
     xmin, xmax: float
@@ -378,20 +389,21 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     plotter = kwargs.pop('plotter', '')
     weights = kwargs.pop('weights', None)
-    if xmin is None or not numpy.isfinite(xmin):
+    if xmin is None or not np.isfinite(xmin):
         xmin = quantile(data, 0.01, weights)
-    if xmax is None or not numpy.isfinite(xmax):
+    if xmax is None or not np.isfinite(xmax):
         xmax = quantile(data, 0.99, weights)
+    range = kwargs.pop('range', (xmin, xmax))
     histtype = kwargs.pop('histtype', 'bar')
 
     if plotter == 'astropyhist':
         try:
-            h, edges, bars = hist(data, ax=ax, range=(xmin, xmax),
+            h, edges, bars = hist(data, ax=ax, range=range,
                                   histtype=histtype, *args, **kwargs)
         except NameError:
             raise ImportError("You need to install astropy to use astropyhist")
     else:
-        h, edges, bars = ax.hist(data, range=(xmin, xmax), histtype=histtype,
+        h, edges, bars = ax.hist(data, range=range, histtype=histtype,
                                  weights=weights, *args, **kwargs)
 
     if histtype == 'bar':
@@ -419,7 +431,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax: matplotlib.axes.Axes
         axis object to plot on
 
-    data_x, data_y: numpy.array
+    data_x, data_y: np.array
         x and y coordinates of uniformly weighted samples to generate kernel
         density estimator.
 
@@ -446,9 +458,10 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     linewidths = kwargs.pop('linewidths', 0.5)
     levels = kwargs.pop('levels', [0.68, 0.95])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
-        return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
+        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
     try:
         x, y, pdf = fastkde_2d(data_x, data_y,
@@ -457,17 +470,17 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         raise ImportError("You need to install fastkde to use fastkde")
 
     levels = iso_probability_contours(pdf, contours=levels)
-    cmap = basic_cmap(color)
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     i = (pdf >= levels[0]*0.5).any(axis=0)
     j = (pdf >= levels[0]*0.5).any(axis=1)
 
-    cbar = ax.contourf(x[i], y[j], pdf[numpy.ix_(j, i)], levels, cmap=cmap,
+    cbar = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
                        zorder=zorder, vmin=0, vmax=pdf.max(), *args, **kwargs)
     for c in cbar.collections:
         c.set_cmap(cmap)
 
-    ax.contour(x[i], y[j], pdf[numpy.ix_(j, i)], levels, zorder=zorder,
+    ax.contour(x[i], y[j], pdf[np.ix_(j, i)], levels, zorder=zorder,
                vmin=0, vmax=pdf.max(), linewidths=linewidths, colors='k',
                *args, **kwargs)
     ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.32),
@@ -491,11 +504,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax: matplotlib.axes.Axes
         axis object to plot on.
 
-    data_x, data_y: numpy.array
+    data_x, data_y: np.array
         x and y coordinates of uniformly weighted samples to generate kernel
         density estimator.
 
-    weights: numpy.array, optional
+    weights: np.array, optional
         Sample weights.
 
     ncompress: int, optional
@@ -522,31 +535,37 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     zorder = kwargs.pop('zorder', 1)
     linewidths = kwargs.pop('linewidths', 0.5)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
-        return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
+        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
-    cov = numpy.cov(data_x, data_y, aweights=weights)
+    if weights is not None:
+        data_x = data_x[weights != 0]
+        data_y = data_y[weights != 0]
+        weights = weights[weights != 0]
+
+    cov = np.cov(data_x, data_y, aweights=weights)
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
                                               weights, ncompress)
     kde = gaussian_kde([tri.x, tri.y], weights=w)
 
     x, y = kde.resample(ncompress)
-    x = numpy.concatenate([tri.x, x])
-    y = numpy.concatenate([tri.y, y])
-    w = numpy.concatenate([w, numpy.zeros(ncompress)])
+    x = np.concatenate([tri.x, x])
+    y = np.concatenate([tri.y, y])
+    w = np.concatenate([w, np.zeros(ncompress)])
     tri = scaled_triangulation(x, y, cov)
 
     p = kde([tri.x, tri.y])
 
-    sigmax = numpy.sqrt(kde.covariance[0, 0])
+    sigmax = np.sqrt(kde.covariance[0, 0])
     p = cut_and_normalise_gaussian(tri.x, p, sigmax, xmin, xmax)
-    sigmay = numpy.sqrt(kde.covariance[1, 1])
+    sigmay = np.sqrt(kde.covariance[1, 1])
     p = cut_and_normalise_gaussian(tri.y, p, sigmay, ymin, ymax)
 
     contours = iso_probability_contours_from_samples(p, weights=w)
 
-    cmap = basic_cmap(color)
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     cbar = ax.tricontourf(tri, p, contours, cmap=cmap,
                           zorder=zorder, vmin=0, vmax=p.max(), *args, **kwargs)
@@ -574,7 +593,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax: matplotlib.axes.Axes
         axis object to plot on
 
-    data_x, data_y: numpy.array
+    data_x, data_y: np.array
         x and y coordinates of uniformly weighted samples to generate kernel
         density estimator.
 
@@ -602,21 +621,21 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     weights = kwargs.pop('weights', None)
 
-    if xmin is None or not numpy.isfinite(xmin):
+    if xmin is None or not np.isfinite(xmin):
         xmin = quantile(data_x, 0.01, weights)
-    if xmax is None or not numpy.isfinite(xmax):
+    if xmax is None or not np.isfinite(xmax):
         xmax = quantile(data_x, 0.99, weights)
-    if ymin is None or not numpy.isfinite(ymin):
+    if ymin is None or not np.isfinite(ymin):
         ymin = quantile(data_y, 0.01, weights)
-    if ymax is None or not numpy.isfinite(ymax):
+    if ymax is None or not np.isfinite(ymax):
         ymax = quantile(data_y, 0.99, weights)
 
     range = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
     if len(data_x) == 0 or len(data_y) == 0:
-        return numpy.zeros(0), numpy.zeros(0), numpy.zeros((0, 0))
+        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
-    cmap = basic_cmap(color)
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     if levels is None:
         pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
@@ -627,16 +646,16 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         density = kwargs.pop('density', False)
         cmin = kwargs.pop('cmin', None)
         cmax = kwargs.pop('cmax', None)
-        pdf, x, y = numpy.histogram2d(data_x, data_y, bins, range,
-                                      density, weights)
+        pdf, x, y = np.histogram2d(data_x, data_y, bins, range,
+                                   density, weights)
         levels = iso_probability_contours(pdf, levels)
-        pdf = numpy.digitize(pdf, levels, right=True)
-        pdf = numpy.array(levels)[pdf]
-        pdf = numpy.ma.masked_array(pdf, pdf < levels[1])
+        pdf = np.digitize(pdf, levels, right=True)
+        pdf = np.array(levels)[pdf]
+        pdf = np.ma.masked_array(pdf, pdf < levels[1])
         if cmin is not None:
-            pdf[pdf < cmin] = numpy.ma.masked
+            pdf[pdf < cmin] = np.ma.masked
         if cmax is not None:
-            pdf[pdf > cmax] = numpy.ma.masked
+            pdf[pdf > cmax] = np.ma.masked
         image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=0, vmax=pdf.max(),
                               *args, **kwargs)
 
@@ -659,7 +678,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax: matplotlib.axes.Axes
         axis object to plot on
 
-    data_x, data_y: numpy.array
+    data_x, data_y: np.array
         x and y coordinates of uniformly weighted samples to plot.
 
     xmin, xmax, ymin, ymax: float
@@ -677,6 +696,8 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    kwargs.pop('q', None)
+    kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     markersize = kwargs.pop('markersize', 1)
 
     points = ax.plot(data_x, data_y, 'o', markersize=markersize,
@@ -725,7 +746,7 @@ def get_legend_proxy(fig):
                   for ax in fig.axes
                   for coll in ax.collections
                   if isinstance(coll, LineCollection)]
-        colors = numpy.unique(colors, axis=0)
+        colors = np.unique(colors, axis=0)
         cmaps = [basic_cmap(color) for color in colors]
         proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.0),
                                edgecolor=cmap(0.999), linewidth=1)
@@ -783,3 +804,19 @@ else:
                                                       emit=emit, auto=auto,
                                                       **kwargs)
         ax.__class__ = DiagonalAxes
+
+
+def quantile_plot_interval(q):
+    """Interpret quantile q input to quantile plot range tuple."""
+    if isinstance(q, str):
+        sigmas = {'1sigma': 0.682689492137086,
+                  '2sigma': 0.954499736103642,
+                  '3sigma': 0.997300203936740,
+                  '4sigma': 0.999936657516334,
+                  '5sigma': 0.999999426696856}
+        q = (1 - sigmas[q]) / 2
+    if isinstance(q, float) or isinstance(q, int):
+        if q > 0.5:
+            q = 1 - q
+        q = (q, 1-q)
+    return q

@@ -1,5 +1,5 @@
 """Main plotting tools."""
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import (GridSpec as GS,
                                  GridSpecFromSubplotSpec as sGS)
@@ -53,7 +53,7 @@ class Higson(Widget):
     def reset_range(self):
         """Reset the ranges of the higson plot."""
         xdata = self.curve.get_xdata()
-        xdata = xdata[numpy.isfinite(xdata)]
+        xdata = xdata[np.isfinite(xdata)]
         self.ax.set_xlim(xdata.max(), xdata.min())
 
 
@@ -159,9 +159,9 @@ class RunPlotter(object):
         self.samples = samples
 
         if params:
-            self.params = numpy.array(params)
+            self.params = np.array(params)
         else:
-            self.params = numpy.array(self.samples.columns[:10])
+            self.params = np.array(self.samples.columns[:10])
 
         self.fig = plt.figure()
         self._set_up()
@@ -245,12 +245,11 @@ class RunPlotter(object):
 
     def update(self, _):
         """Update all the plots upon slider changes."""
-        with numpy.errstate(divide='ignore'):
-            logX = numpy.log(self.samples.nlive /
-                             (self.samples.nlive+1)).cumsum()
+        with np.errstate(divide='ignore'):
+            logX = np.log(self.samples.nlive / (self.samples.nlive+1)).cumsum()
         kT = self.temperature()
         LX = self.samples.logL/kT + logX
-        LX = numpy.exp(LX-LX.max())
+        LX = np.exp(LX-LX.max())
         i = self.evolution()
         logL = self.samples.logL.iloc[i]
         try:
