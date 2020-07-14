@@ -521,10 +521,10 @@ class NestedSamples(MCMCSamples):
 
         logw = dlogX.add(self.beta * self.logL, axis=0)
         logw -= samples.logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
+        S = (dlogX * 0).add(self.beta * self.logL, axis=0) - samples.logZ
 
         samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
-        samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
+        samples['d'] = np.exp(logsumexp(logw, b=(S - samples.D) ** 2, axis=0)) * 2
 
         samples.tex = {'logZ': r'$\log\mathcal{Z}$',
                        'D': r'$\mathcal{D}$',
@@ -555,7 +555,7 @@ class NestedSamples(MCMCSamples):
         dlogX = self.dlogX(nsamples)
         logZ = self.logZ(dlogX)
         logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
+        S = (dlogX * 0).add(self.beta * self.logL, axis=0) - logZ
         return np.exp(logsumexp(logw, b=S, axis=0))
 
     def d(self, nsamples=None):
@@ -570,8 +570,8 @@ class NestedSamples(MCMCSamples):
         logZ = self.logZ(dlogX)
         D = self.D(dlogX)
         logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
-        return np.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
+        S = (dlogX * 0).add(self.beta * self.logL, axis=0) - logZ
+        return np.exp(logsumexp(logw, b=(S - D) ** 2, axis=0)) * 2
 
     def live_points(self, logL=None):
         """Get the live points within logL.
@@ -606,7 +606,7 @@ class NestedSamples(MCMCSamples):
         return RunPlotter(self, params)
 
     def logX(self, nsamples=None):
-    	"""Compute volume within a loglikelihood.
+        """Compute volume within a loglikelihood.
 
         Parameters
         ----------
@@ -616,13 +616,13 @@ class NestedSamples(MCMCSamples):
             distribution. (Default: None)
 
         """
-    	with numpy.errstate(divide='ignore'):
-            if numpy.ndim(nsamples) > 0:
+        with np.errstate(divide='ignore'):
+            if np.ndim(nsamples) > 0:
                 return nsamples
             elif nsamples is None:
-                t = numpy.log(self.nlive/(self.nlive+1)).to_frame()
+                t = np.log(self.nlive / (self.nlive + 1)).to_frame()
             else:
-                r = numpy.log(numpy.random.rand(len(self), nsamples))
+                r = np.log(np.random.rand(len(self), nsamples))
                 t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
 
         logX = t.cumsum()
@@ -639,16 +639,7 @@ class NestedSamples(MCMCSamples):
             distribution. (Default: None)
 
         """
-        with np.errstate(divide='ignore'):
-            if np.ndim(nsamples) > 0:
-                return nsamples
-            elif nsamples is None:
-                t = np.log(self.nlive/(self.nlive+1)).to_frame()
-            else:
-                r = np.log(np.random.rand(len(self), nsamples))
-                t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
-
-        logX = t.cumsum()
+        logX = self.logX(nsamples)
         logXp = logX.shift(1, fill_value=0)
         logXm = logX.shift(-1, fill_value=-np.inf)
         dlogX = logsumexp([logXp.values, logXm.values],
@@ -666,7 +657,7 @@ class NestedSamples(MCMCSamples):
             nlive = logL_birth
             self['nlive'] = nlive
             descending = np.arange(nlive, 0, -1)
-            self.loc[len(self)-nlive:, 'nlive'] = descending
+            self.loc[len(self) - nlive:, 'nlive'] = descending
         else:
             self['logL_birth'] = logL_birth
             self.tex['logL_birth'] = r'$\log\mathcal{L}_{\rm birth}$'
