@@ -524,7 +524,7 @@ class NestedSamples(MCMCSamples):
         S = (dlogX * 0).add(self.beta * self.logL, axis=0) - samples.logZ
 
         samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
-        samples['d'] = np.exp(logsumexp(logw, b=(S - samples.D) ** 2, axis=0)) * 2
+        samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
 
         samples.tex = {'logZ': r'$\log\mathcal{Z}$',
                        'D': r'$\mathcal{D}$',
