@@ -168,11 +168,12 @@ def make_2d_axes(params, **kwargs):
     tex = kwargs.pop('tex', {})
     tex = {p: tex[p] if p in tex else p for p in all_params}
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
-    if 'subplot_spec' in kwargs:
-        grid = SGS(*axes.shape, hspace=0, wspace=0,
-                   subplot_spec=kwargs.pop('subplot_spec'))
-    else:
-        grid = GS(*axes.shape, hspace=0, wspace=0)
+    spec = kwargs.pop('subplot_spec', None)
+    if axes.shape[0] != 0 and axes.shape[1] != 0:
+        if spec is not None:
+            grid = SGS(*axes.shape, hspace=0, wspace=0, subplot_spec=spec)
+        else:
+            grid = GS(*axes.shape, hspace=0, wspace=0)
 
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
