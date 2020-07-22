@@ -168,11 +168,12 @@ def make_2d_axes(params, **kwargs):
     tex = kwargs.pop('tex', {})
     tex = {p: tex[p] if p in tex else p for p in all_params}
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
-    if 'subplot_spec' in kwargs:
-        grid = SGS(*axes.shape, hspace=0, wspace=0,
-                   subplot_spec=kwargs.pop('subplot_spec'))
-    else:
-        grid = GS(*axes.shape, hspace=0, wspace=0)
+    spec = kwargs.pop('subplot_spec', None)
+    if axes.shape[0] != 0 and axes.shape[1] != 0:
+        if spec is not None:
+            grid = SGS(*axes.shape, hspace=0, wspace=0, subplot_spec=spec)
+        else:
+            grid = GS(*axes.shape, hspace=0, wspace=0)
 
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
@@ -483,7 +484,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax.contour(x[i], y[j], pdf[np.ix_(j, i)], levels, zorder=zorder,
                vmin=0, vmax=pdf.max(), linewidths=linewidths, colors='k',
                *args, **kwargs)
-    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.32),
+    ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
                                  lw=2, label=label)]
 
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -575,7 +576,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax.tricontour(tri, p, contours, zorder=zorder,
                   vmin=0, vmax=p.max(), linewidths=linewidths, colors='k',
                   *args, **kwargs)
-    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.32),
+    ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
                                  lw=2, label=label)]
 
     ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
@@ -659,7 +660,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=0, vmax=pdf.max(),
                               *args, **kwargs)
 
-    ax.patches += [plt.Rectangle((0, 0), 1, 1, fc=cmap(0.999), ec=cmap(0.32),
+    ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
                                  lw=2, label=label)]
 
     ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
