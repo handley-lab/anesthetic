@@ -395,8 +395,10 @@ def test_contour_plot_2d(contour_plot_2d):
         # Check unfilled
         ax = plt.gca()
         contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
-        contour_plot_2d(ax, data_x, data_y, facecolor=None, ec='C1')
-        contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.viridis)
+        p = contour_plot_2d(ax, data_x, data_y, facecolor=None, ec='C1')
+        assert p.colors == 'C1'
+        p = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.viridis)
+        assert p.get_cmap() == plt.cm.viridis
         plt.close()
 
     except ImportError:
