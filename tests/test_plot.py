@@ -392,7 +392,7 @@ def test_contour_plot_2d(contour_plot_2d):
         contour_plot_2d(ax, data_x, data_y, q=0)
         plt.close()
 
-        #Check unfilled
+        # Check unfilled
         ax = plt.gca()
         contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
         contour_plot_2d(ax, data_x, data_y, facecolor=None, ec='C1')
