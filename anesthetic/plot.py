@@ -623,7 +623,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=None, ec=edgecolor,
                                      lw=2, label=label)]
 
-    cont = ax.tricontour(tri, p, contours, zorder=zorder, vmin=0, vmax=p.max(),
+    cont = ax.tricontour(tri, p, contours, zorder=zorder, vmin=0, vmax=0.32 * p.max(),
                          linewidths=linewidths, colors=edgecolor, cmap=cmap,
                          *args, **kwargs)
 
