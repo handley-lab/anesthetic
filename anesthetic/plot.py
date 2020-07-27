@@ -528,9 +528,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """
     kwargs = cbook.normalize_kwargs(kwargs,
                                     dict(linewidths=['linewidth', 'lw'],
+                                         linestyles=['linestyle', 'ls'],
                                          color=['c'],
                                          facecolor=['fc'],
-                                         edgecolor=['ec']))
+                                         edgecolor=['ec']),
+                                    forbidden=['colors'])
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
@@ -541,7 +543,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     zorder = kwargs.pop('zorder', 1)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
-    edgecolor = kwargs.pop('edgecolor', 'k')
+    edgecolor = kwargs.pop('edgecolor', color if facecolor is None else 'k')
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -582,13 +584,17 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
             c.set_cmap(cmap)
         ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999),
                                      ec=cmap(0.32), lw=2, label=label)]
+        cmap = None
     else:
+        cmap = kwargs.pop('cmap', None)
+        edgecolor = edgecolor if cmap is None else None
         linewidths = kwargs.pop('linewidths', 1.5)
         ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=None, ec=edgecolor,
                                      lw=2, label=label)]
 
     ax.tricontour(tri, p, contours, zorder=zorder, vmin=0, vmax=p.max(),
-                  linewidths=linewidths, colors=edgecolor, *args, **kwargs)
+                  linewidths=linewidths, colors=edgecolor, cmap=cmap,
+                  *args, **kwargs)
 
     ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(tri.y, ymin, ymax), auto=True)
