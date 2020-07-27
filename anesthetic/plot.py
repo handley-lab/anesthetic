@@ -516,7 +516,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                      lw=2, label=label)]
 
     cont = ax.contour(x[i], y[j], pdf[np.ix_(j, i)], levels, zorder=zorder,
-                      vmin=0, vmax=pdf.max(), linewidths=linewidths,
+                      vmin=0, vmax=0.32 * pdf.max(), linewidths=linewidths,
                       colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -623,9 +623,9 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=None, ec=edgecolor,
                                      lw=2, label=label)]
 
-    cont = ax.tricontour(tri, p, contours, zorder=zorder, vmin=0, vmax=0.32 * p.max(),
-                         linewidths=linewidths, colors=edgecolor, cmap=cmap,
-                         *args, **kwargs)
+    cont = ax.tricontour(tri, p, contours, zorder=zorder,
+                         vmin=0, vmax=0.32 * p.max(), linewidths=linewidths,
+                         colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(tri.y, ymin, ymax), auto=True)
