@@ -602,9 +602,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=None, ec=edgecolor,
                                      lw=2, label=label)]
 
-    ax.tricontour(tri, p, contours, zorder=zorder, vmin=0, vmax=p.max(),
-                  linewidths=linewidths, colors=edgecolor, cmap=cmap,
-                  *args, **kwargs)
+    cont = ax.tricontour(tri, p, contours, zorder=zorder, vmin=0, vmax=p.max(),
+                         linewidths=linewidths, colors=edgecolor, cmap=cmap,
+                         *args, **kwargs)
+    cbar = cont if cbar is None else cbar
 
     ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(tri.y, ymin, ymax), auto=True)
