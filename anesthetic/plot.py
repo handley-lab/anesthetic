@@ -583,18 +583,18 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     contours = iso_probability_contours_from_samples(p, weights=w)
 
-    cbar = None
     if facecolor is not None:
         linewidths = kwargs.pop('linewidths', 0.5)
         cmap = kwargs.pop('cmap', basic_cmap(facecolor))
-        cbar = ax.tricontourf(tri, p, contours, cmap=cmap, zorder=zorder,
+        contf = ax.tricontourf(tri, p, contours, cmap=cmap, zorder=zorder,
                               vmin=0, vmax=p.max(), *args, **kwargs)
-        for c in cbar.collections:
+        for c in contf.collections:
             c.set_cmap(cmap)
         ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999),
                                      ec=cmap(0.32), lw=2, label=label)]
         cmap = None
     else:
+        contf = None
         cmap = kwargs.pop('cmap', None)
         edgecolor = edgecolor if cmap is None else None
         linewidths = kwargs.pop('linewidths', 1.5)
@@ -604,11 +604,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     cont = ax.tricontour(tri, p, contours, zorder=zorder, vmin=0, vmax=p.max(),
                          linewidths=linewidths, colors=edgecolor, cmap=cmap,
                          *args, **kwargs)
-    cbar = cont if cbar is None else cbar
 
     ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(tri.y, ymin, ymax), auto=True)
-    return cbar
+    return contf, cont
 
 
 def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
