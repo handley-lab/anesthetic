@@ -326,6 +326,9 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                 if cmap is None else cmap(2/3)))
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -345,7 +348,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     sigma = np.sqrt(kde.covariance[0, 0])
     pp = cut_and_normalise_gaussian(x[i], p[i], sigma, xmin, xmax)
     pp /= pp.max()
-    ans = ax.plot(x[i], pp, *args, **kwargs)
+    ans = ax.plot(x[i], pp, color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
@@ -717,8 +720,11 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kwargs.pop('q', None)
     kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     markersize = kwargs.pop('markersize', 1)
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                 if cmap is None else cmap(2/3)))
 
-    points = ax.plot(data_x, data_y, 'o', markersize=markersize,
+    points = ax.plot(data_x, data_y, 'o', color=color, markersize=markersize,
                      *args, **kwargs)
     ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
