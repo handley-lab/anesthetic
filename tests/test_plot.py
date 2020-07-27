@@ -444,10 +444,14 @@ def test_scatter_plot_2d():
     plt.close()
 
     ax = plt.gca()
-    points, = scatter_plot_2d(ax, data_x, data_y, color='C0')
+    points, = scatter_plot_2d(ax, data_x, data_y, color='C0', lw=1)
     assert (points.get_color() == 'C0')
     points, = scatter_plot_2d(ax, data_x, data_y, cmap=plt.cm.viridis)
     assert (points.get_color() == plt.cm.viridis(2 / 3))
+    points, = scatter_plot_2d(ax, data_x, data_y, c='C0', fc='C1', ec='C2')
+    assert (points.get_color() == 'C0')
+    assert (points.get_markerfacecolor() == 'C1')
+    assert (points.get_markeredgecolor() == 'C2')
     plt.close()
 
     # Check q
