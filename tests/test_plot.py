@@ -202,6 +202,8 @@ def test_kde_plot_1d(plot_1d):
         # Check arguments are passed onward to underlying function
         line, = plot_1d(ax, data, color='r')
         assert(line.get_color() == 'r')
+        line, = plot_1d(ax, data, cmap=plt.cm.Blues)
+        assert(line.get_color() == plt.cm.Blues(2 / 3))
 
         # Check xmin
         xmin = -0.5
@@ -265,9 +267,16 @@ def test_hist_plot_1d():
                                 color='r', alpha=0.5, plotter=p)
             cc = ColorConverter.to_rgba('r', alpha=0.5)
             assert(np.all([b.get_fc() == cc for b in bars]))
+            bars = hist_plot_1d(ax, data, histtype='bar',
+                                cmap=plt.cm.viridis, alpha=0.5, plotter=p)
+            cc = ColorConverter.to_rgba(plt.cm.viridis(2 / 3), alpha=0.5)
+            assert(np.all([b.get_fc() == cc for b in bars]))
             polygon, = hist_plot_1d(ax, data, histtype='step',
                                     color='r', alpha=0.5, plotter=p)
             assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
+            polygon, = hist_plot_1d(ax, data, histtype='step',
+                                    cmap=plt.cm.viridis, color='r', plotter=p)
+            assert(polygon.get_ec() == ColorConverter.to_rgba('r'))
 
             # Check xmin
             for xmin in [-np.inf, -0.5]:
@@ -382,6 +391,14 @@ def test_contour_plot_2d(contour_plot_2d):
         ax = plt.gca()
         contour_plot_2d(ax, data_x, data_y, q=0)
         plt.close()
+
+        #Check unfilled
+        ax = plt.gca()
+        contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
+        contour_plot_2d(ax, data_x, data_y, facecolor=None, ec='C1')
+        contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.viridis)
+        plt.close()
+
     except ImportError:
         if 'fastkde' not in sys.modules:
             pass
@@ -414,6 +431,13 @@ def test_scatter_plot_2d():
     ax = plt.gca()
     scatter_plot_2d(ax, data_x, data_y, ymax=ymax)
     assert(ax.get_ylim()[1] <= ymax)
+    plt.close()
+
+    ax = plt.gca()
+    points, = scatter_plot_2d(ax, data_x, data_y, color='C0')
+    assert (points.get_color() == 'C0')
+    points, = scatter_plot_2d(ax, data_x, data_y, cmap=plt.cm.viridis)
+    assert (points.get_color() == plt.cm.viridis(2 / 3))
     plt.close()
 
     # Check q
