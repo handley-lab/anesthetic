@@ -325,6 +325,10 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     if data.max()-data.min() <= 0:
         return
 
+    kwargs = normalize_kwargs(
+        kwargs,
+        dict(linewidth=['lw'], linestyle=['ls'], color=['c']),
+        drop=['fc', 'ec'])
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
@@ -460,12 +464,11 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         A set of contourlines or filled regions
 
     """
-    kwargs = cbook.normalize_kwargs(kwargs,
-                                    dict(linewidths=['linewidth', 'lw'],
-                                         linestyles=['linestyle', 'ls'],
-                                         color=['c'],
-                                         facecolor=['fc'],
-                                         edgecolor=['ec']))
+    kwargs = normalize_kwargs(kwargs, dict(linewidths=['linewidth', 'lw'],
+                                           linestyles=['linestyle', 'ls'],
+                                           color=['c'],
+                                           facecolor=['fc'],
+                                           edgecolor=['ec']))
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
@@ -475,7 +478,8 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     levels = kwargs.pop('levels', [0.68, 0.95])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
-    edgecolor = kwargs.pop('edgecolor', color if facecolor is None else 'k')
+    edgecolor = kwargs.pop(
+        'edgecolor', color if facecolor in [None, 'None', 'none'] else 'k')
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -492,7 +496,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     i = (pdf >= levels[0]*0.5).any(axis=0)
     j = (pdf >= levels[0]*0.5).any(axis=1)
 
-    if facecolor is not None:
+    if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
         cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         contf = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
@@ -554,12 +558,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         A set of contourlines or filled regions
 
     """
-    kwargs = cbook.normalize_kwargs(kwargs,
-                                    dict(linewidths=['linewidth', 'lw'],
-                                         linestyles=['linestyle', 'ls'],
-                                         color=['c'],
-                                         facecolor=['fc'],
-                                         edgecolor=['ec']))
+    kwargs = normalize_kwargs(kwargs, dict(linewidths=['linewidth', 'lw'],
+                                           linestyles=['linestyle', 'ls'],
+                                           color=['c'],
+                                           facecolor=['fc'],
+                                           edgecolor=['ec']))
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
@@ -570,7 +573,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     zorder = kwargs.pop('zorder', 1)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
-    edgecolor = kwargs.pop('edgecolor', color if facecolor is None else 'k')
+    edgecolor = kwargs.pop(
+        'edgecolor', color if facecolor in [None, 'None', 'none'] else 'k')
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -601,7 +605,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     contours = iso_probability_contours_from_samples(p, weights=w)
 
-    if facecolor is not None:
+    if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
         cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         contf = ax.tricontourf(tri, p, contours, cmap=cmap, zorder=zorder,
@@ -737,12 +741,16 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
         matplotlib matplotlib.axes.Axes.plot command)
 
     """
+    kwargs = normalize_kwargs(
+        kwargs,
+        dict(color=['c'], mfc=['facecolor', 'fc'], mec=['edgecolor', 'ec']),
+        drop=['ls', 'lw'])
+    kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     kwargs.pop('q', None)
-    kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     markersize = kwargs.pop('markersize', 1)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
@@ -868,3 +876,17 @@ def quantile_plot_interval(q):
             q = 1 - q
         q = (q, 1-q)
     return q
+
+
+def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
+    """Helper function to normalize kwarg inputs.
+
+    Works the same way as cbook.normalize_kwargs, but additionally allows to
+    drop kwargs.
+    """
+    drop = [] if drop is None else drop
+    alias_mapping = {} if alias_mapping is None else alias_mapping
+    kwargs = cbook.normalize_kwargs(kwargs, alias_mapping=alias_mapping)
+    for key in set(drop) & set(kwargs.keys()):
+        kwargs.pop(key)
+    return kwargs
