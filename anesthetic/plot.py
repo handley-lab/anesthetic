@@ -460,15 +460,22 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         A set of contourlines or filled regions
 
     """
+    kwargs = cbook.normalize_kwargs(kwargs,
+                                    dict(linewidths=['linewidth', 'lw'],
+                                         linestyles=['linestyle', 'ls'],
+                                         color=['c'],
+                                         facecolor=['fc'],
+                                         edgecolor=['ec']))
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
-    linewidths = kwargs.pop('linewidths', 0.5)
     levels = kwargs.pop('levels', [0.68, 0.95])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    facecolor = kwargs.pop('facecolor', color)
+    edgecolor = kwargs.pop('edgecolor', color if facecolor is None else 'k')
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -481,25 +488,36 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         raise ImportError("You need to install fastkde to use fastkde")
 
     levels = iso_probability_contours(pdf, contours=levels)
-    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     i = (pdf >= levels[0]*0.5).any(axis=0)
     j = (pdf >= levels[0]*0.5).any(axis=1)
 
-    cbar = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
-                       zorder=zorder, vmin=0, vmax=pdf.max(), *args, **kwargs)
-    for c in cbar.collections:
-        c.set_cmap(cmap)
+    if facecolor is not None:
+        linewidths = kwargs.pop('linewidths', 0.5)
+        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
+        contf = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
+                            zorder=zorder, vmin=0, vmax=pdf.max(),
+                            *args, **kwargs)
+        for c in contf.collections:
+            c.set_cmap(cmap)
+        ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999),
+                                     ec=cmap(0.32), lw=2, label=label)]
+        cmap = None
+    else:
+        contf = None
+        cmap = kwargs.pop('cmap', None)
+        edgecolor = edgecolor if cmap is None else None
+        linewidths = kwargs.pop('linewidths', 1.5)
+        ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=None, ec=edgecolor,
+                                     lw=2, label=label)]
 
-    ax.contour(x[i], y[j], pdf[np.ix_(j, i)], levels, zorder=zorder,
-               vmin=0, vmax=pdf.max(), linewidths=linewidths, colors='k',
-               *args, **kwargs)
-    ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
-                                 lw=2, label=label)]
+    cont = ax.contour(x[i], y[j], pdf[np.ix_(j, i)], levels, zorder=zorder,
+                      vmin=0, vmax=pdf.max(), linewidths=linewidths,
+                      colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
-    return cbar
+    return contf, cont
 
 
 def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
