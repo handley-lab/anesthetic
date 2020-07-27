@@ -511,7 +511,8 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         contf = None
         cmap = kwargs.pop('cmap', None)
         edgecolor = edgecolor if cmap is None else None
-        linewidths = kwargs.pop('linewidths', 1.5)
+        linewidths = kwargs.pop('linewidths',
+                                plt.rcParams.get('lines.linewidth'))
         ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=None, ec=edgecolor,
                                      lw=2, label=label)]
 
