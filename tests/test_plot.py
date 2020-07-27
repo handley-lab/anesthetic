@@ -203,7 +203,7 @@ def test_kde_plot_1d(plot_1d):
         line, = plot_1d(ax, data, color='r')
         assert(line.get_color() == 'r')
         line, = plot_1d(ax, data, cmap=plt.cm.Blues)
-        assert(line.get_color() == plt.cm.Blues(2 / 3))
+        assert(line.get_color() == plt.cm.Blues(0.68))
 
         # Check xmin
         xmin = -0.5
@@ -269,7 +269,7 @@ def test_hist_plot_1d():
             assert(np.all([b.get_fc() == cc for b in bars]))
             bars = hist_plot_1d(ax, data, histtype='bar',
                                 cmap=plt.cm.viridis, alpha=0.5, plotter=p)
-            cc = ColorConverter.to_rgba(plt.cm.viridis(2 / 3), alpha=0.5)
+            cc = ColorConverter.to_rgba(plt.cm.viridis(0.68), alpha=0.5)
             assert(np.all([b.get_fc() == cc for b in bars]))
             polygon, = hist_plot_1d(ax, data, histtype='step',
                                     color='r', alpha=0.5, plotter=p)
@@ -447,7 +447,7 @@ def test_scatter_plot_2d():
     points, = scatter_plot_2d(ax, data_x, data_y, color='C0', lw=1)
     assert (points.get_color() == 'C0')
     points, = scatter_plot_2d(ax, data_x, data_y, cmap=plt.cm.viridis)
-    assert (points.get_color() == plt.cm.viridis(2 / 3))
+    assert (points.get_color() == plt.cm.viridis(0.68))
     points, = scatter_plot_2d(ax, data_x, data_y, c='C0', fc='C1', ec='C2')
     assert (points.get_color() == 'C0')
     assert (points.get_markerfacecolor() == 'C1')
