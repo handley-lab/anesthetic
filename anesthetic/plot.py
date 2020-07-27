@@ -541,8 +541,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                          linestyles=['linestyle', 'ls'],
                                          color=['c'],
                                          facecolor=['fc'],
-                                         edgecolor=['ec']),
-                                    forbidden=['colors'])
+                                         edgecolor=['ec']))
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
