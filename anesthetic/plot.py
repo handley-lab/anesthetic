@@ -609,7 +609,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         linewidths = kwargs.pop('linewidths', 0.5)
         cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         contf = ax.tricontourf(tri, p, contours, cmap=cmap, zorder=zorder,
-                              vmin=0, vmax=p.max(), *args, **kwargs)
+                               vmin=0, vmax=p.max(), *args, **kwargs)
         for c in contf.collections:
             c.set_cmap(cmap)
         ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999),
@@ -879,7 +879,7 @@ def quantile_plot_interval(q):
 
 
 def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
-    """Helper function to normalize kwarg inputs.
+    """Normalize kwarg inputs.
 
     Works the same way as cbook.normalize_kwargs, but additionally allows to
     drop kwargs.
