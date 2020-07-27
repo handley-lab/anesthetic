@@ -341,11 +341,13 @@ def test_contour_plot_2d(contour_plot_2d):
         np.random.seed(1)
         data_x = np.random.randn(1000)
         data_y = np.random.randn(1000)
-        c = contour_plot_2d(ax, data_x, data_y)
+        cf, ct = contour_plot_2d(ax, data_x, data_y)
         if contour_plot_2d is fastkde_contour_plot_2d:
-            assert(isinstance(c, QuadContourSet))
+            assert(isinstance(cf, QuadContourSet))
+            assert(isinstance(ct, QuadContourSet))
         elif contour_plot_2d is kde_contour_plot_2d:
-            assert(isinstance(c, TriContourSet))
+            assert(isinstance(cf, TriContourSet))
+            assert(isinstance(ct, TriContourSet))
 
         xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
 
@@ -394,11 +396,17 @@ def test_contour_plot_2d(contour_plot_2d):
 
         # Check unfilled
         ax = plt.gca()
-        contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
-        p = contour_plot_2d(ax, data_x, data_y, facecolor=None, ec='C1')
-        assert p.colors == 'C1'
-        p = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.viridis)
-        assert p.get_cmap() == plt.cm.viridis
+        cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
+        assert ct.colors == 'C0'
+        cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
+        assert cf.get_cmap() == plt.cm.Reds
+        assert ct.colors == 'C0'
+        cf, ct = contour_plot_2d(ax, data_x, data_y, facecolor=None, ec='C1')
+        assert cf is None
+        assert ct.colors == 'C1'
+        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
+        assert cf is None
+        assert ct.get_cmap() == plt.cm.Reds
         plt.close()
 
     except ImportError:
