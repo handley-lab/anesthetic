@@ -71,10 +71,12 @@ fig, axes = make_2d_axes(['omegabh2', 'omegach2', 'H0'], tex=mcmc.tex)
 mcmc.plot_2d(axes, label='Posterior');
 axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes), len(axes)), loc='upper left');
 
-#| * unfilled contours:
+#| * unfilled contours  &  modifying individual axes:
 
 fig, axes = make_2d_axes(['omegabh2', 'omegach2', 'H0'], tex=mcmc.tex)
-mcmc.plot_2d(axes, fc=None);
+mcmc.plot_2d(axes.iloc[0:1, :], types=dict(upper='kde', lower='kde', diagonal='kde'), fc=None);
+mcmc.plot_2d(axes.iloc[1:2, :], types=dict(upper='kde', lower='kde', diagonal='kde'), fc=None, cmap=plt.cm.Oranges, lw=3);
+mcmc.plot_2d(axes.iloc[2:3, :], types=dict(upper='kde', lower='kde', diagonal='kde'), fc='C2', ec='C3', c='C4', lw=2);
 
 #| ## Defining new parameters
 #|
