@@ -269,6 +269,9 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                 if cmap is None else cmap(2/3)))
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -279,7 +282,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     p /= p.max()
     i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[1], p)))
 
-    ans = ax.plot(x[i], p[i], *args, **kwargs)
+    ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
@@ -399,16 +402,20 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         xmax = quantile(data, 0.99, weights)
     range = kwargs.pop('range', (xmin, xmax))
     histtype = kwargs.pop('histtype', 'bar')
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                 if cmap is None else cmap(2/3)))
 
     if plotter == 'astropyhist':
         try:
-            h, edges, bars = hist(data, ax=ax, range=range,
+            h, edges, bars = hist(data, ax=ax, color=color, range=range,
                                   histtype=histtype, *args, **kwargs)
         except NameError:
             raise ImportError("You need to install astropy to use astropyhist")
     else:
-        h, edges, bars = ax.hist(data, range=range, histtype=histtype,
-                                 weights=weights, *args, **kwargs)
+        h, edges, bars = ax.hist(data, color=color, range=range,
+                                 histtype=histtype, weights=weights,
+                                 *args, **kwargs)
 
     if histtype == 'bar':
         for b in bars:
