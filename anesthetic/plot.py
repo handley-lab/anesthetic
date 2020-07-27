@@ -271,7 +271,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
-                                 if cmap is None else cmap(2/3)))
+                                 if cmap is None else cmap(2. / 3.)))
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -331,7 +331,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ncompress = kwargs.pop('ncompress', 1000)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
-                                 if cmap is None else cmap(2/3)))
+                                 if cmap is None else cmap(2. / 3.)))
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -404,7 +404,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     histtype = kwargs.pop('histtype', 'bar')
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
-                                 if cmap is None else cmap(2/3)))
+                                 if cmap is None else cmap(2. / 3.)))
 
     if plotter == 'astropyhist':
         try:
@@ -730,7 +730,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     markersize = kwargs.pop('markersize', 1)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
-                                 if cmap is None else cmap(2/3)))
+                                 if cmap is None else cmap(2. / 3.)))
 
     points = ax.plot(data_x, data_y, 'o', color=color, markersize=markersize,
                      *args, **kwargs)
