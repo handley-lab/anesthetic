@@ -526,6 +526,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         A set of contourlines or filled regions
 
     """
+    kwargs = cbook.normalize_kwargs(kwargs,
+                                    dict(linewidths=['linewidth', 'lw'],
+                                         color=['c'],
+                                         facecolor=['fc'],
+                                         edgecolor=['ec']))
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
@@ -534,8 +539,9 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ncompress = kwargs.pop('ncompress', 1000)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
-    linewidths = kwargs.pop('linewidths', 0.5)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    facecolor = kwargs.pop('facecolor', color)
+    edgecolor = kwargs.pop('edgecolor', 'k')
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -566,18 +572,23 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     contours = iso_probability_contours_from_samples(p, weights=w)
 
-    cmap = kwargs.pop('cmap', basic_cmap(color))
+    cbar = None
+    if facecolor is not None:
+        linewidths = kwargs.pop('linewidths', 0.5)
+        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
+        cbar = ax.tricontourf(tri, p, contours, cmap=cmap, zorder=zorder,
+                              vmin=0, vmax=p.max(), *args, **kwargs)
+        for c in cbar.collections:
+            c.set_cmap(cmap)
+        ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999),
+                                     ec=cmap(0.32), lw=2, label=label)]
+    else:
+        linewidths = kwargs.pop('linewidths', 1.5)
+        ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=None, ec=edgecolor,
+                                     lw=2, label=label)]
 
-    cbar = ax.tricontourf(tri, p, contours, cmap=cmap,
-                          zorder=zorder, vmin=0, vmax=p.max(), *args, **kwargs)
-    for c in cbar.collections:
-        c.set_cmap(cmap)
-
-    ax.tricontour(tri, p, contours, zorder=zorder,
-                  vmin=0, vmax=p.max(), linewidths=linewidths, colors='k',
-                  *args, **kwargs)
-    ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
-                                 lw=2, label=label)]
+    ax.tricontour(tri, p, contours, zorder=zorder, vmin=0, vmax=p.max(),
+                  linewidths=linewidths, colors=edgecolor, *args, **kwargs)
 
     ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(tri.y, ymin, ymax), auto=True)
