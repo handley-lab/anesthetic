@@ -7,7 +7,8 @@ import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
-                             scatter_plot_2d, quantile_plot_interval)
+                             scatter_plot_2d, quantile_plot_interval,
+                             basic_cmap)
 from numpy.testing import assert_array_equal
 
 from matplotlib.contour import QuadContourSet
@@ -333,8 +334,9 @@ def test_hist_plot_2d():
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
 
-@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
-                                             fastkde_contour_plot_2d])
+# @pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
+#                                              fastkde_contour_plot_2d])
+@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d])
 def test_contour_plot_2d(contour_plot_2d):
     try:
         ax = plt.gca()
@@ -395,18 +397,25 @@ def test_contour_plot_2d(contour_plot_2d):
         plt.close()
 
         # Check unfilled
+        cmap = basic_cmap('C2')
         ax = plt.gca()
+        cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
+        cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
+        # filled `contourf` and unfilled `contour` colors are the same:
+        assert cf1.tcolors[0] == ct2.tcolors[0]
+        assert cf1.tcolors[1] == ct2.tcolors[1]
         cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
         assert ct.colors == 'C0'
         cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
         assert cf.get_cmap() == plt.cm.Reds
         assert ct.colors == 'C0'
-        cf, ct = contour_plot_2d(ax, data_x, data_y, facecolor=None, ec='C1')
+        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
         assert cf is None
         assert ct.colors == 'C1'
         cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
         assert cf is None
         assert ct.get_cmap() == plt.cm.Reds
+        assert ct.colors is None
         plt.close()
 
     except ImportError:
