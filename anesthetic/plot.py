@@ -35,7 +35,7 @@ from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
-                              scaled_triangulation)
+                              scaled_triangulation, match_contour_to_contourf)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
@@ -504,20 +504,24 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                             *args, **kwargs)
         for c in contf.collections:
             c.set_cmap(cmap)
-        ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999),
-                                     ec=cmap(0.32), lw=2, label=label)]
+        ax.patches += [plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                                     fc=cmap(0.999), ec=cmap(0.32))]
         cmap = None
     else:
-        contf = None
-        cmap = kwargs.pop('cmap', None)
-        edgecolor = edgecolor if cmap is None else None
         linewidths = kwargs.pop('linewidths',
                                 plt.rcParams.get('lines.linewidth'))
-        ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=None, ec=edgecolor,
-                                     lw=2, label=label)]
+        cmap = kwargs.pop('cmap', None)
+        contf = None
+        ax.patches += [
+            plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                          fc='None' if cmap is None else cmap(0.999),
+                          ec=edgecolor if cmap is None else cmap(0.32))
+        ]
+        edgecolor = edgecolor if cmap is None else None
 
+    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=pdf.max())
     cont = ax.contour(x[i], y[j], pdf[np.ix_(j, i)], levels, zorder=zorder,
-                      vmin=0, vmax=0.32 * pdf.max(), linewidths=linewidths,
+                      vmin=vmin, vmax=vmax, linewidths=linewidths,
                       colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
@@ -613,19 +617,24 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                vmin=0, vmax=p.max(), *args, **kwargs)
         for c in contf.collections:
             c.set_cmap(cmap)
-        ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999),
-                                     ec=cmap(0.32), lw=2, label=label)]
+        ax.patches += [plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                                     fc=cmap(0.999), ec=cmap(0.32))]
         cmap = None
     else:
-        contf = None
+        linewidths = kwargs.pop('linewidths',
+                                plt.rcParams.get('lines.linewidth'))
         cmap = kwargs.pop('cmap', None)
+        contf = None
+        ax.patches += [
+            plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                          fc='None' if cmap is None else cmap(0.999),
+                          ec=edgecolor if cmap is None else cmap(0.32))
+        ]
         edgecolor = edgecolor if cmap is None else None
-        linewidths = kwargs.pop('linewidths', 1.5)
-        ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=None, ec=edgecolor,
-                                     lw=2, label=label)]
 
+    vmin, vmax = match_contour_to_contourf(contours, vmin=0, vmax=p.max())
     cont = ax.tricontour(tri, p, contours, zorder=zorder,
-                         vmin=0, vmax=0.32 * p.max(), linewidths=linewidths,
+                         vmin=vmin, vmax=vmax, linewidths=linewidths,
                          colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
