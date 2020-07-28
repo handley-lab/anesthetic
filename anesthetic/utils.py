@@ -359,3 +359,16 @@ def sample_compression_1d(x, w=None, n=1000):
 def is_int(x):
     """Test whether x is an integer."""
     return isinstance(x, int) or isinstance(x, np.integer)
+
+
+def match_contour_to_contourf(contours, vmin, vmax):
+    """Get needed `vmin, vmax` to match `contour` colors to `contourf` colors.
+
+    `contourf` uses the arithmetic mean of contour levels to assign colors,
+    whereas `contour` uses the contour level directly. To get the same colors
+    for `contour` lines as for `contourf` faces, we need some fiddly algebra.
+    """
+    c0, c1, c2 = contours
+    vmin = (c0 * c2 - c1 ** 2 + 2 * vmin * (c1 - c0)) / (c2 - c0)
+    vmax = (c0 * c2 - c1 ** 2 + 2 * vmax * (c1 - c0)) / (c2 - c0)
+    return vmin, vmax
