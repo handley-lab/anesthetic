@@ -137,6 +137,10 @@ def test_read_multinest():
 def test_read_polychord():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
+    for key1 in ns.columns:
+        assert_array_equal(ns.weight, ns[key1].weight)
+        for key2 in ns.columns:
+            assert_array_equal(ns[key1].weight, ns[key2].weight)
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")

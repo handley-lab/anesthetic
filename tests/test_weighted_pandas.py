@@ -82,6 +82,14 @@ def test_WeightedDataFrame_constructor():
     return df
 
 
+def test_WeightedDataFrame_key():
+    df = test_WeightedDataFrame_constructor()
+    for key1 in df.columns:
+        assert_array_equal(df.weight, df[key1].weight)
+        for key2 in df.columns:
+            assert_array_equal(df[key1].weight, df[key2].weight)
+
+
 def test_WeightedDataFrame_slice():
     df = test_WeightedDataFrame_constructor()
     assert isinstance(df['A'], WeightedSeries)
