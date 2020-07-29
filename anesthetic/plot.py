@@ -35,7 +35,7 @@ from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
-                              scaled_triangulation)
+                              scaled_triangulation, match_contour_to_contourf)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
@@ -269,6 +269,9 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                 if cmap is None else cmap(0.68)))
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -279,7 +282,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     p /= p.max()
     i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[1], p)))
 
-    ans = ax.plot(x[i], p[i], *args, **kwargs)
+    ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
@@ -322,10 +325,17 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     if data.max()-data.min() <= 0:
         return
 
+    kwargs = normalize_kwargs(
+        kwargs,
+        dict(linewidth=['lw'], linestyle=['ls'], color=['c']),
+        drop=['fc', 'ec'])
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                 if cmap is None else cmap(0.68)))
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -345,7 +355,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     sigma = np.sqrt(kde.covariance[0, 0])
     pp = cut_and_normalise_gaussian(x[i], p[i], sigma, xmin, xmax)
     pp /= pp.max()
-    ans = ax.plot(x[i], pp, *args, **kwargs)
+    ans = ax.plot(x[i], pp, color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     return ans
 
@@ -396,16 +406,20 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         xmax = quantile(data, 0.99, weights)
     range = kwargs.pop('range', (xmin, xmax))
     histtype = kwargs.pop('histtype', 'bar')
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                 if cmap is None else cmap(0.68)))
 
     if plotter == 'astropyhist':
         try:
-            h, edges, bars = hist(data, ax=ax, range=range,
+            h, edges, bars = hist(data, ax=ax, color=color, range=range,
                                   histtype=histtype, *args, **kwargs)
         except NameError:
             raise ImportError("You need to install astropy to use astropyhist")
     else:
-        h, edges, bars = ax.hist(data, range=range, histtype=histtype,
-                                 weights=weights, *args, **kwargs)
+        h, edges, bars = ax.hist(data, color=color, range=range,
+                                 histtype=histtype, weights=weights,
+                                 *args, **kwargs)
 
     if histtype == 'bar':
         for b in bars:
@@ -450,15 +464,22 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         A set of contourlines or filled regions
 
     """
+    kwargs = normalize_kwargs(kwargs, dict(linewidths=['linewidth', 'lw'],
+                                           linestyles=['linestyle', 'ls'],
+                                           color=['c'],
+                                           facecolor=['fc'],
+                                           edgecolor=['ec']))
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
-    linewidths = kwargs.pop('linewidths', 0.5)
     levels = kwargs.pop('levels', [0.68, 0.95])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    facecolor = kwargs.pop('facecolor', color)
+    edgecolor = kwargs.pop(
+        'edgecolor', color if facecolor in [None, 'None', 'none'] else 'k')
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -471,25 +492,41 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         raise ImportError("You need to install fastkde to use fastkde")
 
     levels = iso_probability_contours(pdf, contours=levels)
-    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     i = (pdf >= levels[0]*0.5).any(axis=0)
     j = (pdf >= levels[0]*0.5).any(axis=1)
 
-    cbar = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
-                       zorder=zorder, vmin=0, vmax=pdf.max(), *args, **kwargs)
-    for c in cbar.collections:
-        c.set_cmap(cmap)
+    if facecolor not in [None, 'None', 'none']:
+        linewidths = kwargs.pop('linewidths', 0.5)
+        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
+        contf = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
+                            zorder=zorder, vmin=0, vmax=pdf.max(),
+                            *args, **kwargs)
+        for c in contf.collections:
+            c.set_cmap(cmap)
+        ax.patches += [plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                                     fc=cmap(0.999), ec=cmap(0.32))]
+        cmap = None
+    else:
+        linewidths = kwargs.pop('linewidths',
+                                plt.rcParams.get('lines.linewidth'))
+        cmap = kwargs.pop('cmap', None)
+        contf = None
+        ax.patches += [
+            plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                          fc='None' if cmap is None else cmap(0.999),
+                          ec=edgecolor if cmap is None else cmap(0.32))
+        ]
+        edgecolor = edgecolor if cmap is None else None
 
-    ax.contour(x[i], y[j], pdf[np.ix_(j, i)], levels, zorder=zorder,
-               vmin=0, vmax=pdf.max(), linewidths=linewidths, colors='k',
-               *args, **kwargs)
-    ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
-                                 lw=2, label=label)]
+    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=pdf.max())
+    cont = ax.contour(x[i], y[j], pdf[np.ix_(j, i)], levels, zorder=zorder,
+                      vmin=vmin, vmax=vmax, linewidths=linewidths,
+                      colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
-    return cbar
+    return contf, cont
 
 
 def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
@@ -526,6 +563,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         A set of contourlines or filled regions
 
     """
+    kwargs = normalize_kwargs(kwargs, dict(linewidths=['linewidth', 'lw'],
+                                           linestyles=['linestyle', 'ls'],
+                                           color=['c'],
+                                           facecolor=['fc'],
+                                           edgecolor=['ec']))
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
@@ -534,8 +576,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ncompress = kwargs.pop('ncompress', 1000)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
-    linewidths = kwargs.pop('linewidths', 0.5)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    facecolor = kwargs.pop('facecolor', color)
+    edgecolor = kwargs.pop(
+        'edgecolor', color if facecolor in [None, 'None', 'none'] else 'k')
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -566,22 +610,36 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     contours = iso_probability_contours_from_samples(p, weights=w)
 
-    cmap = kwargs.pop('cmap', basic_cmap(color))
+    if facecolor not in [None, 'None', 'none']:
+        linewidths = kwargs.pop('linewidths', 0.5)
+        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
+        contf = ax.tricontourf(tri, p, contours, cmap=cmap, zorder=zorder,
+                               vmin=0, vmax=p.max(), *args, **kwargs)
+        for c in contf.collections:
+            c.set_cmap(cmap)
+        ax.patches += [plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                                     fc=cmap(0.999), ec=cmap(0.32))]
+        cmap = None
+    else:
+        linewidths = kwargs.pop('linewidths',
+                                plt.rcParams.get('lines.linewidth'))
+        cmap = kwargs.pop('cmap', None)
+        contf = None
+        ax.patches += [
+            plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                          fc='None' if cmap is None else cmap(0.999),
+                          ec=edgecolor if cmap is None else cmap(0.32))
+        ]
+        edgecolor = edgecolor if cmap is None else None
 
-    cbar = ax.tricontourf(tri, p, contours, cmap=cmap,
-                          zorder=zorder, vmin=0, vmax=p.max(), *args, **kwargs)
-    for c in cbar.collections:
-        c.set_cmap(cmap)
-
-    ax.tricontour(tri, p, contours, zorder=zorder,
-                  vmin=0, vmax=p.max(), linewidths=linewidths, colors='k',
-                  *args, **kwargs)
-    ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
-                                 lw=2, label=label)]
+    vmin, vmax = match_contour_to_contourf(contours, vmin=0, vmax=p.max())
+    cont = ax.tricontour(tri, p, contours, zorder=zorder,
+                         vmin=vmin, vmax=vmax, linewidths=linewidths,
+                         colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(tri.y, ymin, ymax), auto=True)
-    return cbar
+    return contf, cont
 
 
 def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
@@ -693,15 +751,22 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
         matplotlib matplotlib.axes.Axes.plot command)
 
     """
+    kwargs = normalize_kwargs(
+        kwargs,
+        dict(color=['c'], mfc=['facecolor', 'fc'], mec=['edgecolor', 'ec']),
+        drop=['ls', 'lw'])
+    kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
     kwargs.pop('q', None)
-    kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
     markersize = kwargs.pop('markersize', 1)
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                 if cmap is None else cmap(0.68)))
 
-    points = ax.plot(data_x, data_y, 'o', markersize=markersize,
+    points = ax.plot(data_x, data_y, 'o', color=color, markersize=markersize,
                      *args, **kwargs)
     ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
@@ -821,3 +886,17 @@ def quantile_plot_interval(q):
             q = 1 - q
         q = (q, 1-q)
     return q
+
+
+def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
+    """Normalize kwarg inputs.
+
+    Works the same way as cbook.normalize_kwargs, but additionally allows to
+    drop kwargs.
+    """
+    drop = [] if drop is None else drop
+    alias_mapping = {} if alias_mapping is None else alias_mapping
+    kwargs = cbook.normalize_kwargs(kwargs, alias_mapping=alias_mapping)
+    for key in set(drop) & set(kwargs.keys()):
+        kwargs.pop(key)
+    return kwargs

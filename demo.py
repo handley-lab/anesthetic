@@ -23,8 +23,8 @@ for filename in ["plikHM_TTTEEE_lowl_lowE_lensing.tar.gz","plikHM_TTTEEE_lowl_lo
 #| ## Marginalised posterior plotting
 #| Import anesthetic and load the MCMC samples:
 
-%matplotlib inline
-from anesthetic import MCMCSamples
+import matplotlib.pyplot as plt
+from anesthetic import MCMCSamples, make_2d_axes
 mcmc_root = 'plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing'
 mcmc = MCMCSamples(root=mcmc_root)
 
@@ -52,6 +52,31 @@ mcmc.plot_2d([['omegabh2','omegach2','H0'], ['logA', 'ns']]);
 #| Rectangle plots are pretty flexible with what they can do:
 
 mcmc.plot_2d([['omegabh2','omegach2','H0'], ['H0','omegach2']]);
+
+#| ## Changing the appearance
+#| 
+#| Anesthetic tries to follow matplotlib conventions as much as possible, so 
+#| most changes to the appearance should be relatively straight forward. 
+#| Here are some examples:
+#| 
+#| * figure size:
+
+fig = plt.figure(figsize=(5, 5))
+fig, axes = make_2d_axes(['omegabh2', 'omegach2', 'H0'], fig=fig, tex=mcmc.tex)
+mcmc.plot_2d(axes);
+
+#| * legends:
+
+fig, axes = make_2d_axes(['omegabh2', 'omegach2', 'H0'], tex=mcmc.tex)
+mcmc.plot_2d(axes, label='Posterior');
+axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes), len(axes)), loc='upper left');
+
+#| * unfilled contours  &  modifying individual axes:
+
+fig, axes = make_2d_axes(['omegabh2', 'omegach2', 'H0'], tex=mcmc.tex)
+mcmc.plot_2d(axes.iloc[0:1, :], types=dict(upper='kde', lower='kde', diagonal='kde'), fc=None);
+mcmc.plot_2d(axes.iloc[1:2, :], types=dict(upper='kde', lower='kde', diagonal='kde'), fc=None, cmap=plt.cm.Oranges, lw=3);
+mcmc.plot_2d(axes.iloc[2:3, :], types=dict(upper='kde', lower='kde', diagonal='kde'), fc='C2', ec='C3', c='C4', lw=2);
 
 #| ## Defining new parameters
 #|
@@ -120,8 +145,7 @@ fig, axes = mcmc.plot_2d(['sigma8','omegab'])
 nested.plot_2d(axes=axes);
 
 #| With nested samples, we can plot the prior (or any temperature), by
-#| passing beta=0. We also introduce here the helper function ``get_legend_proxy``
-#| for creating figure legends.
+#| passing beta=0. We also introduce here how to create figure legends."
 
 prior = nested.set_beta(0)
 fig, axes = prior.plot_2d(['ns','tau'], label='prior')
