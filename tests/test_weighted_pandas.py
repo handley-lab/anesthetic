@@ -1,4 +1,3 @@
-import pytest
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas import Series, DataFrame
 import numpy as np
@@ -14,20 +13,11 @@ def test_WeightedSeries_constructor():
     assert_array_equal(series.weight, 1)
     assert_array_equal(series, data)
 
-    with pytest.warns(FutureWarning):
-        series = WeightedSeries(data, w=None)
-        assert_array_equal(series.weight, 1)
-        assert_array_equal(series, data)
-
     series = WeightedSeries(data, weight=None)
     assert_array_equal(series.weight, 1)
     assert_array_equal(series, data)
 
     weight = np.random.rand(N)
-    with pytest.warns(FutureWarning):
-        series = WeightedSeries(data, w=weight)
-        assert_array_equal(series, data)
-
     series = WeightedSeries(data, weight=weight)
     assert_array_equal(series, data)
 
@@ -53,25 +43,11 @@ def test_WeightedDataFrame_constructor():
     assert_array_equal(df.weight, 1)
     assert_array_equal(df, data)
 
-    with pytest.warns(FutureWarning):
-        df = WeightedDataFrame(data, w=None, columns=cols)
-        assert_array_equal(df.weight, 1)
-        assert_array_equal(df, data)
-
     df = WeightedDataFrame(data, weight=None, columns=cols)
     assert_array_equal(df.weight, 1)
     assert_array_equal(df, data)
 
     weight = np.random.rand(N)
-    with pytest.warns(FutureWarning):
-        df = WeightedDataFrame(data, w=weight, columns=cols)
-        assert df.weight.shape == (N,)
-        assert df.shape == (N, m)
-        assert isinstance(df.weight, Series)
-        assert_array_equal(df, data)
-        assert_array_equal(df.weight, weight)
-        assert_array_equal(df.columns, cols)
-
     df = WeightedDataFrame(data, weight=weight, columns=cols)
     assert df.weight.shape == (N,)
     assert df.shape == (N, m)
@@ -161,7 +137,9 @@ def test_WeightedDataFrame_nan():
     assert (np.all(np.isnan(df.std())))
     assert (np.all(np.isnan(df.cov())))
 
-    df._weight[0] = 0
+    weight = df.weight
+    weight[0] = 0
+    df.weight = weight
     assert_allclose(df.mean(), 0.5, atol=1e-2)
     assert_allclose(df.std(), (1./12)**0.5, atol=1e-2)
     assert_allclose(df.cov(), (1./12)*np.identity(3), atol=1e-2)
@@ -221,7 +199,9 @@ def test_WeightedSeries_nan():
     assert np.isnan(series.std())
     assert np.isnan(series.var())
 
-    series._weight[0] = 0
+    weight = series.weight
+    weight[0] = 0
+    series.weight = weight
     assert_allclose(series.mean(), 0.5, atol=1e-2)
     assert_allclose(series.var(), 1./12, atol=1e-2)
     assert_allclose(series.std(), (1./12)**0.5, atol=1e-2)

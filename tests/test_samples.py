@@ -38,13 +38,13 @@ def test_build_mcmc():
 
     mcmc = MCMCSamples(data=samples, weight=weight)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'weight'],
-                                              dtype=object))
+    assert_array_equal(mcmc.columns, np.array([0, 1, 2], dtype=object))
+    assert(mcmc.index.nlevels == 2)
 
     mcmc = MCMCSamples(data=samples, weight=weight, logL=logL)
     assert(len(mcmc) == nsamps)
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL', 'weight'],
-                                              dtype=object))
+    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    assert(mcmc.index.nlevels == 2)
 
     mcmc = MCMCSamples(data=samples, columns=params)
     assert(len(mcmc) == nsamps)
@@ -65,10 +65,10 @@ def test_build_mcmc():
     weight[:10] = 0.
     mcmc = MCMCSamples(data=samples, logL=logL, weight=weight, logzero=-1e29)
     ns = NestedSamples(data=samples, logL=logL, weight=weight, logzero=-1e29)
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL', 'weight'],
-                                              dtype=object))
-    assert_array_equal(ns.columns, np.array([0, 1, 2, 'logL', 'weight'],
-                                            dtype=object))
+    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    assert(mcmc.index.nlevels == 2)
+    assert_array_equal(ns.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    assert(ns.index.nlevels == 2)
     assert(np.all(mcmc.logL[:10] == -np.inf))
     assert(np.all(ns.logL[:10] == -np.inf))
     assert(np.all(mcmc.logL[10:] == logL[10:]))
@@ -181,8 +181,8 @@ def test_different_parameters():
 
 def test_manual_columns():
     old_params = ['x0', 'x1', 'x2', 'x3', 'x4']
-    mcmc_params = ['logL', 'weight']
-    ns_params = ['logL', 'logL_birth', 'nlive', 'weight']
+    mcmc_params = ['logL']
+    ns_params = ['logL', 'logL_birth', 'nlive']
     mcmc = MCMCSamples(root='./tests/example_data/gd')
     ns = NestedSamples(root='./tests/example_data/pc')
     assert_array_equal(mcmc.columns, old_params + mcmc_params)
@@ -503,27 +503,28 @@ def test_merging():
 def test_beta():
     pc = NestedSamples(root="./tests/example_data/pc")
     weight = pc.weight
-    assert_array_equal(pc['weight'], pc.weight)
+    assert_array_equal(weight, pc.weight)
+    assert_array_equal(pc.index.get_level_values(1), pc.weight)
     assert pc.beta == 1
 
     prior = pc.set_beta(0)
     assert prior.beta == 0
-    assert_array_equal(prior['weight'], prior.weight)
+    assert_array_equal(prior.index.get_level_values(1), prior.weight)
     assert pc.beta == 1
-    assert_array_equal(pc['weight'], pc.weight)
+    assert_array_equal(pc.index.get_level_values(1), pc.weight)
     assert_array_almost_equal(sorted(prior.weight, reverse=True), prior.weight)
 
     for beta in np.linspace(0, 2, 10):
         pc.set_beta(beta, inplace=True)
         assert pc.beta == beta
-        assert_array_equal(pc['weight'], pc.weight)
-        assert not np.array_equal(pc['weight'], weight)
+        assert_array_equal(pc.index.get_level_values(1), pc.weight)
+        assert not np.array_equal(pc.index.get_level_values(1), weight)
 
     for beta in np.linspace(0, 2, 10):
         pc.beta = beta
         assert pc.beta == beta
-        assert_array_equal(pc['weight'], pc.weight)
-        assert not np.array_equal(pc['weight'], weight)
+        assert_array_equal(pc.index.get_level_values(1), pc.weight)
+        assert not np.array_equal(pc.index.get_level_values(1), weight)
 
 
 def test_beta_with_logL_infinities():
@@ -542,10 +543,13 @@ def test_live_points():
 
     for i, logL in pc.logL.iteritems():
         live_points = pc.live_points(logL)
-        assert len(live_points) == pc.nlive[i]
+        assert len(live_points) == int(pc.nlive[i])
 
-        live_points_from_int = pc.live_points(i)
+        live_points_from_int = pc.live_points(i[0])
         assert_array_equal(live_points_from_int, live_points)
+
+        live_points_from_index = pc.live_points(i)
+        assert_array_equal(live_points_from_index, live_points)
 
     last_live_points = pc.live_points()
     logL = pc.logL_birth.max()
@@ -571,8 +575,6 @@ def test_limit_assignment():
     # limits for logL, weight, nlive
     assert ns.limits['logL'][0] == -777.0115456428716
     assert ns.limits['logL'][1] == 5.748335384373301
-    assert ns.limits['weight'][0] == 0
-    assert ns.limits['weight'][1] == 1
     assert ns.limits['nlive'][0] == 0
     assert ns.limits['nlive'][1] == 125
 
@@ -608,5 +610,7 @@ def test_contour_plot_2d_nan():
         ns.plot_2d(['x0', 'x1'])
 
     # Check this error is removed in the case of zero weights
-    ns._weight[:10] = 0
+    weight = ns.weight
+    weight[:10] = 0
+    ns.weight = weight
     ns.plot_2d(['x0', 'x1'])

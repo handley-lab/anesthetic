@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas
-from warnings import warn
 from anesthetic.utils import compress_weights, channel_capacity, quantile
 
 
@@ -10,23 +9,24 @@ class _WeightedObject(object):
     @property
     def weight(self):
         """Sample weights."""
-        if self._weight is None:
+        if self.index.nlevels == 1:
             return pandas.Series(index=self.index, data=1.)
         else:
-            return self._weight[self.index]
+            return pandas.Series(data=self.index.droplevel(0),
+                                 index=self.index)
+
+    @weight.setter
+    def weight(self, weight):
+        if weight is not None:
+            self.index = [self.index.get_level_values(0), weight]
+            self.index.set_names([None, 'weight'], inplace=True)
 
     @property
     def _rand(self):
         """Random number for consistent compression."""
-        return self._rand_[self.index]
-
-    def _construct_weights(self, weight):
-        if weight is not None:
-            self._weight = pandas.Series(index=self.index, data=weight)
-        else:
-            self._weight = None
-        rand = np.random.rand(len(self))
-        self._rand_ = pandas.Series(index=self.index, data=rand)
+        h = pandas.util.hash_array(self.index)
+        _rand = np.frexp(h)[0]*2-1
+        return pandas.Series(data=_rand, index=self.index)
 
     def std(self):
         """Weighted standard deviation of the sampled distribution."""
@@ -45,13 +45,9 @@ class WeightedSeries(_WeightedObject, pandas.Series):
     """Weighted version of pandas.Series."""
 
     def __init__(self, *args, **kwargs):
-        if 'w' in kwargs:
-            warn("'w' as a kwarg will be deprecated in the future. "
-                 "Please use 'weight'", FutureWarning)
-        weight = kwargs.pop('w', None)
-        weight = kwargs.pop('weight', weight)
+        weight = kwargs.pop('weight', None)
         super(WeightedSeries, self).__init__(*args, **kwargs)
-        self._construct_weights(weight)
+        self.weight = weight
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
@@ -87,32 +83,22 @@ class WeightedSeries(_WeightedObject, pandas.Series):
         i = compress_weights(self.weight, self._rand, nsamples)
         return self.repeat(i)
 
-    _metadata = ['_weight', '_rand_']
-
     @property
     def _constructor(self):
         return WeightedSeries
 
     @property
     def _constructor_expanddim(self):
-        def __constructor_expanddim(*args, **kwargs):
-            frame = WeightedDataFrame(*args, weight=self._weight, **kwargs)
-            frame._rand_ = self._rand_
-            return frame
-        return __constructor_expanddim
+        return WeightedDataFrame
 
 
 class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
     """Weighted version of pandas.DataFrame."""
 
     def __init__(self, *args, **kwargs):
-        if 'w' in kwargs:
-            warn("'w' as a kwarg will be deprecated in the future. "
-                 "Please use 'weight'", FutureWarning)
-        weight = kwargs.pop('w', None)
-        weight = kwargs.pop('weight', weight)
+        weight = kwargs.pop('weight', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
-        self._construct_weights(weight)
+        self.weight = weight
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
@@ -161,20 +147,12 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         data = np.repeat(self.values, i, axis=0)
         index = np.repeat(self.index.values, i)
         df = pandas.DataFrame(data=data, index=index, columns=self.columns)
-        if 'weight' in self:
-            return df.drop(columns='weight')
-        else:
-            return df
-
-    _metadata = ['_weight', '_rand_']
+        df.index = df.index.get_level_values(0)
+        return df
 
     @property
     def _constructor_sliced(self):
-        def __constructor_sliced(*args, **kwargs):
-            series = WeightedSeries(*args, weight=self._weight, **kwargs)
-            series._rand_ = self._rand_
-            return series
-        return __constructor_sliced
+        return WeightedSeries
 
     @property
     def _constructor(self):

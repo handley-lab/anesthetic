@@ -100,10 +100,6 @@ class MCMCSamples(WeightedDataFrame):
                 self['logL'] = logL
                 self.tex['logL'] = r'$\log\mathcal{L}$'
 
-            if self._weight is not None:
-                self['weight'] = self.weight
-                self.tex['weight'] = r'MCMC weight'
-
             self._set_automatic_limits()
 
     def _set_automatic_limits(self):
@@ -470,11 +466,7 @@ class NestedSamples(MCMCSamples):
         self._beta = beta
         logw = self.dlogX() + np.where(self.logL == -np.inf, -np.inf,
                                        self.beta * self.logL)
-        self._weight = np.exp(logw - logw.max())
-
-        if self._weight is not None:
-            self['weight'] = self.weight
-            self.tex['weight'] = r'MCMC weight'
+        self.weight = np.exp(logw - logw.max())
 
     def set_beta(self, beta, inplace=False):
         """Change the inverse temperature.
@@ -592,9 +584,11 @@ class NestedSamples(MCMCSamples):
         """
         if logL is None:
             logL = self.logL_birth.max()
-        elif is_int(logL):
-            logL = self.logL[logL]
-
+        else:
+            try:
+                logL = float(self.logL[logL])
+            except KeyError:
+                pass
         return self[(self.logL > logL) & (self.logL_birth <= logL)]
 
     def posterior_points(self, beta=1):
