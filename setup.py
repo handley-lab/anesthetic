@@ -31,7 +31,7 @@ setup(name='anesthetic',
       url='https://github.com/williamjameshandley/anesthetic',
       packages=find_packages(),
       scripts=['scripts/anesthetic'],
-      install_requires=['numpy', 'scipy', 'pandas<=1.0.5', 'matplotlib'],
+      install_requires=['numpy', 'scipy>=1.2.0', 'pandas<=1.0.5', 'matplotlib>=3.1.2'],
       setup_requires=['pytest-runner'],
       extras_require={
           'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc'],
