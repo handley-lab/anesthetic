@@ -189,6 +189,30 @@ def compute_nlive(death, birth):
     return nlive.values
 
 
+def compute_insertion_indices(death, birth):
+    """Compute the live point insertion index for each point.
+
+    For more detail, see https://arxiv.org/abs/2006.03371
+
+    Parameters
+    ----------
+    death, birth : array-like
+        list of birth and death contours
+
+    Returns
+    -------
+    indices: np.array
+        live point index at which each live point was inserted
+    """
+    indices = np.zeros_like(birth, dtype=int)
+    for i, (b, d) in enumerate(zip(birth, death)):
+        i_live = (death > b) & (birth <= b)
+        live = death[i_live]
+        live.sort()
+        indices[i] = np.searchsorted(live, d)
+    return indices
+
+
 def unique(a):
     """Find unique elements, retaining order."""
     b = []

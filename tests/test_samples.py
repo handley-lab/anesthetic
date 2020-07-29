@@ -8,9 +8,10 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from anesthetic.samples import merge_nested_samples
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from numpy.testing import (assert_array_equal, assert_array_almost_equal,
+                           assert_array_less)
 from matplotlib.colors import to_hex
-from scipy.stats import ks_2samp
+from scipy.stats import ks_2samp, kstest
 try:
     import montepython  # noqa: F401
 except ImportError:
@@ -606,3 +607,22 @@ def test_contour_plot_2d_nan():
     # Check this error is removed in the case of zero weights
     ns._weight[:10] = 0
     ns.plot_2d(['x0', 'x1'])
+
+
+def test_compute_insertion():
+    np.random.seed(3)
+    ns = NestedSamples(root='./tests/example_data/pc')
+    assert 'insertion' not in ns
+    ns._compute_insertion_indices()
+    assert 'insertion' in ns
+
+    nlive = ns.nlive.mode()[0]
+    assert_array_less(ns.insertion, nlive)
+
+    u = ns.insertion.values/nlive
+    assert kstest(u[nlive:-nlive], 'uniform').pvalue > 0.05
+
+    pvalues = [kstest(u[i:i+nlive], 'uniform').pvalue
+               for i in range(nlive, len(ns)-2*nlive, nlive)]
+
+    assert kstest(pvalues, 'uniform').pvalue > 0.05
