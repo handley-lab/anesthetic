@@ -4,7 +4,8 @@ from scipy import special as sp
 from numpy.testing import assert_array_equal
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               logsumexp, sample_compression_1d,
-                              triangular_sample_compression_2d)
+                              triangular_sample_compression_2d,
+                              insertion_p_value)
 
 
 def test_nest_level():
@@ -78,6 +79,7 @@ def test_is_int():
 
 
 def test_logsumexpinf():
+    np.random.seed(0)
     a = np.random.rand(10)
     b = np.random.rand(10)
     assert logsumexp(-np.inf, b=[-np.inf]) == -np.inf
@@ -91,3 +93,38 @@ def test_logsumexpinf():
                                 RuntimeWarning)
         assert np.isnan(sp.logsumexp(a, b=b))
     assert np.isfinite(logsumexp(a, b=b))
+
+
+def test_insertion_p_value():
+    np.random.seed(3)
+    nlive = 500
+    ndead = nlive*20
+    indexes = np.random.randint(0, nlive, ndead)
+    ks_results = insertion_p_value(indexes, nlive)
+    assert 'D' in ks_results
+    assert 'p_value' in ks_results
+    assert 'sample_size' in ks_results
+
+    assert 'iterations' not in ks_results
+    assert 'nbatches' not in ks_results
+    assert 'p_value_uncorrected' not in ks_results
+
+    assert ks_results['p_value'] > 0.05
+    assert ks_results['sample_size'] == ndead
+
+    ks_results = insertion_p_value(indexes, nlive, 1)
+    assert 'D' in ks_results
+    assert 'p_value' in ks_results
+    assert 'sample_size' in ks_results
+    assert 'iterations' in ks_results
+    assert 'nbatches' in ks_results
+    assert 'p_value_uncorrected' in ks_results
+
+    assert ks_results['p_value'] > 0.05
+    assert ks_results['p_value_uncorrected'] < ks_results['p_value']
+
+    iterations = ks_results['iterations']
+    assert isinstance(iterations, tuple)
+    assert len(iterations) == 2
+    assert iterations[1] - iterations[0] == nlive
+    assert ks_results['nbatches'] == 20

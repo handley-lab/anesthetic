@@ -613,7 +613,7 @@ def test_compute_insertion():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     assert 'insertion' not in ns
-    ns._compute_insertion_indices()
+    ns._compute_insertion_indexes()
     assert 'insertion' in ns
 
     nlive = ns.nlive.mode()[0]
