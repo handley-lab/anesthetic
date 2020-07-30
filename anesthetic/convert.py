@@ -16,7 +16,7 @@ def to_getdist(nested_samples):
     """
     import getdist
     samples = nested_samples.values
-    weights = nested_samples.weight.values
+    weights = nested_samples.weight
     loglikes = -2*nested_samples.logL.values
     names = nested_samples.columns
     ranges = {name: nested_samples._limits(name) for name in names}

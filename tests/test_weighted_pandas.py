@@ -23,7 +23,7 @@ def test_WeightedSeries_constructor():
 
     assert series.weight.shape == (N,)
     assert series.shape == (N,)
-    assert isinstance(series.weight, Series)
+    assert isinstance(series.weight, np.ndarray)
     assert_array_equal(series, data)
     assert_array_equal(series.weight, weight)
     assert isinstance(series.to_frame(), WeightedDataFrame)
@@ -51,7 +51,7 @@ def test_WeightedDataFrame_constructor():
     df = WeightedDataFrame(data, weight=weight, columns=cols)
     assert df.weight.shape == (N,)
     assert df.shape == (N, m)
-    assert isinstance(df.weight, Series)
+    assert isinstance(df.weight, np.ndarray)
     assert_array_equal(df, data)
     assert_array_equal(df.weight, weight)
     assert_array_equal(df.columns, cols)

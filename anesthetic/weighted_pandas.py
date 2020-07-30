@@ -12,14 +12,13 @@ class _WeightedObject(object):
         if self.index.nlevels == 1:
             return pandas.Series(index=self.index, data=1.)
         else:
-            return pandas.Series(data=self.index.droplevel(0),
-                                 index=self.index)
+            return self.index.get_level_values('weight').to_numpy()
 
     @weight.setter
     def weight(self, weight):
         if weight is not None:
             self.index = [self.index.get_level_values(0), weight]
-            self.index.set_names([None, 'weight'], inplace=True)
+            self.index.set_names(['#', 'weight'], inplace=True)
 
     @property
     def _rand(self):
@@ -62,7 +61,7 @@ class WeightedSeries(_WeightedObject, pandas.Series):
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
-        return quantile(self.values, q, self.weight.values)
+        return quantile(self.values, q, self.weight)
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
