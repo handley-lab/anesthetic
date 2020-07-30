@@ -465,6 +465,10 @@ def test_ns_output():
     assert abs(pc.set_beta(0.0).logZ()) < 1e-2
     assert pc.set_beta(0.9).logZ() < pc.set_beta(1.0).logZ()
 
+    assert_array_almost_equal(pc.set_beta(1).weight, pc.set_beta(1).weight)
+    assert_array_almost_equal(pc.set_beta(0.5).weight, pc.set_beta(0.5).weight)
+    assert_array_equal(pc.set_beta(0).weight, pc.set_beta(0).weight)
+
 
 def test_masking():
     pc = NestedSamples(root="./tests/example_data/pc")
@@ -616,3 +620,10 @@ def test_contour_plot_2d_nan():
     weight[:10] = 0
     ns.weight = weight
     ns.plot_2d(['x0', 'x1'])
+
+
+def test_posterior_points():
+    np.random.seed(3)
+    ns = NestedSamples(root='./tests/example_data/pc')
+    assert_array_equal(ns.posterior_points(), ns.posterior_points())
+    assert_array_equal(ns.posterior_points(0.5), ns.posterior_points(0.5))

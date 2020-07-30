@@ -2,7 +2,8 @@
 
 import numpy as np
 import pandas
-from anesthetic.utils import compress_weights, channel_capacity, quantile
+from anesthetic.utils import (compress_weights, channel_capacity, quantile,
+                              temporary_seed, array_to_seed)
 
 
 class _WeightedObject(object):
@@ -23,9 +24,9 @@ class _WeightedObject(object):
     @property
     def _rand(self):
         """Random number for consistent compression."""
-        h = pandas.util.hash_array(self.index)
-        _rand = np.frexp(h)[0]*2-1
-        return pandas.Series(data=_rand, index=self.index)
+        seed = pandas.util.hash_pandas_object(self.index).sum() % 2**32
+        with temporary_seed(seed):
+            return np.random.rand(len(self))
 
     def std(self):
         """Weighted standard deviation of the sampled distribution."""

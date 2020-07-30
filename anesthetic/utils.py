@@ -4,6 +4,7 @@ import pandas
 from scipy import special
 from scipy.interpolate import interp1d
 from matplotlib.tri import Triangulation
+import contextlib
 
 
 def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
@@ -372,3 +373,19 @@ def match_contour_to_contourf(contours, vmin, vmax):
     vmin = (c0 * c2 - c1 ** 2 + 2 * vmin * (c1 - c0)) / (c2 - c0)
     vmax = (c0 * c2 - c1 ** 2 + 2 * vmax * (c1 - c0)) / (c2 - c0)
     return vmin, vmax
+
+
+@contextlib.contextmanager
+def temporary_seed(seed):
+    """Context for temporarily setting a numpy seed."""
+    state = np.random.get_state()
+    np.random.seed(seed)
+    try:
+        yield
+    finally:
+        np.random.set_state(state)
+
+
+def array_to_seed(array):
+    """Convert numpy array to seed for np.random.seed"""
+    return np.frombuffer(array.data.tobytes(), dtype=int).sum() % 2**32
