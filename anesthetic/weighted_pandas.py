@@ -8,18 +8,18 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile,
 
 class _WeightedObject(object):
     @property
-    def weight(self):
+    def weights(self):
         """Sample weights."""
         if self.index.nlevels == 1:
             return pandas.Series(index=self.index, data=1.)
         else:
-            return self.index.get_level_values('weight').to_numpy()
+            return self.index.get_level_values('weights').to_numpy()
 
-    @weight.setter
-    def weight(self, weight):
-        if weight is not None:
-            self.index = [self.index.get_level_values(0), weight]
-            self.index.set_names(['#', 'weight'], inplace=True)
+    @weights.setter
+    def weights(self, weights):
+        if weights is not None:
+            self.index = [self.index.get_level_values(0), weights]
+            self.index.set_names(['#', 'weights'], inplace=True)
 
     @property
     def _rand(self):
@@ -38,35 +38,35 @@ class _WeightedObject(object):
 
     def neff(self):
         """Effective number of samples."""
-        return channel_capacity(self.weight)
+        return channel_capacity(self.weights)
 
 
 class WeightedSeries(_WeightedObject, pandas.Series):
     """Weighted version of pandas.Series."""
 
     def __init__(self, *args, **kwargs):
-        weight = kwargs.pop('weight', None)
+        weights = kwargs.pop('weights', None)
         super(WeightedSeries, self).__init__(*args, **kwargs)
-        self.weight = weight
+        self.weights = weights
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        nonzero = self.weight != 0
-        return np.average(self[nonzero], weights=self.weight[nonzero])
+        nonzero = self.weights != 0
+        return np.average(self[nonzero], weights=self.weights[nonzero])
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        nonzero = self.weight != 0
+        nonzero = self.weights != 0
         return np.average((self[nonzero]-self.mean())**2,
-                          weights=self.weight[nonzero])
+                          weights=self.weights[nonzero])
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
-        return quantile(self.values, q, self.weight)
+        return quantile(self.values, q, self.weights)
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedSeries, self).hist(weights=self.weight,
+        return super(WeightedSeries, self).hist(weights=self.weights,
                                                 *args, **kwargs)
 
     def compress(self, nsamples=None):
@@ -80,7 +80,7 @@ class WeightedSeries(_WeightedObject, pandas.Series):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.weight, self._rand, nsamples)
+        i = compress_weights(self.weights, self._rand, nsamples)
         return self.repeat(i)
 
     @property
@@ -96,27 +96,27 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
     """Weighted version of pandas.DataFrame."""
 
     def __init__(self, *args, **kwargs):
-        weight = kwargs.pop('weight', None)
+        weights = kwargs.pop('weights', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
-        self.weight = weight
+        self.weights = weights
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        nonzero = self.weight != 0
-        mean = np.average(self[nonzero], weights=self.weight[nonzero], axis=0)
+        nonzero = self.weights != 0
+        mean = np.average(self[nonzero], weights=self.weights[nonzero], axis=0)
         return pandas.Series(mean, index=self.columns)
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        nonzero = self.weight != 0
+        nonzero = self.weights != 0
         var = np.average((self[nonzero]-self.mean())**2,
-                         weights=self.weight[nonzero], axis=0)
+                         weights=self.weights[nonzero], axis=0)
         return pandas.Series(var, index=self.columns)
 
     def cov(self):
         """Weighted covariance of the sampled distribution."""
-        nonzero = self.weight != 0
-        cov = np.cov(self[nonzero].T, aweights=self.weight[nonzero])
+        nonzero = self.weights != 0
+        cov = np.cov(self[nonzero].T, aweights=self.weights[nonzero])
         return pandas.DataFrame(cov, index=self.columns, columns=self.columns)
 
     def quantile(self, q=0.5):
@@ -129,7 +129,7 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedDataFrame, self).hist(weights=self.weight,
+        return super(WeightedDataFrame, self).hist(weights=self.weights,
                                                    *args, **kwargs)
 
     def compress(self, nsamples=None):
@@ -143,7 +143,7 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.weight, self._rand, nsamples)
+        i = compress_weights(self.weights, self._rand, nsamples)
         data = np.repeat(self.values, i, axis=0)
         index = np.repeat(self.index.values, i)
         df = pandas.DataFrame(data=data, index=index, columns=self.columns)
