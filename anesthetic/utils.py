@@ -384,8 +384,3 @@ def temporary_seed(seed):
         yield
     finally:
         np.random.set_state(state)
-
-
-def array_to_seed(array):
-    """Convert numpy array to seed for np.random.seed"""
-    return np.frombuffer(array.data.tobytes(), dtype=int).sum() % 2**32

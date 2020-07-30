@@ -3,7 +3,7 @@
 import numpy as np
 import pandas
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
-                              temporary_seed, array_to_seed)
+                              temporary_seed)
 
 
 class _WeightedObject(object):
