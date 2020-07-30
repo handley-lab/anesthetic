@@ -504,27 +504,29 @@ def test_beta():
     pc = NestedSamples(root="./tests/example_data/pc")
     weight = pc.weight
     assert_array_equal(weight, pc.weight)
-    assert_array_equal(pc.index.get_level_values(1), pc.weight)
+    assert_array_equal(pc.index.get_level_values('weight'), pc.weight)
     assert pc.beta == 1
 
     prior = pc.set_beta(0)
     assert prior.beta == 0
-    assert_array_equal(prior.index.get_level_values(1), prior.weight)
+    assert_array_equal(prior.index.get_level_values('weight'), prior.weight)
     assert pc.beta == 1
-    assert_array_equal(pc.index.get_level_values(1), pc.weight)
+    assert_array_equal(pc.index.get_level_values('weight'), pc.weight)
     assert_array_almost_equal(sorted(prior.weight, reverse=True), prior.weight)
 
     for beta in np.linspace(0, 2, 10):
         pc.set_beta(beta, inplace=True)
         assert pc.beta == beta
-        assert_array_equal(pc.index.get_level_values(1), pc.weight)
-        assert not np.array_equal(pc.index.get_level_values(1), weight)
+        assert_array_equal(pc.index.get_level_values('weight'), pc.weight)
+        assert not np.array_equal(pc.index.get_level_values('weight'),
+                                  weight)
 
     for beta in np.linspace(0, 2, 10):
         pc.beta = beta
         assert pc.beta == beta
-        assert_array_equal(pc.index.get_level_values(1), pc.weight)
-        assert not np.array_equal(pc.index.get_level_values(1), weight)
+        assert_array_equal(pc.index.get_level_values('weight'), pc.weight)
+        assert not np.array_equal(pc.index.get_level_values('weight'),
+                                  weight)
 
 
 def test_beta_with_logL_infinities():
