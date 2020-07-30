@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 from scipy import special as sp
 from numpy.testing import assert_array_equal
+from anesthetic import NestedSamples
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
@@ -102,29 +103,42 @@ def test_insertion_p_value():
     indexes = np.random.randint(0, nlive, ndead)
     ks_results = insertion_p_value(indexes, nlive)
     assert 'D' in ks_results
-    assert 'p_value' in ks_results
+    assert 'p-value' in ks_results
     assert 'sample_size' in ks_results
 
     assert 'iterations' not in ks_results
     assert 'nbatches' not in ks_results
     assert 'p_value_uncorrected' not in ks_results
 
-    assert ks_results['p_value'] > 0.05
+    assert ks_results['p-value'] > 0.05
     assert ks_results['sample_size'] == ndead
 
     ks_results = insertion_p_value(indexes, nlive, 1)
     assert 'D' in ks_results
-    assert 'p_value' in ks_results
+    assert 'p-value' in ks_results
     assert 'sample_size' in ks_results
     assert 'iterations' in ks_results
     assert 'nbatches' in ks_results
-    assert 'p_value_uncorrected' in ks_results
+    assert 'uncorrected p-value' in ks_results
 
-    assert ks_results['p_value'] > 0.05
-    assert ks_results['p_value_uncorrected'] < ks_results['p_value']
+    assert ks_results['p-value'] > 0.05
+    assert ks_results['uncorrected p-value'] < ks_results['p-value']
 
     iterations = ks_results['iterations']
     assert isinstance(iterations, tuple)
     assert len(iterations) == 2
     assert iterations[1] - iterations[0] == nlive
     assert ks_results['nbatches'] == 20
+
+
+def test_p_values_from_sample():
+    np.random.seed(3)
+    ns = NestedSamples(root='./tests/example_data/pc')
+    ns._compute_insertion_indexes()
+    nlive = len(ns.live_points())
+
+    ks_results = insertion_p_value(ns.insertion[nlive:-nlive], nlive)
+    assert ks_results['p-value'] > 0.05
+
+    ks_results = insertion_p_value(ns.insertion[nlive:-nlive], nlive, batch=1)
+    assert ks_results['p-value'] > 0.05

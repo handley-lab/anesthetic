@@ -429,11 +429,11 @@ def insertion_p_value(indexes, nlive, batch=0):
         Kolmogorov-Smirnov test results:
             D: Kolmogorov-Smirnov statistic
             sample_size: sample size
-            p_value: p-value
+            p-value: p-value
             # if batch != 0
             iterations: bounds of batch with minimum p-value
             nbatches: the number of batches in total
-            p_value_uncorrected: p_value without Bonferroni correction
+            uncorrected p-value: p-value without Bonferroni correction
     """
     if batch == 0:
         bins = np.arange(-0.5, nlive + 0.5, 1.)
@@ -448,19 +448,19 @@ def insertion_p_value(indexes, nlive, batch=0):
         ks_result = {}
         ks_result["D"] = D
         ks_result["sample_size"] = sample_size
-        ks_result["p_value"] = kstwobign.sf(K)
+        ks_result["p-value"] = kstwobign.sf(K)
         return ks_result
     else:
         batch = int(batch * nlive)
         batches = [indexes[i:i + batch] for i in range(0, len(indexes), batch)]
         ks_results = [insertion_p_value(c, nlive) for c in batches]
-        ks_result = min(ks_results, key=lambda t: t["p_value"])
+        ks_result = min(ks_results, key=lambda t: t["p-value"])
         index = ks_results.index(ks_result)
 
         ks_result["iterations"] = (index * batch, (index + 1) * batch)
         ks_result["nbatches"] = n = len(batches)
-        ks_result["p_value_uncorrected"] = p = ks_result["p_value"]
-        ks_result["p_value"] = 1. - (1. - p)**n
-        if ks_result["p_value"] == 0.:
-            ks_result["p_value"] = p * n
+        ks_result["uncorrected p-value"] = p = ks_result["p-value"]
+        ks_result["p-value"] = 1. - (1. - p)**n
+        if ks_result["p-value"] == 0.:
+            ks_result["p-value"] = p * n
         return ks_result
