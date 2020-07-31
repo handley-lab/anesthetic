@@ -11,7 +11,8 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              fastkde_contour_plot_2d,
                              kde_contour_plot_2d, hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
-from anesthetic.utils import compute_nlive, is_int, logsumexp
+from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
+                              is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
@@ -651,6 +652,10 @@ class NestedSamples(MCMCSamples):
 
         self.tex['nlive'] = r'$n_{\rm live}$'
         self.beta = self._beta
+
+    def _compute_insertion_indexes(self):
+        self['insertion'] = compute_insertion_indexes(self.logL.values,
+                                                      self.logL_birth.values)
 
     _metadata = MCMCSamples._metadata + ['_beta']
 
