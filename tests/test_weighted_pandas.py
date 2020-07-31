@@ -1,5 +1,6 @@
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas import Series, DataFrame
+import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 
@@ -110,6 +111,17 @@ def test_WeightedDataFrame_quantile():
         assert_allclose(quantile, q, atol=1e-2)
 
 
+def test_WeightedDataFrame_hist():
+    df = test_WeightedDataFrame_constructor()
+    axes = df[['A', 'B']].hist(bins=20, density=True)
+    for ax in axes.flatten():
+        assert len(ax.patches) == 20
+        norm = 0
+        for patch in ax.patches:
+            norm += patch.get_height() * patch.get_width()
+        assert norm == pytest.approx(1)
+
+
 def test_WeightedDataFrame_neff():
     df = test_WeightedDataFrame_constructor()
     neff = df.neff()
@@ -175,6 +187,16 @@ def test_WeightedSeries_quantile():
         quantile = series.quantile(q)
         assert isinstance(quantile, float)
         assert_allclose(quantile, q, atol=1e-2)
+
+
+def test_WeightedSeries_hist():
+    series = test_WeightedSeries_constructor()
+    ax = series.hist(bins=20, density=True)
+    assert len(ax.patches) == 20
+    norm = 0
+    for patch in ax.patches:
+        norm += patch.get_height() * patch.get_width()
+    assert norm == pytest.approx(1)
 
 
 def test_WeightedSeries_neff():
