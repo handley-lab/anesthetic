@@ -3,6 +3,7 @@ from pandas import Series, DataFrame
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
+import matplotlib.pyplot as plt
 
 
 def test_WeightedSeries_constructor():
@@ -120,6 +121,7 @@ def test_WeightedDataFrame_hist():
         for patch in ax.patches:
             norm += patch.get_height() * patch.get_width()
         assert norm == pytest.approx(1)
+    plt.close("all")
 
 
 def test_WeightedDataFrame_neff():
@@ -197,6 +199,7 @@ def test_WeightedSeries_hist():
     for patch in ax.patches:
         norm += patch.get_height() * patch.get_width()
     assert norm == pytest.approx(1)
+    plt.close("all")
 
 
 def test_WeightedSeries_neff():
