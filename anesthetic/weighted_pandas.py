@@ -145,9 +145,9 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         """
         i = compress_weights(self.weights, self._rand, nsamples)
         data = np.repeat(self.values, i, axis=0)
-        index = np.repeat(self.index.values, i)
+        index = self.index.repeat(i)
         df = pandas.DataFrame(data=data, index=index, columns=self.columns)
-        df.index = df.index.get_level_values(0)
+        df.index = df.index.get_level_values('#')
         return df
 
     @property
