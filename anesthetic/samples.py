@@ -316,27 +316,6 @@ class MCMCSamples(WeightedDataFrame):
         """
         default_types = {'diagonal': 'kde', 'lower': 'kde', 'upper': 'scatter'}
         types = kwargs.pop('types', default_types)
-        diagonal = kwargs.pop('diagonal', True)
-        if isinstance(types, list) or isinstance(types, str):
-            from warnings import warn
-            warn("MCMCSamples.plot_2d's argument 'types' might stop accepting "
-                 "str or list(str) as input in the future. It takes a "
-                 "dictionary as input, now, with keys 'diagonal' for the 1D "
-                 "plots and 'lower' and 'upper' for the 2D plots. 'diagonal' "
-                 "accepts the values 'kde' or 'hist' and both 'lower' and "
-                 "'upper' accept the values 'kde' or 'scatter'. "
-                 "Default: {'diagonal': 'kde', 'lower': 'kde'}.",
-                 FutureWarning)
-
-            if isinstance(types, str):
-                types = {'lower': types}
-                if diagonal:
-                    types['diagonal'] = types['lower']
-            elif isinstance(types, list):
-                types = {'lower': types[0], 'upper': types[-1]}
-                if diagonal:
-                    types['diagonal'] = types['lower']
-
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in default_types}
 

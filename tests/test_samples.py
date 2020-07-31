@@ -202,17 +202,7 @@ def test_plot_2d_types():
     params_x = ['x0', 'x1', 'x2', 'x3']
     params_y = ['x0', 'x1', 'x2']
     params = [params_x, params_y]
-    # Test old interface
-    fig, axes = ns.plot_2d(params, types=['kde', 'scatter'])
-    assert((~axes.isnull()).sum().sum() == 12)
 
-    fig, axes = ns.plot_2d(params, types='kde')
-    assert((~axes.isnull()).sum().sum() == 6)
-
-    fig, axes = ns.plot_2d(params, types='kde', diagonal=False)
-    assert((~axes.isnull()).sum().sum() == 3)
-
-    # Test new interface
     fig, axes = ns.plot_2d(params, types={'lower': 'kde'})
     assert((~axes.isnull()).sum().sum() == 3)
 
