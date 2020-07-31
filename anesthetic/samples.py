@@ -39,7 +39,7 @@ class MCMCSamples(WeightedDataFrame):
     columns: list(str)
         reference names of parameters
 
-    weight: np.array
+    weights: np.array
         weights of samples.
 
     logL: np.array
@@ -78,12 +78,12 @@ class MCMCSamples(WeightedDataFrame):
                                  "MCMCSamples and more. MCMCSamples should be "
                                  "used for MCMC chains only." % root)
             burn_in = kwargs.pop('burn_in', False)
-            weight, logL, samples = reader.samples(burn_in=burn_in)
+            weights, logL, samples = reader.samples(burn_in=burn_in)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
             limits = reader.limits()
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
-            self.__init__(data=samples, columns=columns, weight=weight,
+            self.__init__(data=samples, columns=columns, weights=weights,
                           logL=logL, tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
@@ -100,10 +100,6 @@ class MCMCSamples(WeightedDataFrame):
             if logL is not None:
                 self['logL'] = logL
                 self.tex['logL'] = r'$\log\mathcal{L}$'
-
-            if self._weight is not None:
-                self['weight'] = self.weight
-                self.tex['weight'] = r'MCMC weight'
 
             self._set_automatic_limits()
 
@@ -174,7 +170,7 @@ class MCMCSamples(WeightedDataFrame):
                     if ncompress is None:
                         ncompress = 1000
                     return kde_plot_1d(ax, self[paramname_x],
-                                       weights=self.weight,
+                                       weights=self.weights,
                                        ncompress=ncompress,
                                        *args, **kwargs)
                 elif plot_type == 'fastkde':
@@ -182,7 +178,7 @@ class MCMCSamples(WeightedDataFrame):
                     return fastkde_plot_1d(ax, x, *args, **kwargs)
                 elif plot_type == 'hist':
                     return hist_plot_1d(ax, self[paramname_x],
-                                        weights=self.weight,
+                                        weights=self.weights,
                                         *args, **kwargs)
                 elif plot_type == 'astropyhist':
                     x = self[paramname_x].compress(ncompress)
@@ -210,7 +206,7 @@ class MCMCSamples(WeightedDataFrame):
                         ncompress = 1000
                     x = self[paramname_x]
                     y = self[paramname_y]
-                    return kde_contour_plot_2d(ax, x, y, weights=self.weight,
+                    return kde_contour_plot_2d(ax, x, y, weights=self.weights,
                                                ncompress=ncompress,
                                                *args, **kwargs)
                 elif plot_type == 'fastkde':
@@ -227,7 +223,7 @@ class MCMCSamples(WeightedDataFrame):
                 elif plot_type == 'hist':
                     x = self[paramname_x]
                     y = self[paramname_y]
-                    return hist_plot_2d(ax, x, y, weights=self.weight,
+                    return hist_plot_2d(ax, x, y, weights=self.weights,
                                         *args, **kwargs)
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
@@ -320,27 +316,6 @@ class MCMCSamples(WeightedDataFrame):
         """
         default_types = {'diagonal': 'kde', 'lower': 'kde', 'upper': 'scatter'}
         types = kwargs.pop('types', default_types)
-        diagonal = kwargs.pop('diagonal', True)
-        if isinstance(types, list) or isinstance(types, str):
-            from warnings import warn
-            warn("MCMCSamples.plot_2d's argument 'types' might stop accepting "
-                 "str or list(str) as input in the future. It takes a "
-                 "dictionary as input, now, with keys 'diagonal' for the 1D "
-                 "plots and 'lower' and 'upper' for the 2D plots. 'diagonal' "
-                 "accepts the values 'kde' or 'hist' and both 'lower' and "
-                 "'upper' accept the values 'kde' or 'scatter'. "
-                 "Default: {'diagonal': 'kde', 'lower': 'kde'}.",
-                 FutureWarning)
-
-            if isinstance(types, str):
-                types = {'lower': types}
-                if diagonal:
-                    types['diagonal'] = types['lower']
-            elif isinstance(types, list):
-                types = {'lower': types[0], 'upper': types[-1]}
-                if diagonal:
-                    types['diagonal'] = types['lower']
-
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in default_types}
 
@@ -471,11 +446,7 @@ class NestedSamples(MCMCSamples):
         self._beta = beta
         logw = self.dlogX() + np.where(self.logL == -np.inf, -np.inf,
                                        self.beta * self.logL)
-        self._weight = np.exp(logw - logw.max())
-
-        if self._weight is not None:
-            self['weight'] = self.weight
-            self.tex['weight'] = r'MCMC weight'
+        self.weights = np.exp(logw - logw.max())
 
     def set_beta(self, beta, inplace=False):
         """Change the inverse temperature.
@@ -593,9 +564,11 @@ class NestedSamples(MCMCSamples):
         """
         if logL is None:
             logL = self.logL_birth.max()
-        elif is_int(logL):
-            logL = self.logL[logL]
-
+        else:
+            try:
+                logL = float(self.logL[logL])
+            except KeyError:
+                pass
         return self[(self.logL > logL) & (self.logL_birth <= logL)]
 
     def posterior_points(self, beta=1):
@@ -635,9 +608,9 @@ class NestedSamples(MCMCSamples):
 
         if nsamples is None:
             dlogX = np.squeeze(dlogX)
-            return WeightedSeries(dlogX, self.index, weight=self.weight)
+            return WeightedSeries(dlogX, self.index, weights=self.weights)
         else:
-            return WeightedDataFrame(dlogX, self.index, weight=self.weight)
+            return WeightedDataFrame(dlogX, self.index, weights=self.weights)
 
     def _compute_nlive(self, logL_birth):
         if is_int(logL_birth):

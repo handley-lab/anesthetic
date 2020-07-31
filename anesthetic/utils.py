@@ -5,6 +5,7 @@ from scipy import special
 from scipy.interpolate import interp1d
 from scipy.stats import kstwobign
 from matplotlib.tri import Triangulation
+import contextlib
 
 
 def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
@@ -464,3 +465,14 @@ def insertion_p_value(indexes, nlive, batch=0):
         if ks_result["p-value"] == 0.:
             ks_result["p-value"] = p * n
         return ks_result
+
+
+@contextlib.contextmanager
+def temporary_seed(seed):
+    """Context for temporarily setting a numpy seed."""
+    state = np.random.get_state()
+    np.random.seed(seed)
+    try:
+        yield
+    finally:
+        np.random.set_state(state)

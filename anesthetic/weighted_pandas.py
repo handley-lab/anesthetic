@@ -2,31 +2,31 @@
 
 import numpy as np
 import pandas
-from warnings import warn
-from anesthetic.utils import compress_weights, channel_capacity, quantile
+from anesthetic.utils import (compress_weights, channel_capacity, quantile,
+                              temporary_seed)
 
 
 class _WeightedObject(object):
     @property
-    def weight(self):
+    def weights(self):
         """Sample weights."""
-        if self._weight is None:
+        if self.index.nlevels == 1:
             return pandas.Series(index=self.index, data=1.)
         else:
-            return self._weight[self.index]
+            return self.index.get_level_values('weights').to_numpy()
+
+    @weights.setter
+    def weights(self, weights):
+        if weights is not None:
+            self.index = [self.index.get_level_values(0), weights]
+            self.index.set_names(['#', 'weights'], inplace=True)
 
     @property
     def _rand(self):
         """Random number for consistent compression."""
-        return self._rand_[self.index]
-
-    def _construct_weights(self, weight):
-        if weight is not None:
-            self._weight = pandas.Series(index=self.index, data=weight)
-        else:
-            self._weight = None
-        rand = np.random.rand(len(self))
-        self._rand_ = pandas.Series(index=self.index, data=rand)
+        seed = pandas.util.hash_pandas_object(self.index).sum() % 2**32
+        with temporary_seed(seed):
+            return np.random.rand(len(self))
 
     def std(self):
         """Weighted standard deviation of the sampled distribution."""
@@ -38,39 +38,35 @@ class _WeightedObject(object):
 
     def neff(self):
         """Effective number of samples."""
-        return channel_capacity(self.weight)
+        return channel_capacity(self.weights)
 
 
 class WeightedSeries(_WeightedObject, pandas.Series):
     """Weighted version of pandas.Series."""
 
     def __init__(self, *args, **kwargs):
-        if 'w' in kwargs:
-            warn("'w' as a kwarg will be deprecated in the future. "
-                 "Please use 'weight'", FutureWarning)
-        weight = kwargs.pop('w', None)
-        weight = kwargs.pop('weight', weight)
+        weights = kwargs.pop('weights', None)
         super(WeightedSeries, self).__init__(*args, **kwargs)
-        self._construct_weights(weight)
+        self.weights = weights
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        nonzero = self.weight != 0
-        return np.average(self[nonzero], weights=self.weight[nonzero])
+        nonzero = self.weights != 0
+        return np.average(self[nonzero], weights=self.weights[nonzero])
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        nonzero = self.weight != 0
+        nonzero = self.weights != 0
         return np.average((self[nonzero]-self.mean())**2,
-                          weights=self.weight[nonzero])
+                          weights=self.weights[nonzero])
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
-        return quantile(self.values, q, self.weight.values)
+        return quantile(self.values, q, self.weights)
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedSeries, self).hist(weights=self.weight,
+        return super(WeightedSeries, self).hist(weights=self.weights,
                                                 *args, **kwargs)
 
     def compress(self, nsamples=None):
@@ -84,10 +80,8 @@ class WeightedSeries(_WeightedObject, pandas.Series):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.weight, self._rand, nsamples)
+        i = compress_weights(self.weights, self._rand, nsamples)
         return self.repeat(i)
-
-    _metadata = ['_weight', '_rand_']
 
     @property
     def _constructor(self):
@@ -95,42 +89,34 @@ class WeightedSeries(_WeightedObject, pandas.Series):
 
     @property
     def _constructor_expanddim(self):
-        def __constructor_expanddim(*args, **kwargs):
-            frame = WeightedDataFrame(*args, weight=self._weight, **kwargs)
-            frame._rand_ = self._rand_
-            return frame
-        return __constructor_expanddim
+        return WeightedDataFrame
 
 
 class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
     """Weighted version of pandas.DataFrame."""
 
     def __init__(self, *args, **kwargs):
-        if 'w' in kwargs:
-            warn("'w' as a kwarg will be deprecated in the future. "
-                 "Please use 'weight'", FutureWarning)
-        weight = kwargs.pop('w', None)
-        weight = kwargs.pop('weight', weight)
+        weights = kwargs.pop('weights', None)
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
-        self._construct_weights(weight)
+        self.weights = weights
 
     def mean(self):
         """Weighted mean of the sampled distribution."""
-        nonzero = self.weight != 0
-        mean = np.average(self[nonzero], weights=self.weight[nonzero], axis=0)
+        nonzero = self.weights != 0
+        mean = np.average(self[nonzero], weights=self.weights[nonzero], axis=0)
         return pandas.Series(mean, index=self.columns)
 
     def var(self):
         """Weighted variance of the sampled distribution."""
-        nonzero = self.weight != 0
+        nonzero = self.weights != 0
         var = np.average((self[nonzero]-self.mean())**2,
-                         weights=self.weight[nonzero], axis=0)
+                         weights=self.weights[nonzero], axis=0)
         return pandas.Series(var, index=self.columns)
 
     def cov(self):
         """Weighted covariance of the sampled distribution."""
-        nonzero = self.weight != 0
-        cov = np.cov(self[nonzero].T, aweights=self.weight[nonzero])
+        nonzero = self.weights != 0
+        cov = np.cov(self[nonzero].T, aweights=self.weights[nonzero])
         return pandas.DataFrame(cov, index=self.columns, columns=self.columns)
 
     def quantile(self, q=0.5):
@@ -143,7 +129,7 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedDataFrame, self).hist(weights=self.weight,
+        return super(WeightedDataFrame, self).hist(weights=self.weights,
                                                    *args, **kwargs)
 
     def compress(self, nsamples=None):
@@ -157,24 +143,16 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.weight, self._rand, nsamples)
+        i = compress_weights(self.weights, self._rand, nsamples)
         data = np.repeat(self.values, i, axis=0)
-        index = np.repeat(self.index.values, i)
+        index = self.index.repeat(i)
         df = pandas.DataFrame(data=data, index=index, columns=self.columns)
-        if 'weight' in self:
-            return df.drop(columns='weight')
-        else:
-            return df
-
-    _metadata = ['_weight', '_rand_']
+        df.index = df.index.get_level_values('#')
+        return df
 
     @property
     def _constructor_sliced(self):
-        def __constructor_sliced(*args, **kwargs):
-            series = WeightedSeries(*args, weight=self._weight, **kwargs)
-            series._rand_ = self._rand_
-            return series
-        return __constructor_sliced
+        return WeightedSeries
 
     @property
     def _constructor(self):

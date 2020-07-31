@@ -1,8 +1,9 @@
-import pytest
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas import Series, DataFrame
+import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
+import matplotlib.pyplot as plt
 
 
 def test_WeightedSeries_constructor():
@@ -11,33 +12,24 @@ def test_WeightedSeries_constructor():
     data = np.random.rand(N)
 
     series = WeightedSeries(data)
-    assert_array_equal(series.weight, 1)
+    assert_array_equal(series.weights, 1)
     assert_array_equal(series, data)
 
-    with pytest.warns(FutureWarning):
-        series = WeightedSeries(data, w=None)
-        assert_array_equal(series.weight, 1)
-        assert_array_equal(series, data)
-
-    series = WeightedSeries(data, weight=None)
-    assert_array_equal(series.weight, 1)
+    series = WeightedSeries(data, weights=None)
+    assert_array_equal(series.weights, 1)
     assert_array_equal(series, data)
 
-    weight = np.random.rand(N)
-    with pytest.warns(FutureWarning):
-        series = WeightedSeries(data, w=weight)
-        assert_array_equal(series, data)
-
-    series = WeightedSeries(data, weight=weight)
+    weights = np.random.rand(N)
+    series = WeightedSeries(data, weights=weights)
     assert_array_equal(series, data)
 
-    assert series.weight.shape == (N,)
+    assert series.weights.shape == (N,)
     assert series.shape == (N,)
-    assert isinstance(series.weight, Series)
+    assert isinstance(series.weights, np.ndarray)
     assert_array_equal(series, data)
-    assert_array_equal(series.weight, weight)
+    assert_array_equal(series.weights, weights)
     assert isinstance(series.to_frame(), WeightedDataFrame)
-    assert_array_equal(series.to_frame().weight, weight)
+    assert_array_equal(series.to_frame().weights, weights)
 
     return series
 
@@ -50,43 +42,37 @@ def test_WeightedDataFrame_constructor():
     cols = ['A', 'B', 'C']
 
     df = WeightedDataFrame(data, columns=cols)
-    assert_array_equal(df.weight, 1)
+    assert_array_equal(df.weights, 1)
     assert_array_equal(df, data)
 
-    with pytest.warns(FutureWarning):
-        df = WeightedDataFrame(data, w=None, columns=cols)
-        assert_array_equal(df.weight, 1)
-        assert_array_equal(df, data)
-
-    df = WeightedDataFrame(data, weight=None, columns=cols)
-    assert_array_equal(df.weight, 1)
+    df = WeightedDataFrame(data, weights=None, columns=cols)
+    assert_array_equal(df.weights, 1)
     assert_array_equal(df, data)
 
-    weight = np.random.rand(N)
-    with pytest.warns(FutureWarning):
-        df = WeightedDataFrame(data, w=weight, columns=cols)
-        assert df.weight.shape == (N,)
-        assert df.shape == (N, m)
-        assert isinstance(df.weight, Series)
-        assert_array_equal(df, data)
-        assert_array_equal(df.weight, weight)
-        assert_array_equal(df.columns, cols)
-
-    df = WeightedDataFrame(data, weight=weight, columns=cols)
-    assert df.weight.shape == (N,)
+    weights = np.random.rand(N)
+    df = WeightedDataFrame(data, weights=weights, columns=cols)
+    assert df.weights.shape == (N,)
     assert df.shape == (N, m)
-    assert isinstance(df.weight, Series)
+    assert isinstance(df.weights, np.ndarray)
     assert_array_equal(df, data)
-    assert_array_equal(df.weight, weight)
+    assert_array_equal(df.weights, weights)
     assert_array_equal(df.columns, cols)
     return df
+
+
+def test_WeightedDataFrame_key():
+    df = test_WeightedDataFrame_constructor()
+    for key1 in df.columns:
+        assert_array_equal(df.weights, df[key1].weights)
+        for key2 in df.columns:
+            assert_array_equal(df[key1].weights, df[key2].weights)
 
 
 def test_WeightedDataFrame_slice():
     df = test_WeightedDataFrame_constructor()
     assert isinstance(df['A'], WeightedSeries)
     assert df[:10].shape == (10, 3)
-    assert df[:10].weight.shape == (10,)
+    assert df[:10].weights.shape == (10,)
     assert df[:10]._rand.shape == (10,)
 
 
@@ -126,6 +112,18 @@ def test_WeightedDataFrame_quantile():
         assert_allclose(quantile, q, atol=1e-2)
 
 
+def test_WeightedDataFrame_hist():
+    df = test_WeightedDataFrame_constructor()
+    axes = df[['A', 'B']].hist(bins=20, density=True)
+    for ax in axes.flatten():
+        assert len(ax.patches) == 20
+        norm = 0
+        for patch in ax.patches:
+            norm += patch.get_height() * patch.get_width()
+        assert norm == pytest.approx(1)
+    plt.close("all")
+
+
 def test_WeightedDataFrame_neff():
     df = test_WeightedDataFrame_constructor()
     neff = df.neff()
@@ -141,6 +139,9 @@ def test_WeightedDataFrame_compress():
         assert_allclose(i, len(df.compress(i)), rtol=1e-1)
     unit_weights = df.compress(0)
     assert(len(np.unique(unit_weights.index)) == len(unit_weights))
+    assert_array_equal(df.compress(), df.compress())
+    assert_array_equal(df.compress(i), df.compress(i))
+    assert_array_equal(df.compress(-1), df.compress(-1))
 
 
 def test_WeightedDataFrame_nan():
@@ -153,7 +154,9 @@ def test_WeightedDataFrame_nan():
     assert (np.all(np.isnan(df.std())))
     assert (np.all(np.isnan(df.cov())))
 
-    df._weight[0] = 0
+    weights = df.weights
+    weights[0] = 0
+    df.weights = weights
     assert_allclose(df.mean(), 0.5, atol=1e-2)
     assert_allclose(df.std(), (1./12)**0.5, atol=1e-2)
     assert_allclose(df.cov(), (1./12)*np.identity(3), atol=1e-2)
@@ -188,6 +191,17 @@ def test_WeightedSeries_quantile():
         assert_allclose(quantile, q, atol=1e-2)
 
 
+def test_WeightedSeries_hist():
+    series = test_WeightedSeries_constructor()
+    ax = series.hist(bins=20, density=True)
+    assert len(ax.patches) == 20
+    norm = 0
+    for patch in ax.patches:
+        norm += patch.get_height() * patch.get_width()
+    assert norm == pytest.approx(1)
+    plt.close("all")
+
+
 def test_WeightedSeries_neff():
     series = test_WeightedSeries_constructor()
     neff = series.neff()
@@ -213,7 +227,9 @@ def test_WeightedSeries_nan():
     assert np.isnan(series.std())
     assert np.isnan(series.var())
 
-    series._weight[0] = 0
+    weights = series.weights
+    weights[0] = 0
+    series.weights = weights
     assert_allclose(series.mean(), 0.5, atol=1e-2)
     assert_allclose(series.var(), 1./12, atol=1e-2)
     assert_allclose(series.std(), (1./12)**0.5, atol=1e-2)
