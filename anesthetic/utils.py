@@ -3,7 +3,9 @@ import numpy as np
 import pandas
 from scipy import special
 from scipy.interpolate import interp1d
+from scipy.stats import kstwobign
 from matplotlib.tri import Triangulation
+import contextlib
 
 
 def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
@@ -189,6 +191,30 @@ def compute_nlive(death, birth):
     return nlive.values
 
 
+def compute_insertion_indexes(death, birth):
+    """Compute the live point insertion index for each point.
+
+    For more detail, see https://arxiv.org/abs/2006.03371
+
+    Parameters
+    ----------
+    death, birth : array-like
+        list of birth and death contours
+
+    Returns
+    -------
+    indexes: np.array
+        live point index at which each live point was inserted
+    """
+    indexes = np.zeros_like(birth, dtype=int)
+    for i, (b, d) in enumerate(zip(birth, death)):
+        i_live = (death > b) & (birth <= b)
+        live = death[i_live]
+        live.sort()
+        indexes[i] = np.searchsorted(live, d)
+    return indexes
+
+
 def unique(a):
     """Find unique elements, retaining order."""
     b = []
@@ -359,3 +385,94 @@ def sample_compression_1d(x, w=None, n=1000):
 def is_int(x):
     """Test whether x is an integer."""
     return isinstance(x, int) or isinstance(x, np.integer)
+
+
+def match_contour_to_contourf(contours, vmin, vmax):
+    """Get needed `vmin, vmax` to match `contour` colors to `contourf` colors.
+
+    `contourf` uses the arithmetic mean of contour levels to assign colors,
+    whereas `contour` uses the contour level directly. To get the same colors
+    for `contour` lines as for `contourf` faces, we need some fiddly algebra.
+    """
+    c0, c1, c2 = contours
+    vmin = (c0 * c2 - c1 ** 2 + 2 * vmin * (c1 - c0)) / (c2 - c0)
+    vmax = (c0 * c2 - c1 ** 2 + 2 * vmax * (c1 - c0)) / (c2 - c0)
+    return vmin, vmax
+
+
+def insertion_p_value(indexes, nlive, batch=0):
+    """Compute the p-value from insertion indexes, assuming constant nlive.
+
+    Note that this function doesn't use scipy.stats.kstest as the latter
+    assumes continuous distributions.
+
+    For more detail, see https://arxiv.org/abs/2006.03371
+
+    For a rolling test, you should provide the optional parameter batch!=0. In
+    this case the test computes the p value on consecutive batches of size
+    nlive * batch, selects the smallest one and adjusts for multiple
+    comparisons using a Bonferroni correction.
+
+    Parameters
+    ----------
+    indexes: array-like
+        list of insertion indexes, sorted by death contour
+
+    nlive: int
+        number of live points
+
+    batch: float
+        batch size in units of nlive for a rolling p-value
+
+    Returns
+    -------
+    ks_result: dict
+        Kolmogorov-Smirnov test results:
+            D: Kolmogorov-Smirnov statistic
+            sample_size: sample size
+            p-value: p-value
+            # if batch != 0
+            iterations: bounds of batch with minimum p-value
+            nbatches: the number of batches in total
+            uncorrected p-value: p-value without Bonferroni correction
+    """
+    if batch == 0:
+        bins = np.arange(-0.5, nlive + 0.5, 1.)
+        empirical_pmf = np.histogram(indexes, bins=bins, density=True)[0]
+        empirical_cmf = np.cumsum(empirical_pmf)
+        uniform_cmf = np.arange(1., nlive + 1., 1.) / nlive
+
+        D = abs(empirical_cmf - uniform_cmf).max()
+        sample_size = len(indexes)
+        K = D * np.sqrt(sample_size)
+
+        ks_result = {}
+        ks_result["D"] = D
+        ks_result["sample_size"] = sample_size
+        ks_result["p-value"] = kstwobign.sf(K)
+        return ks_result
+    else:
+        batch = int(batch * nlive)
+        batches = [indexes[i:i + batch] for i in range(0, len(indexes), batch)]
+        ks_results = [insertion_p_value(c, nlive) for c in batches]
+        ks_result = min(ks_results, key=lambda t: t["p-value"])
+        index = ks_results.index(ks_result)
+
+        ks_result["iterations"] = (index * batch, (index + 1) * batch)
+        ks_result["nbatches"] = n = len(batches)
+        ks_result["uncorrected p-value"] = p = ks_result["p-value"]
+        ks_result["p-value"] = 1. - (1. - p)**n
+        if ks_result["p-value"] == 0.:
+            ks_result["p-value"] = p * n
+        return ks_result
+
+
+@contextlib.contextmanager
+def temporary_seed(seed):
+    """Context for temporarily setting a numpy seed."""
+    state = np.random.get_state()
+    np.random.seed(seed)
+    try:
+        yield
+    finally:
+        np.random.set_state(state)

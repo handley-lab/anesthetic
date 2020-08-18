@@ -7,7 +7,8 @@ import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
-                             scatter_plot_2d, quantile_plot_interval)
+                             scatter_plot_2d, quantile_plot_interval,
+                             basic_cmap)
 from numpy.testing import assert_array_equal
 
 from matplotlib.contour import QuadContourSet
@@ -202,6 +203,8 @@ def test_kde_plot_1d(plot_1d):
         # Check arguments are passed onward to underlying function
         line, = plot_1d(ax, data, color='r')
         assert(line.get_color() == 'r')
+        line, = plot_1d(ax, data, cmap=plt.cm.Blues)
+        assert(line.get_color() == plt.cm.Blues(0.68))
 
         # Check xmin
         xmin = -0.5
@@ -265,9 +268,16 @@ def test_hist_plot_1d():
                                 color='r', alpha=0.5, plotter=p)
             cc = ColorConverter.to_rgba('r', alpha=0.5)
             assert(np.all([b.get_fc() == cc for b in bars]))
+            bars = hist_plot_1d(ax, data, histtype='bar',
+                                cmap=plt.cm.viridis, alpha=0.5, plotter=p)
+            cc = ColorConverter.to_rgba(plt.cm.viridis(0.68), alpha=0.5)
+            assert(np.all([b.get_fc() == cc for b in bars]))
             polygon, = hist_plot_1d(ax, data, histtype='step',
                                     color='r', alpha=0.5, plotter=p)
             assert(polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5))
+            polygon, = hist_plot_1d(ax, data, histtype='step',
+                                    cmap=plt.cm.viridis, color='r', plotter=p)
+            assert(polygon.get_ec() == ColorConverter.to_rgba('r'))
 
             # Check xmin
             for xmin in [-np.inf, -0.5]:
@@ -332,11 +342,13 @@ def test_contour_plot_2d(contour_plot_2d):
         np.random.seed(1)
         data_x = np.random.randn(1000)
         data_y = np.random.randn(1000)
-        c = contour_plot_2d(ax, data_x, data_y)
+        cf, ct = contour_plot_2d(ax, data_x, data_y)
         if contour_plot_2d is fastkde_contour_plot_2d:
-            assert(isinstance(c, QuadContourSet))
+            assert(isinstance(cf, QuadContourSet))
+            assert(isinstance(ct, QuadContourSet))
         elif contour_plot_2d is kde_contour_plot_2d:
-            assert(isinstance(c, TriContourSet))
+            assert(isinstance(cf, TriContourSet))
+            assert(isinstance(ct, TriContourSet))
 
         xmin, xmax, ymin, ymax = -0.5, 0.5, -0.5, 0.5
 
@@ -382,6 +394,29 @@ def test_contour_plot_2d(contour_plot_2d):
         ax = plt.gca()
         contour_plot_2d(ax, data_x, data_y, q=0)
         plt.close()
+
+        # Check unfilled
+        cmap = basic_cmap('C2')
+        ax = plt.gca()
+        cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
+        cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
+        # filled `contourf` and unfilled `contour` colors are the same:
+        assert cf1.tcolors[0] == ct2.tcolors[0]
+        assert cf1.tcolors[1] == ct2.tcolors[1]
+        cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
+        assert ct.colors == 'C0'
+        cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
+        assert cf.get_cmap() == plt.cm.Reds
+        assert ct.colors == 'C0'
+        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
+        assert cf is None
+        assert ct.colors == 'C1'
+        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
+        assert cf is None
+        assert ct.get_cmap() == plt.cm.Reds
+        assert ct.colors is None
+        plt.close()
+
     except ImportError:
         if 'fastkde' not in sys.modules:
             pass
@@ -414,6 +449,17 @@ def test_scatter_plot_2d():
     ax = plt.gca()
     scatter_plot_2d(ax, data_x, data_y, ymax=ymax)
     assert(ax.get_ylim()[1] <= ymax)
+    plt.close()
+
+    ax = plt.gca()
+    points, = scatter_plot_2d(ax, data_x, data_y, color='C0', lw=1)
+    assert (points.get_color() == 'C0')
+    points, = scatter_plot_2d(ax, data_x, data_y, cmap=plt.cm.viridis)
+    assert (points.get_color() == plt.cm.viridis(0.68))
+    points, = scatter_plot_2d(ax, data_x, data_y, c='C0', fc='C1', ec='C2')
+    assert (points.get_color() == 'C0')
+    assert (points.get_markerfacecolor() == 'C1')
+    assert (points.get_markeredgecolor() == 'C2')
     plt.close()
 
     # Check q
