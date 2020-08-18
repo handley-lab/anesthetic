@@ -37,8 +37,8 @@ def test_compute_nlive():
     # Check the first half are constant
     assert_array_equal(nlives[:len(nlives)//2], nlive)
 
-    # Check no points at the end
-    assert(nlives[-1] == 0)
+    # Check one points at the end
+    assert(nlives[-1] == 1)
 
     # Check never more than nlive
     assert(nlives.max() <= nlive)
