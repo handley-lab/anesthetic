@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas
+from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
                               temporary_seed)
 
@@ -11,7 +12,7 @@ class _WeightedObject(object):
     def weights(self):
         """Sample weights."""
         if self.index.nlevels == 1:
-            return pandas.Series(index=self.index, data=1.)
+            return np.ones_like(self.index)
         else:
             return self.index.get_level_values('weights').to_numpy()
 
@@ -28,9 +29,9 @@ class _WeightedObject(object):
         with temporary_seed(seed):
             return np.random.rand(len(self))
 
-    def std(self):
+    def std(self, skipna=True):
         """Weighted standard deviation of the sampled distribution."""
-        return np.sqrt(self.var())
+        return np.sqrt(self.var(skipna=skipna))
 
     def median(self):
         """Weighted median of the sampled distribution."""
@@ -49,16 +50,19 @@ class WeightedSeries(_WeightedObject, pandas.Series):
         super(WeightedSeries, self).__init__(*args, **kwargs)
         self.weights = weights
 
-    def mean(self):
+    def mean(self, skipna=True):
         """Weighted mean of the sampled distribution."""
-        nonzero = self.weights != 0
-        return np.average(self[nonzero], weights=self.weights[nonzero])
+        null = self.isnull() & skipna
+        return np.average(masked_array(self, null), weights=self.weights)
 
-    def var(self):
+    def var(self, skipna=True):
         """Weighted variance of the sampled distribution."""
-        nonzero = self.weights != 0
-        return np.average((self[nonzero]-self.mean())**2,
-                          weights=self.weights[nonzero])
+        null = self.isnull() & skipna
+        mean = self.mean(skipna=skipna)
+        if np.isnan(mean):
+            return mean
+        return np.average((masked_array(self, null)-mean)**2,
+                          weights=self.weights)
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
@@ -100,23 +104,27 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
         self.weights = weights
 
-    def mean(self):
+    def mean(self, skipna=True):
         """Weighted mean of the sampled distribution."""
-        nonzero = self.weights != 0
-        mean = np.average(self[nonzero], weights=self.weights[nonzero], axis=0)
+        null = self.isnull() & skipna
+        mean = np.average(masked_array(self, null),
+                          weights=self.weights, axis=0)
         return pandas.Series(mean, index=self.columns)
 
-    def var(self):
+    def var(self, skipna=True):
         """Weighted variance of the sampled distribution."""
-        nonzero = self.weights != 0
-        var = np.average((self[nonzero]-self.mean())**2,
-                         weights=self.weights[nonzero], axis=0)
+        null = self.isnull() & skipna
+        mean = self.mean(skipna=skipna).values
+        var = np.average((masked_array(self, null)-mean)**2,
+                         weights=self.weights, axis=0)
         return pandas.Series(var, index=self.columns)
 
-    def cov(self):
+    def cov(self, skipna=True):
         """Weighted covariance of the sampled distribution."""
-        nonzero = self.weights != 0
-        cov = np.cov(self[nonzero].T, aweights=self.weights[nonzero])
+        null = self.isnull() & skipna
+        mean = self.mean(skipna=skipna).values
+        x = masked_array(self - mean, null)
+        cov = np.ma.dot(self.weights * x.T, x) / self.weights.sum().T
         return pandas.DataFrame(cov, index=self.columns, columns=self.columns)
 
     def quantile(self, q=0.5):

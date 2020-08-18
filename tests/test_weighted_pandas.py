@@ -148,15 +148,39 @@ def test_WeightedDataFrame_nan():
     df = test_WeightedDataFrame_constructor()
 
     df['A'][0] = np.nan
-    df['B'][0] = np.nan
-    df['C'][0] = np.nan
-    assert (np.all(np.isnan(df.mean())))
-    assert (np.all(np.isnan(df.std())))
-    assert (np.all(np.isnan(df.cov())))
+    assert ~df.mean().isna().any()
+    assert_array_equal(df.mean(skipna=False).isna(), [True, False, False])
 
-    weights = df.weights
-    weights[0] = 0
-    df.weights = weights
+    assert ~df.std().isna().any()
+    assert_array_equal(df.std(skipna=False).isna(), [True, False, False])
+
+    assert ~df.cov().isna().any().any()
+    assert_array_equal(df.cov(skipna=False).isna(), [[True, True, True],
+                                                     [True, False, False],
+                                                     [True, False, False]])
+
+    df['B'][1] = np.nan
+    assert ~df.mean().isna().any()
+    assert_array_equal(df.mean(skipna=False).isna(), [True, True, False])
+
+    assert ~df.std().isna().any()
+    assert_array_equal(df.std(skipna=False).isna(), [True, True, False])
+
+    assert ~df.cov().isna().any().any()
+    assert_array_equal(df.cov(skipna=False).isna(), [[True, True, True],
+                                                     [True, True, True],
+                                                     [True, True, False]])
+
+    df['C'][2] = np.nan
+    assert ~df.mean().isna().any()
+    assert df.mean(skipna=False).isna().all()
+
+    assert ~df.std().isna().any()
+    assert df.std(skipna=False).isna().all()
+
+    assert ~df.cov().isna().any().any()
+    assert df.cov(skipna=False).isna().all().all()
+
     assert_allclose(df.mean(), 0.5, atol=1e-2)
     assert_allclose(df.std(), (1./12)**0.5, atol=1e-2)
     assert_allclose(df.cov(), (1./12)*np.identity(3), atol=1e-2)
@@ -223,13 +247,14 @@ def test_WeightedSeries_nan():
     series = test_WeightedSeries_constructor()
 
     series[0] = np.nan
-    assert np.isnan(series.mean())
-    assert np.isnan(series.std())
-    assert np.isnan(series.var())
 
-    weights = series.weights
-    weights[0] = 0
-    series.weights = weights
+    assert ~np.isnan(series.mean())
+    assert np.isnan(series.mean(skipna=False))
+    assert ~np.isnan(series.std())
+    assert np.isnan(series.std(skipna=False))
+    assert ~np.isnan(series.var())
+    assert np.isnan(series.var(skipna=False))
+
     assert_allclose(series.mean(), 0.5, atol=1e-2)
     assert_allclose(series.var(), 1./12, atol=1e-2)
     assert_allclose(series.std(), (1./12)**0.5, atol=1e-2)
