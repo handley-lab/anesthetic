@@ -182,13 +182,13 @@ def compute_nlive(death, birth):
     nlive: np.array
         number of live points at each contour
     """
-    birth_index = death.searchsorted(birth)
+    birth_index = death.searchsorted(birth, side='right')
     births = pandas.Series(+1, index=birth_index).sort_index()
-    index = np.arange(death.size)
+    index = np.arange(death.size)+1
     deaths = pandas.Series(-1, index=index)
     nlive = pandas.concat([births, deaths]).sort_index()
     nlive = nlive.groupby(nlive.index).sum().cumsum()
-    return nlive.values
+    return nlive.values[:-1]
 
 
 def compute_insertion_indexes(death, birth):
