@@ -219,6 +219,13 @@ def test_plot_2d_types():
     fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde',
                                           'upper': 'scatter'})
     assert((~axes.isnull()).sum().sum() == 12)
+
+    with pytest.raises(NotImplementedError):
+        fig, axes = ns.plot_2d(params, types={'lower': 'not a plot type'})
+
+    with pytest.raises(NotImplementedError):
+        fig, axes = ns.plot_2d(params, types={'diagonal': 'not a plot type'})
+
     plt.close("all")
 
 
