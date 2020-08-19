@@ -6,10 +6,10 @@ def test_gui():
     plotter = NestedSamples(root='./tests/example_data/pc').gui()
 
     # Type buttons
-    plotter.type.buttons.set_active(0)
-    assert(plotter.type() == 'live')
     plotter.type.buttons.set_active(1)
     assert(plotter.type() == 'posterior')
+    plotter.type.buttons.set_active(0)
+    assert(plotter.type() == 'live')
 
     # Parameter choice buttons
     plotter.param_choice.buttons.set_active(1)
@@ -25,11 +25,17 @@ def test_gui():
     plotter.evolution.slider.set_val(100)
     assert(plotter.evolution() == 100)
     plotter.type.buttons.set_active(1)
+
     plotter.temperature.slider.set_val(0)
     assert(plotter.temperature() == 1)
-
     plotter.temperature.slider.set_val(1)
     assert(plotter.temperature() == 10)
     plotter.temperature.slider.set_val(2)
     assert(plotter.temperature() == 100)
     plotter.type.buttons.set_active(0)
+
+    # Reload button
+    plotter.reload.button.observers[0](None)
+
+    # Reset button
+    plotter.reset.button.observers[0](None)
