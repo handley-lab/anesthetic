@@ -4,36 +4,53 @@ from anesthetic import NestedSamples
 
 
 class WeddingCake():
+    """Class for generating samples from a wedding cake 'likelihood'.
+
+    This is a likelihood with nested hypercuboidal plateau regions of constant
+    likelihood centered on 0.5, with geometrically decreasing volume by a
+    factor of alpha. The value of the likelihood in these plateau regions has a
+    gaussian profile with width sigma.
+
+    logL = - alpha^(2 floor(D*log_alpha(2|x-0.5|_infinity))/D) / (8 sigma^2)
+
+    Parameters
+    ----------
+    D: int
+        dimensionality (number of parameters) of the likelihood
+
+    alpha: float
+        volume compression between plateau regions
+
+    sigma: float
+        width of gaussian profile
+    """
     def __init__(self, D=4, alpha=0.5, sigma=0.01):
         self.D = D
         self.alpha = alpha
         self.sigma = sigma
 
     def logZ(self):
-        i = np.arange(self.i_mean() + self.i_std()*10)
-        ri = self.alpha**(i/self.D)/2
-        logZ = logsumexp(-ri**2/2/self.sigma**2
-                         + i*np.log(self.alpha) + np.log(1-self.alpha))
-        return logZ
-
-    def i_mean(self):
-        return np.sqrt(self.D/2.) * (np.log(4*self.D*self.sigma**2)-1
+        """Numerically compute the true evidence."""
+        mean = np.sqrt(self.D/2.) * (np.log(4*self.D*self.sigma**2)-1
                                      ) / np.log(self.alpha)
+        std = -np.sqrt(self.D/2.)/np.log(self.alpha)
+        i = np.arange(mean + std*10)
 
-    def i_std(self):
-        return -np.sqrt(self.D/2.)/np.log(self.alpha)
-
-    def r(self, x):
-        return np.max(abs(x-0.5), axis=-1)
+        return logsumexp(-self.alpha**(2*i/self.D)/8/self.sigma**2
+                         + i*np.log(self.alpha) + np.log(1-self.alpha))
 
     def i(self, x):
-        return np.floor(self.D*np.log(2*self.r(x))/np.log(self.alpha))
+        """Plateau number of a parameter point."""
+        r = np.max(abs(x-0.5), axis=-1)
+        return np.floor(self.D*np.log(2*r)/np.log(self.alpha))
 
     def logL(self, x):
+        """Gaussian log-likelihood."""
         ri = self.alpha**(self.i(x)/self.D)/2
         return - ri**2/2/self.sigma**2
 
     def sample(self, nlive=500):
+        """Generate samples from a perfect nested sampling run."""
         points = np.zeros((0, self.D))
         death_likes = np.zeros(0)
         birth_likes = np.zeros(0)
