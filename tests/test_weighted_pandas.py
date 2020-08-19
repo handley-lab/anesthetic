@@ -82,12 +82,20 @@ def test_WeightedDataFrame_mean():
     assert isinstance(mean, Series)
     assert_allclose(mean, 0.5, atol=1e-2)
 
+    mean = df.mean(axis=1)
+    assert isinstance(mean, WeightedSeries)
+    assert_allclose(mean.mean(), 0.5, atol=1e-2)
+
 
 def test_WeightedDataFrame_std():
     df = test_WeightedDataFrame_constructor()
     std = df.std()
     assert isinstance(std, Series)
     assert_allclose(std, (1./12)**0.5, atol=1e-2)
+
+    std = df.std(axis=1)
+    assert isinstance(std, WeightedSeries)
+    assert_allclose(std.mean(), (1./12)**0.5, atol=1e-1)
 
 
 def test_WeightedDataFrame_cov():
@@ -106,10 +114,27 @@ def test_WeightedDataFrame_median():
 
 def test_WeightedDataFrame_quantile():
     df = test_WeightedDataFrame_constructor()
-    for q in np.linspace(0, 1, 10):
+
+    quantile = df.quantile()
+    assert isinstance(quantile, Series)
+    assert_allclose(quantile, 0.5, atol=1e-2)
+
+    quantile = df.quantile(axis=1)
+    assert isinstance(quantile, WeightedSeries)
+    assert_allclose(quantile.mean(), 0.5, atol=1e-2)
+
+    qs = np.linspace(0, 1, 10)
+    for q in qs:
         quantile = df.quantile(q)
         assert isinstance(quantile, Series)
         assert_allclose(quantile, q, atol=1e-2)
+
+        quantile = df.quantile(q, axis=1)
+        assert isinstance(quantile, WeightedSeries)
+
+    assert_allclose(df.quantile(qs), np.transpose([qs, qs, qs]), atol=1e-2)
+    quantile = df.quantile(qs, axis=1)
+    assert isinstance(quantile, WeightedDataFrame)
 
 
 def test_WeightedDataFrame_hist():
@@ -149,34 +174,48 @@ def test_WeightedDataFrame_nan():
 
     df['A'][0] = np.nan
     assert ~df.mean().isna().any()
+    assert ~df.mean(axis=1).isna().any()
     assert_array_equal(df.mean(skipna=False).isna(), [True, False, False])
+    assert_array_equal(df.mean(axis=1, skipna=False).isna()[0:6],
+                       [True, False, False, False, False, False])
 
     assert ~df.std().isna().any()
+    assert ~df.std(axis=1).isna().any()
     assert_array_equal(df.std(skipna=False).isna(), [True, False, False])
+    assert_array_equal(df.std(axis=1, skipna=False).isna()[0:6],
+                       [True, False, False, False, False, False])
 
     assert ~df.cov().isna().any().any()
     assert_array_equal(df.cov(skipna=False).isna(), [[True, True, True],
                                                      [True, False, False],
                                                      [True, False, False]])
 
-    df['B'][1] = np.nan
+    df['B'][2] = np.nan
     assert ~df.mean().isna().any()
     assert_array_equal(df.mean(skipna=False).isna(), [True, True, False])
+    assert_array_equal(df.mean(axis=1, skipna=False).isna()[0:6],
+                       [True, False, True, False, False, False])
 
     assert ~df.std().isna().any()
     assert_array_equal(df.std(skipna=False).isna(), [True, True, False])
+    assert_array_equal(df.std(axis=1, skipna=False).isna()[0:6],
+                       [True, False, True, False, False, False])
 
     assert ~df.cov().isna().any().any()
     assert_array_equal(df.cov(skipna=False).isna(), [[True, True, True],
                                                      [True, True, True],
                                                      [True, True, False]])
 
-    df['C'][2] = np.nan
+    df['C'][4] = np.nan
     assert ~df.mean().isna().any()
     assert df.mean(skipna=False).isna().all()
+    assert_array_equal(df.mean(axis=1, skipna=False).isna()[0:6],
+                       [True, False, True, False, True, False])
 
     assert ~df.std().isna().any()
     assert df.std(skipna=False).isna().all()
+    assert_array_equal(df.std(axis=1, skipna=False).isna()[0:6],
+                       [True, False, True, False, True, False])
 
     assert ~df.cov().isna().any().any()
     assert df.cov(skipna=False).isna().all().all()
@@ -209,6 +248,11 @@ def test_WeightedSeries_median():
 
 def test_WeightedSeries_quantile():
     series = test_WeightedSeries_constructor()
+
+    quantile = series.quantile()
+    assert isinstance(quantile, float)
+    assert_allclose(quantile, 0.5, atol=1e-2)
+
     qs = np.linspace(0, 1, 10)
     for q in qs:
         quantile = series.quantile(q)

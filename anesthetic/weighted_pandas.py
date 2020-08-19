@@ -29,9 +29,9 @@ class _WeightedObject(object):
         with temporary_seed(seed):
             return np.random.rand(len(self))
 
-    def std(self, skipna=True):
+    def std(self, *args, **kwargs):
         """Weighted standard deviation of the sampled distribution."""
-        return np.sqrt(self.var(skipna=skipna))
+        return np.sqrt(self.var(*args, **kwargs))
 
     def median(self):
         """Weighted median of the sampled distribution."""
@@ -104,20 +104,26 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         super(WeightedDataFrame, self).__init__(*args, **kwargs)
         self.weights = weights
 
-    def mean(self, skipna=True):
+    def mean(self, axis=0, skipna=True):
         """Weighted mean of the sampled distribution."""
-        null = self.isnull() & skipna
-        mean = np.average(masked_array(self, null),
-                          weights=self.weights, axis=0)
-        return pandas.Series(mean, index=self.columns)
+        if axis == 0:
+            null = self.isnull() & skipna
+            mean = np.average(masked_array(self, null),
+                              weights=self.weights, axis=0)
+            return pandas.Series(mean, index=self.columns)
+        else:
+            return super().mean(axis=axis, skipna=skipna)
 
-    def var(self, skipna=True):
+    def var(self, axis=0, skipna=True):
         """Weighted variance of the sampled distribution."""
-        null = self.isnull() & skipna
-        mean = self.mean(skipna=skipna).values
-        var = np.average((masked_array(self, null)-mean)**2,
-                         weights=self.weights, axis=0)
-        return pandas.Series(var, index=self.columns)
+        if axis == 0:
+            null = self.isnull() & skipna
+            mean = self.mean(skipna=skipna).values
+            var = np.average((masked_array(self, null)-mean)**2,
+                             weights=self.weights, axis=0)
+            return pandas.Series(var, index=self.columns)
+        else:
+            return super().var(axis=axis, skipna=skipna)
 
     def cov(self, skipna=True):
         """Weighted covariance of the sampled distribution."""
@@ -127,13 +133,16 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         cov = np.ma.dot(self.weights * x.T, x) / self.weights.sum().T
         return pandas.DataFrame(cov, index=self.columns, columns=self.columns)
 
-    def quantile(self, q=0.5):
+    def quantile(self, q=0.5, axis=0):
         """Weighted quantile of the sampled distribution."""
-        data = np.array([c.quantile(q) for _, c in self.iteritems()])
-        if np.isscalar(q):
-            return pandas.Series(data, index=self.columns)
+        if axis == 0:
+            data = np.array([c.quantile(q) for _, c in self.iteritems()])
+            if np.isscalar(q):
+                return pandas.Series(data, index=self.columns)
+            else:
+                return pandas.DataFrame(data.T, columns=self.columns, index=q)
         else:
-            return pandas.DataFrame(data.T, columns=self.columns, index=q)
+            return super().quantile(q=q, axis=axis)
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
