@@ -12,6 +12,7 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less)
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest
+from wedding_cake import WeddingCake
 try:
     import montepython  # noqa: F401
 except ImportError:
@@ -218,6 +219,13 @@ def test_plot_2d_types():
     fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde',
                                           'upper': 'scatter'})
     assert((~axes.isnull()).sum().sum() == 12)
+
+    with pytest.raises(NotImplementedError):
+        fig, axes = ns.plot_2d(params, types={'lower': 'not a plot type'})
+
+    with pytest.raises(NotImplementedError):
+        fig, axes = ns.plot_2d(params, types={'diagonal': 'not a plot type'})
+
     plt.close("all")
 
 
@@ -539,9 +547,9 @@ def test_live_points():
     np.random.seed(4)
     pc = NestedSamples(root="./tests/example_data/pc")
 
-    for i, logL in pc.logL.iteritems():
+    for i, logL in pc.logL.iloc[:-1].iteritems():
         live_points = pc.live_points(logL)
-        assert len(live_points) == int(pc.nlive[i])
+        assert len(live_points) == int(pc.nlive[i[0]+1])
 
         live_points_from_int = pc.live_points(i[0])
         assert_array_equal(live_points_from_int, live_points)
@@ -573,7 +581,7 @@ def test_limit_assignment():
     # limits for logL, weights, nlive
     assert ns.limits['logL'][0] == -777.0115456428716
     assert ns.limits['logL'][1] == 5.748335384373301
-    assert ns.limits['nlive'][0] == 0
+    assert ns.limits['nlive'][0] == 1
     assert ns.limits['nlive'][1] == 125
 
 
@@ -638,6 +646,18 @@ def test_posterior_points():
     ns = NestedSamples(root='./tests/example_data/pc')
     assert_array_equal(ns.posterior_points(), ns.posterior_points())
     assert_array_equal(ns.posterior_points(0.5), ns.posterior_points(0.5))
+
+
+def test_wedding_cake():
+    np.random.seed(3)
+    wc = WeddingCake(4, 0.5, 0.01)
+    nlive = 500
+    samples = wc.sample(nlive)
+    assert samples.nlive.iloc[0] == nlive
+    assert samples.nlive.iloc[-1] == 1
+    assert (samples.nlive <= nlive).all()
+    out = samples.logZ(100)
+    assert abs(out.mean()-wc.logZ()) < out.std()*3
 
 
 def test_logzero_mask_prior_level():

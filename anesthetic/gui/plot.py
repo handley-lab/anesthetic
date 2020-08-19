@@ -245,8 +245,7 @@ class RunPlotter(object):
 
     def update(self, _):
         """Update all the plots upon slider changes."""
-        with np.errstate(divide='ignore'):
-            logX = np.log(self.samples.nlive / (self.samples.nlive+1)).cumsum()
+        logX = np.log(self.samples.nlive / (self.samples.nlive+1)).cumsum()
         kT = self.temperature()
         LX = self.samples.logL/kT + logX
         LX = np.exp(LX-LX.max())
