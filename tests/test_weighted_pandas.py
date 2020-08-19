@@ -209,10 +209,13 @@ def test_WeightedSeries_median():
 
 def test_WeightedSeries_quantile():
     series = test_WeightedSeries_constructor()
-    for q in np.linspace(0, 1, 10):
+    qs = np.linspace(0, 1, 10)
+    for q in qs:
         quantile = series.quantile(q)
         assert isinstance(quantile, float)
         assert_allclose(quantile, q, atol=1e-2)
+
+    assert_allclose(series.quantile(qs), qs, atol=1e-2)
 
 
 def test_WeightedSeries_hist():
