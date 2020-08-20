@@ -611,7 +611,7 @@ class NestedSamples(MCMCSamples):
         else:
             return WeightedDataFrame(dlogX, self.index, weights=self.weights)
 
-    def importance_reweighting(self, logL_new, action='replace'):
+    def importance_sample(self, logL_new, action='replace'):
         """Perform importance re-weighting on the log-likelihood.
 
         Parameters
