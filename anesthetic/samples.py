@@ -620,7 +620,7 @@ class NestedSamples(MCMCSamples):
             New log-likelihood values. Should have the same shape as `logL`.
 
         action: str
-            Can be any of {'replace', 'add'}.
+            Can be any of {'replace', 'add', 'mask'}.
                 * replace: Replace the current `logL` with the new `logL_new`.
                 * add: Add the new `logL_new` to the current `logL`.
                 * mask: treat `logL_new` as a boolean mask and only keep the
@@ -641,8 +641,8 @@ class NestedSamples(MCMCSamples):
             samples = samples[logL_new]
         else:
             raise NotImplementedError("`action` needs to be one of "
-                                      "{'replace', 'add'}, but '%s' was "
-                                      "requested." % action)
+                                      "{'replace', 'add', 'mask'}, but '%s' "
+                                      "was requested." % action)
         samples = merge_nested_samples(
             (samples[samples.logL > samples.logL_birth], )
         )
