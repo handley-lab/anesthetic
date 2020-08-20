@@ -611,6 +611,38 @@ class NestedSamples(MCMCSamples):
         else:
             return WeightedDataFrame(dlogX, self.index, weights=self.weights)
 
+    def importance_reweighting(self, logL_new, replace=True, add=False):
+        """Perform importance re-weighting on the log-likelihood.
+
+        Parameters
+        ----------
+        logL_new: np.array
+            New log-likelihood values. Should have the same shape as `logL`.
+
+        replace: bool
+            Replace the current `logL` with the new `logL_new`.
+
+        add: bool
+            Add the new `logL_new` to the current `logL`.
+
+        Returns
+        -------
+        samples: NestedSamples
+            Importance re-weighted samples.
+        """
+        samples = merge_nested_samples((self, ))
+        if not replace ^ add:
+            raise ValueError("One and only one of args 'replace' or 'add' "
+                             "should be set to True.")
+        elif replace:
+            samples.logL = logL_new
+        elif add:
+            samples.logL += logL_new
+        samples = merge_nested_samples(
+            (samples[samples.logL > samples.logL_birth], )
+        )
+        return samples
+
     def _compute_nlive(self, logL_birth):
         if is_int(logL_birth):
             nlive = logL_birth
