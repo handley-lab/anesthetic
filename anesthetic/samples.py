@@ -701,7 +701,7 @@ class NestedSamples(MCMCSamples):
 
 
 def merge_nested_samples(runs):
-    """Merge two or more nested sampling runs.
+    """Merge one or more nested sampling runs.
 
     Parameters
     ----------
