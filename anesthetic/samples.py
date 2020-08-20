@@ -623,6 +623,8 @@ class NestedSamples(MCMCSamples):
             Can be any of {'replace', 'add'}.
                 * replace: Replace the current `logL` with the new `logL_new`.
                 * add: Add the new `logL_new` to the current `logL`.
+                * mask: treat `logL_new` as a boolean mask and only keep the
+                        corresponding (True) samples.
             default: 'replace'
 
         Returns
@@ -635,6 +637,8 @@ class NestedSamples(MCMCSamples):
             samples.logL = logL_new
         elif action == 'add':
             samples.logL += logL_new
+        elif action == 'mask':
+            samples = samples[logL_new]
         else:
             raise NotImplementedError("`action` needs to be one of "
                                       "{'replace', 'add'}, but '%s' was "

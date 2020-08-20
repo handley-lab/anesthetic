@@ -681,6 +681,11 @@ def test_importance_samples():
     assert NS2.d.mean() == pytest.approx(NS1.d.mean(), rel=1e-2)
     assert NS2.d.std() == pytest.approx(NS1.d.std(), abs=1e-2)
 
+    ns2 = ns0.importance_sample(mask, action='mask')
+    assert_array_equal(ns1.logL, ns2.logL)
+    assert_array_equal(ns1.logL_birth, ns2.logL_birth)
+    assert_array_equal(ns1.weights, ns2.weights)
+
 
 def test_wedding_cake():
     np.random.seed(3)
