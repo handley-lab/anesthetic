@@ -669,12 +669,12 @@ def test_logzero_mask_prior_level():
 
     V_prior = pi0[mask].weights.sum() / pi0.weights.sum()
     V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
-    logZ_V_mask = NS0.logZ.mean() + np.log(V_posterior) - np.log(V_prior)
+    logZ_V = NS0.logZ.mean() + np.log(V_posterior) - np.log(V_prior)
 
     ns1 = merge_nested_samples((ns0[mask],))
     NS1 = ns1.ns_output(nsamples=2000)
 
-    assert abs(NS1.logZ.mean() - logZ_V_mask) < NS1.logZ.std()
+    assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
 
 
 def test_logzero_mask_likelihood_level():
@@ -684,12 +684,11 @@ def test_logzero_mask_likelihood_level():
     mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
 
     V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
-    logZ_V_mask = NS0.logZ.mean() + np.log(V_posterior)
+    logZ_V = NS0.logZ.mean() + np.log(V_posterior)
 
-    ns1 = merge_nested_samples((ns0,))
-    ns1.logL = np.where(mask, ns1.logL, -np.inf)
-    # ns1.logL_birth = np.where(mask, ns1.logL_birth, -np.inf)
-    ns1 = merge_nested_samples((ns1,))
+    ns1 = NestedSamples(root='./tests/example_data/pc')
+    ns1.logL = np.where(mask, ns1.logL, -1e30)
+    ns1 = merge_nested_samples((ns1[ns1.logL > ns1.logL_birth],))
     NS1 = ns1.ns_output(nsamples=2000)
 
-    assert abs(NS1.logZ.mean() - logZ_V_mask) < NS1.logZ.std()
+    assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
