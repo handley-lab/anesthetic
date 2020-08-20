@@ -341,7 +341,7 @@ class MCMCSamples(WeightedDataFrame):
 
         return fig, axes
 
-    def importance_sample(self, logL_new, action='add'):
+    def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
 
         Parameters
@@ -349,13 +349,18 @@ class MCMCSamples(WeightedDataFrame):
         logL_new: np.array
             New log-likelihood values. Should have the same shape as `logL`.
 
-        action: str
+        action: str, optional
             Can be any of {'add', 'replace', 'mask'}.
                 * add: Add the new `logL_new` to the current `logL`.
                 * replace: Replace the current `logL` with the new `logL_new`.
                 * mask: treat `logL_new` as a boolean mask and only keep the
                         corresponding (True) samples.
             default: 'add'
+
+        inplace: bool, optional
+            Indicates whether to modify the existing array, or return a new
+            frame with importance sampling applied.  
+            default: False
 
         Returns
         -------
@@ -373,7 +378,10 @@ class MCMCSamples(WeightedDataFrame):
             raise NotImplementedError("`action` needs to be one of "
                                       "{'add', 'replace', 'mask'}, but '%s' "
                                       "was requested." % action)
-        return samples
+        if inplace:
+            self.__init__(samples)
+        else:
+            return samples
 
     def _limits(self, paramname):
         limits = self.limits.get(paramname, (None, None))
@@ -645,7 +653,7 @@ class NestedSamples(MCMCSamples):
         else:
             return WeightedDataFrame(dlogX, self.index, weights=self.weights)
 
-    def importance_sample(self, logL_new, action='add'):
+    def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
 
         Parameters
@@ -653,13 +661,18 @@ class NestedSamples(MCMCSamples):
         logL_new: np.array
             New log-likelihood values. Should have the same shape as `logL`.
 
-        action: str
+        action: str, optional
             Can be any of {'add', 'replace', 'mask'}.
                 * add: Add the new `logL_new` to the current `logL`.
                 * replace: Replace the current `logL` with the new `logL_new`.
                 * mask: treat `logL_new` as a boolean mask and only keep the
                         corresponding (True) samples.
             default: 'add'
+
+        inplace: bool, optional
+            Indicates whether to modify the existing array, or return a new
+            frame with importance sampling applied.  
+            default: False
 
         Returns
         -------
@@ -668,12 +681,15 @@ class NestedSamples(MCMCSamples):
         """
         samples = merge_nested_samples((self, ))
         samples = super(NestedSamples, samples).importance_sample(
-            logL_new=logL_new, action=action
+            logL_new, action=action
         )
         samples = merge_nested_samples(
             (samples[samples.logL > samples.logL_birth], )
         )
-        return samples
+        if inplace:
+            self.__init__(samples)
+        else:
+            return samples
 
     def _compute_nlive(self, logL_birth):
         if is_int(logL_birth):

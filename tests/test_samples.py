@@ -648,7 +648,7 @@ def test_posterior_points():
     assert_array_equal(ns.posterior_points(0.5), ns.posterior_points(0.5))
 
 
-def test_importance_samples():
+def test_NestedSamples_importance_sample():
     np.random.seed(3)
     ns0 = NestedSamples(root='./tests/example_data/pc')
     pi0 = ns0.set_beta(0)
@@ -678,17 +678,46 @@ def test_importance_samples():
     assert_array_equal(ns_masked.weights, ns1.weights)
 
     logL_new = np.where(mask, 0, -np.inf)
-    ns1 = ns0.importance_sample(logL_new=logL_new)
+    ns1 = ns0.importance_sample(logL_new)
     NS1 = ns1.ns_output(nsamples=2000)
     assert_array_equal(ns1, ns_masked)
     logZ_V = NS0.logZ.mean() + np.log(V_posterior) - np.log(V_prior)
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
 
     logL_new = np.where(mask, 0, -1e30)
-    ns1 = ns0.importance_sample(logL_new=logL_new)
+    ns1 = ns0.importance_sample(logL_new)
     NS1 = ns1.ns_output(nsamples=2000)
     logZ_V = NS0.logZ.mean() + np.log(V_posterior)
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
+
+    ns0.importance_sample(logL_new, inplace=True)
+    assert_array_equal(ns0, ns1)
+
+
+def test_MCMCSamples_importance_sample():
+    np.random.seed(3)
+    mc0 = MCMCSamples(root='./tests/example_data/gd')
+
+    with pytest.raises(NotImplementedError):
+        mc0.importance_sample(mc0.logL, action='spam')
+
+    mc_masked = mc0.importance_sample(mc0.logL, action='replace')
+    assert_array_equal(mc0.logL, mc_masked.logL)
+    assert_array_equal(mc0.weights, mc_masked.weights)
+
+    mc_masked = mc0.importance_sample(np.zeros_like(mc0.logL), action='add')
+    assert_array_equal(mc0.logL, mc_masked.logL)
+    assert_array_equal(mc0.weights, mc_masked.weights)
+
+    mask = ((mc0.x0 > -0.3) & (mc0.x2 > 0.2) & (mc0.x4 < 3.5)).to_numpy()
+    mc_masked = mc0[mask]
+
+    mc1 = mc0.importance_sample(mask, action='mask')
+    assert_array_equal(mc_masked.logL, mc1.logL)
+    assert_array_equal(mc_masked.weights, mc1.weights)
+
+    mc0.importance_sample(mask, action='mask', inplace=True)
+    assert_array_equal(mc0, mc1)
 
 
 def test_wedding_cake():
