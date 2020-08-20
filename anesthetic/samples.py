@@ -341,6 +341,40 @@ class MCMCSamples(WeightedDataFrame):
 
         return fig, axes
 
+    def importance_sample(self, logL_new, action='add'):
+        """Perform importance re-weighting on the log-likelihood.
+
+        Parameters
+        ----------
+        logL_new: np.array
+            New log-likelihood values. Should have the same shape as `logL`.
+
+        action: str
+            Can be any of {'add', 'replace', 'mask'}.
+                * add: Add the new `logL_new` to the current `logL`.
+                * replace: Replace the current `logL` with the new `logL_new`.
+                * mask: treat `logL_new` as a boolean mask and only keep the
+                        corresponding (True) samples.
+            default: 'add'
+
+        Returns
+        -------
+        samples: MCMCSamples
+            Importance re-weighted samples.
+        """
+        samples = self.copy()
+        if action == 'add':
+            samples.logL += logL_new
+        elif action == 'replace':
+            samples.logL = logL_new
+        elif action == 'mask':
+            samples = samples[logL_new]
+        else:
+            raise NotImplementedError("`action` needs to be one of "
+                                      "{'add', 'replace', 'mask'}, but '%s' "
+                                      "was requested." % action)
+        return samples
+
     def _limits(self, paramname):
         limits = self.limits.get(paramname, (None, None))
         if limits[0] == limits[1]:
@@ -610,6 +644,36 @@ class NestedSamples(MCMCSamples):
         else:
             return WeightedDataFrame(dlogX, self.index, weights=self.weights)
 
+    def importance_sample(self, logL_new, action='add'):
+        """Perform importance re-weighting on the log-likelihood.
+
+        Parameters
+        ----------
+        logL_new: np.array
+            New log-likelihood values. Should have the same shape as `logL`.
+
+        action: str
+            Can be any of {'add', 'replace', 'mask'}.
+                * add: Add the new `logL_new` to the current `logL`.
+                * replace: Replace the current `logL` with the new `logL_new`.
+                * mask: treat `logL_new` as a boolean mask and only keep the
+                        corresponding (True) samples.
+            default: 'add'
+
+        Returns
+        -------
+        samples: NestedSamples
+            Importance re-weighted samples.
+        """
+        samples = merge_nested_samples((self, ))
+        samples = super(NestedSamples, samples).importance_sample(
+            logL_new=logL_new, action=action
+        )
+        samples = merge_nested_samples(
+            (samples[samples.logL > samples.logL_birth], )
+        )
+        return samples
+
     def _compute_nlive(self, logL_birth):
         if is_int(logL_birth):
             nlive = logL_birth
@@ -636,12 +700,14 @@ class NestedSamples(MCMCSamples):
 
 
 def merge_nested_samples(runs):
-    """Merge two or more nested sampling runs.
+    """Merge one or more nested sampling runs.
 
     Parameters
     ----------
     runs: list(NestedSamples)
-        list or array-like of nested sampling runs.
+        List or array-like of one or more nested sampling runs.
+        If only a single run is provided, this recalculates the live points and
+        as such can be used for masked runs.
 
     Returns
     -------
