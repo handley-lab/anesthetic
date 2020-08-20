@@ -648,6 +648,40 @@ def test_posterior_points():
     assert_array_equal(ns.posterior_points(0.5), ns.posterior_points(0.5))
 
 
+def test_importance_samples():
+    np.random.seed(3)
+    ns0 = NestedSamples(root='./tests/example_data/pc')
+
+    with pytest.raises(NotImplementedError):
+        ns0.importance_sample(ns0.logL, action='spam')
+
+    ns1 = ns0.importance_sample(ns0.logL, action='replace')
+    assert_array_equal(ns0.logL, ns1.logL)
+    assert_array_equal(ns0.logL_birth, ns1.logL_birth)
+    assert_array_equal(ns0.weights, ns1.weights)
+
+    ns1 = ns0.importance_sample(np.zeros_like(ns0.logL), action='add')
+    assert_array_equal(ns0.logL, ns1.logL)
+    assert_array_equal(ns0.logL_birth, ns1.logL_birth)
+    assert_array_equal(ns0.weights, ns1.weights)
+
+    mask = ((ns0.x0 > -0.1) & (ns0.x2 > 0.3) & (ns0.x4 < 3)).to_numpy()
+    ns1 = merge_nested_samples((ns0[mask], ))
+    logL_new = np.where(mask, ns0.logL, -np.inf)
+    ns2 = ns0.importance_sample(logL_new=logL_new)
+    assert_array_equal(ns1.logL, ns2.logL)
+    assert_array_equal(ns1.logL_birth, ns2.logL_birth)
+    assert_array_equal(ns1.weights, ns2.weights)
+    NS1 = ns1.ns_output(nsamples=5000)
+    NS2 = ns2.ns_output(nsamples=5000)
+    assert NS2.logZ.mean() == pytest.approx(NS1.logZ.mean(), rel=1e-2)
+    assert NS2.logZ.std() == pytest.approx(NS1.logZ.std(), abs=1e-2)
+    assert NS2.D.mean() == pytest.approx(NS1.D.mean(), rel=1e-2)
+    assert NS2.D.std() == pytest.approx(NS1.D.std(), abs=1e-2)
+    assert NS2.d.mean() == pytest.approx(NS1.d.mean(), rel=1e-2)
+    assert NS2.d.std() == pytest.approx(NS1.d.std(), abs=1e-2)
+
+
 def test_wedding_cake():
     np.random.seed(3)
     wc = WeddingCake(4, 0.5, 0.01)
