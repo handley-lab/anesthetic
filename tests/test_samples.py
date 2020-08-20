@@ -648,6 +648,49 @@ def test_posterior_points():
     assert_array_equal(ns.posterior_points(0.5), ns.posterior_points(0.5))
 
 
+def test_importance_samples():
+    np.random.seed(3)
+    ns0 = NestedSamples(root='./tests/example_data/pc')
+    pi0 = ns0.set_beta(0)
+    NS0 = ns0.ns_output(nsamples=2000)
+
+    with pytest.raises(NotImplementedError):
+        ns0.importance_sample(ns0.logL, action='spam')
+
+    ns_masked = ns0.importance_sample(ns0.logL, action='replace')
+    assert_array_equal(ns0.logL, ns_masked.logL)
+    assert_array_equal(ns0.logL_birth, ns_masked.logL_birth)
+    assert_array_equal(ns0.weights, ns_masked.weights)
+
+    ns_masked = ns0.importance_sample(np.zeros_like(ns0.logL), action='add')
+    assert_array_equal(ns0.logL, ns_masked.logL)
+    assert_array_equal(ns0.logL_birth, ns_masked.logL_birth)
+    assert_array_equal(ns0.weights, ns_masked.weights)
+
+    mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
+    ns_masked = merge_nested_samples((ns0[mask], ))
+    V_prior = pi0[mask].weights.sum() / pi0.weights.sum()
+    V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
+
+    ns1 = ns0.importance_sample(mask, action='mask')
+    assert_array_equal(ns_masked.logL, ns1.logL)
+    assert_array_equal(ns_masked.logL_birth, ns1.logL_birth)
+    assert_array_equal(ns_masked.weights, ns1.weights)
+
+    logL_new = np.where(mask, 0, -np.inf)
+    ns1 = ns0.importance_sample(logL_new=logL_new)
+    NS1 = ns1.ns_output(nsamples=2000)
+    assert_array_equal(ns1, ns_masked)
+    logZ_V = NS0.logZ.mean() + np.log(V_posterior) - np.log(V_prior)
+    assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
+
+    logL_new = np.where(mask, 0, -1e30)
+    ns1 = ns0.importance_sample(logL_new=logL_new)
+    NS1 = ns1.ns_output(nsamples=2000)
+    logZ_V = NS0.logZ.mean() + np.log(V_posterior)
+    assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
+
+
 def test_wedding_cake():
     np.random.seed(3)
     wc = WeddingCake(4, 0.5, 0.01)
