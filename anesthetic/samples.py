@@ -359,7 +359,7 @@ class MCMCSamples(WeightedDataFrame):
 
         inplace: bool, optional
             Indicates whether to modify the existing array, or return a new
-            frame with importance sampling applied.  
+            frame with importance sampling applied.
             default: False
 
         Returns
@@ -671,7 +671,7 @@ class NestedSamples(MCMCSamples):
 
         inplace: bool, optional
             Indicates whether to modify the existing array, or return a new
-            frame with importance sampling applied.  
+            frame with importance sampling applied.
             default: False
 
         Returns
