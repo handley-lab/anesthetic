@@ -667,7 +667,7 @@ def test_importance_samples():
 
     mask = ((ns0.x0 > -0.1) & (ns0.x2 > 0.3) & (ns0.x4 < 3)).to_numpy()
     ns1 = merge_nested_samples((ns0[mask], ))
-    logL_new = np.where(mask, ns0.logL, -np.inf)
+    logL_new = np.where(mask, 0, -np.inf)
     ns2 = ns0.importance_sample(logL_new=logL_new)
     assert_array_equal(ns1.logL, ns2.logL)
     assert_array_equal(ns1.logL_birth, ns2.logL_birth)

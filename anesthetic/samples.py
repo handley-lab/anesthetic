@@ -611,7 +611,7 @@ class NestedSamples(MCMCSamples):
         else:
             return WeightedDataFrame(dlogX, self.index, weights=self.weights)
 
-    def importance_sample(self, logL_new, action='replace'):
+    def importance_sample(self, logL_new, action='add'):
         """Perform importance re-weighting on the log-likelihood.
 
         Parameters
@@ -620,12 +620,12 @@ class NestedSamples(MCMCSamples):
             New log-likelihood values. Should have the same shape as `logL`.
 
         action: str
-            Can be any of {'replace', 'add', 'mask'}.
-                * replace: Replace the current `logL` with the new `logL_new`.
+            Can be any of {'add', 'replace', 'mask'}.
                 * add: Add the new `logL_new` to the current `logL`.
+                * replace: Replace the current `logL` with the new `logL_new`.
                 * mask: treat `logL_new` as a boolean mask and only keep the
                         corresponding (True) samples.
-            default: 'replace'
+            default: 'add'
 
         Returns
         -------
@@ -633,15 +633,15 @@ class NestedSamples(MCMCSamples):
             Importance re-weighted samples.
         """
         samples = merge_nested_samples((self, ))
-        if action == 'replace':
-            samples.logL = logL_new
-        elif action == 'add':
+        if action == 'add':
             samples.logL += logL_new
+        elif action == 'replace':
+            samples.logL = logL_new
         elif action == 'mask':
             samples = samples[logL_new]
         else:
             raise NotImplementedError("`action` needs to be one of "
-                                      "{'replace', 'add', 'mask'}, but '%s' "
+                                      "{'add', 'replace', 'mask'}, but '%s' "
                                       "was requested." % action)
         samples = merge_nested_samples(
             (samples[samples.logL > samples.logL_birth], )
