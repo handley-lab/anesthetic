@@ -46,7 +46,7 @@ class WeightedSeries(_WeightedObject, pandas.Series):
 
     def __init__(self, *args, **kwargs):
         weights = kwargs.pop('weights', None)
-        super(WeightedSeries, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.weights = weights
 
     def mean(self):
@@ -66,8 +66,7 @@ class WeightedSeries(_WeightedObject, pandas.Series):
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedSeries, self).hist(weights=self.weights,
-                                                *args, **kwargs)
+        return super().hist(weights=self.weights, *args, **kwargs)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
@@ -97,7 +96,7 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
     def __init__(self, *args, **kwargs):
         weights = kwargs.pop('weights', None)
-        super(WeightedDataFrame, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.weights = weights
 
     def mean(self):
@@ -129,8 +128,7 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
 
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
-        return super(WeightedDataFrame, self).hist(weights=self.weights,
-                                                   *args, **kwargs)
+        return super().hist(weights=self.weights, *args, **kwargs)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.

@@ -33,7 +33,7 @@ class MontePythonReader(ChainReader):
             No trailing '/'.
 
         """
-        super(MontePythonReader, self).__init__(root)
+        super().__init__(root)
 
     @property
     def log_param_file(self):

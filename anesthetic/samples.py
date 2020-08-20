@@ -95,7 +95,7 @@ class MCMCSamples(WeightedDataFrame):
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
             self.root = None
-            super(MCMCSamples, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
             if logL is not None:
                 self['logL'] = logL
@@ -429,8 +429,7 @@ class NestedSamples(MCMCSamples):
                 logL_birth = np.where(logL_birth <= logzero, -np.inf,
                                       logL_birth)
 
-            super(NestedSamples, self).__init__(logzero=logzero,
-                                                *args, **kwargs)
+            super().__init__(logzero=logzero, *args, **kwargs)
             if logL_birth is not None:
                 self._compute_nlive(logL_birth)
 

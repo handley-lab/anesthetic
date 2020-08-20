@@ -21,7 +21,7 @@ class Higson(Widget):
     """
 
     def __init__(self, fig, gridspec):
-        super(Higson, self).__init__(fig, gridspec)
+        super().__init__(fig, gridspec)
         self.ax.set_yticks([])
         self.ax.set_ylim(-0.1, 1.1)
         self.ax.set_ylabel(r'$LX$')
@@ -61,15 +61,14 @@ class Evolution(Slider):
     """Slider controlling the evolution stage of the live points."""
 
     def __init__(self, fig, gridspec, action, valmax):
-        super(Evolution, self).__init__(fig, gridspec, action, '',
-                                        0, valmax, 0, 'horizontal')
+        super().__init__(fig, gridspec, action, '', 0, valmax, 0, 'horizontal')
         self.slider.valtext.set_horizontalalignment('right')
         self.slider.valtext.set_position((0.98, 0.5))
 
     def __call__(self):
         """Return the current iteration as an integer."""
         mx = self.slider.valmax-1
-        val = int(super(Evolution, self).__call__())
+        val = int(super().__call__())
         return min(val, mx)
 
     def set_text(self, logL, n):
@@ -85,19 +84,18 @@ class Evolution(Slider):
 
         """
         text = r'$\log L$: %.6g, $n_\mathrm{live}$: %i' % (logL, n)
-        return super(Evolution, self).set_text(text)
+        return super().set_text(text)
 
 
 class Temperature(Slider):
     """Logarithmic slider controlling temperature of the posterior points."""
 
     def __init__(self, fig, gridspec, action):
-        super(Temperature, self).__init__(fig, gridspec, action, r'$kT$',
-                                          -1, 5, 0, 'vertical')
+        super().__init__(fig, gridspec, action, r'$kT$', -1, 5, 0, 'vertical')
 
     def __call__(self):
         """Return the current temperature."""
-        return 10**super(Temperature, self).__call__()
+        return 10**super().__call__()
 
     def set_text(self, kT):
         """Set the text at end of slider.
@@ -109,7 +107,7 @@ class Temperature(Slider):
 
         """
         text = r'%.2g' % kT
-        return super(Temperature, self).set_text(text)
+        return super().set_text(text)
 
 
 class RunPlotter(object):
