@@ -611,7 +611,7 @@ class NestedSamples(MCMCSamples):
         else:
             return WeightedDataFrame(dlogX, self.index, weights=self.weights)
 
-    def importance_reweighting(self, logL_new, replace=True, add=False):
+    def importance_reweighting(self, logL_new, action='replace'):
         """Perform importance re-weighting on the log-likelihood.
 
         Parameters
@@ -619,11 +619,11 @@ class NestedSamples(MCMCSamples):
         logL_new: np.array
             New log-likelihood values. Should have the same shape as `logL`.
 
-        replace: bool
-            Replace the current `logL` with the new `logL_new`.
-
-        add: bool
-            Add the new `logL_new` to the current `logL`.
+        action: str
+            Can be any of {'replace', 'add'}.
+                * replace: Replace the current `logL` with the new `logL_new`.
+                * add: Add the new `logL_new` to the current `logL`.
+            default: 'replace'
 
         Returns
         -------
@@ -631,13 +631,14 @@ class NestedSamples(MCMCSamples):
             Importance re-weighted samples.
         """
         samples = merge_nested_samples((self, ))
-        if not replace ^ add:
-            raise ValueError("One and only one of args 'replace' or 'add' "
-                             "should be set to True.")
-        elif replace:
+        if action == 'replace':
             samples.logL = logL_new
-        elif add:
+        elif action == 'add':
             samples.logL += logL_new
+        else:
+            raise NotImplementedError("`action` needs to be one of "
+                                      "{'replace', 'add'}, but '%s' was "
+                                      "requested." % action)
         samples = merge_nested_samples(
             (samples[samples.logL > samples.logL_birth], )
         )
