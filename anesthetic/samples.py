@@ -666,12 +666,9 @@ class NestedSamples(MCMCSamples):
             Importance re-weighted samples.
         """
         samples = merge_nested_samples((self, ))
-        samples = super(NestedSamples, samples).importance_sample(
-            logL_new=logL_new, action=action
-        )
-        samples = merge_nested_samples(
-            (samples[samples.logL > samples.logL_birth], )
-        )
+        samples = super().importance_sample(logL_new, action=action)
+        mask = samples.logL > samples.logL_birth
+        samples = merge_nested_samples((samples[mask],))
         return samples
 
     def _compute_nlive(self, logL_birth):
