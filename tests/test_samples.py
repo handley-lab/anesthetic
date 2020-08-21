@@ -691,7 +691,16 @@ def test_NestedSamples_importance_sample():
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
 
     ns0.importance_sample(logL_new, inplace=True)
+    assert type(ns0) is NestedSamples
     assert_array_equal(ns0, ns1)
+    assert ns0.tex == ns1.tex
+    assert ns0.limits == ns1.limits
+    assert ns0.root == ns1.root
+    assert ns0.label == ns1.label
+    assert ns0.beta == ns1.beta
+    assert ns0 is not ns1
+    assert ns0.tex is not ns1.tex
+    assert ns0.limits is not ns1.limits
 
 
 def test_MCMCSamples_importance_sample():
@@ -717,7 +726,16 @@ def test_MCMCSamples_importance_sample():
     assert_array_equal(mc_masked.weights, mc1.weights)
 
     mc0.importance_sample(mask, action='mask', inplace=True)
+    assert type(mc0) is MCMCSamples
     assert_array_equal(mc0, mc1)
+    assert mc0.tex == mc1.tex
+    assert mc0.limits == mc1.limits
+    assert mc0.root == mc1.root
+    assert mc0.label == mc1.label
+    assert mc1._metadata == mc0._metadata
+    assert mc0 is not mc1
+    assert mc0.tex is not mc1.tex
+    assert mc0.limits is not mc1.limits
 
 
 def test_wedding_cake():

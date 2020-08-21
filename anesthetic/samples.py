@@ -6,6 +6,7 @@
 import os
 import numpy as np
 import pandas
+import copy
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
                              fastkde_contour_plot_2d,
@@ -379,7 +380,7 @@ class MCMCSamples(WeightedDataFrame):
                                       "{'add', 'replace', 'mask'}, but '%s' "
                                       "was requested." % action)
         if inplace:
-            self.__init__(samples)
+            self.__dict__ = copy.deepcopy(samples.__dict__)
         else:
             return samples
 
@@ -687,7 +688,7 @@ class NestedSamples(MCMCSamples):
             (samples[samples.logL > samples.logL_birth], )
         )
         if inplace:
-            self.__init__(samples)
+            self.__dict__ = copy.deepcopy(samples.__dict__)
         else:
             return samples
 
