@@ -32,6 +32,10 @@ class _WeightedObject(object):
         """Weighted standard deviation of the sampled distribution."""
         return np.sqrt(self.var())
 
+    def kurtosis(self):
+        """Weighted standard deviation of the sampled distribution."""
+        return self.kurt()
+
     def median(self):
         """Weighted median of the sampled distribution."""
         return self.quantile()
@@ -39,6 +43,10 @@ class _WeightedObject(object):
     def neff(self):
         """Effective number of samples."""
         return channel_capacity(self.weights)
+
+    def sem(self):
+        """Weighted standard error of the mean."""
+        return np.sqrt(self.var()/self.neff())
 
 
 class WeightedSeries(_WeightedObject, pandas.Series):
@@ -60,6 +68,37 @@ class WeightedSeries(_WeightedObject, pandas.Series):
         return np.average((self[nonzero]-self.mean())**2,
                           weights=self.weights[nonzero])
 
+    def cov(self, other):
+        """Weighted covariance with another Series."""
+        nonzero = self.weights != 0
+        return np.cov(self[nonzero], other[nonzero],
+                      aweights=self.weights[nonzero])[0, 1]
+
+    def corr(self, other):
+        """Weighted pearson correlation with another Series."""
+        nonzero = self.weights != 0
+        cov = np.cov(self[nonzero], other[nonzero],
+                     aweights=self.weights[nonzero])
+        return cov[0, 1]/np.sqrt(cov[0, 0])/np.sqrt(cov[1, 1])
+
+    def kurt(self):
+        """Weighted kurtosis of the sampled distribution."""
+        nonzero = self.weights != 0
+        return np.average(((self[nonzero]-self.mean())/self.std())**4,
+                          weights=self.weights[nonzero])
+
+    def skew(self):
+        """Weighted skewness of the sampled distribution."""
+        nonzero = self.weights != 0
+        return np.average(((self[nonzero]-self.mean())/self.std())**3,
+                          weights=self.weights[nonzero])
+
+    def mad(self):
+        """Weighted mean absolute deviation of the sampled distribution."""
+        nonzero = self.weights != 0
+        return np.average(abs(self[nonzero]-self.mean()),
+                          weights=self.weights[nonzero])
+
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
         return quantile(self.values, q, self.weights)
@@ -68,6 +107,11 @@ class WeightedSeries(_WeightedObject, pandas.Series):
         """Weighted histogram of the sampled distribution."""
         return super(WeightedSeries, self).hist(weights=self.weights,
                                                 *args, **kwargs)
+
+    def sample(self, *args, **kwargs):
+        """Weighted sample."""
+        return super(WeightedSeries, self).sample(weights=self.weights,
+                                                  *args, **kwargs)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
@@ -119,6 +163,67 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         cov = np.cov(self[nonzero].T, aweights=self.weights[nonzero])
         return pandas.DataFrame(cov, index=self.columns, columns=self.columns)
 
+    def corr(self):
+        """Weighted pearson correlation matrix of the sampled distribution."""
+        cov = self.cov()
+        diag = np.sqrt(np.diag(cov))
+        return cov.divide(diag, axis=1).divide(diag, axis=0)
+
+    def corrwith(self, other, drop=False):
+        """Weighted pearson correlation matrix of the sampled distribution."""
+        this = self._get_numeric_data()
+
+        if isinstance(other, pandas.Series):
+            return this.apply(lambda x: other.corr(x), axis=0)
+
+        other = other._get_numeric_data()
+        left, right = this.align(other, join="inner", copy=False)
+
+        # mask missing values
+        left = left + right * 0
+        right = right + left * 0
+
+        # demeaned data
+        ldem = left - left.mean()
+        rdem = right - right.mean()
+
+        num = (ldem * rdem * self.weights[:, None]).sum()
+        dom = self.weights.sum() * left.std() * right.std()
+
+        correl = num / dom
+
+        if not drop:
+            # Find non-matching labels along the given axis
+            result_index = this._get_axis(1).union(other._get_axis(1))
+            idx_diff = result_index.difference(correl.index)
+
+            if len(idx_diff) > 0:
+                correl = correl.append(pandas.Series([np.nan] * len(idx_diff),
+                                       index=idx_diff))
+
+        return correl
+
+    def kurt(self):
+        """Weighted kurtosis of the sampled distribution."""
+        nonzero = self.weights != 0
+        kurt = np.average(((self[nonzero]-self.mean())/self.std())**4,
+                          weights=self.weights[nonzero], axis=0)
+        return pandas.Series(kurt, index=self.columns)
+
+    def skew(self):
+        """Weighted skewness of the sampled distribution."""
+        nonzero = self.weights != 0
+        skew = np.average(((self[nonzero]-self.mean())/self.std())**3,
+                          weights=self.weights[nonzero], axis=0)
+        return pandas.Series(skew, index=self.columns)
+
+    def mad(self):
+        """Weighted mean absolute deviation of the sampled distribution."""
+        nonzero = self.weights != 0
+        kurt = np.average(abs(self[nonzero]-self.mean()),
+                          weights=self.weights[nonzero], axis=0)
+        return pandas.Series(kurt, index=self.columns)
+
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
         data = np.array([c.quantile(q) for _, c in self.iteritems()])
@@ -131,6 +236,11 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         """Weighted histogram of the sampled distribution."""
         return super(WeightedDataFrame, self).hist(weights=self.weights,
                                                    *args, **kwargs)
+
+    def sample(self, *args, **kwargs):
+        """Weighted sample."""
+        return super(WeightedDataFrame, self).sample(weights=self.weights,
+                                                     *args, **kwargs)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
