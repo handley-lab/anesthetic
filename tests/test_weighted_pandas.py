@@ -119,7 +119,7 @@ def test_WeightedDataFrame_corrwith():
     assert isinstance(correl, Series)
     assert_allclose(df.corrwith(df.A), df.corr()['A'])
 
-    correl = df.corrwith(other=df[['A', 'B']])
+    correl = df.corrwith(df[['A', 'B']])
     assert isinstance(correl, Series)
     assert_allclose(correl['A'], 1, atol=1e-2)
     assert_allclose(correl['B'], 1, atol=1e-2)
@@ -132,12 +132,19 @@ def test_WeightedDataFrame_median():
     assert isinstance(median, Series)
     assert_allclose(median, 0.5, atol=1e-2)
 
+    median = df.median(axis=1)
+    assert isinstance(median, WeightedSeries)
+    assert_allclose(median.mean(), 0.5, atol=1e-2)
+
 
 def test_WeightedDataFrame_sem():
     df = test_WeightedDataFrame_constructor()
     sem = df.sem()
     assert isinstance(sem, Series)
     assert_allclose(sem, (1./12)**0.5/np.sqrt(df.neff()), atol=1e-2)
+
+    sem = df.sem(axis=1)
+    assert isinstance(sem, WeightedSeries)
 
 
 def test_WeightedDataFrame_kurtosis():
@@ -147,6 +154,10 @@ def test_WeightedDataFrame_kurtosis():
     assert_allclose(kurtosis, 9./5, atol=1e-2)
     assert_array_equal(df.kurtosis(), df.kurt())
 
+    kurtosis = df.kurtosis(axis=1)
+    assert isinstance(kurtosis, WeightedSeries)
+    assert_array_equal(df.kurtosis(axis=1), df.kurt(axis=1))
+
 
 def test_WeightedDataFrame_skew():
     df = test_WeightedDataFrame_constructor()
@@ -154,12 +165,18 @@ def test_WeightedDataFrame_skew():
     assert isinstance(skew, Series)
     assert_allclose(skew, 0., atol=2e-2)
 
+    skew = df.skew(axis=1)
+    assert isinstance(skew, Series)
+
 
 def test_WeightedDataFrame_mad():
     df = test_WeightedDataFrame_constructor()
     mad = df.mad()
     assert isinstance(mad, Series)
     assert_allclose(mad, 0.25, atol=1e-2)
+
+    mad = df.mad(axis=1)
+    assert isinstance(mad, Series)
 
 
 def test_WeightedDataFrame_quantile():
@@ -286,6 +303,8 @@ def test_WeightedDataFrame_nan():
 
 def test_WeightedSeries_mean():
     series = test_WeightedSeries_constructor()
+    series[0] = np.nan
+    series.var(skipna=False)
     mean = series.mean()
     assert isinstance(mean, float)
     assert_allclose(mean, 0.5, atol=1e-2)
