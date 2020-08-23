@@ -82,12 +82,20 @@ def test_WeightedDataFrame_mean():
     assert isinstance(mean, Series)
     assert_allclose(mean, 0.5, atol=1e-2)
 
+    mean = df.mean(axis=1)
+    assert isinstance(mean, WeightedSeries)
+    assert_allclose(mean.mean(), 0.5, atol=1e-2)
+
 
 def test_WeightedDataFrame_std():
     df = test_WeightedDataFrame_constructor()
     std = df.std()
     assert isinstance(std, Series)
     assert_allclose(std, (1./12)**0.5, atol=1e-2)
+
+    std = df.std(axis=1)
+    assert isinstance(std, WeightedSeries)
+    assert_allclose(std.mean(), (1./12)**0.5, atol=1e-1)
 
 
 def test_WeightedDataFrame_cov():
@@ -106,10 +114,27 @@ def test_WeightedDataFrame_median():
 
 def test_WeightedDataFrame_quantile():
     df = test_WeightedDataFrame_constructor()
-    for q in np.linspace(0, 1, 10):
+
+    quantile = df.quantile()
+    assert isinstance(quantile, Series)
+    assert_allclose(quantile, 0.5, atol=1e-2)
+
+    quantile = df.quantile(axis=1)
+    assert isinstance(quantile, WeightedSeries)
+    assert_allclose(quantile.mean(), 0.5, atol=1e-2)
+
+    qs = np.linspace(0, 1, 10)
+    for q in qs:
         quantile = df.quantile(q)
         assert isinstance(quantile, Series)
         assert_allclose(quantile, q, atol=1e-2)
+
+        quantile = df.quantile(q, axis=1)
+        assert isinstance(quantile, WeightedSeries)
+
+    assert_allclose(df.quantile(qs), np.transpose([qs, qs, qs]), atol=1e-2)
+    quantile = df.quantile(qs, axis=1)
+    assert isinstance(quantile, WeightedDataFrame)
 
 
 def test_WeightedDataFrame_hist():
@@ -148,15 +173,53 @@ def test_WeightedDataFrame_nan():
     df = test_WeightedDataFrame_constructor()
 
     df['A'][0] = np.nan
-    df['B'][0] = np.nan
-    df['C'][0] = np.nan
-    assert (np.all(np.isnan(df.mean())))
-    assert (np.all(np.isnan(df.std())))
-    assert (np.all(np.isnan(df.cov())))
+    assert ~df.mean().isna().any()
+    assert ~df.mean(axis=1).isna().any()
+    assert_array_equal(df.mean(skipna=False).isna(), [True, False, False])
+    assert_array_equal(df.mean(axis=1, skipna=False).isna()[0:6],
+                       [True, False, False, False, False, False])
 
-    weights = df.weights
-    weights[0] = 0
-    df.weights = weights
+    assert ~df.std().isna().any()
+    assert ~df.std(axis=1).isna().any()
+    assert_array_equal(df.std(skipna=False).isna(), [True, False, False])
+    assert_array_equal(df.std(axis=1, skipna=False).isna()[0:6],
+                       [True, False, False, False, False, False])
+
+    assert ~df.cov().isna().any().any()
+    assert_array_equal(df.cov(skipna=False).isna(), [[True, True, True],
+                                                     [True, False, False],
+                                                     [True, False, False]])
+
+    df['B'][2] = np.nan
+    assert ~df.mean().isna().any()
+    assert_array_equal(df.mean(skipna=False).isna(), [True, True, False])
+    assert_array_equal(df.mean(axis=1, skipna=False).isna()[0:6],
+                       [True, False, True, False, False, False])
+
+    assert ~df.std().isna().any()
+    assert_array_equal(df.std(skipna=False).isna(), [True, True, False])
+    assert_array_equal(df.std(axis=1, skipna=False).isna()[0:6],
+                       [True, False, True, False, False, False])
+
+    assert ~df.cov().isna().any().any()
+    assert_array_equal(df.cov(skipna=False).isna(), [[True, True, True],
+                                                     [True, True, True],
+                                                     [True, True, False]])
+
+    df['C'][4] = np.nan
+    assert ~df.mean().isna().any()
+    assert df.mean(skipna=False).isna().all()
+    assert_array_equal(df.mean(axis=1, skipna=False).isna()[0:6],
+                       [True, False, True, False, True, False])
+
+    assert ~df.std().isna().any()
+    assert df.std(skipna=False).isna().all()
+    assert_array_equal(df.std(axis=1, skipna=False).isna()[0:6],
+                       [True, False, True, False, True, False])
+
+    assert ~df.cov().isna().any().any()
+    assert df.cov(skipna=False).isna().all().all()
+
     assert_allclose(df.mean(), 0.5, atol=1e-2)
     assert_allclose(df.std(), (1./12)**0.5, atol=1e-2)
     assert_allclose(df.cov(), (1./12)*np.identity(3), atol=1e-2)
@@ -185,10 +248,18 @@ def test_WeightedSeries_median():
 
 def test_WeightedSeries_quantile():
     series = test_WeightedSeries_constructor()
-    for q in np.linspace(0, 1, 10):
+
+    quantile = series.quantile()
+    assert isinstance(quantile, float)
+    assert_allclose(quantile, 0.5, atol=1e-2)
+
+    qs = np.linspace(0, 1, 10)
+    for q in qs:
         quantile = series.quantile(q)
         assert isinstance(quantile, float)
         assert_allclose(quantile, q, atol=1e-2)
+
+    assert_allclose(series.quantile(qs), qs, atol=1e-2)
 
 
 def test_WeightedSeries_hist():
@@ -223,13 +294,14 @@ def test_WeightedSeries_nan():
     series = test_WeightedSeries_constructor()
 
     series[0] = np.nan
-    assert np.isnan(series.mean())
-    assert np.isnan(series.std())
-    assert np.isnan(series.var())
 
-    weights = series.weights
-    weights[0] = 0
-    series.weights = weights
+    assert ~np.isnan(series.mean())
+    assert np.isnan(series.mean(skipna=False))
+    assert ~np.isnan(series.std())
+    assert np.isnan(series.std(skipna=False))
+    assert ~np.isnan(series.var())
+    assert np.isnan(series.var(skipna=False))
+
     assert_allclose(series.mean(), 0.5, atol=1e-2)
     assert_allclose(series.var(), 1./12, atol=1e-2)
     assert_allclose(series.std(), (1./12)**0.5, atol=1e-2)
