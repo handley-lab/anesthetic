@@ -33,7 +33,7 @@ class _WeightedObject(object):
         return np.sqrt(self.var())
 
     def kurtosis(self):
-        """Weighted standard deviation of the sampled distribution."""
+        """Weighted kurtosis of the sampled distribution."""
         return self.kurt()
 
     def median(self):
@@ -170,7 +170,7 @@ class WeightedDataFrame(_WeightedObject, pandas.DataFrame):
         return cov.divide(diag, axis=1).divide(diag, axis=0)
 
     def corrwith(self, other, drop=False):
-        """Weighted pearson correlation matrix of the sampled distribution."""
+        """Pairwise weighted pearson correlation."""
         this = self._get_numeric_data()
 
         if isinstance(other, pandas.Series):
