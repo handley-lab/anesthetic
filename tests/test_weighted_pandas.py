@@ -317,11 +317,21 @@ def test_WeightedSeries_std():
     assert isinstance(std, float)
     assert_allclose(std, (1./12)**0.5, atol=1e-2)
 
+    series[0] = np.nan
+    assert ~np.isnan(series.std())
+    assert np.isnan(series.std(skipna=False))
+
 
 def test_WeightedSeries_cov():
     df = test_WeightedDataFrame_constructor()
     assert_allclose(df.A.cov(df.A), 1./12, atol=1e-2)
     assert_allclose(df.A.cov(df.B), 0, atol=1e-2)
+
+    df.loc[0, 'B'] = np.nan
+    assert ~np.isnan(df.A.cov(df.B))
+    assert np.isnan(df.A.cov(df.B, skipna=False))
+    assert ~np.isnan(df.B.cov(df.A))
+    assert np.isnan(df.B.cov(df.A, skipna=False))
 
 
 def test_WeightedSeries_corr():
@@ -353,6 +363,10 @@ def test_WeightedSeries_kurtosis():
     assert_allclose(kurtosis, 9./5, atol=1e-2)
     assert series.kurtosis() == series.kurt()
 
+    series[0] = np.nan
+    assert ~np.isnan(series.kurtosis())
+    assert np.isnan(series.kurtosis(skipna=False))
+
 
 def test_WeightedSeries_skew():
     series = test_WeightedSeries_constructor()
@@ -360,12 +374,20 @@ def test_WeightedSeries_skew():
     assert isinstance(skew, float)
     assert_allclose(skew, 0., atol=1e-2)
 
+    series[0] = np.nan
+    assert ~np.isnan(series.skew())
+    assert np.isnan(series.skew(skipna=False))
+
 
 def test_WeightedSeries_mad():
     series = test_WeightedSeries_constructor()
     mad = series.mad()
     assert isinstance(mad, float)
     assert_allclose(mad, 0.25, atol=1e-2)
+
+    series[0] = np.nan
+    assert ~np.isnan(series.mad())
+    assert np.isnan(series.mad(skipna=False))
 
 
 def test_WeightedSeries_quantile():
