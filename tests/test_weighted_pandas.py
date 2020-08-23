@@ -205,6 +205,7 @@ def test_WeightedDataFrame_quantile():
 
 
 def test_WeightedDataFrame_hist():
+    plt.figure()
     df = test_WeightedDataFrame_constructor()
     axes = df[['A', 'B']].hist(bins=20, density=True)
     for ax in axes.flatten():
@@ -384,6 +385,7 @@ def test_WeightedSeries_quantile():
 
 
 def test_WeightedSeries_hist():
+    plt.figure()
     series = test_WeightedSeries_constructor()
     ax = series.hist(bins=20, density=True)
     assert len(ax.patches) == 20
