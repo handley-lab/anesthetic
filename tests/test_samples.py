@@ -491,7 +491,6 @@ def test_merging():
     samples_1 = NestedSamples(root='./tests/example_data/pc')
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
     samples = merge_nested_samples([samples_1, samples_2])
-    samples.reset_index(drop=True).sort_values('logL')
     nlive_1 = samples_1.nlive.mode()[0]
     nlive_2 = samples_2.nlive.mode()[0]
     nlive = samples.nlive.mode()[0]
