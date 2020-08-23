@@ -501,6 +501,7 @@ def test_merging():
             and samples.logZ() > samples_2.logZ()
             or samples.logZ() > samples_1.logZ()
             and samples.logZ() < samples_2.logZ())
+    assert 'x0' in samples.tex
 
 
 def test_beta():
@@ -648,7 +649,7 @@ def test_posterior_points():
     assert_array_equal(ns.posterior_points(0.5), ns.posterior_points(0.5))
 
 
-def test_importance_samples():
+def test_NestedSamples_importance_sample():
     np.random.seed(3)
     ns0 = NestedSamples(root='./tests/example_data/pc')
     pi0 = ns0.set_beta(0)
@@ -678,17 +679,72 @@ def test_importance_samples():
     assert_array_equal(ns_masked.weights, ns1.weights)
 
     logL_new = np.where(mask, 0, -np.inf)
-    ns1 = ns0.importance_sample(logL_new=logL_new)
+    ns1 = ns0.importance_sample(logL_new)
     NS1 = ns1.ns_output(nsamples=2000)
     assert_array_equal(ns1, ns_masked)
     logZ_V = NS0.logZ.mean() + np.log(V_posterior) - np.log(V_prior)
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
 
     logL_new = np.where(mask, 0, -1e30)
-    ns1 = ns0.importance_sample(logL_new=logL_new)
+    ns1 = ns0.importance_sample(logL_new)
     NS1 = ns1.ns_output(nsamples=2000)
     logZ_V = NS0.logZ.mean() + np.log(V_posterior)
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
+
+    ns0.importance_sample(logL_new, inplace=True)
+    assert type(ns0) is NestedSamples
+    assert_array_equal(ns0, ns1)
+    assert ns0.tex == ns1.tex
+    assert ns0.limits == ns1.limits
+    assert ns0.root == ns1.root
+    assert ns0.label == ns1.label
+    assert ns0.beta == ns1.beta
+    assert ns0 is not ns1
+    assert ns0.tex is not ns1.tex
+    assert ns0.limits is not ns1.limits
+
+
+def test_MCMCSamples_importance_sample():
+    np.random.seed(3)
+    mc0 = MCMCSamples(root='./tests/example_data/gd')
+
+    with pytest.raises(NotImplementedError):
+        mc0.importance_sample(mc0.logL, action='spam')
+
+    mc_masked = mc0.importance_sample(mc0.logL, action='replace')
+    assert_array_equal(mc0.logL, mc_masked.logL)
+    assert_array_equal(mc0.weights, mc_masked.weights)
+
+    mc_masked = mc0.importance_sample(np.zeros_like(mc0.logL), action='add')
+    assert_array_equal(mc0.logL, mc_masked.logL)
+    assert_array_equal(mc0.weights, mc_masked.weights)
+
+    mask = ((mc0.x0 > -0.3) & (mc0.x2 > 0.2) & (mc0.x4 < 3.5)).to_numpy()
+    mc_masked = mc0[mask]
+
+    mc1 = mc0.importance_sample(mask, action='mask')
+    assert_array_equal(mc_masked.logL, mc1.logL)
+    assert_array_equal(mc_masked.weights, mc1.weights)
+    assert mc0.tex == mc1.tex
+    assert mc0.limits == mc1.limits
+    assert mc0.root == mc1.root
+    assert mc0.label == mc1.label
+    assert mc1._metadata == mc0._metadata
+    assert mc0 is not mc1
+    assert mc0.tex is not mc1.tex
+    assert mc0.limits is not mc1.limits
+
+    mc0.importance_sample(mask, action='mask', inplace=True)
+    assert type(mc0) is MCMCSamples
+    assert_array_equal(mc0, mc1)
+    assert mc0.tex == mc1.tex
+    assert mc0.limits == mc1.limits
+    assert mc0.root == mc1.root
+    assert mc0.label == mc1.label
+    assert mc1._metadata == mc0._metadata
+    assert mc0 is not mc1
+    assert mc0.tex is not mc1.tex
+    assert mc0.limits is not mc1.limits
 
 
 def test_wedding_cake():
@@ -735,3 +791,27 @@ def test_logzero_mask_likelihood_level():
     NS1 = ns1.ns_output(nsamples=2000)
 
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
+
+
+def test_recompute():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    recompute = pc.recompute()
+    assert recompute is not pc
+
+    pc.loc[1000, 'logL'] = pc.logL_birth.iloc[1000]-1
+    with pytest.raises(RuntimeError):
+        pc.recompute()
+
+    mn = NestedSamples(root='./tests/example_data/mn_old')
+    with pytest.raises(RuntimeError):
+        mn.recompute()
+
+
+def test_copy():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    new = pc.copy()
+    assert new is not pc
+    assert new.tex is not pc.tex
+    assert new.limits is not pc.limits
