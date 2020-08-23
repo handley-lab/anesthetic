@@ -491,6 +491,7 @@ def test_merging():
     samples_1 = NestedSamples(root='./tests/example_data/pc')
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
     samples = merge_nested_samples([samples_1, samples_2])
+    samples.reset_index(drop=True).sort_values('logL')
     nlive_1 = samples_1.nlive.mode()[0]
     nlive_2 = samples_2.nlive.mode()[0]
     nlive = samples.nlive.mode()[0]
@@ -724,6 +725,14 @@ def test_MCMCSamples_importance_sample():
     mc1 = mc0.importance_sample(mask, action='mask')
     assert_array_equal(mc_masked.logL, mc1.logL)
     assert_array_equal(mc_masked.weights, mc1.weights)
+    assert mc0.tex == mc1.tex
+    assert mc0.limits == mc1.limits
+    assert mc0.root == mc1.root
+    assert mc0.label == mc1.label
+    assert mc1._metadata == mc0._metadata
+    assert mc0 is not mc1
+    assert mc0.tex is not mc1.tex
+    assert mc0.limits is not mc1.limits
 
     mc0.importance_sample(mask, action='mask', inplace=True)
     assert type(mc0) is MCMCSamples
@@ -782,3 +791,27 @@ def test_logzero_mask_likelihood_level():
     NS1 = ns1.ns_output(nsamples=2000)
 
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
+
+
+def test_recompute():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    recompute = pc.recompute()
+    assert recompute is not pc
+
+    pc.loc[1000, 'logL'] = pc.logL_birth.iloc[1000]-1
+    with pytest.raises(RuntimeError):
+        pc.recompute()
+
+    mn = NestedSamples(root='./tests/example_data/mn_old')
+    with pytest.raises(RuntimeError):
+        mn.recompute()
+
+
+def test_copy():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    new = pc.copy()
+    assert new is not pc
+    assert new.tex is not pc.tex
+    assert new.limits is not pc.limits
