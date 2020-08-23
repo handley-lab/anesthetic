@@ -763,4 +763,6 @@ def merge_nested_samples(runs):
     samples: NestedSamples
         Merged run.
     """
-    return pandas.concat(runs, ignore_index=True).recompute()
+    merge = pandas.concat(runs, ignore_index=True)
+    merge.tex = {key: val for r in runs for key, val in r.tex.items()}
+    return merge.recompute()

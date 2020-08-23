@@ -501,6 +501,7 @@ def test_merging():
             and samples.logZ() > samples_2.logZ()
             or samples.logZ() > samples_1.logZ()
             and samples.logZ() < samples_2.logZ())
+    assert 'x0' in samples.tex
 
 
 def test_beta():
