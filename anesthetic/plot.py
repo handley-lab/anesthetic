@@ -27,9 +27,8 @@ import matplotlib.cbook as cbook
 import matplotlib.lines as mlines
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.collections import LineCollection
 from matplotlib.transforms import Affine2D
-from anesthetic.utils import check_bounds, nest_level, unique
+from anesthetic.utils import check_bounds, nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
@@ -770,54 +769,6 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
     return points
-
-
-def get_legend_proxy(fig):
-    """Extract a proxy for plotting onto a legend.
-
-    Example usage:
-        >>> fig, axes = modelA.plot_2d()
-        >>> modelB.plot_2d(axes)
-        >>> proxy = get_legend_proxy(fig)
-        >>> fig.legend(proxy, ['A', 'B']
-
-    Parameters
-    ----------
-        fig: matplotlib.figure.Figure
-            Figure to extract colors from.
-
-    """
-    from warnings import warn
-    warn("`get_legend_proxy` is deprecated and might be deleted in the "
-         "future. You can now simply use `axes[x][y].legend()` or do "
-         "`handles, labels = axes[x][y].get_legend_handles_labels()` "
-         "and pass the handles and labels to the figure legend "
-         "`fig.legend(handles, labels)`.", FutureWarning)
-    cmaps = [coll.get_cmap() for ax in fig.axes for coll in ax.collections
-             if isinstance(coll.get_cmap(), LinearSegmentedColormap)]
-    cmaps = unique(cmaps)
-
-    if not cmaps:
-        colors = [line.get_color() for ax in fig.axes for line in ax.lines]
-        colors = unique(colors)
-        cmaps = [basic_cmap(color) for color in colors]
-
-    proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.999),
-                           edgecolor=cmap(0.32), linewidth=2)
-             for cmap in cmaps]
-
-    if not cmaps:
-        colors = [coll.get_ec()[0]
-                  for ax in fig.axes
-                  for coll in ax.collections
-                  if isinstance(coll, LineCollection)]
-        colors = np.unique(colors, axis=0)
-        cmaps = [basic_cmap(color) for color in colors]
-        proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.0),
-                               edgecolor=cmap(0.999), linewidth=1)
-                 for cmap in cmaps]
-
-    return proxy
 
 
 def basic_cmap(color):
