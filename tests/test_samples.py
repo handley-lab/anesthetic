@@ -10,6 +10,7 @@ from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from anesthetic.samples import merge_nested_samples
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less)
+from pandas.testing import assert_frame_equal
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest
 from wedding_cake import WeddingCake
@@ -544,6 +545,13 @@ def test_beta_with_logL_infinities():
     ns.plot_1d(['x0', 'x1'])
 
 
+def test_prior():
+    ns = NestedSamples(root="./tests/example_data/pc")
+    prior = ns.prior()
+    assert prior.beta == 0
+    assert_frame_equal(prior, ns.set_beta(0))
+
+
 def test_live_points():
     np.random.seed(4)
     pc = NestedSamples(root="./tests/example_data/pc")
@@ -647,6 +655,11 @@ def test_posterior_points():
     ns = NestedSamples(root='./tests/example_data/pc')
     assert_array_equal(ns.posterior_points(), ns.posterior_points())
     assert_array_equal(ns.posterior_points(0.5), ns.posterior_points(0.5))
+
+
+def test_prior_points():
+    ns = NestedSamples(root='./tests/example_data/pc')
+    assert_array_equal(ns.prior_points(), ns.posterior_points(0))
 
 
 def test_NestedSamples_importance_sample():
