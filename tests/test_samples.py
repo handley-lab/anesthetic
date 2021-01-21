@@ -9,7 +9,6 @@ from matplotlib.patches import Rectangle
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from anesthetic.samples import merge_nested_samples
 from anesthetic.samples import merge_samples_weighted
-from scipy.special import logsumexp
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less)
 from pandas.testing import assert_frame_equal
@@ -508,25 +507,26 @@ def test_merging():
 
 
 def test_weighted_merging():
-    #Generate some data to try it out:
+    # Generate some data to try it out:
     samples_1 = NestedSamples(root='./tests/example_data/pc')
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
     samples_1['xtest'] = 7*samples_1['x3']
     samples_2['xtest'] = samples_2['x3']
     mean1 = samples_1.mean()['xtest']
     mean2 = samples_2.mean()['xtest']
-
-    # Test with explicit weights
-    weight1 = 31
-    weight2 = 13
-    samples = merge_samples_weighted([samples_1, samples_2], weights=[weight1, weight2])
-    mean = samples.mean()['xtest']
-    assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
+    samples = [samples_1, samples_2]
 
     # Test with evidence weights
     weight1 = np.exp(samples_1.logZ())
     weight2 = np.exp(samples_2.logZ())
-    samples = merge_samples_weighted([samples_1, samples_2])
+    samples = merge_samples_weighted(samples)
+    mean = samples.mean()['xtest']
+    assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
+
+    # Test with explicit weights
+    weight1 = 31
+    weight2 = 13
+    samples = merge_samples_weighted(samples, weights=[weight1, weight2])
     mean = samples.mean()['xtest']
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 

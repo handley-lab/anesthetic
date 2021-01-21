@@ -799,14 +799,15 @@ def merge_samples_weighted(samples, weights=None):
         Merged (weighted) run.
     """
     mcmc_samples = [MCMCSamples(s) for s in samples]
-    if weights==None:
+    if weights is None:
         logZs = np.array([s.logZ() for s in samples])
         # Subtract logsumexp to avoid numerical issues (similar to max(logZs))
         logZs -= logsumexp(logZs)
         weights = np.exp(logZs)
     else:
-        assert len(weights)==len(samples), ("samples and weights must have \
-            the same length, each weight is for a whole sample. Currently",\
+        assert len(weights) == len(samples), (
+            "samples and weights must have \
+            the same length, each weight is for a whole sample. Currently",
             len(samples), len(weights))
 
     new_samples = MCMCSamples()
