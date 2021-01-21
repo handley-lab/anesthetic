@@ -779,13 +779,17 @@ def merge_nested_samples(runs):
 def merge_samples_weighted(samples, weights=None):
     r"""Merge sets of samples with weights.
 
+    Combine two (or more) samples so the new PDF is
+    P(x|new) = weight_A P(x|A) + weight_B P(x|B).
+    The number of samples and internal weights do not affect the result.
+
     Parameters
     ----------
     samples: list(NestedSamples) or list(MCMCSamples)
         List or array-like of one or more MCMC or nested sampling runs.
 
     weights: list(double) or None
-        Weight for each run in samples.
+        Weight for each run in samples (normalized internally).
         Can be omitted if samples are NestedSamples,
         then exp(logZ) is used as weight.
 
@@ -806,8 +810,9 @@ def merge_samples_weighted(samples, weights=None):
             len(samples), len(weights))
 
     new_samples = MCMCSamples()
-    for s, w in zip(samples, weights):
-        new_weights = s.weights / s.weights.sum() * w
+    for s, w in zip(mcmc_samples, weights):
+        # Normalize the given weights
+        new_weights = s.weights / s.weights.sum() * w/np.sum(weights)
         s = MCMCSamples(s, weights=new_weights)
         new_samples = new_samples.append(s)
 
