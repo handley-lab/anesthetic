@@ -774,3 +774,43 @@ def merge_nested_samples(runs):
     merge = pandas.concat(runs, ignore_index=True)
     merge.tex = {key: val for r in runs for key, val in r.tex.items()}
     return merge.recompute()
+
+
+def merge_samples_weighted(samples, weights=None):
+    r"""Merge sets of samples with weights.
+
+    Parameters
+    ----------
+    samples: list(NestedSamples) or list(MCMCSamples)
+        List or array-like of one or more MCMC or nested sampling runs.
+
+    weights: list(double) or None
+        Weight for each run in samples.
+        Can be omitted if samples are NestedSamples,
+        then exp(logZ) is used as weight.
+
+    Returns
+    -------
+    new_samples: MCMCSamples
+        Merged (weighted) run.
+    """
+    mcmc_samples = [MCMCSamples(s) for s in samples]
+    if weights==None:
+        logZs = np.array([s.logZ() for s in samples])
+        # Subtract logsumexp to avoid numerical issues (similar to max(logZs))
+        logZs -= logsumexp(logZs)
+        weights = np.exp(logZs)
+    else:
+        assert len(weights)==len(samples), ("samples and weights must have \
+            the same length, each weight is for a whole sample. Currently",\
+            len(samples), len(weights))
+
+    new_samples = MCMCSamples()
+    for s, w in zip(samples, weights):
+        new_weights = s.weights / s.weights.sum() * w
+        s = MCMCSamples(s, weights=new_weights)
+        new_samples = new_samples.append(s)
+
+    # Should we make sure that max(new_samples.weights)==1?
+
+    return new_samples
