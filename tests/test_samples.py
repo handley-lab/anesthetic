@@ -514,19 +514,19 @@ def test_weighted_merging():
     samples_2['xtest'] = samples_2['x3']
     mean1 = samples_1.mean()['xtest']
     mean2 = samples_2.mean()['xtest']
-    samples = [samples_1, samples_2]
 
     # Test with evidence weights
     weight1 = np.exp(samples_1.logZ())
     weight2 = np.exp(samples_2.logZ())
-    samples = merge_samples_weighted(samples)
+    samples = merge_samples_weighted([samples_1, samples_2])
     mean = samples.mean()['xtest']
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
     # Test with explicit weights
     weight1 = 31
     weight2 = 13
-    samples = merge_samples_weighted(samples, weights=[weight1, weight2])
+    samples = merge_samples_weighted(
+        [samples_1, samples_2], weights=[weight1, weight2])
     mean = samples.mean()['xtest']
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
