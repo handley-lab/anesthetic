@@ -8,3 +8,5 @@ dependencies:
   - Cython
   - pip:
       - fastkde
+      - astropy
+      - getdist
