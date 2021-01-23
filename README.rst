@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 =========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley and Lukas Hergt
-:Version: 2.0.0-beta.4
+:Version: 2.0.0-beta.5
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -33,9 +33,10 @@ anesthetic: nested sampling visualisation
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/williamjameshandley/anesthetic/1.0.0?filepath=demo.ipynb
    :alt: Online interactive notebook
-
-
-
+.. image:: https://img.shields.io/badge/arXiv-1905.04768-b31b1b.svg
+   :target: https://arxiv.org/abs/1905.04768
+   :alt: Open-access paper
+   
 
 
 ``anesthetic`` brings together tools for processing nested sampling chains, leveraging standard scientific python libraries.
