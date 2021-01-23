@@ -26,27 +26,24 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Upgrade pip
-      run: python -m pip install --upgrade pip
+    - name: Upgrade pip and install linters
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install flake8 pydocstyle
 
     - name: flake8 PEP compliance checks
-      run: |
-        python -m pip install flake8
-        flake8 anesthetic tests
+      run: flake8 anesthetic tests
 
     - name: pydocstyle documentation style checks
-      run: |
-        python -m pip install pydocstyle
-        pydocstyle --convention=numpy anesthetic
+      run: pydocstyle --convention=numpy anesthetic
 
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
+        python -m pip install pytest pytest-cov pytest-xdist
+        python -m pip install -r requirements.txt
 
     - name: Test with pytest
-      run: |
-        python -m pip install pytest pytest-cov pytest-xdist
-        python -m pytest --cov=anesthetic -n auto tests
+      run: python -m pytest --cov=anesthetic -n auto tests
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
