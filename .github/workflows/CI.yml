@@ -17,6 +17,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.6, 3.7, 3.8, 3.9]
+        extras: [true, false]
 
     steps:
     - uses: actions/checkout@v2
@@ -41,6 +42,10 @@ jobs:
       run: |
         python -m pip install pytest pytest-cov pytest-xdist
         python -m pip install -r requirements.txt
+
+    - name: Install extra dependencies
+      if: ${{ matrix.extras }} 
+      run: python -m pip install -r requirements_extras.txt 
 
     - name: Test with pytest
       run: python -m pytest --cov=anesthetic -n auto tests
