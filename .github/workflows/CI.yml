@@ -13,7 +13,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    step:
+    steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
     - name: Upgrade pip and install linters
