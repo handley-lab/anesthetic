@@ -11,47 +11,47 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        extras: [true, false]
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Upgrade pip and install linters
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install flake8 pydocstyle
-
-    - name: flake8 PEP compliance checks
-      run: python -m flake8 anesthetic tests
-
-    - name: pydocstyle documentation style checks
-      run: python -m pydocstyle --convention=numpy anesthetic
-
-    - name: Install dependencies
-      run: |
-        python -m pip install pytest pytest-cov pytest-xdist
-        python -m pip install -r requirements.txt
-
-    - name: Install extra dependencies
-      if: ${{ matrix.extras }} 
-      run: python -m pip install -r requirements_extras.txt 
-
-    - name: Test with pytest
-      run: python -m pytest --cov=anesthetic -n auto tests
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+  #  build:
+  #    runs-on: ${{ matrix.os }}
+  #    strategy:
+  #      matrix:
+  #        os: [ubuntu-latest, macos-latest, windows-latest]
+  #        python-version: [3.6, 3.7, 3.8, 3.9]
+  #        extras: [true, false]
+  #
+  #    steps:
+  #    - uses: actions/checkout@v2
+  #
+  #    - name: Set up Python ${{ matrix.python-version }}
+  #      uses: actions/setup-python@v2
+  #      with:
+  #        python-version: ${{ matrix.python-version }}
+  #
+  #    - name: Upgrade pip and install linters
+  #      run: |
+  #        python -m pip install --upgrade pip
+  #        python -m pip install flake8 pydocstyle
+  #
+  #    - name: flake8 PEP compliance checks
+  #      run: python -m flake8 anesthetic tests
+  #
+  #    - name: pydocstyle documentation style checks
+  #      run: python -m pydocstyle --convention=numpy anesthetic
+  #
+  #    - name: Install dependencies
+  #      run: |
+  #        python -m pip install pytest pytest-cov pytest-xdist
+  #        python -m pip install -r requirements.txt
+  #
+  #    - name: Install extra dependencies
+  #      if: ${{ matrix.extras }} 
+  #      run: python -m pip install -r requirements_extras.txt 
+  #
+  #    - name: Test with pytest
+  #      run: python -m pytest --cov=anesthetic -n auto tests
+  #
+  #    - name: Upload coverage to Codecov
+  #      uses: codecov/codecov-action@v1
 
   conda:
     runs-on: ${{ matrix.os }}
@@ -75,6 +75,7 @@ jobs:
       run: conda install pytest pytest-cov pytest-xdist
 
     - name: Test with pytest
+      shell: bash -l {0}
       run: python -m pytest --cov=anesthetic -n auto tests
 
     - name: Upload coverage to Codecov
