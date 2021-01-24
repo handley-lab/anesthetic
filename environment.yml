@@ -6,7 +6,3 @@ dependencies:
   - matplotlib
   - pandas
   - Cython
-  - pip:
-      - fastkde
-      - astropy
-      - getdist
