@@ -401,7 +401,6 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         xmin = quantile(data, 0.01, weights)
     if xmax is None or not np.isfinite(xmax):
         xmax = quantile(data, 0.99, weights)
-    range = kwargs.pop('range', (xmin, xmax))
     histtype = kwargs.pop('histtype', 'bar')
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
@@ -409,12 +408,12 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     if plotter == 'astropyhist':
         try:
-            h, edges, bars = hist(data, ax=ax, color=color, range=range,
+            h, edges, bars = hist(data, ax=ax, color=color, range=(xmin, xmax),
                                   histtype=histtype, *args, **kwargs)
         except NameError:
             raise ImportError("You need to install astropy to use astropyhist")
     else:
-        h, edges, bars = ax.hist(data, color=color, range=range,
+        h, edges, bars = ax.hist(data, color=color, range=(xmin, xmax),
                                  histtype=histtype, weights=weights,
                                  *args, **kwargs)
 
@@ -686,7 +685,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if ymax is None or not np.isfinite(ymax):
         ymax = quantile(data_y, 0.99, weights)
 
-    range = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
+    rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
     if len(data_x) == 0 or len(data_y) == 0:
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
@@ -695,14 +694,14 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     if levels is None:
         pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
-                                     cmap=cmap, range=range,
+                                     cmap=cmap, range=rge,
                                      *args, **kwargs)
     else:
         bins = kwargs.pop('bins', 10)
         density = kwargs.pop('density', False)
         cmin = kwargs.pop('cmin', None)
         cmax = kwargs.pop('cmax', None)
-        pdf, x, y = np.histogram2d(data_x, data_y, bins, range,
+        pdf, x, y = np.histogram2d(data_x, data_y, bins, rge,
                                    density, weights)
         levels = iso_probability_contours(pdf, levels)
         pdf = np.digitize(pdf, levels, right=True)
