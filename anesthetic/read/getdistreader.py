@@ -34,7 +34,7 @@ class GetDistReader(ChainReader):
                         tex[paramname] = '$' + ' '.join(line[1:]) + '$'
                 return paramnames, tex
         except IOError:
-            return super(GetDistReader, self).paramnames()
+            return super().paramnames()
 
     def limits(self):
         """Read <root>.ranges in getdist format."""
@@ -55,7 +55,7 @@ class GetDistReader(ChainReader):
                     limits[paramname] = (xmin, xmax)
                 return limits
         except IOError:
-            return super(GetDistReader, self).limits()
+            return super().limits()
 
     def samples(self, burn_in=False):
         """Read <root>_1.txt in getdist format."""
