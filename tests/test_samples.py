@@ -12,7 +12,7 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less)
 from pandas.testing import assert_frame_equal
 from matplotlib.colors import to_hex
-from scipy.stats import ks_2samp, kstest
+from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
 try:
     import montepython  # noqa: F401
@@ -724,40 +724,56 @@ def test_MCMCSamples_importance_sample():
     with pytest.raises(NotImplementedError):
         mc0.importance_sample(mc0.logL, action='spam')
 
-    mc_masked = mc0.importance_sample(mc0.logL, action='replace')
-    assert_array_equal(mc0.logL, mc_masked.logL)
-    assert_array_equal(mc0.weights, mc_masked.weights)
+    # new gaussian logL
+    logL_i = norm.logpdf(mc0.x3, loc=0.4, scale=0.1)
 
-    mc_masked = mc0.importance_sample(np.zeros_like(mc0.logL), action='add')
-    assert_array_equal(mc0.logL, mc_masked.logL)
-    assert_array_equal(mc0.weights, mc_masked.weights)
+    # add logL
+    mc1 = mc0.importance_sample(np.zeros_like(mc0.logL), action='add')
+    assert_array_equal(mc0.logL, mc1.logL)
+    assert_array_equal(mc0.weights, mc1.weights)
+    mc1 = mc0.importance_sample(logL_new=logL_i)
+    assert np.all(mc1.logL.values != mc0.logL.values)
+    assert not np.all(mc1.weights == mc0.weights)
 
+    # replace logL
+    mc2 = mc0.importance_sample(mc0.logL, action='replace')
+    assert_array_equal(mc0.logL, mc2.logL)
+    assert_array_equal(mc0.weights, mc2.weights)
+    mc2 = mc0.importance_sample(mc0.logL.values+logL_i, action='replace')
+    assert np.all(mc2.logL.values != mc0.logL.values)
+    assert not np.all(mc2.weights == mc0.weights)
+    assert_array_equal(mc1.logL.values, mc2.logL.values)
+    assert_array_almost_equal(mc1.logL.values, mc2.logL.values)
+
+    # mask logL
     mask = ((mc0.x0 > -0.3) & (mc0.x2 > 0.2) & (mc0.x4 < 3.5)).to_numpy()
     mc_masked = mc0[mask]
+    mc3 = mc0.importance_sample(mask, action='mask')
+    assert_array_equal(mc_masked.logL, mc3.logL)
+    assert_array_equal(mc_masked.weights, mc3.weights)
+    assert np.all(mc3.x0 > -0.3)
 
-    mc1 = mc0.importance_sample(mask, action='mask')
-    assert_array_equal(mc_masked.logL, mc1.logL)
-    assert_array_equal(mc_masked.weights, mc1.weights)
-    assert mc0.tex == mc1.tex
-    assert mc0.limits == mc1.limits
-    assert mc0.root == mc1.root
-    assert mc0.label == mc1.label
-    assert mc1._metadata == mc0._metadata
-    assert mc0 is not mc1
-    assert mc0.tex is not mc1.tex
-    assert mc0.limits is not mc1.limits
+    for mc in [mc1, mc2, mc3]:
+        assert mc.tex == mc0.tex
+        assert mc.limits == mc0.limits
+        assert mc.root == mc0.root
+        assert mc.label == mc0.label
+        assert mc._metadata == mc0._metadata
+        assert mc is not mc0
+        assert mc.tex is not mc0.tex
+        assert mc.limits is not mc0.limits
 
     mc0.importance_sample(mask, action='mask', inplace=True)
     assert type(mc0) is MCMCSamples
-    assert_array_equal(mc0, mc1)
-    assert mc0.tex == mc1.tex
-    assert mc0.limits == mc1.limits
-    assert mc0.root == mc1.root
-    assert mc0.label == mc1.label
-    assert mc1._metadata == mc0._metadata
-    assert mc0 is not mc1
-    assert mc0.tex is not mc1.tex
-    assert mc0.limits is not mc1.limits
+    assert_array_equal(mc3, mc0)
+    assert mc3.tex == mc0.tex
+    assert mc3.limits == mc0.limits
+    assert mc3.root == mc0.root
+    assert mc3.label == mc0.label
+    assert mc3._metadata == mc0._metadata
+    assert mc3 is not mc0
+    assert mc3.tex is not mc0.tex
+    assert mc3.limits is not mc0.limits
 
 
 def test_wedding_cake():
