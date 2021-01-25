@@ -711,7 +711,7 @@ class NestedSamples(MCMCSamples):
 
         Parameters
         ----------
-        logL_birth, array-like or int, optional
+        logL_birth: array-like or int, optional
             array-like: the birth contours.
             int: the number of live points.
             default: use the existing birth contours to compute nlive
