@@ -49,10 +49,6 @@ class _WeightedObject(object):
         """Weighted median of the sampled distribution."""
         return self.quantile(*args, **kwargs)
 
-    def sample(self, *args, **kwargs):
-        """Weighted sample."""
-        return super().sample(weights=self.weights, *args, **kwargs)
-
     def hist(self, *args, **kwargs):
         """Weighted histogram of the sampled distribution."""
         return super().hist(weights=self.weights, *args, **kwargs)
@@ -75,7 +71,7 @@ class WeightedSeries(_WeightedObject, Series):
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         if np.isnan(mean):
-            return mean
+            return np.nan
         return np.average(masked_array((self-mean)**2, null),
                           weights=self.weights)
 
@@ -131,6 +127,19 @@ class WeightedSeries(_WeightedObject, Series):
         """Weighted quantile of the sampled distribution."""
         return quantile(self.values, q, self.weights)
 
+<<<<<<< HEAD
+=======
+    def hist(self, *args, **kwargs):
+        """Weighted histogram of the sampled distribution."""
+        return super(WeightedSeries, self).hist(weights=self.weights,
+                                                *args, **kwargs)
+
+    def sample(self, *args, **kwargs):
+        """Weighted sample."""
+        return super(WeightedSeries, self).sample(weights=self.weights,
+                                                  *args, **kwargs)
+
+>>>>>>> fac7817cd4f5e9a71298b1be65273c05c957e541
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
 
@@ -277,6 +286,19 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         else:
             return super().quantile(q=q, axis=axis)
 
+<<<<<<< HEAD
+=======
+    def hist(self, *args, **kwargs):
+        """Weighted histogram of the sampled distribution."""
+        return super(WeightedDataFrame, self).hist(weights=self.weights,
+                                                   *args, **kwargs)
+
+    def sample(self, *args, **kwargs):
+        """Weighted sample."""
+        return super(WeightedDataFrame, self).sample(weights=self.weights,
+                                                     *args, **kwargs)
+
+>>>>>>> fac7817cd4f5e9a71298b1be65273c05c957e541
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
 

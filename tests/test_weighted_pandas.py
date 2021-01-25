@@ -105,11 +105,78 @@ def test_WeightedDataFrame_cov():
     assert_allclose(cov, (1./12)*np.identity(3), atol=1e-2)
 
 
+def test_WeightedDataFrame_corr():
+    df = test_WeightedDataFrame_constructor()
+    corr = df.corr()
+    assert isinstance(corr, DataFrame)
+    assert_allclose(corr, np.identity(3), atol=1e-2)
+
+
+def test_WeightedDataFrame_corrwith():
+    df = test_WeightedDataFrame_constructor()
+
+    correl = df.corrwith(df.A)
+    assert isinstance(correl, Series)
+    assert_allclose(df.corrwith(df.A), df.corr()['A'])
+
+    correl = df.corrwith(df[['A', 'B']])
+    assert isinstance(correl, Series)
+    assert_allclose(correl['A'], 1, atol=1e-2)
+    assert_allclose(correl['B'], 1, atol=1e-2)
+    assert np.isnan(correl['C'])
+
+
 def test_WeightedDataFrame_median():
     df = test_WeightedDataFrame_constructor()
     median = df.median()
     assert isinstance(median, Series)
     assert_allclose(median, 0.5, atol=1e-2)
+
+    median = df.median(axis=1)
+    assert isinstance(median, WeightedSeries)
+    assert_allclose(median.mean(), 0.5, atol=1e-2)
+
+
+def test_WeightedDataFrame_sem():
+    df = test_WeightedDataFrame_constructor()
+    sem = df.sem()
+    assert isinstance(sem, Series)
+    assert_allclose(sem, (1./12)**0.5/np.sqrt(df.neff()), atol=1e-2)
+
+    sem = df.sem(axis=1)
+    assert isinstance(sem, WeightedSeries)
+
+
+def test_WeightedDataFrame_kurtosis():
+    df = test_WeightedDataFrame_constructor()
+    kurtosis = df.kurtosis()
+    assert isinstance(kurtosis, Series)
+    assert_allclose(kurtosis, 9./5, atol=1e-2)
+    assert_array_equal(df.kurtosis(), df.kurt())
+
+    kurtosis = df.kurtosis(axis=1)
+    assert isinstance(kurtosis, WeightedSeries)
+    assert_array_equal(df.kurtosis(axis=1), df.kurt(axis=1))
+
+
+def test_WeightedDataFrame_skew():
+    df = test_WeightedDataFrame_constructor()
+    skew = df.skew()
+    assert isinstance(skew, Series)
+    assert_allclose(skew, 0., atol=2e-2)
+
+    skew = df.skew(axis=1)
+    assert isinstance(skew, Series)
+
+
+def test_WeightedDataFrame_mad():
+    df = test_WeightedDataFrame_constructor()
+    mad = df.mad()
+    assert isinstance(mad, Series)
+    assert_allclose(mad, 0.25, atol=1e-2)
+
+    mad = df.mad(axis=1)
+    assert isinstance(mad, Series)
 
 
 def test_WeightedDataFrame_quantile():
@@ -138,6 +205,7 @@ def test_WeightedDataFrame_quantile():
 
 
 def test_WeightedDataFrame_hist():
+    plt.figure()
     df = test_WeightedDataFrame_constructor()
     axes = df[['A', 'B']].hist(bins=20, density=True)
     for ax in axes.flatten():
@@ -147,6 +215,15 @@ def test_WeightedDataFrame_hist():
             norm += patch.get_height() * patch.get_width()
         assert norm == pytest.approx(1)
     plt.close("all")
+
+
+def test_WeightedDataFrame_sample():
+    df = test_WeightedDataFrame_constructor()
+    sample = df.sample()
+    assert isinstance(sample, WeightedDataFrame)
+    samples = df.sample(5)
+    assert isinstance(samples, WeightedDataFrame)
+    assert len(samples) == 5
 
 
 def test_WeightedDataFrame_neff():
@@ -227,6 +304,8 @@ def test_WeightedDataFrame_nan():
 
 def test_WeightedSeries_mean():
     series = test_WeightedSeries_constructor()
+    series[0] = np.nan
+    series.var(skipna=False)
     mean = series.mean()
     assert isinstance(mean, float)
     assert_allclose(mean, 0.5, atol=1e-2)
@@ -238,12 +317,77 @@ def test_WeightedSeries_std():
     assert isinstance(std, float)
     assert_allclose(std, (1./12)**0.5, atol=1e-2)
 
+    series[0] = np.nan
+    assert ~np.isnan(series.std())
+    assert np.isnan(series.std(skipna=False))
+
+
+def test_WeightedSeries_cov():
+    df = test_WeightedDataFrame_constructor()
+    assert_allclose(df.A.cov(df.A), 1./12, atol=1e-2)
+    assert_allclose(df.A.cov(df.B), 0, atol=1e-2)
+
+    df.loc[0, 'B'] = np.nan
+    assert ~np.isnan(df.A.cov(df.B))
+    assert np.isnan(df.A.cov(df.B, skipna=False))
+    assert ~np.isnan(df.B.cov(df.A))
+    assert np.isnan(df.B.cov(df.A, skipna=False))
+
+
+def test_WeightedSeries_corr():
+    df = test_WeightedDataFrame_constructor()
+    assert_allclose(df.A.corr(df.A), 1., atol=1e-2)
+    assert_allclose(df.A.corr(df.B), 0, atol=1e-2)
+    D = df.A + df.B
+    assert_allclose(df.A.corr(D), 1/np.sqrt(2), atol=1e-2)
+
 
 def test_WeightedSeries_median():
     series = test_WeightedSeries_constructor()
     median = series.median()
     assert isinstance(median, float)
     assert_allclose(median, 0.5, atol=1e-2)
+
+
+def test_WeightedSeries_sem():
+    series = test_WeightedSeries_constructor()
+    sem = series.sem()
+    assert isinstance(sem, float)
+    assert_allclose(sem, (1./12)**0.5/np.sqrt(series.neff()), atol=1e-2)
+
+
+def test_WeightedSeries_kurtosis():
+    series = test_WeightedSeries_constructor()
+    kurtosis = series.kurtosis()
+    assert isinstance(kurtosis, float)
+    assert_allclose(kurtosis, 9./5, atol=1e-2)
+    assert series.kurtosis() == series.kurt()
+
+    series[0] = np.nan
+    assert ~np.isnan(series.kurtosis())
+    assert np.isnan(series.kurtosis(skipna=False))
+
+
+def test_WeightedSeries_skew():
+    series = test_WeightedSeries_constructor()
+    skew = series.skew()
+    assert isinstance(skew, float)
+    assert_allclose(skew, 0., atol=1e-2)
+
+    series[0] = np.nan
+    assert ~np.isnan(series.skew())
+    assert np.isnan(series.skew(skipna=False))
+
+
+def test_WeightedSeries_mad():
+    series = test_WeightedSeries_constructor()
+    mad = series.mad()
+    assert isinstance(mad, float)
+    assert_allclose(mad, 0.25, atol=1e-2)
+
+    series[0] = np.nan
+    assert ~np.isnan(series.mad())
+    assert np.isnan(series.mad(skipna=False))
 
 
 def test_WeightedSeries_quantile():
@@ -263,6 +407,7 @@ def test_WeightedSeries_quantile():
 
 
 def test_WeightedSeries_hist():
+    plt.figure()
     series = test_WeightedSeries_constructor()
     ax = series.hist(bins=20, density=True)
     assert len(ax.patches) == 20
@@ -271,6 +416,15 @@ def test_WeightedSeries_hist():
         norm += patch.get_height() * patch.get_width()
     assert norm == pytest.approx(1)
     plt.close("all")
+
+
+def test_WeightedSeries_sample():
+    series = test_WeightedSeries_constructor()
+    sample = series.sample()
+    assert isinstance(sample, WeightedSeries)
+    samples = series.sample(5)
+    assert isinstance(samples, WeightedSeries)
+    assert len(samples) == 5
 
 
 def test_WeightedSeries_neff():

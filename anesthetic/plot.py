@@ -5,7 +5,6 @@ wish to use.
 
 - ``make_1d_axes``
 - ``make_2d_axes``
-- ``get_legend_proxy``
 
 to create a set of axes and legend proxies.
 

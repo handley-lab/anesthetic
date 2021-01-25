@@ -370,8 +370,11 @@ class MCMCSamples(WeightedDataFrame):
         """
         samples = self.copy()
         if action == 'add':
+            samples.weights *= np.exp(logL_new - logL_new.max())
             samples.logL += logL_new
         elif action == 'replace':
+            logL_new2 = logL_new - samples.logL
+            samples.weights *= np.exp(logL_new2 - logL_new2.max())
             samples.logL = logL_new
         elif action == 'mask':
             samples = samples[logL_new]
@@ -522,6 +525,10 @@ class NestedSamples(MCMCSamples):
             data.beta = beta
             return data
 
+    def prior(self, inplace=False):
+        """Re-weight samples at infinite temperature to get prior samples."""
+        return self.set_beta(beta=0, inplace=inplace)
+
     def ns_output(self, nsamples=200):
         """Compute Bayesian global quantities.
 
@@ -628,6 +635,10 @@ class NestedSamples(MCMCSamples):
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
         return self.set_beta(beta).compress(-1)
+
+    def prior_points(self, params=None):
+        """Get equally weighted prior points."""
+        return self.posterior_points(beta=0)
 
     def gui(self, params=None):
         """Construct a graphical user interface for viewing samples."""
