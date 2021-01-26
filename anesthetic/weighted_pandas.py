@@ -9,6 +9,13 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile,
 
 
 class _WeightedObject(object):
+    """Common methods for WeightedSeries and WeightedDataFrame."""
+
+    def __init__(self, *args, **kwargs):
+        weights = kwargs.pop('weights', None)
+        super().__init__(*args, **kwargs)
+        self.weights = weights
+
     @property
     def weights(self):
         """Sample weights."""
@@ -42,6 +49,14 @@ class _WeightedObject(object):
         """Weighted median of the sampled distribution."""
         return self.quantile(*args, **kwargs)
 
+    def sample(self, *args, **kwargs):
+        """Weighted sample."""
+        return super().sample(weights=self.weights, *args, **kwargs)
+
+    def hist(self, *args, **kwargs):
+        """Weighted histogram of the sampled distribution."""
+        return super().hist(weights=self.weights, *args, **kwargs)
+
     def neff(self):
         """Effective number of samples."""
         return channel_capacity(self.weights)
@@ -49,11 +64,6 @@ class _WeightedObject(object):
 
 class WeightedSeries(_WeightedObject, Series):
     """Weighted version of pandas.Series."""
-
-    def __init__(self, *args, **kwargs):
-        weights = kwargs.pop('weights', None)
-        super(WeightedSeries, self).__init__(*args, **kwargs)
-        self.weights = weights
 
     def mean(self, skipna=True):
         """Weighted mean of the sampled distribution."""
@@ -65,7 +75,7 @@ class WeightedSeries(_WeightedObject, Series):
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         if np.isnan(mean):
-            return np.nan
+            return mean
         return np.average(masked_array((self-mean)**2, null),
                           weights=self.weights)
 
@@ -121,16 +131,6 @@ class WeightedSeries(_WeightedObject, Series):
         """Weighted quantile of the sampled distribution."""
         return quantile(self.values, q, self.weights)
 
-    def hist(self, *args, **kwargs):
-        """Weighted histogram of the sampled distribution."""
-        return super(WeightedSeries, self).hist(weights=self.weights,
-                                                *args, **kwargs)
-
-    def sample(self, *args, **kwargs):
-        """Weighted sample."""
-        return super(WeightedSeries, self).sample(weights=self.weights,
-                                                  *args, **kwargs)
-
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
 
@@ -156,11 +156,6 @@ class WeightedSeries(_WeightedObject, Series):
 
 class WeightedDataFrame(_WeightedObject, DataFrame):
     """Weighted version of pandas.DataFrame."""
-
-    def __init__(self, *args, **kwargs):
-        weights = kwargs.pop('weights', None)
-        super(WeightedDataFrame, self).__init__(*args, **kwargs)
-        self.weights = weights
 
     def mean(self, axis=0, skipna=True):
         """Weighted mean of the sampled distribution."""
@@ -281,16 +276,6 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                 return DataFrame(data.T, columns=self.columns, index=q)
         else:
             return super().quantile(q=q, axis=axis)
-
-    def hist(self, *args, **kwargs):
-        """Weighted histogram of the sampled distribution."""
-        return super(WeightedDataFrame, self).hist(weights=self.weights,
-                                                   *args, **kwargs)
-
-    def sample(self, *args, **kwargs):
-        """Weighted sample."""
-        return super(WeightedDataFrame, self).sample(weights=self.weights,
-                                                     *args, **kwargs)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
