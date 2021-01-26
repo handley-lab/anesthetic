@@ -798,9 +798,9 @@ def merge_samples_weighted(samples, weights=None):
     new_samples: MCMCSamples
         Merged (weighted) run.
     """
-    mcmc_samples = [MCMCSamples(s) for s in samples]
+    mcmc_samples = copy.deepcopy([MCMCSamples(s) for s in samples])
     if weights is None:
-        logZs = np.array([s.logZ() for s in samples])
+        logZs = np.array(copy.deepcopy([s.logZ() for s in samples]))
         # Subtract logsumexp to avoid numerical issues (similar to max(logZs))
         logZs -= logsumexp(logZs)
         weights = np.exp(logZs)
