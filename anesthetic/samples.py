@@ -370,8 +370,11 @@ class MCMCSamples(WeightedDataFrame):
         """
         samples = self.copy()
         if action == 'add':
+            samples.weights *= np.exp(logL_new - logL_new.max())
             samples.logL += logL_new
         elif action == 'replace':
+            logL_new2 = logL_new - samples.logL
+            samples.weights *= np.exp(logL_new2 - logL_new2.max())
             samples.logL = logL_new
         elif action == 'mask':
             samples = samples[logL_new]
