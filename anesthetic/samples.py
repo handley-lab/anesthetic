@@ -7,6 +7,7 @@ import os
 import numpy as np
 import pandas
 import copy
+from collections.abc import Sequence
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
                              fastkde_contour_plot_2d,
@@ -801,9 +802,16 @@ def merge_samples_weighted(samples, weights=None):
     new_samples: MCMCSamples
         Merged (weighted) run.
     """
+    if not isinstance(samples, Sequence):
+        raise TypeError("samples must be a Sequence (list of samples).")
+
     mcmc_samples = copy.deepcopy([MCMCSamples(s) for s in samples])
     if weights is None:
-        logZs = np.array(copy.deepcopy([s.logZ() for s in samples]))
+        try:
+            logZs = np.array(copy.deepcopy([s.logZ() for s in samples]))
+        except AttributeError:
+            raise ValueError("If samples includes MCMCSamples\
+                then weights must be given.")
         # Subtract logsumexp to avoid numerical issues (similar to max(logZs))
         logZs -= logsumexp(logZs)
         weights = np.exp(logZs)
@@ -820,6 +828,6 @@ def merge_samples_weighted(samples, weights=None):
         s = MCMCSamples(s, weights=new_weights)
         new_samples = new_samples.append(s)
 
-    # Should we make sure that max(new_samples.weights)==1?
+    new_samples.weights /= new_samples.weights.max()
 
     return new_samples
