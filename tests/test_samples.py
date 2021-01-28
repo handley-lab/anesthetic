@@ -536,11 +536,10 @@ def test_weighted_merging():
         merge_samples_weighted([MCMCSamples(samples_1)])
     # len(weights) != len(samples)
     with pytest.raises(ValueError):
-        merge_samples_weighted([samples_1, samples_2], weights=[1,2,3])
+        merge_samples_weighted([samples_1, samples_2], weights=[1, 2, 3])
     # A samples is passed and not a sequence
     with pytest.raises(TypeError):
-        merge_samples_weighted(samples_1, weights=[1,2,3])
-
+        merge_samples_weighted(samples_1, weights=[1, 2, 3])
 
 
 def test_beta():
