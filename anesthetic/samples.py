@@ -810,16 +810,16 @@ def merge_samples_weighted(samples, weights=None):
         try:
             logZs = np.array(copy.deepcopy([s.logZ() for s in samples]))
         except AttributeError:
-            raise ValueError("If samples includes MCMCSamples\
-                then weights must be given.")
+            raise ValueError("If samples includes MCMCSamples "
+                             "then weights must be given.")
         # Subtract logsumexp to avoid numerical issues (similar to max(logZs))
         logZs -= logsumexp(logZs)
         weights = np.exp(logZs)
     else:
-        assert len(weights) == len(samples), (
-            "samples and weights must have \
-            the same length, each weight is for a whole sample. Currently",
-            len(samples), len(weights))
+        if len(weights) != len(samples):
+            raise ValueError("samples and weights must have the same length,"
+                             "each weight is for a whole sample. Currently",
+                             len(samples), len(weights))
 
     new_samples = MCMCSamples()
     for s, w in zip(mcmc_samples, weights):

@@ -530,6 +530,18 @@ def test_weighted_merging():
     mean = samples.mean()['xtest']
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
+    # Test if correct exceptions are raised:
+    # MCMCSamples are passed without weights
+    with pytest.raises(ValueError):
+        merge_samples_weighted([MCMCSamples(samples_1)])
+    # len(weights) != len(samples)
+    with pytest.raises(ValueError):
+        merge_samples_weighted([samples_1, samples_2], weights=[1,2,3])
+    # A samples is passed and not a sequence
+    with pytest.raises(TypeError):
+        merge_samples_weighted(samples_1, weights=[1,2,3])
+
+
 
 def test_beta():
     pc = NestedSamples(root="./tests/example_data/pc")
