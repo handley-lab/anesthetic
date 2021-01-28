@@ -7,6 +7,7 @@ import os
 import numpy as np
 import pandas
 import copy
+from collections.abc import Sequence
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
                              fastkde_contour_plot_2d,
@@ -776,3 +777,56 @@ def merge_nested_samples(runs):
     merge = pandas.concat(runs, ignore_index=True)
     merge.tex = {key: val for r in runs for key, val in r.tex.items()}
     return merge.recompute()
+
+
+def merge_samples_weighted(samples, weights=None):
+    r"""Merge sets of samples with weights.
+
+    Combine two (or more) samples so the new PDF is
+    P(x|new) = weight_A P(x|A) + weight_B P(x|B).
+    The number of samples and internal weights do not affect the result.
+
+    Parameters
+    ----------
+    samples: list(NestedSamples) or list(MCMCSamples)
+        List or array-like of one or more MCMC or nested sampling runs.
+
+    weights: list(double) or None
+        Weight for each run in samples (normalized internally).
+        Can be omitted if samples are NestedSamples,
+        then exp(logZ) is used as weight.
+
+    Returns
+    -------
+    new_samples: MCMCSamples
+        Merged (weighted) run.
+    """
+    if not isinstance(samples, Sequence):
+        raise TypeError("samples must be a Sequence (list of samples).")
+
+    mcmc_samples = copy.deepcopy([MCMCSamples(s) for s in samples])
+    if weights is None:
+        try:
+            logZs = np.array(copy.deepcopy([s.logZ() for s in samples]))
+        except AttributeError:
+            raise ValueError("If samples includes MCMCSamples "
+                             "then weights must be given.")
+        # Subtract logsumexp to avoid numerical issues (similar to max(logZs))
+        logZs -= logsumexp(logZs)
+        weights = np.exp(logZs)
+    else:
+        if len(weights) != len(samples):
+            raise ValueError("samples and weights must have the same length,"
+                             "each weight is for a whole sample. Currently",
+                             len(samples), len(weights))
+
+    new_samples = MCMCSamples()
+    for s, w in zip(mcmc_samples, weights):
+        # Normalize the given weights
+        new_weights = s.weights / s.weights.sum() * w/np.sum(weights)
+        s = MCMCSamples(s, weights=new_weights)
+        new_samples = new_samples.append(s)
+
+    new_samples.weights /= new_samples.weights.max()
+
+    return new_samples

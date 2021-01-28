@@ -8,6 +8,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from anesthetic.samples import merge_nested_samples
+from anesthetic.samples import merge_samples_weighted
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less)
 from pandas.testing import assert_frame_equal
@@ -503,6 +504,42 @@ def test_merging():
             or samples.logZ() > samples_1.logZ()
             and samples.logZ() < samples_2.logZ())
     assert 'x0' in samples.tex
+
+
+def test_weighted_merging():
+    # Generate some data to try it out:
+    samples_1 = NestedSamples(root='./tests/example_data/pc')
+    samples_2 = NestedSamples(root='./tests/example_data/pc_250')
+    samples_1['xtest'] = 7*samples_1['x3']
+    samples_2['xtest'] = samples_2['x3']
+    mean1 = samples_1.mean()['xtest']
+    mean2 = samples_2.mean()['xtest']
+
+    # Test with evidence weights
+    weight1 = np.exp(samples_1.logZ())
+    weight2 = np.exp(samples_2.logZ())
+    samples = merge_samples_weighted([samples_1, samples_2])
+    mean = samples.mean()['xtest']
+    assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
+
+    # Test with explicit weights
+    weight1 = 31
+    weight2 = 13
+    samples = merge_samples_weighted(
+        [samples_1, samples_2], weights=[weight1, weight2])
+    mean = samples.mean()['xtest']
+    assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
+
+    # Test if correct exceptions are raised:
+    # MCMCSamples are passed without weights
+    with pytest.raises(ValueError):
+        merge_samples_weighted([MCMCSamples(samples_1)])
+    # len(weights) != len(samples)
+    with pytest.raises(ValueError):
+        merge_samples_weighted([samples_1, samples_2], weights=[1, 2, 3])
+    # A samples is passed and not a sequence
+    with pytest.raises(TypeError):
+        merge_samples_weighted(samples_1, weights=[1, 2, 3])
 
 
 def test_beta():
