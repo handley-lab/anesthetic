@@ -67,7 +67,7 @@ class LabelsWidget(Widget):
     """
 
     def __init__(self, fig, gridspec, labels):
-        super(LabelsWidget, self).__init__(fig, gridspec)
+        super().__init__(fig, gridspec)
         self.labels = labels
 
 
@@ -90,7 +90,7 @@ class Button(Widget):
     """
 
     def __init__(self, fig, gridspec, action, text):
-        super(Button, self).__init__(fig, gridspec)
+        super().__init__(fig, gridspec)
         self.button = mplButton(self.ax, text)
         self.button.on_clicked(action)
 
@@ -113,7 +113,7 @@ class CheckButtons(LabelsWidget):
     """
 
     def __init__(self, fig, gridspec, labels, action):
-        super(CheckButtons, self).__init__(fig, gridspec, labels)
+        super().__init__(fig, gridspec, labels)
         default = [i == 0 for i, _ in enumerate(self.labels)]
         self.buttons = mplCheckButtons(self.ax, self.labels, default)
         self.buttons.on_clicked(action)
@@ -138,7 +138,7 @@ class RadioButtons(LabelsWidget):
     """
 
     def __init__(self, fig, gridspec, labels, action):
-        super(RadioButtons, self).__init__(fig, gridspec, labels)
+        super().__init__(fig, gridspec, labels)
         self.buttons = mplRadioButtons(self.ax, self.labels)
         self.buttons.on_clicked(action)
 
@@ -173,7 +173,7 @@ class Slider(Widget):
 
     def __init__(self, fig, gridspec, action, text,
                  valmin, valmax, valinit, orientation):
-        super(Slider, self).__init__(fig, gridspec)
+        super().__init__(fig, gridspec)
         self.slider = mplSlider(self.ax, text, valmin, valmax, valinit=valinit,
                                 orientation=orientation)
         self.slider.on_changed(action)
@@ -222,7 +222,7 @@ class TrianglePlot(Widget):
     """
 
     def __init__(self, fig, gridspec):
-        super(TrianglePlot, self).__init__(fig, gridspec)
+        super().__init__(fig, gridspec)
         self.fig.delaxes(self.ax)
         _, self.ax = make_2d_axes([], fig=self.fig, subplot_spec=self.gridspec)
 

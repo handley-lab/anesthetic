@@ -97,7 +97,7 @@ class MCMCSamples(WeightedDataFrame):
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
             self.root = None
-            super(MCMCSamples, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
             if logL is not None:
                 self['logL'] = logL
@@ -488,8 +488,7 @@ class NestedSamples(MCMCSamples):
                 logL_birth = np.where(logL_birth <= logzero, -np.inf,
                                       logL_birth)
 
-            super(NestedSamples, self).__init__(logzero=logzero,
-                                                *args, **kwargs)
+            super().__init__(logzero=logzero, *args, **kwargs)
             if logL_birth is not None:
                 self.recompute(logL_birth, inplace=True)
 
@@ -713,7 +712,7 @@ class NestedSamples(MCMCSamples):
 
         Parameters
         ----------
-        logL_birth, array-like or int, optional
+        logL_birth: array-like or int, optional
             array-like: the birth contours.
             int: the number of live points.
             default: use the existing birth contours to compute nlive

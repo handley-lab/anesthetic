@@ -5,12 +5,10 @@ wish to use.
 
 - ``make_1d_axes``
 - ``make_2d_axes``
-- ``get_legend_proxy``
 
 to create a set of axes and legend proxies.
 
 """
-import sys
 import numpy as np
 import pandas
 import matplotlib.pyplot as plt
@@ -28,9 +26,8 @@ import matplotlib.cbook as cbook
 import matplotlib.lines as mlines
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.collections import LineCollection
 from matplotlib.transforms import Affine2D
-from anesthetic.utils import check_bounds, nest_level, unique
+from anesthetic.utils import check_bounds, nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
@@ -404,7 +401,6 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         xmin = quantile(data, 0.01, weights)
     if xmax is None or not np.isfinite(xmax):
         xmax = quantile(data, 0.99, weights)
-    range = kwargs.pop('range', (xmin, xmax))
     histtype = kwargs.pop('histtype', 'bar')
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
@@ -412,12 +408,12 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     if plotter == 'astropyhist':
         try:
-            h, edges, bars = hist(data, ax=ax, color=color, range=range,
+            h, edges, bars = hist(data, ax=ax, color=color, range=(xmin, xmax),
                                   histtype=histtype, *args, **kwargs)
         except NameError:
             raise ImportError("You need to install astropy to use astropyhist")
     else:
-        h, edges, bars = ax.hist(data, color=color, range=range,
+        h, edges, bars = ax.hist(data, color=color, range=(xmin, xmax),
                                  histtype=histtype, weights=weights,
                                  *args, **kwargs)
 
@@ -689,7 +685,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if ymax is None or not np.isfinite(ymax):
         ymax = quantile(data_y, 0.99, weights)
 
-    range = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
+    rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
     if len(data_x) == 0 or len(data_y) == 0:
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
@@ -698,14 +694,14 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     if levels is None:
         pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
-                                     cmap=cmap, range=range,
+                                     cmap=cmap, range=rge,
                                      *args, **kwargs)
     else:
         bins = kwargs.pop('bins', 10)
         density = kwargs.pop('density', False)
         cmin = kwargs.pop('cmin', None)
         cmax = kwargs.pop('cmax', None)
-        pdf, x, y = np.histogram2d(data_x, data_y, bins, range,
+        pdf, x, y = np.histogram2d(data_x, data_y, bins, rge,
                                    density, weights)
         levels = iso_probability_contours(pdf, levels)
         pdf = np.digitize(pdf, levels, right=True)
@@ -773,103 +769,28 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     return points
 
 
-def get_legend_proxy(fig):
-    """Extract a proxy for plotting onto a legend.
-
-    Example usage:
-        >>> fig, axes = modelA.plot_2d()
-        >>> modelB.plot_2d(axes)
-        >>> proxy = get_legend_proxy(fig)
-        >>> fig.legend(proxy, ['A', 'B']
-
-    Parameters
-    ----------
-        fig: matplotlib.figure.Figure
-            Figure to extract colors from.
-
-    """
-    from warnings import warn
-    warn("`get_legend_proxy` is deprecated and might be deleted in the "
-         "future. You can now simply use `axes[x][y].legend()` or do "
-         "`handles, labels = axes[x][y].get_legend_handles_labels()` "
-         "and pass the handles and labels to the figure legend "
-         "`fig.legend(handles, labels)`.", FutureWarning)
-    cmaps = [coll.get_cmap() for ax in fig.axes for coll in ax.collections
-             if isinstance(coll.get_cmap(), LinearSegmentedColormap)]
-    cmaps = unique(cmaps)
-
-    if not cmaps:
-        colors = [line.get_color() for ax in fig.axes for line in ax.lines]
-        colors = unique(colors)
-        cmaps = [basic_cmap(color) for color in colors]
-
-    proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.999),
-                           edgecolor=cmap(0.32), linewidth=2)
-             for cmap in cmaps]
-
-    if not cmaps:
-        colors = [coll.get_ec()[0]
-                  for ax in fig.axes
-                  for coll in ax.collections
-                  if isinstance(coll, LineCollection)]
-        colors = np.unique(colors, axis=0)
-        cmaps = [basic_cmap(color) for color in colors]
-        proxy = [plt.Rectangle((0, 0), 1, 1, facecolor=cmap(0.0),
-                               edgecolor=cmap(0.999), linewidth=1)
-                 for cmap in cmaps]
-
-    return proxy
-
-
 def basic_cmap(color):
     """Construct basic colormap a single color."""
     return LinearSegmentedColormap.from_list(color, ['#ffffff', color])
 
 
-if sys.version_info > (3, 0):
-    def make_diagonal(ax):
-        """Link x and y axes limits."""
-        class DiagonalAxes(type(ax)):
-            def set_xlim(self, left=None, right=None, emit=True, auto=False,
-                         xmin=None, xmax=None):
-                super(type(ax), self).set_ylim(bottom=left, top=right,
-                                               emit=True, auto=auto,
-                                               ymin=xmin, ymax=xmax)
-                return super(type(ax), self).set_xlim(left=left, right=right,
-                                                      emit=emit, auto=auto,
-                                                      xmin=xmin, xmax=xmax)
+def make_diagonal(ax):
+    """Link x and y axes limits."""
+    class DiagonalAxes(type(ax)):
+        def set_xlim(self, left=None, right=None, emit=True, auto=False,
+                     xmin=None, xmax=None):
+            super().set_ylim(bottom=left, top=right, emit=True, auto=auto,
+                             ymin=xmin, ymax=xmax)
+            return super().set_xlim(left=left, right=right, emit=emit,
+                                    auto=auto, xmin=xmin, xmax=xmax)
 
-            def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
-                         ymin=None, ymax=None):
-                super(type(ax), self).set_xlim(left=bottom, right=top,
-                                               emit=True, auto=auto,
-                                               xmin=ymin, xmax=ymax)
-                return super(type(ax), self).set_ylim(bottom=bottom, top=top,
-                                                      emit=emit, auto=auto,
-                                                      ymin=ymin, ymax=ymax)
-        ax.__class__ = DiagonalAxes
-else:
-    def make_diagonal(ax):
-        """Link x and y axes limits."""
-        class DiagonalAxes(type(ax)):
-            def set_xlim(self, left=None, right=None, emit=True, auto=False,
-                         **kwargs):
-                super(type(ax), self).set_ylim(bottom=left, top=right,
-                                               emit=True, auto=auto,
-                                               **kwargs)
-                return super(type(ax), self).set_xlim(left=left, right=right,
-                                                      emit=emit, auto=auto,
-                                                      **kwargs)
-
-            def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
-                         **kwargs):
-                super(type(ax), self).set_xlim(left=bottom, right=top,
-                                               emit=True, auto=auto,
-                                               **kwargs)
-                return super(type(ax), self).set_ylim(bottom=bottom, top=top,
-                                                      emit=emit, auto=auto,
-                                                      **kwargs)
-        ax.__class__ = DiagonalAxes
+        def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
+                     ymin=None, ymax=None):
+            super().set_xlim(left=bottom, right=top, emit=True, auto=auto,
+                             xmin=ymin, xmax=ymax)
+            return super().set_ylim(bottom=bottom, top=top, emit=emit,
+                                    auto=auto, ymin=ymin, ymax=ymax)
+    ax.__class__ = DiagonalAxes
 
 
 def quantile_plot_interval(q):
