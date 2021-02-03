@@ -264,6 +264,50 @@ def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
     return c
 
 
+def iso_probability_1d(x, pdf):
+    """Find the x values corresponding to values of 0.68 and
+    0.95 on normalised 1D posterior"""
+
+    def turningpoints(x):
+        x_pri = x + np.abs(x.min())
+        idx = []
+        for i in range(1, len(x_pri)-1):
+            if ((x_pri[i-1] < x_pri[i] and x_pri[i+1] < x_pri[i])
+                    or (x_pri[i-1] > x_pri[i] and x_pri[i+1] > x_pri[i])):
+                idx.append(i)
+        return idx
+
+    lims95, lims68 = [], []
+    if pdf[-1] > 0.05 and pdf[-1] < 0.32:
+        lims95.append(x[-1])
+    if pdf[0] > 0.05 and pdf[0] < 0.32:
+        lims95.append(x[0])
+    if pdf[0] > 0.32:
+        lims68.append(x[0])
+    if pdf[-1] > 0.32:
+        lims68.append(x[-1])
+
+    idx = turningpoints(pdf)
+    y = np.split(pdf, idx)
+    x = np.split(x, idx)
+
+    for i in range(len(x)):
+        if y[i].min() <= 0.05 and y[i].max() >= 0.05:
+            if y[i][1] > y[i][0]:
+                lims95.append(np.interp(0.05, y[i], x[i]))
+            else:
+                lims95.append(np.interp(-0.05, -y[i], x[i]))
+        if y[i].min() <= 0.32 and y[i].max() >= 0.32:
+            if y[i][1] > y[i][0]:
+                lims68.append(np.interp(0.32, y[i], x[i]))
+            else:
+                lims68.append(np.interp(-0.32, -y[i], x[i]))
+    lims95 = np.sort(np.array(lims95))
+    lims68 = np.sort(np.array(lims68))
+
+    return [lims68, lims95]
+
+
 def scaled_triangulation(x, y, cov):
     """Triangulation scaled by a covariance matrix.
 

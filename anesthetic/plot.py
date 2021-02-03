@@ -32,7 +32,8 @@ from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
-                              scaled_triangulation, match_contour_to_contourf)
+                              scaled_triangulation, match_contour_to_contourf,
+                              iso_probability_1d)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
@@ -309,6 +310,10 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         lower/upper prior bound.
         optional, default None
 
+    fill: Bool
+        fills between iso probability confidence regions (68%, 95%) if True.
+        Default False.
+
     Returns
     -------
     lines: matplotlib.lines.Line2D
@@ -326,6 +331,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         kwargs,
         dict(linewidth=['lw'], linestyle=['ls'], color=['c']),
         drop=['fc', 'ec'])
+    fill = kwargs.pop('fill', False)
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
@@ -354,6 +360,21 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     pp /= pp.max()
     ans = ax.plot(x[i], pp, color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
+
+    if fill is True:
+        lims68, lims95 = iso_probability_1d(x[i], pp)
+        for j in range(0, len(lims68), 2):
+            lim0Lower = lims68[j]
+            lim0Upper = lims68[j+1]
+            x_per = np.linspace(lim0Lower, lim0Upper, 1000)
+            y_per = np.interp(x_per, x[i], pp)
+            ax.fill_between(x_per, y_per, color='gray', label='68%')
+        for j in range(0, len(lims95), 2):
+            lim0Lower = lims95[j]
+            lim0Upper = lims95[j+1]
+            x_per = np.linspace(lim0Lower, lim0Upper, 1000)
+            y_per = np.interp(x_per, x[i], pp)
+            ax.fill_between(x_per, y_per, color='gray', label='95%', alpha=0.3)
     return ans
 
 
