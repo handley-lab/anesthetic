@@ -7,8 +7,8 @@ anesthetic: nested sampling visualisation
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
-.. image:: https://travis-ci.com/williamjameshandley/anesthetic.svg?branch=master
-   :target: https://travis-ci.com/williamjameshandley/anesthetic
+.. image:: https://github.com/williamjameshandley/anesthetic/workflows/CI/badge.svg?branch=master
+   :target: https://github.com/williamjameshandley/anesthetic/actions?query=workflow%3ACI+branch%3Amaster
    :alt: Build Status
 .. image:: https://circleci.com/gh/williamjameshandley/anesthetic.svg?style=svg
    :target: https://circleci.com/gh/williamjameshandley/anesthetic
