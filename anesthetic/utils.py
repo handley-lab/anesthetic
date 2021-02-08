@@ -264,9 +264,10 @@ def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
     return c
 
 
-def iso_probability_1d(x, pdf):
-    """Find the x values corresponding to values of 0.68 and
-    0.95 on normalised 1D posterior"""
+def iso_probability_1d(x, pdf, contours=[0.68, 0.95]):
+    """Find the x values corresponding to values of contours
+    on a normalised 1D posterior"""
+    contours = [1-p for p in reversed(contours)]
 
     def turningpoints(x):
         x_pri = x + np.abs(x.min())
@@ -277,35 +278,31 @@ def iso_probability_1d(x, pdf):
                 idx.append(i)
         return idx
 
-    lims95, lims68 = [], []
-    if pdf[-1] > 0.05 and pdf[-1] < 0.32:
-        lims95.append(x[-1])
-    if pdf[0] > 0.05 and pdf[0] < 0.32:
-        lims95.append(x[0])
-    if pdf[0] > 0.32:
-        lims68.append(x[0])
-    if pdf[-1] > 0.32:
-        lims68.append(x[-1])
+    lims = []
+    for i in range(len(contours)):
+        if i < len(contours) - 1:
+            if pdf[-1] > contours[i] and pdf[-1] < contours[i+1]:
+                lims.append(x[-1])
+            if pdf[0] > contours[i] and pdf[0] < contours[i+1]:
+                lims.append(x[0])
+        if pdf[0] > contours[-1]:
+            lims.append(x[0])
+        if pdf[-1] > contours[-1]:
+            lims.append(x[-1])
 
     idx = turningpoints(pdf)
     y = np.split(pdf, idx)
     x = np.split(x, idx)
 
     for i in range(len(x)):
-        if y[i].min() <= 0.05 and y[i].max() >= 0.05:
-            if y[i][1] > y[i][0]:
-                lims95.append(np.interp(0.05, y[i], x[i]))
-            else:
-                lims95.append(np.interp(-0.05, -y[i], x[i]))
-        if y[i].min() <= 0.32 and y[i].max() >= 0.32:
-            if y[i][1] > y[i][0]:
-                lims68.append(np.interp(0.32, y[i], x[i]))
-            else:
-                lims68.append(np.interp(-0.32, -y[i], x[i]))
-    lims95 = np.sort(np.array(lims95))
-    lims68 = np.sort(np.array(lims68))
+        for j in range(len(contours)):
+            if y[i].min() <= contours[j] and y[i].max() >= contours[j]:
+                if y[i][1] > y[i][0]:
+                    lims.append(np.interp(contours[j], y[i], x[i]))
+                else:
+                    lims.append(np.interp(-contours[j], -y[i], x[i]))
 
-    return [lims68, lims95]
+    return np.sort(lims)
 
 
 def scaled_triangulation(x, y, cov):

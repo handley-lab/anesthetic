@@ -252,6 +252,26 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         lower/upper prior bound
         optional, default None
 
+    fill: Bool
+        fills between iso probability confidence regions (68%, 95%) if True.
+        Default False.
+
+    levels: list
+        amount of mass within each iso-probability lines.
+        optional, default [0.68, 0.95]
+
+    fill_color: string
+        string defining the color to plot filled regions with
+        optional, default 'gray'.
+
+    fill_alpha: list
+        variation in intensity of color to shade each region with
+        optional, default [1, 0.5]
+
+    invert_alpha: Bool
+        flips shading on filled regions
+        default False
+
     Returns
     -------
     lines: matplotlib.lines.Line2D
@@ -264,6 +284,12 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     if data.max()-data.min() <= 0:
         return
+
+    fill = kwargs.pop('fill', False)
+    levels = kwargs.pop('levels', [0.68, 0.95])
+    fill_color = kwargs.pop('fill_color', 'gray')
+    fill_alpha = kwargs.pop('fill_alpha', [1, 0.5])
+    invert_alpha = kwargs.pop('invert_alpha', False)
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
@@ -282,6 +308,35 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
+
+    if fill is True:
+        lims = iso_probability_1d(x[i], p[i], levels)
+        c = [round(1-level, 2) for level in levels]
+        for j in range(len(lims)):
+            if j < len(lims) - 1:
+                if lims[j] != lims[j+1]:
+                    x_per = np.linspace(lims[j], lims[j+1], 1000)
+                    y_per = np.interp(x_per, x[i], p[i])
+                    y_max = round(y_per.max(), 2)
+                    if y_max > max(c):
+                        alpha = max(fill_alpha)
+                    else:
+                        for h in range(len(c)):
+                            if h > 0:
+                                if y_max > c[h] and \
+                                        y_max <= c[h-1]:
+                                    alpha = fill_alpha[h]
+                    if invert_alpha is True:
+                        ax.fill_between(
+                            x_per, y_per,
+                            color=fill_color,
+                            alpha=1-alpha)
+                    else:
+                        ax.fill_between(
+                            x_per, y_per,
+                            color=fill_color,
+                            alpha=alpha)
+
     return ans
 
 
@@ -314,6 +369,22 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         fills between iso probability confidence regions (68%, 95%) if True.
         Default False.
 
+    levels: list
+        values at which to draw each iso-probability lines.
+        optional, default [0.68, 0.95]
+
+    fill_color: string
+        string defining the color to plot filled regions with
+        optional, default 'gray'.
+
+    fill_alpha: list
+        variation in intensity of color to shade each region with
+        optional, default [1, 0.5]
+
+    invert_alpha: Bool
+        flips shading on filled regions
+        default False
+
     Returns
     -------
     lines: matplotlib.lines.Line2D
@@ -331,7 +402,13 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         kwargs,
         dict(linewidth=['lw'], linestyle=['ls'], color=['c']),
         drop=['fc', 'ec'])
+
     fill = kwargs.pop('fill', False)
+    levels = kwargs.pop('levels', [0.68, 0.95])
+    fill_color = kwargs.pop('fill_color', 'gray')
+    fill_alpha = kwargs.pop('fill_alpha', [1, 0.5])
+    invert_alpha = kwargs.pop('invert_alpha', False)
+
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
@@ -362,19 +439,33 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
     if fill is True:
-        lims68, lims95 = iso_probability_1d(x[i], pp)
-        for j in range(0, len(lims68), 2):
-            lim0Lower = lims68[j]
-            lim0Upper = lims68[j+1]
-            x_per = np.linspace(lim0Lower, lim0Upper, 1000)
-            y_per = np.interp(x_per, x[i], pp)
-            ax.fill_between(x_per, y_per, color='gray', label='68%')
-        for j in range(0, len(lims95), 2):
-            lim0Lower = lims95[j]
-            lim0Upper = lims95[j+1]
-            x_per = np.linspace(lim0Lower, lim0Upper, 1000)
-            y_per = np.interp(x_per, x[i], pp)
-            ax.fill_between(x_per, y_per, color='gray', label='95%', alpha=0.3)
+        lims = iso_probability_1d(x[i], p[i], levels)
+        c = [round(1-level, 2) for level in levels]
+        for j in range(len(lims)):
+            if j < len(lims) - 1:
+                if lims[j] != lims[j+1]:
+                    x_per = np.linspace(lims[j], lims[j+1], 1000)
+                    y_per = np.interp(x_per, x[i], pp)
+                    y_max = round(y_per.max(), 2)
+                    if y_max > max(c):
+                        alpha = max(fill_alpha)
+                    else:
+                        for h in range(len(c)):
+                            if h > 0:
+                                if y_max > c[h] and \
+                                        y_max <= c[h-1]:
+                                    alpha = fill_alpha[h]
+                    if invert_alpha is True:
+                        ax.fill_between(
+                            x_per, y_per,
+                            color=fill_color,
+                            alpha=1-alpha)
+                    else:
+                        ax.fill_between(
+                            x_per, y_per,
+                            color=fill_color,
+                            alpha=alpha)
+
     return ans
 
 
