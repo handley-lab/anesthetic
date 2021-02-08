@@ -234,7 +234,7 @@ def make_2d_axes(params, **kwargs):
 
 
 def fill_plot_1d(ax, x, p, levels, cmap):
-    """Function for plotting filled regions in 1D posteriors."""
+    """Plot filled regions in 1D posteriors."""
     lims = iso_probability_1d(x, p, levels)
     c = [round(1-level, 2) for level in levels]
     for j in range(len(lims)):
