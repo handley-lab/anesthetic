@@ -265,8 +265,7 @@ def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
 
 
 def iso_probability_1d(x, pdf, contours=[0.68, 0.95]):
-    """Find the x values corresponding to values of contours
-    on a normalised 1D posterior"""
+    """Contour values on a normalised 1D posterior."""
     contours = [1-p for p in reversed(contours)]
 
     def turningpoints(x):
