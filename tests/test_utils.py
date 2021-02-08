@@ -144,6 +144,7 @@ def test_p_values_from_sample():
     ks_results = insertion_p_value(ns.insertion[nlive:-nlive], nlive, batch=1)
     assert ks_results['p-value'] > 0.05
 
+
 def test_iso_probability_1d():
 
     data = np.random.normal(0, 0.5, 1000)
