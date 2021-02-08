@@ -232,11 +232,10 @@ def test_kde_plot_1d(plot_1d):
 
         # Check iso-probability code
         plot_1d(
-            ax, data, fill=True, fill_color='red',
-            fill_alpha=[0.9, 0.4], invert_alpha=True)
+            ax, data, fill=True, cmap=plt.get_cmap('Reds_r'))
         plot_1d(
             ax, data, fill=True, levels=[0.2, 0.6, 0.8],
-            fill_alpha=[0.9, 0.4, 0.2])
+            cmap=plt.get_cmap('Blues'))
 
     except ImportError:
         if 'fastkde' not in sys.modules:

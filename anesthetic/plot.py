@@ -232,6 +232,24 @@ def make_2d_axes(params, **kwargs):
 
     return fig, axes
 
+def fill_plot_1d(ax, x, p, levels, cmap):
+    """Helper function for plotting filled regions in 1D posteriors."""
+    lims = iso_probability_1d(x, p, levels)
+    c = [round(1-level, 2) for level in levels]
+    for j in range(len(lims)):
+        if j < len(lims) - 1:
+            if lims[j] != lims[j+1]:
+                x_per = np.linspace(lims[j], lims[j+1], 1000)
+                y_per = np.interp(x_per, x, p)
+                y_max = round(y_per.max(), 2)
+                if y_max > max(c):
+                    fill_color = cmap(max(c))
+                else:
+                    for h in range(1, len(c), 1):
+                        if y_max > c[h] and \
+                                y_max <= c[h-1]:
+                            fill_color = cmap(c[h])
+                ax.fill_between(x_per, y_per, color=fill_color)
 
 def fastkde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
@@ -253,24 +271,12 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         optional, default None
 
     fill: Bool
-        fills between iso probability confidence regions (68%, 95%) if True.
+        fills between iso probability confidence regions if True.
         Default False.
 
     levels: list
-        amount of mass within each iso-probability lines.
+        values at which to draw iso-probability lines.
         optional, default [0.68, 0.95]
-
-    fill_color: string
-        string defining the color to plot filled regions with
-        optional, default 'gray'.
-
-    fill_alpha: list
-        variation in intensity of color to shade each region with
-        optional, default [1, 0.5]
-
-    invert_alpha: Bool
-        flips shading on filled regions
-        default False
 
     Returns
     -------
@@ -287,9 +293,6 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     fill = kwargs.pop('fill', False)
     levels = kwargs.pop('levels', [0.68, 0.95])
-    fill_color = kwargs.pop('fill_color', 'gray')
-    fill_alpha = kwargs.pop('fill_alpha', [1, 0.5])
-    invert_alpha = kwargs.pop('invert_alpha', False)
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
@@ -310,32 +313,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
     if fill is True:
-        lims = iso_probability_1d(x[i], p[i], levels)
-        c = [round(1-level, 2) for level in levels]
-        for j in range(len(lims)):
-            if j < len(lims) - 1:
-                if lims[j] != lims[j+1]:
-                    x_per = np.linspace(lims[j], lims[j+1], 1000)
-                    y_per = np.interp(x_per, x[i], p[i])
-                    y_max = round(y_per.max(), 2)
-                    if y_max > max(c):
-                        alpha = max(fill_alpha)
-                    else:
-                        for h in range(len(c)):
-                            if h > 0:
-                                if y_max > c[h] and \
-                                        y_max <= c[h-1]:
-                                    alpha = fill_alpha[h]
-                    if invert_alpha is True:
-                        ax.fill_between(
-                            x_per, y_per,
-                            color=fill_color,
-                            alpha=1-alpha)
-                    else:
-                        ax.fill_between(
-                            x_per, y_per,
-                            color=fill_color,
-                            alpha=alpha)
+        fill_plot_1d(ax, x[i], p[i], levels, cmap)
 
     return ans
 
@@ -366,24 +344,12 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         optional, default None
 
     fill: Bool
-        fills between iso probability confidence regions (68%, 95%) if True.
+        fills between iso probability confidence regions if True.
         Default False.
 
     levels: list
-        values at which to draw each iso-probability lines.
+        values at which to draw iso-probability lines.
         optional, default [0.68, 0.95]
-
-    fill_color: string
-        string defining the color to plot filled regions with
-        optional, default 'gray'.
-
-    fill_alpha: list
-        variation in intensity of color to shade each region with
-        optional, default [1, 0.5]
-
-    invert_alpha: Bool
-        flips shading on filled regions
-        default False
 
     Returns
     -------
@@ -405,9 +371,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     fill = kwargs.pop('fill', False)
     levels = kwargs.pop('levels', [0.68, 0.95])
-    fill_color = kwargs.pop('fill_color', 'gray')
-    fill_alpha = kwargs.pop('fill_alpha', [1, 0.5])
-    invert_alpha = kwargs.pop('invert_alpha', False)
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
@@ -439,32 +402,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
     if fill is True:
-        lims = iso_probability_1d(x[i], p[i], levels)
-        c = [round(1-level, 2) for level in levels]
-        for j in range(len(lims)):
-            if j < len(lims) - 1:
-                if lims[j] != lims[j+1]:
-                    x_per = np.linspace(lims[j], lims[j+1], 1000)
-                    y_per = np.interp(x_per, x[i], pp)
-                    y_max = round(y_per.max(), 2)
-                    if y_max > max(c):
-                        alpha = max(fill_alpha)
-                    else:
-                        for h in range(len(c)):
-                            if h > 0:
-                                if y_max > c[h] and \
-                                        y_max <= c[h-1]:
-                                    alpha = fill_alpha[h]
-                    if invert_alpha is True:
-                        ax.fill_between(
-                            x_per, y_per,
-                            color=fill_color,
-                            alpha=1-alpha)
-                    else:
-                        ax.fill_between(
-                            x_per, y_per,
-                            color=fill_color,
-                            alpha=alpha)
+        fill_plot_1d(ax, x[i], pp, levels, cmap)
 
     return ans
 
