@@ -232,6 +232,7 @@ def make_2d_axes(params, **kwargs):
 
     return fig, axes
 
+
 def fill_plot_1d(ax, x, p, levels, cmap):
     """Helper function for plotting filled regions in 1D posteriors."""
     lims = iso_probability_1d(x, p, levels)
@@ -250,6 +251,7 @@ def fill_plot_1d(ax, x, p, levels, cmap):
                                 y_max <= c[h-1]:
                             fill_color = cmap(c[h])
                 ax.fill_between(x_per, y_per, color=fill_color)
+
 
 def fastkde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
