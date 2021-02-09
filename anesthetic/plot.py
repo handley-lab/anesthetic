@@ -297,7 +297,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         c = iso_probability_contours_from_samples(p[i], contours=levels)
         for j in range(len(c)-1):
             ax.fill_between(
-                x[i], p[i], where=(p[i] >= c[j]), color=cmap(c[j]))
+                x[i], p[i], where=(p[i] >= c[j]), color=cmap(levels[j]))
 
     return ans
 
@@ -389,7 +389,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         c = iso_probability_contours_from_samples(pp, contours=levels)
         for j in range(len(c)-1):
             ax.fill_between(
-                x[i], pp, where=(pp >= c[j]), color=cmap(c[j]))
+                x[i], pp, where=(pp >= c[j]), color=cmap(levels[j]))
 
     return ans
 
