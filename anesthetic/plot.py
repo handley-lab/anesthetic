@@ -277,9 +277,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
-    cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
-                                 if cmap is None else cmap(0.68)))
+    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    facecolor = kwargs.pop('facecolor', color)
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -295,9 +294,10 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     if fill is True:
         c = iso_probability_contours_from_samples(p[i], contours=levels)
+        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         for j in range(len(c)-1):
-            ax.fill_between(
-                x[i], p[i], where=(p[i] >= c[j]), color=cmap(levels[j]))
+            ax.fill_between(x[i], p[i], where=p[i] >= c[j],
+                            color=cmap(c[j]))
 
     return ans
 
@@ -360,9 +360,9 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
-    cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
-                                 if cmap is None else cmap(0.68)))
+    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    facecolor = kwargs.pop('facecolor', color)
+
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -387,9 +387,10 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     if fill is True:
         c = iso_probability_contours_from_samples(pp, contours=levels)
+        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         for j in range(len(c)-1):
-            ax.fill_between(
-                x[i], pp, where=(pp >= c[j]), color=cmap(levels[j]))
+            ax.fill_between(x[i], pp, where=pp >= c[j],
+                            color=cmap(c[j]))
 
     return ans
 
