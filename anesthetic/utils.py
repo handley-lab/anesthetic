@@ -264,46 +264,6 @@ def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
     return c
 
 
-def iso_probability_1d(x, pdf, contours=[0.68, 0.95]):
-    """Contour values on a normalised 1D posterior."""
-    contours = [1-p for p in reversed(contours)]
-
-    def turningpoints(x):
-        x_pri = x + np.abs(x.min())
-        idx = []
-        for i in range(1, len(x_pri)-1):
-            if ((x_pri[i-1] < x_pri[i] and x_pri[i+1] < x_pri[i])
-                    or (x_pri[i-1] > x_pri[i] and x_pri[i+1] > x_pri[i])):
-                idx.append(i)
-        return idx
-
-    lims = []
-    for i in range(len(contours)):
-        if i < len(contours) - 1:
-            if pdf[-1] > contours[i] and pdf[-1] < contours[i+1]:
-                lims.append(x[-1])
-            if pdf[0] > contours[i] and pdf[0] < contours[i+1]:
-                lims.append(x[0])
-        if pdf[0] > contours[-1]:
-            lims.append(x[0])
-        if pdf[-1] > contours[-1]:
-            lims.append(x[-1])
-
-    idx = turningpoints(pdf)
-    y = np.split(pdf, idx)
-    x = np.split(x, idx)
-
-    for i in range(len(x)):
-        for j in range(len(contours)):
-            if y[i].min() <= contours[j] and y[i].max() >= contours[j]:
-                if y[i][1] > y[i][0]:
-                    lims.append(np.interp(contours[j], y[i], x[i]))
-                else:
-                    lims.append(np.interp(-contours[j], -y[i], x[i]))
-
-    return np.sort(lims)
-
-
 def scaled_triangulation(x, y, cov):
     """Triangulation scaled by a covariance matrix.
 
