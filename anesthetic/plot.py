@@ -277,7 +277,9 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
-    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                     if cmap is None else cmap(0.68)))
     facecolor = kwargs.pop('facecolor', color)
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
@@ -360,7 +362,9 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
-    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    cmap = kwargs.pop('cmap', None)
+    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+                                     if cmap is None else cmap(0.68)))
     facecolor = kwargs.pop('facecolor', color)
 
     q = kwargs.pop('q', '5sigma')
