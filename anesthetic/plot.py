@@ -32,8 +32,7 @@ from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
-                              scaled_triangulation, match_contour_to_contourf,
-                              iso_probability_1d)
+                              scaled_triangulation, match_contour_to_contourf)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
@@ -233,26 +232,6 @@ def make_2d_axes(params, **kwargs):
     return fig, axes
 
 
-def fill_plot_1d(ax, x, p, levels, cmap):
-    """Plot filled regions in 1D posteriors."""
-    lims = iso_probability_1d(x, p, levels)
-    c = [round(1-level, 2) for level in levels]
-    for j in range(len(lims)):
-        if j < len(lims) - 1:
-            if lims[j] != lims[j+1]:
-                x_per = np.linspace(lims[j], lims[j+1], 1000)
-                y_per = np.interp(x_per, x, p)
-                y_max = round(y_per.max(), 2)
-                if y_max > max(c):
-                    fill_color = cmap(max(c))
-                else:
-                    for h in range(1, len(c), 1):
-                        if y_max > c[h] and \
-                                y_max <= c[h-1]:
-                            fill_color = cmap(c[h])
-                ax.fill_between(x_per, y_per, color=fill_color)
-
-
 def fastkde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
@@ -315,7 +294,10 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
     if fill is True:
-        fill_plot_1d(ax, x[i], p[i], levels, cmap)
+        c = iso_probability_contours_from_samples(p[i], contours=levels)
+        for j in range(len(c)-1):
+            ax.fill_between(
+                x[i], p[i], where=(p[i] >= c[j]), color=cmap(c[j]))
 
     return ans
 
@@ -404,7 +386,10 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
     if fill is True:
-        fill_plot_1d(ax, x[i], pp, levels, cmap)
+        c = iso_probability_contours_from_samples(pp, contours=levels)
+        for j in range(len(c)-1):
+            ax.fill_between(
+                x[i], pp, where=(pp >= c[j]), color=cmap(c[j]))
 
     return ans
 
