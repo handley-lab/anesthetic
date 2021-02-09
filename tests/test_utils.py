@@ -1,13 +1,12 @@
 import warnings
 import numpy as np
 from scipy import special as sp
-from scipy.stats import gaussian_kde
 from numpy.testing import assert_array_equal
 from anesthetic import NestedSamples
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
-                              insertion_p_value, iso_probability_1d)
+                              insertion_p_value)
 
 
 def test_nest_level():
@@ -143,25 +142,3 @@ def test_p_values_from_sample():
 
     ks_results = insertion_p_value(ns.insertion[nlive:-nlive], nlive, batch=1)
     assert ks_results['p-value'] > 0.05
-
-
-def test_iso_probability_1d():
-
-    data = np.random.normal(0, 0.5, 1000)
-    x, w = sample_compression_1d(data, None, 1000)
-    kde = gaussian_kde(x, weights=None)
-    p = kde(x)
-    p /= p.max()
-
-    idx = np.where(p < 0.2)[0]
-    X = np.delete(x, idx)
-    Y = np.delete(p, idx)
-    lims = iso_probability_1d(X, Y, contours=[0.68, 0.95])
-    assert np.isclose(lims[0], X.min(), rtol=1e-4, atol=1e-4)
-    assert np.isclose(lims[-1], X.max(), rtol=1e-4, atol=1e-4)
-    idx = np.where(p < 0.4)[0]
-    X = np.delete(x, idx)
-    Y = np.delete(p, idx)
-    lims = iso_probability_1d(X, Y, contours=[0.68, 0.95])
-    assert np.isclose(lims[0], X.min(), rtol=1e-4, atol=1e-4)
-    assert np.isclose(lims[-1], X.max(), rtol=1e-4, atol=1e-4)
