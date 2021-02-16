@@ -251,7 +251,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         lower/upper prior bound
         optional, default None
 
-    fill: Bool
+    filled1d: Bool
         fills between iso probability confidence regions if True.
         Default False.
 
@@ -272,7 +272,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     if data.max()-data.min() <= 0:
         return
 
-    fill = kwargs.pop('fill', False)
+    filled1d = kwargs.pop('filled1d', False)
     levels = kwargs.pop('levels', [0.68, 0.95])
 
     xmin = kwargs.pop('xmin', None)
@@ -294,7 +294,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
-    if fill is True:
+    if filled1d is True:
         c = iso_probability_contours_from_samples(p[i], contours=levels)
         cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         for j in range(len(c)-1):
@@ -329,7 +329,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         lower/upper prior bound.
         optional, default None
 
-    fill: Bool
+    filled1d: Bool
         fills between iso probability confidence regions if True.
         Default False.
 
@@ -355,7 +355,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c']),
         drop=['fc', 'ec'])
 
-    fill = kwargs.pop('fill', False)
+    filled1d = kwargs.pop('filled1d', False)
     levels = kwargs.pop('levels', [0.68, 0.95])
 
     xmin = kwargs.pop('xmin', None)
@@ -389,7 +389,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ans = ax.plot(x[i], pp, color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
-    if fill is True:
+    if filled1d is True:
         c = iso_probability_contours_from_samples(pp, contours=levels)
         cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         for j in range(len(c)-1):
