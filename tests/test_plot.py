@@ -232,9 +232,9 @@ def test_kde_plot_1d(plot_1d):
 
         # Check iso-probability code
         plot_1d(
-            ax, data, fill=True)
+            ax, data, filled1d=True)
         plot_1d(
-            ax, data, fill=True, levels=[0.2, 0.6, 0.8])
+            ax, data, filled1d=True, levels=[0.2, 0.6, 0.8])
 
     except ImportError:
         if 'fastkde' not in sys.modules:
