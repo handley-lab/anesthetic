@@ -222,6 +222,11 @@ def test_plot_2d_types():
                            'diagonal': 'filledkde'})
     assert((~axes.isnull()).sum().sum() == 6)
 
+    if 'fastkde' in sys.modules:
+        fig, axes = ns.plot_2d(params, types={'lower': 'kde',
+                               'diagonal': 'filledfastkde'})
+        assert((~axes.isnull()).sum().sum() == 6)
+
     fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde'})
     assert((~axes.isnull()).sum().sum() == 6)
 
