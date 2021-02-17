@@ -295,7 +295,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
     if filled1d is True:
-        c = iso_probability_contours_from_samples(p[i], contours=levels)
+        c = iso_probability_contours(p[i], contours=levels)
         cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         for j in range(len(c)-1):
             ax.fill_between(x[i], p[i], where=p[i] >= c[j],
