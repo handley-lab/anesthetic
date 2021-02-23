@@ -25,7 +25,7 @@ except ImportError:
 import matplotlib.cbook as cbook
 import matplotlib.lines as mlines
 from matplotlib.ticker import MaxNLocator
-from matplotlib.colors import LinearSegmentedColormap, from_levels_and_colors
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.transforms import Affine2D
 from anesthetic.utils import check_bounds, nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
