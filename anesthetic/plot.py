@@ -25,7 +25,7 @@ except ImportError:
 import matplotlib.cbook as cbook
 import matplotlib.lines as mlines
 from matplotlib.ticker import MaxNLocator
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, from_levels_and_colors
 from matplotlib.transforms import Affine2D
 from anesthetic.utils import check_bounds, nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
@@ -296,7 +296,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     if filled1d is True:
         c = iso_probability_contours(p[i], contours=levels)
-        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
+        if cmap is None:
+            cmap = basic_cmap(facecolor)
         for j in range(len(c)-1):
             ax.fill_between(x[i], p[i], where=p[i] >= c[j],
                             color=cmap(c[j]))
@@ -392,7 +393,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     if filled1d is True:
         c = iso_probability_contours_from_samples(pp, contours=levels,
                                                   weights=w)
-        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
+        if cmap is None:
+            cmap = basic_cmap(facecolor)
         for j in range(len(c)-1):
             ax.fill_between(x[i], pp, where=pp >= c[j],
                             color=cmap(c[j]))
