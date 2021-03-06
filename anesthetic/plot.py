@@ -251,10 +251,6 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         lower/upper prior bound
         optional, default None
 
-    filled1d: Bool
-        fills between iso probability confidence regions if True.
-        Default False.
-
     levels: list
         values at which to draw iso-probability lines.
         optional, default [0.68, 0.95]
@@ -272,7 +268,6 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     if data.max()-data.min() <= 0:
         return
 
-    filled1d = kwargs.pop('filled1d', False)
     levels = kwargs.pop('levels', [0.68, 0.95])
 
     xmin = kwargs.pop('xmin', None)
@@ -280,7 +275,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
-    facecolor = kwargs.pop('facecolor', color)
+    facecolor = kwargs.pop('facecolor', False)
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -294,7 +289,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
-    if filled1d is True:
+    if facecolor is True:
+        facecolor = color
         c = iso_probability_contours(p[i], contours=levels)
         if cmap is None:
             cmap = basic_cmap(facecolor)
@@ -330,10 +326,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         lower/upper prior bound.
         optional, default None
 
-    filled1d: Bool
-        fills between iso probability confidence regions if True.
-        Default False.
-
     levels: list
         values at which to draw iso-probability lines.
         optional, default [0.68, 0.95]
@@ -356,7 +348,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c']),
         drop=['fc', 'ec'])
 
-    filled1d = kwargs.pop('filled1d', False)
     levels = kwargs.pop('levels', [0.68, 0.95])
 
     xmin = kwargs.pop('xmin', None)
@@ -366,7 +357,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
-    facecolor = kwargs.pop('facecolor', color)
+    facecolor = kwargs.pop('facecolor', False)
 
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
@@ -390,7 +381,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ans = ax.plot(x[i], pp, color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
-    if filled1d is True:
+    if facecolor is True:
+        facecolor = color
         c = iso_probability_contours_from_samples(pp, contours=levels,
                                                   weights=w)
         if cmap is None:

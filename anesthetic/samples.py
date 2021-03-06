@@ -182,14 +182,14 @@ class MCMCSamples(WeightedDataFrame):
                     return kde_plot_1d(ax, self[paramname_x],
                                        weights=self.weights,
                                        ncompress=ncompress,
-                                       filled1d=True,
+                                       facecolor=True,
                                        *args, **kwargs)
                 elif plot_type == 'fastkde':
                     x = self[paramname_x].compress(ncompress)
                     return fastkde_plot_1d(ax, x, *args, **kwargs)
                 elif plot_type == 'filledfastkde':
                     x = self[paramname_x].compress(ncompress)
-                    return fastkde_plot_1d(ax, x, filled1d=True,
+                    return fastkde_plot_1d(ax, x, facecolor=True,
                                            *args, **kwargs)
                 elif plot_type == 'hist':
                     return hist_plot_1d(ax, self[paramname_x],
