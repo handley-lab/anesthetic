@@ -255,6 +255,12 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         values at which to draw iso-probability lines.
         optional, default [0.68, 0.95]
 
+    facecolor: bool or string
+        If set to True then the 1d plot will be shaded with the value of the
+        ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
+        to define the color of the shading directly.
+        optional, default False
+
     Returns
     -------
     lines: matplotlib.lines.Line2D
@@ -289,14 +295,14 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
-    if facecolor is True:
-        facecolor = color
+    if facecolor:
+        if facecolor is True:
+            facecolor = color
         c = iso_probability_contours(p[i], contours=levels)
-        if cmap is None:
-            cmap = basic_cmap(facecolor)
+        cmap = basic_cmap(facecolor)
         for j in range(len(c)-1):
             ax.fill_between(x[i], p[i], where=p[i] >= c[j],
-                            color=cmap(c[j]))
+                            color=cmap(c[j]), edgecolor=color)
 
     return ans
 
@@ -329,6 +335,12 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     levels: list
         values at which to draw iso-probability lines.
         optional, default [0.68, 0.95]
+
+    facecolor: bool or string
+        If set to True then the 1d plot will be shaded with the value of the
+        ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
+        to define the color of the shading directly.
+        optional, default False
 
     Returns
     -------
@@ -381,15 +393,15 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ans = ax.plot(x[i], pp, color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
-    if facecolor is True:
-        facecolor = color
+    if facecolor:
+        if facecolor is True:
+            facecolor = color
         c = iso_probability_contours_from_samples(pp, contours=levels,
                                                   weights=w)
-        if cmap is None:
-            cmap = basic_cmap(facecolor)
+        cmap = basic_cmap(facecolor)
         for j in range(len(c)-1):
             ax.fill_between(x[i], pp, where=pp >= c[j],
-                            color=cmap(c[j]))
+                            color=cmap(c[j]), edgecolor=color)
 
     return ans
 

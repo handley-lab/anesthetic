@@ -131,8 +131,7 @@ class MCMCSamples(WeightedDataFrame):
 
         plot_type: str
             Must be in {'kde', 'scatter', 'hist', 'fastkde'} for 2D plots and
-            in {'kde', 'hist', 'fastkde', 'astropyhist', 'filledkde',
-            'filledfastkde'} for 1D plots.
+            in {'kde', 'hist', 'fastkde', 'astropyhist'} for 1D plots.
             optional, (Default: 'kde')
 
         ncompress: int
@@ -176,21 +175,9 @@ class MCMCSamples(WeightedDataFrame):
                                        weights=self.weights,
                                        ncompress=ncompress,
                                        *args, **kwargs)
-                elif plot_type == 'filledkde':
-                    if ncompress is None:
-                        ncompress = 1000
-                    return kde_plot_1d(ax, self[paramname_x],
-                                       weights=self.weights,
-                                       ncompress=ncompress,
-                                       facecolor=True,
-                                       *args, **kwargs)
                 elif plot_type == 'fastkde':
                     x = self[paramname_x].compress(ncompress)
                     return fastkde_plot_1d(ax, x, *args, **kwargs)
-                elif plot_type == 'filledfastkde':
-                    x = self[paramname_x].compress(ncompress)
-                    return fastkde_plot_1d(ax, x, facecolor=True,
-                                           *args, **kwargs)
                 elif plot_type == 'hist':
                     return hist_plot_1d(ax, self[paramname_x],
                                         weights=self.weights,
@@ -202,9 +189,7 @@ class MCMCSamples(WeightedDataFrame):
                 else:
                     raise NotImplementedError("plot_type is '%s', but must be"
                                               " one of {'kde', 'fastkde', "
-                                              "'hist', 'astropyhist',"
-                                              "'filledkde',"
-                                              "'filledfastkde'}."
+                                              "'hist', 'astropyhist'}."
                                               % plot_type)
             else:
                 ax.plot([], [])
