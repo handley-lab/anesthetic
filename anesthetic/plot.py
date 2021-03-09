@@ -268,6 +268,12 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         matplotlib matplotlib.axes.Axes.plot command)
 
     """
+
+    kwargs = normalize_kwargs(
+        kwargs,
+        dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
+        facecolor=['fc'], edgecolor=['ec']))
+
     if len(data) == 0:
         return np.zeros(0), np.zeros(0)
 
@@ -282,6 +288,13 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
     facecolor = kwargs.pop('facecolor', False)
+
+    if 'edgecolor' in kwargs:
+        color = kwargs['edgecolor']
+        edgecolor = kwargs.pop('edgecolor')
+    else:
+        edgecolor = color
+
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
 
@@ -302,7 +315,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         cmap = basic_cmap(facecolor)
         for j in range(len(c)-1):
             ax.fill_between(x[i], p[i], where=p[i] >= c[j],
-                            color=cmap(c[j]), edgecolor=color)
+                            color=cmap(c[j]), edgecolor=edgecolor)
 
     return ans
 
@@ -349,6 +362,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         matplotlib matplotlib.axes.Axes.plot command)
 
     """
+
     if len(data) == 0:
         return np.zeros(0), np.zeros(0)
 
@@ -357,8 +371,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     kwargs = normalize_kwargs(
         kwargs,
-        dict(linewidth=['lw'], linestyle=['ls'], color=['c']),
-        drop=['fc', 'ec'])
+        dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
+        facecolor=['fc'], edgecolor=['ec']))
 
     levels = kwargs.pop('levels', [0.68, 0.95])
 
@@ -370,6 +384,12 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
     facecolor = kwargs.pop('facecolor', False)
+
+    if 'edgecolor' in kwargs:
+        color = kwargs['edgecolor']
+        edgecolor = kwargs.pop('edgecolor')
+    else:
+        edgecolor = color
 
     q = kwargs.pop('q', '5sigma')
     q = quantile_plot_interval(q=q)
@@ -401,7 +421,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         cmap = basic_cmap(facecolor)
         for j in range(len(c)-1):
             ax.fill_between(x[i], pp, where=pp >= c[j],
-                            color=cmap(c[j]), edgecolor=color)
+                            color=cmap(c[j]), edgecolor=edgecolor)
 
     return ans
 
