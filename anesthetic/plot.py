@@ -272,7 +272,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     kwargs = normalize_kwargs(
         kwargs,
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
-        facecolor=['fc'], edgecolor=['ec']))
+             facecolor=['fc'], edgecolor=['ec']))
 
     if len(data) == 0:
         return np.zeros(0), np.zeros(0)
@@ -290,8 +290,9 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     facecolor = kwargs.pop('facecolor', False)
 
     if 'edgecolor' in kwargs:
-        color = kwargs['edgecolor']
         edgecolor = kwargs.pop('edgecolor')
+        if edgecolor:
+            color = edgecolor
     else:
         edgecolor = color
 
@@ -308,14 +309,17 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
-    if facecolor:
+    if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
             facecolor = color
         c = iso_probability_contours(p[i], contours=levels)
         cmap = basic_cmap(facecolor)
+        fill = []
         for j in range(len(c)-1):
-            ax.fill_between(x[i], p[i], where=p[i] >= c[j],
-                            color=cmap(c[j]), edgecolor=edgecolor)
+            fill.append(ax.fill_between(x[i], p[i], where=p[i] >= c[j],
+                        color=cmap(c[j]), edgecolor=edgecolor))
+
+        return ans, fill
 
     return ans
 
@@ -372,7 +376,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     kwargs = normalize_kwargs(
         kwargs,
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
-        facecolor=['fc'], edgecolor=['ec']))
+             facecolor=['fc'], edgecolor=['ec']))
 
     levels = kwargs.pop('levels', [0.68, 0.95])
 
@@ -386,8 +390,9 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     facecolor = kwargs.pop('facecolor', False)
 
     if 'edgecolor' in kwargs:
-        color = kwargs['edgecolor']
         edgecolor = kwargs.pop('edgecolor')
+        if edgecolor:
+            color = edgecolor
     else:
         edgecolor = color
 
@@ -413,15 +418,18 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ans = ax.plot(x[i], pp, color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
-    if facecolor:
+    if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
             facecolor = color
         c = iso_probability_contours_from_samples(pp, contours=levels,
                                                   weights=w)
         cmap = basic_cmap(facecolor)
+        fill = []
         for j in range(len(c)-1):
-            ax.fill_between(x[i], pp, where=pp >= c[j],
-                            color=cmap(c[j]), edgecolor=edgecolor)
+            fill.append(ax.fill_between(x[i], pp, where=pp >= c[j],
+                        color=cmap(c[j]), edgecolor=edgecolor))
+
+        return ans, fill
 
     return ans
 
