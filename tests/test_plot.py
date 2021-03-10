@@ -15,7 +15,7 @@ from matplotlib.contour import QuadContourSet
 from matplotlib.tri import TriContourSet
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch, Polygon
-from matplotlib.colors import ColorConverter
+from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
 from pandas.core.series import Series
 from pandas.core.frame import DataFrame
@@ -229,6 +229,16 @@ def test_kde_plot_1d(plot_1d):
         plot_1d(ax, data, q=0.1)
         plot_1d(ax, data, q=0.9)
         plot_1d(ax, data, q=(0.1, 0.9))
+
+        # Check iso-probability code
+        line, fill = plot_1d(ax, data, facecolor=True)
+        plot_1d(ax, data, facecolor=True, levels=[0.2, 0.6, 0.8])
+        line, fill = plot_1d(ax, data, fc='blue', color='k', ec='r')
+        assert(np.all(fill[0].get_edgecolor()[0] == to_rgba('r')))
+        assert (to_rgba(line[0].get_color()) == to_rgba('r'))
+        line, fill = plot_1d(ax, data, fc=True, color='k', ec=None)
+        assert(len(fill[0].get_edgecolor()) == 0)
+        assert (to_rgba(line[0].get_color()) == to_rgba('k'))
 
     except ImportError:
         if 'fastkde' not in sys.modules:
