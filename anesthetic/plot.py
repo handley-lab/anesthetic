@@ -268,7 +268,6 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         matplotlib matplotlib.axes.Axes.plot command)
 
     """
-
     kwargs = normalize_kwargs(
         kwargs,
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
@@ -366,7 +365,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         matplotlib matplotlib.axes.Axes.plot command)
 
     """
-
     if len(data) == 0:
         return np.zeros(0), np.zeros(0)
 
