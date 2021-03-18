@@ -3,7 +3,7 @@ anesthetic: nested sampling visualisation
 =========================================
 :anesthetic: nested sampling visualisation
 :Author: Will Handley and Lukas Hergt
-:Version: 2.0.0-beta.6
+:Version: 2.0.0-beta.7
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -62,9 +62,9 @@ Features
 - Both samples and plotting axes are stored as a ``pandas.DataFrame``, with parameter names as indices, which makes for easy access and modification.
 - Sensible color scheme for plotting nearly flat distributions.
 - For easy extension/modification, uses the standard python libraries:
-  `numpy <https://www.numpy.org/>`__, 
-  `scipy <https://www.scipy.org/>`__, 
-  `matplotlib <https://matplotlib.org/>`__ 
+  `numpy <https://www.numpy.org/>`__,
+  `scipy <https://www.scipy.org/>`__,
+  `matplotlib <https://matplotlib.org/>`__
   and `pandas <https://pandas.pydata.org/>`__.
 
 Installation
@@ -80,7 +80,7 @@ or via the setup.py
 
 .. code:: bash
 
-    git clone https://github.com/williamjameshandley/anesthetic 
+    git clone https://github.com/williamjameshandley/anesthetic
     cd anesthetic
     python setup.py install --user
 
@@ -95,7 +95,7 @@ You can check that things are working by running the test suite:
 
 
 Dependencies
-~~~~~~~~~~~~ 
+~~~~~~~~~~~~
 
 Basic requirements:
 
@@ -171,10 +171,10 @@ Another posterior plotting tool?
 
 There are several excellent tools for plotting marginalised posteriors:
 
-- `getdist <http://getdist.readthedocs.io/en/latest/intro.html>`__ 
+- `getdist <http://getdist.readthedocs.io/en/latest/intro.html>`__
 - `corner <https://corner.readthedocs.io>`__
 - `pygtc <https://pygtc.readthedocs.io>`__
-- `dynesty <https://dynesty.readthedocs.io>`__ 
+- `dynesty <https://dynesty.readthedocs.io>`__
 - `MontePython <http://baudren.github.io/montepython.html>`__
 
 Why create another one? In general, any dedicated user of software will find that there is some functionality that in their use case is lacking, and the designs of previous codes make such extensions challenging. In my case this was:
@@ -190,7 +190,7 @@ Why create another one? In general, any dedicated user of software will find tha
     samples['omegab'] = samples.omegabh2/(samples.H0/100)**2      # Define omegab
     samples.tex['omegab'] = '$\Omega_b$'                          # Label omegab
     samples.plot_1d('omegab')                                     # Simple 1D plot
-    
+
 3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which presents a problem if you are trying to plot priors along with your posteriors. ``anesthetic`` has a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
 
 What's in a name?
