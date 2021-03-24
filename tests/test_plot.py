@@ -239,6 +239,24 @@ def test_kde_plot_1d(plot_1d):
         line, fill = plot_1d(ax, data, fc=True, color='k', ec=None)
         assert(len(fill[0].get_edgecolor()) == 0)
         assert (to_rgba(line[0].get_color()) == to_rgba('k'))
+        plt.close("all")
+
+        # Check xlim, Gaussian (i.e. limits reduced to relevant data range)
+        fig, ax = plt.subplots()
+        data = np.random.randn(1000) * 0.01 + 0.5
+        plot_1d(ax, data, xmin=0, xmax=1)
+        xmin, xmax = ax.get_xlim()
+        assert(xmin > 0.4)
+        assert(xmax < 0.6)
+        plt.close("all")
+        # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
+        fig, ax = plt.subplots()
+        data = np.random.uniform(size=1000)
+        plot_1d(ax, data, xmin=0, xmax=1)
+        xmin, xmax = ax.get_xlim()
+        assert(xmin == 0)
+        assert(xmax == 1)
+        plt.close("all")
 
     except ImportError:
         if 'fastkde' not in sys.modules:
