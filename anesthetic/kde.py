@@ -103,4 +103,4 @@ def fastkde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
         p = p[y <= ymax, :]
         y = y[y <= ymax]
 
-    return x, y, p
+    return x, y, p, xmin, xmax, ymin, ymax

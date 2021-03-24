@@ -557,8 +557,9 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
     try:
-        x, y, pdf = fastkde_2d(data_x, data_y,
-                               xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+        x, y, pdf, xmin, xmax, ymin, ymax = fastkde_2d(data_x, data_y,
+                                                       xmin=xmin, xmax=xmax,
+                                                       ymin=ymin, ymax=ymax)
     except NameError:
         raise ImportError("You need to install fastkde to use fastkde")
 
@@ -595,8 +596,8 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                       vmin=vmin, vmax=vmax, linewidths=linewidths,
                       colors=edgecolor, cmap=cmap, *args, **kwargs)
 
-    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
-    ax.set_ylim(*check_bounds(y[j], ymin, ymax), auto=True)
+    ax.set_xlim(xmin, xmax, auto=True)
+    ax.set_ylim(ymin, ymax, auto=True)
     return contf, cont
 
 
