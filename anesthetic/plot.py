@@ -299,14 +299,14 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     q = quantile_plot_interval(q=q)
 
     try:
-        x, p = fastkde_1d(data, xmin, xmax)
+        x, p, xmin, xmax = fastkde_1d(data, xmin, xmax)
     except NameError:
         raise ImportError("You need to install fastkde to use fastkde")
     p /= p.max()
     i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[1], p)))
 
     ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
-    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
+    ax.set_xlim(xmin, xmax, auto=True)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
