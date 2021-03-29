@@ -239,6 +239,24 @@ def test_kde_plot_1d(plot_1d):
         line, fill = plot_1d(ax, data, fc=True, color='k', ec=None)
         assert(len(fill[0].get_edgecolor()) == 0)
         assert (to_rgba(line[0].get_color()) == to_rgba('k'))
+        plt.close("all")
+
+        # Check xlim, Gaussian (i.e. limits reduced to relevant data range)
+        fig, ax = plt.subplots()
+        data = np.random.randn(1000) * 0.01 + 0.5
+        plot_1d(ax, data, xmin=0, xmax=1)
+        xmin, xmax = ax.get_xlim()
+        assert(xmin > 0.4)
+        assert(xmax < 0.6)
+        plt.close("all")
+        # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
+        fig, ax = plt.subplots()
+        data = np.random.uniform(size=1000)
+        plot_1d(ax, data, xmin=0, xmax=1)
+        xmin, xmax = ax.get_xlim()
+        assert(xmin == 0)
+        assert(xmax == 1)
+        plt.close("all")
 
     except ImportError:
         if 'fastkde' not in sys.modules:
@@ -425,7 +443,32 @@ def test_contour_plot_2d(contour_plot_2d):
         assert cf is None
         assert ct.get_cmap() == plt.cm.Reds
         assert ct.colors is None
-        plt.close()
+        plt.close("all")
+
+        # Check limits, Gaussian (i.e. limits reduced to relevant data range)
+        fig, ax = plt.subplots()
+        data_x = np.random.randn(1000) * 0.01 + 0.5
+        data_y = np.random.randn(1000) * 0.01 + 0.5
+        contour_plot_2d(ax, data_x, data_y, xmin=0, xmax=1, ymin=0, ymax=1)
+        xmin, xmax = ax.get_xlim()
+        ymin, ymax = ax.get_ylim()
+        assert(xmin > 0.4)
+        assert(xmax < 0.6)
+        assert(ymin > 0.4)
+        assert(ymax < 0.6)
+        plt.close("all")
+        # Check limits, Uniform (i.e. data & limits span entire prior boundary)
+        fig, ax = plt.subplots()
+        data_x = np.random.uniform(size=1000)
+        data_y = np.random.uniform(size=1000)
+        contour_plot_2d(ax, data_x, data_y, xmin=0, xmax=1, ymin=0, ymax=1)
+        xmin, xmax = ax.get_xlim()
+        ymin, ymax = ax.get_ylim()
+        assert(xmin == 0)
+        assert(xmax == 1)
+        assert(ymin == 0)
+        assert(ymax == 1)
+        plt.close("all")
 
     except ImportError:
         if 'fastkde' not in sys.modules:
