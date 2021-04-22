@@ -35,7 +35,7 @@ def test_gui():
     plotter.type.buttons.set_active(0)
 
     # Reload button
-    plotter.reload.button.observers[0]()
+    #plotter.reload.button.observers[0]()
 
     # Reset button
-    plotter.reset.button.observers[0]()
+    #plotter.reset.button.observers[0]()
