@@ -779,6 +779,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    vmin = kwargs.pop('vmin', 0)
     label = kwargs.pop('label', None)
     levels = kwargs.pop('levels', None)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
@@ -802,7 +803,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     if levels is None:
         pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
-                                     cmap=cmap, range=rge,
+                                     cmap=cmap, range=rge, vmin=vmin,
                                      *args, **kwargs)
     else:
         bins = kwargs.pop('bins', 10)
@@ -819,7 +820,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
             pdf[pdf < cmin] = np.ma.masked
         if cmax is not None:
             pdf[pdf > cmax] = np.ma.masked
-        image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=0, vmax=pdf.max(),
+        image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=vmin,
                               *args, **kwargs)
 
     ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
