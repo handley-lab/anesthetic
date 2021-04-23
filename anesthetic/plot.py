@@ -583,8 +583,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     levels = kwargs.pop('levels', [0.68, 0.95])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
-    edgecolor = kwargs.pop(
-        'edgecolor', color if facecolor in [None, 'None', 'none'] else 'k')
+    edgecolor = kwargs.pop('edgecolor', color)
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -684,8 +683,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     zorder = kwargs.pop('zorder', 1)
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
-    edgecolor = kwargs.pop(
-        'edgecolor', color if facecolor in [None, 'None', 'none'] else 'k')
+    edgecolor = kwargs.pop('edgecolor', color)
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
