@@ -177,7 +177,8 @@ def test_make_2d_axes_ticks(upper, inner_ticks):
     yticks = [0.2, 0.5, 0.8]
     paramnames = ["x0", "x1", "x2", "x3"]
     for k in paramnames:
-        fig, axes = make_2d_axes(paramnames, upper=upper, inner_ticks=inner_ticks)
+        fig, axes = make_2d_axes(paramnames, upper=upper,
+                                 inner_ticks=inner_ticks)
         axes[k][k].set_xticks(xticks)
         axes[k][k].set_yticks(yticks)
         for i, row in axes.iterrows():
