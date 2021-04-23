@@ -170,17 +170,20 @@ def test_make_2d_axes_behaviour():
         plt.close("all")
 
 
+@pytest.mark.parametrize('upper', [False, True])
 @pytest.mark.parametrize('inner_ticks', [False, True])
-def test_make_2d_axes_ticks(inner_ticks):
+def test_make_2d_axes_ticks(upper, inner_ticks):
     xticks = [0.1, 0.4, 0.7]
     yticks = [0.2, 0.5, 0.8]
     paramnames = ["x0", "x1", "x2", "x3"]
     for k in paramnames:
-        fig, axes = make_2d_axes(paramnames, inner_ticks=inner_ticks)
+        fig, axes = make_2d_axes(paramnames, upper=upper, inner_ticks=inner_ticks)
         axes[k][k].set_xticks(xticks)
         axes[k][k].set_yticks(yticks)
         for i, row in axes.iterrows():
             for j, ax in row.iteritems():
+                if ax is None:
+                    break
                 if i == k:
                     assert np.array_equal(yticks, ax.get_yticks())
                 else:
