@@ -381,6 +381,12 @@ def test_1d_density_kwarg(s):
     kde_height = x2y(0)
     assert(kde_height == pytest.approx(1, rel=0.1))
 
+    # fastkde density = False:
+    f = fastkde_plot_1d(ax, x, density=False)[0]
+    x2y = interp1d(f.get_xdata(), f.get_ydata(), 'cubic', assume_sorted=True)
+    fastkde_height = x2y(0)
+    assert(fastkde_height == pytest.approx(1, rel=0.1))
+
     # hist density = True:
     h = hist_plot_1d(ax, x, density=True, bins=np.linspace(-5.5, 5.5, 12))
     bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
@@ -392,6 +398,12 @@ def test_1d_density_kwarg(s):
     kde_height = x2y(0)
     gauss_norm = 1 / np.sqrt(2 * np.pi * s**2)
     assert(kde_height == pytest.approx(gauss_norm, rel=0.1))
+
+    # fastkde density = True:
+    f = fastkde_plot_1d(ax, x, density=True)[0]
+    x2y = interp1d(f.get_xdata(), f.get_ydata(), 'cubic', assume_sorted=True)
+    fastkde_height = x2y(0)
+    assert(fastkde_height == pytest.approx(gauss_norm, rel=0.1))
     plt.close("all")
 
 
