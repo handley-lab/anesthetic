@@ -317,6 +317,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
+    density = kwargs.pop('density', False)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
@@ -339,7 +340,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     p /= p.max()
     i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[1], p)))
 
-    ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
+    area = np.trapz(x=x[i], y=p[i]) if density else 1
+    ans = ax.plot(x[i], p[i]/area, color=color, *args, **kwargs)
     ax.set_xlim(xmin, xmax, auto=True)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
@@ -416,6 +418,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     weights = kwargs.pop('weights', None)
     ncompress = kwargs.pop('ncompress', 1000)
+    density = kwargs.pop('density', False)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
@@ -447,7 +450,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     sigma = np.sqrt(kde.covariance[0, 0])
     pp = cut_and_normalise_gaussian(x[i], p[i], sigma, xmin, xmax)
     pp /= pp.max()
-    ans = ax.plot(x[i], pp, color=color, *args, **kwargs)
+    area = np.trapz(x=x[i], y=pp) if density else 1
+    ans = ax.plot(x[i], pp/area, color=color, *args, **kwargs)
     ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
@@ -511,6 +515,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     if xmax is None or not np.isfinite(xmax):
         xmax = quantile(data, 0.99, weights)
     histtype = kwargs.pop('histtype', 'bar')
+    density = kwargs.get('density', False)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
@@ -526,15 +531,16 @@ def hist_plot_1d(ax, data, *args, **kwargs):
                                  histtype=histtype, weights=weights,
                                  *args, **kwargs)
 
-    if histtype == 'bar':
+    if histtype == 'bar' and not density:
         for b in bars:
             b.set_height(b.get_height() / h.max())
-    elif histtype == 'step' or histtype == 'stepfilled':
+    elif (histtype == 'step' or histtype == 'stepfilled') and not density:
         trans = Affine2D().scale(sx=1, sy=1./h.max()) + ax.transData
         bars[0].set_transform(trans)
 
     ax.set_xlim(*check_bounds(edges, xmin, xmax), auto=True)
-    ax.set_ylim(0, 1.1)
+    if not density:
+        ax.set_ylim(0, 1.1)
     return bars
 
 
