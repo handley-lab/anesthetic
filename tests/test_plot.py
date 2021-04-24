@@ -364,47 +364,42 @@ def test_hist_plot_2d():
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
 
 
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
 @pytest.mark.parametrize('s', [1, 2])
-def test_1d_density_kwarg(s):
-    np.random.seed(0)
-    x = np.random.normal(scale=s, size=2000)
-    fig, ax = plt.subplots()
+def test_1d_density_kwarg(plot_1d, s):
+    try:
+        np.random.seed(0)
+        x = np.random.normal(scale=s, size=2000)
+        fig, ax = plt.subplots()
 
-    # hist density = False:
-    h = hist_plot_1d(ax, x, density=False, bins=np.linspace(-5.5, 5.5, 12))
-    bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
-    assert(bar_height == pytest.approx(1, rel=0.1))
+        # hist density = False:
+        h = hist_plot_1d(ax, x, density=False, bins=np.linspace(-5.5, 5.5, 12))
+        bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+        assert(bar_height == pytest.approx(1, rel=0.1))
 
-    # kde density = False:
-    k = kde_plot_1d(ax, x, density=False)[0]
-    x2y = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
-    kde_height = x2y(0)
-    assert(kde_height == pytest.approx(1, rel=0.1))
+        # kde density = False:
+        k = plot_1d(ax, x, density=False)[0]
+        f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
+        kde_height = f(0)
+        assert(kde_height == pytest.approx(1, rel=0.1))
 
-    # fastkde density = False:
-    f = fastkde_plot_1d(ax, x, density=False)[0]
-    x2y = interp1d(f.get_xdata(), f.get_ydata(), 'cubic', assume_sorted=True)
-    fastkde_height = x2y(0)
-    assert(fastkde_height == pytest.approx(1, rel=0.1))
+        # hist density = True:
+        h = hist_plot_1d(ax, x, density=True, bins=np.linspace(-5.5, 5.5, 12))
+        bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+        assert(bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1))
 
-    # hist density = True:
-    h = hist_plot_1d(ax, x, density=True, bins=np.linspace(-5.5, 5.5, 12))
-    bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
-    assert(bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1))
+        # kde density = True:
+        k = plot_1d(ax, x, density=True)[0]
+        f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
+        kde_height = f(0)
+        gauss_norm = 1 / np.sqrt(2 * np.pi * s**2)
+        assert(kde_height == pytest.approx(gauss_norm, rel=0.1))
 
-    # kde density = True:
-    k = kde_plot_1d(ax, x, density=True)[0]
-    x2y = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
-    kde_height = x2y(0)
-    gauss_norm = 1 / np.sqrt(2 * np.pi * s**2)
-    assert(kde_height == pytest.approx(gauss_norm, rel=0.1))
+        plt.close("all")
 
-    # fastkde density = True:
-    f = fastkde_plot_1d(ax, x, density=True)[0]
-    x2y = interp1d(f.get_xdata(), f.get_ydata(), 'cubic', assume_sorted=True)
-    fastkde_height = x2y(0)
-    assert(fastkde_height == pytest.approx(gauss_norm, rel=0.1))
-    plt.close("all")
+    except ImportError:
+        if 'fastkde' not in sys.modules:
+            pass
 
 
 @pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
