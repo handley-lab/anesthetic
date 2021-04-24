@@ -19,6 +19,8 @@ from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
 from pandas.core.series import Series
 from pandas.core.frame import DataFrame
+from scipy.special import erf
+from scipy.interpolate import interp1d
 
 
 def test_make_1d_axes():
@@ -360,6 +362,37 @@ def test_hist_plot_2d():
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
+
+
+@pytest.mark.parametrize('s', [1, 2])
+def test_1d_density_kwarg(s):
+    np.random.seed(0)
+    x = np.random.normal(scale=s, size=2000)
+    fig, ax = plt.subplots()
+
+    # hist density = False:
+    h = hist_plot_1d(ax, x, density=False, bins=np.linspace(-5.5, 5.5, 12))
+    bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+    assert(bar_height == pytest.approx(1, rel=0.1))
+
+    # kde density = False:
+    k = kde_plot_1d(ax, x, density=False)[0]
+    x2y = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
+    kde_height = x2y(0)
+    assert(kde_height == pytest.approx(1, rel=0.1))
+
+    # hist density = True:
+    h = hist_plot_1d(ax, x, density=True, bins=np.linspace(-5.5, 5.5, 12))
+    bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+    assert(bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1))
+
+    # kde density = True:
+    k = kde_plot_1d(ax, x, density=True)[0]
+    x2y = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
+    kde_height = x2y(0)
+    gauss_norm = 1 / np.sqrt(2 * np.pi * s**2)
+    assert(kde_height == pytest.approx(gauss_norm, rel=0.1))
+    plt.close("all")
 
 
 @pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
