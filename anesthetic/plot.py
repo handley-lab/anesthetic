@@ -283,6 +283,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
+    density = kwargs.pop('density', False)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
@@ -305,7 +306,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     p /= p.max()
     i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[1], p)))
 
-    ans = ax.plot(x[i], p[i], color=color, *args, **kwargs)
+    area = np.trapz(x=x[i], y=p[i]) if density else 1
+    ans = ax.plot(x[i], p[i]/area, color=color, *args, **kwargs)
     ax.set_xlim(xmin, xmax, auto=True)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
