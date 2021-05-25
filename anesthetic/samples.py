@@ -7,6 +7,7 @@ import os
 import numpy as np
 import pandas
 import copy
+import warnings
 from collections.abc import Sequence
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
@@ -738,9 +739,17 @@ class NestedSamples(MCMCSamples):
                 raise RuntimeError("Cannot recompute run without "
                                    "birth contours logL_birth.")
 
-            if (samples.logL <= samples.logL_birth).any():
-                raise RuntimeError("Not a valid nested sampling run. "
-                                   "Require logL > logL_birth.")
+            invalid = samples.logL <= samples.logL_birth
+            n_bad = invalid.sum()
+            if n_bad:
+                warnings.warn("%i out of %i samples have logL <= logL_birth."
+                              "\nThis may just indicate numerical rounding "
+                              "errors at the peak of the likelihood, but "
+                              "further investigation of the chains files is "
+                              "recommended."
+                              "\nDropping the invalid samples." %
+                              (n_bad, len(samples)), RuntimeWarning)
+                samples = samples[~invalid].reset_index()
 
             samples['nlive'] = compute_nlive(samples.logL, samples.logL_birth)
 
