@@ -870,7 +870,8 @@ def test_recompute():
 
     pc.loc[1000, 'logL'] = pc.logL_birth.iloc[1000]-1
     with pytest.warns(RuntimeWarning):
-        pc.recompute()
+        recompute = pc.recompute()
+    assert len(recompute) == len(pc) - 1
 
     mn = NestedSamples(root='./tests/example_data/mn_old')
     with pytest.raises(RuntimeError):
