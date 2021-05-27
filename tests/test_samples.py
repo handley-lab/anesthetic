@@ -888,7 +888,7 @@ def test_copy():
 
 def test_plotting_with_integer_names():
     np.random.seed(3)
-    samples_1 = MCMCSamples(data=np.random.rand(1000,3))
-    samples_2 = MCMCSamples(data=np.random.rand(1000,3))
-    fig, ax = samples_1.plot_2d([0,1,2])
+    samples_1 = MCMCSamples(data=np.random.rand(1000, 3))
+    samples_2 = MCMCSamples(data=np.random.rand(1000, 3))
+    fig, ax = samples_1.plot_2d([0, 1, 2])
     samples_2.plot_2d(ax)
