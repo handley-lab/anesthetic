@@ -189,7 +189,7 @@ def compute_nlive(death, birth):
     deaths = pandas.Series(-1, index=index)
     nlive = pandas.concat([births, deaths]).sort_index()
     nlive = nlive.groupby(nlive.index).sum().cumsum()
-    return nlive.values[:-1]
+    return nlive.to_numpy()[:-1]
 
 
 def compute_insertion_indexes(death, birth):

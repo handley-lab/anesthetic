@@ -681,7 +681,7 @@ def test_compute_insertion():
     nlive = ns.nlive.mode()[0]
     assert_array_less(ns.insertion, nlive)
 
-    u = ns.insertion.values/nlive
+    u = ns.insertion.to_numpy()/nlive
     assert kstest(u[nlive:-nlive], 'uniform').pvalue > 0.05
 
     pvalues = [kstest(u[i:i+nlive], 'uniform').pvalue
@@ -772,18 +772,18 @@ def test_MCMCSamples_importance_sample():
     assert_array_equal(mc0.logL, mc1.logL)
     assert_array_equal(mc0.weights, mc1.weights)
     mc1 = mc0.importance_sample(logL_new=logL_i)
-    assert np.all(mc1.logL.values != mc0.logL.values)
+    assert np.all(mc1.logL.to_numpy() != mc0.logL.to_numpy())
     assert not np.all(mc1.weights == mc0.weights)
 
     # replace logL
     mc2 = mc0.importance_sample(mc0.logL, action='replace')
     assert_array_equal(mc0.logL, mc2.logL)
     assert_array_equal(mc0.weights, mc2.weights)
-    mc2 = mc0.importance_sample(mc0.logL.values+logL_i, action='replace')
-    assert np.all(mc2.logL.values != mc0.logL.values)
+    mc2 = mc0.importance_sample(mc0.logL.to_numpy()+logL_i, action='replace')
+    assert np.all(mc2.logL.to_numpy() != mc0.logL.to_numpy())
     assert not np.all(mc2.weights == mc0.weights)
-    assert_array_equal(mc1.logL.values, mc2.logL.values)
-    assert_array_almost_equal(mc1.logL.values, mc2.logL.values)
+    assert_array_equal(mc1.logL.to_numpy(), mc2.logL.to_numpy())
+    assert_array_almost_equal(mc1.logL.to_numpy(), mc2.logL.to_numpy())
 
     # mask logL
     mask = ((mc0.x0 > -0.3) & (mc0.x2 > 0.2) & (mc0.x4 < 3.5)).to_numpy()

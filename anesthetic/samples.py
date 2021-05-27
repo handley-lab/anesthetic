@@ -667,7 +667,7 @@ class NestedSamples(MCMCSamples):
         logX = t.cumsum()
         logXp = logX.shift(1, fill_value=0)
         logXm = logX.shift(-1, fill_value=-np.inf)
-        dlogX = logsumexp([logXp.values, logXm.values],
+        dlogX = logsumexp([logXp.to_numpy(), logXm.to_numpy()],
                           b=[np.ones_like(logXp), -np.ones_like(logXm)],
                           axis=0) - np.log(2)
 
@@ -749,8 +749,9 @@ class NestedSamples(MCMCSamples):
         return modify_inplace(self, samples, inplace)
 
     def _compute_insertion_indexes(self):
-        self['insertion'] = compute_insertion_indexes(self.logL.values,
-                                                      self.logL_birth.values)
+        logL = self.logL.to_numpy()
+        logL_birth = self.logL_birth.to_numpy()
+        self['insertion'] = compute_insertion_indexes(logL, logL_birth)
 
     _metadata = MCMCSamples._metadata + ['_beta']
 

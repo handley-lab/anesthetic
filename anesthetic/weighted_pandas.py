@@ -129,7 +129,7 @@ class WeightedSeries(_WeightedObject, Series):
 
     def quantile(self, q=0.5):
         """Weighted quantile of the sampled distribution."""
-        return quantile(self.values, q, self.weights)
+        return quantile(self.to_numpy(), q, self.weights)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
@@ -171,7 +171,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted variance of the sampled distribution."""
         if axis == 0:
             null = self.isnull() & skipna
-            mean = self.mean(skipna=skipna).values
+            mean = self.mean(skipna=skipna).to_numpy()
             var = np.average(masked_array((self-mean)**2, null),
                              weights=self.weights, axis=0)
             return Series(var, index=self.columns)
@@ -181,7 +181,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     def cov(self, skipna=True):
         """Weighted covariance of the sampled distribution."""
         null = self.isnull() & skipna
-        mean = self.mean(skipna=skipna).values
+        mean = self.mean(skipna=skipna).to_numpy()
         x = masked_array(self - mean, null)
         cov = np.ma.dot(self.weights * x.T, x) / self.weights.sum().T
         return DataFrame(cov, index=self.columns, columns=self.columns)
@@ -230,8 +230,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted kurtosis of the sampled distribution."""
         if axis == 0:
             null = self.isnull() & skipna
-            mean = self.mean(skipna=skipna).values
-            std = self.std(skipna=skipna).values
+            mean = self.mean(skipna=skipna).to_numpy()
+            std = self.std(skipna=skipna).to_numpy()
             kurt = np.average(masked_array(((self-mean)/std)**4, null),
                               weights=self.weights, axis=0)
             return Series(kurt, index=self.columns)
@@ -242,8 +242,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted skewness of the sampled distribution."""
         if axis == 0:
             null = self.isnull() & skipna
-            mean = self.mean(skipna=skipna).values
-            std = self.std(skipna=skipna).values
+            mean = self.mean(skipna=skipna).to_numpy()
+            std = self.std(skipna=skipna).to_numpy()
             skew = np.average(masked_array(((self-mean)/std)**3, null),
                               weights=self.weights, axis=0)
             return Series(skew, index=self.columns)
@@ -254,7 +254,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted mean absolute deviation of the sampled distribution."""
         if axis == 0:
             null = self.isnull() & skipna
-            mean = self.mean(skipna=skipna).values
+            mean = self.mean(skipna=skipna).to_numpy()
             mad = np.average(masked_array(abs(self-mean), null),
                              weights=self.weights, axis=0)
             return Series(mad, index=self.columns)
@@ -289,7 +289,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
         """
         i = compress_weights(self.weights, self._rand, nsamples)
-        data = np.repeat(self.values, i, axis=0)
+        data = np.repeat(self.to_numpy(), i, axis=0)
         index = self.index.repeat(i)
         df = DataFrame(data=data, index=index, columns=self.columns)
         df.index = df.index.get_level_values('#')
