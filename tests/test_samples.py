@@ -892,3 +892,6 @@ def test_plotting_with_integer_names():
     samples_2 = MCMCSamples(data=np.random.rand(1000, 3))
     fig, ax = samples_1.plot_2d([0, 1, 2])
     samples_2.plot_2d(ax)
+
+    fig, ax = samples_1.plot_1d([0, 1, 2])
+    samples_2.plot_1d(ax)
