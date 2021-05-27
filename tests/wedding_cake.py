@@ -76,7 +76,8 @@ class WeddingCake():
 
             samps = NestedSamples(points, logL=death_likes,
                                   logL_birth=birth_likes)
-            if samps.live_points().weights.sum()/samps.weights.sum() < 0.001:
+
+            if samps.iloc[-nlive:].weights.sum()/samps.weights.sum() < 0.001:
                 break
 
         death_likes = np.concatenate([death_likes, live_likes])

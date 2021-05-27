@@ -631,7 +631,8 @@ class NestedSamples(MCMCSamples):
                 logL = float(self.logL[logL])
             except KeyError:
                 pass
-        return self[(self.logL > logL) & (self.logL_birth <= logL)]
+        i = (self.logL >= logL) & (self.logL_birth < logL)
+        return MCMCSamples(self[i], weights=np.ones(i.sum()))
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
