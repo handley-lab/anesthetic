@@ -261,7 +261,7 @@ class MCMCSamples(WeightedDataFrame):
         if not isinstance(axes, pandas.Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
         else:
-            fig = axes.values[~axes.isna()][0].figure
+            fig = axes.bfill().to_numpy().flatten()[0].figure
 
         for x, ax in axes.iteritems():
             self.plot(ax, x, *args, **kwargs)
