@@ -621,8 +621,8 @@ class NestedSamples(MCMCSamples):
         live_points: NestedSamples
             Live points at either:
                 - contour logL (if input is float)
-                - ith contour (if input is integer)
-                - last generation contour if logL not provided
+                - ith iteration (if input is integer)
+                - last set of live points if no argument provided
         """
         if logL is None:
             logL = self.logL_birth.max()
