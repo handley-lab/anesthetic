@@ -330,7 +330,7 @@ class MCMCSamples(WeightedDataFrame):
                                      lower=('lower' in types),
                                      diagonal=('diagonal' in types))
         else:
-            fig = axes.values[~axes.isna()][0].figure
+            fig = axes.bfill().to_numpy().flatten()[0].figure
 
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
