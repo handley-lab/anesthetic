@@ -871,8 +871,9 @@ def test_recompute():
     assert recompute is not pc
 
     pc.loc[1000, 'logL'] = pc.logL_birth.iloc[1000]-1
-    with pytest.raises(RuntimeError):
-        pc.recompute()
+    with pytest.warns(RuntimeWarning):
+        recompute = pc.recompute()
+    assert len(recompute) == len(pc) - 1
 
     mn = NestedSamples(root='./tests/example_data/mn_old')
     with pytest.raises(RuntimeError):
