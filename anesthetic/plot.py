@@ -120,10 +120,11 @@ def make_2d_axes(params, **kwargs):
             Figure to plot on.
             Default: matplotlib.pyplot.figure()
 
-        inner_ticks: bool
-            If False, plot ticks only on the very left and very bottom.
-            If True, plot ticks also in inner subplots.
-            Default: False
+        ticks: str
+            If 'outer', plot ticks only on the very left and very bottom.
+            If 'inner', plot ticks also in inner subplots.
+            If None, plot no ticks at all.
+            Default: 'outer'
 
         subplot_spec: matplotlib.gridspec.GridSpec, optional
             gridspec to plot array as part of a subfigure.
@@ -143,7 +144,7 @@ def make_2d_axes(params, **kwargs):
     else:
         xparams = yparams = params
 
-    inner_ticks = kwargs.pop('inner_ticks', False)
+    ticks = kwargs.pop('ticks', 'outer')
     upper = kwargs.pop('upper', True)
     lower = kwargs.pop('lower', True)
     diagonal = kwargs.pop('diagonal', True)
@@ -227,7 +228,7 @@ def make_2d_axes(params, **kwargs):
     # left and right ticks and labels
     for y, ax in axes.iterrows():
         ax_ = ax.dropna()
-        if len(ax_) and inner_ticks:
+        if len(ax_) and ticks == 'inner':
             for i, a in enumerate(ax_):
                 if i == 0:  # first column
                     if a.position == 'diagonal' and len(ax_) == 1:
@@ -241,15 +242,23 @@ def make_2d_axes(params, **kwargs):
                 else:  # not diagonal and not first column
                     a.tick_params('y', direction='inout',
                                   left=True, labelleft=False)
-        elif len(ax_):  # no inner ticks
+        elif len(ax_) and ticks == 'outer':  # no inner ticks
             for a in ax_[1:]:
                 a.tick_params('y', left=False, labelleft=False)
+        elif len(ax_) and ticks is None:  # no ticks at all
+            for a in ax_:
+                a.tick_params('y', left=False, right=False,
+                              labelleft=False, labelright=False)
+        else:
+            raise NotImplementedError(
+                "ticks=%s was requested, but ticks can only be one of "
+                "['outer', 'inner', None]." % ticks)
 
     # bottom and top ticks and labels
     for x, ax in axes.iteritems():
         ax_ = ax.dropna()
         if len(ax_):
-            if inner_ticks:
+            if ticks == 'inner':
                 for i, a in enumerate(ax_):
                     if i == len(ax_) - 1:  # bottom row
                         a.tick_params('x', bottom=True, labelbottom=True)
@@ -259,9 +268,17 @@ def make_2d_axes(params, **kwargs):
                         if a.position == 'diagonal':
                             a.twin.tick_params('x', direction='inout',
                                                bottom=True, labelbottom=False)
-            else:  # no inner ticks
+            elif ticks == 'outer':  # no inner ticks
                 for a in ax_[:-1]:
                     a.tick_params('x', bottom=False, labelbottom=False)
+            elif ticks is None:  # no ticks at all
+                for a in ax_:
+                    a.tick_params('x', bottom=False, top=False,
+                                  labelbottom=False, labeltop=False)
+            else:
+                raise NotImplementedError(
+                    "ticks=%s was requested, but ticks can only be one of "
+                    "['outer', 'inner', None]." % ticks)
 
     return fig, axes
 
