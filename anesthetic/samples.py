@@ -619,7 +619,7 @@ class NestedSamples(MCMCSamples):
 
         Returns
         -------
-        live_points: NestedSamples
+        live_points: MCMCSamples
             Live points at either:
                 - contour logL (if input is float)
                 - ith iteration (if input is integer)
