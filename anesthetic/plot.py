@@ -250,7 +250,7 @@ def make_2d_axes(params, **kwargs):
                 a.tick_params('y', left=False, right=False,
                               labelleft=False, labelright=False)
         else:
-            raise NotImplementedError(
+            raise ValueError(
                 "ticks=%s was requested, but ticks can only be one of "
                 "['outer', 'inner', None]." % ticks)
 
