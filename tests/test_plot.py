@@ -179,8 +179,7 @@ def test_make_2d_axes_ticks(upper, ticks):
     yticks = [0.2, 0.5, 0.8]
     paramnames = ["x0", "x1", "x2", "x3"]
     for k in paramnames:
-        fig, axes = make_2d_axes(paramnames, upper=upper,
-                                 ticks=ticks)
+        fig, axes = make_2d_axes(paramnames, upper=upper, ticks=ticks)
         axes[k][k].set_xticks(xticks)
         axes[k][k].set_yticks(yticks)
         for i, row in axes.iterrows():
@@ -196,6 +195,8 @@ def test_make_2d_axes_ticks(upper, ticks):
                 else:
                     assert not np.array_equal(xticks, ax.get_xticks())
         plt.close("all")
+    with pytest.raises(ValueError):
+        make_2d_axes(paramnames, upper=upper, ticks='spam')
 
 
 def test_2d_axes_limits():

@@ -276,7 +276,7 @@ def make_2d_axes(params, **kwargs):
                     a.tick_params('x', bottom=False, top=False,
                                   labelbottom=False, labeltop=False)
             else:
-                raise NotImplementedError(
+                raise ValueError(
                     "ticks=%s was requested, but ticks can only be one of "
                     "['outer', 'inner', None]." % ticks)
 
