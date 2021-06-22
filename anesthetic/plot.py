@@ -36,6 +36,52 @@ from anesthetic.utils import (sample_compression_1d, quantile,
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
+class AxesSeries(pandas.Series):
+    @property
+    def _constructor(self):
+        return AxesSeries
+
+    @property
+    def _constructor_expanddim(self):
+        return AxesDataFrame
+
+
+class AxesDataFrame(pandas.DataFrame):
+    @property
+    def _constructor(self):
+        return AxesDataFrame
+
+    @property
+    def _constructor_sliced(self):
+        return AxesSeries
+
+    def axlines(self, params, values, **kwargs):
+        """
+        Add vertical and horizontal lines across all axes for the given
+        parameter, value pairs.
+
+        Parameters
+        ----------
+        params : str, list(str)
+            parameter label(s).
+            Should match the shape of `values`.
+        values : float, list(float)
+            value(s) at which vertical and horizontal lines should be added.
+            Should match the shape of `params`.
+        kwargs
+            Anything that can be passed to `plt.axvline` or `plt.axhline`.
+        """
+        params = np.atleast_1d(params)
+        values = np.atleast_1d(values)
+        for i, param in enumerate(params):
+            if param in self.columns:
+                for ax in self.loc[:, param]:
+                    ax.axvline(values[i], **kwargs)
+            if param in self.index:
+                for ax in self.loc[param, self.columns != param]:
+                    ax.axhline(values[i], **kwargs)
+
+
 def make_1d_axes(params, **kwargs):
     """Create a set of axes for plotting 1D marginalised posteriors.
 
@@ -68,7 +114,7 @@ def make_1d_axes(params, **kwargs):
         Pandas array of axes objects
 
     """
-    axes = pandas.Series(index=np.atleast_1d(params), dtype=object)
+    axes = AxesSeries(index=np.atleast_1d(params), dtype=object)
     axes[:] = None
     tex = kwargs.pop('tex', {})
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
@@ -142,9 +188,9 @@ def make_2d_axes(params, **kwargs):
     lower = kwargs.pop('lower', True)
     diagonal = kwargs.pop('diagonal', True)
 
-    axes = pandas.DataFrame(index=np.atleast_1d(yparams),
-                            columns=np.atleast_1d(xparams),
-                            dtype=object)
+    axes = AxesDataFrame(index=np.atleast_1d(yparams),
+                         columns=np.atleast_1d(xparams),
+                         dtype=object)
     axes[:][:] = None
     all_params = list(axes.columns) + list(axes.index)
 
