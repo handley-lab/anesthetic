@@ -200,6 +200,7 @@ def test_2d_axlines(axesparams, params, values):
     kwargs = dict(c='k', ls='--', lw=0.5)
     fig, axes = make_2d_axes(axesparams)
     axes.axlines(params, values, **kwargs)
+    plt.close("all")
 
 
 @pytest.mark.parametrize('params, values', [('A', [0, 0]),
@@ -211,6 +212,7 @@ def test_2d_axlines_error(params, values):
         axesparams = ['A', 'B', 'C', 'D']
         fig, axes = make_2d_axes(axesparams)
         axes.axlines(params, values)
+        plt.close("all")
 
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
