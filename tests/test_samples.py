@@ -16,6 +16,7 @@ from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
 try:
+    import getdist  # noqa: F401
     import montepython  # noqa: F401
 except ImportError:
     pass
