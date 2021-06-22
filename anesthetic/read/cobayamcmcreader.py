@@ -1,10 +1,12 @@
 """Tools for reading from getdist chains files."""
+from warnings import warn
 from anesthetic.read.getdistreader import GetDistReader
 try:
     from getdist import loadMCSamples
-except ImportError as err:
-    raise ImportError("Need GetDist in order to read Cobaya MCMC output.\n"
-                      "%s" % err)
+except ImportError:
+    loadMCSamples = lambda file_root: warn("Please first install GetDist. "
+                                           "GetDist is needed in order to "
+                                           "read Cobaya MCMC output.")
 
 
 class CobayaMCMCReader(GetDistReader):
