@@ -37,6 +37,8 @@ from anesthetic.boundary import cut_and_normalise_gaussian
 
 
 class AxesSeries(pandas.Series):
+    """Anesthetic's axes version of `pandas.Series`."""
+
     @property
     def _constructor(self):
         return AxesSeries
@@ -47,6 +49,8 @@ class AxesSeries(pandas.Series):
 
 
 class AxesDataFrame(pandas.DataFrame):
+    """Anesthetic's axes version of `pandas.DataFrame`."""
+
     @property
     def _constructor(self):
         return AxesDataFrame
@@ -56,20 +60,19 @@ class AxesDataFrame(pandas.DataFrame):
         return AxesSeries
 
     def axlines(self, params, values, **kwargs):
-        """
-        Add vertical and horizontal lines across all axes for the given
-        parameter, value pairs.
+        """Add vertical and horizontal lines across all axes.
 
         Parameters
         ----------
-        params : str, list(str)
-            parameter label(s).
-            Should match the shape of `values`.
-        values : float, list(float)
-            value(s) at which vertical and horizontal lines should be added.
-            Should match the shape of `params`.
-        kwargs
-            Anything that can be passed to `plt.axvline` or `plt.axhline`.
+            params : str, list(str)
+                parameter label(s).
+                Should match the shape of `values`.
+            values : float, list(float)
+                value(s) at which vertical and horizontal lines should be added.
+                Should match the shape of `params`.
+            kwargs
+                Any kwarg that can be passed to `plt.axvline` or `plt.axhline`.
+
         """
         params = np.atleast_1d(params)
         values = np.atleast_1d(values)
