@@ -68,7 +68,7 @@ class AxesDataFrame(pandas.DataFrame):
                 parameter label(s).
                 Should match the shape of `values`.
             values : float, list(float)
-                value(s) at which vertical and horizontal lines should be added.
+                value(s) at which vertical and horizontal lines shall be added.
                 Should match the shape of `params`.
             kwargs
                 Any kwarg that can be passed to `plt.axvline` or `plt.axhline`.
