@@ -3,10 +3,8 @@ from warnings import warn
 from anesthetic.read.getdistreader import GetDistReader
 try:
     from getdist import loadMCSamples
-except ImportError:
-    loadMCSamples = lambda file_root: warn("Please first install GetDist. "
-                                           "GetDist is needed in order to "
-                                           "read Cobaya MCMC output.")
+except ImportError as imperr:
+    pass
 
 
 class CobayaMCMCReader(GetDistReader):
