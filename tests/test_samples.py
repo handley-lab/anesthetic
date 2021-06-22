@@ -115,6 +115,17 @@ def test_read_getdist_discard_burn_in():
     mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
 
 
+@pytest.mark.xfail('getdist' not in sys.modules,
+                   raises=ImportError,
+                   reason="requires getdist package")
+def test_read_cobayamcmc():
+    np.random.seed(3)
+    mcmc = MCMCSamples(root='./tests/example_data/cb')
+    mcmc.plot_2d(['x0', 'x1'])
+    mcmc.plot_1d(['x0', 'x1'])
+    plt.close("all")
+
+
 @pytest.mark.xfail('montepython' not in sys.modules,
                    raises=ImportError,
                    reason="requires montepython package")
