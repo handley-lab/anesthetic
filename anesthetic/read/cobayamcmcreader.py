@@ -1,9 +1,8 @@
 """Tools for reading from getdist chains files."""
-from warnings import warn
 from anesthetic.read.getdistreader import GetDistReader
 try:
     from getdist import loadMCSamples
-except ImportError as imperr:
+except ImportError:
     pass
 
 
