@@ -16,7 +16,6 @@ from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
 try:
-    import getdist  # noqa: F401
     import montepython  # noqa: F401
 except ImportError:
     pass
@@ -117,7 +116,7 @@ def test_read_getdist_discard_burn_in():
 
 
 @pytest.mark.xfail('getdist' not in sys.modules,
-                   raises=ImportError,
+                   raises=NameError,
                    reason="requires getdist package")
 def test_read_cobayamcmc():
     np.random.seed(3)
