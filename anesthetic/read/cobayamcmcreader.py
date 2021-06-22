@@ -6,6 +6,7 @@ except ImportError as err:
     raise ImportError("Need GetDist in order to read Cobaya MCMC output.\n"
                       "%s" % err)
 
+
 class CobayaMCMCReader(GetDistReader):
     """Read Cobaya yaml files."""
 
