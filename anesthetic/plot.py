@@ -66,16 +66,20 @@ class AxesDataFrame(pandas.DataFrame):
         ----------
             params : str, list(str)
                 parameter label(s).
-                Should match the shape of `values`.
+                Should match the size of `values`.
             values : float, list(float)
                 value(s) at which vertical and horizontal lines shall be added.
-                Should match the shape of `params`.
+                Should match the size of `params`.
             kwargs
                 Any kwarg that can be passed to `plt.axvline` or `plt.axhline`.
 
         """
-        params = np.atleast_1d(params)
-        values = np.atleast_1d(values)
+        params = np.ravel(params)
+        values = np.ravel(values)
+        if params.size != values.size:
+            raise ValueError("The sizes of `params` and `values` must match "
+                             "exactly, but params.size=%s and values.size=%s."
+                             % (params.size, values.size))
         for i, param in enumerate(params):
             if param in self.columns:
                 for ax in self.loc[:, param]:
