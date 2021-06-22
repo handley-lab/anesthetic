@@ -26,10 +26,18 @@ class CobayaMCMCReader(GetDistReader):
                 header = f.readline()[1:]
                 paramnames = header.split()[2:]
                 s = loadMCSamples(file_root=self.root)
-                tex = {i.name: '$' + i.label + '$' for i in s.paramNames.names}
+                tex = {p.name: '$' + p.label + '$' for p in s.paramNames.names}
                 return paramnames, tex
         except IOError:
             return super().paramnames()
+
+    def limits(self):
+        """Infer param limits from <root>.yaml in cobaya format."""
+        s = loadMCSamples(file_root=self.root)
+        return {p.name: (s.ranges.getLower(p.name), s.ranges.getUpper(p.name))
+                for p in s.paramNames.names
+                if s.ranges.getLower(p.name) is not None
+                or s.ranges.getUpper(p.name) is not None}
 
     @property
     def yaml_file(self):
