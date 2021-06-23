@@ -196,10 +196,13 @@ def test_2d_axes_limits():
 @pytest.mark.parametrize('params, values', [('A', 0),
                                             (['A', 'C', 'E'], [0, 0, 0]),
                                             (['A', 'C', 'C'], [0, 0, 0.5])])
-def test_2d_axlines(axesparams, params, values):
-    kwargs = dict(c='k', ls='--', lw=0.5)
+def test_2d_axlines_axspans(axesparams, params, values):
+    values = np.array(values)
+    line_kwargs = dict(c='k', ls='--', lw=0.5)
+    span_kwargs = dict(c='k', alpha=0.5)
     fig, axes = make_2d_axes(axesparams)
-    axes.axlines(params, values, **kwargs)
+    axes.axlines(params, values, **line_kwargs)
+    axes.axspans(params, values-0.1, values+0.1, **span_kwargs)
     plt.close("all")
 
 
@@ -207,11 +210,13 @@ def test_2d_axlines(axesparams, params, values):
                                             (['A', 'C'], 0),
                                             (['A', 'C'], [0, 0, 0.5]),
                                             (['A', 'C', 'C'], [0, 0])])
-def test_2d_axlines_error(params, values):
+def test_2d_axlines_axspans_error(params, values):
+    values = np.array(values)
+    axesparams = ['A', 'B', 'C', 'D']
     with pytest.raises(ValueError):
-        axesparams = ['A', 'B', 'C', 'D']
         fig, axes = make_2d_axes(axesparams)
         axes.axlines(params, values)
+        axes.axspans(params, values-0.1, values+0.1)
         plt.close("all")
 
 
