@@ -64,10 +64,10 @@ class AxesDataFrame(pandas.DataFrame):
 
         Parameters
         ----------
-            params : str, list(str)
+            params : str or list(str)
                 parameter label(s).
                 Should match the size of `values`.
-            values : float, list(float)
+            values : float or list(float)
                 value(s) at which vertical and horizontal lines shall be added.
                 Should match the size of `params`.
             kwargs
@@ -87,6 +87,41 @@ class AxesDataFrame(pandas.DataFrame):
             if param in self.index:
                 for ax in self.loc[param, self.columns != param]:
                     ax.axhline(values[i], **kwargs)
+
+    def axspans(self, params, vmins, vmaxs, **kwargs):
+        """Add vertical and horizontal spans across all axes.
+
+        Parameters
+        ----------
+            params : str or list(str)
+                parameter label(s).
+                Should match the size of `vmins` and `vmaxs`.
+            vmins : float or list(float)
+                Minimum value of the vertical and horizontal axes spans.
+                Should match the size of `params`.
+            vmaxs : float or list(float)
+                Maximum value of the vertical and horizontal axes spans.
+                Should match the size of `params`.
+            kwargs
+                Any kwarg that can be passed to `plt.axvspan` or `plt.axhspan`.
+
+        """
+        kwargs = normalize_kwargs(kwargs, dict(color=['c']))
+        params = np.ravel(params)
+        vmins = np.ravel(vmins)
+        vmaxs = np.ravel(vmaxs)
+        if params.size != vmins.size:
+            raise ValueError("The sizes of `params`, `vmins` and `vmaxs` must "
+                             "match exactly, but params.size=%s, "
+                             "vmins.size=%s and vmaxs.size=%s."
+                             % (params.size, vmins.size, vmaxs.size))
+        for i, param in enumerate(params):
+            if param in self.columns:
+                for ax in self.loc[:, param]:
+                    ax.axvspan(vmins[i], vmaxs[i], **kwargs)
+            if param in self.index:
+                for ax in self.loc[param, self.columns != param]:
+                    ax.axhspan(vmins[i], vmaxs[i], **kwargs)
 
 
 def make_1d_axes(params, **kwargs):
