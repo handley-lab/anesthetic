@@ -213,11 +213,12 @@ def test_2d_axlines_axspans(axesparams, params, values):
 def test_2d_axlines_axspans_error(params, values):
     values = np.array(values)
     axesparams = ['A', 'B', 'C', 'D']
+    fig, axes = make_2d_axes(axesparams)
     with pytest.raises(ValueError):
-        fig, axes = make_2d_axes(axesparams)
         axes.axlines(params, values)
+    with pytest.raises(ValueError):
         axes.axspans(params, values-0.1, values+0.1)
-        plt.close("all")
+    plt.close("all")
 
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
