@@ -632,6 +632,15 @@ def test_limit_assignment():
     assert ns.limits['logL'][1] == 5.748335384373301
     assert ns.limits['nlive'][0] == 1
     assert ns.limits['nlive'][1] == 125
+    # limits for derived parameters:
+    ns['x5'] = ns.x0 + ns.x1
+    assert 'x5' in ns.columns and 'x5' not in ns.limits
+    ns.plot_1d(['x5'])
+    assert 'x5' in ns.columns and 'x5' in ns.limits
+    ns['x6'] = ns.x2 + ns.x3
+    assert 'x6' in ns.columns and 'x6' not in ns.limits
+    ns.plot_2d(['x5', 'x6'])
+    assert 'x6' in ns.columns and 'x6' in ns.limits
 
 
 def test_xmin_xmax_1d():
@@ -869,8 +878,9 @@ def test_recompute():
     assert recompute is not pc
 
     pc.loc[1000, 'logL'] = pc.logL_birth.iloc[1000]-1
-    with pytest.raises(RuntimeError):
-        pc.recompute()
+    with pytest.warns(RuntimeWarning):
+        recompute = pc.recompute()
+    assert len(recompute) == len(pc) - 1
 
     mn = NestedSamples(root='./tests/example_data/mn_old')
     with pytest.raises(RuntimeError):
