@@ -159,6 +159,7 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
+        self._set_automatic_limits()
         plot_type = kwargs.pop('plot_type', 'kde')
         do_1d_plot = paramname_y is None or paramname_x == paramname_y
         kwargs['label'] = kwargs.get('label', self.label)
