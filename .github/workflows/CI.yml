@@ -83,7 +83,7 @@ jobs:
       run: |
         pwd
         ls
-        pytest -m pytest --cov=anesthetic -n auto tests
+        python -m pytest --cov=anesthetic -n auto tests
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
