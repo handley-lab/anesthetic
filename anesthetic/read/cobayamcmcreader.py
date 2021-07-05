@@ -1,12 +1,14 @@
 """Tools for reading from getdist chains files."""
-from anesthetic.read.getdistreader import GetDistReader
+import glob
+import numpy as np
+from anesthetic.read.chainreader import ChainReader
 try:
     from getdist import loadMCSamples
 except ImportError:
     pass
 
 
-class CobayaMCMCReader(GetDistReader):
+class CobayaMCMCReader(ChainReader):
     """Read Cobaya yaml files."""
 
     def paramnames(self):
@@ -38,7 +40,35 @@ class CobayaMCMCReader(GetDistReader):
                 if s.ranges.getLower(p.name) is not None
                 or s.ranges.getUpper(p.name) is not None}
 
+    def samples(self, burn_in=False):
+        """Read <root>_1.txt in getdist format."""
+        data = np.array([])
+        for chains_file in self.chains_files:
+            data_i = np.loadtxt(chains_file)
+            if burn_in:
+                if 0 < burn_in < 1:
+                    index = int(len(data_i) * burn_in)
+                elif type(burn_in) is int and 1 < burn_in < len(data_i):
+                    index = burn_in
+                else:
+                    raise ValueError("`burn_in` is %s, but should be an "
+                                     "integer greater 1 and smaller len(data) "
+                                     "or a float between 0 and 1." % burn_in)
+                data_i = data_i[index:]
+            data = np.concatenate((data, data_i)) if data.size else data_i
+        weights, logP, samples = np.split(data, [1, 2], axis=1)
+        return weights.flatten(), logP.flatten(), samples
+
+
     @property
     def yaml_file(self):
         """Cobaya parameter file."""
         return self.root + '.updated.yaml'
+
+    @property
+    def chains_files(self):
+        """File containing parameter names."""
+        files = glob.glob(self.root + '.[0-99].txt')
+        if not files:
+            files = [self.root + '.txt']
+        return files
