@@ -59,7 +59,6 @@ class CobayaMCMCReader(ChainReader):
         weights, logP, samples = np.split(data, [1, 2], axis=1)
         return weights.flatten(), logP.flatten(), samples
 
-
     @property
     def yaml_file(self):
         """Cobaya parameter file."""
