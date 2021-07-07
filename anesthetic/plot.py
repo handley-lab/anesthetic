@@ -352,7 +352,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     levels: list
         values at which to draw iso-probability lines.
-        optional, default [0.68, 0.95]
+        optional, default [0.95, 0.68]
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -529,7 +529,8 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     levels: list
         amount of mass within each iso-probability contour.
-        optional, default [0.68, 0.95]
+        Has to be ordered from outermost to innermost contour.
+        optional, default [0.95, 0.68]
 
     xmin, xmax, ymin, ymax: float
         lower/upper prior bounds in x/y coordinates
