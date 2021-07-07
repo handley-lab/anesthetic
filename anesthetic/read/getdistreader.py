@@ -73,9 +73,8 @@ class GetDistReader(ChainReader):
                                      "or a float between 0 and 1." % burn_in)
                 data_i = data_i[index:]
             data = np.concatenate((data, data_i)) if data.size else data_i
-        weights, chi2, samples = np.split(data, [1, 2], axis=1)
-        logL = chi2/-2.
-        return weights.flatten(), logL.flatten(), samples
+        weights, minuslogL, samples = np.split(data, [1, 2], axis=1)
+        return weights.flatten(), -minuslogL.flatten(), samples
 
     @property
     def paramnames_file(self):
