@@ -225,9 +225,9 @@ def unique(a):
     return b
 
 
-def iso_probability_contours(pdf, contours=[0.68, 0.95]):
+def iso_probability_contours(pdf, contours=[0.95, 0.68]):
     """Compute the iso-probability contour values."""
-    contours = [1-p for p in reversed(contours)]
+    contours = [1-p for p in contours]
     p = np.sort(np.array(pdf).flatten())
     m = np.cumsum(p)
     m /= m[-1]
@@ -243,12 +243,12 @@ def iso_probability_contours(pdf, contours=[0.68, 0.95]):
     return c
 
 
-def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
+def iso_probability_contours_from_samples(pdf, contours=[0.95, 0.68],
                                           weights=None):
     """Compute the iso-probability contour values."""
     if weights is None:
         weights = np.ones_like(pdf)
-    contours = [1-p for p in reversed(contours)]
+    contours = [1-p for p in contours]
     i = np.argsort(pdf)
     m = np.cumsum(weights[i])
     m /= m[-1]

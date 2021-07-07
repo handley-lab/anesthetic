@@ -253,7 +253,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     levels: list
         values at which to draw iso-probability lines.
-        optional, default [0.68, 0.95]
+        optional, default [0.95, 0.68]
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -279,7 +279,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     if data.max()-data.min() <= 0:
         return
 
-    levels = kwargs.pop('levels', [0.68, 0.95])
+    levels = kwargs.pop('levels', [0.95, 0.68])
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
@@ -378,7 +378,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
 
-    levels = kwargs.pop('levels', [0.68, 0.95])
+    levels = kwargs.pop('levels', [0.95, 0.68])
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
@@ -552,7 +552,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
-    levels = kwargs.pop('levels', [0.68, 0.95])
+    levels = kwargs.pop('levels', [0.95, 0.68])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
     edgecolor = kwargs.pop('edgecolor', color)
