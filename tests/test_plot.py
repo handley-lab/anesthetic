@@ -265,7 +265,7 @@ def test_kde_plot_1d(plot_1d):
 
         # Check iso-probability code
         line, fill = plot_1d(ax, data, facecolor=True)
-        plot_1d(ax, data, facecolor=True, levels=[0.2, 0.6, 0.8])
+        plot_1d(ax, data, facecolor=True, levels=[0.8, 0.6, 0.2])
         line, fill = plot_1d(ax, data, fc='blue', color='k', ec='r')
         assert(np.all(fill[0].get_edgecolor()[0] == to_rgba('r')))
         assert (to_rgba(line[0].get_color()) == to_rgba('r'))
