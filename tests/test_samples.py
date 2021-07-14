@@ -607,9 +607,9 @@ def test_live_points():
     np.random.seed(4)
     pc = NestedSamples(root="./tests/example_data/pc")
 
-    for i, logL in pc.logL.iloc[:-1].iteritems():
+    for i, logL in pc.logL.iloc[::49].iteritems():
         live_points = pc.live_points(logL)
-        assert len(live_points) == int(pc.nlive[i[0]+1])
+        assert len(live_points) == int(pc.nlive[i[0]])
 
         live_points_from_int = pc.live_points(i[0])
         assert_array_equal(live_points_from_int, live_points)
@@ -617,9 +617,11 @@ def test_live_points():
         live_points_from_index = pc.live_points(i)
         assert_array_equal(live_points_from_index, live_points)
 
+    assert pc.live_points(0).index[0][0] == 0
+
     last_live_points = pc.live_points()
     logL = pc.logL_birth.max()
-    assert (last_live_points.logL > logL).all()
+    assert (last_live_points.logL >= logL).all()
     assert len(last_live_points) == pc.nlive.mode()[0]
 
 
