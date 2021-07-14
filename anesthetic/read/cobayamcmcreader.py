@@ -68,6 +68,4 @@ class CobayaMCMCReader(ChainReader):
     def chains_files(self):
         """File containing parameter names."""
         files = glob.glob(self.root + '.[0-99].txt')
-        if not files:
-            files = [self.root + '.txt']
         return files
