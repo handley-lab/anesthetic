@@ -368,15 +368,6 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         return
 
     levels = kwargs.pop('levels', [0.95, 0.68])
-    if not np.all(levels[:-1] > levels[1:]):
-        raise ValueError(
-            "The kwarg `levels` has to be ordered from outermost to innermost "
-            "contour, i.e. in strictly descending order when referring to the "
-            "enclosed probability mass, e.g. like the default [0.95, 0.68]. "
-            "This breaking change in behaviour was introduced in version "
-            "2.0.0-beta.10, in order to better match the ordering of other "
-            "matplotlib kwargs."
-        )
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
@@ -476,15 +467,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
              facecolor=['fc'], edgecolor=['ec']))
 
     levels = kwargs.pop('levels', [0.95, 0.68])
-    if not np.all(levels[:-1] > levels[1:]):
-        raise ValueError(
-            "The kwarg `levels` has to be ordered from outermost to innermost "
-            "contour, i.e. in strictly descending order when referring to the "
-            "enclosed probability mass, e.g. like the default [0.95, 0.68]. "
-            "This breaking change in behaviour was introduced in version "
-            "2.0.0-beta.10, in order to better match the ordering of other "
-            "matplotlib kwargs."
-        )
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
@@ -660,15 +642,6 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
-    if not np.all(levels[:-1] > levels[1:]):
-        raise ValueError(
-            "The kwarg `levels` has to be ordered from outermost to innermost "
-            "contour, i.e. in strictly descending order when referring to the "
-            "enclosed probability mass, e.g. like the default [0.95, 0.68]. "
-            "This breaking change in behaviour was introduced in version "
-            "2.0.0-beta.10, in order to better match the ordering of other "
-            "matplotlib kwargs."
-        )
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
     edgecolor = kwargs.pop('edgecolor', color)
@@ -775,15 +748,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
-    if not np.all(levels[:-1] > levels[1:]):
-        raise ValueError(
-            "The kwarg `levels` has to be ordered from outermost to innermost "
-            "contour, i.e. in strictly descending order when referring to the "
-            "enclosed probability mass, e.g. like the default [0.95, 0.68]. "
-            "This breaking change in behaviour was introduced in version "
-            "2.0.0-beta.10, in order to better match the ordering of other "
-            "matplotlib kwargs."
-        )
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
     edgecolor = kwargs.pop('edgecolor', color)
