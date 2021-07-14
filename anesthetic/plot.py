@@ -742,6 +742,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     weights: np.array, optional
         Sample weights.
 
+    levels: list, optional
+        amount of mass within each iso-probability contour.
+        Has to be ordered from outermost to innermost contour.
+        optional, default [0.95, 0.68]
+
     ncompress: int, optional
         Degree of compression.
         optional, Default 1000
@@ -769,6 +774,16 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ncompress = kwargs.pop('ncompress', 1000)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
+    levels = kwargs.pop('levels', [0.95, 0.68])
+    if not np.all(levels[:-1] > levels[1:]):
+        raise ValueError(
+            "The kwarg `levels` has to be ordered from outermost to innermost "
+            "contour, i.e. in strictly descending order when referring to the "
+            "enclosed probability mass, e.g. like the default [0.95, 0.68]. "
+            "This breaking change in behaviour was introduced in version "
+            "2.0.0-beta.10, in order to better match the ordering of other "
+            "matplotlib kwargs."
+        )
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
     edgecolor = kwargs.pop('edgecolor', color)
@@ -800,12 +815,13 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     sigmay = np.sqrt(kde.covariance[1, 1])
     p = cut_and_normalise_gaussian(tri.y, p, sigmay, ymin, ymax)
 
-    contours = iso_probability_contours_from_samples(p, weights=w)
+    levels = iso_probability_contours_from_samples(p, contours=levels,
+                                                   weights=w)
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
         cmap = kwargs.pop('cmap', basic_cmap(facecolor))
-        contf = ax.tricontourf(tri, p, contours, cmap=cmap, zorder=zorder,
+        contf = ax.tricontourf(tri, p, levels=levels, cmap=cmap, zorder=zorder,
                                vmin=0, vmax=p.max(), *args, **kwargs)
         for c in contf.collections:
             c.set_cmap(cmap)
@@ -824,8 +840,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         ]
         edgecolor = edgecolor if cmap is None else None
 
-    vmin, vmax = match_contour_to_contourf(contours, vmin=0, vmax=p.max())
-    cont = ax.tricontour(tri, p, contours, zorder=zorder,
+    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=p.max())
+    cont = ax.tricontour(tri, p, levels=levels, zorder=zorder,
                          vmin=vmin, vmax=vmax, linewidths=linewidths,
                          colors=edgecolor, cmap=cmap, *args, **kwargs)
 
