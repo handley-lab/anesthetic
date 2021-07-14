@@ -620,11 +620,11 @@ class NestedSamples(MCMCSamples):
 
         Returns
         -------
-        live_points: NestedSamples
+        live_points: MCMCSamples
             Live points at either:
                 - contour logL (if input is float)
-                - ith contour (if input is integer)
-                - last generation contour if logL not provided
+                - ith iteration (if input is integer)
+                - last set of live points if no argument provided
         """
         if logL is None:
             logL = self.logL_birth.max()
@@ -633,7 +633,8 @@ class NestedSamples(MCMCSamples):
                 logL = float(self.logL[logL])
             except KeyError:
                 pass
-        return self[(self.logL > logL) & (self.logL_birth <= logL)]
+        i = (self.logL >= logL) & (self.logL_birth < logL)
+        return MCMCSamples(self[i], weights=np.ones(i.sum()))
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
