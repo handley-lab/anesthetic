@@ -82,11 +82,6 @@ class GetDistReader(ChainReader):
         return self.root + '.paramnames'
 
     @property
-    def yaml_file(self):
-        """Cobaya parameter file."""
-        return self.root + '.updated.yaml'
-
-    @property
     def ranges_file(self):
         """File containing parameter names."""
         return self.root + '.ranges'
@@ -99,5 +94,4 @@ class GetDistReader(ChainReader):
             files = glob.glob(self.root + '.[0-9].txt')
         if not files:
             files = [self.root + '.txt']
-
         return files

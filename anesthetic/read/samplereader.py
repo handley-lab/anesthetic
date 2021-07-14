@@ -1,6 +1,7 @@
 """Generic sampling reading tools."""
 import os
 from anesthetic.read.getdistreader import GetDistReader
+from anesthetic.read.cobayamcmcreader import CobayaMCMCReader
 from anesthetic.read.montepythonreader import MontePythonReader
 from anesthetic.read.polychordreader import PolyChordReader
 from anesthetic.read.multinestreader import MultiNestReader
@@ -17,10 +18,16 @@ def SampleReader(root):
         return pc
 
     gd = GetDistReader(root)
-    if ((os.path.isfile(gd.paramnames_file) or os.path.isfile(gd.yaml_file))
+    if (os.path.isfile(gd.paramnames_file)
             and os.path.isfile(gd.chains_files[0])
             and os.path.isfile(gd.chains_files[-1])):
         return gd
+
+    cb = CobayaMCMCReader(root)
+    if (os.path.isfile(cb.yaml_file)
+            and os.path.isfile(cb.chains_files[0])
+            and os.path.isfile(cb.chains_files[-1])):
+        return cb
 
     mp = MontePythonReader(root)
     if (os.path.isfile(mp.log_param_file)
