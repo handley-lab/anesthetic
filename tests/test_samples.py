@@ -100,6 +100,9 @@ def test_read_getdist():
     plt.close("all")
 
 
+@pytest.mark.xfail('getdist' not in sys.modules,
+                   raises=NameError,
+                   reason="requires getdist package")
 @pytest.mark.parametrize('root', ['gd', 'cb'])
 def test_read_discard_burn_in(root):
     np.random.seed(3)
