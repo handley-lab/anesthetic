@@ -127,9 +127,11 @@ class WeightedSeries(_WeightedObject, Series):
         """Weighted standard error of the mean."""
         return np.sqrt(self.var(skipna=skipna)/self.neff())
 
-    def quantile(self, q=0.5, **kwargs):
+    def quantile(self, q=0.5, numeric_only=True, interpolation='linear'):
         """Weighted quantile of the sampled distribution."""
-        return quantile(self.values, q, self.weights, **kwargs)
+        if not numeric_only:
+            raise NotImplementedError("numeric_only kwarg not implemented")
+        return quantile(self.values, q, self.weights, interpolation)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
@@ -266,8 +268,11 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         n = self.neff() if axis == 0 else self.shape[1]
         return np.sqrt(self.var(axis=axis, skipna=skipna)/n)
 
-    def quantile(self, q=0.5, axis=0, **kwargs):
+    def quantile(self, q=0.5, axis=0, numeric_only=True,
+                 interpolation='linear'):
         """Weighted quantile of the sampled distribution."""
+        if not numeric_only:
+            raise NotImplementedError("numeric_only kwarg not implemented")
         if axis == 0:
             data = np.array([c.quantile(q) for _, c in self.iteritems()])
             if np.isscalar(q):
@@ -275,7 +280,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             else:
                 return DataFrame(data.T, columns=self.columns, index=q)
         else:
-            return super().quantile(q=q, axis=axis, **kwargs)
+            return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
+                                    interpolation=interpolation)
 
     def compress(self, nsamples=None):
         """Reduce the number of samples by discarding low-weights.
