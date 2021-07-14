@@ -227,7 +227,7 @@ def unique(a):
 
 def iso_probability_contours(pdf, contours=[0.95, 0.68]):
     """Compute the iso-probability contour values."""
-    if not np.all(contours[:-1] > contours[1:]):
+    if len(contours) > 1 and not np.all(contours[:-1] > contours[1:]):
         raise ValueError(
             "The kwargs `levels` and `contours` have to be ordered from "
             "outermost to innermost contour, i.e. in strictly descending "
@@ -256,7 +256,7 @@ def iso_probability_contours(pdf, contours=[0.95, 0.68]):
 def iso_probability_contours_from_samples(pdf, contours=[0.95, 0.68],
                                           weights=None):
     """Compute the iso-probability contour values."""
-    if not np.all(contours[:-1] > contours[1:]):
+    if len(contours) > 1 and not np.all(contours[:-1] > contours[1:]):
         raise ValueError(
             "The kwargs `levels` and `contours` have to be ordered from "
             "outermost to innermost contour, i.e. in strictly descending "
