@@ -1,0 +1,58 @@
+theory: null
+likelihood:
+  norm:
+    type: []
+    speed: -1
+    stop_at_error: false
+    version: null
+    external: 'lambda x0, x1: stats.multivariate_normal.logpdf([x0, x1], mean=[0,
+      0], cov=[[1, -0.25], [-0.25, 0.5]])'
+    input_params:
+    - x0
+    - x1
+    output_params: []
+params:
+  x0:
+    prior:
+      min: -1
+      max: 1
+  x1:
+    prior:
+      min: -1
+      max: 1
+sampler:
+  mcmc:
+    burn_in: 0
+    max_tries: 40d
+    covmat: null
+    covmat_params: null
+    proposal_scale: 2.4
+    output_every: 60s
+    learn_every: 40d
+    learn_proposal: true
+    learn_proposal_Rminus1_max: 2.0
+    learn_proposal_Rminus1_max_early: 30.0
+    learn_proposal_Rminus1_min: 0.0
+    max_samples: .inf
+    Rminus1_stop: 0.01
+    Rminus1_cl_stop: 0.2
+    Rminus1_cl_level: 0.95
+    Rminus1_single_split: 4
+    measure_speeds: true
+    oversample_power: 0.4
+    oversample_thin: true
+    drag: false
+    blocking:
+    - - 1
+      - - x0
+        - x1
+    callback_function: null
+    callback_every: null
+    seed: null
+    check_every: null
+    oversample: null
+    drag_limits: null
+    fallback_covmat_scale: 4
+    version: 3.1.0
+output: cb
+version: 3.1.0
