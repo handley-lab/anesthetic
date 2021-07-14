@@ -1,9 +1,12 @@
 import warnings
 import numpy as np
+import pytest
 from scipy import special as sp
 from numpy.testing import assert_array_equal
 from anesthetic import NestedSamples
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
+                              iso_probability_contours,
+                              iso_probability_contours_from_samples,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
                               insertion_p_value)
@@ -46,6 +49,14 @@ def test_compute_nlive():
 
 def test_unique():
     assert(unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4])
+
+
+@pytest.mark.parametrize('ipc', [iso_probability_contours,
+                                 iso_probability_contours_from_samples])
+def test_iso_probability_contours(ipc):
+    p = np.random.randn(10)
+    with pytest.raises(ValueError):
+        ipc(p, contours=[0.68, 0.95])
 
 
 def test_triangular_sample_compression_2d():

@@ -274,6 +274,12 @@ def test_kde_plot_1d(plot_1d):
         assert (to_rgba(line[0].get_color()) == to_rgba('k'))
         plt.close("all")
 
+        # Check levels
+        with pytest.raises(ValueError):
+            ax = plt.gca()
+            plot_1d(ax, data, fc=True, levels=[0.68, 0.95])
+            plt.close("all")
+
         # Check xlim, Gaussian (i.e. limits reduced to relevant data range)
         fig, ax = plt.subplots()
         data = np.random.randn(1000) * 0.01 + 0.5
@@ -488,6 +494,11 @@ def test_contour_plot_2d(contour_plot_2d):
         assert(ax.get_ylim()[1] <= ymax)
         assert(ax.get_ylim()[0] >= ymin)
         plt.close()
+
+        # Check levels
+        with pytest.raises(ValueError):
+            ax = plt.gca()
+            contour_plot_2d(ax, data_x, data_y, levels=[0.68, 0.95])
 
         # Check q
         ax = plt.gca()
