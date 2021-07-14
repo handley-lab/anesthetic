@@ -227,6 +227,16 @@ def unique(a):
 
 def iso_probability_contours(pdf, contours=[0.95, 0.68]):
     """Compute the iso-probability contour values."""
+    if not np.all(contours[:-1] > contours[1:]):
+        raise ValueError(
+            "The kwargs `levels` and `contours` have to be ordered from "
+            "outermost to innermost contour, i.e. in strictly descending "
+            "order when referring to the enclosed probability mass, e.g. "
+            "like the default [0.95, 0.68]. "
+            "This breaking change in behaviour was introduced in version "
+            "2.0.0-beta.10, in order to better match the ordering of other "
+            "matplotlib kwargs."
+        )
     contours = [1-p for p in contours]
     p = np.sort(np.array(pdf).flatten())
     m = np.cumsum(p)
@@ -246,6 +256,16 @@ def iso_probability_contours(pdf, contours=[0.95, 0.68]):
 def iso_probability_contours_from_samples(pdf, contours=[0.95, 0.68],
                                           weights=None):
     """Compute the iso-probability contour values."""
+    if not np.all(contours[:-1] > contours[1:]):
+        raise ValueError(
+            "The kwargs `levels` and `contours` have to be ordered from "
+            "outermost to innermost contour, i.e. in strictly descending "
+            "order when referring to the enclosed probability mass, e.g. "
+            "like the default [0.95, 0.68]. "
+            "This breaking change in behaviour was introduced in version "
+            "2.0.0-beta.10, in order to better match the ordering of other "
+            "matplotlib kwargs."
+        )
     if weights is None:
         weights = np.ones_like(pdf)
     contours = [1-p for p in contours]
