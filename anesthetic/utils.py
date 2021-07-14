@@ -68,7 +68,7 @@ def compress_weights(w, u=None, nsamples=None):
     return (integer + extra).astype(int)
 
 
-def quantile(a, q, w=None):
+def quantile(a, q, w=None, interpolation='linear'):
     """Compute the weighted quantile for a one dimensional array."""
     if w is None:
         w = np.ones_like(a)
@@ -78,7 +78,7 @@ def quantile(a, q, w=None):
     c = np.cumsum(w[i[1:]]+w[i[:-1]])
     c /= c[-1]
     c = np.concatenate(([0.], c))
-    icdf = interp1d(c, a[i])
+    icdf = interp1d(c, a[i], kind=interpolation)
     quant = icdf(q)
     if isinstance(q, float):
         quant = float(quant)
