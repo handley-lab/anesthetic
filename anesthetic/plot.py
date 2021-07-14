@@ -36,6 +36,94 @@ from anesthetic.utils import (sample_compression_1d, quantile,
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
+class AxesSeries(pandas.Series):
+    """Anesthetic's axes version of `pandas.Series`."""
+
+    @property
+    def _constructor(self):
+        return AxesSeries
+
+    @property
+    def _constructor_expanddim(self):
+        return AxesDataFrame
+
+
+class AxesDataFrame(pandas.DataFrame):
+    """Anesthetic's axes version of `pandas.DataFrame`."""
+
+    @property
+    def _constructor(self):
+        return AxesDataFrame
+
+    @property
+    def _constructor_sliced(self):
+        return AxesSeries
+
+    def axlines(self, params, values, **kwargs):
+        """Add vertical and horizontal lines across all axes.
+
+        Parameters
+        ----------
+            params : str or list(str)
+                parameter label(s).
+                Should match the size of `values`.
+            values : float or list(float)
+                value(s) at which vertical and horizontal lines shall be added.
+                Should match the size of `params`.
+            kwargs
+                Any kwarg that can be passed to `plt.axvline` or `plt.axhline`.
+
+        """
+        params = np.ravel(params)
+        values = np.ravel(values)
+        if params.size != values.size:
+            raise ValueError("The sizes of `params` and `values` must match "
+                             "exactly, but params.size=%s and values.size=%s."
+                             % (params.size, values.size))
+        for i, param in enumerate(params):
+            if param in self.columns:
+                for ax in self.loc[:, param]:
+                    ax.axvline(values[i], **kwargs)
+            if param in self.index:
+                for ax in self.loc[param, self.columns != param]:
+                    ax.axhline(values[i], **kwargs)
+
+    def axspans(self, params, vmins, vmaxs, **kwargs):
+        """Add vertical and horizontal spans across all axes.
+
+        Parameters
+        ----------
+            params : str or list(str)
+                parameter label(s).
+                Should match the size of `vmins` and `vmaxs`.
+            vmins : float or list(float)
+                Minimum value of the vertical and horizontal axes spans.
+                Should match the size of `params`.
+            vmaxs : float or list(float)
+                Maximum value of the vertical and horizontal axes spans.
+                Should match the size of `params`.
+            kwargs
+                Any kwarg that can be passed to `plt.axvspan` or `plt.axhspan`.
+
+        """
+        kwargs = normalize_kwargs(kwargs, dict(color=['c']))
+        params = np.ravel(params)
+        vmins = np.ravel(vmins)
+        vmaxs = np.ravel(vmaxs)
+        if params.size != vmins.size:
+            raise ValueError("The sizes of `params`, `vmins` and `vmaxs` must "
+                             "match exactly, but params.size=%s, "
+                             "vmins.size=%s and vmaxs.size=%s."
+                             % (params.size, vmins.size, vmaxs.size))
+        for i, param in enumerate(params):
+            if param in self.columns:
+                for ax in self.loc[:, param]:
+                    ax.axvspan(vmins[i], vmaxs[i], **kwargs)
+            if param in self.index:
+                for ax in self.loc[param, self.columns != param]:
+                    ax.axhspan(vmins[i], vmaxs[i], **kwargs)
+
+
 def make_1d_axes(params, **kwargs):
     """Create a set of axes for plotting 1D marginalised posteriors.
 
@@ -68,7 +156,7 @@ def make_1d_axes(params, **kwargs):
         Pandas array of axes objects
 
     """
-    axes = pandas.Series(index=np.atleast_1d(params), dtype=object)
+    axes = AxesSeries(index=np.atleast_1d(params), dtype=object)
     axes[:] = None
     tex = kwargs.pop('tex', {})
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
@@ -142,9 +230,9 @@ def make_2d_axes(params, **kwargs):
     lower = kwargs.pop('lower', True)
     diagonal = kwargs.pop('diagonal', True)
 
-    axes = pandas.DataFrame(index=np.atleast_1d(yparams),
-                            columns=np.atleast_1d(xparams),
-                            dtype=object)
+    axes = AxesDataFrame(index=np.atleast_1d(yparams),
+                         columns=np.atleast_1d(xparams),
+                         dtype=object)
     axes[:][:] = None
     all_params = list(axes.columns) + list(axes.index)
 
