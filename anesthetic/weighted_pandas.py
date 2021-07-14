@@ -129,7 +129,6 @@ class WeightedSeries(_WeightedObject, Series):
 
     def quantile(self, q=0.5, numeric_only=True, interpolation='linear'):
         """Weighted quantile of the sampled distribution."""
-
         if not numeric_only:
             raise NotImplementedError("numeric_only kwarg not implemented")
         return quantile(self.to_numpy(), q, self.weights, interpolation)
