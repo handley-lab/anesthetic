@@ -203,6 +203,9 @@ def test_WeightedDataFrame_quantile():
     quantile = df.quantile(qs, axis=1)
     assert isinstance(quantile, WeightedDataFrame)
 
+    with pytest.raises(NotImplementedError):
+        df.quantile(numeric_only=False)
+
 
 def test_WeightedDataFrame_hist():
     plt.figure()
@@ -404,6 +407,9 @@ def test_WeightedSeries_quantile():
         assert_allclose(quantile, q, atol=1e-2)
 
     assert_allclose(series.quantile(qs), qs, atol=1e-2)
+
+    with pytest.raises(NotImplementedError):
+        series.quantile(numeric_only=False)
 
 
 def test_WeightedSeries_hist():
