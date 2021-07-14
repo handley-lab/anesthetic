@@ -80,7 +80,7 @@ jobs:
 
     - name: Test with pytest
       shell: bash -l {0}
-      run: pytest --cov=anesthetic -n auto tests
+      run: python -m pytest --cov=anesthetic -n auto tests
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
