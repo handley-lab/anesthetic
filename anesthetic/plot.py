@@ -208,6 +208,12 @@ def make_2d_axes(params, **kwargs):
             Figure to plot on.
             Default: matplotlib.pyplot.figure()
 
+        ticks: str
+            If 'outer', plot ticks only on the very left and very bottom.
+            If 'inner', plot ticks also in inner subplots.
+            If None, plot no ticks at all.
+            Default: 'outer'
+
         subplot_spec: matplotlib.gridspec.GridSpec, optional
             gridspec to plot array as part of a subfigure.
             Default: None
@@ -226,6 +232,7 @@ def make_2d_axes(params, **kwargs):
     else:
         xparams = yparams = params
 
+    ticks = kwargs.pop('ticks', 'outer')
     upper = kwargs.pop('upper', True)
     lower = kwargs.pop('lower', True)
     diagonal = kwargs.pop('diagonal', True)
@@ -267,14 +274,14 @@ def make_2d_axes(params, **kwargs):
         return fig, axes
     position = axes.copy()
     axes[:][:] = None
-    for j, y in enumerate(axes.index):
+    for j, y in enumerate(axes.index[::-1]):
         for i, x in enumerate(axes.columns):
             if position[x][y] is not None:
                 sx = list(axes[x].dropna())
                 sx = sx[0] if sx else None
                 sy = list(axes.T[y].dropna())
                 sy = sy[0] if sy else None
-                axes[x][y] = fig.add_subplot(grid[j, i],
+                axes[x][y] = fig.add_subplot(grid[axes.index.size-1-j, i],
                                              sharex=sx, sharey=sy)
 
                 if position[x][y] == 0:
@@ -288,10 +295,17 @@ def make_2d_axes(params, **kwargs):
                     axes[x][y].containers = axes[x][y].twin.containers
                     make_diagonal(axes[x][y])
                     axes[x][y].position = 'diagonal'
-                elif position[x][y] == 1:
-                    axes[x][y].position = 'upper'
-                elif position[x][y] == -1:
-                    axes[x][y].position = 'lower'
+                    axes[x][y].twin.xaxis.set_major_locator(
+                        MaxNLocator(3, prune='both'))
+                else:
+                    if position[x][y] == 1:
+                        axes[x][y].position = 'upper'
+                    elif position[x][y] == -1:
+                        axes[x][y].position = 'lower'
+                    axes[x][y].yaxis.set_major_locator(
+                        MaxNLocator(3, prune='both'))
+                axes[x][y].xaxis.set_major_locator(
+                    MaxNLocator(3, prune='both'))
 
     for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
         ax.set_ylabel(tex[y])
@@ -299,23 +313,60 @@ def make_2d_axes(params, **kwargs):
     for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().iteritems():
         ax.set_xlabel(tex[x])
 
+    # left and right ticks and labels
     for y, ax in axes.iterrows():
         ax_ = ax.dropna()
-        if len(ax_):
+        if len(ax_) and ticks == 'inner':
+            for i, a in enumerate(ax_):
+                if i == 0:  # first column
+                    if a.position == 'diagonal' and len(ax_) == 1:
+                        a.tick_params('y', left=False, labelleft=False)
+                    else:
+                        a.tick_params('y', left=True, labelleft=True)
+                elif a.position == 'diagonal':  # not first column
+                    tl = a.yaxis.majorTicks[0].tick1line.get_markersize()
+                    a.tick_params('y', direction='out', length=tl/2,
+                                  left=True, labelleft=False)
+                else:  # not diagonal and not first column
+                    a.tick_params('y', direction='inout',
+                                  left=True, labelleft=False)
+        elif len(ax_) and ticks == 'outer':  # no inner ticks
             for a in ax_[1:]:
                 a.tick_params('y', left=False, labelleft=False)
+        elif len(ax_) and ticks is None:  # no ticks at all
+            for a in ax_:
+                a.tick_params('y', left=False, right=False,
+                              labelleft=False, labelright=False)
+        else:
+            raise ValueError(
+                "ticks=%s was requested, but ticks can only be one of "
+                "['outer', 'inner', None]." % ticks)
 
+    # bottom and top ticks and labels
     for x, ax in axes.iteritems():
         ax_ = ax.dropna()
         if len(ax_):
-            for a in ax_[:-1]:
-                a.tick_params('x', bottom=False, labelbottom=False)
-
-    for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
-        ax.yaxis.set_major_locator(MaxNLocator(3, prune='both'))
-
-    for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().iteritems():
-        ax.xaxis.set_major_locator(MaxNLocator(3, prune='both'))
+            if ticks == 'inner':
+                for i, a in enumerate(ax_):
+                    if i == len(ax_) - 1:  # bottom row
+                        a.tick_params('x', bottom=True, labelbottom=True)
+                    else:  # not bottom row
+                        a.tick_params('x', direction='inout',
+                                      bottom=True, labelbottom=False)
+                        if a.position == 'diagonal':
+                            a.twin.tick_params('x', direction='inout',
+                                               bottom=True, labelbottom=False)
+            elif ticks == 'outer':  # no inner ticks
+                for a in ax_[:-1]:
+                    a.tick_params('x', bottom=False, labelbottom=False)
+            elif ticks is None:  # no ticks at all
+                for a in ax_:
+                    a.tick_params('x', bottom=False, top=False,
+                                  labelbottom=False, labeltop=False)
+            else:
+                raise ValueError(
+                    "ticks=%s was requested, but ticks can only be one of "
+                    "['outer', 'inner', None]." % ticks)
 
     return fig, axes
 
