@@ -59,21 +59,22 @@ def mcmc_sim(ndims=5):
 
 
 np.random.seed(0)
-data, logL, w = mcmc_sim()
-mcmc = MCMCSamples(data=data, columns=columns, logL=logL, w=w, tex=tex)
-mcmc['chi2'] = -2*mcmc.logL
+data, logL, weights = mcmc_sim()
+mcmc = MCMCSamples(data=data, columns=columns, logL=logL, weights=weights, tex=tex)
+mcmc['logL'] = -mcmc.logL
+mcmc['weight'] = mcmc.weights
 
 
 # MCMC multiple files
 root = './tests/example_data/gd'
 roots.append(root)
-mcmc[['weight', 'chi2'] + columns][:len(mcmc)//2].to_csv(root + '_1.txt', sep=' ', index=False, header=False)
-mcmc[['weight', 'chi2'] + columns][len(mcmc)//2:].to_csv(root + '_2.txt', sep=' ', index=False, header=False)
+mcmc[['weight', 'logL'] + columns][:len(mcmc)//2].to_csv(root + '_1.txt', sep=' ', index=False, header=False)
+mcmc[['weight', 'logL'] + columns][len(mcmc)//2:].to_csv(root + '_2.txt', sep=' ', index=False, header=False)
 
 # MCMC single file
 root = './tests/example_data/gd_single'
 roots.append(root)
-mcmc[['weight', 'chi2'] + columns].to_csv(root + '.txt', sep=' ', index=False, header=False)
+mcmc[['weight', 'logL'] + columns].to_csv(root + '.txt', sep=' ', index=False, header=False)
 
 
 # NS
