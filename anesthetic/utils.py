@@ -415,10 +415,17 @@ def match_contour_to_contourf(contours, vmin, vmax):
     whereas `contour` uses the contour level directly. To get the same colors
     for `contour` lines as for `contourf` faces, we need some fiddly algebra.
     """
-    c0, c1, c2 = contours
-    vmin = (c0 * c2 - c1 ** 2 + 2 * vmin * (c1 - c0)) / (c2 - c0)
-    vmax = (c0 * c2 - c1 ** 2 + 2 * vmax * (c1 - c0)) / (c2 - c0)
-    return vmin, vmax
+    if len(contours) <= 2:
+        vmin = 2 * vmin - vmax
+        return vmin, vmax
+    else:
+        c0 = contours[0]
+        c1 = contours[1]
+        ce = contours[-2]
+        denom = vmax + ce - c1 - c0
+        vmin = +(c0 * vmax - c1 * ce + 2 * vmin * (ce - c0)) / denom
+        vmax = -(c0 * vmax + c1 * ce - 2 * vmax * ce) / denom
+        return vmin, vmax
 
 
 def insertion_p_value(indexes, nlive, batch=0):
