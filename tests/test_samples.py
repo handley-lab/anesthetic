@@ -924,3 +924,10 @@ def test_plotting_with_integer_names():
 
     fig, ax = samples_1.plot_1d([0, 1, 2])
     samples_2.plot_1d(ax)
+
+    assert samples_1[0].shape == (1000,)
+    assert_array_equal(samples_1.loc[:,0], samples_1[0])
+    assert_array_equal(samples_1.loc[:,0], samples_1.iloc[:,0])
+    with pytest.raises(KeyError):
+        samples_1['0']
+
