@@ -3,7 +3,7 @@ import os
 import sys
 import pytest
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from numpy.testing import assert_array_equal
 import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
 try:
@@ -103,5 +103,3 @@ def test_discard_burn_in(root):
             assert_array_equal(mcmc0[key][1000:2000], mcmc1[key][:1000])
     mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
     mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
-
-
