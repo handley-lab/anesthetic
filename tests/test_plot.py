@@ -557,6 +557,41 @@ def test_contour_plot_2d(contour_plot_2d):
             pass
 
 
+@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
+                                             fastkde_contour_plot_2d])
+@pytest.mark.parametrize('levels', [[0.9],
+                                    [0.9, 0.6],
+                                    [0.9, 0.6, 0.3],
+                                    [0.9, 0.7, 0.5, 0.3]])
+def test_contour_plot_2d_levels(contour_plot_2d, levels):
+    try:
+        np.random.seed(42)
+        x = np.random.randn(1000)
+        y = np.random.randn(1000)
+        cmap = plt.cm.viridis
+
+        ax1 = plt.subplot(211)
+        contour_plot_2d(ax1, x, y, levels=levels, cmap=cmap)
+        ax2 = plt.subplot(212)
+        contour_plot_2d(ax2, x, y, levels=levels, cmap=cmap, fc=None)
+
+        # assert that color between filled and unfilled contours matches
+        # first level
+        color1 = ax1.get_children()[0].get_facecolor()  # filled face color
+        color2 = ax2.get_children()[0].get_edgecolor()  # unfilled line color
+        assert_array_equal(color1, color2)
+        # last level
+        color1 = ax1.get_children()[len(levels)-1].get_facecolor()
+        color2 = ax2.get_children()[len(levels)-1].get_edgecolor()
+        assert_array_equal(color1, color2)
+
+        plt.close("all")
+
+    except ImportError:
+        if 'fastkde' not in sys.modules:
+            pass
+
+
 def test_scatter_plot_2d():
     fig, ax = plt.subplots()
     np.random.seed(2)
