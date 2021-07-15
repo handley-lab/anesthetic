@@ -83,10 +83,12 @@ class AxesDataFrame(pandas.DataFrame):
         for i, param in enumerate(params):
             if param in self.columns:
                 for ax in self.loc[:, param]:
-                    ax.axvline(values[i], **kwargs)
+                    if ax is not None:
+                        ax.axvline(values[i], **kwargs)
             if param in self.index:
                 for ax in self.loc[param, self.columns != param]:
-                    ax.axhline(values[i], **kwargs)
+                    if ax is not None:
+                        ax.axhline(values[i], **kwargs)
 
     def axspans(self, params, vmins, vmaxs, **kwargs):
         """Add vertical and horizontal spans across all axes.
@@ -118,10 +120,12 @@ class AxesDataFrame(pandas.DataFrame):
         for i, param in enumerate(params):
             if param in self.columns:
                 for ax in self.loc[:, param]:
-                    ax.axvspan(vmins[i], vmaxs[i], **kwargs)
+                    if ax is not None:
+                        ax.axvspan(vmins[i], vmaxs[i], **kwargs)
             if param in self.index:
                 for ax in self.loc[param, self.columns != param]:
-                    ax.axhspan(vmins[i], vmaxs[i], **kwargs)
+                    if ax is not None:
+                        ax.axhspan(vmins[i], vmaxs[i], **kwargs)
 
 
 def make_1d_axes(params, **kwargs):
