@@ -225,9 +225,19 @@ def unique(a):
     return b
 
 
-def iso_probability_contours(pdf, contours=[0.68, 0.95]):
+def iso_probability_contours(pdf, contours=[0.95, 0.68]):
     """Compute the iso-probability contour values."""
-    contours = [1-p for p in reversed(contours)]
+    if len(contours) > 1 and not np.all(contours[:-1] > contours[1:]):
+        raise ValueError(
+            "The kwargs `levels` and `contours` have to be ordered from "
+            "outermost to innermost contour, i.e. in strictly descending "
+            "order when referring to the enclosed probability mass, e.g. "
+            "like the default [0.95, 0.68]. "
+            "This breaking change in behaviour was introduced in version "
+            "2.0.0-beta.10, in order to better match the ordering of other "
+            "matplotlib kwargs."
+        )
+    contours = [1-p for p in contours]
     p = np.sort(np.array(pdf).flatten())
     m = np.cumsum(p)
     m /= m[-1]
@@ -243,12 +253,22 @@ def iso_probability_contours(pdf, contours=[0.68, 0.95]):
     return c
 
 
-def iso_probability_contours_from_samples(pdf, contours=[0.68, 0.95],
+def iso_probability_contours_from_samples(pdf, contours=[0.95, 0.68],
                                           weights=None):
     """Compute the iso-probability contour values."""
+    if len(contours) > 1 and not np.all(contours[:-1] > contours[1:]):
+        raise ValueError(
+            "The kwargs `levels` and `contours` have to be ordered from "
+            "outermost to innermost contour, i.e. in strictly descending "
+            "order when referring to the enclosed probability mass, e.g. "
+            "like the default [0.95, 0.68]. "
+            "This breaking change in behaviour was introduced in version "
+            "2.0.0-beta.10, in order to better match the ordering of other "
+            "matplotlib kwargs."
+        )
     if weights is None:
         weights = np.ones_like(pdf)
-    contours = [1-p for p in reversed(contours)]
+    contours = [1-p for p in contours]
     i = np.argsort(pdf)
     m = np.cumsum(weights[i])
     m /= m[-1]
@@ -395,10 +415,17 @@ def match_contour_to_contourf(contours, vmin, vmax):
     whereas `contour` uses the contour level directly. To get the same colors
     for `contour` lines as for `contourf` faces, we need some fiddly algebra.
     """
-    c0, c1, c2 = contours
-    vmin = (c0 * c2 - c1 ** 2 + 2 * vmin * (c1 - c0)) / (c2 - c0)
-    vmax = (c0 * c2 - c1 ** 2 + 2 * vmax * (c1 - c0)) / (c2 - c0)
-    return vmin, vmax
+    if len(contours) <= 2:
+        vmin = 2 * vmin - vmax
+        return vmin, vmax
+    else:
+        c0 = contours[0]
+        c1 = contours[1]
+        ce = contours[-2]
+        denom = vmax + ce - c1 - c0
+        vmin = +(c0 * vmax - c1 * ce + 2 * vmin * (ce - c0)) / denom
+        vmax = -(c0 * vmax + c1 * ce - 2 * vmax * ce) / denom
+        return vmin, vmax
 
 
 def insertion_p_value(indexes, nlive, batch=0):
