@@ -292,7 +292,7 @@ def test_kde_plot_1d(plot_1d):
 
         # Check iso-probability code
         line, fill = plot_1d(ax, data, facecolor=True)
-        plot_1d(ax, data, facecolor=True, levels=[0.2, 0.6, 0.8])
+        plot_1d(ax, data, facecolor=True, levels=[0.8, 0.6, 0.2])
         line, fill = plot_1d(ax, data, fc='blue', color='k', ec='r')
         assert(np.all(fill[0].get_edgecolor()[0] == to_rgba('r')))
         assert (to_rgba(line[0].get_color()) == to_rgba('r'))
@@ -300,6 +300,12 @@ def test_kde_plot_1d(plot_1d):
         assert(len(fill[0].get_edgecolor()) == 0)
         assert (to_rgba(line[0].get_color()) == to_rgba('k'))
         plt.close("all")
+
+        # Check levels
+        with pytest.raises(ValueError):
+            ax = plt.gca()
+            plot_1d(ax, data, fc=True, levels=[0.68, 0.95])
+            plt.close("all")
 
         # Check xlim, Gaussian (i.e. limits reduced to relevant data range)
         fig, ax = plt.subplots()
@@ -516,6 +522,11 @@ def test_contour_plot_2d(contour_plot_2d):
         assert(ax.get_ylim()[0] >= ymin)
         plt.close()
 
+        # Check levels
+        with pytest.raises(ValueError):
+            ax = plt.gca()
+            contour_plot_2d(ax, data_x, data_y, levels=[0.68, 0.95])
+
         # Check q
         ax = plt.gca()
         contour_plot_2d(ax, data_x, data_y, q=0)
@@ -566,6 +577,41 @@ def test_contour_plot_2d(contour_plot_2d):
         assert(xmax == 1)
         assert(ymin == 0)
         assert(ymax == 1)
+        plt.close("all")
+
+    except ImportError:
+        if 'fastkde' not in sys.modules:
+            pass
+
+
+@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
+                                             fastkde_contour_plot_2d])
+@pytest.mark.parametrize('levels', [[0.9],
+                                    [0.9, 0.6],
+                                    [0.9, 0.6, 0.3],
+                                    [0.9, 0.7, 0.5, 0.3]])
+def test_contour_plot_2d_levels(contour_plot_2d, levels):
+    try:
+        np.random.seed(42)
+        x = np.random.randn(1000)
+        y = np.random.randn(1000)
+        cmap = plt.cm.viridis
+
+        ax1 = plt.subplot(211)
+        contour_plot_2d(ax1, x, y, levels=levels, cmap=cmap)
+        ax2 = plt.subplot(212)
+        contour_plot_2d(ax2, x, y, levels=levels, cmap=cmap, fc=None)
+
+        # assert that color between filled and unfilled contours matches
+        # first level
+        color1 = ax1.get_children()[0].get_facecolor()  # filled face color
+        color2 = ax2.get_children()[0].get_edgecolor()  # unfilled line color
+        assert_array_equal(color1, color2)
+        # last level
+        color1 = ax1.get_children()[len(levels)-1].get_facecolor()
+        color2 = ax2.get_children()[len(levels)-1].get_edgecolor()
+        assert_array_equal(color1, color2)
+
         plt.close("all")
 
     except ImportError:

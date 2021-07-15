@@ -371,7 +371,7 @@ def test_hist_levels():
     np.random.seed(3)
     mcmc = NestedSamples(root='./tests/example_data/pc')
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'lower': 'hist'},
-                 levels=[0.68, 0.95], bins=20)
+                 levels=[0.95, 0.68], bins=20)
     plt.close("all")
 
 

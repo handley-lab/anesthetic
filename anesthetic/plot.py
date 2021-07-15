@@ -392,7 +392,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     levels: list
         values at which to draw iso-probability lines.
-        optional, default [0.68, 0.95]
+        optional, default [0.95, 0.68]
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -418,7 +418,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     if data.max()-data.min() <= 0:
         return
 
-    levels = kwargs.pop('levels', [0.68, 0.95])
+    levels = kwargs.pop('levels', [0.95, 0.68])
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
@@ -491,7 +491,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     levels: list
         values at which to draw iso-probability lines.
-        optional, default [0.68, 0.95]
+        optional, default [0.95, 0.68]
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -517,7 +517,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
 
-    levels = kwargs.pop('levels', [0.68, 0.95])
+    levels = kwargs.pop('levels', [0.95, 0.68])
 
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
@@ -668,7 +668,8 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     levels: list
         amount of mass within each iso-probability contour.
-        optional, default [0.68, 0.95]
+        Has to be ordered from outermost to innermost contour.
+        optional, default [0.95, 0.68]
 
     xmin, xmax, ymin, ymax: float
         lower/upper prior bounds in x/y coordinates
@@ -691,7 +692,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymax = kwargs.pop('ymax', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
-    levels = kwargs.pop('levels', [0.68, 0.95])
+    levels = kwargs.pop('levels', [0.95, 0.68])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
     edgecolor = kwargs.pop('edgecolor', color)
@@ -765,6 +766,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     weights: np.array, optional
         Sample weights.
 
+    levels: list, optional
+        amount of mass within each iso-probability contour.
+        Has to be ordered from outermost to innermost contour.
+        optional, default [0.95, 0.68]
+
     ncompress: int, optional
         Degree of compression.
         optional, Default 1000
@@ -792,6 +798,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ncompress = kwargs.pop('ncompress', 1000)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
+    levels = kwargs.pop('levels', [0.95, 0.68])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', color)
     edgecolor = kwargs.pop('edgecolor', color)
@@ -823,12 +830,13 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     sigmay = np.sqrt(kde.covariance[1, 1])
     p = cut_and_normalise_gaussian(tri.y, p, sigmay, ymin, ymax)
 
-    contours = iso_probability_contours_from_samples(p, weights=w)
+    levels = iso_probability_contours_from_samples(p, contours=levels,
+                                                   weights=w)
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
         cmap = kwargs.pop('cmap', basic_cmap(facecolor))
-        contf = ax.tricontourf(tri, p, contours, cmap=cmap, zorder=zorder,
+        contf = ax.tricontourf(tri, p, levels=levels, cmap=cmap, zorder=zorder,
                                vmin=0, vmax=p.max(), *args, **kwargs)
         for c in contf.collections:
             c.set_cmap(cmap)
@@ -847,8 +855,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         ]
         edgecolor = edgecolor if cmap is None else None
 
-    vmin, vmax = match_contour_to_contourf(contours, vmin=0, vmax=p.max())
-    cont = ax.tricontour(tri, p, contours, zorder=zorder,
+    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=p.max())
+    cont = ax.tricontour(tri, p, levels=levels, zorder=zorder,
                          vmin=vmin, vmax=vmax, linewidths=linewidths,
                          colors=edgecolor, cmap=cmap, *args, **kwargs)
 
