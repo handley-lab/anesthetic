@@ -3,7 +3,7 @@ import os
 import sys
 import pytest
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
 try:
@@ -37,7 +37,7 @@ def test_read_cobayamcmc():
 
     # compare directly with getdist
     mcmc_gd = getdist.loadMCSamples(file_root="./tests/example_data/cb")
-    assert_array_equal(mcmc.logL, mcmc_gd.loglikes)
+    assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
 
 
 @pytest.mark.xfail('montepython' not in sys.modules,
