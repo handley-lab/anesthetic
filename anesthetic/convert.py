@@ -15,9 +15,9 @@ def to_getdist(nested_samples):
         getdist equivalent samples
     """
     import getdist
-    samples = nested_samples.values
+    samples = nested_samples.to_numpy()
     weights = nested_samples.weights
-    loglikes = -2*nested_samples.logL.values
+    loglikes = -2*nested_samples.logL.to_numpy()
     names = nested_samples.columns
     ranges = {name: nested_samples._limits(name) for name in names}
     return getdist.mcsamples.MCSamples(samples=samples,
