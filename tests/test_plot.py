@@ -84,7 +84,7 @@ def test_make_2d_axes_inputs_outputs():
     for p, ax in axes.iloc[-1].iteritems():
         assert(ax.get_xlabel() == p)
 
-    for ax in axes.iloc[:-1, 1:].values.flatten():
+    for ax in axes.iloc[:-1, 1:].to_numpy().flatten():
         assert(ax.get_xlabel() == '')
         assert(ax.get_ylabel() == '')
 
