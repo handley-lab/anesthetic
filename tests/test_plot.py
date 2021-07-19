@@ -84,7 +84,7 @@ def test_make_2d_axes_inputs_outputs():
     for p, ax in axes.iloc[-1].iteritems():
         assert(ax.get_xlabel() == p)
 
-    for ax in axes.iloc[:-1, 1:].values.flatten():
+    for ax in axes.iloc[:-1, 1:].to_numpy().flatten():
         assert(ax.get_xlabel() == '')
         assert(ax.get_ylabel() == '')
 
@@ -223,11 +223,12 @@ def test_2d_axes_limits():
 @pytest.mark.parametrize('params, values', [('A', 0),
                                             (['A', 'C', 'E'], [0, 0, 0]),
                                             (['A', 'C', 'C'], [0, 0, 0.5])])
-def test_2d_axlines_axspans(axesparams, params, values):
+@pytest.mark.parametrize('upper', [True, False])
+def test_2d_axlines_axspans(axesparams, params, values, upper):
     values = np.array(values)
     line_kwargs = dict(c='k', ls='--', lw=0.5)
     span_kwargs = dict(c='k', alpha=0.5)
-    fig, axes = make_2d_axes(axesparams)
+    fig, axes = make_2d_axes(axesparams, upper=upper)
     axes.axlines(params, values, **line_kwargs)
     axes.axspans(params, values-0.1, values+0.1, **span_kwargs)
     plt.close("all")
