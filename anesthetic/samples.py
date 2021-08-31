@@ -16,12 +16,13 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp, modify_inplace)
+from anesthetic.utils import (sample_compression_1d, quantile,
+                              iso_probability_contours)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
 from scipy.stats import gaussian_kde
 from anesthetic.boundary import cut_and_normalise_gaussian
-
 
 
 class MCMCSamples(WeightedDataFrame):
@@ -379,12 +380,6 @@ class MCMCSamples(WeightedDataFrame):
 
         """
 
-        from scipy.stats import gaussian_kde
-        from anesthetic.utils import (sample_compression_1d, quantile,
-                              triangular_sample_compression_2d,
-                              iso_probability_contours,
-                              iso_probability_contours_from_samples,
-                              scaled_triangulation, match_contour_to_contourf)
         levels = kwargs.pop('levels', [0.95, 0.68])
 
         xmin = kwargs.pop('xmin', None)
