@@ -794,7 +794,7 @@ def merge_nested_samples(runs):
     return merge.recompute()
 
 
-def merge_samples_weighted(samples, weights=None):
+def merge_samples_weighted(samples, weights=None, label=None):
     r"""Merge sets of samples with weights.
 
     Combine two (or more) samples so the new PDF is
@@ -810,6 +810,9 @@ def merge_samples_weighted(samples, weights=None):
         Weight for each run in samples (normalized internally).
         Can be omitted if samples are NestedSamples,
         then exp(logZ) is used as weight.
+
+    label: str or None
+        Label for the new samples. Default: None
 
     Returns
     -------
@@ -843,5 +846,9 @@ def merge_samples_weighted(samples, weights=None):
         new_samples = new_samples.append(s)
 
     new_samples.weights /= new_samples.weights.max()
+
+    new_samples.label = label
+    # Copy tex, if different values for same key exist, the last one is used.
+    new_samples.tex = {key: val for s in samples for key, val in s.tex.items()}
 
     return new_samples
