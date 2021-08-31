@@ -538,7 +538,8 @@ def test_weighted_merging():
     # Test with evidence weights
     weight1 = np.exp(samples_1.logZ())
     weight2 = np.exp(samples_2.logZ())
-    samples = merge_samples_weighted([samples_1, samples_2], label='Merged label')
+    samples = merge_samples_weighted([samples_1, samples_2],
+                                     label='Merged label')
     mean = samples.mean()['xtest']
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
