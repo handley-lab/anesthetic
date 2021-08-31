@@ -19,6 +19,10 @@ from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
+from scipy.stats import gaussian_kde
+from anesthetic.boundary import cut_and_normalise_gaussian
+
+
 
 class MCMCSamples(WeightedDataFrame):
     """Storage and plotting tools for MCMC samples.
@@ -344,6 +348,92 @@ class MCMCSamples(WeightedDataFrame):
                     self.plot(ax_, x, y, plot_type=plot_type, *args, **lkwargs)
 
         return fig, axes
+
+    def confidence_1d(self, key, type='kde', *args, **kwargs):
+        """Compute 1d marginalised confidence levels (iso-probability).
+
+        Rather ugly demo-function computing CL with a kernel density
+        estimation provided by scipy.stats.gaussian_kde in between.
+
+        Parameters
+        ----------
+        key: str
+            Variable name
+
+        ncompress: int, optional
+            Degree of compression. Default 1000
+
+        xmin, xmax: float
+            lower/upper prior bound.
+            optional, default None
+
+        levels: list
+            values at which to draw iso-probability lines.
+            optional, default [0.95, 0.68]
+
+        Returns
+        -------
+        confidence_intervals: list
+            List (for each confidence level) containing lists (for each peak)
+            of lists (2 points for lower and upper bound of interval).
+
+        """
+
+        from scipy.stats import gaussian_kde
+        from anesthetic.utils import (sample_compression_1d, quantile,
+                              triangular_sample_compression_2d,
+                              iso_probability_contours,
+                              iso_probability_contours_from_samples,
+                              scaled_triangulation, match_contour_to_contourf)
+        levels = kwargs.pop('levels', [0.95, 0.68])
+
+        xmin = kwargs.pop('xmin', None)
+        xmax = kwargs.pop('xmax', None)
+        ncompress = kwargs.pop('ncompress', 1000)
+        density = kwargs.pop('density', False)
+
+        from anesthetic.plot import quantile_plot_interval
+        q = kwargs.pop('q', '5sigma')
+        q = quantile_plot_interval(q=q)
+
+        data = self[key]
+        weights = self.weights
+
+        data = data[weights != 0]
+        weights = weights[weights != 0]
+
+        x, w = sample_compression_1d(data, weights, ncompress)
+        kde = gaussian_kde(x, weights=w)
+        p = kde(x)
+        p /= p.max()
+        i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[1], w)))
+        if xmin is not None:
+            i = i & (x > xmin)
+        if xmax is not None:
+            i = i & (x < xmax)
+
+        sigma = np.sqrt(kde.covariance[0, 0])
+        pp = cut_and_normalise_gaussian(x[i], p[i], sigma, xmin, xmax)
+        pp /= pp.max()
+        c = iso_probability_contours_from_samples(pp, contours=levels,
+                                                  weights=w)
+        # len(c)-1 as c[-1]==1 is not relevant
+        confidence_intervals = [ [] for _ in range(len(c)-1)]
+        for level_index in range(len(c)-1):
+            where = p >= c[level_index]
+            current = False
+            for i in range(len(p)):
+                if where[i] != current:
+                    if current == False:
+                        print("[", x[i], end = ', ')
+                        confidence_intervals[level_index].append([x[i], 1])
+                    else:
+                        print(x[i], "] = {0:.0f}%".format(100*levels[level_index]),"confidence interval")
+                        confidence_intervals[level_index][-1][1] = x[i]
+                    current = where[i]
+
+        return confidence_intervals
+
 
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
