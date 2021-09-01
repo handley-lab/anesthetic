@@ -8,7 +8,7 @@ import numpy as np
 import pandas
 import copy
 import warnings
-from collections.abc import Sequence
+from collections.abc import Collection
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
                              fastkde_contour_plot_2d,
@@ -819,8 +819,8 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples: MCMCSamples
         Merged (weighted) run.
     """
-    if not isinstance(samples, Sequence):
-        raise TypeError("samples must be a Sequence (list of samples).")
+    if not isinstance(samples, Collection):
+        raise TypeError("samples must be a list of samples.")
 
     mcmc_samples = copy.deepcopy([MCMCSamples(s) for s in samples])
     if weights is None:
