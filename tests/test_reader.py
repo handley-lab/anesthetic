@@ -6,11 +6,21 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
+from anesthetic.read.chainreader import ChainReader
 try:
     import getdist
     import montepython  # noqa: F401
 except ImportError:
     pass
+
+
+def test_read_chainreader():
+    reader = ChainReader('root')
+    assert reader.root == 'root'
+    assert reader.paramnames() == (None, {})
+    assert reader.limits() == {}
+    with pytest.raises(NotImplementedError):
+        reader.samples()
 
 
 def test_read_getdist():
@@ -103,3 +113,8 @@ def test_discard_burn_in(root):
             assert_array_equal(mcmc0[key][1000:2000], mcmc1[key][:1000])
     mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
     mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
+
+
+def test_read_fail():
+    with pytest.raises(FileNotFoundError):
+        MCMCSamples(root='./tests/example_data/foo')
