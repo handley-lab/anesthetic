@@ -819,9 +819,10 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples: MCMCSamples
         Merged (weighted) run.
     """
-    if not (isinstance(samples, Sequence) or isinstance(samples, pandas.Series)):
-        raise TypeError("samples must be a list of samples",
-                         "(Sequence or pandas.Series)")
+    if not (isinstance(samples, Sequence) or
+            isinstance(samples, pandas.Series)):
+        raise TypeError("samples must be a list of samples "
+                        "(Sequence or pandas.Series)")
 
     mcmc_samples = copy.deepcopy([MCMCSamples(s) for s in samples])
     if weights is None:
