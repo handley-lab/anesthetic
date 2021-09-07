@@ -101,7 +101,7 @@ def ns_sim(ndims=5, nlive=125):
         while live_likes[i] <= Lmin:
             live_points[i, :] = np.random.uniform(low=low, high=high, size=ndims) 
             live_likes[i] = loglikelihood(live_points[i])
-    return dead_points, dead_likes, birth_likes, live_points, live_likes, live_birth_likes
+    return np.array(dead_points), np.array(dead_likes), np.array(birth_likes), live_points, live_likes, live_birth_likes
 
 np.random.seed(0)
 data, logL, logL_birth, live, live_logL, live_logL_birth = ns_sim()
