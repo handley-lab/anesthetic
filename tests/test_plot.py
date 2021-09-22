@@ -9,7 +9,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d, quantile_plot_interval,
                              basic_cmap)
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_allclose
 
 from matplotlib.contour import QuadContourSet
 from matplotlib.tri import TriContourSet
@@ -328,6 +328,17 @@ def test_kde_plot_1d(plot_1d):
     except ImportError:
         if 'fastkde' not in sys.modules:
             pass
+
+
+def test_ncompress_kde_1d():
+    fig, ax = plt.subplots()
+    np.random.seed(0)
+    data = np.random.randn(5000)
+    line0, = kde_plot_1d(ax, data, q='5sigma', ncompress=5000)
+    line1, = kde_plot_1d(ax, data, q='5sigma', ncompress=1000)
+    x2y = interp1d(line0.get_xdata(), line0.get_ydata())
+    assert_allclose(line1.get_ydata(), x2y(line1.get_xdata()))
+    plt.close("all")
 
 
 def test_hist_plot_1d():
