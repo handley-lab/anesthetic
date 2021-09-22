@@ -547,8 +547,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         data = data[weights != 0]
         weights = weights[weights != 0]
 
+    kde = gaussian_kde(data, weights=weights)
     x, w = sample_compression_1d(data, weights, ncompress)
-    kde = gaussian_kde(x, weights=w)
     p = kde(x)
     p /= p.max()
     i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[1], w)))
