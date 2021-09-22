@@ -816,16 +816,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         data_y = data_y[weights != 0]
         weights = weights[weights != 0]
 
+    kde = gaussian_kde([data_x, data_y], weights=weights)
     cov = np.cov(data_x, data_y, aweights=weights)
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
                                               weights, ncompress)
-    kde = gaussian_kde([tri.x, tri.y], weights=w)
-
-    x, y = kde.resample(ncompress)
-    x = np.concatenate([tri.x, x])
-    y = np.concatenate([tri.y, y])
-    w = np.concatenate([w, np.zeros(ncompress)])
-    tri = scaled_triangulation(x, y, cov)
 
     p = kde([tri.x, tri.y])
 
