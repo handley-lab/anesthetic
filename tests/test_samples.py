@@ -443,15 +443,32 @@ def test_weighted_merging():
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
     samples_1['xtest'] = 7*samples_1['x3']
     samples_2['xtest'] = samples_2['x3']
+    samples_1.tex['xtest'] = "$x_{t,1}$"
+    samples_2.tex['xtest'] = "$x_{t,2}$"
     mean1 = samples_1.mean()['xtest']
     mean2 = samples_2.mean()['xtest']
 
     # Test with evidence weights
     weight1 = np.exp(samples_1.logZ())
     weight2 = np.exp(samples_2.logZ())
-    samples = merge_samples_weighted([samples_1, samples_2])
+    samples = merge_samples_weighted([samples_1, samples_2],
+                                     label='Merged label')
     mean = samples.mean()['xtest']
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
+
+    # Test tex and label
+    for key in samples.keys():
+        if key in samples_2.keys():
+            assert samples.tex[key] == samples_2.tex[key]
+        else:
+            assert samples.tex[key] == samples_1.tex[key]
+    assert samples.label == 'Merged label'
+
+    # Test that label is None when no label is passed
+    samples_1.label = "1"
+    samples_2.label = "2"
+    samples = merge_samples_weighted([samples_1, samples_2])
+    assert samples.label is None
 
     # Test with explicit weights
     weight1 = 31
