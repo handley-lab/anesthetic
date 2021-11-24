@@ -546,10 +546,16 @@ def test_contour_plot_2d(contour_plot_2d):
         cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
         assert cf.get_cmap() == plt.cm.Reds
         assert ct.colors == 'C0'
+        plt.close("all")
+        ax = plt.gca()
+        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None)
+        assert cf is None
+        assert ct.colors is None
+        assert ct.get_cmap()(1.) == to_rgba('C0')
         cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, c='C3')
         assert cf is None
         assert ct.colors is None
-        assert ct.get_cmap() == basic_cmap('C3')
+        assert ct.get_cmap()(1.) == to_rgba('C3')
         cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
         assert cf is None
         assert ct.colors == 'C1'
