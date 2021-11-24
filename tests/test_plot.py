@@ -546,13 +546,23 @@ def test_contour_plot_2d(contour_plot_2d):
         cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
         assert cf.get_cmap() == plt.cm.Reds
         assert ct.colors == 'C0'
+        plt.close("all")
+        ax = plt.gca()
+        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None)
+        assert cf is None
+        assert ct.colors is None
+        assert ct.get_cmap()(1.) == to_rgba('C0')
+        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, c='C3')
+        assert cf is None
+        assert ct.colors is None
+        assert ct.get_cmap()(1.) == to_rgba('C3')
         cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
         assert cf is None
         assert ct.colors == 'C1'
         cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
         assert cf is None
-        assert ct.get_cmap() == plt.cm.Reds
         assert ct.colors is None
+        assert ct.get_cmap() == plt.cm.Reds
         plt.close("all")
 
         # Check limits, Gaussian (i.e. limits reduced to relevant data range)
@@ -605,12 +615,12 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
 
         # assert that color between filled and unfilled contours matches
         # first level
-        color1 = ax1.get_children()[0].get_facecolor()  # filled face color
-        color2 = ax2.get_children()[0].get_edgecolor()  # unfilled line color
+        color1 = ax1.collections[0].get_facecolor()  # filled face color
+        color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
         assert_array_equal(color1, color2)
         # last level
-        color1 = ax1.get_children()[len(levels)-1].get_facecolor()
-        color2 = ax2.get_children()[len(levels)-1].get_edgecolor()
+        color1 = ax1.collections[len(levels)-1].get_facecolor()
+        color2 = ax2.collections[len(levels)-1].get_edgecolor()
         assert_array_equal(color1, color2)
 
         plt.close("all")
