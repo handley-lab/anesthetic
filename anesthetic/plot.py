@@ -1052,6 +1052,7 @@ def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
 
 
 def set_colors(c, fc, ec, cmap):
+    """Navigate interplay between possible color inputs {c, fc, ec, cmap}."""
     if fc in [None, 'None', 'none']:
         # unfilled contours
         if ec is None and cmap is None:
