@@ -1062,7 +1062,7 @@ def set_colors(c, fc, ec, cmap):
             fc = c
         if ec is None and cmap is None:
             ec = c
-            cmap = basic_cmap(c)
+            cmap = basic_cmap(fc)
         elif ec is None:
             ec = (cmap(1.),)
         elif cmap is None:
