@@ -15,7 +15,7 @@ from matplotlib.contour import QuadContourSet
 from matplotlib.tri import TriContourSet
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch, Polygon
-from matplotlib.colors import ColorConverter, to_rgba
+from matplotlib.colors import ColorConverter, to_rgba, rgb2hex
 from matplotlib.figure import Figure
 from pandas.core.series import Series
 from pandas.core.frame import DataFrame
@@ -546,13 +546,23 @@ def test_contour_plot_2d(contour_plot_2d):
         cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
         assert cf.get_cmap() == plt.cm.Reds
         assert ct.colors == 'C0'
+        plt.close("all")
+        ax = plt.gca()
+        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None)
+        assert cf is None
+        assert ct.colors is None
+        assert ct.get_cmap() == basic_cmap(rgb2hex('C0'))
+        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, c='C3')
+        assert cf is None
+        assert ct.colors is None
+        assert ct.get_cmap() == basic_cmap('C3')
         cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
         assert cf is None
         assert ct.colors == 'C1'
         cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
         assert cf is None
-        assert ct.get_cmap() == plt.cm.Reds
         assert ct.colors is None
+        assert ct.get_cmap() == plt.cm.Reds
         plt.close("all")
 
         # Check limits, Gaussian (i.e. limits reduced to relevant data range)
