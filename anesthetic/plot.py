@@ -1017,6 +1017,13 @@ def make_diagonal(ax):
                              xmin=ymin, xmax=ymax)
             return super().set_ylim(bottom=bottom, top=top, emit=emit,
                                     auto=auto, ymin=ymin, ymax=ymax)
+
+        def get_legend_handles_labels(self, *args, **kwargs):
+            return self.twin.get_legend_handles_labels(*args, **kwargs)
+
+        def legend(self, *args, **kwargs):
+            return self.twin.legend(*args, **kwargs)
+
     ax.__class__ = DiagonalAxes
 
 
