@@ -293,10 +293,6 @@ def make_2d_axes(params, **kwargs):
                     axes[x][y].twin.set_yticks([])
                     axes[x][y].twin.set_ylim(0, 1.1)
                     axes[x][y].set_zorder(axes[x][y].twin.get_zorder() + 1)
-                    axes[x][y].lines = axes[x][y].twin.lines
-                    axes[x][y].patches = axes[x][y].twin.patches
-                    axes[x][y].collections = axes[x][y].twin.collections
-                    axes[x][y].containers = axes[x][y].twin.containers
                     make_diagonal(axes[x][y])
                     axes[x][y].position = 'diagonal'
                     axes[x][y].twin.xaxis.set_major_locator(
@@ -725,19 +721,19 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                             *args, **kwargs)
         for c in contf.collections:
             c.set_cmap(cmap)
-        ax.patches += [plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
-                                     fc=cmap(0.999), ec=cmap(0.32))]
+        ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                                   fc=cmap(0.999), ec=cmap(0.32)))
         cmap = None
     else:
         linewidths = kwargs.pop('linewidths',
                                 plt.rcParams.get('lines.linewidth'))
         cmap = kwargs.pop('cmap', None)
         contf = None
-        ax.patches += [
+        ax.add_patch(
             plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                           fc='None' if cmap is None else cmap(0.999),
                           ec=edgecolor if cmap is None else cmap(0.32))
-        ]
+        )
         edgecolor = edgecolor if cmap is None else None
 
     vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=pdf.max())
@@ -844,19 +840,19 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                vmin=0, vmax=p.max(), *args, **kwargs)
         for c in contf.collections:
             c.set_cmap(cmap)
-        ax.patches += [plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
-                                     fc=cmap(0.999), ec=cmap(0.32))]
+        ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
+                                   fc=cmap(0.999), ec=cmap(0.32)))
         cmap = None
     else:
         linewidths = kwargs.pop('linewidths',
                                 plt.rcParams.get('lines.linewidth'))
         cmap = kwargs.pop('cmap', None)
         contf = None
-        ax.patches += [
+        ax.add_patch(
             plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                           fc='None' if cmap is None else cmap(0.999),
                           ec=edgecolor if cmap is None else cmap(0.32))
-        ]
+        )
         edgecolor = edgecolor if cmap is None else None
 
     vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=p.max())
@@ -946,8 +942,8 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=vmin,
                               *args, **kwargs)
 
-    ax.patches += [plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
-                                 lw=2, label=label)]
+    ax.add_patch(plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
+                               lw=2, label=label))
 
     ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
     ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)
