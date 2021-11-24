@@ -292,7 +292,6 @@ def make_2d_axes(params, **kwargs):
                     axes[x][y].twin = axes[x][y].twinx()
                     axes[x][y].twin.set_yticks([])
                     axes[x][y].twin.set_ylim(0, 1.1)
-                    axes[x][y].set_zorder(axes[x][y].twin.get_zorder() + 1)
                     make_diagonal(axes[x][y])
                     axes[x][y].position = 'diagonal'
                     axes[x][y].twin.xaxis.set_major_locator(
