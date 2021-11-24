@@ -605,12 +605,12 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
 
         # assert that color between filled and unfilled contours matches
         # first level
-        color1 = ax1.get_children()[0].get_facecolor()  # filled face color
-        color2 = ax2.get_children()[0].get_edgecolor()  # unfilled line color
+        color1 = ax1.collections[0].get_facecolor()  # filled face color
+        color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
         assert_array_equal(color1, color2)
         # last level
-        color1 = ax1.get_children()[len(levels)-1].get_facecolor()
-        color2 = ax2.get_children()[len(levels)-1].get_edgecolor()
+        color1 = ax1.collections[len(levels)-1].get_facecolor()
+        color2 = ax2.collections[len(levels)-1].get_edgecolor()
         assert_array_equal(color1, color2)
 
         plt.close("all")
