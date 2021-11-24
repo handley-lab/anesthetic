@@ -694,8 +694,11 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
-    facecolor = kwargs.pop('facecolor', color)
-    edgecolor = kwargs.pop('edgecolor', color)
+    facecolor = kwargs.pop('facecolor', True)
+    edgecolor = kwargs.pop('edgecolor', None)
+    cmap = kwargs.pop('cmap', None)
+    facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
+                                            ec=edgecolor, cmap=cmap)
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -715,7 +718,6 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
-        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         contf = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
                             zorder=zorder, vmin=0, vmax=pdf.max(),
                             *args, **kwargs)
@@ -727,14 +729,12 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     else:
         linewidths = kwargs.pop('linewidths',
                                 plt.rcParams.get('lines.linewidth'))
-        cmap = kwargs.pop('cmap', None)
         contf = None
         ax.add_patch(
             plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                           fc='None' if cmap is None else cmap(0.999),
                           ec=edgecolor if cmap is None else cmap(0.32))
         )
-        edgecolor = edgecolor if cmap is None else None
 
     vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=pdf.max())
     cont = ax.contour(x[i], y[j], pdf[np.ix_(j, i)], levels, zorder=zorder,
@@ -800,8 +800,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
-    facecolor = kwargs.pop('facecolor', color)
-    edgecolor = kwargs.pop('edgecolor', color)
+    facecolor = kwargs.pop('facecolor', True)
+    edgecolor = kwargs.pop('edgecolor', None)
+    cmap = kwargs.pop('cmap', None)
+    facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
+                                            ec=edgecolor, cmap=cmap)
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
@@ -835,7 +838,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
-        cmap = kwargs.pop('cmap', basic_cmap(facecolor))
         contf = ax.tricontourf(tri, p, levels=levels, cmap=cmap, zorder=zorder,
                                vmin=0, vmax=p.max(), *args, **kwargs)
         for c in contf.collections:
@@ -846,14 +848,12 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     else:
         linewidths = kwargs.pop('linewidths',
                                 plt.rcParams.get('lines.linewidth'))
-        cmap = kwargs.pop('cmap', None)
         contf = None
         ax.add_patch(
             plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                           fc='None' if cmap is None else cmap(0.999),
                           ec=edgecolor if cmap is None else cmap(0.32))
         )
-        edgecolor = edgecolor if cmap is None else None
 
     vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=p.max())
     cont = ax.tricontour(tri, p, levels=levels, zorder=zorder,
@@ -1049,3 +1049,22 @@ def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
     for key in set(drop) & set(kwargs.keys()):
         kwargs.pop(key)
     return kwargs
+
+
+def set_colors(c, fc, ec, cmap):
+    if fc in [None, 'None', 'none']:
+        # unfilled contours
+        if ec is None and cmap is None:
+            cmap = basic_cmap(c)
+    else:
+        # filled contours
+        if fc is True:
+            fc = c
+        if ec is None and cmap is None:
+            ec = c
+            cmap = basic_cmap(c)
+        elif ec is None:
+            ec = (cmap(1.),)
+        elif cmap is None:
+            cmap = basic_cmap(fc)
+    return fc, ec, cmap
