@@ -212,6 +212,9 @@ def test_plot_2d_legend():
     for y, row in axes.iterrows():
         for x, ax in row.iteritems():
             if ax is not None:
+                leg = ax.legend()
+                assert(leg.get_texts()[0].get_text() == 'l1')
+                assert(leg.get_texts()[1].get_text() == 'l2')
                 handles, labels = ax.get_legend_handles_labels()
                 assert(labels == ['l1', 'l2'])
                 if x == y:
@@ -228,6 +231,9 @@ def test_plot_2d_legend():
     for y, row in axes.iterrows():
         for x, ax in row.iteritems():
             if ax is not None:
+                leg = ax.legend()
+                assert(leg.get_texts()[0].get_text() == 'l1')
+                assert(leg.get_texts()[1].get_text() == 'l2')
                 handles, labels = ax.get_legend_handles_labels()
                 assert(labels == ['l1', 'l2'])
                 if x == y:
