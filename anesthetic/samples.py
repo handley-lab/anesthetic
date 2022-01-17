@@ -754,7 +754,7 @@ class NestedSamples(MCMCSamples):
                               "\nDropping the invalid samples." %
                               (n_bad, len(samples), n_equal),
                               RuntimeWarning)
-                samples = samples[~invalid].reset_index()
+                samples = samples[~invalid].reset_index(drop=True)
 
             samples['nlive'] = compute_nlive(samples.logL, samples.logL_birth)
 
