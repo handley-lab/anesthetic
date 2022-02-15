@@ -135,6 +135,31 @@ roots.append(root)
 ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
 ns[columns + ['logL', 'cluster']].to_csv(root + 'phys_live.points', sep=' ', index=False, header=False)
 
+# Run with single line live points file
+root = './tests/example_data/pc_single_live'
+roots.append(root)
+data, live = np.split(np.concatenate([data, live]), [-1])
+logL, live_logL = np.split(np.concatenate([logL, live_logL]), [-1])
+logL_birth, live_logL_birth = np.split(np.concatenate([logL_birth, live_logL_birth]), [-1])
+ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
+live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
+
+ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
+live_ns[columns + ['logL', 'logL_birth']].to_csv(root + '_phys_live-birth.txt', sep=' ', index=False, header=False)
+
+# Run with empty live points file
+root = './tests/example_data/pc_zero_live'
+roots.append(root)
+data, live = np.split(np.concatenate([data, live]), [len(data)+1])
+logL, live_logL = np.split(np.concatenate([logL, live_logL]), [len(data)+1])
+logL_birth, live_logL_birth = np.split(np.concatenate([logL_birth, live_logL_birth]), [len(data)+1])
+ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
+live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
+
+ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
+live_ns[columns + ['logL', 'logL_birth']].to_csv(root + '_phys_live-birth.txt', sep=' ', index=False, header=False)
+
+
 
 # Second run with different live points
 data, logL, logL_birth, live, live_logL, live_logL_birth = ns_sim(nlive=250)
