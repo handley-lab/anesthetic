@@ -138,9 +138,10 @@ ns[columns + ['logL', 'cluster']].to_csv(root + 'phys_live.points', sep=' ', ind
 # Run with single line live points file
 root = './tests/example_data/pc_single_live'
 roots.append(root)
-data, live = np.split(np.concatenate([data, live]), [-1])
-logL, live_logL = np.split(np.concatenate([logL, live_logL]), [-1])
-logL_birth, live_logL_birth = np.split(np.concatenate([logL_birth, live_logL_birth]), [-1])
+i = np.argsort(live_logL)
+data, live = np.split(np.concatenate([data, live[i]]), [-1])
+logL, live_logL = np.split(np.concatenate([logL, live_logL[i]]), [-1])
+logL_birth, live_logL_birth = np.split(np.concatenate([logL_birth, live_logL_birth[i]]), [-1])
 ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
 live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
 
