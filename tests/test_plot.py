@@ -8,7 +8,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d, quantile_plot_interval,
-                             basic_cmap)
+                             basic_cmap, AxesSeries, AxesDataFrame)
 from numpy.testing import assert_array_equal, assert_allclose
 
 from matplotlib.contour import QuadContourSet
@@ -21,6 +21,10 @@ from pandas.core.series import Series
 from pandas.core.frame import DataFrame
 from scipy.special import erf
 from scipy.interpolate import interp1d
+
+
+def test_AxesSeries():
+    assert isinstance(AxesSeries().to_frame(), AxesDataFrame)
 
 
 def test_make_1d_axes():
@@ -316,6 +320,7 @@ def test_kde_plot_1d(plot_1d):
         assert(xmin > 0.4)
         assert(xmax < 0.6)
         plt.close("all")
+
         # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
         fig, ax = plt.subplots()
         data = np.random.uniform(size=1000)
@@ -324,6 +329,16 @@ def test_kde_plot_1d(plot_1d):
         assert(xmin == 0)
         assert(xmax == 1)
         plt.close("all")
+
+        # Check corner cases
+        data = np.random.uniform(size=0)
+        line, fill = plot_1d(None, data)
+        assert_array_equal(line, np.zeros(0))
+        assert_array_equal(fill, np.zeros(0))
+
+        data = np.ones(100)
+        ans = plot_1d(None, data)
+        assert(ans is None)
 
     except ImportError:
         if 'fastkde' not in sys.modules:
@@ -411,6 +426,10 @@ def test_hist_plot_1d():
                                     xmin=xmin, xmax=xmax, plotter=p)
             assert((polygon.xy[:, 0] >= -0.5).all())
             assert((polygon.xy[:, 0] <= 0.5).all())
+
+            data = np.ones(100)
+            assert (hist_plot_1d(None, data) is None)
+
             plt.close("all")
         except ImportError:
             if p == 'astropyhist' and 'astropy' not in sys.modules:
@@ -438,6 +457,15 @@ def test_hist_plot_2d():
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     assert xmin > -3 and xmax < 3 and ymin > -3 and ymax < 3
+
+    hist_plot_2d(ax, data_x, data_y, weights=weights, cmin=0.1, cmax=0.2)
+
+    cf, ct = hist_plot_2d(None, [], np.ones(100))
+    assert_array_equal(cf, np.zeros(0))
+    assert_array_equal(ct, np.zeros(0))
+    cf, ct = hist_plot_2d(None, np.ones(100), [])
+    assert_array_equal(cf, np.zeros(0))
+    assert_array_equal(ct, np.zeros(0))
 
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
@@ -600,6 +628,16 @@ def test_contour_plot_2d(contour_plot_2d):
         assert(ymin == 0)
         assert(ymax == 1)
         plt.close("all")
+
+        cf, ct = contour_plot_2d(None, [], np.ones(100))
+        assert_array_equal(cf, np.zeros(0))
+        assert_array_equal(ct, np.zeros(0))
+        cf, ct = contour_plot_2d(None, np.ones(100), [])
+        assert_array_equal(cf, np.zeros(0))
+        assert_array_equal(ct, np.zeros(0))
+
+        ans = contour_plot_2d(None, None, xmin=1, xmax=0)
+        assert(ans is None)
 
     except ImportError:
         if 'fastkde' not in sys.modules:
