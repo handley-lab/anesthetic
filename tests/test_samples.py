@@ -581,8 +581,8 @@ def test_limit_assignment():
     assert ns.limits['x3'][0] == 0
     assert ns.limits['x3'][1] == 1
     # limits for logL, weights, nlive
-    assert ns.limits['logL'][0] == -777.0115456428716
-    assert ns.limits['logL'][1] == 5.748335384373301
+    assert np.isclose(ns.limits['logL'][0], -777.0115456428716)
+    assert np.isclose(ns.limits['logL'][1], 5.748335384373301)
     assert ns.limits['nlive'][0] == 1
     assert ns.limits['nlive'][1] == 125
     # limits for derived parameters:
