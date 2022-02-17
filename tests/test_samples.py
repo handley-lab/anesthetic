@@ -840,6 +840,16 @@ def test_recompute():
         mn.recompute()
 
 
+def test_unsorted():
+    np.random.seed(4)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    i = np.random.choice(len(pc), len(pc), replace=False)
+    pc_resort = NestedSamples(data=pc.loc[i, ['x0', 'x1', 'x2', 'x3', 'x4']],
+                              logL=pc.loc[i, 'logL'],
+                              logL_birth=pc.loc[i, 'logL_birth'])
+    assert_array_equal(pc_resort, pc)
+
+
 def test_copy():
     np.random.seed(3)
     pc = NestedSamples(root='./tests/example_data/pc')
