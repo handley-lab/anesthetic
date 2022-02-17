@@ -725,10 +725,12 @@ class NestedSamples(MCMCSamples):
             frame with contours resorted and nlive recomputed
             default: False
         """
-        samples = self.sort_values('logL').reset_index(drop=True)
+        samples = self.copy()
 
         if is_int(logL_birth):
             nlive = logL_birth
+            samples.sort_values('logL', inplace=True)
+            samples.reset_index(drop=True, inplace=True)
             samples['nlive'] = nlive
             descending = np.arange(nlive, 0, -1)
             samples.loc[len(samples)-nlive:, 'nlive'] = descending
@@ -756,6 +758,8 @@ class NestedSamples(MCMCSamples):
                               RuntimeWarning)
                 samples = samples[~invalid].reset_index(drop=True)
 
+            samples.sort_values('logL', inplace=True)
+            samples.reset_index(drop=True, inplace=True)
             samples['nlive'] = compute_nlive(samples.logL, samples.logL_birth)
 
         samples.tex['nlive'] = r'$n_{\rm live}$'
