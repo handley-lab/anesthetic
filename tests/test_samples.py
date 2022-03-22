@@ -874,3 +874,12 @@ def test_plotting_with_integer_names():
     assert_array_equal(samples_1.loc[:, 0], samples_1.iloc[:, 0])
     with pytest.raises(KeyError):
         samples_1['0']
+
+
+def test_credibility_interval():
+    np.random.seed(3)
+    samples = NestedSamples(root='./tests/example_data/pc')
+    assert np.allclose([-0.1001, 0.0951], samples.credibility_interval("x0", level=0.68, method="iso-probability"), atol=0.001)
+    assert np.isclose(0.1633, samples.credibility_interval("x0", level=0.95, method="upper-limit"), atol=0.001)
+    assert np.isclose(-0.0009, samples.credibility_interval("x0", level=0.5, method="lower-limit"), atol=0.001)
+

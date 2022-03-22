@@ -8,6 +8,8 @@ import numpy as np
 import pandas
 import copy
 import warnings
+from scipy.interpolate import interp1d
+from scipy.optimize import minimize_scalar
 from collections.abc import Sequence
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
@@ -344,6 +346,54 @@ class MCMCSamples(WeightedDataFrame):
                     self.plot(ax_, x, y, plot_type=plot_type, *args, **lkwargs)
 
         return fig, axes
+
+    def credibility_interval(self, key, level=0.68, method="iso-probability"):
+        """Compute marginalised credibility interval, also referred to as
+        confidence interval or iso-probability contour.
+        Parameters
+        ----------
+        key: str
+            Variable name
+        level: float
+            confidence level. Default 0.68
+        method: str
+            Whether to calculate iso-probability interval (interval with
+            same probability density at each end, "iso-probability", this
+            is also the smallest interval containing `level` fraction of
+            samples), or whether to compute one-sided limits "lower-limit" /
+            "upper-limit" for which `level` fraction of the samples lie
+            above / below the limit.
+        Returns
+        -------
+        limit: tuple or float
+            Tuple (iso-probability interval) or float (upper/lower limit)
+        """
+        assert level<1, "Level >= 1!"
+        samples = self[key]
+        weights = self.weights
+        # Sort and normalize
+        order = np.argsort(samples)
+        samples = samples[order]
+        weights = weights[order]/np.sum(weights)
+        # Compute inverse cumulative distribution function
+        # Insert 0 and 1 at the first and last value, respectively.
+        CDF = np.append(np.insert(np.cumsum(weights), 0, 0), 1)
+        S = np.array([np.min(samples), *samples, np.max(samples)])
+        invcdf = interp1d(CDF, S)
+        if method=="iso-probability":
+            # Find smallest interval
+            distance = lambda a, level=level: invcdf(a+level)-invcdf(a)
+            a = minimize_scalar(distance, bounds=(0,1-level), method="Bounded")
+            interval = (invcdf(a.x), invcdf(a.x+level))
+        elif method=="lower-limit":
+            # Get value from which we reach the desired level
+            interval = invcdf(1-level)
+        elif method=="upper-limit":
+            # Get value to which we reach the desired level
+            interval = invcdf(level)
+        else:
+            assert False, "unknown method: "+method
+        return interval
 
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
