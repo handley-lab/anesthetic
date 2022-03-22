@@ -885,6 +885,6 @@ def test_credibility_interval():
     assert np.isclose(samples.credibility_interval("x0", level=0.95,
                                                    method="upper-limit"),
                       0.1633, atol=0.001)
-    assert np.isclose(samples.credibility_interval("x0", level=0.95,
+    assert np.isclose(samples.credibility_interval("x0", level=0.5,
                                                    method="lower-limit"),
                       -0.0009, atol=0.001)
