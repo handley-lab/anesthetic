@@ -374,7 +374,7 @@ class MCMCSamples(WeightedDataFrame):
         limit: tuple or float
             Tuple (iso-probability interval) or float (upper/lower limit)
         """
-        assert level<1, "Level >= 1!"
+        assert level < 1, "Level >= 1 is not allowed!"
         samples = self[key]
         weights = self.weights
         # Sort and normalize
@@ -386,15 +386,17 @@ class MCMCSamples(WeightedDataFrame):
         CDF = np.append(np.insert(np.cumsum(weights), 0, 0), 1)
         S = np.array([np.min(samples), *samples, np.max(samples)])
         invcdf = interp1d(CDF, S)
-        if method=="iso-probability":
+        if method == "iso-probability":
             # Find smallest interval
-            distance = lambda a, level=level: invcdf(a+level)-invcdf(a)
-            a = minimize_scalar(distance, bounds=(0,1-level), method="Bounded")
+            def distance(a, level=level):
+                return invcdf(a+level)-invcdf(a)
+            a = minimize_scalar(distance, bounds=(0, 1-level),
+                                method="Bounded")
             interval = (invcdf(a.x), invcdf(a.x+level))
-        elif method=="lower-limit":
+        elif method == "lower-limit":
             # Get value from which we reach the desired level
             interval = invcdf(1-level)
-        elif method=="upper-limit":
+        elif method == "upper-limit":
             # Get value to which we reach the desired level
             interval = invcdf(level)
         else:

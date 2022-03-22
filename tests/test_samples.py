@@ -879,7 +879,12 @@ def test_plotting_with_integer_names():
 def test_credibility_interval():
     np.random.seed(3)
     samples = NestedSamples(root='./tests/example_data/pc')
-    assert np.allclose([-0.1001, 0.0951], samples.credibility_interval("x0", level=0.68, method="iso-probability"), atol=0.001)
-    assert np.isclose(0.1633, samples.credibility_interval("x0", level=0.95, method="upper-limit"), atol=0.001)
-    assert np.isclose(-0.0009, samples.credibility_interval("x0", level=0.5, method="lower-limit"), atol=0.001)
-
+    assert np.allclose(samples.credibility_interval("x0", level=0.68,
+                                                    method="iso-probability"),
+                       [-0.1001, 0.0951], atol=0.001)
+    assert np.isclose(samples.credibility_interval("x0", level=0.95,
+                                                   method="upper-limit"),
+                      0.1633, atol=0.001)
+    assert np.isclose(samples.credibility_interval("x0", level=0.95,
+                                                   method="lower-limit"),
+                      -0.0009, atol=0.001)
