@@ -348,8 +348,14 @@ class MCMCSamples(WeightedDataFrame):
         return fig, axes
 
     def credibility_interval(self, key, level=0.68, method="iso-probability"):
-        """Compute marginalised credibility interval, also referred to as
-        confidence interval or iso-probability contour.
+        """Compute the marginalised credibility interval, also referred to as
+        confidence interval or iso-probability contours. Also options to
+        compute upper or lower limits instead.
+
+        Note: This is based on the discrete set of points and weights without
+        interpolation. Discretization error is determined by the (normalized)
+        weights, i.e. is small for large sample sizes with small weights.
+
         Parameters
         ----------
         key: str
