@@ -874,3 +874,14 @@ def test_plotting_with_integer_names():
     assert_array_equal(samples_1.loc[:, 0], samples_1.iloc[:, 0])
     with pytest.raises(KeyError):
         samples_1['0']
+
+
+def test_logL_list():
+    np.random.seed(5)
+    default = NestedSamples(root='./tests/example_data/pc')
+    logL = default.logL.tolist()
+    logL_birth = default.logL_birth.tolist()
+    data = default.iloc[:, :5].to_numpy().tolist()
+
+    samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
+    assert_array_equal(default, samples)
