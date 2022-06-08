@@ -484,6 +484,17 @@ def test_weighted_merging():
     mean = samples.mean()['xtest']
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
+    # Test plot still works (see issue #189)
+    prior_samples = []
+    for i in range(3):
+        d = {"x": np.random.uniform(size=1000),
+             "y": np.random.uniform(size=1000)}
+        tmp = MCMCSamples(d)
+        prior_samples.append(tmp)
+    merge_prior = merge_samples_weighted(prior_samples, weights=np.ones(3))
+    merge_prior.plot_2d(["x", "y"])
+    plt.close('all')
+
     # Test if correct exceptions are raised:
     # MCMCSamples are passed without weights
     with pytest.raises(ValueError):
