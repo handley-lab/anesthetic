@@ -94,8 +94,8 @@ class MCMCSamples(WeightedDataFrame):
             logL = kwargs.pop('logL', None)
             if logL is not None:
                 logL = np.where(logL <= logzero, -np.inf, logL)
-                if np.any(np.isnan(logL)):
-                    raise ValueError("NaN found in likelihood values")
+                if np.any(pandas.isnull(logL)):
+                    raise ValueError("Null value encountered in logL")
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
