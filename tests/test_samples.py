@@ -86,6 +86,10 @@ def test_build_mcmc():
 
     assert(mcmc.root is None)
 
+    with pytest.raises(ValueError) as excinfo:
+        MCMCSamples(data=data, logL=np.full_like(logL, np.nan))
+    assert "Null value encountered in logL" in str(excinfo.value)
+
 
 def test_NS_input_fails_in_MCMCSamples():
     with pytest.raises(ValueError) as excinfo:
