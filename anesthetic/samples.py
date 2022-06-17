@@ -95,7 +95,7 @@ class MCMCSamples(WeightedDataFrame):
             if logL is not None:
                 logL = np.where(logL <= logzero, -np.inf, logL)
                 if np.any(pandas.isnull(logL)):
-                    raise ValueError("Null value encountered in logL")
+                    raise ValueError("Null value encountered in logL.")
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
