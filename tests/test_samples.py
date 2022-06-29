@@ -1,3 +1,4 @@
+import warnings
 import matplotlib_agg  # noqa: F401
 import sys
 import pytest
@@ -85,10 +86,6 @@ def test_build_mcmc():
     assert(np.all(ns.logL == logL))
 
     assert(mcmc.root is None)
-
-    with pytest.raises(ValueError) as excinfo:
-        MCMCSamples(data=data, logL=np.full_like(logL, np.nan))
-    assert "Null value encountered in logL." in str(excinfo.value)
 
 
 def test_NS_input_fails_in_MCMCSamples():
@@ -853,6 +850,13 @@ def test_recompute():
     mn = NestedSamples(root='./tests/example_data/mn_old')
     with pytest.raises(RuntimeError):
         mn.recompute()
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        pc["logL"] = np.full_like(pc["logL"], np.nan)
+        pc.recompute()
+        assert len(w) == 1
+        assert "Null value encountered in logL." in str(w[-1].message)
 
 
 def test_unsorted():
