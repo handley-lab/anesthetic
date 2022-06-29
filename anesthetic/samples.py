@@ -94,8 +94,6 @@ class MCMCSamples(WeightedDataFrame):
             logL = kwargs.pop('logL', None)
             if logL is not None:
                 logL = np.where(logL <= logzero, -np.inf, logL)
-                if np.any(pandas.isnull(logL)):
-                    raise ValueError("Null value encountered in logL.")
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
             self.label = kwargs.pop('label', None)
@@ -766,6 +764,10 @@ class NestedSamples(MCMCSamples):
 
         samples.tex['nlive'] = r'$n_{\rm live}$'
         samples.beta = samples._beta
+
+        if np.any(pandas.isnull(samples.logL)):
+            warnings.warn("Null value encountered in logL.", RuntimeWarning)
+
         return modify_inplace(self, samples, inplace)
 
     def _compute_insertion_indexes(self):
