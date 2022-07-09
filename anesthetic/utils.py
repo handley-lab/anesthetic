@@ -335,6 +335,11 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     w: array-like
         Compressed samples and weights
     """
+    # Pre-process samples to not be affected by non-standard indexing
+    # Details: https://github.com/williamjameshandley/anesthetic/issues/189
+    x = np.array(x)
+    y = np.array(y)
+
     x = pandas.Series(x)
     if w is None:
         w = pandas.Series(index=x.index, data=np.ones_like(x))
