@@ -805,6 +805,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
     kwargs.pop('q', None)
+    bw_method = kwargs.pop('bw_method', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
@@ -817,7 +818,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     cov = np.cov(data_x, data_y, aweights=weights)
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
                                               weights, ncompress)
-    kde = gaussian_kde([tri.x, tri.y], weights=w)
+    kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
 
     x, y = kde.resample(ncompress)
     x = np.concatenate([tri.x, x])
