@@ -516,6 +516,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
 
+    bw_method = kwargs.pop('bw_method', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
 
     xmin = kwargs.pop('xmin', None)
@@ -543,7 +544,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         weights = weights[weights != 0]
 
     x, w = sample_compression_1d(data, weights, ncompress)
-    kde = gaussian_kde(x, weights=w)
+    kde = gaussian_kde(x, weights=w, bw_method=bw_method)
     p = kde(x)
     p /= p.max()
     i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[1], w)))
@@ -789,6 +790,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            color=['c'],
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
+    bw_method = kwargs.pop('bw_method', None)
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
@@ -805,7 +807,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
     kwargs.pop('q', None)
-    bw_method = kwargs.pop('bw_method', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
         return np.zeros(0), np.zeros(0), np.zeros((0, 0))
