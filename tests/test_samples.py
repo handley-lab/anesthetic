@@ -856,7 +856,7 @@ def test_recompute():
         pc["logL"] = np.full_like(pc["logL"], np.nan)
         pc.recompute()
         assert len(w) == 1
-        assert "Null value encountered in logL." in str(w[-1].message)
+        assert "NaN encountered in logL." in str(w[-1].message)
 
 
 def test_unsorted():

@@ -765,8 +765,8 @@ class NestedSamples(MCMCSamples):
         samples.tex['nlive'] = r'$n_{\rm live}$'
         samples.beta = samples._beta
 
-        if np.any(pandas.isnull(samples.logL)):
-            warnings.warn("Null value encountered in logL.", RuntimeWarning)
+        if np.any(pandas.isna(samples.logL)):
+            warnings.warn("NaN encountered in logL.", RuntimeWarning)
 
         return modify_inplace(self, samples, inplace)
 
