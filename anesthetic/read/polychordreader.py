@@ -11,7 +11,8 @@ class PolyChordReader(GetDistReader):
         data = np.loadtxt(self.birth_file)
         try:
             _data = np.loadtxt(self.phys_live_birth_file)
-            data = np.concatenate([data, _data])
+            _data = np.atleast_2d(_data)
+            data = np.concatenate([data, _data]) if _data.size else data
             data = np.unique(data, axis=0)
             i = np.argsort(data[:, -2])
             data = data[i, :]
