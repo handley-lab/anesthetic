@@ -900,6 +900,7 @@ def test_credibility_interval():
                                                    method="lower-limit"),
                       -0.0009, atol=0.001)
 
+
 def test_logL_list():
     np.random.seed(5)
     default = NestedSamples(root='./tests/example_data/pc')
