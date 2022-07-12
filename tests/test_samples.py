@@ -592,8 +592,8 @@ def test_limit_assignment():
     assert ns.limits['x3'][0] == 0
     assert ns.limits['x3'][1] == 1
     # limits for logL, weights, nlive
-    assert ns.limits['logL'][0] == -777.0115456428716
-    assert ns.limits['logL'][1] == 5.748335384373301
+    assert np.isclose(ns.limits['logL'][0], -777.0115456428716)
+    assert np.isclose(ns.limits['logL'][1], 5.748335384373301)
     assert ns.limits['nlive'][0] == 1
     assert ns.limits['nlive'][1] == 125
     # limits for derived parameters:
@@ -899,3 +899,13 @@ def test_credibility_interval():
     assert np.isclose(samples.credibility_interval("x0", level=0.5,
                                                    method="lower-limit"),
                       -0.0009, atol=0.001)
+
+def test_logL_list():
+    np.random.seed(5)
+    default = NestedSamples(root='./tests/example_data/pc')
+    logL = default.logL.tolist()
+    logL_birth = default.logL_birth.tolist()
+    data = default.iloc[:, :5].to_numpy().tolist()
+
+    samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
+    assert_array_equal(default, samples)
