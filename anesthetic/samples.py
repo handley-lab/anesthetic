@@ -93,6 +93,7 @@ class MCMCSamples(WeightedDataFrame):
             logzero = kwargs.pop('logzero', -1e30)
             logL = kwargs.pop('logL', None)
             if logL is not None:
+                logL = np.array(logL)
                 logL = np.where(logL <= logzero, -np.inf, logL)
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
@@ -487,6 +488,7 @@ class NestedSamples(MCMCSamples):
             self._beta = kwargs.pop('beta', 1.)
             logL_birth = kwargs.pop('logL_birth', None)
             if not isinstance(logL_birth, int) and logL_birth is not None:
+                logL_birth = np.array(logL_birth)
                 logL_birth = np.where(logL_birth <= logzero, -np.inf,
                                       logL_birth)
 
