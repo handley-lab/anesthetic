@@ -127,7 +127,6 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
     samples = np.array(samples)[order]
     weights = np.array(weights)[order]/np.sum(weights)
     # Compute inverse cumulative distribution function
-    cumsum = np.cumsum(weights)
     S = np.array([np.min(samples), *samples, np.max(samples)])
     CDF = np.append(np.insert(np.cumsum(weights), 0, 0), 1)
     invCDF = interp1d(CDF, S)
