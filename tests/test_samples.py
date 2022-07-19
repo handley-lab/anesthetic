@@ -892,10 +892,10 @@ def test_credibility_interval():
     np.random.seed(3)
     samples = NestedSamples(root='./tests/example_data/pc')
     assert np.allclose(credibility_interval(samples["x0"], level=0.68,
-                      weights=samples.weights, method="hpd"),
+                       weights=samples.weights, method="hpd"),
                        [-0.1, 0.1], atol=0.02)
     assert np.allclose(credibility_interval(samples["x0"], level=0.95,
-                      weights=samples.weights, method="et"),
+                       weights=samples.weights, method="et"),
                        [-0.2, 0.2], atol=0.02)
     assert np.isclose(credibility_interval(samples["x0"], level=0.975,
                       weights=samples.weights, method="ul"),

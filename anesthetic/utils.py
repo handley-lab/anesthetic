@@ -147,6 +147,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
     else:
         raise ValueError("Method '{0:}' unknown".format(method))
 
+
 def check_bounds(d, xmin=None, xmax=None):
     """Check if we need to apply strict bounds."""
     if len(d) > 0:
