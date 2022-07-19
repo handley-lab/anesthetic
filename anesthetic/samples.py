@@ -8,8 +8,6 @@ import numpy as np
 import pandas
 import copy
 import warnings
-from scipy.interpolate import interp1d
-from scipy.optimize import minimize_scalar
 from collections.abc import Sequence
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
