@@ -87,9 +87,10 @@ def quantile(a, q, w=None, interpolation='linear'):
 
 
 def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
-    """Compute the credibility interval of weighted samples. Based on
-    linear interpolation of the cumulative density function, thus expected
-    discretization errors on the scale of distances between samples.
+    """Compute the credibility interval of weighted samples.
+
+    Based on linear interpolation of the cumulative density function, thus
+    expect discretization errors on the scale of distances between samples.
 
     Parameters
     ----------
