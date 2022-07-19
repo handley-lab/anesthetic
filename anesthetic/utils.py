@@ -85,6 +85,7 @@ def quantile(a, q, w=None, interpolation='linear'):
         quant = float(quant)
     return quant
 
+
 def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
     """Compute the credibility interval of weighted samples. Based on
     linear interpolation of the cumulative density function, thus expected
@@ -113,7 +114,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
     limit: tuple or float
         Tuple [lower, upper] for hpd/et, or float for ll/ul
     """
-    if level>=1:
+    if level >= 1:
         raise ValueError('level must be <1, got {0:.2f}'.format(level))
     if len(np.shape(samples)) != 1:
         raise ValueError('Support only 1D arrays for samples')
@@ -133,7 +134,8 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
 
     if method == "hpd":
         # Find smallest interval
-        distance = lambda Y, level=level: invCDF(Y+level)-invCDF(Y)
+        def distance(Y, level=level):
+            return invCDF(Y+level)-invCDF(Y)
         res = minimize_scalar(distance, bounds=(0, 1-level), method="Bounded")
         return np.array([invCDF(res.x), invCDF(res.x+level)])
     elif method == "ll":
