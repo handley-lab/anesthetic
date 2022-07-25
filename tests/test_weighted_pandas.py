@@ -207,19 +207,6 @@ def test_WeightedDataFrame_quantile():
         df.quantile(numeric_only=False)
 
 
-def test_WeightedDataFrame_hist():
-    plt.figure()
-    df = test_WeightedDataFrame_constructor()
-    axes = df[['A', 'B']].hist(bins=20, density=True)
-    for ax in axes.flatten():
-        assert len(ax.patches) == 20
-        norm = 0
-        for patch in ax.patches:
-            norm += patch.get_height() * patch.get_width()
-        assert norm == pytest.approx(1)
-    plt.close("all")
-
-
 def test_WeightedDataFrame_sample():
     df = test_WeightedDataFrame_constructor()
     sample = df.sample()
@@ -412,18 +399,6 @@ def test_WeightedSeries_quantile():
         series.quantile(numeric_only=False)
 
 
-def test_WeightedSeries_hist():
-    plt.figure()
-    series = test_WeightedSeries_constructor()
-    ax = series.hist(bins=20, density=True)
-    assert len(ax.patches) == 20
-    norm = 0
-    for patch in ax.patches:
-        norm += patch.get_height() * patch.get_width()
-    assert norm == pytest.approx(1)
-    plt.close("all")
-
-
 def test_WeightedSeries_sample():
     series = test_WeightedSeries_constructor()
     sample = series.sample()
@@ -465,3 +440,70 @@ def test_WeightedSeries_nan():
     assert_allclose(series.mean(), 0.5, atol=1e-2)
     assert_allclose(series.var(), 1./12, atol=1e-2)
     assert_allclose(series.std(), (1./12)**0.5, atol=1e-2)
+
+
+def mcmc_run():
+    m, s = 0.5, 0.1
+
+    def logL(x):
+        return x, -((x-m)**2).sum(axis=-1)/2/s**2
+
+    np.random.seed(0)
+    x0, logL0 = logL(np.random.normal(m, s, 4))
+    dat = []
+    for _ in range(3000):
+        dat.append(x0)
+        x1, logL1 = logL(np.random.normal(x0, s/2))
+        if np.log(np.random.rand()) < logL1 - logL0:
+            x0, logL0 = x1, logL1
+
+    df = DataFrame(dat, columns=["x", "y", "z", "w"])
+    weights = df.groupby(df.columns.tolist(), sort=False).size().values
+    wdf = WeightedDataFrame(df.drop_duplicates(), weights=weights)
+    return df, wdf
+
+
+def test_WeightedDataFrame_hist():
+    df, wdf = mcmc_run()
+
+    df_axes = df.hist()
+    wdf_axes = wdf.hist()
+    for df_ax, wdf_ax in zip(df_axes.flatten(), wdf_axes.flatten()):
+        for df_patch, wdf_patch in zip(df_ax.patches, wdf_ax.patches):
+            assert df_patch._height == wdf_patch._height
+            assert df_patch._width == wdf_patch._width
+            assert df_patch._x0 == wdf_patch._x0
+            assert df_patch._y0 == wdf_patch._y0
+
+    df_axes = df.plot.hist(subplots=True)
+    wdf_axes = wdf.plot.hist(subplots=True)
+    for df_ax, wdf_ax in zip(df_axes.flatten(), wdf_axes.flatten()):
+        for df_patch, wdf_patch in zip(df_ax.patches, wdf_ax.patches):
+            assert df_patch._height == wdf_patch._height
+            assert df_patch._width == wdf_patch._width
+            assert df_patch._x0 == wdf_patch._x0
+            assert df_patch._y0 == wdf_patch._y0
+
+
+def test_WeightedSeries_hist():
+    df, wdf = mcmc_run()
+
+    fig, axes = plt.subplots(2)
+    df.x.hist(ax=axes[0])
+    wdf.x.hist(ax=axes[1])
+
+    for df_patch, wdf_patch in zip(axes[0].patches, axes[1].patches):
+        assert df_patch._height == wdf_patch._height
+        assert df_patch._width == wdf_patch._width
+        assert df_patch._x0 == wdf_patch._x0
+        assert df_patch._y0 == wdf_patch._y0
+
+    fig, axes = plt.subplots(2)
+    df.x.plot.hist(ax=axes[0])
+    wdf.x.plot.hist(ax=axes[1])
+
+    for df_patch, wdf_patch in zip(axes[0].patches, axes[1].patches):
+        assert df_patch._height == wdf_patch._height
+        assert df_patch._width == wdf_patch._width
+        assert df_patch._x0 == wdf_patch._x0
+        assert df_patch._y0 == wdf_patch._y0
