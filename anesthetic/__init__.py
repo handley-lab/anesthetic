@@ -11,6 +11,8 @@ Key routines:
 import anesthetic.samples
 import anesthetic.plot
 
+from pandas import set_option as _set_option
+_set_option('plotting.backend', 'anesthetic._matplotlib')
 
 MCMCSamples = anesthetic.samples.MCMCSamples
 NestedSamples = anesthetic.samples.NestedSamples
