@@ -1,7 +1,11 @@
 import pandas.plotting._matplotlib.hist
 import numpy as np
-import pandas as pd
 from anesthetic.weighted_pandas import _WeightedObject
+from pandas.core.dtypes.missing import (
+    isna,
+    remove_na_arraylike,
+)
+from pandas.plotting._matplotlib.core import MPLPlot
 
 
 class HistPlot(pandas.plotting._matplotlib.hist.HistPlot):
@@ -9,7 +13,7 @@ class HistPlot(pandas.plotting._matplotlib.hist.HistPlot):
     def _calculate_bins(self, data):
         nd_values = data._convert(datetime=True)._get_numeric_data()
         values = np.ravel(nd_values)
-        values = values[~pd.isna(values)]
+        values = values[~isna(values)]
 
         hist, bins = np.histogram(
             values, bins=self.bins, range=self.kwds.get("range", None),
@@ -21,6 +25,32 @@ class HistPlot(pandas.plotting._matplotlib.hist.HistPlot):
         if isinstance(self.data, _WeightedObject):
             self.kwds['weights'] = self.data.weights
         return super()._make_plot()
+
+
+class KdePlot(HistPlot, pandas.plotting._matplotlib.hist.KdePlot):
+    # noqa: disable=D101
+    @classmethod
+    def _plot(
+        cls,
+        ax,
+        y,
+        style=None,
+        bw_method=None,
+        ind=None,
+        column_num=None,
+        stacking_id=None,
+        **kwds,
+    ):
+        from scipy.stats import gaussian_kde
+        weights = kwds.pop("weights", None)
+        print("weights:", weights)
+
+        y = remove_na_arraylike(y)
+        gkde = gaussian_kde(y, bw_method=bw_method, weights=weights)
+
+        y = gkde.evaluate(ind)
+        lines = MPLPlot._plot(ax, ind, y, style=style, **kwds)
+        return lines
 
 
 def hist_frame(data, *args, **kwds):

@@ -12,7 +12,10 @@ import anesthetic.samples
 import anesthetic.plot
 
 from pandas import set_option as _set_option
+from pandas.plotting._core import _backends
 _set_option('plotting.backend', 'anesthetic._matplotlib')
+_backends['matplotlib'] = _backends.pop('anesthetic._matplotlib')
+
 
 MCMCSamples = anesthetic.samples.MCMCSamples
 NestedSamples = anesthetic.samples.NestedSamples
