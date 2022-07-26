@@ -1,9 +1,11 @@
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.utils import channel_capacity
 from pandas import Series, DataFrame
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 import matplotlib.pyplot as plt
+from pandas.plotting import scatter_matrix, bootstrap_plot
 
 
 def test_WeightedSeries_constructor():
@@ -470,19 +472,19 @@ def test_WeightedDataFrame_hist():
     wdf_axes = wdf.hist()
     for df_ax, wdf_ax in zip(df_axes.flatten(), wdf_axes.flatten()):
         for df_patch, wdf_patch in zip(df_ax.patches, wdf_ax.patches):
-            assert df_patch._height == wdf_patch._height
-            assert df_patch._width == wdf_patch._width
-            assert df_patch._x0 == wdf_patch._x0
-            assert df_patch._y0 == wdf_patch._y0
+            assert df_patch.get_height() == wdf_patch.get_height()
+            assert df_patch.get_width() == wdf_patch.get_width()
+            assert df_patch.get_xy() == wdf_patch.get_xy()
 
     df_axes = df.plot.hist(subplots=True)
     wdf_axes = wdf.plot.hist(subplots=True)
     for df_ax, wdf_ax in zip(df_axes.flatten(), wdf_axes.flatten()):
         for df_patch, wdf_patch in zip(df_ax.patches, wdf_ax.patches):
-            assert df_patch._height == wdf_patch._height
-            assert df_patch._width == wdf_patch._width
-            assert df_patch._x0 == wdf_patch._x0
-            assert df_patch._y0 == wdf_patch._y0
+            assert df_patch.get_height() == wdf_patch.get_height()
+            assert df_patch.get_width() == wdf_patch.get_width()
+            assert df_patch.get_xy() == wdf_patch.get_xy()
+
+    plt.close("all")
 
 
 def test_WeightedSeries_hist():
@@ -493,17 +495,49 @@ def test_WeightedSeries_hist():
     wdf.x.hist(ax=axes[1])
 
     for df_patch, wdf_patch in zip(axes[0].patches, axes[1].patches):
-        assert df_patch._height == wdf_patch._height
-        assert df_patch._width == wdf_patch._width
-        assert df_patch._x0 == wdf_patch._x0
-        assert df_patch._y0 == wdf_patch._y0
+        assert df_patch.get_height() == wdf_patch.get_height()
+        assert df_patch.get_width() == wdf_patch.get_width()
+        assert df_patch.get_xy() == wdf_patch.get_xy()
 
     fig, axes = plt.subplots(2)
     df.x.plot.hist(ax=axes[0])
     wdf.x.plot.hist(ax=axes[1])
 
     for df_patch, wdf_patch in zip(axes[0].patches, axes[1].patches):
-        assert df_patch._height == wdf_patch._height
-        assert df_patch._width == wdf_patch._width
-        assert df_patch._x0 == wdf_patch._x0
-        assert df_patch._y0 == wdf_patch._y0
+        assert df_patch.get_height() == wdf_patch.get_height()
+        assert df_patch.get_width() == wdf_patch.get_width()
+        assert df_patch.get_xy() == wdf_patch.get_xy()
+
+    plt.close("all")
+
+
+def test_KdePlot():
+    df, wdf = mcmc_run()
+
+    bw_method = 0.3
+    ax = df.x.plot.kde(bw_method=bw_method)
+    ax = wdf.x.plot.kde(bw_method=bw_method)
+    df_line, wdf_line = ax.lines
+    assert (df_line.get_xdata() == wdf_line.get_xdata()).all()
+    assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-4)
+
+    plt.close("all")
+
+
+def test_scatter_matrix():
+    df, wdf = mcmc_run()
+    np.random.seed(0)
+
+    scatter_matrix(df)
+    axes = scatter_matrix(wdf)
+    n = len(axes[0, 1].collections[0].get_offsets().data)
+    neff = channel_capacity(wdf.weights)
+    assert_allclose(n, neff, atol=np.sqrt(n))
+
+    plt.close("all")
+
+
+def test_boostrap_plot():
+    df, wdf = mcmc_run()
+    bootstrap_plot(wdf.x)
+    plt.close("all")
