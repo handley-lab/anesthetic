@@ -1,6 +1,5 @@
 from pandas.plotting._matplotlib import (  # noqa: F401
         PLOT_CLASSES,
-        TYPE_CHECKING,
         __name__,
         __all__,
         plot,
@@ -35,9 +34,6 @@ from pandas.plotting._matplotlib import (  # noqa: F401
     radviz,
     table,
 )
-
-if TYPE_CHECKING:
-    from pandas.plotting._matplotlib.core import MPLPlot  # noqa: F401
 
 PLOT_CLASSES['hist'] = HistPlot
 PLOT_CLASSES['kde'] = KdePlot
