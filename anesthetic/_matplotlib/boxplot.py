@@ -1,6 +1,10 @@
 from pandas.plotting._matplotlib.boxplot import BoxPlot as _BoxPlot
 from pandas.plotting._matplotlib.boxplot import _grouped_plot_by_column
-from pandas.plotting._matplotlib.style import get_standard_colors
+try:
+    from pandas.plotting._matplotlib.style import get_standard_colors
+except ImportError:
+    from pandas.plotting._matplotlib.style import (_get_standard_colors
+                                                   as get_standard_colors)
 from anesthetic.weighted_pandas import _WeightedObject
 from anesthetic.utils import quantile
 from pandas.core.dtypes.common import is_dict_like

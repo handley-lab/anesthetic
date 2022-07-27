@@ -11,10 +11,25 @@ Key routines:
 import anesthetic.samples
 import anesthetic.plot
 
-from pandas import set_option as _set_option
-from pandas.plotting._core import _backends
-_set_option('plotting.backend', 'anesthetic._matplotlib')
-_backends['matplotlib'] = _backends.pop('anesthetic._matplotlib')
+import pandas
+import pandas.plotting._core
+import pandas.plotting._misc
+
+
+def _anesthetic_override(function):
+    def wrapper(backend=None):
+        if backend == 'matplotlib':
+            return function('anesthetic._matplotlib')
+        return function(backend)
+    return wrapper
+
+
+pandas.plotting._core._get_plot_backend = \
+        _anesthetic_override(pandas.plotting._core._get_plot_backend)
+pandas.plotting._misc._get_plot_backend = \
+        _anesthetic_override(pandas.plotting._misc._get_plot_backend)
+
+pandas.options.plotting.backend = 'anesthetic._matplotlib'
 
 
 MCMCSamples = anesthetic.samples.MCMCSamples
