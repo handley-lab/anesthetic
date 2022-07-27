@@ -61,39 +61,39 @@ def boxplot(data, *args, **kwds):
         kwds['weights'] = data.weights
 
     def create_plot_group():
-        fontsize = None
-        kwds = None
-        maybe_color_bp = None
-        return_type = None
-        rot = None
+        fontsize = None  # pragma: no cover
+        kwds = None  # pragma: no cover
+        maybe_color_bp = None  # pragma: no cover
+        return_type = None  # pragma: no cover
+        rot = None  # pragma: no cover
 
-        def plot_group(keys, values, ax, **kwargs):
+        def plot_group(keys, values, ax, **kwargs):  # pragma: no cover
             # GH 45465: xlabel/ylabel need to be popped out before plotting
-            xlabel = kwargs.pop("xlabel", None)
-            ylabel = kwargs.pop("ylabel", None)
+            xlabel = kwds.pop("xlabel", None)
+            ylabel = kwds.pop("ylabel", None)
             if xlabel:
                 ax.set_xlabel(pprint_thing(xlabel))
             if ylabel:
                 ax.set_ylabel(pprint_thing(ylabel))
 
-            weights = kwds.get("weights", None)
+            weights = kwds.pop("weights", None)
             keys = [pprint_thing(x) for x in keys]
             if weights is None:
                 values = [np.asarray(remove_na_arraylike(v), dtype=object)
                           for v in values]
-                bp = ax.boxplot(values, **kwargs)
+                bp = ax.boxplot(values, **kwds)
             else:
-                whis = kwargs.pop("whis", 1.5)
-                kwargs['showfliers'] = False
+                whis = kwds.pop("whis", 1.5)
+                kwds['showfliers'] = False
                 from anesthetic._matplotlib.boxplot import _bxpstat
                 bp = ax.bxp([_bxpstat(v, weights, whis) for v in values],
-                            **kwargs)
+                            **kwds)
 
             if fontsize is not None:
                 ax.tick_params(axis="both", labelsize=fontsize)
 
             # GH 45465: x/y are flipped when "vert" changes
-            is_vertical = kwargs.get("vert", True)
+            is_vertical = kwds.get("vert", True)
             ticks = ax.get_xticks() if is_vertical else ax.get_yticks()
             if len(ticks) != len(keys):
                 i, remainder = divmod(len(ticks), len(keys))
@@ -103,7 +103,7 @@ def boxplot(data, *args, **kwds):
                 ax.set_xticklabels(keys, rotation=rot)
             else:
                 ax.set_yticklabels(keys, rotation=rot)
-            maybe_color_bp(bp, **kwargs)
+            maybe_color_bp(bp, **kwds)
 
             # Return axes in multiplot case, maybe revisit later # 985
             if return_type == "dict":

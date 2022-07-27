@@ -574,6 +574,16 @@ def test_BoxPlot():
 
     plt.close("all")
 
+    for return_type in ['dict', 'both']:
+        wdf.plot.box(return_type=return_type)
+        wdf.boxplot(return_type=return_type)
+
+    wdf.boxplot(xlabel='xlabel')
+    wdf.boxplot(ylabel='ylabel')
+
+    wdf.boxplot(vert=False)
+    wdf.boxplot(fontsize=30)
+
 
 def test_ScatterPlot():
     df, wdf = mcmc_run()

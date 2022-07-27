@@ -6,10 +6,6 @@ def replace_inner_function(outer, new_inner):
 
     Code taken from https://stackoverflow.com/a/27550237
     """
-    if hasattr(new_inner, '__code__'):
-        # support both functions and code objects
-        new_inner = new_inner.__code__
-
     # find original code object so we can validate the closures match
     ocode = outer.__code__
     function, code = type(outer), type(ocode)
