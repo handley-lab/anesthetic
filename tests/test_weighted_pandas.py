@@ -587,5 +587,5 @@ def test_ScatterPlot():
 def test_HexBinPLot():
     df, wdf = mcmc_run()
 
-    ax1 = df.plot.hexbin('x','y')
-    ax2 = wdf.plot.hexbin('x','y')
+    df.plot.hexbin('x', 'y')
+    wdf.plot.hexbin('x', 'y')
