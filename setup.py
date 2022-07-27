@@ -56,5 +56,5 @@ setup(name='anesthetic',
                    'Topic :: Scientific/Engineering :: Visualization',
                    'Topic :: Scientific/Engineering :: Information Analysis',
                    'Topic :: Scientific/Engineering :: Mathematics',
-      ]
+      ],
       )

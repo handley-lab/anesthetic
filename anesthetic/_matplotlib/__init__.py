@@ -1,3 +1,4 @@
+"""anesthetic override of matplotlib backend for weighted samples."""
 from pandas.plotting._matplotlib import (  # noqa: F401
         PLOT_CLASSES,
         __name__,
