@@ -9,13 +9,13 @@ from pandas.plotting._matplotlib import (  # noqa: F401
 )
 
 
-"""
-from anesthetic._matplotlib.boxplot import (
+from anesthetic._matplotlib.boxplot import (  # noqa: F401
     BoxPlot,
     boxplot,
     boxplot_frame,
-    boxplot_frame_groupby,
 )
+from pandas.plotting._matplotlib import boxplot_frame_groupby  # noqa: F401
+"""
 from pandas.plotting._matplotlib.core import (
     AreaPlot,
     BarhPlot,
@@ -26,17 +26,17 @@ from pandas.plotting._matplotlib.core import (
     ScatterPlot,
 )
 """
-from anesthetic._matplotlib.hist import (
+from anesthetic._matplotlib.hist import (  # noqa: F401
     HistPlot,
     KdePlot,
     hist_frame,
     hist_series,
 )
-from anesthetic._matplotlib.misc import (
+from anesthetic._matplotlib.misc import (  # noqa: F401
     bootstrap_plot,
     scatter_matrix,
 )
-from pandas.plotting._matplotlib import (
+from pandas.plotting._matplotlib import (  # noqa: F401
     andrews_curves,
     autocorrelation_plot,
     lag_plot,
@@ -50,3 +50,4 @@ if TYPE_CHECKING:
 
 PLOT_CLASSES['hist'] = HistPlot
 PLOT_CLASSES['kde'] = KdePlot
+PLOT_CLASSES['box'] = BoxPlot

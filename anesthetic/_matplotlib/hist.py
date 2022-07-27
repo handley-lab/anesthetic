@@ -1,3 +1,5 @@
+from pandas.plotting._matplotlib.hist import HistPlot as _HistPlot
+from pandas.plotting._matplotlib.hist import KdePlot as _KdePlot
 import pandas.plotting._matplotlib.hist
 import numpy as np
 from anesthetic.weighted_pandas import _WeightedObject
@@ -8,7 +10,7 @@ from pandas.core.dtypes.missing import (
 from pandas.plotting._matplotlib.core import MPLPlot
 
 
-class HistPlot(pandas.plotting._matplotlib.hist.HistPlot):
+class HistPlot(_HistPlot):
     # noqa: disable=D101
     def _calculate_bins(self, data):
         nd_values = data._convert(datetime=True)._get_numeric_data()
@@ -27,7 +29,7 @@ class HistPlot(pandas.plotting._matplotlib.hist.HistPlot):
         return super()._make_plot()
 
 
-class KdePlot(HistPlot, pandas.plotting._matplotlib.hist.KdePlot):
+class KdePlot(HistPlot, _KdePlot):
     # noqa: disable=D101
     @classmethod
     def _plot(
@@ -43,7 +45,6 @@ class KdePlot(HistPlot, pandas.plotting._matplotlib.hist.KdePlot):
     ):
         from scipy.stats import gaussian_kde
         weights = kwds.pop("weights", None)
-        print("weights:", weights)
 
         y = remove_na_arraylike(y)
         gkde = gaussian_kde(y, bw_method=bw_method, weights=weights)
