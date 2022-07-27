@@ -570,3 +570,22 @@ def test_BoxPlot():
     wdf.groupby('split').boxplot()
 
     plt.close("all")
+
+
+def test_ScatterPlot():
+    df, wdf = mcmc_run()
+    np.random.seed(0)
+
+    df.plot.scatter('x', 'y')
+    ax = wdf.plot.scatter('x', 'y')
+
+    n = len(ax.collections[0].get_offsets().data)
+    neff = channel_capacity(wdf.weights)
+    assert_allclose(n, neff, atol=np.sqrt(n))
+
+
+def test_HexBinPLot():
+    df, wdf = mcmc_run()
+
+    ax1 = df.plot.hexbin('x','y')
+    ax2 = wdf.plot.hexbin('x','y')
