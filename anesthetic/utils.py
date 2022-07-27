@@ -69,8 +69,8 @@ def compress_weights(w, u=None, nsamples=None):
     return (integer + extra).astype(int)
 
 
-def quantile(a, q, w=None, interpolation='linear'):
-    """Compute the weighted quantile for a one dimensional array."""
+def cdf(a, w=None, inverse=False, interpolation='linear'):
+    """Compute the weighted (inverse) empirical cdf for a 1d array."""
     if w is None:
         w = np.ones_like(a)
     a = np.array(list(a))  # Necessary to convert pandas arrays
@@ -79,7 +79,15 @@ def quantile(a, q, w=None, interpolation='linear'):
     c = np.cumsum(w[i[1:]]+w[i[:-1]])
     c /= c[-1]
     c = np.concatenate(([0.], c))
-    icdf = interp1d(c, a[i], kind=interpolation)
+    if inverse:
+        return interp1d(c, a[i], kind=interpolation)
+    else:
+        return interp1d(a[i], c, kind=interpolation)
+
+
+def quantile(a, q, w=None, interpolation='linear'):
+    """Compute the weighted quantile for a one dimensional array."""
+    icdf = cdf(a, w, inverse=True, interpolation=interpolation)
     quant = icdf(q)
     if isinstance(q, float):
         quant = float(quant)
@@ -124,15 +132,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
     if weights is not None and np.shape(samples) != np.shape(weights):
         raise ValueError('Shape of samples and weights differs')
 
-    weights = np.ones(len(samples)) if weights is None else weights
-    # Sort and normalize
-    order = np.argsort(samples)
-    samples = np.array(samples)[order]
-    weights = np.array(weights)[order]/np.sum(weights)
-    # Compute inverse cumulative distribution function
-    S = np.array([np.min(samples), *samples, np.max(samples)])
-    CDF = np.append(np.insert(np.cumsum(weights), 0, 0), 1)
-    invCDF = interp1d(CDF, S)
+    invCDF = cdf(samples, weights, inverse=True)
 
     if method == "hpd":
         # Find smallest interval
