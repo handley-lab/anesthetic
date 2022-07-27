@@ -57,4 +57,7 @@ setup(name='anesthetic',
                    'Topic :: Scientific/Engineering :: Information Analysis',
                    'Topic :: Scientific/Engineering :: Mathematics',
       ],
+      entry_points={
+          "pandas_plotting_backends": ["matplotlib = anesthetic:_matplotlib"],
+          }
       )
