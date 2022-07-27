@@ -515,9 +515,10 @@ def test_KdePlot():
     df, wdf = mcmc_run()
 
     bw_method = 0.3
-    ax = df.x.plot.kde(bw_method=bw_method)
-    ax = wdf.x.plot.kde(bw_method=bw_method)
-    df_line, wdf_line = ax.lines
+    fig, axes = plt.subplots(2)
+    df.x.plot.kde(bw_method=bw_method, ax=axes[0])
+    wdf.x.plot.kde(bw_method=bw_method, ax=axes[1])
+    df_line, wdf_line = axes[0].lines[0], axes[1].lines[0]
     assert (df_line.get_xdata() == wdf_line.get_xdata()).all()
     assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-4)
 
@@ -537,7 +538,35 @@ def test_scatter_matrix():
     plt.close("all")
 
 
-def test_boostrap_plot():
+def test_bootstrap_plot():
     df, wdf = mcmc_run()
     bootstrap_plot(wdf.x)
+    plt.close("all")
+
+
+def test_BoxPlot():
+    df, wdf = mcmc_run()
+
+    df.plot.box()
+    wdf.plot.box()
+
+    df.boxplot()
+    wdf.boxplot()
+
+    plt.close("all")
+    df.x.plot.box()
+    plt.close("all")
+    wdf.x.plot.box()
+
+    df['split'] = ''
+    df.loc[:len(df)//2, 'split'] = 'A'
+    df.loc[len(df)//2:, 'split'] = 'B'
+
+    wdf['split'] = ''
+    wdf.iloc[:len(wdf)//2, -1] = 'A'
+    wdf.iloc[len(wdf)//2:, -1] = 'B'
+
+    df.groupby('split').boxplot()
+    wdf.groupby('split').boxplot()
+
     plt.close("all")
