@@ -92,6 +92,8 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
     Based on linear interpolation of the cumulative density function, thus
     expect discretization errors on the scale of distances between samples.
 
+    https://github.com/Stefan-Heimersheim/fastCI#readme
+
     Parameters
     ----------
     samples: array
