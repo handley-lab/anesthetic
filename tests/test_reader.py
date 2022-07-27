@@ -90,8 +90,14 @@ def test_read_polychord():
     os.rename('./tests/example_data/pc_phys_live-birth.txt_',
               './tests/example_data/pc_phys_live-birth.txt')
 
+    ns_zero_live = NestedSamples(root='./tests/example_data/pc_zero_live')
+
+    ns_single_live = NestedSamples(root='./tests/example_data/pc_single_live')
+
     cols = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth']
     assert_array_equal(ns_nolive[cols], ns[cols][:ns_nolive.shape[0]])
+    assert_array_equal(ns_zero_live[cols], ns[cols])
+    assert_array_equal(ns_single_live[cols], ns[cols])
 
 
 @pytest.mark.xfail('getdist' not in sys.modules,
