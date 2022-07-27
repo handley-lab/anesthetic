@@ -904,6 +904,15 @@ def test_credibility_interval():
                       weights=samples.weights, method="ll"),
                       0, atol=0.001)
 
+    with pytest.raises(ValueError):
+        credibility_interval(samples[['x0', 'x1']])
+
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, weights=[1, 2, 3])
+
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, method='foo')
+
 
 def test_logL_list():
     np.random.seed(5)
