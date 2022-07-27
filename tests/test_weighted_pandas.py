@@ -558,6 +558,9 @@ def test_BoxPlot():
     plt.close("all")
     wdf.x.plot.box()
 
+    df.plot.box(subplots=True)
+    wdf.plot.box(subplots=True)
+
     df['split'] = ''
     df.loc[:len(df)//2, 'split'] = 'A'
     df.loc[len(df)//2:, 'split'] = 'B'

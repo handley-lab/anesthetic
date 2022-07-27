@@ -30,8 +30,7 @@ class BoxPlot(_BoxPlot):
     # noqa: disable=D101
     @classmethod
     def _plot(cls, ax, y, column_num=None, return_type="axes", **kwds):
-        ndim2 = y.ndim == 2
-        if ndim2:
+        if y.ndim == 2:
             y = [remove_na_arraylike(v) for v in y]
             # Boxplot fails with empty arrays, so need to add a NaN
             #   if any cols are empty
@@ -47,11 +46,8 @@ class BoxPlot(_BoxPlot):
         else:
             whis = kwds.pop("whis", 1.5)
             kwds['showfliers'] = False
-
-            if ndim2:
-                bp = ax.bxp([_bxpstat(yi, weights, whis) for yi in y], **kwds)
-            else:
-                bp = ax.bxp(_bxpstat(y, weights, whis), **kwds)
+            y = np.atleast_2d(y)
+            bp = ax.bxp([_bxpstat(yi, weights, whis) for yi in y], **kwds)
 
         if return_type == "dict":
             return bp, bp
