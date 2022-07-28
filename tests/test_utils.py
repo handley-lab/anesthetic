@@ -2,14 +2,16 @@ import warnings
 import numpy as np
 import pytest
 from scipy import special as sp
-from numpy.testing import assert_array_equal
+from numpy.testing import (assert_array_equal, assert_allclose,
+                           assert_array_almost_equal)
 from anesthetic import NestedSamples
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
-                              insertion_p_value)
+                              insertion_p_value,
+                              credibility_interval, cdf)
 
 
 def test_nest_level():
@@ -153,3 +155,47 @@ def test_p_values_from_sample():
 
     ks_results = insertion_p_value(ns.insertion[nlive:-nlive], nlive, batch=1)
     assert ks_results['p-value'] > 0.05
+
+
+def test_cdf():
+    np.random.seed(3)
+    data = np.random.randn(10000)
+    weights = np.random.rand(10000)
+
+    CDF = cdf(data, weights)
+    ICDF = cdf(data, weights, inverse=True)
+
+    linspace = np.linspace(0, 1, 1001)[1:-1]
+    assert_array_almost_equal(linspace, CDF(ICDF(linspace)))
+
+    sigs = [CDF(i)-CDF(-i) for i in [1, 2, 3]]
+    assert_allclose(sigs, [0.6827, 0.9545, 0.9973], atol=0.01)
+
+
+def test_credibility_interval():
+    np.random.seed(3)
+    samples = NestedSamples(root='./tests/example_data/pc')
+    assert_allclose(credibility_interval(samples["x0"], level=0.68,
+                    weights=samples.weights, method="hpd"),
+                    [-0.1, 0.1], atol=0.02)
+    assert_allclose(credibility_interval(samples["x0"], level=0.95,
+                    weights=samples.weights, method="et"),
+                    [-0.2, 0.2], atol=0.02)
+    assert_allclose(credibility_interval(samples["x0"], level=0.975,
+                    weights=samples.weights, method="ul"),
+                    0.2, atol=0.02)
+    assert_allclose(credibility_interval(samples["x0"], level=0.5,
+                    weights=samples.weights, method="ll"),
+                    0, atol=0.001)
+
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, level=1.1)
+
+    with pytest.raises(ValueError):
+        credibility_interval(samples[['x0', 'x1']])
+
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, weights=[1, 2, 3])
+
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, method='foo')

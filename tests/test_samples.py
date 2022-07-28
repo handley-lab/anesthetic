@@ -8,7 +8,6 @@ from matplotlib.patches import Rectangle
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
 from anesthetic.samples import merge_nested_samples
 from anesthetic.samples import merge_samples_weighted
-from anesthetic.utils import credibility_interval
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less)
 from pandas.testing import assert_frame_equal
@@ -886,32 +885,6 @@ def test_plotting_with_integer_names():
     assert_array_equal(samples_1.loc[:, 0], samples_1.iloc[:, 0])
     with pytest.raises(KeyError):
         samples_1['0']
-
-
-def test_credibility_interval():
-    np.random.seed(3)
-    samples = NestedSamples(root='./tests/example_data/pc')
-    assert np.allclose(credibility_interval(samples["x0"], level=0.68,
-                       weights=samples.weights, method="hpd"),
-                       [-0.1, 0.1], atol=0.02)
-    assert np.allclose(credibility_interval(samples["x0"], level=0.95,
-                       weights=samples.weights, method="et"),
-                       [-0.2, 0.2], atol=0.02)
-    assert np.isclose(credibility_interval(samples["x0"], level=0.975,
-                      weights=samples.weights, method="ul"),
-                      0.2, atol=0.02)
-    assert np.isclose(credibility_interval(samples["x0"], level=0.5,
-                      weights=samples.weights, method="ll"),
-                      0, atol=0.001)
-
-    with pytest.raises(ValueError):
-        credibility_interval(samples[['x0', 'x1']])
-
-    with pytest.raises(ValueError):
-        credibility_interval(samples.x0, weights=[1, 2, 3])
-
-    with pytest.raises(ValueError):
-        credibility_interval(samples.x0, method='foo')
 
 
 def test_logL_list():
