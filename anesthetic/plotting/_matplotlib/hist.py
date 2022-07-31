@@ -8,8 +8,17 @@ from pandas.core.dtypes.missing import (
 )
 from pandas.plotting._matplotlib.core import MPLPlot, PlanePlot
 from typing import Literal
-from anesthetic.plotting._matplotlib.core import _WeightedMPLPlot, _CompressedMPLPlot, _get_weights
-from anesthetic.plot import kde_contour_plot_2d, hist_plot_2d, fastkde_contour_plot_2d, kde_plot_1d, fastkde_plot_1d, hist_plot_1d
+from anesthetic.plotting._matplotlib.core import (
+    _WeightedMPLPlot, _CompressedMPLPlot, _get_weights
+)
+from anesthetic.plot import (
+    kde_contour_plot_2d,
+    hist_plot_2d,
+    fastkde_contour_plot_2d,
+    kde_plot_1d,
+    fastkde_plot_1d,
+    hist_plot_1d
+)
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):

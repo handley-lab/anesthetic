@@ -18,7 +18,6 @@ from anesthetic.plotting._matplotlib.core import (  # noqa: F401
     HexBinPlot,
 )
 from anesthetic.plotting._matplotlib.hist import (  # noqa: F401
-    HistPlot,
     KdePlot,
     Kde1dPlot,
     FastKde1dPlot,
