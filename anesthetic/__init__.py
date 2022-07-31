@@ -20,12 +20,12 @@ def _anesthetic_override(_get_plot_backend):
     """Override the default backend.
 
     When _get_plot_backend asks for 'matplotlib' it will be directed to
-    'anesthetic._matplotlib'. This is necessary since any users of
+    'anesthetic.plotting._matplotlib'. This is necessary since any users of
     WeightedSamples should not be using the original backend.
     """
     def wrapper(backend=None):
         if backend == 'matplotlib':
-            return _get_plot_backend('anesthetic._matplotlib')
+            return _get_plot_backend('anesthetic.plotting._matplotlib')
         return _get_plot_backend(backend)
     return wrapper
 
@@ -36,8 +36,8 @@ pandas.plotting._core._get_plot_backend = \
 pandas.plotting._misc._get_plot_backend = \
         _anesthetic_override(pandas.plotting._misc._get_plot_backend)
 
-# Set anesthetic._matplotlib as the actual backend
-pandas.options.plotting.backend = 'anesthetic._matplotlib'
+# Set anesthetic.plotting._matplotlib as the actual backend
+pandas.options.plotting.backend = 'anesthetic.plotting._matplotlib'
 
 
 MCMCSamples = anesthetic.samples.MCMCSamples

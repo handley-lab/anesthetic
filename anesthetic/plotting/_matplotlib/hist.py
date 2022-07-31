@@ -7,7 +7,7 @@ from pandas.core.dtypes.missing import (
     remove_na_arraylike,
 )
 from pandas.plotting._matplotlib.core import MPLPlot
-from anesthetic._matplotlib.core import _WeightedMPLPlot, _get_weights
+from anesthetic.plotting._matplotlib.core import _WeightedMPLPlot, _get_weights
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):
