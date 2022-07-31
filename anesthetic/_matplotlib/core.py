@@ -4,23 +4,34 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
 from anesthetic.weighted_pandas import _WeightedObject
 
 
+def _get_weights(kwargs, data):
+    if isinstance(data, _WeightedObject):
+        kwargs['weights'] = data.weights
+
+
 class _WeightedMPLPlot(MPLPlot):
     def __init__(self, data, *args, **kwargs):
-        if isinstance(data, _WeightedObject):
-            kwargs['weights'] = data.weights
+        _get_weights(kwargs, data)
         super().__init__(data, *args, **kwargs)
 
 
-def _get_weights(kwds, data):
+def _compress_weights(kwargs, data):
     if isinstance(data, _WeightedObject):
-        kwds['weights'] = data.weights
+        return data.compress(kwargs.pop('ncompress', None))
+    else:
+        return data
 
 
-class ScatterPlot(_ScatterPlot):
+class _CompressedMPLPLot(MPLPlot):
+    def __init__(self, data, *args, **kwargs):
+        data = _compress_weights(kwargs, data)
+        super().__init__(data, *args, **kwargs)
+
+
+class ScatterPlot(_CompressedMPLPLot, _ScatterPlot):
     # noqa: disable=D101
     def __init__(self, data, x, y, s=None, c=None, **kwargs) -> None:
         if isinstance(data, _WeightedObject):
-            data = data.compress(kwargs.pop('ncompress', None))
             kwargs['alpha'] = kwargs.get('alpha', 0.5)
         super().__init__(data, x, y, s, c, **kwargs)
 
