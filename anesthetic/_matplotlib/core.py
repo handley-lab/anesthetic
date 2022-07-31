@@ -22,13 +22,13 @@ def _compress_weights(kwargs, data):
         return data
 
 
-class _CompressedMPLPLot(MPLPlot):
+class _CompressedMPLPlot(MPLPlot):
     def __init__(self, data, *args, **kwargs):
         data = _compress_weights(kwargs, data)
         super().__init__(data, *args, **kwargs)
 
 
-class ScatterPlot(_CompressedMPLPLot, _ScatterPlot):
+class ScatterPlot(_CompressedMPLPlot, _ScatterPlot):
     # noqa: disable=D101
     def __init__(self, data, x, y, s=None, c=None, **kwargs) -> None:
         if isinstance(data, _WeightedObject):
