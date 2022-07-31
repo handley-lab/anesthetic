@@ -44,5 +44,5 @@ PLOT_CLASSES['box'] = BoxPlot
 PLOT_CLASSES['scatter'] = ScatterPlot
 PLOT_CLASSES['hexbin'] = HexBinPlot
 
-PLOT_CLASSES['kde2d'] = Kde2dPlot
-PLOT_CLASSES['hist2d'] = Hist2dPlot
+PLOT_CLASSES['kde_2d'] = Kde2dPlot
+PLOT_CLASSES['hist_2d'] = Hist2dPlot

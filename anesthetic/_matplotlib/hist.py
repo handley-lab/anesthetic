@@ -63,8 +63,8 @@ class KdePlot(HistPlot, _KdePlot):
 
 class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
     @property
-    def _kind(self) -> Literal["kde2d"]:
-        return "kde2d"
+    def _kind(self) -> Literal["kde_2d"]:
+        return "kde_2d"
 
     def _make_plot(self):
         return kde_contour_plot_2d(
@@ -76,8 +76,8 @@ class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
 
 class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
     @property
-    def _kind(self) -> Literal["hist2d"]:
-        return "hist2d"
+    def _kind(self) -> Literal["hist_2d"]:
+        return "hist_2d"
 
     def _make_plot(self):
         return hist_plot_2d(
@@ -86,7 +86,6 @@ class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
             self.data[self.y].values,
             **self.kwds,
         )
-
 
 
 def hist_frame(data, *args, **kwds):

@@ -613,8 +613,8 @@ def test_HexBinPlot():
     wdf.plot.hexbin('x', 'y')
 
 
-def test_WeightedDataFramePlotting()
+def test_WeightedDataFramePlotting():
     df, wdf = mcmc_run()
 
-    wdf.plot.hist2d('x', 'y')
-    wdf.plot.kde2d('x', 'y')
+    wdf.plot.hist_2d('x', 'y')
+    wdf.plot.kde_2d('x', 'y')
