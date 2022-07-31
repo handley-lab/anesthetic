@@ -597,8 +597,15 @@ def test_ScatterPlot():
     assert_allclose(n, neff, atol=np.sqrt(n))
 
 
-def test_HexBinPLot():
+def test_HexBinPlot():
     df, wdf = mcmc_run()
 
     df.plot.hexbin('x', 'y')
     wdf.plot.hexbin('x', 'y')
+
+
+def test_WeightedDataFramePlotting()
+    df, wdf = mcmc_run()
+
+    wdf.plot.hist2d('x', 'y')
+    wdf.plot.kde2d('x', 'y')
