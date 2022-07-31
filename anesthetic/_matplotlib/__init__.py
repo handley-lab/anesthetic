@@ -18,9 +18,10 @@ from anesthetic._matplotlib.core import (  # noqa: F401
     HexBinPlot,
 )
 from anesthetic._matplotlib.hist import (  # noqa: F401
-    HistPlot,
     KdePlot,
     Kde2dPlot,
+    FastKde2dPlot,
+    HistPlot,
     Hist2dPlot,
     hist_frame,
     hist_series,
@@ -44,5 +45,6 @@ PLOT_CLASSES['box'] = BoxPlot
 PLOT_CLASSES['scatter'] = ScatterPlot
 PLOT_CLASSES['hexbin'] = HexBinPlot
 
-PLOT_CLASSES['kde_2d'] = Kde2dPlot
 PLOT_CLASSES['hist_2d'] = Hist2dPlot
+PLOT_CLASSES['kde_2d'] = Kde2dPlot
+PLOT_CLASSES['fastkde_2d'] = FastKde2dPlot

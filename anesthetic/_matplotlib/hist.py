@@ -8,8 +8,8 @@ from pandas.core.dtypes.missing import (
 )
 from pandas.plotting._matplotlib.core import MPLPlot, PlanePlot
 from typing import Literal
-from anesthetic._matplotlib.core import _WeightedMPLPlot, _get_weights
-from anesthetic.plot import kde_contour_plot_2d, hist_plot_2d
+from anesthetic._matplotlib.core import _WeightedMPLPlot, _CompressedMPLPlot, _get_weights
+from anesthetic.plot import kde_contour_plot_2d, hist_plot_2d, fastkde_contour_plot_2d
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):
@@ -68,6 +68,19 @@ class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
 
     def _make_plot(self):
         return kde_contour_plot_2d(
+            self.axes[0],
+            self.data[self.x].values,
+            self.data[self.y].values,
+            **self.kwds)
+
+
+class FastKde2dPlot(_CompressedMPLPlot, PlanePlot):
+    @property
+    def _kind(self) -> Literal["fastkde_2d"]:
+        return "fastkde_2d"
+
+    def _make_plot(self):
+        return fastkde_contour_plot_2d(
             self.axes[0],
             self.data[self.x].values,
             self.data[self.y].values,

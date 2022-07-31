@@ -618,3 +618,4 @@ def test_WeightedDataFramePlotting():
 
     wdf.plot.hist_2d('x', 'y')
     wdf.plot.kde_2d('x', 'y')
+    wdf.plot.fastkde_2d('x', 'y')
