@@ -535,12 +535,17 @@ def test_scatter_matrix():
     neff = channel_capacity(wdf.weights)
     assert_allclose(n, neff, atol=np.sqrt(n))
 
+    axes = scatter_matrix(wdf, ncompress=50)
+    n = len(axes[0, 1].collections[0].get_offsets().data)
+    assert_allclose(n, 50, atol=np.sqrt(n))
+
     plt.close("all")
 
 
 def test_bootstrap_plot():
     df, wdf = mcmc_run()
     bootstrap_plot(wdf.x)
+    bootstrap_plot(wdf.x, ncompress=500)
     plt.close("all")
 
 
@@ -595,6 +600,10 @@ def test_ScatterPlot():
     n = len(ax.collections[0].get_offsets().data)
     neff = channel_capacity(wdf.weights)
     assert_allclose(n, neff, atol=np.sqrt(n))
+
+    ax = wdf.plot.scatter('x', 'y', ncompress=50)
+    n = len(ax.collections[0].get_offsets().data)
+    assert_allclose(n, 50, atol=np.sqrt(50))
 
 
 def test_HexBinPlot():

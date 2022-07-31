@@ -20,7 +20,7 @@ class ScatterPlot(_ScatterPlot):
     # noqa: disable=D101
     def __init__(self, data, x, y, s=None, c=None, **kwargs) -> None:
         if isinstance(data, _WeightedObject):
-            data = data.compress()
+            data = data.compress(kwargs.pop('ncompress', None))
             kwargs['alpha'] = kwargs.get('alpha', 0.5)
         super().__init__(data, x, y, s, c, **kwargs)
 
