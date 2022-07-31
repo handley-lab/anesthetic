@@ -59,6 +59,8 @@ class _WeightedObject(object):
         """Effective number of samples."""
         return channel_capacity(self.weights)
 
+    plot = CachedAccessor("plot", PlotAccessor)
+
 
 class WeightedSeries(_WeightedObject, Series):
     """Weighted version of pandas.Series."""
@@ -306,5 +308,3 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     @property
     def _constructor(self):
         return WeightedDataFrame
-
-    plot = CachedAccessor("plot", PlotAccessor)
