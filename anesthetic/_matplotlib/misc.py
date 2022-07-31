@@ -1,16 +1,14 @@
 import pandas.plotting._matplotlib.misc as misc
-from anesthetic.weighted_pandas import _WeightedObject
+from anesthetic._matplotlib.core import _compress_weights
 
 
 def scatter_matrix(frame, *args, **kwargs):
     # noqa: disable=D103
-    if isinstance(frame, _WeightedObject):
-        frame = frame.compress(kwargs.pop('ncompress', None))
+    frame = _compress_weights(kwargs, frame)
     return misc.scatter_matrix(frame, *args, **kwargs)
 
 
 def bootstrap_plot(series, *args, **kwargs):
     # noqa: disable=D103
-    if isinstance(series, _WeightedObject):
-        series = series.compress(kwargs.pop('ncompress', None))
+    series = _compress_weights(kwargs, series)
     return misc.bootstrap_plot(series, *args, **kwargs)
