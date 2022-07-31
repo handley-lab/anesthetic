@@ -1,6 +1,6 @@
 import pandas.plotting._matplotlib.boxplot
 from pandas.plotting._matplotlib.boxplot import BoxPlot as _BoxPlot
-from anesthetic.weighted_pandas import _WeightedObject
+from anesthetic._matplotlib.core import _WeightedMPLPlot, _get_weights
 from anesthetic.utils import quantile
 from pandas.core.dtypes.missing import remove_na_arraylike
 import numpy as np
@@ -19,7 +19,7 @@ def _bxpstat(y, weights, whis):
     return bxpstat
 
 
-class BoxPlot(_BoxPlot):
+class BoxPlot(_WeightedMPLPlot, _BoxPlot):
     # noqa: disable=D101
     @classmethod
     def _plot(cls, ax, y, column_num=None, return_type="axes", **kwds):
@@ -49,16 +49,10 @@ class BoxPlot(_BoxPlot):
         else:
             return ax, bp
 
-    def _make_plot(self):
-        if isinstance(self.data, _WeightedObject):
-            self.kwds['weights'] = self.data.weights
-        return super()._make_plot()
-
 
 def boxplot(data, *args, **kwds):
     # noqa: disable=D103
-    if isinstance(data, _WeightedObject):
-        kwds['weights'] = data.weights
+    _get_weights(kwds, data)
 
     def create_plot_group():
         fontsize = None  # pragma: no cover
@@ -120,8 +114,7 @@ def boxplot(data, *args, **kwds):
 
 def boxplot_frame(data, *args, **kwds):
     # noqa: disable=D103
-    if isinstance(data, _WeightedObject):
-        kwds['weights'] = data.weights
+    _get_weights(kwds, data)
     import matplotlib.pyplot as plt
 
     ax = boxplot(data, *args, **kwds)
