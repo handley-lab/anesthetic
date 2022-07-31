@@ -1,4 +1,6 @@
-import matplotlib_agg  # noqa: F401
+%load_ext autoreload
+%autoreload 2
+#import matplotlib_agg  # noqa: F401
 import sys
 import pytest
 import numpy as np
@@ -13,7 +15,7 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
 from pandas.testing import assert_frame_equal
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
-from wedding_cake import WeddingCake
+#from wedding_cake import WeddingCake
 try:
     import montepython  # noqa: F401
 except ImportError:
@@ -109,6 +111,12 @@ def test_different_parameters():
     fig, axes = make_2d_axes([params_x, params_y])
     ns.plot_2d(axes)
     plt.close('all')
+
+
+def test_MCMCSamples_plot():
+    mcmc = MCMCSamples(root='./tests/example_data/gd')
+    mcmc.plot.kde2d("x0","x1")
+    mcmc.plot.hist2d("x0","x1")
 
 
 def test_manual_columns():

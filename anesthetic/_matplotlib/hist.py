@@ -7,7 +7,10 @@ from pandas.core.dtypes.missing import (
     isna,
     remove_na_arraylike,
 )
-from pandas.plotting._matplotlib.core import MPLPlot
+from pandas.plotting._matplotlib.core import MPLPlot, PlanePlot
+from typing import Literal
+
+from anesthetic.plot import kde_contour_plot_2d, hist_plot_2d
 
 
 class HistPlot(_HistPlot):
@@ -52,6 +55,43 @@ class KdePlot(HistPlot, _KdePlot):
         y = gkde.evaluate(ind)
         lines = MPLPlot._plot(ax, ind, y, style=style, **kwds)
         return lines
+
+
+class Kde2dPlot(PlanePlot):
+    @property
+    def _kind(self) -> Literal["kde2d"]:
+        return "kde2d"
+
+    def _make_plot(self):
+        if isinstance(self.data, _WeightedObject):
+            self.kwds['weights'] = self.data.weights
+
+        ans = kde_contour_plot_2d(
+            self.axes[0],
+            self.data[x].values,
+            self.data[y].values,
+            **self.kwds,
+        )
+
+        return ans
+
+
+class Hist2dPlot(PlanePlot):
+    @property
+    def _kind(self) -> Literal["hist2d"]:
+        return "hist2d"
+
+    def _make_plot(self):
+        if isinstance(self.data, _WeightedObject):
+            self.kwds['weights'] = self.data.weights
+
+        return hist_plot_2d(
+            self.axes[0],
+            self.data[x].values,
+            self.data[y].values,
+            **self.kwds,
+        )
+
 
 
 def hist_frame(data, *args, **kwds):
