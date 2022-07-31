@@ -137,7 +137,7 @@ def test_plot_2d_kinds():
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
     assert((~axes.isnull()).sum().sum() == 3)
 
-    fig, axes = ns.plot_2d(params, kind={'upper': 'scatter'})
+    fig, axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
     assert((~axes.isnull()).sum().sum() == 6)
 
     fig, axes = ns.plot_2d(params, kind={'upper': 'kde_2d',
@@ -154,7 +154,7 @@ def test_plot_2d_kinds():
 
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d',
-                                         'upper': 'scatter'})
+                                         'upper': 'scatter_2d'})
     assert((~axes.isnull()).sum().sum() == 12)
 
     with pytest.raises(ValueError):
@@ -173,13 +173,13 @@ def test_plot_2d_kinds_multiple_calls():
 
     fig, axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
                                          'lower': 'kde_2d',
-                                         'upper': 'scatter'})
+                                         'upper': 'scatter_2d'})
     ns.plot_2d(axes, kind={'diagonal': 'hist'})
 
     fig, axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
     ns.plot_2d(axes, kind={'diagonal': 'kde_1d',
                            'lower': 'kde_2d',
-                           'upper': 'scatter'})
+                           'upper': 'scatter_2d'})
     plt.close('all')
 
 
@@ -230,9 +230,9 @@ def test_plot_2d_legend():
     # Test label kwarg for hist and scatter
     fig, axes = make_2d_axes(params, lower=False)
     ns.plot_2d(axes, label='l1', kind=dict(diagonal='hist_1d',
-                                           upper='scatter'))
+                                           upper='scatter_2d'))
     mc.plot_2d(axes, label='l2', kind=dict(diagonal='hist_1d',
-                                           upper='scatter'))
+                                           upper='scatter_2d'))
 
     for y, row in axes.iterrows():
         for x, ax in row.iteritems():
@@ -296,7 +296,7 @@ def test_plot_2d_colours():
         fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
         kind = {'diagonal': kind + '_1d',
                 'lower': kind + '_2d',
-                'upper': 'scatter'}
+                'upper': 'scatter_2d'}
         gd.plot_2d(axes, kind=kind, label="gd")
         pc.plot_2d(axes, kind=kind, label="pc")
         mn.plot_2d(axes, kind=kind, label="mn")

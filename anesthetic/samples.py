@@ -138,7 +138,10 @@ class MCMCSamples(WeightedDataFrame):
             fig = axes.bfill().to_numpy().flatten()[0].figure
 
         for x, ax in axes.iteritems():
-            self[x].plot(ax=ax, *args, **kwargs)
+            if x in self:
+                self[x].plot(ax=ax, *args, **kwargs)
+            else:
+                ax.plot([], [])
 
         return fig, axes
 
@@ -172,7 +175,9 @@ class MCMCSamples(WeightedDataFrame):
                 - 'scatter'
                 - 'hist'
                 - 'fastkde'
-            Default: {'diagonal': 'kde', 'lower': 'kde', 'upper':'scatter'}
+            Default: {'diagonal': 'kde_1d',
+                      'lower': 'kde_2d',
+                      'upper':'scatter_2d'}
 
         diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
             kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
@@ -192,7 +197,7 @@ class MCMCSamples(WeightedDataFrame):
         """
         default_kinds = {'diagonal': 'kde_1d',
                          'lower': 'kde_2d',
-                         'upper': 'scatter'}
+                         'upper': 'scatter_2d'}
         kind = kwargs.pop('kind', default_kinds)
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in default_kinds}
@@ -214,10 +219,17 @@ class MCMCSamples(WeightedDataFrame):
                     pos = ax.position
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
-                    if x == y:
-                        self[x].plot(ax=ax.twin, *args, **lkwargs)
+                    if lkwargs['kind'] is not None:
+                        if x in self and y in self:
+                            if x == y:
+                                self[x].plot(ax=ax.twin, *args, **lkwargs)
+                            else:
+                                self.plot(x, y, ax=ax, *args, **lkwargs)
                     else:
-                        self.plot(x, y, ax=ax, *args, **lkwargs)
+                        if x==y:
+                            ax.twin.plot([], [])
+                        else:
+                            ax.plot([], [])
 
         return fig, axes
 

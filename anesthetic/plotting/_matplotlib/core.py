@@ -1,7 +1,9 @@
 from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               HexBinPlot as _HexBinPlot,
-                                              MPLPlot)
+                                              MPLPlot, PlanePlot)
 from anesthetic.weighted_pandas import _WeightedObject
+from anesthetic.plot import scatter_plot_2d
+from typing import Literal
 
 
 def _get_weights(kwargs, data):
@@ -34,6 +36,19 @@ class ScatterPlot(_CompressedMPLPlot, _ScatterPlot):
         if isinstance(data, _WeightedObject):
             kwargs['alpha'] = kwargs.get('alpha', 0.5)
         super().__init__(data, x, y, s, c, **kwargs)
+
+
+class ScatterPlot2d(_CompressedMPLPlot, PlanePlot):
+    @property
+    def _kind(self) -> Literal["scatter_2d"]:
+        return "scatter_2d"
+
+    def _make_plot(self):
+        return scatter_plot_2d(
+            self.axes[0],
+            self.data[self.x].values,
+            self.data[self.y].values,
+            **self.kwds)
 
 
 class HexBinPlot(_HexBinPlot):

@@ -15,6 +15,7 @@ from anesthetic.plotting._matplotlib.boxplot import (  # noqa: F401
 from pandas.plotting._matplotlib import boxplot_frame_groupby  # noqa: F401
 from anesthetic.plotting._matplotlib.core import (  # noqa: F401
     ScatterPlot,
+    ScatterPlot2d,
     HexBinPlot,
 )
 from anesthetic.plotting._matplotlib.hist import (  # noqa: F401
@@ -54,3 +55,4 @@ PLOT_CLASSES['fastkde_1d'] = FastKde1dPlot
 PLOT_CLASSES['hist_2d'] = Hist2dPlot
 PLOT_CLASSES['kde_2d'] = Kde2dPlot
 PLOT_CLASSES['fastkde_2d'] = FastKde2dPlot
+PLOT_CLASSES['scatter_2d'] = ScatterPlot2d

@@ -13,6 +13,7 @@ def _process_docstring(doc):
         "    - 'kde_2d' : 2d Kernel Density Estimation plot (DataFrame only)\n"
         "    - 'fastkde_2d' : 2d Kernel Density Estimation plot"
         "                     with fastkde package (DataFrame only)\n"
+        "    - 'scatter_2d' : 2d scatter plot (DataFrame only)\n"
         )
     return doc[:i] + e + doc[i:]
 
@@ -23,7 +24,7 @@ class PlotAccessor(_PlotAccessor):
         + ("hist_1d", "kde_1d", "fastkde_1d")
     _series_kinds = _PlotAccessor._series_kinds + ()
     _dataframe_kinds = _PlotAccessor._dataframe_kinds \
-        + ("hist_2d", "kde_2d", "fastkde_2d")
+        + ("hist_2d", "kde_2d", "fastkde_2d", "scatter_2d")
     _all_kinds = _common_kinds + _series_kinds + _dataframe_kinds
 
     def hist_1d(self, **kwargs) -> PlotAccessor:
@@ -43,3 +44,6 @@ class PlotAccessor(_PlotAccessor):
 
     def hist_2d(self, x, y, **kwargs) -> PlotAccessor:
         return self(kind="hist_2d", x=x, y=y, **kwargs)
+
+    def scatter_2d(self, x, y, **kwargs) -> PlotAccessor:
+        return self(kind="scatter_2d", x=x, y=y, **kwargs)
