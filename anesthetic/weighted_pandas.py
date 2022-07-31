@@ -6,6 +6,8 @@ from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
                               temporary_seed)
+from pandas.core.accessor import CachedAccessor
+from anesthetic.plotting import PlotAccessor
 
 
 class _WeightedObject(object):
@@ -304,3 +306,5 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     @property
     def _constructor(self):
         return WeightedDataFrame
+
+    plot = CachedAccessor("plot", PlotAccessor)

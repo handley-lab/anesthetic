@@ -12,15 +12,12 @@ from collections.abc import Sequence
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
                              fastkde_contour_plot_2d,
-                             kde_contour_plot_2d, hist_plot_2d,
-                             PlotAccessor)
+                             kde_contour_plot_2d, hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp, modify_inplace)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
-from pandas.core.accessor import CachedAccessor
-
 
 
 class MCMCSamples(WeightedDataFrame):
@@ -115,8 +112,6 @@ class MCMCSamples(WeightedDataFrame):
         for param in self.columns:
             if param not in self.limits:
                 self.limits[param] = (self[param].min(), self[param].max())
-
-    plot = CachedAccessor("plot", PlotAccessor)
 
     def _plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
