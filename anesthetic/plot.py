@@ -218,7 +218,7 @@ class PlotAccessor(pandas.plotting.PlotAccessor):
         return self(kind="kde2d", x=x, y=y, **kwargs)
 
     def hist2d(self, x, y, **kwargs) -> PlotAccessor:
-        return self(kind="kde2d", x=x, y=y, **kwargs)
+        return self(kind="hist2d", x=x, y=y, **kwargs)
 
 class AxesSeries(pandas.Series):
     """Anesthetic's axes version of `pandas.Series`."""

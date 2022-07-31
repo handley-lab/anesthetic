@@ -69,8 +69,8 @@ class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
     def _make_plot(self):
         return kde_contour_plot_2d(
             self.axes[0],
-            self.data[x].values,
-            self.data[y].values,
+            self.data[self.x].values,
+            self.data[self.y].values,
             **self.kwds)
 
 
@@ -82,8 +82,8 @@ class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
     def _make_plot(self):
         return hist_plot_2d(
             self.axes[0],
-            self.data[x].values,
-            self.data[y].values,
+            self.data[self.x].values,
+            self.data[self.y].values,
             **self.kwds,
         )
 
