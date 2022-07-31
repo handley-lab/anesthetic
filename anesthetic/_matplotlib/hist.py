@@ -1,32 +1,37 @@
-from pandas.plotting._matplotlib.hist import HistPlot as _HistPlot
-from pandas.plotting._matplotlib.hist import KdePlot as _KdePlot
+from pandas.plotting._matplotlib.hist import (HistPlot as _HistPlot,
+                                              KdePlot as _KdePlot)
 import pandas.plotting._matplotlib.hist
 import numpy as np
-from anesthetic.weighted_pandas import _WeightedObject
 from pandas.core.dtypes.missing import (
     isna,
     remove_na_arraylike,
 )
 from pandas.plotting._matplotlib.core import MPLPlot
+from anesthetic._matplotlib.core import _WeightedMPLPlot, _get_weights
 
 
-class HistPlot(_HistPlot):
+class HistPlot(_WeightedMPLPlot, _HistPlot):
     # noqa: disable=D101
     def _calculate_bins(self, data):
         nd_values = data._convert(datetime=True)._get_numeric_data()
         values = np.ravel(nd_values)
+        weights = self.kwds.get("weights", None)
+        if weights is not None:
+            try:
+                weights = np.broadcast_to(weights[:, None], nd_values.shape)
+            except ValueError:
+                print(nd_values.shape, weights.shape)
+                pass
+            weights = np.ravel(weights)
+            weights = weights[~isna(values)]
+
         values = values[~isna(values)]
 
         hist, bins = np.histogram(
             values, bins=self.bins, range=self.kwds.get("range", None),
-            weights=self.kwds.get("weights", None)
+            weights=weights
         )
         return bins
-
-    def _make_plot(self):
-        if isinstance(self.data, _WeightedObject):
-            self.kwds['weights'] = self.data.weights
-        return super()._make_plot()
 
 
 class KdePlot(HistPlot, _KdePlot):
@@ -56,13 +61,11 @@ class KdePlot(HistPlot, _KdePlot):
 
 def hist_frame(data, *args, **kwds):
     # noqa: disable=D103
-    if isinstance(data, _WeightedObject):
-        kwds['weights'] = data.weights
+    _get_weights(kwds, data)
     return pandas.plotting._matplotlib.hist_frame(data, *args, **kwds)
 
 
 def hist_series(data, *args, **kwds):
     # noqa: disable=D103
-    if isinstance(data, _WeightedObject):
-        kwds['weights'] = data.weights
+    _get_weights(kwds, data)
     return pandas.plotting._matplotlib.hist_series(data, *args, **kwds)
