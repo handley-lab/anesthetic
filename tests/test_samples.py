@@ -225,6 +225,7 @@ def test_plot_2d_legend():
                     assert(all([isinstance(h, Line2D) for h in handles]))
                 else:
                     assert(all([isinstance(h, Rectangle) for h in handles]))
+
     plt.close('all')
 
     # Test label kwarg for hist and scatter
@@ -335,8 +336,6 @@ def test_plot_1d_colours():
     mn.drop(columns='x2', inplace=True)
 
     kinds = ['kde', 'hist']
-    if 'astropy' in sys.modules:
-        kinds += ['astropyhist']
     if 'fastkde' in sys.modules:
         kinds += ['fastkde']
 
@@ -376,8 +375,8 @@ def test_plot_1d_colours():
 def test_astropyhist():
     np.random.seed(3)
     mcmc = NestedSamples(root='./tests/example_data/pc')
-    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'diagonal': 'astropyhist'})
-    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='astropyhist')
+    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d',
+                 plotter='astropyhist')
     plt.close("all")
 
 

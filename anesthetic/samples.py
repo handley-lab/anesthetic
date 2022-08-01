@@ -132,10 +132,15 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
+        self._set_automatic_limits()
+
         if not isinstance(axes, pandas.Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
         else:
             fig = axes.bfill().to_numpy().flatten()[0].figure
+
+        kwargs['kind'] = kwargs.get('kind', 'kde_1d')
+        kwargs['label'] = kwargs.get('label', self.label)
 
         for x, ax in axes.iteritems():
             if x in self:
@@ -198,9 +203,12 @@ class MCMCSamples(WeightedDataFrame):
         default_kinds = {'diagonal': 'kde_1d',
                          'lower': 'kde_2d',
                          'upper': 'scatter_2d'}
-        kind = kwargs.pop('kind', default_kinds)
+        kind = kwargs.get('kind', default_kinds)
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in default_kinds}
+        kwargs['label'] = kwargs.get('label', self.label)
+
+        self._set_automatic_limits()
 
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
@@ -226,7 +234,7 @@ class MCMCSamples(WeightedDataFrame):
                             else:
                                 self.plot(x, y, ax=ax, *args, **lkwargs)
                     else:
-                        if x==y:
+                        if x == y:
                             ax.twin.plot([], [])
                         else:
                             ax.plot([], [])
