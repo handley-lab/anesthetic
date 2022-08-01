@@ -48,6 +48,7 @@ class ScatterPlot2d(_CompressedMPLPlot, PlanePlot):
             self.axes[0],
             self.data[self.x].values,
             self.data[self.y].values,
+            label=self.label,
             **self.kwds)
 
 

@@ -298,7 +298,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         data = np.repeat(self.to_numpy(), i, axis=0)
         index = self.index.repeat(i)
         df = DataFrame(data=data, index=index, columns=self.columns)
-        df.index = df.index.get_level_values('#')
+        if self.index.nlevels == 2:
+            df.index = df.index.get_level_values('#')
         return df
 
     plot_1d = anesthetic.plotting.plot_1d

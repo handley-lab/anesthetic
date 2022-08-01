@@ -84,7 +84,7 @@ def plot_1d(self, axes, *args, **kwargs):
     kwargs['label'] = kwargs.get('label', self.label)
 
     for x, ax in axes.iteritems():
-        if x in self:
+        if x in self and kwargs['kind'] is not None:
             self[x].plot(ax=ax, *args, **kwargs)
         else:
             ax.plot([], [])
@@ -169,12 +169,11 @@ def plot_2d(self, axes, *args, **kwargs):
                 pos = ax.position
                 lkwargs = local_kwargs.get(pos, {})
                 lkwargs['kind'] = kind.get(pos, None)
-                if lkwargs['kind'] is not None:
-                    if x in self and y in self:
-                        if x == y:
-                            self[x].plot(ax=ax.twin, *args, **lkwargs)
-                        else:
-                            self.plot(x, y, ax=ax, *args, **lkwargs)
+                if x in self and y in self and lkwargs['kind'] is not None:
+                    if x == y:
+                        self[x].plot(ax=ax.twin, *args, **lkwargs)
+                    else:
+                        self.plot(x, y, ax=ax, *args, **lkwargs)
                 else:
                     if x == y:
                         ax.twin.plot([], [])

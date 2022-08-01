@@ -79,6 +79,7 @@ class Kde1dPlot(_WeightedMPLPlot):
         return kde_plot_1d(
             self.axes[0],
             self.data.values[:, 0],
+            label=self.label,
             **self.kwds)
 
 
@@ -91,6 +92,7 @@ class FastKde1dPlot(_CompressedMPLPlot):
         return fastkde_plot_1d(
             self.axes[0],
             self.data.values[:, 0],
+            label=self.label,
             **self.kwds)
 
 
@@ -103,6 +105,7 @@ class Hist1dPlot(_WeightedMPLPlot):
         return hist_plot_1d(
             self.axes[0],
             self.data.values[:, 0],
+            label=self.label,
             **self.kwds)
 
 
@@ -116,6 +119,7 @@ class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
             self.axes[0],
             self.data[self.x].values,
             self.data[self.y].values,
+            label=self.label,
             **self.kwds)
 
 
@@ -129,6 +133,7 @@ class FastKde2dPlot(_CompressedMPLPlot, PlanePlot):
             self.axes[0],
             self.data[self.x].values,
             self.data[self.y].values,
+            label=self.label,
             **self.kwds)
 
 
@@ -142,6 +147,7 @@ class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
             self.axes[0],
             self.data[self.x].values,
             self.data[self.y].values,
+            label=self.label,
             **self.kwds,
         )
 
