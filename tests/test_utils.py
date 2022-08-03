@@ -47,7 +47,7 @@ def test_compute_nlive():
     assert nlives.max() <= nlive
 
     # Check length
-    assert(len(nlives) == len(logL))
+    assert (len(nlives) == len(logL))
 
 
 def test_unique():
