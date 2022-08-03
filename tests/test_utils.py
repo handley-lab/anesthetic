@@ -15,13 +15,13 @@ from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
 
 
 def test_nest_level():
-    assert(nest_level(0) == 0)
-    assert(nest_level([]) == 1)
-    assert(nest_level(['a']) == 1)
-    assert(nest_level(['a', 'b']) == 1)
-    assert(nest_level([['a'], 'b']) == 2)
-    assert(nest_level(['a', ['b']]) == 2)
-    assert(nest_level([['a'], ['b']]) == 2)
+    assert nest_level(0) == 0
+    assert nest_level([]) == 1
+    assert nest_level(['a']) == 1
+    assert nest_level(['a', 'b']) == 1
+    assert nest_level([['a'], 'b']) == 2
+    assert nest_level(['a', ['b']]) == 2
+    assert nest_level([['a'], ['b']]) == 2
 
 
 def test_compute_nlive():
@@ -43,14 +43,14 @@ def test_compute_nlive():
     assert_array_equal(nlives[:len(nlives)//2], nlive)
 
     # Check one point at the end
-    assert(nlives[-1] == 1)
+    assert nlives[-1] == 1
 
     # Check never more than nlive
-    assert(nlives.max() <= nlive)
+    assert nlives.max() <= nlive
 
 
 def test_unique():
-    assert(unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4])
+    assert unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4]
 
 
 @pytest.mark.parametrize('ipc', [iso_probability_contours,
