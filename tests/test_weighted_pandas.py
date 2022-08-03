@@ -243,7 +243,7 @@ def test_WeightedDataFrame_compress():
     for i in np.logspace(3, 5, 10):
         assert_allclose(i, len(df.compress(i)), rtol=1e-1)
     unit_weights = df.compress(0)
-    assert(len(np.unique(unit_weights.index)) == len(unit_weights))
+    assert len(np.unique(unit_weights.index)) == len(unit_weights)
     assert_array_equal(df.compress(), df.compress())
     assert_array_equal(df.compress(i), df.compress(i))
     assert_array_equal(df.compress(-1), df.compress(-1))
@@ -447,7 +447,7 @@ def test_WeightedSeries_compress():
     for i in np.logspace(3, 5, 10):
         assert_allclose(i, len(series.compress(i)), rtol=1e-1)
     unit_weights = series.compress(0)
-    assert(len(np.unique(unit_weights.index)) == len(unit_weights))
+    assert len(np.unique(unit_weights.index)) == len(unit_weights)
 
 
 def test_WeightedSeries_nan():
