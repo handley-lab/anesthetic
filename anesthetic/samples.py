@@ -770,7 +770,7 @@ class NestedSamples(MCMCSamples):
         if np.any(pandas.isna(samples.logL)):
             warnings.warn("NaN encountered in logL. If this is unexpected, you"
                           " should investigate why your likelihood is throwing"
-                          " NaNs. Dropping these parameters at prior level",
+                          " NaNs. Dropping these samples at prior level",
                           RuntimeWarning)
             samples = samples[samples.logL.notna()].recompute()
 
