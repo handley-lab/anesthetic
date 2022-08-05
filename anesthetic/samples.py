@@ -766,6 +766,14 @@ class NestedSamples(MCMCSamples):
 
         samples.tex['nlive'] = r'$n_{\rm live}$'
         samples.beta = samples._beta
+
+        if np.any(pandas.isna(samples.logL)):
+            warnings.warn("NaN encountered in logL. If this is unexpected, you"
+                          " should investigate why your likelihood is throwing"
+                          " NaNs. Dropping these samples at prior level",
+                          RuntimeWarning)
+            samples = samples[samples.logL.notna()].recompute()
+
         return modify_inplace(self, samples, inplace)
 
     def _compute_insertion_indexes(self):
