@@ -634,7 +634,6 @@ def test_contour_plot_2d(contour_plot_2d):
         assert_array_equal(cf, np.zeros(0))
         assert_array_equal(ct, np.zeros(0))
 
-
         plt.close("all")
 
     except ImportError:
