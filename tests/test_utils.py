@@ -30,7 +30,7 @@ def test_compute_nlive():
     nlive = 500
     ncompress = 100
     logL = np.cumsum(np.random.rand(nlive, ncompress), axis=1)
-    logL_birth = np.concatenate((np.ones((nlive, 1))*-1e30, logL[:, :-1]),
+    logL_birth = np.concatenate((np.ones((nlive, 1))*-np.inf, logL[:, :-1]),
                                 axis=1)
     i = np.argsort(logL.flatten())
     logL = logL.flatten()[i]
@@ -47,6 +47,9 @@ def test_compute_nlive():
 
     # Check never more than nlive
     assert nlives.max() <= nlive
+
+    # Check length
+    assert (len(nlives) == len(logL))
 
 
 def test_unique():
