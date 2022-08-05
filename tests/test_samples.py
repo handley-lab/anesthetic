@@ -1,3 +1,4 @@
+import warnings
 import matplotlib_agg  # noqa: F401
 import sys
 import pytest
@@ -849,6 +850,20 @@ def test_recompute():
     mn = NestedSamples(root='./tests/example_data/mn_old')
     with pytest.raises(RuntimeError):
         mn.recompute()
+
+
+def test_NaN():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        pc_new = pc.copy()
+        pc_new.loc[2, "logL"] = np.nan
+        pc_new.recompute(inplace=True)
+        assert len(w) == 1
+        assert "NaN encountered in logL." in str(w[-1].message)
+        assert len(pc_new) == len(pc) - 1
+        assert pc_new.nlive.iloc[0] == 124
 
 
 def test_unsorted():
