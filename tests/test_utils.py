@@ -13,13 +13,13 @@ from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
 
 
 def test_nest_level():
-    assert(nest_level(0) == 0)
-    assert(nest_level([]) == 1)
-    assert(nest_level(['a']) == 1)
-    assert(nest_level(['a', 'b']) == 1)
-    assert(nest_level([['a'], 'b']) == 2)
-    assert(nest_level(['a', ['b']]) == 2)
-    assert(nest_level([['a'], ['b']]) == 2)
+    assert nest_level(0) == 0
+    assert nest_level([]) == 1
+    assert nest_level(['a']) == 1
+    assert nest_level(['a', 'b']) == 1
+    assert nest_level([['a'], 'b']) == 2
+    assert nest_level(['a', ['b']]) == 2
+    assert nest_level([['a'], ['b']]) == 2
 
 
 def test_compute_nlive():
@@ -28,7 +28,7 @@ def test_compute_nlive():
     nlive = 500
     ncompress = 100
     logL = np.cumsum(np.random.rand(nlive, ncompress), axis=1)
-    logL_birth = np.concatenate((np.ones((nlive, 1))*-1e30, logL[:, :-1]),
+    logL_birth = np.concatenate((np.ones((nlive, 1))*-np.inf, logL[:, :-1]),
                                 axis=1)
     i = np.argsort(logL.flatten())
     logL = logL.flatten()[i]
@@ -41,14 +41,17 @@ def test_compute_nlive():
     assert_array_equal(nlives[:len(nlives)//2], nlive)
 
     # Check one point at the end
-    assert(nlives[-1] == 1)
+    assert nlives[-1] == 1
 
     # Check never more than nlive
-    assert(nlives.max() <= nlive)
+    assert nlives.max() <= nlive
+
+    # Check length
+    assert (len(nlives) == len(logL))
 
 
 def test_unique():
-    assert(unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4])
+    assert unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4]
 
 
 @pytest.mark.parametrize('ipc', [iso_probability_contours,
