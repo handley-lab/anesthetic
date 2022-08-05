@@ -1,0 +1,1 @@
+"""Perfect nested sampling generators."""
