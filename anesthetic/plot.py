@@ -516,6 +516,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
 
+    bw_method = kwargs.pop('bw_method', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
 
     xmin = kwargs.pop('xmin', None)
@@ -543,7 +544,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         weights = weights[weights != 0]
 
     x, w = sample_compression_1d(data, weights, ncompress)
-    kde = gaussian_kde(x, weights=w)
+    kde = gaussian_kde(x, weights=w, bw_method=bw_method)
     p = kde(x)
     p /= p.max()
     i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[1], w)))
@@ -789,6 +790,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            color=['c'],
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
+    bw_method = kwargs.pop('bw_method', None)
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
@@ -817,7 +819,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     cov = np.cov(data_x, data_y, aweights=weights)
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
                                               weights, ncompress)
-    kde = gaussian_kde([tri.x, tri.y], weights=w)
+    kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
 
     x, y = kde.resample(ncompress)
     x = np.concatenate([tri.x, x])
