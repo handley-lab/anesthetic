@@ -1,10 +1,10 @@
 """Utility functions for nested sampling examples."""
 import numpy as np
 from scipy.stats import special_ortho_group
-from scipy.special import gamma
+from scipy.special import gamma, gammaln
 
 
-class random_ellipsoid(object):
+def random_ellipsoid(mean, cov, size=None):
     """Draw a point uniformly in an ellipsoid.
 
     This is defined so that the volume of the ellipsoid is sqrt(det(cov))*V_n.
@@ -21,19 +21,13 @@ class random_ellipsoid(object):
         The covariance structure of the ellipsoid. Axes have lengths equal to
         the square root of the eigenvalues of this matrix.
     """
-
-    def __init__(self, mean, cov):
-        self.mean = mean
-        self.cov = cov
-
-    def __call__(self, size=None):
-        """Generate samples uniformly from the ellipsoid."""
-        d = len(self.mean)
-        L = np.linalg.cholesky(self.cov)
-        x = np.random.multivariate_normal(np.zeros(d), np.eye(d), size=size)
-        r = np.linalg.norm(x, axis=-1, keepdims=True)
-        u = np.random.power(d, r.shape)
-        return self.mean + (u*x/r) @ L.T
+    """Generate samples uniformly from the ellipsoid."""
+    d = len(mean)
+    L = np.linalg.cholesky(cov)
+    x = np.random.multivariate_normal(np.zeros(d), np.eye(d), size=size)
+    r = np.linalg.norm(x, axis=-1, keepdims=True)
+    u = np.random.power(d, r.shape)
+    return mean + (u*x/r) @ L.T
 
 
 def random_covariance(sigmas):
@@ -51,4 +45,8 @@ def random_covariance(sigmas):
 
 def volume_n_ball(n, r=1):
     """Volume of an n dimensional ball, radius r."""
-    return np.pi**(n/2)/gamma(n/2+1)*r**n
+    return np.pi**(n/2)/gamma(1+n/2)*r**n
+
+def log_volume_n_ball(n, r=1):
+    """Log-volume of an n dimensional ball, radius r."""
+    return np.log(np.pi)*(n/2)- gammaln(1+n/2) + np.log(r)*n
