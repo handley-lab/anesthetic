@@ -444,7 +444,9 @@ def test_WeightedSeries_nan():
     assert_allclose(series.std(), (1./12)**0.5, atol=1e-2)
 
 
-def mcmc_run():
+@pytest.fixture
+def mcmc_df():
+    np.random.seed(0)
     m, s = 0.5, 0.1
 
     def logL(x):
@@ -459,25 +461,25 @@ def mcmc_run():
         if np.log(np.random.rand()) < logL1 - logL0:
             x0, logL0 = x1, logL1
 
-    df = DataFrame(dat, columns=["x", "y", "z", "w"])
-    weights = df.groupby(df.columns.tolist(), sort=False).size().values
-    wdf = WeightedDataFrame(df.drop_duplicates(), weights=weights)
-    return df, wdf
+    return DataFrame(dat, columns=["x", "y", "z", "w"])
+
+@pytest.fixture
+def mcmc_wdf(mcmc_df):
+    weights = mcmc_df.groupby(mcmc_df.columns.tolist(), sort=False).size()
+    return WeightedDataFrame(mcmc_df.drop_duplicates(), weights=weights.values)
 
 
-def test_WeightedDataFrame_hist():
-    df, wdf = mcmc_run()
-
-    df_axes = df.hist()
-    wdf_axes = wdf.hist()
+def test_WeightedDataFrame_hist(mcmc_df, mcmc_wdf):
+    df_axes = mcmc_df.hist()
+    wdf_axes = mcmc_wdf.hist()
     for df_ax, wdf_ax in zip(df_axes.flatten(), wdf_axes.flatten()):
         for df_patch, wdf_patch in zip(df_ax.patches, wdf_ax.patches):
             assert df_patch.get_height() == wdf_patch.get_height()
             assert df_patch.get_width() == wdf_patch.get_width()
             assert df_patch.get_xy() == wdf_patch.get_xy()
 
-    df_axes = df.plot.hist(subplots=True)
-    wdf_axes = wdf.plot.hist(subplots=True)
+    df_axes = mcmc_df.plot.hist(subplots=True)
+    wdf_axes = mcmc_wdf.plot.hist(subplots=True)
     for df_ax, wdf_ax in zip(df_axes.flatten(), wdf_axes.flatten()):
         for df_patch, wdf_patch in zip(df_ax.patches, wdf_ax.patches):
             assert df_patch.get_height() == wdf_patch.get_height()
@@ -487,12 +489,11 @@ def test_WeightedDataFrame_hist():
     plt.close("all")
 
 
-def test_WeightedSeries_hist():
-    df, wdf = mcmc_run()
+def test_WeightedSeries_hist(mcmc_df, mcmc_wdf):
 
     fig, axes = plt.subplots(2)
-    df.x.hist(ax=axes[0])
-    wdf.x.hist(ax=axes[1])
+    mcmc_df.x.hist(ax=axes[0])
+    mcmc_wdf.x.hist(ax=axes[1])
 
     for df_patch, wdf_patch in zip(axes[0].patches, axes[1].patches):
         assert df_patch.get_height() == wdf_patch.get_height()
@@ -500,8 +501,8 @@ def test_WeightedSeries_hist():
         assert df_patch.get_xy() == wdf_patch.get_xy()
 
     fig, axes = plt.subplots(2)
-    df.x.plot.hist(ax=axes[0])
-    wdf.x.plot.hist(ax=axes[1])
+    mcmc_df.x.plot.hist(ax=axes[0])
+    mcmc_wdf.x.plot.hist(ax=axes[1])
 
     for df_patch, wdf_patch in zip(axes[0].patches, axes[1].patches):
         assert df_patch.get_height() == wdf_patch.get_height()
@@ -511,13 +512,11 @@ def test_WeightedSeries_hist():
     plt.close("all")
 
 
-def test_KdePlot():
-    df, wdf = mcmc_run()
-
+def test_KdePlot(mcmc_df, mcmc_wdf):
     bw_method = 0.3
     fig, axes = plt.subplots(2)
-    df.x.plot.kde(bw_method=bw_method, ax=axes[0])
-    wdf.x.plot.kde(bw_method=bw_method, ax=axes[1])
+    mcmc_df.x.plot.kde(bw_method=bw_method, ax=axes[0])
+    mcmc_wdf.x.plot.kde(bw_method=bw_method, ax=axes[1])
     df_line, wdf_line = axes[0].lines[0], axes[1].lines[0]
     assert (df_line.get_xdata() == wdf_line.get_xdata()).all()
     assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-4)
@@ -525,89 +524,78 @@ def test_KdePlot():
     plt.close("all")
 
 
-def test_scatter_matrix():
-    df, wdf = mcmc_run()
-    np.random.seed(0)
-
-    scatter_matrix(df)
-    axes = scatter_matrix(wdf)
+def test_scatter_matrix(mcmc_df, mcmc_wdf):
+    scatter_matrix(mcmc_df)
+    axes = scatter_matrix(mcmc_wdf)
     n = len(axes[0, 1].collections[0].get_offsets().data)
-    neff = channel_capacity(wdf.weights)
+    neff = channel_capacity(mcmc_wdf.weights)
     assert_allclose(n, neff, atol=np.sqrt(n))
 
-    axes = scatter_matrix(wdf, ncompress=50)
+    axes = scatter_matrix(mcmc_wdf, ncompress=50)
     n = len(axes[0, 1].collections[0].get_offsets().data)
     assert_allclose(n, 50, atol=np.sqrt(n))
 
     plt.close("all")
 
 
-def test_bootstrap_plot():
-    df, wdf = mcmc_run()
-    bootstrap_plot(wdf.x)
-    bootstrap_plot(wdf.x, ncompress=500)
+def test_bootstrap_plot(mcmc_df, mcmc_wdf):
+    bootstrap_plot(mcmc_wdf.x)
+    bootstrap_plot(mcmc_wdf.x, ncompress=500)
     plt.close("all")
 
 
-def test_BoxPlot():
-    df, wdf = mcmc_run()
+def test_BoxPlot(mcmc_df, mcmc_wdf):
+    mcmc_df.plot.box()
+    mcmc_wdf.plot.box()
 
-    df.plot.box()
-    wdf.plot.box()
-
-    df.boxplot()
-    wdf.boxplot()
+    mcmc_df.boxplot()
+    mcmc_wdf.boxplot()
 
     plt.close("all")
-    df.x.plot.box()
+    mcmc_df.x.plot.box()
     plt.close("all")
-    wdf.x.plot.box()
+    mcmc_wdf.x.plot.box()
 
-    df.plot.box(subplots=True)
-    wdf.plot.box(subplots=True)
+    mcmc_df.plot.box(subplots=True)
+    mcmc_wdf.plot.box(subplots=True)
 
-    df['split'] = ''
-    df.loc[:len(df)//2, 'split'] = 'A'
-    df.loc[len(df)//2:, 'split'] = 'B'
+    mcmc_df['split'] = ''
+    mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
+    mcmc_df.loc[len(mcmc_df)//2:, 'split'] = 'B'
 
-    wdf['split'] = ''
-    wdf.iloc[:len(wdf)//2, -1] = 'A'
-    wdf.iloc[len(wdf)//2:, -1] = 'B'
+    mcmc_wdf['split'] = ''
+    mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
+    mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
 
-    df.groupby('split').boxplot()
-    wdf.groupby('split').boxplot()
+    mcmc_df.groupby('split').boxplot()
+    mcmc_wdf.groupby('split').boxplot()
 
     plt.close("all")
 
     for return_type in ['dict', 'both']:
-        wdf.plot.box(return_type=return_type)
-        wdf.boxplot(return_type=return_type)
+        mcmc_wdf.plot.box(return_type=return_type)
+        mcmc_wdf.boxplot(return_type=return_type)
 
-    wdf.boxplot(xlabel='xlabel')
-    wdf.boxplot(ylabel='ylabel')
+    mcmc_wdf.boxplot(xlabel='xlabel')
+    mcmc_wdf.boxplot(ylabel='ylabel')
 
-    wdf.boxplot(vert=False)
-    wdf.boxplot(fontsize=30)
+    mcmc_wdf.boxplot(vert=False)
+    mcmc_wdf.boxplot(fontsize=30)
 
 
-def test_ScatterPlot():
-    df, wdf = mcmc_run()
-    np.random.seed(0)
-
-    df.plot.scatter('x', 'y')
-    ax = wdf.plot.scatter('x', 'y')
+def test_ScatterPlot(mcmc_df, mcmc_wdf):
+    mcmc_df.plot.scatter('x', 'y')
+    ax = mcmc_wdf.plot.scatter('x', 'y')
 
     n = len(ax.collections[0].get_offsets().data)
-    neff = channel_capacity(wdf.weights)
+    neff = channel_capacity(mcmc_wdf.weights)
     assert_allclose(n, neff, atol=np.sqrt(n))
 
-    ax = wdf.plot.scatter('x', 'y', ncompress=50)
+    ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
     n = len(ax.collections[0].get_offsets().data)
     assert_allclose(n, 50, atol=np.sqrt(50))
 
 
-def test_HexBinPLot():
-    df, wdf = mcmc_run()
-
-    df.plot.hexbin('x', 'y')
-    wdf.plot.hexbin('x', 'y')
+def test_HexBinPLot(mcmc_df, mcmc_wdf):
+    mcmc_df.plot.hexbin('x', 'y')
+    mcmc_wdf.plot.hexbin('x', 'y')
