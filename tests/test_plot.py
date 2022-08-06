@@ -300,10 +300,10 @@ def test_kde_plot_1d(plot_1d):
         plot_1d(ax, data, facecolor=True, levels=[0.8, 0.6, 0.2])
         line, fill = plot_1d(ax, data, fc='blue', color='k', ec='r')
         assert np.all(fill[0].get_edgecolor()[0] == to_rgba('r'))
-        assert (to_rgba(line[0].get_color()) == to_rgba('r'))
+        assert to_rgba(line[0].get_color()) == to_rgba('r')
         line, fill = plot_1d(ax, data, fc=True, color='k', ec=None)
         assert len(fill[0].get_edgecolor()) == 0
-        assert (to_rgba(line[0].get_color()) == to_rgba('k'))
+        assert to_rgba(line[0].get_color()) == to_rgba('k')
         plt.close("all")
 
         # Check levels
@@ -337,7 +337,7 @@ def test_kde_plot_1d(plot_1d):
 
         data = np.ones(100)
         ans = plot_1d(ax, data)
-        assert(ans is None)
+        assert ans is None
         plt.close("all")
 
     except ImportError:
@@ -424,9 +424,9 @@ def test_hist_plot_1d():
             assert (np.array([b.xy[-1] for b in bars]) <= 0.5).all()
             polygon, = hist_plot_1d(ax, data, histtype='step',
                                     xmin=xmin, xmax=xmax, plotter=p)
-            assert((polygon.xy[:, 0] >= -0.5).all())
-            assert((polygon.xy[:, 0] <= 0.5).all())
-            assert(hist_plot_1d(ax, np.ones(100)) is None)
+            assert (polygon.xy[:, 0] >= -0.5).all()
+            assert (polygon.xy[:, 0] <= 0.5).all()
+            assert hist_plot_1d(ax, np.ones(100)) is None
 
             plt.close("all")
         except ImportError:
@@ -622,10 +622,10 @@ def test_contour_plot_2d(contour_plot_2d):
         contour_plot_2d(ax, data_x, data_y, xmin=0, xmax=1, ymin=0, ymax=1)
         xmin, xmax = ax.get_xlim()
         ymin, ymax = ax.get_ylim()
-        assert(xmin == 0)
-        assert(xmax == 1)
-        assert(ymin == 0)
-        assert(ymax == 1)
+        assert xmin == 0
+        assert xmax == 1
+        assert ymin == 0
+        assert ymax == 1
 
         cf, ct = contour_plot_2d(ax, [], np.ones(100))
         assert_array_equal(cf, np.zeros(0))
@@ -707,13 +707,13 @@ def test_scatter_plot_2d():
 
     ax = plt.gca()
     points, = scatter_plot_2d(ax, data_x, data_y, color='C0', lw=1)
-    assert (points.get_color() == 'C0')
+    assert points.get_color() == 'C0'
     points, = scatter_plot_2d(ax, data_x, data_y, cmap=plt.cm.viridis)
-    assert (points.get_color() == plt.cm.viridis(0.68))
+    assert points.get_color() == plt.cm.viridis(0.68)
     points, = scatter_plot_2d(ax, data_x, data_y, c='C0', fc='C1', ec='C2')
-    assert (points.get_color() == 'C0')
-    assert (points.get_markerfacecolor() == 'C1')
-    assert (points.get_markeredgecolor() == 'C2')
+    assert points.get_color() == 'C0'
+    assert points.get_markerfacecolor() == 'C1'
+    assert points.get_markeredgecolor() == 'C2'
     plt.close()
 
     # Check q

@@ -191,7 +191,7 @@ def test_root_and_label():
     assert ns.label is None
 
     mc = MCMCSamples(root='./tests/example_data/gd')
-    assert (mc.root == './tests/example_data/gd')
+    assert mc.root == './tests/example_data/gd'
     assert mc.label == 'gd'
 
     mc = MCMCSamples()
