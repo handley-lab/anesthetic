@@ -37,7 +37,4 @@ def SampleReader(root):
         return mp
 
     errstr = "Could not find MCMC sampling chains with root %s" % root
-    try:
-        raise FileNotFoundError(errstr)
-    except NameError:
-        raise IOError(errstr)
+    raise FileNotFoundError(errstr)

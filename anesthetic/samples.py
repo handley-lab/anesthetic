@@ -93,6 +93,7 @@ class MCMCSamples(WeightedDataFrame):
             logzero = kwargs.pop('logzero', -1e30)
             logL = kwargs.pop('logL', None)
             if logL is not None:
+                logL = np.array(logL)
                 logL = np.where(logL <= logzero, -np.inf, logL)
             self.tex = kwargs.pop('tex', {})
             self.limits = kwargs.pop('limits', {})
@@ -487,6 +488,7 @@ class NestedSamples(MCMCSamples):
             self._beta = kwargs.pop('beta', 1.)
             logL_birth = kwargs.pop('logL_birth', None)
             if not isinstance(logL_birth, int) and logL_birth is not None:
+                logL_birth = np.array(logL_birth)
                 logL_birth = np.where(logL_birth <= logzero, -np.inf,
                                       logL_birth)
 
@@ -725,10 +727,12 @@ class NestedSamples(MCMCSamples):
             frame with contours resorted and nlive recomputed
             default: False
         """
-        samples = self.sort_values('logL').reset_index(drop=True)
+        samples = self.copy()
 
         if is_int(logL_birth):
             nlive = logL_birth
+            samples.sort_values('logL', inplace=True)
+            samples.reset_index(drop=True, inplace=True)
             samples['nlive'] = nlive
             descending = np.arange(nlive, 0, -1)
             samples.loc[len(samples)-nlive:, 'nlive'] = descending
@@ -754,12 +758,22 @@ class NestedSamples(MCMCSamples):
                               "\nDropping the invalid samples." %
                               (n_bad, len(samples), n_equal),
                               RuntimeWarning)
-                samples = samples[~invalid].reset_index()
+                samples = samples[~invalid].reset_index(drop=True)
 
+            samples.sort_values('logL', inplace=True)
+            samples.reset_index(drop=True, inplace=True)
             samples['nlive'] = compute_nlive(samples.logL, samples.logL_birth)
 
         samples.tex['nlive'] = r'$n_{\rm live}$'
         samples.beta = samples._beta
+
+        if np.any(pandas.isna(samples.logL)):
+            warnings.warn("NaN encountered in logL. If this is unexpected, you"
+                          " should investigate why your likelihood is throwing"
+                          " NaNs. Dropping these samples at prior level",
+                          RuntimeWarning)
+            samples = samples[samples.logL.notna()].recompute()
+
         return modify_inplace(self, samples, inplace)
 
     def _compute_insertion_indexes(self):
@@ -794,7 +808,7 @@ def merge_nested_samples(runs):
     return merge.recompute()
 
 
-def merge_samples_weighted(samples, weights=None):
+def merge_samples_weighted(samples, weights=None, label=None):
     r"""Merge sets of samples with weights.
 
     Combine two (or more) samples so the new PDF is
@@ -811,13 +825,18 @@ def merge_samples_weighted(samples, weights=None):
         Can be omitted if samples are NestedSamples,
         then exp(logZ) is used as weight.
 
+    label: str or None
+        Label for the new samples. Default: None
+
     Returns
     -------
     new_samples: MCMCSamples
         Merged (weighted) run.
     """
-    if not isinstance(samples, Sequence):
-        raise TypeError("samples must be a Sequence (list of samples).")
+    if not (isinstance(samples, Sequence) or
+            isinstance(samples, pandas.Series)):
+        raise TypeError("samples must be a list of samples "
+                        "(Sequence or pandas.Series)")
 
     mcmc_samples = copy.deepcopy([MCMCSamples(s) for s in samples])
     if weights is None:
@@ -843,5 +862,9 @@ def merge_samples_weighted(samples, weights=None):
         new_samples = new_samples.append(s)
 
     new_samples.weights /= new_samples.weights.max()
+
+    new_samples.label = label
+    # Copy tex, if different values for same key exist, the last one is used.
+    new_samples.tex = {key: val for s in samples for key, val in s.tex.items()}
 
     return new_samples

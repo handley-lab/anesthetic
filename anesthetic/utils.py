@@ -183,13 +183,14 @@ def compute_nlive(death, birth):
     nlive: np.array
         number of live points at each contour
     """
-    birth_index = death.searchsorted(birth, side='right')
-    births = pandas.Series(+1, index=birth_index).sort_index()
-    index = np.arange(death.size)+1
-    deaths = pandas.Series(-1, index=index)
-    nlive = pandas.concat([births, deaths]).sort_index()
-    nlive = nlive.groupby(nlive.index).sum().cumsum()
-    return nlive.to_numpy()[:-1]
+    b = pandas.DataFrame(np.array(birth), columns=['logL'])
+    d = pandas.DataFrame(np.array(death), columns=['logL'],
+                         index=b.index + len(b))
+    b['n'] = +1
+    d['n'] = -1
+    t = pandas.concat([b, d]).sort_values(['logL', 'n'])
+    n = t.n.cumsum()
+    return (n[d.index]+1).to_numpy()
 
 
 def compute_insertion_indexes(death, birth):
@@ -335,6 +336,11 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     w: array-like
         Compressed samples and weights
     """
+    # Pre-process samples to not be affected by non-standard indexing
+    # Details: https://github.com/williamjameshandley/anesthetic/issues/189
+    x = np.array(x)
+    y = np.array(y)
+
     x = pandas.Series(x)
     if w is None:
         w = pandas.Series(index=x.index, data=np.ones_like(x))

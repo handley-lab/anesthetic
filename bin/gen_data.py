@@ -59,21 +59,22 @@ def mcmc_sim(ndims=5):
 
 
 np.random.seed(0)
-data, logL, w = mcmc_sim()
-mcmc = MCMCSamples(data=data, columns=columns, logL=logL, w=w, tex=tex)
-mcmc['chi2'] = -2*mcmc.logL
+data, logL, weights = mcmc_sim()
+mcmc = MCMCSamples(data=data, columns=columns, logL=logL, weights=weights, tex=tex)
+mcmc['minuslogL'] = -mcmc.logL
+mcmc['weight'] = mcmc.weights
 
 
 # MCMC multiple files
 root = './tests/example_data/gd'
 roots.append(root)
-mcmc[['weight', 'chi2'] + columns][:len(mcmc)//2].to_csv(root + '_1.txt', sep=' ', index=False, header=False)
-mcmc[['weight', 'chi2'] + columns][len(mcmc)//2:].to_csv(root + '_2.txt', sep=' ', index=False, header=False)
+mcmc[['weight', 'minuslogL'] + columns][:len(mcmc)//2].to_csv(root + '_1.txt', sep=' ', index=False, header=False)
+mcmc[['weight', 'minuslogL'] + columns][len(mcmc)//2:].to_csv(root + '_2.txt', sep=' ', index=False, header=False)
 
 # MCMC single file
 root = './tests/example_data/gd_single'
 roots.append(root)
-mcmc[['weight', 'chi2'] + columns].to_csv(root + '.txt', sep=' ', index=False, header=False)
+mcmc[['weight', 'minuslogL'] + columns].to_csv(root + '.txt', sep=' ', index=False, header=False)
 
 
 # NS
@@ -100,7 +101,7 @@ def ns_sim(ndims=5, nlive=125):
         while live_likes[i] <= Lmin:
             live_points[i, :] = np.random.uniform(low=low, high=high, size=ndims) 
             live_likes[i] = loglikelihood(live_points[i])
-    return dead_points, dead_likes, birth_likes, live_points, live_likes, live_birth_likes
+    return np.array(dead_points), np.array(dead_likes), np.array(birth_likes), live_points, live_likes, live_birth_likes
 
 np.random.seed(0)
 data, logL, logL_birth, live, live_logL, live_logL_birth = ns_sim()
@@ -133,6 +134,32 @@ roots.append(root)
 
 ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
 ns[columns + ['logL', 'cluster']].to_csv(root + 'phys_live.points', sep=' ', index=False, header=False)
+
+# Run with single line live points file
+root = './tests/example_data/pc_single_live'
+roots.append(root)
+i = np.argsort(live_logL)
+data, live = np.split(np.concatenate([data, live[i]]), [-1])
+logL, live_logL = np.split(np.concatenate([logL, live_logL[i]]), [-1])
+logL_birth, live_logL_birth = np.split(np.concatenate([logL_birth, live_logL_birth[i]]), [-1])
+ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
+live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
+
+ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
+live_ns[columns + ['logL', 'logL_birth']].to_csv(root + '_phys_live-birth.txt', sep=' ', index=False, header=False)
+
+# Run with empty live points file
+root = './tests/example_data/pc_zero_live'
+roots.append(root)
+data, live = np.split(np.concatenate([data, live]), [len(data)+1])
+logL, live_logL = np.split(np.concatenate([logL, live_logL]), [len(data)+1])
+logL_birth, live_logL_birth = np.split(np.concatenate([logL_birth, live_logL_birth]), [len(data)+1])
+ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
+live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
+
+ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
+live_ns[columns + ['logL', 'logL_birth']].to_csv(root + '_phys_live-birth.txt', sep=' ', index=False, header=False)
+
 
 
 # Second run with different live points
