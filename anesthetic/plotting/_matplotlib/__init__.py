@@ -14,8 +14,13 @@ from anesthetic.plotting._matplotlib.boxplot import (  # noqa: F401
 )
 from pandas.plotting._matplotlib import boxplot_frame_groupby  # noqa: F401
 from anesthetic.plotting._matplotlib.core import (  # noqa: F401
-    ScatterPlot,
+    AreaPlot,
+    BarhPlot,
+    BarPlot,
     HexBinPlot,
+    LinePlot,
+    PiePlot,
+    ScatterPlot,
 )
 from anesthetic.plotting._matplotlib.hist import (  # noqa: F401
     HistPlot,
@@ -36,8 +41,13 @@ from pandas.plotting._matplotlib import (  # noqa: F401
     table,
 )
 
-PLOT_CLASSES['hist'] = HistPlot
-PLOT_CLASSES['kde'] = KdePlot
-PLOT_CLASSES['box'] = BoxPlot
-PLOT_CLASSES['scatter'] = ScatterPlot
-PLOT_CLASSES['hexbin'] = HexBinPlot
+PLOT_CLASSES["line"] = LinePlot
+PLOT_CLASSES["bar"] = BarPlot
+PLOT_CLASSES["barh"] = BarhPlot
+PLOT_CLASSES["box"] = BoxPlot
+PLOT_CLASSES["hist"] = HistPlot
+PLOT_CLASSES["kde"] = KdePlot
+PLOT_CLASSES["area"] = AreaPlot
+PLOT_CLASSES["pie"] = PiePlot
+PLOT_CLASSES["scatter"] = ScatterPlot
+PLOT_CLASSES["hexbin"] = HexBinPlot

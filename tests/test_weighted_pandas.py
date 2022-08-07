@@ -591,3 +591,30 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
     df_colors = df_axes.collections[0].get_facecolors()
     wdf_colors = wdf_axes.collections[0].get_facecolors()
     assert_allclose(df_colors, wdf_colors)
+
+mcmc_df_ = mcmc_df.copy()
+mcmc_wdf_ = mcmc_wdf.copy()
+mcmc_df = mcmc_df_.copy()
+mcmc_wdf = mcmc_wdf_.copy()
+
+def test_AreaPlot(mcmc_df, mcmc_wdf):
+    pass
+
+
+def test_BarPlot(mcmc_df, mcmc_wdf):
+    pass
+
+
+def test_BarhPlot(mcmc_df, mcmc_wdf):
+    pass
+
+
+def test_PiePlot(mcmc_df, mcmc_wdf):
+    pass
+
+
+def test_LinePlot(mcmc_df, mcmc_wdf):
+    df_axes = mcmc_df.plot.line()
+    wdf_axes = mcmc_wdf.plot.line()
+
+    mcmc_wdf.plot.line()
