@@ -1,7 +1,7 @@
 """Pandas DataFrame and Series with weighted samples."""
 
 import numpy as np
-from pandas import Series, DataFrame
+from pandas import Series, DataFrame, concat
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
@@ -240,8 +240,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             idx_diff = result_index.difference(correl.index)
 
             if len(idx_diff) > 0:
-                correl = correl._append(Series([np.nan] * len(idx_diff),
-                                               index=idx_diff))
+                correl = concat([correl, Series([np.nan] * len(idx_diff),
+                                                index=idx_diff)])
 
         return correl
 
