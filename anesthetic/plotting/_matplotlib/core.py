@@ -4,6 +4,7 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
 from anesthetic.weighted_pandas import _WeightedObject
 from anesthetic.plot import scatter_plot_2d
 from typing import Literal
+import numpy as np
 
 
 def _get_weights(kwargs, data):
@@ -58,4 +59,5 @@ class HexBinPlot(_HexBinPlot):
         if isinstance(data, _WeightedObject):
             C = '__weights'
             data[C] = data.weights
+            kwargs['reduce_C_function'] = np.sum
         super().__init__(data, x, y, C=C, **kwargs)

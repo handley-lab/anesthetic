@@ -1,3 +1,4 @@
+import warnings
 import matplotlib_agg  # noqa: F401
 import sys
 import pytest
@@ -32,59 +33,59 @@ def test_build_mcmc():
     limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
 
     mcmc = MCMCSamples(data=data)
-    assert(len(mcmc) == nsamps)
+    assert len(mcmc) == nsamps
     assert_array_equal(mcmc.columns, np.array([0, 1, 2], dtype=object))
 
     mcmc = MCMCSamples(data=data, logL=logL)
-    assert(len(mcmc) == nsamps)
+    assert len(mcmc) == nsamps
     assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
 
     mcmc = MCMCSamples(data=data, weights=weights)
-    assert(len(mcmc) == nsamps)
+    assert len(mcmc) == nsamps
     assert_array_equal(mcmc.columns, np.array([0, 1, 2], dtype=object))
-    assert(mcmc.index.nlevels == 2)
+    assert mcmc.index.nlevels == 2
 
     mcmc = MCMCSamples(data=data, weights=weights, logL=logL)
-    assert(len(mcmc) == nsamps)
+    assert len(mcmc) == nsamps
     assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
-    assert(mcmc.index.nlevels == 2)
+    assert mcmc.index.nlevels == 2
 
     mcmc = MCMCSamples(data=data, columns=params)
-    assert(len(mcmc) == nsamps)
+    assert len(mcmc) == nsamps
     assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
 
     mcmc = MCMCSamples(data=data, tex=tex)
     for p in params:
-        assert(mcmc.tex[p] == tex[p])
+        assert mcmc.tex[p] == tex[p]
 
     mcmc = MCMCSamples(data=data, limits=limits)
     for p in params:
-        assert(mcmc.limits[p] == limits[p])
+        assert mcmc.limits[p] == limits[p]
 
     ns = NestedSamples(data=data, logL=logL, weights=weights)
-    assert(len(ns) == nsamps)
-    assert(np.all(np.isfinite(ns.logL)))
+    assert len(ns) == nsamps
+    assert np.all(np.isfinite(ns.logL))
     logL[:10] = -1e300
     weights[:10] = 0.
     mcmc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e29)
     ns = NestedSamples(data=data, logL=logL, weights=weights, logzero=-1e29)
     assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
-    assert(mcmc.index.nlevels == 2)
+    assert mcmc.index.nlevels == 2
     assert_array_equal(ns.columns, np.array([0, 1, 2, 'logL'], dtype=object))
-    assert(ns.index.nlevels == 2)
-    assert(np.all(mcmc.logL[:10] == -np.inf))
-    assert(np.all(ns.logL[:10] == -np.inf))
-    assert(np.all(mcmc.logL[10:] == logL[10:]))
-    assert(np.all(ns.logL[10:] == logL[10:]))
+    assert ns.index.nlevels == 2
+    assert np.all(mcmc.logL[:10] == -np.inf)
+    assert np.all(ns.logL[:10] == -np.inf)
+    assert np.all(mcmc.logL[10:] == logL[10:])
+    assert np.all(ns.logL[10:] == logL[10:])
 
     mcmc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e301)
     ns = NestedSamples(data=data, logL=logL, weights=weights, logzero=-1e301)
-    assert(np.all(np.isfinite(mcmc.logL)))
-    assert(np.all(np.isfinite(ns.logL)))
-    assert(np.all(mcmc.logL == logL))
-    assert(np.all(ns.logL == logL))
+    assert np.all(np.isfinite(mcmc.logL))
+    assert np.all(np.isfinite(ns.logL))
+    assert np.all(mcmc.logL == logL)
+    assert np.all(ns.logL == logL)
 
-    assert(mcmc.root is None)
+    assert mcmc.root is None
 
 
 def test_NS_input_fails_in_MCMCSamples():
@@ -135,27 +136,27 @@ def test_plot_2d_kinds():
     params = [params_x, params_y]
 
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
-    assert((~axes.isnull()).sum().sum() == 3)
+    assert (~axes.isnull()).sum().sum() == 3
 
     fig, axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
-    assert((~axes.isnull()).sum().sum() == 6)
+    assert (~axes.isnull()).sum().sum() == 6
 
     fig, axes = ns.plot_2d(params, kind={'upper': 'kde_2d',
                                          'diagonal': 'kde_1d'})
-    assert((~axes.isnull()).sum().sum() == 9)
+    assert (~axes.isnull()).sum().sum() == 9
 
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d'})
-    assert((~axes.isnull()).sum().sum() == 6)
+    assert (~axes.isnull()).sum().sum() == 6
 
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d'})
-    assert((~axes.isnull()).sum().sum() == 6)
+    assert (~axes.isnull()).sum().sum() == 6
 
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d',
                                          'upper': 'scatter_2d'})
-    assert((~axes.isnull()).sum().sum() == 12)
+    assert (~axes.isnull()).sum().sum() == 12
 
     with pytest.raises(ValueError):
         fig, axes = ns.plot_2d(params, kind={'lower': 'not a plot kind'})
@@ -186,20 +187,20 @@ def test_plot_2d_kinds_multiple_calls():
 def test_root_and_label():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
-    assert(ns.root == './tests/example_data/pc')
-    assert(ns.label == 'pc')
+    assert ns.root == './tests/example_data/pc'
+    assert ns.label == 'pc'
 
     ns = NestedSamples()
-    assert(ns.root is None)
-    assert(ns.label is None)
+    assert ns.root is None
+    assert ns.label is None
 
     mc = MCMCSamples(root='./tests/example_data/gd')
     assert (mc.root == './tests/example_data/gd')
-    assert(mc.label == 'gd')
+    assert mc.label == 'gd'
 
     mc = MCMCSamples()
-    assert(mc.root is None)
-    assert(mc.label is None)
+    assert mc.root is None
+    assert mc.label is None
 
 
 def test_plot_2d_legend():
@@ -217,14 +218,14 @@ def test_plot_2d_legend():
         for x, ax in row.iteritems():
             if ax is not None:
                 leg = ax.legend()
-                assert(leg.get_texts()[0].get_text() == 'l1')
-                assert(leg.get_texts()[1].get_text() == 'l2')
+                assert leg.get_texts()[0].get_text() == 'l1'
+                assert leg.get_texts()[1].get_text() == 'l2'
                 handles, labels = ax.get_legend_handles_labels()
-                assert(labels == ['l1', 'l2'])
+                assert labels == ['l1', 'l2']
                 if x == y:
-                    assert(all([isinstance(h, Line2D) for h in handles]))
+                    assert all([isinstance(h, Line2D) for h in handles])
                 else:
-                    assert(all([isinstance(h, Rectangle) for h in handles]))
+                    assert all([isinstance(h, Rectangle) for h in handles])
 
     plt.close('all')
 
@@ -239,15 +240,15 @@ def test_plot_2d_legend():
         for x, ax in row.iteritems():
             if ax is not None:
                 leg = ax.legend()
-                assert(leg.get_texts()[0].get_text() == 'l1')
-                assert(leg.get_texts()[1].get_text() == 'l2')
+                assert leg.get_texts()[0].get_text() == 'l1'
+                assert leg.get_texts()[1].get_text() == 'l2'
                 handles, labels = ax.get_legend_handles_labels()
-                assert(labels == ['l1', 'l2'])
+                assert labels == ['l1', 'l2']
                 if x == y:
-                    assert(all([isinstance(h, Rectangle) for h in handles]))
+                    assert all([isinstance(h, Rectangle) for h in handles])
                 else:
-                    assert(all([isinstance(h, Line2D)
-                                for h in handles]))
+                    assert all([isinstance(h, Line2D)
+                                for h in handles])
     plt.close('all')
 
     # test default labelling
@@ -259,7 +260,7 @@ def test_plot_2d_legend():
         for x, ax in row.iteritems():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
-                assert(labels == ['pc', 'gd'])
+                assert labels == ['pc', 'gd']
     plt.close('all')
 
     # Test label kwarg to constructors
@@ -275,7 +276,7 @@ def test_plot_2d_legend():
         for x, ax in row.iteritems():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
-                assert(labels == ['l1', 'l2'])
+                assert labels == ['l1', 'l2']
     plt.close('all')
 
 
@@ -320,9 +321,9 @@ def test_plot_2d_colours():
                     elif label == 'mn':
                         mn_colors.append(color)
 
-        assert(len(set(gd_colors)) == 1)
-        assert(len(set(mn_colors)) == 1)
-        assert(len(set(pc_colors)) == 1)
+        assert len(set(gd_colors)) == 1
+        assert len(set(mn_colors)) == 1
+        assert len(set(pc_colors)) == 1
         plt.close("all")
 
 
@@ -363,9 +364,9 @@ def test_plot_1d_colours():
                 elif label == 'mn':
                     mn_colors.append(color)
 
-        assert(len(set(gd_colors)) == 1)
-        assert(len(set(mn_colors)) == 1)
-        assert(len(set(pc_colors)) == 1)
+        assert len(set(gd_colors)) == 1
+        assert len(set(mn_colors)) == 1
+        assert len(set(pc_colors)) == 1
         plt.close("all")
 
 
@@ -398,14 +399,14 @@ def test_ns_output():
         assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
         assert PC['d'].mean() < 5
         assert PC.cov()['D']['logZ'] < 0
-        assert(abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * n**0.5 * 2)
-        assert(abs(PC.D.mean() - pc.D()) < PC.D.std() * n**0.5 * 2)
-        assert(abs(PC.d.mean() - pc.d()) < PC.d.std() * n**0.5 * 2)
+        assert abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * n**0.5 * 2
+        assert abs(PC.D.mean() - pc.D()) < PC.D.std() * n**0.5 * 2
+        assert abs(PC.d.mean() - pc.d()) < PC.d.std() * n**0.5 * 2
 
         n = 100
-        assert(ks_2samp(pc.logZ(n), PC.logZ).pvalue > 0.05)
-        assert(ks_2samp(pc.D(n), PC.D).pvalue > 0.05)
-        assert(ks_2samp(pc.d(n), PC.d).pvalue > 0.05)
+        assert ks_2samp(pc.logZ(n), PC.logZ).pvalue > 0.05
+        assert ks_2samp(pc.D(n), PC.D).pvalue > 0.05
+        assert ks_2samp(pc.d(n), PC.d).pvalue > 0.05
 
     assert abs(pc.set_beta(0.0).logZ()) < 1e-2
     assert pc.set_beta(0.9).logZ() < pc.set_beta(1.0).logZ()
@@ -857,6 +858,20 @@ def test_recompute():
     mn = NestedSamples(root='./tests/example_data/mn_old')
     with pytest.raises(RuntimeError):
         mn.recompute()
+
+
+def test_NaN():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        pc_new = pc.copy()
+        pc_new.loc[2, "logL"] = np.nan
+        pc_new.recompute(inplace=True)
+        assert len(w) == 1
+        assert "NaN encountered in logL." in str(w[-1].message)
+        assert len(pc_new) == len(pc) - 1
+        assert pc_new.nlive.iloc[0] == 124
 
 
 def test_unsorted():
