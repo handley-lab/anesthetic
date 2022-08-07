@@ -566,6 +566,8 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.boxplot(vert=False)
     mcmc_wdf.boxplot(fontsize=30)
 
+    plt.close("all")
+
 
 def test_ScatterPlot(mcmc_df, mcmc_wdf):
     mcmc_df.plot.scatter('x', 'y')
@@ -578,6 +580,8 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
     ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
     n = len(ax.collections[0].get_offsets().data)
     assert_allclose(n, 50, atol=np.sqrt(50))
+
+    plt.close("all")
 
 
 def test_HexBinPlot(mcmc_df, mcmc_wdf):
@@ -592,14 +596,18 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
     wdf_colors = wdf_axes.collections[0].get_facecolors()
     assert_allclose(df_colors, wdf_colors)
 
+    plt.close("all")
 
-def test_WeightedDataFramePlotting(wdf):
-    wdf.plot.hist()
-    wdf.x.plot.kde(subplots=True)
 
-    wdf.plot.hist_2d('x', 'y')
-    wdf.plot.kde_2d('x', 'y')
-    wdf.plot.fastkde_2d('x', 'y')
-    wdf.plot.kde_1d()
-    wdf.plot.fastkde_1d()
-    wdf.plot.hist_1d()
+def test_WeightedDataFramePlotting(mcmc_wdf):
+    mcmc_wdf.plot.hist()
+    mcmc_wdf.x.plot.kde(subplots=True)
+
+    mcmc_wdf.plot.hist_2d('x', 'y')
+    mcmc_wdf.plot.kde_2d('x', 'y')
+    mcmc_wdf.plot.fastkde_2d('x', 'y')
+    mcmc_wdf.plot.kde_1d()
+    mcmc_wdf.plot.fastkde_1d()
+    mcmc_wdf.plot.hist_1d()
+
+    plt.close("all")
