@@ -581,5 +581,13 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
 
 
 def test_HexBinPLot(mcmc_df, mcmc_wdf):
-    mcmc_df.plot.hexbin('x', 'y')
-    mcmc_wdf.plot.hexbin('x', 'y')
+    df_axes = mcmc_df.plot.hexbin('x', 'y', mincnt=1)
+    wdf_axes = mcmc_wdf.plot.hexbin('x', 'y')
+
+    df_data = df_axes.collections[0].get_offsets()
+    wdf_data = wdf_axes.collections[0].get_offsets()
+    assert_allclose(df_data, wdf_data)
+
+    df_colors = df_axes.collections[0].get_facecolors()
+    wdf_colors = wdf_axes.collections[0].get_facecolors()
+    assert_allclose(df_colors, wdf_colors)
