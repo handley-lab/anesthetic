@@ -7,7 +7,6 @@ from anesthetic.examples.perfect_ns import (
     gaussian, correlated_gaussian
 )
 from scipy.spatial import ConvexHull
-from scipy.special import gamma, gammaln
 
 
 def test_random_covariance():
@@ -54,28 +53,31 @@ def test_perfect_ns_gaussian():
     ndims = 10
     sigma = 0.1
     R = 1
-    D = ndims/2*np.log(2*np.pi*np.e*sigma**2) - log_volume_n_ball(ndims)
-    logZ = gammaln(ndims/2) + log_volume_n_ball(ndims-1) - log_volume_n_ball(ndims, R)  + np.log(sigma)*ndims + (ndims/2-1)*np.log(2)
-    plt.hist(samples.logZ(1000))
-    samples = gaussian(nlive, ndims)
-    samples
-    samples.gui()
-    gaussian(nlive, ndims).logZ()
-    samples.gui()
-    plt.plot(samples.logL, samples.nlive)
-    samples.nlive.plot()
-    samples.gui()
+
+    samples = gaussian(nlive, ndims, sigma, R)
+
+    assert (samples[:-nlive].nlive == nlive).all()
+
+    mean = samples[np.arange(ndims)].mean()
+    assert_allclose(mean, 0, atol=1e-2)
+    cov = samples[np.arange(ndims)].cov()
+    assert_allclose(cov, np.eye(ndims)*sigma**2, atol=1e-3)
+
+    D = log_volume_n_ball(ndims) - ndims/2*np.log(2*np.pi*np.e*sigma**2)
+    assert_allclose(samples.D(), D, atol=3*samples.D(12).std())
+
+    logZ = ndims/2 * np.log(2*np.pi*sigma**2) - log_volume_n_ball(ndims, R)
+    assert_allclose(samples.logZ(), logZ, atol=3*samples.logZ(12).std())
 
 
 def test_perfect_ns_correlated_gaussian():
     np.random.seed(0)
     nlive = 500
-    d = 5
-    mean = 0.5*np.ones(d)
-    cov = random_covariance(np.random.rand(d)*0.1)
+    ndims = 5
+    mean = 0.5*np.ones(ndims)
+    cov = random_covariance(np.random.rand(ndims)*0.1)
     samples = correlated_gaussian(nlive, mean, cov)
-    samples.nlive.plot()
     assert_allclose(samples.logZ(), 0, atol=3*samples.logZ(12).std())
     assert (samples[:-nlive].nlive >= nlive).all()
-    assert_allclose(samples[[0, 1, 2, 3, 4]].mean(), mean, atol=1e-2)
-    assert_allclose(samples[[0, 1, 2, 3, 4]].cov(), cov/(d+2), atol=1e-2)
+    assert_allclose(samples[np.arange(ndims)].mean(), mean, atol=1e-2)
+    assert_allclose(samples[np.arange(ndims)].cov(), cov/(ndims+2), atol=1e-2)

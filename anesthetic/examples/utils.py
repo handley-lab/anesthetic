@@ -47,6 +47,7 @@ def volume_n_ball(n, r=1):
     """Volume of an n dimensional ball, radius r."""
     return np.pi**(n/2)/gamma(1+n/2)*r**n
 
+
 def log_volume_n_ball(n, r=1):
     """Log-volume of an n dimensional ball, radius r."""
-    return np.log(np.pi)*(n/2)- gammaln(1+n/2) + np.log(r)*n
+    return np.log(np.pi)*n/2 - gammaln(1+n/2) + np.log(r)*n

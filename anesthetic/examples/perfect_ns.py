@@ -12,7 +12,7 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
     Up to normalisation this is identical to the example in John Skilling's
     original paper https://doi.org/10.1214/06-BA127 . Both spherical Gaussian
     width sigma and spherical uniform prior width R are centered on zero
-    
+
     Parameters
     ----------
     nlive: int
@@ -29,10 +29,15 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
 
     logLmin: float
         loglikelihood at which to terminate
+
+    Returns
+    -------
+    samples: NestedSamples
+        Nested sampling run
     """
 
     def logLike(x):
-        return  -(x**2).sum(axis=-1)/2/sigma**2
+        return -(x**2).sum(axis=-1)/2/sigma**2
 
     def random_sphere(n):
         return random_ellipsoid(np.zeros(ndims), np.eye(ndims), n)
@@ -48,7 +53,7 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
         logL_birth = logL.copy()
         r = (points**2).sum(axis=-1, keepdims=True)**0.5
 
-    samples = merge_nested_samples(samples) 
+    samples = merge_nested_samples(samples)
     samples.logL
     logLend = samples[samples.nlive >= nlive].logL.max()
     return samples[samples.logL_birth < logLend].recompute()
@@ -80,7 +85,7 @@ def correlated_gaussian(nlive, mean, cov):
         covariance of gaussian in parameters
 
     Returns
-    ------
+    -------
     samples: NestedSamples
         Nested sampling run
     """
