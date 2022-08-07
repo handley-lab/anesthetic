@@ -554,7 +554,7 @@ class NestedSamples(MCMCSamples):
 
         """
         dlogX = self.dlogX(nsamples)
-        samples = MCMCSamples(index=dlogX.columns)
+        samples = pandas.DataFrame(index=dlogX.columns)
         samples['logZ'] = self.logZ(dlogX)
 
         logw = dlogX.add(self.beta * self.logL, axis=0)
@@ -563,6 +563,7 @@ class NestedSamples(MCMCSamples):
 
         samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
         samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
+        samples = MCMCSamples(samples)
 
         samples.tex = {'logZ': r'$\log\mathcal{Z}$',
                        'D': r'$\mathcal{D}$',
@@ -592,8 +593,8 @@ class NestedSamples(MCMCSamples):
         """
         dlogX = self.dlogX(nsamples)
         logZ = self.logZ(dlogX)
-        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
+        logw = dlogX.add(self.beta * self.logL, axis=0).values - logZ
+        S = (dlogX*0).add(self.beta * self.logL, axis=0).values - logZ
         return np.exp(logsumexp(logw, b=S, axis=0))
 
     def d(self, nsamples=None):
@@ -607,8 +608,8 @@ class NestedSamples(MCMCSamples):
         dlogX = self.dlogX(nsamples)
         logZ = self.logZ(dlogX)
         D = self.D(dlogX)
-        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
+        logw = dlogX.add(self.beta * self.logL, axis=0).values - logZ
+        S = (dlogX*0).add(self.beta * self.logL, axis=0).values - logZ
         return np.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
 
     def live_points(self, logL=None):
@@ -854,12 +855,14 @@ def merge_samples_weighted(samples, weights=None, label=None):
                              "each weight is for a whole sample. Currently",
                              len(samples), len(weights))
 
-    new_samples = MCMCSamples()
+    new_samples = []
     for s, w in zip(mcmc_samples, weights):
         # Normalize the given weights
         new_weights = s.weights / s.weights.sum() * w/np.sum(weights)
         s = MCMCSamples(s, weights=new_weights)
-        new_samples = new_samples.append(s)
+        new_samples.append(s)
+
+    new_samples = pandas.concat(new_samples)
 
     new_samples.weights /= new_samples.weights.max()
 

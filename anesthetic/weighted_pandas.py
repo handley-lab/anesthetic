@@ -14,21 +14,38 @@ class _WeightedObject(object):
     def __init__(self, *args, **kwargs):
         weights = kwargs.pop('weights', None)
         super().__init__(*args, **kwargs)
-        self.weights = weights
+        if weights is None:
+            if 'weights' in self.index.names:
+                weights = self.weights
+            else:
+                weights = np.ones_like(self.index, int)
+        self._set_weights(weights)
 
     @property
     def weights(self):
         """Sample weights."""
-        if self.index.nlevels == 1:
-            return np.ones_like(self.index)
-        else:
-            return self.index.get_level_values('weights').to_numpy()
+        return self.index.get_level_values('weights').to_numpy()
 
     @weights.setter
     def weights(self, weights):
-        if weights is not None:
-            self.index = [self.index.get_level_values(0), weights]
-            self.index.set_names(['#', 'weights'], inplace=True)
+        self._set_weights(weights)
+
+    def _set_weights(self, weights):
+        self.index = [self.index.get_level_values(name)
+                      for name in self.index.names if name != 'weights'] \
+                          + [weights]
+        names = self.index.names[:-1] + ['weights']
+        self.index.set_names(names, inplace=True)
+
+    def reset_index(self, level=None, drop=False, inplace=False, *args):
+        weights = self.weights
+        answer = super().reset_index(level=level, drop=drop,
+                                     inplace=inplace, *args)
+        if inplace:
+            self._set_weights(weights)
+        else:
+            answer._set_weights(weights)
+            return answer
 
     @property
     def _rand(self):
@@ -173,7 +190,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted variance of the sampled distribution."""
         if axis == 0:
             null = self.isnull() & skipna
-            mean = self.mean(skipna=skipna).to_numpy()
+            mean = self.mean(skipna=skipna)
             var = np.average(masked_array((self-mean)**2, null),
                              weights=self.weights, axis=0)
             return Series(var, index=self.columns)
@@ -183,7 +200,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     def cov(self, skipna=True):
         """Weighted covariance of the sampled distribution."""
         null = self.isnull() & skipna
-        mean = self.mean(skipna=skipna).to_numpy()
+        mean = self.mean(skipna=skipna)
         x = masked_array(self - mean, null)
         cov = np.ma.dot(self.weights * x.T, x) / self.weights.sum().T
         return DataFrame(cov, index=self.columns, columns=self.columns)
@@ -223,8 +240,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             idx_diff = result_index.difference(correl.index)
 
             if len(idx_diff) > 0:
-                correl = correl.append(Series([np.nan] * len(idx_diff),
-                                              index=idx_diff))
+                correl = correl._append(Series([np.nan] * len(idx_diff),
+                                               index=idx_diff))
 
         return correl
 
@@ -232,8 +249,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted kurtosis of the sampled distribution."""
         if axis == 0:
             null = self.isnull() & skipna
-            mean = self.mean(skipna=skipna).to_numpy()
-            std = self.std(skipna=skipna).to_numpy()
+            mean = self.mean(skipna=skipna)
+            std = self.std(skipna=skipna)
             kurt = np.average(masked_array(((self-mean)/std)**4, null),
                               weights=self.weights, axis=0)
             return Series(kurt, index=self.columns)
@@ -244,8 +261,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted skewness of the sampled distribution."""
         if axis == 0:
             null = self.isnull() & skipna
-            mean = self.mean(skipna=skipna).to_numpy()
-            std = self.std(skipna=skipna).to_numpy()
+            mean = self.mean(skipna=skipna)
+            std = self.std(skipna=skipna)
             skew = np.average(masked_array(((self-mean)/std)**3, null),
                               weights=self.weights, axis=0)
             return Series(skew, index=self.columns)
@@ -256,7 +273,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted mean absolute deviation of the sampled distribution."""
         if axis == 0:
             null = self.isnull() & skipna
-            mean = self.mean(skipna=skipna).to_numpy()
+            mean = self.mean(skipna=skipna)
             mad = np.average(masked_array(abs(self-mean), null),
                              weights=self.weights, axis=0)
             return Series(mad, index=self.columns)
@@ -298,8 +315,15 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         data = np.repeat(self.to_numpy(), i, axis=0)
         index = self.index.repeat(i)
         df = DataFrame(data=data, index=index, columns=self.columns)
-        df.index = df.index.get_level_values('#')
+        df.index = df.index.droplevel('weights')
         return df
+
+    def _reduce(self, op, name, **kwargs):
+        answer = super()._reduce(op, name, **kwargs)
+        if kwargs['axis'] == 0:
+            answer = Series(answer).droplevel('weights')
+            answer.name = None
+        return answer
 
     @property
     def _constructor_sliced(self):

@@ -431,9 +431,9 @@ def test_merging():
     samples_1 = NestedSamples(root='./tests/example_data/pc')
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
     samples = merge_nested_samples([samples_1, samples_2])
-    nlive_1 = samples_1.nlive.mode()[0]
-    nlive_2 = samples_2.nlive.mode()[0]
-    nlive = samples.nlive.mode()[0]
+    nlive_1 = samples_1.nlive.mode().to_numpy()[0]
+    nlive_2 = samples_2.nlive.mode().to_numpy()[0]
+    nlive = samples.nlive.mode().to_numpy()[0]
     assert nlive_1 == 125
     assert nlive_2 == 250
     assert nlive == nlive_1 + nlive_2
@@ -452,15 +452,15 @@ def test_weighted_merging():
     samples_2['xtest'] = samples_2['x3']
     samples_1.tex['xtest'] = "$x_{t,1}$"
     samples_2.tex['xtest'] = "$x_{t,2}$"
-    mean1 = samples_1.mean()['xtest']
-    mean2 = samples_2.mean()['xtest']
+    mean1 = samples_1.xtest.mean()
+    mean2 = samples_2.xtest.mean()
 
     # Test with evidence weights
     weight1 = np.exp(samples_1.logZ())
     weight2 = np.exp(samples_2.logZ())
     samples = merge_samples_weighted([samples_1, samples_2],
                                      label='Merged label')
-    mean = samples.mean()['xtest']
+    mean = samples.xtest.mean()
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
     # Test tex and label
@@ -482,7 +482,7 @@ def test_weighted_merging():
     weight2 = 13
     samples = merge_samples_weighted(
         [samples_1, samples_2], weights=[weight1, weight2])
-    mean = samples.mean()['xtest']
+    mean = samples.xtest.mean()
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
     # Test plot still works (see issue #189)
@@ -574,7 +574,9 @@ def test_live_points():
     last_live_points = pc.live_points()
     logL = pc.logL_birth.max()
     assert (last_live_points.logL >= logL).all()
-    assert len(last_live_points) == pc.nlive.mode()[0]
+    assert len(last_live_points) == pc.nlive.mode().to_numpy()[0]
+
+    len(last_live_points)
 
 
 def test_limit_assignment():
@@ -652,7 +654,7 @@ def test_compute_insertion():
     ns._compute_insertion_indexes()
     assert 'insertion' in ns
 
-    nlive = ns.nlive.mode()[0]
+    nlive = ns.nlive.mode().to_numpy()[0]
     assert_array_less(ns.insertion, nlive)
 
     u = ns.insertion.to_numpy()/nlive
