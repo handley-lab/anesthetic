@@ -6,6 +6,9 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix, bootstrap_plot
+from pandas.plotting._matplotlib.misc import (
+    scatter_matrix as orig_scatter_matrix
+)
 
 
 @pytest.fixture
@@ -494,11 +497,23 @@ def test_KdePlot(mcmc_df, mcmc_wdf):
 
 
 def test_scatter_matrix(mcmc_df, mcmc_wdf):
-    scatter_matrix(mcmc_df)
+    axes = scatter_matrix(mcmc_df)
+    data = axes[0, 1].collections[0].get_offsets().data
+    axes = orig_scatter_matrix(mcmc_df)
+    orig_data = axes[0, 1].collections[0].get_offsets().data
+
+    assert_allclose(data, orig_data)
+
     axes = scatter_matrix(mcmc_wdf)
-    n = len(axes[0, 1].collections[0].get_offsets().data)
+    data = axes[0, 1].collections[0].get_offsets().data
+    n = len(data)
     neff = channel_capacity(mcmc_wdf.weights)
     assert_allclose(n, neff, atol=np.sqrt(n))
+
+    axes = orig_scatter_matrix(mcmc_wdf)
+    orig_data = axes[0, 1].collections[0].get_offsets().data
+    n = len(orig_data)
+    assert n == len(mcmc_wdf)
 
     axes = scatter_matrix(mcmc_wdf, ncompress=50)
     n = len(axes[0, 1].collections[0].get_offsets().data)
