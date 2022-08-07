@@ -1,5 +1,5 @@
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
-from pandas import Series, DataFrame
+from pandas import Series, DataFrame, MultiIndex
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
@@ -13,6 +13,7 @@ def test_WeightedSeries_constructor():
 
     series = WeightedSeries(data)
     assert_array_equal(series.weights, 1)
+    assert_array_equal(series.index.get_level_values('weights'), 1)
     assert_array_equal(series, data)
 
     series = WeightedSeries(data, weights=None)
@@ -465,3 +466,18 @@ def test_WeightedSeries_nan():
     assert_allclose(series.mean(), 0.5, atol=1e-2)
     assert_allclose(series.var(), 1./12, atol=1e-2)
     assert_allclose(series.std(), (1./12)**0.5, atol=1e-2)
+
+
+def test_multiindex():
+    np.random.rand(0)
+    N = 1000
+    index_1 = np.arange(N)
+    index_2 = np.random.randint(0, 1000, N)
+    index = MultiIndex.from_arrays([index_1, index_2], names=['A', 'B'])
+    data = np.random.rand(N, 5)
+    weights = np.random.rand(N)
+    wdf = WeightedDataFrame(data, weights=weights, index=index)
+
+    assert wdf.index.names == ['A', 'B', 'weights']
+    assert_allclose(np.array([*wdf.index]).T, [index_1, index_2, weights])
+    assert wdf.reset_index().index.names == [None, 'weights']
