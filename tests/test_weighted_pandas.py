@@ -580,7 +580,7 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
     assert_allclose(n, 50, atol=np.sqrt(50))
 
 
-def test_HexBinPLot(mcmc_df, mcmc_wdf):
+def test_HexBinPlot(mcmc_df, mcmc_wdf):
     df_axes = mcmc_df.plot.hexbin('x', 'y', mincnt=1)
     wdf_axes = mcmc_wdf.plot.hexbin('x', 'y')
 
