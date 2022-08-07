@@ -294,7 +294,7 @@ def test_WeightedSeries_std(series):
     assert np.isnan(series.std(skipna=False))
 
 
-def test_WeightedDataFrame_cov(frame):
+def test_WeightedSeries_cov(frame):
     assert_allclose(frame.A.cov(frame.A), 1./12, atol=1e-2)
     assert_allclose(frame.A.cov(frame.B), 0, atol=1e-2)
 
@@ -305,7 +305,7 @@ def test_WeightedDataFrame_cov(frame):
     assert np.isnan(frame.B.cov(frame.A, skipna=False))
 
 
-def test_WeightedDataFrame_corr(frame):
+def test_WeightedSeries_corr(frame):
     assert_allclose(frame.A.corr(frame.A), 1., atol=1e-2)
     assert_allclose(frame.A.corr(frame.B), 0, atol=1e-2)
     D = frame.A + frame.B
@@ -430,6 +430,7 @@ def mcmc_df():
             x0, logL0 = x1, logL1
 
     return DataFrame(dat, columns=["x", "y", "z", "w"])
+
 
 @pytest.fixture
 def mcmc_wdf(mcmc_df):
