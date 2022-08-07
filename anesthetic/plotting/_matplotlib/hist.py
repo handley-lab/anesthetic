@@ -71,6 +71,7 @@ class KdePlot(HistPlot, _KdePlot):
 
 
 class Kde1dPlot(_WeightedMPLPlot):
+    # noqa: disable=D101
     @property
     def _kind(self) -> Literal["kde_1d"]:
         return "kde_1d"
@@ -84,6 +85,7 @@ class Kde1dPlot(_WeightedMPLPlot):
 
 
 class FastKde1dPlot(_CompressedMPLPlot):
+    # noqa: disable=D101
     @property
     def _kind(self) -> Literal["fastkde_1d"]:
         return "fastkde_1d"
@@ -97,6 +99,7 @@ class FastKde1dPlot(_CompressedMPLPlot):
 
 
 class Hist1dPlot(_WeightedMPLPlot):
+    # noqa: disable=D101
     @property
     def _kind(self) -> Literal["hist_1d"]:
         return "hist_1d"
@@ -110,6 +113,7 @@ class Hist1dPlot(_WeightedMPLPlot):
 
 
 class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
+    # noqa: disable=D101
     @property
     def _kind(self) -> Literal["kde_2d"]:
         return "kde_2d"
@@ -124,6 +128,7 @@ class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
 
 
 class FastKde2dPlot(_CompressedMPLPlot, PlanePlot):
+    # noqa: disable=D101
     @property
     def _kind(self) -> Literal["fastkde_2d"]:
         return "fastkde_2d"
@@ -138,6 +143,7 @@ class FastKde2dPlot(_CompressedMPLPlot, PlanePlot):
 
 
 class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
+    # noqa: disable=D101
     @property
     def _kind(self) -> Literal["hist_2d"]:
         return "hist_2d"

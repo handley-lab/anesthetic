@@ -21,6 +21,7 @@ def _process_docstring(doc):
 
 
 class PlotAccessor(_PlotAccessor):
+    # noqa: disable=D101
     __doc__ = _process_docstring(_PlotAccessor.__doc__)
     _common_kinds = _PlotAccessor._common_kinds \
         + ("hist_1d", "kde_1d", "fastkde_1d")
@@ -30,24 +31,31 @@ class PlotAccessor(_PlotAccessor):
     _all_kinds = _common_kinds + _series_kinds + _dataframe_kinds
 
     def hist_1d(self, **kwargs) -> PlotAccessor:
+        """Histogram plot: See anesthetic.plot.hist_plot_1d."""
         return self(kind="hist_1d", **kwargs)
 
     def kde_1d(self, **kwargs) -> PlotAccessor:
+        """KDE plot: See anesthetic.plot.kde_plot_1d."""
         return self(kind="kde_1d", **kwargs)
 
     def fastkde_1d(self, **kwargs) -> PlotAccessor:
+        """KDE plot: See anesthetic.plot.fastkde_plot_1d."""
         return self(kind="fastkde_1d", **kwargs)
 
     def kde_2d(self, x, y, **kwargs) -> PlotAccessor:
+        """KDE plot: See anesthetic.plot.kde_contour_plot_2d."""
         return self(kind="kde_2d", x=x, y=y, **kwargs)
 
     def fastkde_2d(self, x, y, **kwargs) -> PlotAccessor:
+        """KDE plot: See anesthetic.plot.fastkde_contour_plot_2d."""
         return self(kind="fastkde_2d", x=x, y=y, **kwargs)
 
     def hist_2d(self, x, y, **kwargs) -> PlotAccessor:
+        """Histogram plot: See anesthetic.plot.hist_plot_2d."""
         return self(kind="hist_2d", x=x, y=y, **kwargs)
 
     def scatter_2d(self, x, y, **kwargs) -> PlotAccessor:
+        """Scatter plot: See anesthetic.plot.scatter_plot_2d."""
         return self(kind="scatter_2d", x=x, y=y, **kwargs)
 
 

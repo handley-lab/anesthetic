@@ -40,6 +40,7 @@ class ScatterPlot(_CompressedMPLPlot, _ScatterPlot):
 
 
 class ScatterPlot2d(_CompressedMPLPlot, PlanePlot):
+    # noqa: disable=D101
     @property
     def _kind(self) -> Literal["scatter_2d"]:
         return "scatter_2d"
