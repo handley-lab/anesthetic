@@ -23,16 +23,13 @@ class _WeightedMPLPlot(MPLPlot):
 
     def _get_index_name(self):
         if isinstance(self.data, _WeightedObject):
-            return '#'
+            return np.squeeze(self.data.index.droplevel('weights').names)
         else:
             return super()._get_index_name()
 
     def _get_xticks(self, convert_period: bool = False):
         if isinstance(self.data, _WeightedObject):
-            if self.data.index.nlevels == 1:
-                return self.data.index
-            else:
-                return self.data.index.get_level_values('#')._mpl_repr()
+            return self.data.index.droplevel('weights')._mpl_repr()
         else:
             return super()._get_xticks(convert_period)
 

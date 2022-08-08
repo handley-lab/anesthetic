@@ -566,6 +566,8 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.boxplot(vert=False)
     mcmc_wdf.boxplot(fontsize=30)
 
+    plt.close("all")
+
 
 def test_ScatterPlot(mcmc_df, mcmc_wdf):
     mcmc_df.plot.scatter('x', 'y')
@@ -578,6 +580,8 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
     ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
     n = len(ax.collections[0].get_offsets().data)
     assert_allclose(n, 50, atol=np.sqrt(50))
+
+    plt.close("all")
 
 
 def test_HexBinPlot(mcmc_df, mcmc_wdf):
@@ -592,29 +596,42 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
     wdf_colors = wdf_axes.collections[0].get_facecolors()
     assert_allclose(df_colors, wdf_colors)
 
-mcmc_df_ = mcmc_df.copy()
-mcmc_wdf_ = mcmc_wdf.copy()
-mcmc_df = mcmc_df_.copy()
-mcmc_wdf = mcmc_wdf_.copy()
 
 def test_AreaPlot(mcmc_df, mcmc_wdf):
-    pass
+    axes_wdf = mcmc_wdf.plot.area()
+    axes_df = mcmc_df.plot.area()
+
+    assert_allclose(axes_df.get_xlim(), axes_wdf.get_xlim(), rtol=1e-3)
+    assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-3)
+
+    plt.close("all")
 
 
 def test_BarPlot(mcmc_df, mcmc_wdf):
-    pass
+    axes_bar = mcmc_wdf[5:10].plot.bar()
+    axes_barh = mcmc_wdf[5:10].plot.barh()
+    assert_array_equal(axes_bar.get_xticks(), axes_barh.get_yticks())
+    assert_array_equal(axes_bar.get_yticks(), axes_barh.get_xticks())
 
-
-def test_BarhPlot(mcmc_df, mcmc_wdf):
-    pass
+    plt.close("all")
 
 
 def test_PiePlot(mcmc_df, mcmc_wdf):
-    pass
+    axes_wdf = mcmc_wdf[5:10].x.plot.pie()
+    axes_wdf = mcmc_wdf[5:10].plot.pie(subplots=True)
+
+    plt.close("all")
 
 
 def test_LinePlot(mcmc_df, mcmc_wdf):
-    df_axes = mcmc_df.plot.line()
-    wdf_axes = mcmc_wdf.plot.line()
+    df_axes = mcmc_df.x.plot.line()
+    assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())
 
-    mcmc_wdf.plot.line()
+    wdf_axes = mcmc_wdf.x.plot.line()
+    assert_array_equal(mcmc_wdf.index.droplevel('weights'),
+                       wdf_axes.lines[0].get_xdata())
+
+    wdf_axes = mcmc_wdf.plot.line()
+    assert len(axes.lines) == len(mcmc_wdf.columns)
+
+    plt.close("all")
