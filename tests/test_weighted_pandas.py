@@ -442,21 +442,35 @@ def mcmc_wdf(mcmc_df):
 
 
 def test_WeightedDataFrame_hist(mcmc_df, mcmc_wdf):
-    df_axes = mcmc_df.hist()
-    wdf_axes = mcmc_wdf.hist()
-    for df_ax, wdf_ax in zip(df_axes.flatten(), wdf_axes.flatten()):
-        for df_patch, wdf_patch in zip(df_ax.patches, wdf_ax.patches):
-            assert df_patch.get_height() == wdf_patch.get_height()
-            assert df_patch.get_width() == wdf_patch.get_width()
-            assert df_patch.get_xy() == wdf_patch.get_xy()
+    df_axes = mcmc_df.hist().flatten()
+    wdf_axes = mcmc_wdf.hist().flatten()
+
+    df_heights = [p.get_height() for ax in df_axes for p in ax.patches]
+    wdf_heights = [p.get_height() for ax in wdf_axes for p in ax.patches]
+    assert df_heights == wdf_heights
+
+    df_widths = [p.get_width() for ax in df_axes for p in ax.patches]
+    wdf_widths = [p.get_width() for ax in wdf_axes for p in ax.patches]
+    assert df_widths == wdf_widths
+
+    df_xys = [p.get_xy() for ax in df_axes for p in ax.patches]
+    wdf_xys = [p.get_xy() for ax in wdf_axes for p in ax.patches]
+    assert df_xys == wdf_xys
 
     df_axes = mcmc_df.plot.hist(subplots=True)
     wdf_axes = mcmc_wdf.plot.hist(subplots=True)
-    for df_ax, wdf_ax in zip(df_axes.flatten(), wdf_axes.flatten()):
-        for df_patch, wdf_patch in zip(df_ax.patches, wdf_ax.patches):
-            assert df_patch.get_height() == wdf_patch.get_height()
-            assert df_patch.get_width() == wdf_patch.get_width()
-            assert df_patch.get_xy() == wdf_patch.get_xy()
+
+    df_heights = [p.get_height() for ax in df_axes for p in ax.patches]
+    wdf_heights = [p.get_height() for ax in wdf_axes for p in ax.patches]
+    assert df_heights == wdf_heights
+
+    df_widths = [p.get_width() for ax in df_axes for p in ax.patches]
+    wdf_widths = [p.get_width() for ax in wdf_axes for p in ax.patches]
+    assert df_widths == wdf_widths
+
+    df_xys = [p.get_xy() for ax in df_axes for p in ax.patches]
+    wdf_xys = [p.get_xy() for ax in wdf_axes for p in ax.patches]
+    assert df_xys == wdf_xys
 
     plt.close("all")
 
@@ -467,19 +481,33 @@ def test_WeightedSeries_hist(mcmc_df, mcmc_wdf):
     mcmc_df.x.hist(ax=axes[0])
     mcmc_wdf.x.hist(ax=axes[1])
 
-    for df_patch, wdf_patch in zip(axes[0].patches, axes[1].patches):
-        assert df_patch.get_height() == wdf_patch.get_height()
-        assert df_patch.get_width() == wdf_patch.get_width()
-        assert df_patch.get_xy() == wdf_patch.get_xy()
+    df_heights = [p.get_height() for p in axes[0].patches]
+    wdf_heights = [p.get_height() for p in axes[1].patches]
+    assert df_heights == wdf_heights
+
+    df_widths = [p.get_width() for p in axes[0].patches]
+    wdf_widths = [p.get_width() for p in axes[1].patches]
+    assert df_widths == wdf_widths
+
+    df_xys = [p.get_xy() for p in axes[0].patches]
+    wdf_xys = [p.get_xy() for p in axes[1].patches]
+    assert df_xys == wdf_xys
 
     fig, axes = plt.subplots(2)
     mcmc_df.x.plot.hist(ax=axes[0])
     mcmc_wdf.x.plot.hist(ax=axes[1])
 
-    for df_patch, wdf_patch in zip(axes[0].patches, axes[1].patches):
-        assert df_patch.get_height() == wdf_patch.get_height()
-        assert df_patch.get_width() == wdf_patch.get_width()
-        assert df_patch.get_xy() == wdf_patch.get_xy()
+    df_heights = [p.get_height() for p in axes[0].patches]
+    wdf_heights = [p.get_height() for p in axes[1].patches]
+    assert df_heights == wdf_heights
+
+    df_widths = [p.get_width() for p in axes[0].patches]
+    wdf_widths = [p.get_width() for p in axes[1].patches]
+    assert df_widths == wdf_widths
+
+    df_xys = [p.get_xy() for p in axes[0].patches]
+    wdf_xys = [p.get_xy() for p in axes[1].patches]
+    assert df_xys == wdf_xys
 
     plt.close("all")
 
@@ -625,11 +653,10 @@ def test_PiePlot(mcmc_df, mcmc_wdf):
 
 def test_LinePlot(mcmc_df, mcmc_wdf):
     df_axes = mcmc_df.x.plot.line()
-    assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())
-
     wdf_axes = mcmc_wdf.x.plot.line()
+    assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())
     assert_array_equal(mcmc_wdf.index.droplevel('weights'),
-                       wdf_axes.lines[0].get_xdata())
+                       wdf_axes.lines[1].get_xdata())
 
     wdf_axes = mcmc_wdf.plot.line()
     assert len(wdf_axes.lines) == len(mcmc_wdf.columns)
