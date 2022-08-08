@@ -617,8 +617,8 @@ def test_BarPlot(mcmc_df, mcmc_wdf):
 
 
 def test_PiePlot(mcmc_df, mcmc_wdf):
-    axes_wdf = mcmc_wdf[5:10].x.plot.pie()
-    axes_wdf = mcmc_wdf[5:10].plot.pie(subplots=True)
+    mcmc_wdf[5:10].x.plot.pie()
+    mcmc_wdf[5:10].plot.pie(subplots=True)
 
     plt.close("all")
 
@@ -632,6 +632,6 @@ def test_LinePlot(mcmc_df, mcmc_wdf):
                        wdf_axes.lines[0].get_xdata())
 
     wdf_axes = mcmc_wdf.plot.line()
-    assert len(axes.lines) == len(mcmc_wdf.columns)
+    assert len(wdf_axes.lines) == len(mcmc_wdf.columns)
 
     plt.close("all")

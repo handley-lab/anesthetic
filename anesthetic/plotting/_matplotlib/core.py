@@ -8,7 +8,6 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               MPLPlot)
 from anesthetic.weighted_pandas import _WeightedObject
 import numpy as np
-from pandas.io.formats.printing import pprint_thing
 
 
 def _get_weights(kwargs, data):
