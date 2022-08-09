@@ -8,6 +8,7 @@ import numpy as np
 import pandas
 import copy
 import warnings
+from pandas import MultiIndex
 from collections.abc import Sequence
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
@@ -586,12 +587,25 @@ class NestedSamples(MCMCSamples):
             r = np.log(np.random.rand(len(self), nsamples))
             r = WeightedDataFrame(r, self.index, weights=self.weights)
             t = r.divide(self.nlive, axis=0)
+            t.columns.name = 'samples'
         return t.cumsum()
 
-    def logw(self, nsamples=None):
+    def betalogL(self, beta=None):
+        if beta is None:
+            beta = self.beta
+        if np.isscalar(beta):
+            betalogL = WeightedSeries(beta*self.logL, index=self.index)
+            betalogL.name = 'betalogL'
+        else:
+            betalogL = WeightedDataFrame(np.outer(self.logL, beta),
+                                         index=self.index, columns=beta)
+            betalogL.columns.name = 'beta'
+        return betalogL
+
+    def logw(self, nsamples=None, beta=None):
         """Log-nested sampling weight.
 
-        The logarith of the (unnormalised) sampling weight.
+        The logarithm of the (unnormalised) sampling weight.
 
         - If nsamples is not supplied, return mean log evidence
         - If nsamples is integer, return nsamples from the distribution
@@ -599,11 +613,22 @@ class NestedSamples(MCMCSamples):
         """
         if np.ndim(nsamples) > 0:
             return nsamples
+
         dlogX = self.dlogX(nsamples)
-        logw = dlogX.add(self.beta * self.logL, axis=0)
+        betalogL = self.betalogL(beta)
+        if dlogX.ndim == 1 and betalogL.ndim == 1:
+            logw = dlogX + betalogL
+        elif dlogX.ndim > 1 and betalogL.ndim == 1:
+            logw = dlogX.add(betalogL, axis=0)
+        elif dlogX.ndim == 1 and betalogL.ndim > 1:
+            logw = (dlogX + betalogL.T).T
+        else:
+            columns = MultiIndex.from_product([betalogL.columns, dlogX.columns])
+            logw = pandas.DataFrame(dlogX).reindex(columns=columns,level='samples') + betalogL
+            logw = WeightedDataFrame(logw)
         return logw
 
-    def logZ(self, nsamples=None):
+    def logZ(self, nsamples=None, beta=None):
         """Log-Evidence.
 
         - If nsamples is not supplied, return mean log evidence
@@ -615,7 +640,7 @@ class NestedSamples(MCMCSamples):
         logZ = logsumexp(logw, axis=0)
         return pandas.Series(logZ, name='logZ').squeeze()
 
-    def D(self, nsamples=None):
+    def D(self, nsamples=None, beta=None):
         """Kullback-Leibler divergence.
 
         - If nsamples is not supplied, return mean KL divergence
@@ -629,7 +654,7 @@ class NestedSamples(MCMCSamples):
         D = np.exp(logsumexp(logw-logZ, b=S, axis=0))
         return pandas.Series(D, name='D').squeeze()
 
-    def d(self, nsamples=None):
+    def d(self, nsamples=None, beta=None):
         """Bayesian model dimensionality.
 
         - If nsamples is not supplied, return mean BMD
@@ -700,11 +725,13 @@ class NestedSamples(MCMCSamples):
         dlogX = logsumexp([logXp, logXm], axis=0,
                           b=[np.ones_like(logXp), -np.ones_like(logXm)])
         dlogX -= np.log(2)
-
         if nsamples is None:
-            return WeightedSeries(dlogX, self.index, weights=self.weights)
+            dlogX = WeightedSeries(dlogX, self.index, weights=self.weights)
+            dlogX.name = 'dlogX'
         else:
-            return WeightedDataFrame(dlogX, self.index, weights=self.weights)
+            dlogX = WeightedDataFrame(dlogX, self.index, weights=self.weights)
+            dlogX.columns.name = logX.columns.name
+        return dlogX
 
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.

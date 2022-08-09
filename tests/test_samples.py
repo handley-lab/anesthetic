@@ -383,8 +383,23 @@ def test_hist_levels():
     plt.close("all")
 
 
+#def test_logw():
+#    np.random.seed(3)
+#    pc = NestedSamples(root='./tests/example_data/pc')
+#    assert isinstance(pc.logw(), WeightedSeries)
+#    assert isinstance(pc.logw(nsamples=5), WeightedDataFrame)
+#    assert isinstance(pc.logw(beta=[0,0.5,1]), WeightedDataFrame)
+#
+#    x = pc.logw(nsamples=5, beta=[0,0.5,1])
+#    assert isinstance(x, WeightedDataFrame)
+#    assert x.columns.names == ['beta', 'samples']
+#    x
+#
+#    self = pc
+
+
 def test_ns_output():
-    np.random.seed(3)
+    np.random.seed(2)
     pc = NestedSamples(root='./tests/example_data/pc')
     for beta in [1., 0., 0.5]:
         pc.beta = beta
@@ -410,11 +425,16 @@ def test_ns_output():
         assert isinstance(pc.d(), float)
 
         assert isinstance(pc.logX(10), WeightedDataFrame)
+        assert pc.logX(10).columns.name == 'samples'
         assert isinstance(pc.dlogX(10), WeightedDataFrame)
+        assert pc.dlogX(10).columns.name == 'samples'
         assert isinstance(pc.logw(10), WeightedDataFrame)
+        assert pc.logw(10).columns.name == 'samples'
+
         assert isinstance(pc.logZ(10), Series)
         assert isinstance(pc.D(10), Series)
         assert isinstance(pc.d(10), Series)
+        pc.dlogX(10)
 
         assert isinstance(PC, DataFrame)
 
