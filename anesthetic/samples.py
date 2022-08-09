@@ -553,13 +553,12 @@ class NestedSamples(MCMCSamples):
             Samples from the P(logZ, D, d) distribution
 
         """
-        dlogX = self.dlogX(nsamples)
-        samples = MCMCSamples(index=dlogX.columns)
-        samples['logZ'] = self.logZ(dlogX)
+        logw = self.logw(nsamples)
+        samples = MCMCSamples(index=logw.columns)
+        samples['logZ'] = self.logZ(logw)
 
-        logw = dlogX.add(self.beta * self.logL, axis=0)
         logw -= samples.logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
+        S = (logw*0).add(self.beta * self.logL, axis=0) - samples.logZ
 
         samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
         samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
@@ -570,46 +569,79 @@ class NestedSamples(MCMCSamples):
         samples.label = self.label
         return samples
 
+    def logX(self, nsamples=None):
+        """Log-Volume.
+
+        The log of the prior volume contained within each iso-likelihood
+        contour.
+
+        - If nsamples is not supplied, return mean log evidence
+        - If nsamples is integer, return nsamples from the distribution
+
+        """
+        if nsamples is None:
+            t = np.log(self.nlive/(self.nlive+1))
+            t.name = 'logX'
+        else:
+            r = np.log(np.random.rand(len(self), nsamples))
+            t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
+        return t.cumsum()
+
+    def logw(self, nsamples=None):
+        """Log-nested sampling weight.
+
+        The logarith of the (unnormalised) sampling weight.
+
+        - If nsamples is not supplied, return mean log evidence
+        - If nsamples is integer, return nsamples from the distribution
+
+        """
+        if np.ndim(nsamples) > 0:
+            return nsamples
+        dlogX = self.dlogX(nsamples)
+        logw = dlogX.add(self.beta * self.logL, axis=0)
+        return logw
+
     def logZ(self, nsamples=None):
         """Log-Evidence.
 
         - If nsamples is not supplied, return mean log evidence
         - If nsamples is integer, return nsamples from the distribution
-        - If nsamples is array, use nsamples as volumes of evidence shells
+        - If nsamples is array, use nsamples as log weights
 
         """
-        dlogX = self.dlogX(nsamples)
-        logw = dlogX.add(self.beta * self.logL, axis=0)
-        return logsumexp(logw, axis=0)
+        logw = self.logw(nsamples)
+        logZ = logsumexp(logw, axis=0)
+        return pandas.Series(logZ, name='logZ').squeeze()
 
     def D(self, nsamples=None):
         """Kullback-Leibler divergence.
 
         - If nsamples is not supplied, return mean KL divergence
         - If nsamples is integer, return nsamples from the distribution
-        - If nsamples is array, use nsamples as volumes of evidence shells
+        - If nsamples is array, use nsamples as log weights
 
         """
-        dlogX = self.dlogX(nsamples)
-        logZ = self.logZ(dlogX)
-        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
-        return np.exp(logsumexp(logw, b=S, axis=0))
+        logw = self.logw(nsamples)
+        logZ = self.logZ(logw)
+        S = (logw*0).add(self.beta * self.logL, axis=0) - logZ
+        D = np.exp(logsumexp(logw-logZ, b=S, axis=0))
+        return pandas.Series(D, name='D').squeeze()
 
     def d(self, nsamples=None):
         """Bayesian model dimensionality.
 
         - If nsamples is not supplied, return mean BMD
         - If nsamples is integer, return nsamples from the distribution
-        - If nsamples is array, use nsamples as volumes of evidence shells
+        - If nsamples is array, use nsamples as shell volumes dlogX
 
         """
-        dlogX = self.dlogX(nsamples)
-        logZ = self.logZ(dlogX)
-        D = self.D(dlogX)
-        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
-        return np.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
+        logw = self.logw(nsamples)
+        logZ = self.logZ(logw)
+        D = self.D(logw)
+        S = (logw*0).add(self.beta * self.logL, axis=0) - logZ
+        d = np.exp(logsumexp(logw-logZ, b=(S-D)**2, axis=0))*2
+        return pandas.Series(d, name='d').squeeze()
 
     def live_points(self, logL=None):
         """Get the live points within logL.
@@ -661,20 +693,12 @@ class NestedSamples(MCMCSamples):
             distribution. (Default: None)
 
         """
-        if np.ndim(nsamples) > 0:
-            return nsamples
-        elif nsamples is None:
-            t = np.log(self.nlive/(self.nlive+1)).to_frame()
-        else:
-            r = np.log(np.random.rand(len(self), nsamples))
-            t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
-
-        logX = t.cumsum()
-        logXp = logX.shift(1, fill_value=0)
-        logXm = logX.shift(-1, fill_value=-np.inf)
-        dlogX = logsumexp([logXp.to_numpy(), logXm.to_numpy()],
-                          b=[np.ones_like(logXp), -np.ones_like(logXm)],
-                          axis=0) - np.log(2)
+        logX = self.logX(nsamples)
+        logXp = logX.shift(1, fill_value=0).to_numpy()
+        logXm = logX.shift(-1, fill_value=-np.inf).to_numpy()
+        dlogX = logsumexp([logXp, logXm], axis=0,
+                          b=[np.ones_like(logXp), -np.ones_like(logXm)])
+        dlogX -= np.log(2)
 
         if nsamples is None:
             dlogX = np.squeeze(dlogX)
