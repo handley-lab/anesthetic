@@ -3,12 +3,13 @@ import matplotlib_agg  # noqa: F401
 import sys
 import pytest
 import numpy as np
+from pandas import DataFrame, Series
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
-from anesthetic.samples import merge_nested_samples
-from anesthetic.samples import merge_samples_weighted
+from anesthetic.weighted_pandas import WeightedSeries, WeightedDataFrame
+from anesthetic.samples import merge_nested_samples, merge_samples_weighted
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less)
 from pandas.testing import assert_frame_equal
@@ -400,6 +401,22 @@ def test_ns_output():
         assert ks_2samp(pc.logZ(n), PC.logZ).pvalue > 0.05
         assert ks_2samp(pc.D(n), PC.D).pvalue > 0.05
         assert ks_2samp(pc.d(n), PC.d).pvalue > 0.05
+
+        assert isinstance(pc.logX(), WeightedSeries)
+        assert isinstance(pc.dlogX(), WeightedSeries)
+        assert isinstance(pc.logw(), WeightedSeries)
+        assert isinstance(pc.logZ(), float)
+        assert isinstance(pc.D(), float)
+        assert isinstance(pc.d(), float)
+
+        assert isinstance(pc.logX(10), WeightedDataFrame)
+        assert isinstance(pc.dlogX(10), WeightedDataFrame)
+        assert isinstance(pc.logw(10), WeightedDataFrame)
+        assert isinstance(pc.logZ(10), Series)
+        assert isinstance(pc.D(10), Series)
+        assert isinstance(pc.d(10), Series)
+
+        assert isinstance(PC, DataFrame)
 
     assert abs(pc.set_beta(0.0).logZ()) < 1e-2
     assert pc.set_beta(0.9).logZ() < pc.set_beta(1.0).logZ()

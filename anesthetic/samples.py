@@ -584,7 +584,8 @@ class NestedSamples(MCMCSamples):
             t.name = 'logX'
         else:
             r = np.log(np.random.rand(len(self), nsamples))
-            t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
+            r = WeightedDataFrame(r, self.index, weights=self.weights)
+            t = r.divide(self.nlive, axis=0)
         return t.cumsum()
 
     def logw(self, nsamples=None):
@@ -701,7 +702,6 @@ class NestedSamples(MCMCSamples):
         dlogX -= np.log(2)
 
         if nsamples is None:
-            dlogX = np.squeeze(dlogX)
             return WeightedSeries(dlogX, self.index, weights=self.weights)
         else:
             return WeightedDataFrame(dlogX, self.index, weights=self.weights)
