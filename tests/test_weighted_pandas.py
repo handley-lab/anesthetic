@@ -624,20 +624,6 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
     wdf_colors = wdf_axes.collections[0].get_facecolors()
     assert_allclose(df_colors, wdf_colors)
 
-    plt.close("all")
-
-
-def test_WeightedDataFramePlotting(mcmc_wdf):
-    mcmc_wdf.plot.hist()
-    mcmc_wdf.x.plot.kde(subplots=True)
-
-    mcmc_wdf.plot.hist_2d('x', 'y')
-    mcmc_wdf.plot.kde_2d('x', 'y')
-    mcmc_wdf.plot.fastkde_2d('x', 'y')
-    mcmc_wdf.plot.kde_1d()
-    mcmc_wdf.plot.fastkde_1d()
-    mcmc_wdf.plot.hist_1d()
-
 
 def test_AreaPlot(mcmc_df, mcmc_wdf):
     axes_wdf = mcmc_wdf.plot.area()

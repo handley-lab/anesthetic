@@ -920,3 +920,19 @@ def test_logL_list():
 
     samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
     assert_array_equal(default, samples)
+    plt.close("all")
+
+
+def test_hist_plotting():
+    samples = NestedSamples(root='./tests/example_data/pc')
+    samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
+    samples.x0.plot.kde(subplots=True)
+
+    samples.plot.hist_2d('x0', 'x1')
+    samples.plot.kde_2d('x0', 'x1')
+    samples.plot.fastkde_2d('x0', 'x1')
+    samples.plot.kde_1d()
+    samples.plot.fastkde_1d()
+    samples.plot.hist_1d()
+
+    plt.close("all")

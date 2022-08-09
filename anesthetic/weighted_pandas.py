@@ -6,8 +6,6 @@ from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
                               temporary_seed)
-from pandas.core.accessor import CachedAccessor
-import anesthetic.plotting
 
 
 class _WeightedObject(object):
@@ -58,8 +56,6 @@ class _WeightedObject(object):
     def neff(self):
         """Effective number of samples."""
         return channel_capacity(self.weights)
-
-    plot = CachedAccessor("plot", anesthetic.plotting.PlotAccessor)
 
 
 class WeightedSeries(_WeightedObject, Series):
@@ -301,9 +297,6 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         if self.index.nlevels == 2:
             df.index = df.index.get_level_values('#')
         return df
-
-    plot_1d = anesthetic.plotting.plot_1d
-    plot_2d = anesthetic.plotting.plot_2d
 
     @property
     def _constructor_sliced(self):
