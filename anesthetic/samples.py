@@ -129,6 +129,16 @@ class MCMCSamples(WeightedDataFrame):
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
 
+        kind: str, optional
+            What kind of plots to produce. Alongside the usual pandas options
+            {'hist', 'box', 'kde', 'density'}, anesthetic also provides
+            {'hist_1d', 'kde_1d', 'fastkde_1d'}.
+            Warning -- while the other pandas plotting options
+            {'line', 'bar', 'barh', 'area', 'pie'} are also accessible, these
+            can be hard to interpret/expensive for MCMCSamples or
+            NestedSamples.
+            Default kde_1d
+
         Returns
         -------
         fig: matplotlib.figure.Figure
@@ -174,18 +184,32 @@ class MCMCSamples(WeightedDataFrame):
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
 
-        kind: dict, optional
-            What kinds of plots to produce. Takes the keys 'diagonal'
-            for the 1D plots and 'lower' and 'upper' for the 2D plots.
-            The options for 'diagonal are:
+        kind/kinds: dict, optional
+            What kinds of plots to produce. Dictionary takes the keys
+            'diagonal' for the 1D plots and 'lower' and 'upper' for the 2D
+            plots. The options for 'diagonal' are:
+                - 'kde_1d'
+                - 'hist_1d'
+                - 'fastkde_1d'
                 - 'kde'
                 - 'hist'
-                - 'astropyhist'
+                - 'box'
+                - 'kde'
+                - 'density'
             The options for 'lower' and 'upper' are:
+                - 'kde_2d'
+                - 'hist_2d'
+                - 'scatter_2d'
+                - 'fastkde_2d'
                 - 'kde'
                 - 'scatter'
-                - 'hist'
-                - 'fastkde'
+                - 'hexbin'
+            There are also a set of shortcuts provided in
+            MCMCSamples.plot_2d_default_kinds:
+                - 'kde_1d': 1d kde plots down the diagonal
+                - 'kde_2d': 2d kde plots in lower triangle
+                - 'kde': 1d & 2d kde plots in lower & diagonal
+            Feel free to add your own to this list!
             Default: {'diagonal': 'kde_1d',
                       'lower': 'kde_2d',
                       'upper':'scatter_2d'}
@@ -206,12 +230,15 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        default_kinds = {'diagonal': 'kde_1d',
-                         'lower': 'kde_2d',
-                         'upper': 'scatter_2d'}
-        kind = kwargs.get('kind', default_kinds)
+        kind = kwargs.pop('kind', 'default')
+        kind = kwargs.pop('kinds', kind)
+        try:
+            kind = self.plot_2d_default_kinds.get(kind, kind)
+        except TypeError:
+            pass
+
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
-                        for pos in default_kinds}
+                        for pos in ['upper', 'lower', 'diagonal']}
         kwargs['label'] = kwargs.get('label', self.label)
 
         self._set_automatic_limits()
@@ -245,6 +272,15 @@ class MCMCSamples(WeightedDataFrame):
                             ax.plot([], [])
 
         return fig, axes
+
+    plot_2d_default_kinds = {
+        'default': {'diagonal': 'kde_1d',
+                    'lower': 'kde_2d',
+                    'upper': 'scatter_2d'},
+        'kde_1d': {'diagonal': 'kde_1d'},
+        'kde_2d': {'lower': 'kde_2d'},
+        'kde': {'diagonal': 'kde_1d', 'lower': 'kde_2d'},
+    }
 
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
