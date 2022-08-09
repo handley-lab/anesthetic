@@ -76,7 +76,7 @@ def quantile(a, q, w=None, interpolation='linear'):
     w = np.array(list(w))  # Necessary to convert pandas arrays
     i = np.argsort(a)
     c = np.cumsum(w[i[1:]]+w[i[:-1]])
-    c = c/c[-1]
+    c = c / c[-1]
     c = np.concatenate(([0.], c))
     icdf = interp1d(c, a[i], kind=interpolation)
     quant = icdf(q)
