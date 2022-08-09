@@ -383,6 +383,39 @@ def test_hist_levels():
     plt.close("all")
 
 
+def test_logZ():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+
+    assert isinstance(pc.logZ(), float)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    logZ = pc.logZ(nsamples=nsamples)
+    assert isinstance(logZ, Series)
+    assert logZ.index.names == ['samples']
+    assert logZ.name == 'logZ'
+    assert len(logZ) == nsamples
+
+    logZ = pc.logZ(beta=beta)
+    assert isinstance(logZ, Series)
+    assert logZ.index.names == ['beta']
+    assert logZ.name == 'logZ'
+    assert len(logZ) == len(beta)
+
+    logZ = pc.logZ(nsamples=nsamples, beta=beta)
+    assert isinstance(logZ, Series)
+    assert logZ.index.names == ['beta', 'samples']
+    assert logZ.name == 'logZ'
+    assert logZ.index.levshape == (len(beta), nsamples)
+
+    n = 1000
+    logZ = pc.logZ(n)
+
+    assert abs(logZ.mean() - pc.logZ()) < logZ.std() * n**0.5 * 3
+
+
 #def test_logw():
 #    np.random.seed(3)
 #    pc = NestedSamples(root='./tests/example_data/pc')
@@ -390,12 +423,35 @@ def test_hist_levels():
 #    assert isinstance(pc.logw(nsamples=5), WeightedDataFrame)
 #    assert isinstance(pc.logw(beta=[0,0.5,1]), WeightedDataFrame)
 #
-#    x = pc.logw(nsamples=5, beta=[0,0.5,1])
-#    assert isinstance(x, WeightedDataFrame)
-#    assert x.columns.names == ['beta', 'samples']
-#    x
+#    logw = pc.logw(nsamples=5, beta=[0,0.5,1])
+#    assert isinstance(logw, WeightedDataFrame)
+#    assert logw.columns.names == ['beta', 'samples']
 #
-#    self = pc
+#    nsamples = None
+#    beta = None
+#    pc.logw().columns
+#    pc.logZ(beta=[0,0.5,1])
+#    pc.D(0,[0,1])
+#
+#    pc.D(10,beta=np.linspace(0,1,101))
+#    pc.logZ(beta=np.linspace(0,1,101)).plot()
+#    pc.logZ(100,beta=np.linspace(0,1,101)).unstack('samples').plot(color='k',alpha=0.5)
+#    pc.logZ(100).hist()
+#
+#    pc.D(beta=np.linspace(0,1,101)).plot()
+#    pc.D(100,beta=np.linspace(0,1,101)).unstack('samples').plot(color='k',alpha=0.5)
+#
+#    nsamples = 5
+#    beta = np.linspace(0,1,1001)
+#    beta
+#    pc.logZ(5,beta=beta).unstack('samples').plot(color='k',alpha=0.5)
+#    pc.D(5,beta=beta).unstack('samples').plot(color='k',alpha=0.5)
+#    pc.D(beta=beta)
+#
+#    pc.D(beta=beta).plot()
+#    pc.d(beta=beta).plot()
+#
+#    pc.logZ(5,beta=beta).unstack('samples').plot(color='k',alpha=0.5)
 
 
 def test_ns_output():
@@ -434,7 +490,6 @@ def test_ns_output():
         assert isinstance(pc.logZ(10), Series)
         assert isinstance(pc.D(10), Series)
         assert isinstance(pc.d(10), Series)
-        pc.dlogX(10)
 
         assert isinstance(PC, DataFrame)
 

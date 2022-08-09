@@ -8,7 +8,7 @@ import numpy as np
 import pandas
 import copy
 import warnings
-from pandas import MultiIndex
+from pandas import MultiIndex, DataFrame, Series
 from collections.abc import Sequence
 from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
                              kde_plot_1d, hist_plot_1d, scatter_plot_2d,
@@ -262,7 +262,7 @@ class MCMCSamples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        if not isinstance(axes, pandas.Series):
+        if not isinstance(axes, Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
         else:
             fig = axes.bfill().to_numpy().flatten()[0].figure
@@ -328,7 +328,7 @@ class MCMCSamples(WeightedDataFrame):
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
-        if not isinstance(axes, pandas.DataFrame):
+        if not isinstance(axes, DataFrame):
             fig, axes = make_2d_axes(axes, tex=self.tex,
                                      upper=('upper' in types),
                                      lower=('lower' in types),
@@ -623,8 +623,9 @@ class NestedSamples(MCMCSamples):
         elif dlogX.ndim == 1 and betalogL.ndim > 1:
             logw = (dlogX + betalogL.T).T
         else:
-            columns = MultiIndex.from_product([betalogL.columns, dlogX.columns])
-            logw = pandas.DataFrame(dlogX).reindex(columns=columns,level='samples') + betalogL
+            cols = MultiIndex.from_product([betalogL.columns, dlogX.columns])
+            logw = DataFrame(dlogX).reindex(columns=cols, level='samples')
+            logw = logw + betalogL
             logw = WeightedDataFrame(logw)
         return logw
 
@@ -636,9 +637,12 @@ class NestedSamples(MCMCSamples):
         - If nsamples is array, use nsamples as log weights
 
         """
-        logw = self.logw(nsamples)
+        logw = self.logw(nsamples, beta)
         logZ = logsumexp(logw, axis=0)
-        return pandas.Series(logZ, name='logZ').squeeze()
+        if np.isscalar(logZ):
+            return logZ
+        else:
+            return Series(logZ, name='logZ', index=logw.columns).squeeze()
 
     def D(self, nsamples=None, beta=None):
         """Kullback-Leibler divergence.
@@ -648,11 +652,15 @@ class NestedSamples(MCMCSamples):
         - If nsamples is array, use nsamples as log weights
 
         """
-        logw = self.logw(nsamples)
-        logZ = self.logZ(logw)
-        S = (logw*0).add(self.beta * self.logL, axis=0) - logZ
+        logw = self.logw(nsamples, beta)
+        logZ = self.logZ(logw, beta)
+        betalogL = self.betalogL(beta)
+        S = (logw*0).add(betalogL, axis=0) - logZ
         D = np.exp(logsumexp(logw-logZ, b=S, axis=0))
-        return pandas.Series(D, name='D').squeeze()
+        if np.isscalar(D):
+            return D
+        else:
+            return Series(D, name='D', index=logw.columns).squeeze()
 
     def d(self, nsamples=None, beta=None):
         """Bayesian model dimensionality.
@@ -662,12 +670,16 @@ class NestedSamples(MCMCSamples):
         - If nsamples is array, use nsamples as shell volumes dlogX
 
         """
-        logw = self.logw(nsamples)
-        logZ = self.logZ(logw)
-        D = self.D(logw)
-        S = (logw*0).add(self.beta * self.logL, axis=0) - logZ
+        logw = self.logw(nsamples, beta)
+        logZ = self.logZ(logw, beta)
+        betalogL = self.betalogL(beta)
+        S = (logw*0).add(betalogL, axis=0) - logZ
+        D = self.D(logw, beta)
         d = np.exp(logsumexp(logw-logZ, b=(S-D)**2, axis=0))*2
-        return pandas.Series(d, name='d').squeeze()
+        if np.isscalar(d):
+            return d
+        else:
+            return Series(d, name='d', index=logw.columns).squeeze()
 
     def live_points(self, logL=None):
         """Get the live points within logL.
@@ -885,7 +897,7 @@ def merge_samples_weighted(samples, weights=None, label=None):
         Merged (weighted) run.
     """
     if not (isinstance(samples, Sequence) or
-            isinstance(samples, pandas.Series)):
+            isinstance(samples, Series)):
         raise TypeError("samples must be a list of samples "
                         "(Sequence or pandas.Series)")
 
