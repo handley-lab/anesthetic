@@ -32,7 +32,7 @@ from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
-                              match_contour_to_contourf)
+                              scaled_triangulation, match_contour_to_contourf)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
