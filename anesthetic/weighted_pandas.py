@@ -53,10 +53,6 @@ class _WeightedObject(object):
         """Weighted sample."""
         return super().sample(weights=self.weights, *args, **kwargs)
 
-    def hist(self, *args, **kwargs):
-        """Weighted histogram of the sampled distribution."""
-        return super().hist(weights=self.weights, *args, **kwargs)
-
     def neff(self):
         """Effective number of samples."""
         return channel_capacity(self.weights)
