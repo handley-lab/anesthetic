@@ -1,5 +1,5 @@
 import warnings
-import matplotlib_agg  # noqa: F401
+import anesthetic.examples._matplotlib_agg  # noqa: F401
 import sys
 import pytest
 import numpy as np
@@ -14,7 +14,6 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
 from pandas.testing import assert_frame_equal
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
-from wedding_cake import WeddingCake
 try:
     import montepython  # noqa: F401
 except ImportError:
@@ -788,18 +787,6 @@ def test_MCMCSamples_importance_sample():
     assert mc3 is not mc0
     assert mc3.tex is not mc0.tex
     assert mc3.limits is not mc0.limits
-
-
-def test_wedding_cake():
-    np.random.seed(3)
-    wc = WeddingCake(4, 0.5, 0.01)
-    nlive = 500
-    samples = wc.sample(nlive)
-    assert samples.nlive.iloc[0] == nlive
-    assert samples.nlive.iloc[-1] == 1
-    assert (samples.nlive <= nlive).all()
-    out = samples.logZ(100)
-    assert abs(out.mean()-wc.logZ()) < out.std()*3
 
 
 def test_logzero_mask_prior_level():

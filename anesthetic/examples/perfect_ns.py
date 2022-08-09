@@ -116,3 +116,73 @@ def correlated_gaussian(nlive, mean, cov):
         samples = merge_nested_samples([samples, samps_1, samps_2])
 
     return samples
+
+
+def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
+    """Perfect nested sampling run for a wedding cake likelihood.
+
+    This is a likelihood with nested hypercuboidal plateau regions of constant
+    likelihood centered on 0.5, with geometrically decreasing volume by a
+    factor of alpha. The value of the likelihood in these plateau regions has a
+    gaussian profile with width sigma.
+
+    logL = - alpha^(2 floor(D*log_alpha(2|x-0.5|_infinity))/D) / (8 sigma^2)
+
+    Parameters
+    ----------
+    nlive: int
+        number of live points
+
+    ndims: int
+        dimensionality of the likelihood
+
+    sigma: float
+        width of gaussian profile
+
+    alpha: float
+        volume compression between plateau regions
+    """
+
+    def i(x):
+        """Plateau number of a parameter point."""
+        r = np.max(abs(x-0.5), axis=-1)
+        return np.floor(ndims*np.log(2*r)/np.log(alpha))
+
+    def logL(x):
+        """Gaussian log-likelihood."""
+        ri = alpha**(i(x)/ndims)/2
+        return - ri**2/2/sigma**2
+
+    points = np.zeros((0, ndims))
+    death_likes = np.zeros(0)
+    birth_likes = np.zeros(0)
+
+    live_points = np.random.rand(nlive, ndims)
+    live_likes = logL(live_points)
+    live_birth_likes = np.ones(nlive)*-np.inf
+
+    while True:
+        logL_ = live_likes.min()
+        j = live_likes == logL_
+
+        death_likes = np.concatenate([death_likes, live_likes[j]])
+        birth_likes = np.concatenate([birth_likes, live_birth_likes[j]])
+        points = np.concatenate([points, live_points[j]])
+
+        i_ = i(live_points[j][0])+1
+        r_ = alpha**(i_/ndims)/2
+        x_ = np.random.uniform(0.5-r_, 0.5+r_, size=(j.sum(), ndims))
+        live_birth_likes[j] = logL_
+        live_points[j] = x_
+        live_likes[j] = logL(x_)
+
+        samps = NestedSamples(points, logL=death_likes, logL_birth=birth_likes)
+
+        if samps.iloc[-nlive:].weights.sum()/samps.weights.sum() < 0.001:
+            break
+
+    death_likes = np.concatenate([death_likes, live_likes])
+    birth_likes = np.concatenate([birth_likes, live_birth_likes])
+    points = np.concatenate([points, live_points])
+
+    return NestedSamples(points, logL=death_likes, logL_birth=birth_likes)

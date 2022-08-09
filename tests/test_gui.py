@@ -1,4 +1,4 @@
-import matplotlib_agg  # noqa: F401
+import anesthetic.examples._matplotlib_agg  # noqa: F401
 from packaging import version
 from matplotlib import __version__ as mpl_version
 from anesthetic import NestedSamples
