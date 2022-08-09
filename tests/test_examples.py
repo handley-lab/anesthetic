@@ -78,7 +78,9 @@ def test_perfect_ns_correlated_gaussian():
     mean = 0.5*np.ones(ndims)
     cov = random_covariance(np.random.rand(ndims)*0.1)
     samples = correlated_gaussian(nlive, mean, cov)
-    assert_allclose(samples.logZ(), 0, atol=3*samples.logZ(12).std())
+    samples.gui()
+    logZ = np.linalg.slogdet(2*np.pi*cov)[1]/2
+    assert_allclose(samples.logZ(), logZ, atol=3*samples.logZ(12).std())
     assert (samples[:-nlive].nlive >= nlive).all()
     assert_allclose(samples[np.arange(ndims)].mean(), mean, atol=1e-2)
     assert_allclose(samples[np.arange(ndims)].cov(), cov/(ndims+2), atol=1e-2)

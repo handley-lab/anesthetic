@@ -1,6 +1,5 @@
 """Perfect nested sampling generators."""
 import numpy as np
-from scipy.stats import multivariate_normal
 from anesthetic.examples.utils import random_ellipsoid
 from anesthetic import NestedSamples
 from anesthetic.samples import merge_nested_samples
@@ -59,7 +58,7 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
     return samples[samples.logL_birth < logLend].recompute()
 
 
-def correlated_gaussian(nlive, mean, cov):
+def correlated_gaussian(nlive, mean, cov, bounds=None):
     """Perfect nested sampling run for a correlated gaussian likelihood.
 
     This produces a perfect nested sampling run with a uniform prior over the
@@ -77,12 +76,15 @@ def correlated_gaussian(nlive, mean, cov):
     nlive: int
         minimum number of live points across the run
 
-    mean: 1d array-like
+    mean: 1d array-like, shape (ndims,)
         mean of gaussian in parameters. Length of array defines dimensionality
         of run.
 
-    cov: 2d array-like
+    cov: 2d array-like, shape (ndims,ndims)
         covariance of gaussian in parameters
+
+    bounds: 2d array-like, shape (ndims, 2)
+        bounds of a gaussian, default [[0, 1]]*ndims
 
     Returns
     -------
@@ -90,19 +92,27 @@ def correlated_gaussian(nlive, mean, cov):
         Nested sampling run
     """
 
-    def logLike(x):
-        return multivariate_normal(mean, cov).logpdf(x)
+    invcov = np.linalg.inv(cov)
 
+    def logLike(x):
+        return -0.5 * ((x-mean) @ invcov * (x-mean)).sum(axis=-1)
+
+    ndims = len(mean)
+
+    if bounds is None:
+        bounds = [[0, 1]]*ndims
+
+    bounds = np.array(bounds)
     logLmax = logLike(mean)
 
-    points = np.random.rand(2*nlive, len(mean))
+    points = np.random.uniform(*bounds.T, (2*nlive, ndims))
     samples = NestedSamples(points, logL=logLike(points), logL_birth=-np.inf)
 
     while (1/samples.nlive.iloc[:-nlive]).sum() < samples.D()*2:
         logLs = samples.logL.iloc[-nlive]
 
         # Cube round
-        points = np.random.rand(nlive, len(mean))
+        points = np.random.uniform(*bounds.T, (nlive, ndims))
         logL = logLike(points)
         i = logL > logLs
         samps_1 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs)
