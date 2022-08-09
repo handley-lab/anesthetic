@@ -362,6 +362,10 @@ def make_2d_axes(params, **kwargs):
                 for a in ax_:
                     a.tick_params('x', bottom=False, top=False,
                                   labelbottom=False, labeltop=False)
+            else:
+                raise ValueError(
+                    "ticks=%s was requested, but ticks can only be one of "
+                    "['outer', 'inner', None]." % ticks)
 
     return fig, axes
 
@@ -698,7 +702,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
-        return np.zeros(0), np.zeros(0)
+        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
     try:
         x, y, pdf, xmin, xmax, ymin, ymax = fastkde_2d(data_x, data_y,
@@ -805,7 +809,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kwargs.pop('q', None)
 
     if len(data_x) == 0 or len(data_y) == 0:
-        return np.zeros(0), np.zeros(0)
+        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
     if weights is not None:
         data_x = data_x[weights != 0]
@@ -901,9 +905,6 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     weights = kwargs.pop('weights', None)
 
-    if len(data_x) == 0 or len(data_y) == 0:
-        return np.zeros(0), np.zeros(0)
-
     if xmin is None or not np.isfinite(xmin):
         xmin = quantile(data_x, 0.01, weights)
     if xmax is None or not np.isfinite(xmax):
@@ -914,6 +915,9 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         ymax = quantile(data_y, 0.99, weights)
 
     rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
+
+    if len(data_x) == 0 or len(data_y) == 0:
+        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
     cmap = kwargs.pop('cmap', basic_cmap(color))
 
