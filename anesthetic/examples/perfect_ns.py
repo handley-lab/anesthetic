@@ -91,7 +91,6 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
     samples: NestedSamples
         Nested sampling run
     """
-
     invcov = np.linalg.inv(cov)
 
     def logLike(x):
