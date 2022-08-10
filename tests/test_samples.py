@@ -956,27 +956,35 @@ def test_samples_dot_plot():
     assert len(axes) == 1
     axes = samples[['x0', 'x1']].plot.kde(subplots=True)
     assert len(axes) == 2
+    plt.close("all")
 
     axes = samples.plot.kde_2d('x0', 'x1')
     assert len(axes.collections) == 5
     assert axes.get_xlabel() == 'x0'
     assert axes.get_ylabel() == 'x1'
+    plt.close("all")
     axes = samples.plot.hist_2d('x1', 'x0')
     assert len(axes.collections) == 1
     assert axes.get_xlabel() == 'x1'
     assert axes.get_ylabel() == 'x0'
-    # axes = samples.plot.scatter_2d('x2', 'x3')
-    # assert len(axes.lines) == 1
+    plt.close("all")
+    axes = samples.plot.scatter_2d('x2', 'x3')
+    assert len(axes.lines) == 1
+    plt.close("all")
     axes = samples.x1.plot.kde_1d()
     assert len(axes.lines) == 1
+    plt.close("all")
     axes = samples.x2.plot.hist_1d()
     assert len(axes.containers) == 1
+    plt.close("all")
 
     try:
         axes = samples.plot.fastkde_2d('x0', 'x1')
         assert len(axes.collections) == 5
+        plt.close("all")
         axes = samples.plot.fastkde_1d()
         assert len(axes.lines) == 1
+        plt.close("all")
     except ImportError:
         pass
 
