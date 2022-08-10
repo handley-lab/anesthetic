@@ -11,7 +11,36 @@ Key routines:
 import anesthetic.samples
 import anesthetic.plot
 
+import pandas
+import pandas.plotting._core
+import pandas.plotting._misc
 
+
+def _anesthetic_override(_get_plot_backend):
+    """Override the default backend.
+
+    When _get_plot_backend asks for 'matplotlib' it will be directed to
+    'anesthetic.plotting._matplotlib'. This is necessary since any users of
+    WeightedSamples should not be using the original backend.
+    """
+    def wrapper(backend=None):
+        if backend == 'matplotlib':
+            return _get_plot_backend('anesthetic.plotting._matplotlib')
+        return _get_plot_backend(backend)
+    return wrapper
+
+
+# Override the two places where _get_plot_backend is defined
+pandas.plotting._core._get_plot_backend = \
+        _anesthetic_override(pandas.plotting._core._get_plot_backend)
+pandas.plotting._misc._get_plot_backend = \
+        _anesthetic_override(pandas.plotting._misc._get_plot_backend)
+
+# Set anesthetic.plotting._matplotlib as the actual backend
+pandas.options.plotting.backend = 'anesthetic.plotting._matplotlib'
+
+
+Samples = anesthetic.samples.Samples
 MCMCSamples = anesthetic.samples.MCMCSamples
 NestedSamples = anesthetic.samples.NestedSamples
 make_2d_axes = anesthetic.plot.make_2d_axes

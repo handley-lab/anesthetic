@@ -53,10 +53,6 @@ class _WeightedObject(object):
         """Weighted sample."""
         return super().sample(weights=self.weights, *args, **kwargs)
 
-    def hist(self, *args, **kwargs):
-        """Weighted histogram of the sampled distribution."""
-        return super().hist(weights=self.weights, *args, **kwargs)
-
     def neff(self):
         """Effective number of samples."""
         return channel_capacity(self.weights)
@@ -298,7 +294,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         data = np.repeat(self.to_numpy(), i, axis=0)
         index = self.index.repeat(i)
         df = DataFrame(data=data, index=index, columns=self.columns)
-        df.index = df.index.get_level_values('#')
+        if self.index.nlevels == 2:
+            df.index = df.index.get_level_values('#')
         return df
 
     @property
