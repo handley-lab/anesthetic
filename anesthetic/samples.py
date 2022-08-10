@@ -1,5 +1,6 @@
 """Main classes for the anesthetic module.
 
+- ``Samples``
 - ``MCMCSamples``
 - ``NestedSamples``
 """
@@ -20,22 +21,19 @@ from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 
 
-class MCMCSamples(WeightedDataFrame):
-    """Storage and plotting tools for MCMC samples.
+class Samples(WeightedDataFrame):
+    """Storage and plotting tools for general samples.
 
     Extends the pandas.DataFrame by providing plotting methods and
     standardising sample storage.
 
     Example plotting commands include
-        - ``mcmc.plot_1d(['paramA', 'paramB'])``
-        - ``mcmc.plot_2d(['paramA', 'paramB'])``
-        - ``mcmc.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD']])``
+        - ``samples.plot_1d(['paramA', 'paramB'])``
+        - ``samples.plot_2d(['paramA', 'paramB'])``
+        - ``samples.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD']])``
 
     Parameters
     ----------
-    root: str, optional
-        root for reading chains from file. Overrides all other arguments.
-
     data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
@@ -62,56 +60,54 @@ class MCMCSamples(WeightedDataFrame):
         Anything equal or below this value is set to `-np.inf`.
         default: -1e30
 
-    burn_in: int or float
-        Discards the first integer number of nsamples if int
-        or the first fraction of nsamples if float.
-        Only works if `root` provided and if chains are GetDist compatible.
-        default: False
-
     """
+    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'root',
+                                               'label']
 
     def __init__(self, *args, **kwargs):
-        root = kwargs.pop('root', None)
-        if root is not None:
-            reader = SampleReader(root)
-            if hasattr(reader, 'birth_file') or hasattr(reader, 'ev_file'):
-                raise ValueError("The file root %s seems to point to a Nested "
-                                 "Sampling chain. Please use NestedSamples "
-                                 "instead which has the same features as "
-                                 "MCMCSamples and more. MCMCSamples should be "
-                                 "used for MCMC chains only." % root)
-            burn_in = kwargs.pop('burn_in', False)
-            weights, logL, samples = reader.samples(burn_in=burn_in)
-            params, tex = reader.paramnames()
-            columns = kwargs.pop('columns', params)
-            limits = reader.limits()
-            kwargs['label'] = kwargs.get('label', os.path.basename(root))
-            self.__init__(data=samples, columns=columns, weights=weights,
-                          logL=logL, tex=tex, limits=limits, *args, **kwargs)
-            self.root = root
-        else:
-            logzero = kwargs.pop('logzero', -1e30)
-            logL = kwargs.pop('logL', None)
-            if logL is not None:
-                logL = np.array(logL)
-                logL = np.where(logL <= logzero, -np.inf, logL)
-            self.tex = kwargs.pop('tex', {})
-            self.limits = kwargs.pop('limits', {})
-            self.label = kwargs.pop('label', None)
-            self.root = None
-            super().__init__(*args, **kwargs)
+        logzero = kwargs.pop('logzero', -1e30)
+        logL = kwargs.pop('logL', None)
+        if logL is not None:
+            logL = np.array(logL)
+            logL = np.where(logL <= logzero, -np.inf, logL)
+        self.tex = kwargs.pop('tex', {})
+        self.limits = kwargs.pop('limits', {})
+        self.label = kwargs.pop('label', None)
+        super().__init__(*args, **kwargs)
 
-            if logL is not None:
-                self['logL'] = logL
-                self.tex['logL'] = r'$\log\mathcal{L}$'
+        if logL is not None:
+            self['logL'] = logL
+            self.tex['logL'] = r'$\log\mathcal{L}$'
 
-            self._set_automatic_limits()
+        self._set_automatic_limits()
+
+    @property
+    def _constructor(self):
+        return Samples
+
+    def _reload_data(self):
+        self.__init__(root=self.root)
+        return self
+
+    def _limits(self, paramname):
+        limits = self.limits.get(paramname, (None, None))
+        if limits[0] == limits[1]:
+            limits = (None, None)
+        return limits
 
     def _set_automatic_limits(self):
         """Set all unassigned limits to min and max of sample."""
         for param in self.columns:
             if param not in self.limits:
                 self.limits[param] = (self[param].min(), self[param].max())
+
+    def copy(self, deep=True):
+        """Copy which also includes mutable metadata."""
+        new = super().copy(deep)
+        if deep:
+            new.tex = copy.deepcopy(self.tex)
+            new.limits = copy.deepcopy(self.limits)
+        return new
 
     def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
         """Interface for 2D and 1D plotting routines.
@@ -274,7 +270,7 @@ class MCMCSamples(WeightedDataFrame):
     def plot_2d(self, axes, *args, **kwargs):
         """Create an array of 2D plots.
 
-        To avoid intefering with y-axis sharing, one-dimensional plots are
+        To avoid interfering with y-axis sharing, one-dimensional plots are
         created on a separate axis, which is monkey-patched onto the argument
         ax as the attribute ax.twin.
 
@@ -286,8 +282,8 @@ class MCMCSamples(WeightedDataFrame):
                 - [list(str),list(str)] if the x and y axes are different
                 - pandas.DataFrame(matplotlib.axes.Axes)
             If a pandas.DataFrame is provided as an existing set of axes, then
-            this is used for creating the plot. Otherwise a new set of axes are
-            created using the list or lists of strings.
+            this is used for creating the plot. Otherwise, a new set of axes
+            are created using the list or lists of strings.
 
         types: dict, optional
             What type (or types) of plots to produce. Takes the keys 'diagonal'
@@ -389,39 +385,95 @@ class MCMCSamples(WeightedDataFrame):
 
         return modify_inplace(self, samples, inplace)
 
-    def _limits(self, paramname):
-        limits = self.limits.get(paramname, (None, None))
-        if limits[0] == limits[1]:
-            limits = (None, None)
-        return limits
 
-    def _reload_data(self):
-        self.__init__(root=self.root)
-        return self
+class MCMCSamples(Samples):
+    """Storage and plotting tools for MCMC samples.
 
-    def copy(self, deep=True):
-        """Copy which also includes mutable metadata."""
-        new = super().copy(deep)
-        if deep:
-            new.tex = copy.deepcopy(self.tex)
-            new.limits = copy.deepcopy(self.limits)
-        return new
+    Extends the pandas.DataFrame by providing plotting methods and
+    standardising sample storage.
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'limits',
-                                               'root', 'label']
+    Example plotting commands include
+        - ``mcmc.plot_1d(['paramA', 'paramB'])``
+        - ``mcmc.plot_2d(['paramA', 'paramB'])``
+        - ``mcmc.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD']])``
+
+    Parameters
+    ----------
+    root: str, optional
+        root for reading chains from file. Overrides all other arguments.
+
+    data: np.array
+        Coordinates of samples. shape = (nsamples, ndims).
+
+    columns: list(str)
+        reference names of parameters
+
+    weights: np.array
+        weights of samples.
+
+    logL: np.array
+        loglikelihoods of samples.
+
+    tex: dict
+        mapping from columns to tex labels for plotting
+
+    limits: dict
+        mapping from columns to prior limits
+
+    label: str
+        Legend label
+
+    logzero: float
+        The threshold for `log(0)` values assigned to rejected sample points.
+        Anything equal or below this value is set to `-np.inf`.
+        default: -1e30
+
+    burn_in: int or float
+        Discards the first integer number of nsamples if int
+        or the first fraction of nsamples if float.
+        Only works if `root` provided and if chains are GetDist compatible.
+        default: False
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        root = kwargs.pop('root', None)
+        if root is not None:
+            reader = SampleReader(root)
+            if hasattr(reader, 'birth_file') or hasattr(reader, 'ev_file'):
+                raise ValueError("The file root %s seems to point to a Nested "
+                                 "Sampling chain. Please use NestedSamples "
+                                 "instead which has the same features as "
+                                 "MCMCSamples and more. MCMCSamples should be "
+                                 "used for MCMC chains only." % root)
+            burn_in = kwargs.pop('burn_in', False)
+            weights, logL, samples = reader.samples(burn_in=burn_in)
+            params, tex = reader.paramnames()
+            columns = kwargs.pop('columns', params)
+            limits = reader.limits()
+            kwargs['label'] = kwargs.get('label', os.path.basename(root))
+            self.__init__(data=samples, columns=columns, weights=weights,
+                          logL=logL, tex=tex, limits=limits, *args, **kwargs)
+            self.root = root
+        else:
+            self.root = None
+            super().__init__(*args, **kwargs)
 
     @property
     def _constructor(self):
         return MCMCSamples
 
 
-class NestedSamples(MCMCSamples):
+class NestedSamples(Samples):
     """Storage and plotting tools for Nested Sampling samples.
 
     We extend the MCMCSamples class with the additional methods:
 
     * ``self.live_points(logL)``
+    * ``self.set_beta(beta)``
+    * ``self.prior()``
     * ``self.posterior_points(beta)``
+    * ``self.prior_points()``
     * ``self.ns_output()``
     * ``self.logZ()``
     * ``self.D()``
@@ -469,6 +521,7 @@ class NestedSamples(MCMCSamples):
         default: -1e30
 
     """
+    _metadata = Samples._metadata + ['_beta']
 
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
@@ -484,6 +537,7 @@ class NestedSamples(MCMCSamples):
                           tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
+            self.root = None
             logzero = kwargs.pop('logzero', -1e30)
             self._beta = kwargs.pop('beta', 1.)
             logL_birth = kwargs.pop('logL_birth', None)
@@ -497,6 +551,15 @@ class NestedSamples(MCMCSamples):
                 self.recompute(logL_birth, inplace=True)
 
             self._set_automatic_limits()
+
+    @property
+    def _constructor(self):
+        return NestedSamples
+
+    def _compute_insertion_indexes(self):
+        logL = self.logL.to_numpy()
+        logL_birth = self.logL_birth.to_numpy()
+        self['insertion'] = compute_insertion_indexes(logL, logL_birth)
 
     @property
     def beta(self):
@@ -554,7 +617,7 @@ class NestedSamples(MCMCSamples):
 
         """
         dlogX = self.dlogX(nsamples)
-        samples = MCMCSamples(index=dlogX.columns)
+        samples = Samples(index=dlogX.columns)
         samples['logZ'] = self.logZ(dlogX)
 
         logw = dlogX.add(self.beta * self.logL, axis=0)
@@ -622,7 +685,7 @@ class NestedSamples(MCMCSamples):
 
         Returns
         -------
-        live_points: MCMCSamples
+        live_points: Samples
             Live points at either:
                 - contour logL (if input is float)
                 - ith iteration (if input is integer)
@@ -636,7 +699,7 @@ class NestedSamples(MCMCSamples):
             except KeyError:
                 pass
         i = (self.logL >= logL) & (self.logL_birth < logL)
-        return MCMCSamples(self[i], weights=np.ones(i.sum()))
+        return Samples(self[i], weights=np.ones(i.sum()))
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
@@ -776,17 +839,6 @@ class NestedSamples(MCMCSamples):
 
         return modify_inplace(self, samples, inplace)
 
-    def _compute_insertion_indexes(self):
-        logL = self.logL.to_numpy()
-        logL_birth = self.logL_birth.to_numpy()
-        self['insertion'] = compute_insertion_indexes(logL, logL_birth)
-
-    _metadata = MCMCSamples._metadata + ['_beta']
-
-    @property
-    def _constructor(self):
-        return NestedSamples
-
 
 def merge_nested_samples(runs):
     """Merge one or more nested sampling runs.
@@ -830,7 +882,7 @@ def merge_samples_weighted(samples, weights=None, label=None):
 
     Returns
     -------
-    new_samples: MCMCSamples
+    new_samples: Samples
         Merged (weighted) run.
     """
     if not (isinstance(samples, Sequence) or
@@ -838,7 +890,7 @@ def merge_samples_weighted(samples, weights=None, label=None):
         raise TypeError("samples must be a list of samples "
                         "(Sequence or pandas.Series)")
 
-    mcmc_samples = copy.deepcopy([MCMCSamples(s) for s in samples])
+    mcmc_samples = copy.deepcopy([Samples(s) for s in samples])
     if weights is None:
         try:
             logZs = np.array(copy.deepcopy([s.logZ() for s in samples]))
@@ -854,11 +906,11 @@ def merge_samples_weighted(samples, weights=None, label=None):
                              "each weight is for a whole sample. Currently",
                              len(samples), len(weights))
 
-    new_samples = MCMCSamples()
+    new_samples = Samples()
     for s, w in zip(mcmc_samples, weights):
         # Normalize the given weights
         new_weights = s.weights / s.weights.sum() * w/np.sum(weights)
-        s = MCMCSamples(s, weights=new_weights)
+        s = Samples(s, weights=new_weights)
         new_samples = new_samples.append(s)
 
     new_samples.weights /= new_samples.weights.max()
