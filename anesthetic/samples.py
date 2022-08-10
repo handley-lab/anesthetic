@@ -10,15 +10,18 @@ import pandas
 import copy
 import warnings
 from collections.abc import Sequence
-from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
-                             kde_plot_1d, hist_plot_1d, scatter_plot_2d,
-                             fastkde_contour_plot_2d,
-                             kde_contour_plot_2d, hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp, modify_inplace)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from pandas.core.accessor import CachedAccessor
+from anesthetic.plot import make_1d_axes, make_2d_axes
+import anesthetic.weighted_pandas
+from anesthetic.plotting import PlotAccessor
+
+anesthetic.weighted_pandas._WeightedObject.plot =\
+    CachedAccessor("plot", PlotAccessor)
 
 
 class Samples(WeightedDataFrame):
@@ -109,132 +112,6 @@ class Samples(WeightedDataFrame):
             new.limits = copy.deepcopy(self.limits)
         return new
 
-    def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
-        """Interface for 2D and 1D plotting routines.
-
-        Produces a single 1D or 2D plot on an axis.
-
-        Parameters
-        ----------
-        ax: matplotlib.axes.Axes
-            Axes to plot on
-
-        paramname_x: str
-            Choice of parameter to plot on x-coordinate from self.columns.
-
-        paramname_y: str
-            Choice of parameter to plot on y-coordinate from self.columns.
-            optional, if not provided, or the same as paramname_x, then 1D plot
-            produced.
-
-        plot_type: str
-            Must be in {'kde', 'scatter', 'hist', 'fastkde'} for 2D plots and
-            in {'kde', 'hist', 'fastkde', 'astropyhist'} for 1D plots.
-            optional, (Default: 'kde')
-
-        ncompress: int
-            Number of samples to use in plotting routines.
-            optional, Default dynamically chosen
-
-        q: str, float, (float, float)
-            Plot the `q` inner posterior quantiles in 1d 'kde' plots. To plot
-            the full range, set `q=0` or `q=1`.
-            * if str: any of {'1sigma', '2sigma', '3sigma', '4sigma', '5sigma'}
-                Plot within mean +/- #sigma of posterior.
-            * if float: Plot within the symmetric confidence interval
-                `(1-q, q)`  or `(q, 1-q)`.
-            * if tuple:  Plot within the (possibly asymmetric) confidence
-                interval `q`.
-            optional, (Default: '5sigma')
-
-        Returns
-        -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
-        axes: pandas.DataFrame or pandas.Series of matplotlib.axes.Axes
-            Pandas array of axes objects
-
-        """
-        self._set_automatic_limits()
-        plot_type = kwargs.pop('plot_type', 'kde')
-        do_1d_plot = paramname_y is None or paramname_x == paramname_y
-        kwargs['label'] = kwargs.get('label', self.label)
-        ncompress = kwargs.pop('ncompress', None)
-
-        if do_1d_plot:
-            if paramname_x in self and plot_type is not None:
-                xmin, xmax = self._limits(paramname_x)
-                kwargs['xmin'] = kwargs.get('xmin', xmin)
-                kwargs['xmax'] = kwargs.get('xmax', xmax)
-                if plot_type == 'kde':
-                    if ncompress is None:
-                        ncompress = 1000
-                    return kde_plot_1d(ax, self[paramname_x],
-                                       weights=self.weights,
-                                       ncompress=ncompress,
-                                       *args, **kwargs)
-                elif plot_type == 'fastkde':
-                    x = self[paramname_x].compress(ncompress)
-                    return fastkde_plot_1d(ax, x, *args, **kwargs)
-                elif plot_type == 'hist':
-                    return hist_plot_1d(ax, self[paramname_x],
-                                        weights=self.weights,
-                                        *args, **kwargs)
-                elif plot_type == 'astropyhist':
-                    x = self[paramname_x].compress(ncompress)
-                    return hist_plot_1d(ax, x, plotter='astropyhist',
-                                        *args, **kwargs)
-                else:
-                    raise NotImplementedError("plot_type is '%s', but must be"
-                                              " one of {'kde', 'fastkde', "
-                                              "'hist', 'astropyhist'}."
-                                              % plot_type)
-            else:
-                ax.plot([], [])
-
-        else:
-            if (paramname_x in self and paramname_y in self
-                    and plot_type is not None):
-                xmin, xmax = self._limits(paramname_x)
-                kwargs['xmin'] = kwargs.get('xmin', xmin)
-                kwargs['xmax'] = kwargs.get('xmax', xmax)
-                ymin, ymax = self._limits(paramname_y)
-                kwargs['ymin'] = kwargs.get('ymin', ymin)
-                kwargs['ymax'] = kwargs.get('ymax', ymax)
-                if plot_type == 'kde':
-                    if ncompress is None:
-                        ncompress = 1000
-                    x = self[paramname_x]
-                    y = self[paramname_y]
-                    return kde_contour_plot_2d(ax, x, y, weights=self.weights,
-                                               ncompress=ncompress,
-                                               *args, **kwargs)
-                elif plot_type == 'fastkde':
-                    x = self[paramname_x].compress(ncompress)
-                    y = self[paramname_y].compress(ncompress)
-                    return fastkde_contour_plot_2d(ax, x, y,
-                                                   *args, **kwargs)
-                elif plot_type == 'scatter':
-                    if ncompress is None:
-                        ncompress = 500
-                    x = self[paramname_x].compress(ncompress)
-                    y = self[paramname_y].compress(ncompress)
-                    return scatter_plot_2d(ax, x, y, *args, **kwargs)
-                elif plot_type == 'hist':
-                    x = self[paramname_x]
-                    y = self[paramname_y]
-                    return hist_plot_2d(ax, x, y, weights=self.weights,
-                                        *args, **kwargs)
-                else:
-                    raise NotImplementedError("plot_type is '%s', but must be"
-                                              "in {'kde', 'fastkde',"
-                                              "'scatter', 'hist'}."
-                                              % plot_type)
-
-            else:
-                ax.plot([], [])
-
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
 
@@ -248,6 +125,16 @@ class Samples(WeightedDataFrame):
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
 
+        kind: str, optional
+            What kind of plots to produce. Alongside the usual pandas options
+            {'hist', 'box', 'kde', 'density'}, anesthetic also provides
+            {'hist_1d', 'kde_1d', 'fastkde_1d'}.
+            Warning -- while the other pandas plotting options
+            {'line', 'bar', 'barh', 'area', 'pie'} are also accessible, these
+            can be hard to interpret/expensive for MCMCSamples or
+            NestedSamples.
+            Default kde_1d
+
         Returns
         -------
         fig: matplotlib.figure.Figure
@@ -257,13 +144,21 @@ class Samples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
+        self._set_automatic_limits()
+
         if not isinstance(axes, pandas.Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
         else:
             fig = axes.bfill().to_numpy().flatten()[0].figure
 
+        kwargs['kind'] = kwargs.get('kind', 'kde_1d')
+        kwargs['label'] = kwargs.get('label', self.label)
+
         for x, ax in axes.iteritems():
-            self.plot(ax, x, *args, **kwargs)
+            if x in self and kwargs['kind'] is not None:
+                self[x].plot(ax=ax, *args, **kwargs)
+            else:
+                ax.plot([], [])
 
         return fig, axes
 
@@ -285,23 +180,39 @@ class Samples(WeightedDataFrame):
             this is used for creating the plot. Otherwise, a new set of axes
             are created using the list or lists of strings.
 
-        types: dict, optional
-            What type (or types) of plots to produce. Takes the keys 'diagonal'
-            for the 1D plots and 'lower' and 'upper' for the 2D plots.
-            The options for 'diagonal are:
+        kind/kinds: dict, optional
+            What kinds of plots to produce. Dictionary takes the keys
+            'diagonal' for the 1D plots and 'lower' and 'upper' for the 2D
+            plots. The options for 'diagonal' are:
+                - 'kde_1d'
+                - 'hist_1d'
+                - 'fastkde_1d'
                 - 'kde'
                 - 'hist'
-                - 'astropyhist'
+                - 'box'
+                - 'kde'
+                - 'density'
             The options for 'lower' and 'upper' are:
+                - 'kde_2d'
+                - 'hist_2d'
+                - 'scatter_2d'
+                - 'fastkde_2d'
                 - 'kde'
                 - 'scatter'
-                - 'hist'
-                - 'fastkde'
-            Default: {'diagonal': 'kde', 'lower': 'kde', 'upper':'scatter'}
+                - 'hexbin'
+            There are also a set of shortcuts provided in
+            MCMCSamples.plot_2d_default_kinds:
+                - 'kde_1d': 1d kde plots down the diagonal
+                - 'kde_2d': 2d kde plots in lower triangle
+                - 'kde': 1d & 2d kde plots in lower & diagonal
+            Feel free to add your own to this list!
+            Default: {'diagonal': 'kde_1d',
+                      'lower': 'kde_2d',
+                      'upper':'scatter_2d'}
 
         diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
             kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
-            useful when there is a conflict of kwargs for different types of
+            useful when there is a conflict of kwargs for different kinds of
             plots.  Note that any kwargs directly passed to plot_2d will
             overwrite any kwarg with the same key passed to <sub>_kwargs.
             Default: {}
@@ -315,19 +226,33 @@ class Samples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        default_types = {'diagonal': 'kde', 'lower': 'kde', 'upper': 'scatter'}
-        types = kwargs.pop('types', default_types)
+        kind = kwargs.pop('kind', 'default')
+        kind = kwargs.pop('kinds', kind)
+        if isinstance(kind, str) and kind in self.plot_2d_default_kinds:
+            kind = self.plot_2d_default_kinds.get(kind)
+        if (not isinstance(kind, dict) or
+                not set(kind.keys()) <= {'lower', 'upper', 'diagonal'}):
+            raise ValueError(f"{kind} is not a valid input. `kind`/`kinds` "
+                             "must be a dict mapping "
+                             "{'lower','diagonal','upper'} to an allowed plot "
+                             "(see `help(NestedSamples.plot2d)`), or one of "
+                             "the following string shortcuts: "
+                             f"{list(self.plot_2d_default_kinds.keys())}")
+
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
-                        for pos in default_types}
+                        for pos in ['upper', 'lower', 'diagonal']}
+        kwargs['label'] = kwargs.get('label', self.label)
+
+        self._set_automatic_limits()
 
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
             fig, axes = make_2d_axes(axes, tex=self.tex,
-                                     upper=('upper' in types),
-                                     lower=('lower' in types),
-                                     diagonal=('diagonal' in types))
+                                     upper=('upper' in kind),
+                                     lower=('lower' in kind),
+                                     diagonal=('diagonal' in kind))
         else:
             fig = axes.bfill().to_numpy().flatten()[0].figure
 
@@ -335,12 +260,32 @@ class Samples(WeightedDataFrame):
             for x, ax in row.iteritems():
                 if ax is not None:
                     pos = ax.position
-                    ax_ = ax.twin if x == y else ax
-                    plot_type = types.get(pos, None)
                     lkwargs = local_kwargs.get(pos, {})
-                    self.plot(ax_, x, y, plot_type=plot_type, *args, **lkwargs)
+                    lkwargs['kind'] = kind.get(pos, None)
+                    if x in self and y in self and lkwargs['kind'] is not None:
+                        if x == y:
+                            self[x].plot(ax=ax.twin, *args, **lkwargs)
+                        else:
+                            self.plot(x, y, ax=ax, *args, **lkwargs)
+                    else:
+                        if x == y:
+                            ax.twin.plot([], [])
+                        else:
+                            ax.plot([], [])
 
         return fig, axes
+
+    plot_2d_default_kinds = {
+        'default': {'diagonal': 'kde_1d',
+                    'lower': 'kde_2d',
+                    'upper': 'scatter_2d'},
+        'kde': {'diagonal': 'kde_1d', 'lower': 'kde_2d'},
+        'kde_1d': {'diagonal': 'kde_1d'},
+        'kde_2d': {'lower': 'kde_2d'},
+        'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
+        'hist_1d': {'diagonal': 'hist_1d'},
+        'hist_2d': {'lower': 'hist_2d'},
+    }
 
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.

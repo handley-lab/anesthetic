@@ -653,12 +653,12 @@ def test_PiePlot(mcmc_df, mcmc_wdf):
 
 def test_LinePlot(mcmc_df, mcmc_wdf):
     df_axes = mcmc_df.x.plot.line()
-    wdf_axes = mcmc_wdf.x.plot.line()
     assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())
+    plt.close("all")
+    wdf_axes = mcmc_wdf.x.plot.line()
     assert_array_equal(mcmc_wdf.index.droplevel('weights'),
-                       wdf_axes.lines[1].get_xdata())
-
+                       wdf_axes.lines[0].get_xdata())
+    plt.close("all")
     wdf_axes = mcmc_wdf.plot.line()
     assert len(wdf_axes.lines) == len(mcmc_wdf.columns)
-
     plt.close("all")
