@@ -759,14 +759,14 @@ def test_beta():
                                   weights)
 
 
-def test_beta_with_logL_infinities():
+def test_logL_infinities():
     ns = NestedSamples(root="./tests/example_data/pc")
+
     for i in range(10):
         ns.loc[i, 'logL'] = -np.inf
-    prior = ns.set_beta(0)
-    assert np.all(prior.logL[:10] == -np.inf)
-    assert np.all(prior.weights[:10] == 0)
-    ns.plot_1d(['x0', 'x1'])
+
+    ns.recompute(inplace=True)
+    assert (ns.logL == -np.inf).sum() == 0
 
 
 def test_prior():

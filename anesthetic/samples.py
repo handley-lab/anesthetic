@@ -507,8 +507,7 @@ class NestedSamples(MCMCSamples):
     @beta.setter
     def beta(self, beta):
         self._beta = beta
-        logw = self.dlogX() + np.where(self.logL == -np.inf, -np.inf,
-                                       self.beta * self.logL)
+        logw = self.logw(beta=beta)
         self.weights = np.exp(logw - logw.max())
 
     def set_beta(self, beta, inplace=False):
@@ -637,11 +636,11 @@ class NestedSamples(MCMCSamples):
         if beta is None:
             beta = self.beta
         if np.isscalar(beta):
-            betalogL = WeightedSeries(beta*self.logL, index=self.index)
+            betalogL = WeightedSeries(beta*self.logL, self.index)
             betalogL.name = 'betalogL'
         else:
             betalogL = WeightedDataFrame(np.outer(self.logL, beta),
-                                         index=self.index, columns=beta)
+                                         self.index, columns=beta)
             betalogL.columns.name = 'beta'
         return betalogL
 
@@ -681,17 +680,18 @@ class NestedSamples(MCMCSamples):
 
         dlogX = self.dlogX(nsamples)
         betalogL = self._betalogL(beta)
+
         if dlogX.ndim == 1 and betalogL.ndim == 1:
             logw = dlogX + betalogL
         elif dlogX.ndim > 1 and betalogL.ndim == 1:
             logw = dlogX.add(betalogL, axis=0)
         elif dlogX.ndim == 1 and betalogL.ndim > 1:
-            logw = (dlogX + betalogL.T).T
+            logw = betalogL.add(dlogX, axis=0)
         else:
             cols = MultiIndex.from_product([betalogL.columns, dlogX.columns])
             logw = DataFrame(dlogX).reindex(columns=cols, level='samples')
             logw = logw + betalogL
-            logw = WeightedDataFrame(logw)
+            logw = WeightedDataFrame(logw, self.index)
         return logw
 
     def logZ(self, nsamples=None, beta=None):
@@ -822,10 +822,10 @@ class NestedSamples(MCMCSamples):
                           b=[np.ones_like(logXp), -np.ones_like(logXm)])
         dlogX -= np.log(2)
         if nsamples is None:
-            dlogX = WeightedSeries(dlogX, self.index, weights=self.weights)
+            dlogX = WeightedSeries(dlogX, self.index)
             dlogX.name = 'dlogX'
         else:
-            dlogX = WeightedDataFrame(dlogX, self.index, weights=self.weights)
+            dlogX = WeightedDataFrame(dlogX, self.index)
             dlogX.columns.name = logX.columns.name
         return dlogX
 
