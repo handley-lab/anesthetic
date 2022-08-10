@@ -1,4 +1,3 @@
-from __future__ import annotations
 from pandas.plotting import PlotAccessor as _PlotAccessor
 
 
@@ -28,30 +27,30 @@ class PlotAccessor(_PlotAccessor):
         + ("hist_2d", "kde_2d", "fastkde_2d", "scatter_2d")
     _all_kinds = _common_kinds + _series_kinds + _dataframe_kinds
 
-    def hist_1d(self, **kwargs) -> PlotAccessor:
+    def hist_1d(self, **kwargs):
         """Histogram plot: See anesthetic.plot.hist_plot_1d."""
         return self(kind="hist_1d", **kwargs)
 
-    def kde_1d(self, **kwargs) -> PlotAccessor:
+    def kde_1d(self, **kwargs):
         """KDE plot: See anesthetic.plot.kde_plot_1d."""
         return self(kind="kde_1d", **kwargs)
 
-    def fastkde_1d(self, **kwargs) -> PlotAccessor:
+    def fastkde_1d(self, **kwargs):
         """KDE plot: See anesthetic.plot.fastkde_plot_1d."""
         return self(kind="fastkde_1d", **kwargs)
 
-    def kde_2d(self, x, y, **kwargs) -> PlotAccessor:
+    def kde_2d(self, x, y, **kwargs):
         """KDE plot: See anesthetic.plot.kde_contour_plot_2d."""
         return self(kind="kde_2d", x=x, y=y, **kwargs)
 
-    def fastkde_2d(self, x, y, **kwargs) -> PlotAccessor:
+    def fastkde_2d(self, x, y, **kwargs):
         """KDE plot: See anesthetic.plot.fastkde_contour_plot_2d."""
         return self(kind="fastkde_2d", x=x, y=y, **kwargs)
 
-    def hist_2d(self, x, y, **kwargs) -> PlotAccessor:
+    def hist_2d(self, x, y, **kwargs):
         """Histogram plot: See anesthetic.plot.hist_plot_2d."""
         return self(kind="hist_2d", x=x, y=y, **kwargs)
 
-    def scatter_2d(self, x, y, **kwargs) -> PlotAccessor:
+    def scatter_2d(self, x, y, **kwargs):
         """Scatter plot: See anesthetic.plot.scatter_plot_2d."""
         return self(kind="scatter_2d", x=x, y=y, **kwargs)

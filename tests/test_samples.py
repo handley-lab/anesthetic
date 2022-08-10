@@ -930,9 +930,13 @@ def test_hist_plotting():
 
     samples.plot.hist_2d('x0', 'x1')
     samples.plot.kde_2d('x0', 'x1')
-    samples.plot.fastkde_2d('x0', 'x1')
     samples.plot.kde_1d()
-    samples.plot.fastkde_1d()
     samples.plot.hist_1d()
+
+    try:
+        samples.plot.fastkde_2d('x0', 'x1')
+        samples.plot.fastkde_1d()
+    except ImportError:
+        pass
 
     plt.close("all")

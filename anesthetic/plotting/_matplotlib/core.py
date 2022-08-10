@@ -8,7 +8,10 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               MPLPlot, PlanePlot)
 from anesthetic.weighted_pandas import _WeightedObject
 from anesthetic.plot import scatter_plot_2d
-from typing import Literal
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 import numpy as np
 
 
