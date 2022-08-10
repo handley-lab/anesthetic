@@ -1,5 +1,6 @@
 """Main classes for the anesthetic module.
 
+- ``Samples``
 - ``MCMCSamples``
 - ``NestedSamples``
 """
@@ -9,27 +10,334 @@ import pandas
 import copy
 import warnings
 from collections.abc import Sequence
-from anesthetic.plot import (make_1d_axes, make_2d_axes, fastkde_plot_1d,
-                             kde_plot_1d, hist_plot_1d, scatter_plot_2d,
-                             fastkde_contour_plot_2d,
-                             kde_contour_plot_2d, hist_plot_2d)
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp, modify_inplace)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from pandas.core.accessor import CachedAccessor
+from anesthetic.plot import make_1d_axes, make_2d_axes
+import anesthetic.weighted_pandas
+from anesthetic.plotting import PlotAccessor
+anesthetic.weighted_pandas._WeightedObject.plot =\
+    CachedAccessor("plot", PlotAccessor)
+anesthetic.weighted_pandas._WeightedObject.plot =\
+    CachedAccessor("plot", PlotAccessor)
 
 
-class MCMCSamples(WeightedDataFrame):
-    """Storage and plotting tools for MCMC samples.
+class Samples(WeightedDataFrame):
+    """Storage and plotting tools for general samples.
 
     Extends the pandas.DataFrame by providing plotting methods and
     standardising sample storage.
 
     Example plotting commands include
-        - ``mcmc.plot_1d(['paramA', 'paramB'])``
-        - ``mcmc.plot_2d(['paramA', 'paramB'])``
-        - ``mcmc.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD']])``
+        - ``samples.plot_1d(['paramA', 'paramB'])``
+        - ``samples.plot_2d(['paramA', 'paramB'])``
+        - ``samples.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD']])``
+
+    Parameters
+    ----------
+    data: np.array
+        Coordinates of samples. shape = (nsamples, ndims).
+
+    columns: list(str)
+        reference names of parameters
+
+    weights: np.array
+        weights of samples.
+
+    logL: np.array
+        loglikelihoods of samples.
+
+    tex: dict
+        mapping from columns to tex labels for plotting
+
+    limits: dict
+        mapping from columns to prior limits
+
+    label: str
+        Legend label
+
+    logzero: float
+        The threshold for `log(0)` values assigned to rejected sample points.
+        Anything equal or below this value is set to `-np.inf`.
+        default: -1e30
+
+    """
+
+    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'label']
+
+    def __init__(self, *args, **kwargs):
+        logzero = kwargs.pop('logzero', -1e30)
+        logL = kwargs.pop('logL', None)
+        if logL is not None:
+            logL = np.array(logL)
+            logL = np.where(logL <= logzero, -np.inf, logL)
+        self.tex = kwargs.pop('tex', {})
+        self.limits = kwargs.pop('limits', {})
+        self.label = kwargs.pop('label', None)
+        super().__init__(*args, **kwargs)
+
+        if logL is not None:
+            self['logL'] = logL
+            self.tex['logL'] = r'$\log\mathcal{L}$'
+
+        self._set_automatic_limits()
+
+    @property
+    def _constructor(self):
+        return Samples
+
+    def _reload_data(self):
+        self.__init__(root=self.root)
+        return self
+
+    def _limits(self, paramname):
+        limits = self.limits.get(paramname, (None, None))
+        if limits[0] == limits[1]:
+            limits = (None, None)
+        return limits
+
+    def _set_automatic_limits(self):
+        """Set all unassigned limits to min and max of sample."""
+        for param in self.columns:
+            if param not in self.limits:
+                self.limits[param] = (self[param].min(), self[param].max())
+
+    def copy(self, deep=True):
+        """Copy which also includes mutable metadata."""
+        new = super().copy(deep)
+        if deep:
+            new.tex = copy.deepcopy(self.tex)
+            new.limits = copy.deepcopy(self.limits)
+        return new
+
+    def plot_1d(self, axes, *args, **kwargs):
+        """Create an array of 1D plots.
+
+        Parameters
+        ----------
+        axes: plotting axes
+            Can be:
+                - list(str) or str
+                - pandas.Series(matplotlib.axes.Axes)
+            If a pandas.Series is provided as an existing set of axes, then
+            this is used for creating the plot. Otherwise a new set of axes are
+            created using the list or lists of strings.
+
+        kind: str, optional
+            What kind of plots to produce. Alongside the usual pandas options
+            {'hist', 'box', 'kde', 'density'}, anesthetic also provides
+            {'hist_1d', 'kde_1d', 'fastkde_1d'}.
+            Warning -- while the other pandas plotting options
+            {'line', 'bar', 'barh', 'area', 'pie'} are also accessible, these
+            can be hard to interpret/expensive for Samples, MCMCSamples, or
+            NestedSamples.
+            Default kde_1d
+
+        Returns
+        -------
+        fig: matplotlib.figure.Figure
+            New or original (if supplied) figure object
+
+        axes: pandas.Series of matplotlib.axes.Axes
+            Pandas array of axes objects
+
+        """
+        self._set_automatic_limits()
+
+        if not isinstance(axes, pandas.Series):
+            fig, axes = make_1d_axes(axes, tex=self.tex)
+        else:
+            fig = axes.bfill().to_numpy().flatten()[0].figure
+
+        kwargs['kind'] = kwargs.get('kind', 'kde_1d')
+        kwargs['label'] = kwargs.get('label', self.label)
+
+        for x, ax in axes.iteritems():
+            if x in self and kwargs['kind'] is not None:
+                self[x].plot(ax=ax, *args, **kwargs)
+            else:
+                ax.plot([], [])
+
+        return fig, axes
+
+    def plot_2d(self, axes, *args, **kwargs):
+        """Create an array of 2D plots.
+
+        To avoid interfering with y-axis sharing, one-dimensional plots are
+        created on a separate axis, which is monkey-patched onto the argument
+        ax as the attribute ax.twin.
+
+        Parameters
+        ----------
+        axes: plotting axes
+            Can be:
+                - list(str) if the x and y axes are the same
+                - [list(str),list(str)] if the x and y axes are different
+                - pandas.DataFrame(matplotlib.axes.Axes)
+            If a pandas.DataFrame is provided as an existing set of axes, then
+            this is used for creating the plot. Otherwise, a new set of axes
+            are created using the list or lists of strings.
+
+        kind/kinds: dict, optional
+            What kinds of plots to produce. Dictionary takes the keys
+            'diagonal' for the 1D plots and 'lower' and 'upper' for the 2D
+            plots. The options for 'diagonal' are:
+                - 'kde_1d'
+                - 'hist_1d'
+                - 'fastkde_1d'
+                - 'kde'
+                - 'hist'
+                - 'box'
+                - 'kde'
+                - 'density'
+            The options for 'lower' and 'upper' are:
+                - 'kde_2d'
+                - 'hist_2d'
+                - 'scatter_2d'
+                - 'fastkde_2d'
+                - 'kde'
+                - 'scatter'
+                - 'hexbin'
+            There are also a set of shortcuts provided in
+            Samples.plot_2d_default_kinds:
+                - 'kde_1d': 1d kde plots down the diagonal
+                - 'kde_2d': 2d kde plots in lower triangle
+                - 'kde': 1d & 2d kde plots in lower & diagonal
+            Feel free to add your own to this list!
+            Default: {'diagonal': 'kde_1d',
+                      'lower': 'kde_2d',
+                      'upper':'scatter_2d'}
+
+        diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
+            kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
+            useful when there is a conflict of kwargs for different kinds of
+            plots.  Note that any kwargs directly passed to plot_2d will
+            overwrite any kwarg with the same key passed to <sub>_kwargs.
+            Default: {}
+
+        Returns
+        -------
+        fig: matplotlib.figure.Figure
+            New or original (if supplied) figure object
+
+        axes: pandas.DataFrame of matplotlib.axes.Axes
+            Pandas array of axes objects
+
+        """
+        kind = kwargs.pop('kind', 'default')
+        kind = kwargs.pop('kinds', kind)
+        if isinstance(kind, str) and kind in self.plot_2d_default_kinds:
+            kind = self.plot_2d_default_kinds.get(kind)
+        if (not isinstance(kind, dict) or
+                not set(kind.keys()) <= {'lower', 'upper', 'diagonal'}):
+            raise ValueError(f"{kind} is not a valid input. `kind`/`kinds` "
+                             "must be a dict mapping "
+                             "{'lower','diagonal','upper'} to an allowed plot "
+                             "(see `help(NestedSamples.plot2d)`), or one of "
+                             "the following string shortcuts: "
+                             f"{list(self.plot_2d_default_kinds.keys())}")
+
+        local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
+                        for pos in ['upper', 'lower', 'diagonal']}
+        kwargs['label'] = kwargs.get('label', self.label)
+
+        self._set_automatic_limits()
+
+        for pos in local_kwargs:
+            local_kwargs[pos].update(kwargs)
+
+        if not isinstance(axes, pandas.DataFrame):
+            fig, axes = make_2d_axes(axes, tex=self.tex,
+                                     upper=('upper' in kind),
+                                     lower=('lower' in kind),
+                                     diagonal=('diagonal' in kind))
+        else:
+            fig = axes.bfill().to_numpy().flatten()[0].figure
+
+        for y, row in axes.iterrows():
+            for x, ax in row.iteritems():
+                if ax is not None:
+                    pos = ax.position
+                    lkwargs = local_kwargs.get(pos, {})
+                    lkwargs['kind'] = kind.get(pos, None)
+                    if x in self and y in self and lkwargs['kind'] is not None:
+                        if x == y:
+                            self[x].plot(ax=ax.twin, *args, **lkwargs)
+                        else:
+                            self.plot(x, y, ax=ax, *args, **lkwargs)
+                    else:
+                        if x == y:
+                            ax.twin.plot([], [])
+                        else:
+                            ax.plot([], [])
+
+        return fig, axes
+
+    plot_2d_default_kinds = {
+        'default': {'diagonal': 'kde_1d',
+                    'lower': 'kde_2d',
+                    'upper': 'scatter_2d'},
+        'kde': {'diagonal': 'kde_1d', 'lower': 'kde_2d'},
+        'kde_1d': {'diagonal': 'kde_1d'},
+        'kde_2d': {'lower': 'kde_2d'},
+        'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
+        'hist_1d': {'diagonal': 'hist_1d'},
+        'hist_2d': {'lower': 'hist_2d'},
+    }
+
+    def importance_sample(self, logL_new, action='add', inplace=False):
+        """Perform importance re-weighting on the log-likelihood.
+
+        Parameters
+        ----------
+        logL_new: np.array
+            New log-likelihood values. Should have the same shape as `logL`.
+
+        action: str, optional
+            Can be any of {'add', 'replace', 'mask'}.
+                * add: Add the new `logL_new` to the current `logL`.
+                * replace: Replace the current `logL` with the new `logL_new`.
+                * mask: treat `logL_new` as a boolean mask and only keep the
+                        corresponding (True) samples.
+            default: 'add'
+
+        inplace: bool, optional
+            Indicates whether to modify the existing array, or return a new
+            frame with importance sampling applied.
+            default: False
+
+        Returns
+        -------
+        samples: Samples/MCMCSamples/NestedSamples
+            Importance re-weighted samples.
+        """
+        samples = self.copy()
+        if action == 'add':
+            samples.weights *= np.exp(logL_new - logL_new.max())
+            samples.logL += logL_new
+        elif action == 'replace':
+            logL_new2 = logL_new - samples.logL
+            samples.weights *= np.exp(logL_new2 - logL_new2.max())
+            samples.logL = logL_new
+        elif action == 'mask':
+            samples = samples[logL_new]
+        else:
+            raise NotImplementedError("`action` needs to be one of "
+                                      "{'add', 'replace', 'mask'}, but '%s' "
+                                      "was requested." % action)
+
+        return modify_inplace(self, samples, inplace)
+
+
+class MCMCSamples(Samples):
+    """Storage and plotting tools for MCMC samples.
+
+    We extend the Samples class with the additional methods:
+
+    * ``burn_in`` parameter
 
     Parameters
     ----------
@@ -70,6 +378,8 @@ class MCMCSamples(WeightedDataFrame):
 
     """
 
+    _metadata = Samples._metadata + ['root']
+
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
         if root is not None:
@@ -78,7 +388,7 @@ class MCMCSamples(WeightedDataFrame):
                 raise ValueError("The file root %s seems to point to a Nested "
                                  "Sampling chain. Please use NestedSamples "
                                  "instead which has the same features as "
-                                 "MCMCSamples and more. MCMCSamples should be "
+                                 "Samples and more. MCMCSamples should be "
                                  "used for MCMC chains only." % root)
             burn_in = kwargs.pop('burn_in', False)
             weights, logL, samples = reader.samples(burn_in=burn_in)
@@ -90,338 +400,24 @@ class MCMCSamples(WeightedDataFrame):
                           logL=logL, tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
-            logzero = kwargs.pop('logzero', -1e30)
-            logL = kwargs.pop('logL', None)
-            if logL is not None:
-                logL = np.array(logL)
-                logL = np.where(logL <= logzero, -np.inf, logL)
-            self.tex = kwargs.pop('tex', {})
-            self.limits = kwargs.pop('limits', {})
-            self.label = kwargs.pop('label', None)
             self.root = None
             super().__init__(*args, **kwargs)
-
-            if logL is not None:
-                self['logL'] = logL
-                self.tex['logL'] = r'$\log\mathcal{L}$'
-
-            self._set_automatic_limits()
-
-    def _set_automatic_limits(self):
-        """Set all unassigned limits to min and max of sample."""
-        for param in self.columns:
-            if param not in self.limits:
-                self.limits[param] = (self[param].min(), self[param].max())
-
-    def plot(self, ax, paramname_x, paramname_y=None, *args, **kwargs):
-        """Interface for 2D and 1D plotting routines.
-
-        Produces a single 1D or 2D plot on an axis.
-
-        Parameters
-        ----------
-        ax: matplotlib.axes.Axes
-            Axes to plot on
-
-        paramname_x: str
-            Choice of parameter to plot on x-coordinate from self.columns.
-
-        paramname_y: str
-            Choice of parameter to plot on y-coordinate from self.columns.
-            optional, if not provided, or the same as paramname_x, then 1D plot
-            produced.
-
-        plot_type: str
-            Must be in {'kde', 'scatter', 'hist', 'fastkde'} for 2D plots and
-            in {'kde', 'hist', 'fastkde', 'astropyhist'} for 1D plots.
-            optional, (Default: 'kde')
-
-        ncompress: int
-            Number of samples to use in plotting routines.
-            optional, Default dynamically chosen
-
-        q: str, float, (float, float)
-            Plot the `q` inner posterior quantiles in 1d 'kde' plots. To plot
-            the full range, set `q=0` or `q=1`.
-            * if str: any of {'1sigma', '2sigma', '3sigma', '4sigma', '5sigma'}
-                Plot within mean +/- #sigma of posterior.
-            * if float: Plot within the symmetric confidence interval
-                `(1-q, q)`  or `(q, 1-q)`.
-            * if tuple:  Plot within the (possibly asymmetric) confidence
-                interval `q`.
-            optional, (Default: '5sigma')
-
-        Returns
-        -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
-        axes: pandas.DataFrame or pandas.Series of matplotlib.axes.Axes
-            Pandas array of axes objects
-
-        """
-        self._set_automatic_limits()
-        plot_type = kwargs.pop('plot_type', 'kde')
-        do_1d_plot = paramname_y is None or paramname_x == paramname_y
-        kwargs['label'] = kwargs.get('label', self.label)
-        ncompress = kwargs.pop('ncompress', None)
-
-        if do_1d_plot:
-            if paramname_x in self and plot_type is not None:
-                xmin, xmax = self._limits(paramname_x)
-                kwargs['xmin'] = kwargs.get('xmin', xmin)
-                kwargs['xmax'] = kwargs.get('xmax', xmax)
-                if plot_type == 'kde':
-                    if ncompress is None:
-                        ncompress = 1000
-                    return kde_plot_1d(ax, self[paramname_x],
-                                       weights=self.weights,
-                                       ncompress=ncompress,
-                                       *args, **kwargs)
-                elif plot_type == 'fastkde':
-                    x = self[paramname_x].compress(ncompress)
-                    return fastkde_plot_1d(ax, x, *args, **kwargs)
-                elif plot_type == 'hist':
-                    return hist_plot_1d(ax, self[paramname_x],
-                                        weights=self.weights,
-                                        *args, **kwargs)
-                elif plot_type == 'astropyhist':
-                    x = self[paramname_x].compress(ncompress)
-                    return hist_plot_1d(ax, x, plotter='astropyhist',
-                                        *args, **kwargs)
-                else:
-                    raise NotImplementedError("plot_type is '%s', but must be"
-                                              " one of {'kde', 'fastkde', "
-                                              "'hist', 'astropyhist'}."
-                                              % plot_type)
-            else:
-                ax.plot([], [])
-
-        else:
-            if (paramname_x in self and paramname_y in self
-                    and plot_type is not None):
-                xmin, xmax = self._limits(paramname_x)
-                kwargs['xmin'] = kwargs.get('xmin', xmin)
-                kwargs['xmax'] = kwargs.get('xmax', xmax)
-                ymin, ymax = self._limits(paramname_y)
-                kwargs['ymin'] = kwargs.get('ymin', ymin)
-                kwargs['ymax'] = kwargs.get('ymax', ymax)
-                if plot_type == 'kde':
-                    if ncompress is None:
-                        ncompress = 1000
-                    x = self[paramname_x]
-                    y = self[paramname_y]
-                    return kde_contour_plot_2d(ax, x, y, weights=self.weights,
-                                               ncompress=ncompress,
-                                               *args, **kwargs)
-                elif plot_type == 'fastkde':
-                    x = self[paramname_x].compress(ncompress)
-                    y = self[paramname_y].compress(ncompress)
-                    return fastkde_contour_plot_2d(ax, x, y,
-                                                   *args, **kwargs)
-                elif plot_type == 'scatter':
-                    if ncompress is None:
-                        ncompress = 500
-                    x = self[paramname_x].compress(ncompress)
-                    y = self[paramname_y].compress(ncompress)
-                    return scatter_plot_2d(ax, x, y, *args, **kwargs)
-                elif plot_type == 'hist':
-                    x = self[paramname_x]
-                    y = self[paramname_y]
-                    return hist_plot_2d(ax, x, y, weights=self.weights,
-                                        *args, **kwargs)
-                else:
-                    raise NotImplementedError("plot_type is '%s', but must be"
-                                              "in {'kde', 'fastkde',"
-                                              "'scatter', 'hist'}."
-                                              % plot_type)
-
-            else:
-                ax.plot([], [])
-
-    def plot_1d(self, axes, *args, **kwargs):
-        """Create an array of 1D plots.
-
-        Parameters
-        ----------
-        axes: plotting axes
-            Can be:
-                - list(str) or str
-                - pandas.Series(matplotlib.axes.Axes)
-            If a pandas.Series is provided as an existing set of axes, then
-            this is used for creating the plot. Otherwise a new set of axes are
-            created using the list or lists of strings.
-
-        Returns
-        -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
-        axes: pandas.Series of matplotlib.axes.Axes
-            Pandas array of axes objects
-
-        """
-        if not isinstance(axes, pandas.Series):
-            fig, axes = make_1d_axes(axes, tex=self.tex)
-        else:
-            fig = axes.bfill().to_numpy().flatten()[0].figure
-
-        for x, ax in axes.iteritems():
-            self.plot(ax, x, *args, **kwargs)
-
-        return fig, axes
-
-    def plot_2d(self, axes, *args, **kwargs):
-        """Create an array of 2D plots.
-
-        To avoid intefering with y-axis sharing, one-dimensional plots are
-        created on a separate axis, which is monkey-patched onto the argument
-        ax as the attribute ax.twin.
-
-        Parameters
-        ----------
-        axes: plotting axes
-            Can be:
-                - list(str) if the x and y axes are the same
-                - [list(str),list(str)] if the x and y axes are different
-                - pandas.DataFrame(matplotlib.axes.Axes)
-            If a pandas.DataFrame is provided as an existing set of axes, then
-            this is used for creating the plot. Otherwise a new set of axes are
-            created using the list or lists of strings.
-
-        types: dict, optional
-            What type (or types) of plots to produce. Takes the keys 'diagonal'
-            for the 1D plots and 'lower' and 'upper' for the 2D plots.
-            The options for 'diagonal are:
-                - 'kde'
-                - 'hist'
-                - 'astropyhist'
-            The options for 'lower' and 'upper' are:
-                - 'kde'
-                - 'scatter'
-                - 'hist'
-                - 'fastkde'
-            Default: {'diagonal': 'kde', 'lower': 'kde', 'upper':'scatter'}
-
-        diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
-            kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
-            useful when there is a conflict of kwargs for different types of
-            plots.  Note that any kwargs directly passed to plot_2d will
-            overwrite any kwarg with the same key passed to <sub>_kwargs.
-            Default: {}
-
-        Returns
-        -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
-        axes: pandas.DataFrame of matplotlib.axes.Axes
-            Pandas array of axes objects
-
-        """
-        default_types = {'diagonal': 'kde', 'lower': 'kde', 'upper': 'scatter'}
-        types = kwargs.pop('types', default_types)
-        local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
-                        for pos in default_types}
-
-        for pos in local_kwargs:
-            local_kwargs[pos].update(kwargs)
-
-        if not isinstance(axes, pandas.DataFrame):
-            fig, axes = make_2d_axes(axes, tex=self.tex,
-                                     upper=('upper' in types),
-                                     lower=('lower' in types),
-                                     diagonal=('diagonal' in types))
-        else:
-            fig = axes.bfill().to_numpy().flatten()[0].figure
-
-        for y, row in axes.iterrows():
-            for x, ax in row.iteritems():
-                if ax is not None:
-                    pos = ax.position
-                    ax_ = ax.twin if x == y else ax
-                    plot_type = types.get(pos, None)
-                    lkwargs = local_kwargs.get(pos, {})
-                    self.plot(ax_, x, y, plot_type=plot_type, *args, **lkwargs)
-
-        return fig, axes
-
-    def importance_sample(self, logL_new, action='add', inplace=False):
-        """Perform importance re-weighting on the log-likelihood.
-
-        Parameters
-        ----------
-        logL_new: np.array
-            New log-likelihood values. Should have the same shape as `logL`.
-
-        action: str, optional
-            Can be any of {'add', 'replace', 'mask'}.
-                * add: Add the new `logL_new` to the current `logL`.
-                * replace: Replace the current `logL` with the new `logL_new`.
-                * mask: treat `logL_new` as a boolean mask and only keep the
-                        corresponding (True) samples.
-            default: 'add'
-
-        inplace: bool, optional
-            Indicates whether to modify the existing array, or return a new
-            frame with importance sampling applied.
-            default: False
-
-        Returns
-        -------
-        samples: MCMCSamples
-            Importance re-weighted samples.
-        """
-        samples = self.copy()
-        if action == 'add':
-            samples.weights *= np.exp(logL_new - logL_new.max())
-            samples.logL += logL_new
-        elif action == 'replace':
-            logL_new2 = logL_new - samples.logL
-            samples.weights *= np.exp(logL_new2 - logL_new2.max())
-            samples.logL = logL_new
-        elif action == 'mask':
-            samples = samples[logL_new]
-        else:
-            raise NotImplementedError("`action` needs to be one of "
-                                      "{'add', 'replace', 'mask'}, but '%s' "
-                                      "was requested." % action)
-
-        return modify_inplace(self, samples, inplace)
-
-    def _limits(self, paramname):
-        limits = self.limits.get(paramname, (None, None))
-        if limits[0] == limits[1]:
-            limits = (None, None)
-        return limits
-
-    def _reload_data(self):
-        self.__init__(root=self.root)
-        return self
-
-    def copy(self, deep=True):
-        """Copy which also includes mutable metadata."""
-        new = super().copy(deep)
-        if deep:
-            new.tex = copy.deepcopy(self.tex)
-            new.limits = copy.deepcopy(self.limits)
-        return new
-
-    _metadata = WeightedDataFrame._metadata + ['tex', 'limits',
-                                               'root', 'label']
 
     @property
     def _constructor(self):
         return MCMCSamples
 
 
-class NestedSamples(MCMCSamples):
+class NestedSamples(Samples):
     """Storage and plotting tools for Nested Sampling samples.
 
-    We extend the MCMCSamples class with the additional methods:
+    We extend the Samples class with the additional methods:
 
     * ``self.live_points(logL)``
+    * ``self.set_beta(beta)``
+    * ``self.prior()``
     * ``self.posterior_points(beta)``
+    * ``self.prior_points()``
     * ``self.ns_output()``
     * ``self.logZ()``
     * ``self.D()``
@@ -470,6 +466,8 @@ class NestedSamples(MCMCSamples):
 
     """
 
+    _metadata = Samples._metadata + ['root', '_beta']
+
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
         if root is not None:
@@ -484,6 +482,7 @@ class NestedSamples(MCMCSamples):
                           tex=tex, limits=limits, *args, **kwargs)
             self.root = root
         else:
+            self.root = None
             logzero = kwargs.pop('logzero', -1e30)
             self._beta = kwargs.pop('beta', 1.)
             logL_birth = kwargs.pop('logL_birth', None)
@@ -497,6 +496,15 @@ class NestedSamples(MCMCSamples):
                 self.recompute(logL_birth, inplace=True)
 
             self._set_automatic_limits()
+
+    @property
+    def _constructor(self):
+        return NestedSamples
+
+    def _compute_insertion_indexes(self):
+        logL = self.logL.to_numpy()
+        logL_birth = self.logL_birth.to_numpy()
+        self['insertion'] = compute_insertion_indexes(logL, logL_birth)
 
     @property
     def beta(self):
@@ -554,7 +562,7 @@ class NestedSamples(MCMCSamples):
 
         """
         dlogX = self.dlogX(nsamples)
-        samples = MCMCSamples(index=dlogX.columns)
+        samples = Samples(index=dlogX.columns)
         samples['logZ'] = self.logZ(dlogX)
 
         logw = dlogX.add(self.beta * self.logL, axis=0)
@@ -622,7 +630,7 @@ class NestedSamples(MCMCSamples):
 
         Returns
         -------
-        live_points: MCMCSamples
+        live_points: Samples
             Live points at either:
                 - contour logL (if input is float)
                 - ith iteration (if input is integer)
@@ -636,7 +644,7 @@ class NestedSamples(MCMCSamples):
             except KeyError:
                 pass
         i = (self.logL >= logL) & (self.logL_birth < logL)
-        return MCMCSamples(self[i], weights=np.ones(i.sum()))
+        return Samples(self[i], weights=np.ones(i.sum()))
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
@@ -776,17 +784,6 @@ class NestedSamples(MCMCSamples):
 
         return modify_inplace(self, samples, inplace)
 
-    def _compute_insertion_indexes(self):
-        logL = self.logL.to_numpy()
-        logL_birth = self.logL_birth.to_numpy()
-        self['insertion'] = compute_insertion_indexes(logL, logL_birth)
-
-    _metadata = MCMCSamples._metadata + ['_beta']
-
-    @property
-    def _constructor(self):
-        return NestedSamples
-
 
 def merge_nested_samples(runs):
     """Merge one or more nested sampling runs.
@@ -830,7 +827,7 @@ def merge_samples_weighted(samples, weights=None, label=None):
 
     Returns
     -------
-    new_samples: MCMCSamples
+    new_samples: Samples
         Merged (weighted) run.
     """
     if not (isinstance(samples, Sequence) or
@@ -838,7 +835,7 @@ def merge_samples_weighted(samples, weights=None, label=None):
         raise TypeError("samples must be a list of samples "
                         "(Sequence or pandas.Series)")
 
-    mcmc_samples = copy.deepcopy([MCMCSamples(s) for s in samples])
+    mcmc_samples = copy.deepcopy([Samples(s) for s in samples])
     if weights is None:
         try:
             logZs = np.array(copy.deepcopy([s.logZ() for s in samples]))
@@ -854,11 +851,11 @@ def merge_samples_weighted(samples, weights=None, label=None):
                              "each weight is for a whole sample. Currently",
                              len(samples), len(weights))
 
-    new_samples = MCMCSamples()
+    new_samples = Samples()
     for s, w in zip(mcmc_samples, weights):
         # Normalize the given weights
         new_weights = s.weights / s.weights.sum() * w/np.sum(weights)
-        s = MCMCSamples(s, weights=new_weights)
+        s = Samples(s, weights=new_weights)
         new_samples = new_samples.append(s)
 
     new_samples.weights /= new_samples.weights.max()
