@@ -6,8 +6,22 @@ from pandas.core.dtypes.missing import (
     isna,
     remove_na_arraylike,
 )
-from pandas.plotting._matplotlib.core import MPLPlot
-from anesthetic.plotting._matplotlib.core import _WeightedMPLPlot, _get_weights
+from pandas.plotting._matplotlib.core import MPLPlot, PlanePlot
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+from anesthetic.plotting._matplotlib.core import (
+    _WeightedMPLPlot, _CompressedMPLPlot, _get_weights
+)
+from anesthetic.plot import (
+    kde_contour_plot_2d,
+    hist_plot_2d,
+    fastkde_contour_plot_2d,
+    kde_plot_1d,
+    fastkde_plot_1d,
+    hist_plot_1d
+)
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):
@@ -57,6 +71,94 @@ class KdePlot(HistPlot, _KdePlot):
         y = gkde.evaluate(ind)
         lines = MPLPlot._plot(ax, ind, y, style=style, **kwds)
         return lines
+
+
+class Kde1dPlot(_WeightedMPLPlot):
+    # noqa: disable=D101
+    @property
+    def _kind(self) -> Literal["kde_1d"]:
+        return "kde_1d"
+
+    def _make_plot(self):
+        return kde_plot_1d(
+            self.axes[0],
+            self.data.values[:, 0],
+            label=self.label,
+            **self.kwds)
+
+
+class FastKde1dPlot(_CompressedMPLPlot):
+    # noqa: disable=D101
+    @property
+    def _kind(self) -> Literal["fastkde_1d"]:
+        return "fastkde_1d"
+
+    def _make_plot(self):
+        return fastkde_plot_1d(
+            self.axes[0],
+            self.data.values[:, 0],
+            label=self.label,
+            **self.kwds)
+
+
+class Hist1dPlot(_WeightedMPLPlot):
+    # noqa: disable=D101
+    @property
+    def _kind(self) -> Literal["hist_1d"]:
+        return "hist_1d"
+
+    def _make_plot(self):
+        return hist_plot_1d(
+            self.axes[0],
+            self.data.values[:, 0],
+            label=self.label,
+            **self.kwds)
+
+
+class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
+    # noqa: disable=D101
+    @property
+    def _kind(self) -> Literal["kde_2d"]:
+        return "kde_2d"
+
+    def _make_plot(self):
+        return kde_contour_plot_2d(
+            self.axes[0],
+            self.data[self.x].values,
+            self.data[self.y].values,
+            label=self.label,
+            **self.kwds)
+
+
+class FastKde2dPlot(_CompressedMPLPlot, PlanePlot):
+    # noqa: disable=D101
+    @property
+    def _kind(self) -> Literal["fastkde_2d"]:
+        return "fastkde_2d"
+
+    def _make_plot(self):
+        return fastkde_contour_plot_2d(
+            self.axes[0],
+            self.data[self.x].values,
+            self.data[self.y].values,
+            label=self.label,
+            **self.kwds)
+
+
+class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
+    # noqa: disable=D101
+    @property
+    def _kind(self) -> Literal["hist_2d"]:
+        return "hist_2d"
+
+    def _make_plot(self):
+        return hist_plot_2d(
+            self.axes[0],
+            self.data[self.x].values,
+            self.data[self.y].values,
+            label=self.label,
+            **self.kwds,
+        )
 
 
 def hist_frame(data, *args, **kwds):
