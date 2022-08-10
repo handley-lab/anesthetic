@@ -135,50 +135,53 @@ def test_plot_2d_kinds():
     params_y = ['x0', 'x1', 'x2']
     params = [params_x, params_y]
 
+    # Check dictionaries
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
-    assert (~axes.isnull()).sum().sum() == 3
+    assert (~axes.isnull()).to_numpy().sum() == 3
 
     fig, axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
-    assert (~axes.isnull()).sum().sum() == 6
+    assert (~axes.isnull()).to_numpy().sum() == 6
 
     fig, axes = ns.plot_2d(params, kind={'upper': 'kde_2d',
                                          'diagonal': 'kde_1d'})
-    assert (~axes.isnull()).sum().sum() == 9
+    assert (~axes.isnull()).to_numpy().sum() == 9
 
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d'})
-    assert (~axes.isnull()).sum().sum() == 6
+    assert (~axes.isnull()).to_numpy().sum() == 6
 
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d'})
-    assert (~axes.isnull()).sum().sum() == 6
+    assert (~axes.isnull()).to_numpy().sum() == 6
 
     fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d',
                                          'upper': 'scatter_2d'})
-    assert (~axes.isnull()).sum().sum() == 12
+    assert (~axes.isnull()).to_numpy().sum() == 12
 
     with pytest.raises(ValueError):
-        fig, axes = ns.plot_2d(params, kind={'lower': 'not a plot kind'})
+        ns.plot_2d(params, kind={'lower': 'not a plot kind'})
 
     with pytest.raises(ValueError):
-        fig, axes = ns.plot_2d(params, kind={'diagonal': 'not a plot kind'})
+        ns.plot_2d(params, kind={'diagonal': 'not a plot kind'})
 
-    # Check defaults
+    # Check strings
     fig, axes = ns.plot_2d(params, kind='kde')
-    assert (~axes.isnull()).sum().sum() == 6
+    assert (~axes.isnull()).to_numpy().sum() == 6
     fig, axes = ns.plot_2d(params, kind='kde_1d')
-    assert (~axes.isnull()).sum().sum() == 3
+    assert (~axes.isnull()).to_numpy().sum() == 3
     fig, axes = ns.plot_2d(params, kind='kde_2d')
-    assert (~axes.isnull()).sum().sum() == 3
+    assert (~axes.isnull()).to_numpy().sum() == 3
+    with pytest.raises(KeyError):
+        ns.plot_2d(params, kind='incorrect string')
 
     # Check kinds vs kind kwarg
     fig, axes = ns.plot_2d(params, kinds='kde')
-    assert (~axes.isnull()).sum().sum() == 6
+    assert (~axes.isnull()).to_numpy().sum() == 6
     fig, axes = ns.plot_2d(params, kinds='kde_1d')
-    assert (~axes.isnull()).sum().sum() == 3
+    assert (~axes.isnull()).to_numpy().sum() == 3
     fig, axes = ns.plot_2d(params, kinds='kde_2d')
-    assert (~axes.isnull()).sum().sum() == 3
+    assert (~axes.isnull()).to_numpy().sum() == 3
 
     with pytest.raises(ValueError):
         ns.plot_2d(params, kinds='foo')
