@@ -216,7 +216,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         this = self._get_numeric_data()
 
         if isinstance(other, Series):
-            return this.apply(lambda x: other.corr(x), axis=0)
+            answer = this.apply(lambda x: other.corr(x), axis=0)
+            return Series(answer)
 
         other = other._get_numeric_data()
         left, right = this.align(other, join="inner", copy=False)
@@ -243,7 +244,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                 correl = concat([correl, Series([np.nan] * len(idx_diff),
                                                 index=idx_diff)])
 
-        return correl
+        return Series(correl)
 
     def kurt(self, axis=0, skipna=True):
         """Weighted kurtosis of the sampled distribution."""
@@ -332,3 +333,15 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     @property
     def _constructor(self):
         return WeightedDataFrame
+
+    def _ixs(self, i, axis=0): 
+        answer = super()._ixs(i, axis=axis)
+        #print("columns", self.columns)
+        #print("index", self.index)
+        
+        #if self._get_axis_number(axis) == 0:
+        #    answer = Series(answer.droplevel('weights'))
+        return answer
+
+
+
