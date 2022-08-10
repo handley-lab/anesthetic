@@ -232,9 +232,14 @@ class MCMCSamples(WeightedDataFrame):
         """
         kind = kwargs.pop('kind', 'default')
         kind = kwargs.pop('kinds', kind)
-
         if isinstance(kind, str):
             kind = self.plot_2d_default_kinds.get(kind)
+
+        if not isinstance(kind, dict):
+            raise ValueError("kind/kinds must be a dict mapping "
+                             "{'lower','diagonal','upper'} to an allowed plot "
+                             "(see `help(NestedSamples.plot2d)`), or a string "
+                             "in NestedSamples.plot_2d_default_kinds")
 
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in ['upper', 'lower', 'diagonal']}

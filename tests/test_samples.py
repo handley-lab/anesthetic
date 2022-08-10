@@ -180,6 +180,9 @@ def test_plot_2d_kinds():
     fig, axes = ns.plot_2d(params, kinds='kde_2d')
     assert (~axes.isnull()).sum().sum() == 3
 
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kinds='foo')
+
     plt.close("all")
 
 
