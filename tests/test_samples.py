@@ -946,3 +946,38 @@ def test_logL_list():
     samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
     assert_array_equal(default, samples)
     plt.close("all")
+
+
+def test_samples_dot_plot():
+    samples = NestedSamples(root='./tests/example_data/pc')
+    axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
+    assert len(axes.containers) == 5
+    axes = samples.x0.plot.kde(subplots=True)
+    assert len(axes) == 1
+    axes = samples[['x0', 'x1']].plot.kde(subplots=True)
+    assert len(axes) == 2
+
+    axes = samples.plot.kde_2d('x0', 'x1')
+    assert len(axes.collections) == 5
+    assert axes.get_xlabel() == 'x0'
+    assert axes.get_ylabel() == 'x1'
+    axes = samples.plot.hist_2d('x1', 'x0')
+    assert len(axes.collections) == 1
+    assert axes.get_xlabel() == 'x1'
+    assert axes.get_ylabel() == 'x0'
+    # axes = samples.plot.scatter_2d('x2', 'x3')
+    # assert len(axes.lines) == 1
+    axes = samples.x1.plot.kde_1d()
+    assert len(axes.lines) == 1
+    axes = samples.x2.plot.hist_1d()
+    assert len(axes.containers) == 1
+
+    try:
+        axes = samples.plot.fastkde_2d('x0', 'x1')
+        assert len(axes.collections) == 5
+        axes = samples.plot.fastkde_1d()
+        assert len(axes.lines) == 1
+    except ImportError:
+        pass
+
+    plt.close("all")
