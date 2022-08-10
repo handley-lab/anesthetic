@@ -132,7 +132,7 @@ class Samples(WeightedDataFrame):
             {'hist_1d', 'kde_1d', 'fastkde_1d'}.
             Warning -- while the other pandas plotting options
             {'line', 'bar', 'barh', 'area', 'pie'} are also accessible, these
-            can be hard to interpret/expensive for MCMCSamples or
+            can be hard to interpret/expensive for Samples, MCMCSamples, or
             NestedSamples.
             Default kde_1d
 
@@ -202,7 +202,7 @@ class Samples(WeightedDataFrame):
                 - 'scatter'
                 - 'hexbin'
             There are also a set of shortcuts provided in
-            MCMCSamples.plot_2d_default_kinds:
+            Samples.plot_2d_default_kinds:
                 - 'kde_1d': 1d kde plots down the diagonal
                 - 'kde_2d': 2d kde plots in lower triangle
                 - 'kde': 1d & 2d kde plots in lower & diagonal
@@ -311,7 +311,7 @@ class Samples(WeightedDataFrame):
 
         Returns
         -------
-        samples: MCMCSamples
+        samples: Samples/MCMCSamples/NestedSamples
             Importance re-weighted samples.
         """
         samples = self.copy()
@@ -378,7 +378,7 @@ class MCMCSamples(Samples):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['root']
+    _metadata = Samples._metadata + ['root']
 
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
@@ -388,7 +388,7 @@ class MCMCSamples(Samples):
                 raise ValueError("The file root %s seems to point to a Nested "
                                  "Sampling chain. Please use NestedSamples "
                                  "instead which has the same features as "
-                                 "MCMCSamples and more. MCMCSamples should be "
+                                 "Samples and more. MCMCSamples should be "
                                  "used for MCMC chains only." % root)
             burn_in = kwargs.pop('burn_in', False)
             weights, logL, samples = reader.samples(burn_in=burn_in)
