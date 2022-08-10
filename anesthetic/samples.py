@@ -546,8 +546,8 @@ class NestedSamples(MCMCSamples):
         Parameters
         ----------
         nsamples: int, optional
-            - If nsamples is not supplied, return mean value
-            - If nsamples is integer, return nsamples from the distribution of
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
 
         beta: float, array-like, optional
@@ -559,13 +559,13 @@ class NestedSamples(MCMCSamples):
             Series, index ['logZ', 'd', 'D', 'logL']
         elif beta is scalar and nsamples is int:
             DataFrame, index range(nsamples),
-            columns ['logZ', 'd', 'D', 'logL'] 
+            columns ['logZ', 'd', 'D', 'logL']
         elif beta is array-like and nsamples is None:
             DataFrame, index beta,
-            columns ['logZ', 'd', 'D', 'logL'] 
+            columns ['logZ', 'd', 'D', 'logL']
         elif beta is array-like and nsamples is int:
             DataFrame, index MultiIndex the product of beta and range(nsamples)
-            columns ['logZ', 'd', 'D', 'logL'] 
+            columns ['logZ', 'd', 'D', 'logL']
         """
         logw = self.logw(nsamples, beta)
         if nsamples is None and beta is None:
@@ -598,8 +598,8 @@ class NestedSamples(MCMCSamples):
         Parameters
         ----------
         nsamples: int, optional
-            - If nsamples is not supplied, return mean value
-            - If nsamples is integer, return nsamples from the distribution of
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
 
         Returns
@@ -620,7 +620,7 @@ class NestedSamples(MCMCSamples):
         return t.cumsum()
 
     def _betalogL(self, beta=None):
-        """log (L**beta) convenience function.
+        """Log(L**beta) convenience function.
 
         Parameters
         ----------
@@ -653,8 +653,8 @@ class NestedSamples(MCMCSamples):
         Parameters
         ----------
         nsamples: int, optional
-            - If nsamples is not supplied, return mean value
-            - If nsamples is integer, return nsamples from the distribution of
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
             - If nsamples is array, nsamples is assumed to be logw and returned
               (implementation convenience functionality)
@@ -700,8 +700,8 @@ class NestedSamples(MCMCSamples):
         Parameters
         ----------
         nsamples: int, optional
-            - If nsamples is not supplied, return mean value
-            - If nsamples is integer, return nsamples from the distribution of
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
             - If nsamples is array, nsamples is assumed to be logw
 
@@ -728,7 +728,7 @@ class NestedSamples(MCMCSamples):
         else:
             return Series(logZ, name='logZ', index=logw.columns).squeeze()
 
-    _logZ_function_shape ='\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
+    _logZ_function_shape = '\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
 
     def D(self, nsamples=None, beta=None):
         """Kullback-Leibler divergence."""
@@ -800,11 +800,12 @@ class NestedSamples(MCMCSamples):
 
     def dlogX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
+
         Parameters
         ----------
         nsamples: int, optional
-            - If nsamples is not supplied, return mean value
-            - If nsamples is integer, return nsamples from the distribution of
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
 
         Returns
