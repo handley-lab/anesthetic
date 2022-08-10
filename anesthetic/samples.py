@@ -389,13 +389,9 @@ class Samples(WeightedDataFrame):
 class MCMCSamples(Samples):
     """Storage and plotting tools for MCMC samples.
 
-    Extends the pandas.DataFrame by providing plotting methods and
-    standardising sample storage.
+    We extend the Samples class with the additional methods:
 
-    Example plotting commands include
-        - ``mcmc.plot_1d(['paramA', 'paramB'])``
-        - ``mcmc.plot_2d(['paramA', 'paramB'])``
-        - ``mcmc.plot_2d([['paramA', 'paramB'], ['paramC', 'paramD']])``
+    * ``burn_in`` parameter
 
     Parameters
     ----------
@@ -469,7 +465,7 @@ class MCMCSamples(Samples):
 class NestedSamples(Samples):
     """Storage and plotting tools for Nested Sampling samples.
 
-    We extend the MCMCSamples class with the additional methods:
+    We extend the Samples class with the additional methods:
 
     * ``self.live_points(logL)``
     * ``self.set_beta(beta)``
