@@ -164,6 +164,22 @@ def test_plot_2d_kinds():
     with pytest.raises(ValueError):
         fig, axes = ns.plot_2d(params, kind={'diagonal': 'not a plot kind'})
 
+    # Check defaults
+    fig, axes = ns.plot_2d(params, kind='kde')
+    assert (~axes.isnull()).sum().sum() == 6
+    fig, axes = ns.plot_2d(params, kind='kde_1d')
+    assert (~axes.isnull()).sum().sum() == 3
+    fig, axes = ns.plot_2d(params, kind='kde_2d')
+    assert (~axes.isnull()).sum().sum() == 3
+
+    # Check kinds vs kind kwarg
+    fig, axes = ns.plot_2d(params, kinds='kde')
+    assert (~axes.isnull()).sum().sum() == 6
+    fig, axes = ns.plot_2d(params, kinds='kde_1d')
+    assert (~axes.isnull()).sum().sum() == 3
+    fig, axes = ns.plot_2d(params, kinds='kde_2d')
+    assert (~axes.isnull()).sum().sum() == 3
+
     plt.close("all")
 
 
