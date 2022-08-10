@@ -232,14 +232,16 @@ class MCMCSamples(WeightedDataFrame):
         """
         kind = kwargs.pop('kind', 'default')
         kind = kwargs.pop('kinds', kind)
-        if isinstance(kind, str):
+        if isinstance(kind, str) and kind in self.plot_2d_default_kinds:
             kind = self.plot_2d_default_kinds.get(kind)
-
-        if not isinstance(kind, dict):
-            raise ValueError("kind/kinds must be a dict mapping "
+        if (not isinstance(kind, dict) or
+                not set(kind.keys()) <= {'lower', 'upper', 'diagonal'}):
+            raise ValueError(f"{kind} is not a valid input. `kind`/`kinds` "
+                             "must be a dict mapping "
                              "{'lower','diagonal','upper'} to an allowed plot "
-                             "(see `help(NestedSamples.plot2d)`), or a string "
-                             "in NestedSamples.plot_2d_default_kinds")
+                             "(see `help(NestedSamples.plot2d)`), or one of "
+                             "the following string shortcuts: "
+                             f"{list(self.plot_2d_default_kinds.keys())}")
 
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in ['upper', 'lower', 'diagonal']}
@@ -281,9 +283,12 @@ class MCMCSamples(WeightedDataFrame):
         'default': {'diagonal': 'kde_1d',
                     'lower': 'kde_2d',
                     'upper': 'scatter_2d'},
+        'kde': {'diagonal': 'kde_1d', 'lower': 'kde_2d'},
         'kde_1d': {'diagonal': 'kde_1d'},
         'kde_2d': {'lower': 'kde_2d'},
-        'kde': {'diagonal': 'kde_1d', 'lower': 'kde_2d'},
+        'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
+        'hist_1d': {'diagonal': 'hist_1d'},
+        'hist_2d': {'lower': 'hist_2d'},
     }
 
     def importance_sample(self, logL_new, action='add', inplace=False):
