@@ -33,35 +33,35 @@ def test_build_samples():
     tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
     limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
 
-    samples = Samples(data=data)
-    assert len(samples) == nsamps
-    assert_array_equal(samples.columns, np.array([0, 1, 2], dtype=object))
+    s = Samples(data=data)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2], dtype=object))
 
-    samples = Samples(data=data, logL=logL)
-    assert len(samples) == nsamps
-    assert_array_equal(samples.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    s = Samples(data=data, logL=logL)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2, 'logL'], dtype=object))
 
-    samples = Samples(data=data, weights=weights)
-    assert len(samples) == nsamps
-    assert_array_equal(samples.columns, np.array([0, 1, 2], dtype=object))
-    assert samples.index.nlevels == 2
+    s = Samples(data=data, weights=weights)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2], dtype=object))
+    assert s.index.nlevels == 2
 
-    samples = Samples(data=data, weights=weights, logL=logL)
-    assert len(samples) == nsamps
-    assert_array_equal(samples.columns, np.array([0, 1, 2, 'logL'], dtype=object))
-    assert samples.index.nlevels == 2
+    s = Samples(data=data, weights=weights, logL=logL)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    assert s.index.nlevels == 2
 
-    samples = Samples(data=data, columns=params)
-    assert len(samples) == nsamps
-    assert_array_equal(samples.columns, ['A', 'B', 'C'])
+    s = Samples(data=data, columns=params)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, ['A', 'B', 'C'])
 
-    samples = Samples(data=data, tex=tex)
+    s = Samples(data=data, tex=tex)
     for p in params:
-        assert samples.tex[p] == tex[p]
+        assert s.tex[p] == tex[p]
 
-    samples = Samples(data=data, limits=limits)
+    s = Samples(data=data, limits=limits)
     for p in params:
-        assert samples.limits[p] == limits[p]
+        assert s.limits[p] == limits[p]
 
     mc = MCMCSamples(data=data, logL=logL, weights=weights)
     assert len(mc) == nsamps
@@ -407,8 +407,7 @@ def test_plot_1d_colours():
 def test_astropyhist():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
-    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d',
-                 plotter='astropyhist')
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', plotter='astropyhist')
     plt.close("all")
 
 
@@ -416,7 +415,7 @@ def test_hist_levels():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
-                 levels=[0.95, 0.68], bins=20)
+               levels=[0.95, 0.68], bins=20)
     plt.close("all")
 
 
