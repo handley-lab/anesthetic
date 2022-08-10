@@ -62,8 +62,7 @@ class Samples(WeightedDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'root',
-                                               'label']
+    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'label']
 
     def __init__(self, *args, **kwargs):
         logzero = kwargs.pop('logzero', -1e30)
@@ -437,6 +436,8 @@ class MCMCSamples(Samples):
 
     """
 
+    _metadata = WeightedDataFrame._metadata + ['root']
+
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
         if root is not None:
@@ -523,7 +524,7 @@ class NestedSamples(Samples):
 
     """
 
-    _metadata = Samples._metadata + ['_beta']
+    _metadata = Samples._metadata + ['root', '_beta']
 
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
