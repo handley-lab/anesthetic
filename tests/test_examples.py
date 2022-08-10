@@ -15,7 +15,7 @@ def test_random_covariance():
     d = 5
     sigmas = np.random.rand(d)
     cov = random_covariance(sigmas)
-    assert cov.shape == (d, d) 
+    assert cov.shape == (d, d)
     e = np.linalg.eigvals(cov)
     assert_allclose(np.sort(e), np.sort(sigmas**2))
 
@@ -31,8 +31,8 @@ def test_random_ellipsoid():
         return random_ellipsoid(mean, cov, shape)
 
     assert rvs(10).shape == (10, d)
-     ssert(rvs((10,)).shape == (10, d)
-     ssert(rvs((10, 20)).shape == (10, 20, d)
+    assert rvs((10,)).shape == (10, d)
+    assert rvs((10, 20)).shape == (10, 20, d)
 
     dat = rvs(100000)
 
