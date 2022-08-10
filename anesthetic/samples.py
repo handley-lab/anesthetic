@@ -61,6 +61,7 @@ class Samples(WeightedDataFrame):
         default: -1e30
 
     """
+
     _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'root',
                                                'label']
 
@@ -521,6 +522,7 @@ class NestedSamples(Samples):
         default: -1e30
 
     """
+
     _metadata = Samples._metadata + ['_beta']
 
     def __init__(self, *args, **kwargs):
