@@ -92,7 +92,7 @@ def test_NS_input_fails_in_MCMCSamples():
     with pytest.raises(ValueError) as excinfo:
         MCMCSamples(root='./tests/example_data/pc')
     assert "Please use NestedSamples instead which has the same features as " \
-           "MCMCSamples and more. MCMCSamples should be used for MCMC " \
+           "Samples and more. MCMCSamples should be used for MCMC " \
            "chains only." in str(excinfo.value)
 
 
