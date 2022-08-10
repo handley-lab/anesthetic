@@ -104,7 +104,7 @@ class MCMCSamples(WeightedDataFrame):
 
             if logL is not None:
                 self['logL'] = logL
-                self.tex['logL'] = r'$\log\mathcal{L}$'
+                self.tex['logL'] = r'$\ln\mathcal{L}$'
 
             self._set_automatic_limits()
 
@@ -535,7 +535,7 @@ class NestedSamples(MCMCSamples):
         """Re-weight samples at infinite temperature to get prior samples."""
         return self.set_beta(beta=0, inplace=inplace)
 
-    def ns_output(self, nsamples=200):
+    def ns_output(self, nsamples=None, beta=None):
         """Compute Bayesian global quantities.
 
         Using nested sampling we can compute the evidence (logZ),
@@ -546,27 +546,46 @@ class NestedSamples(MCMCSamples):
         Parameters
         ----------
         nsamples: int, optional
-            number of samples to generate (Default: 100)
+            - If nsamples is not supplied, return mean value
+            - If nsamples is integer, return nsamples from the distribution of
+              values inferred by nested sampling
+
+        beta: float, array-like, optional
+            inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
         -------
-        pandas.DataFrame
-            Samples from the P(logZ, D, d) distribution
-
+        if beta is scalar and nsamples is None:
+            Series, index ['logZ', 'd', 'D', 'logL']
+        elif beta is scalar and nsamples is int:
+            DataFrame, index range(nsamples),
+            columns ['logZ', 'd', 'D', 'logL'] 
+        elif beta is array-like and nsamples is None:
+            DataFrame, index beta,
+            columns ['logZ', 'd', 'D', 'logL'] 
+        elif beta is array-like and nsamples is int:
+            DataFrame, index MultiIndex the product of beta and range(nsamples)
+            columns ['logZ', 'd', 'D', 'logL'] 
         """
-        logw = self.logw(nsamples)
-        samples = MCMCSamples(index=logw.columns)
+        logw = self.logw(nsamples, beta)
+        if nsamples is None and beta is None:
+            samples = Series(dtype=float)
+        else:
+            samples = DataFrame(index=logw.columns)
         samples['logZ'] = self.logZ(logw)
 
-        logw -= samples.logZ
-        S = (logw*0).add(self.beta * self.logL, axis=0) - samples.logZ
+        betalogL = self._betalogL(beta)
+        S = (logw*0).add(betalogL, axis=0) - samples.logZ
 
-        samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
-        samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
+        samples['D'] = np.exp(logsumexp(logw-samples.logZ, b=S, axis=0))
+        samples['d'] = np.exp(logsumexp(logw-samples.logZ, b=(S-samples.D)**2,
+                              axis=0))*2
+        samples['logL'] = samples['logZ'] + samples['D']
 
-        samples.tex = {'logZ': r'$\log\mathcal{Z}$',
+        samples.tex = {'logZ': r'$\ln\mathcal{Z}$',
                        'D': r'$\mathcal{D}$',
-                       'd': r'$d$'}
+                       'd': r'$d$',
+                       'logL': r'$\ln L$'}
         samples.label = self.label
         return samples
 
@@ -576,9 +595,19 @@ class NestedSamples(MCMCSamples):
         The log of the prior volume contained within each iso-likelihood
         contour.
 
-        - If nsamples is not supplied, return mean log evidence
-        - If nsamples is integer, return nsamples from the distribution
+        Parameters
+        ----------
+        nsamples: int, optional
+            - If nsamples is not supplied, return mean value
+            - If nsamples is integer, return nsamples from the distribution of
+              values inferred by nested sampling
 
+        Returns
+        -------
+        if nsamples is None:
+            WeightedSeries like self
+        elif nsamples is int
+            WeightedDataFrame like self, columns range(nsamples)
         """
         if nsamples is None:
             t = np.log(self.nlive/(self.nlive+1))
@@ -590,7 +619,21 @@ class NestedSamples(MCMCSamples):
             t.columns.name = 'samples'
         return t.cumsum()
 
-    def betalogL(self, beta=None):
+    def _betalogL(self, beta=None):
+        """log (L**beta) convenience function.
+
+        Parameters
+        ----------
+        beta, scalar or array-like, optional
+            inverse temperature(s) beta=1/kT. Default self.beta
+
+        Returns
+        -------
+        if beta is scalar:
+            WeightedSeries like self
+        elif beta is array-like:
+            WeightedDataFrame like self, columns of beta
+        """
         if beta is None:
             beta = self.beta
         if np.isscalar(beta):
@@ -605,17 +648,39 @@ class NestedSamples(MCMCSamples):
     def logw(self, nsamples=None, beta=None):
         """Log-nested sampling weight.
 
-        The logarithm of the (unnormalised) sampling weight.
+        The logarithm of the (unnormalised) sampling weight log(L**beta*dX).
 
-        - If nsamples is not supplied, return mean log evidence
-        - If nsamples is integer, return nsamples from the distribution
+        Parameters
+        ----------
+        nsamples: int, optional
+            - If nsamples is not supplied, return mean value
+            - If nsamples is integer, return nsamples from the distribution of
+              values inferred by nested sampling
+            - If nsamples is array, nsamples is assumed to be logw and returned
+              (implementation convenience functionality)
 
+        beta: float, array-like, optional
+            inverse temperature(s) beta=1/kT. Default self.beta
+
+        Returns
+        -------
+        if nsamples is array-like
+            WeightedDataFrame equal to nsamples
+        elif beta is scalar and nsamples is None:
+            WeightedSeries like self
+        elif beta is array-like and nsamples is None:
+            WeightedDataFrame like self, columns of beta
+        elif beta is scalar and nsamples is int:
+            WeightedDataFrame like self, columns of range(nsamples)
+        elif beta is array-like and nsamples is int:
+            WeightedDataFrame like self, MultiIndex columns the product of beta
+            and range(nsamples)
         """
         if np.ndim(nsamples) > 0:
             return nsamples
 
         dlogX = self.dlogX(nsamples)
-        betalogL = self.betalogL(beta)
+        betalogL = self._betalogL(beta)
         if dlogX.ndim == 1 and betalogL.ndim == 1:
             logw = dlogX + betalogL
         elif dlogX.ndim > 1 and betalogL.ndim == 1:
@@ -632,10 +697,29 @@ class NestedSamples(MCMCSamples):
     def logZ(self, nsamples=None, beta=None):
         """Log-Evidence.
 
-        - If nsamples is not supplied, return mean log evidence
-        - If nsamples is integer, return nsamples from the distribution
-        - If nsamples is array, use nsamples as log weights
+        Parameters
+        ----------
+        nsamples: int, optional
+            - If nsamples is not supplied, return mean value
+            - If nsamples is integer, return nsamples from the distribution of
+              values inferred by nested sampling
+            - If nsamples is array, nsamples is assumed to be logw
 
+        beta: float, array-like, optional
+            inverse temperature(s) beta=1/kT. Default self.beta
+
+        Returns
+        -------
+        if nsamples is array-like:
+            Series, index nsamples.columns
+        elif beta is scalar and nsamples is None:
+            float
+        elif beta is array-like and nsamples is None:
+            Series, index beta
+        elif beta is scalar and nsamples is int:
+            Series, index range(nsamples)
+        elif beta is array-like and nsamples is int:
+            Series, MultiIndex columns the product of beta and range(nsamples)
         """
         logw = self.logw(nsamples, beta)
         logZ = logsumexp(logw, axis=0)
@@ -644,17 +728,13 @@ class NestedSamples(MCMCSamples):
         else:
             return Series(logZ, name='logZ', index=logw.columns).squeeze()
 
+    _logZ_function_shape ='\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
+
     def D(self, nsamples=None, beta=None):
-        """Kullback-Leibler divergence.
-
-        - If nsamples is not supplied, return mean KL divergence
-        - If nsamples is integer, return nsamples from the distribution
-        - If nsamples is array, use nsamples as log weights
-
-        """
+        """Kullback-Leibler divergence."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
-        betalogL = self.betalogL(beta)
+        betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - logZ
         D = np.exp(logsumexp(logw-logZ, b=S, axis=0))
         if np.isscalar(D):
@@ -662,17 +742,13 @@ class NestedSamples(MCMCSamples):
         else:
             return Series(D, name='D', index=logw.columns).squeeze()
 
+    D.__doc__ += _logZ_function_shape
+
     def d(self, nsamples=None, beta=None):
-        """Bayesian model dimensionality.
-
-        - If nsamples is not supplied, return mean BMD
-        - If nsamples is integer, return nsamples from the distribution
-        - If nsamples is array, use nsamples as shell volumes dlogX
-
-        """
+        """Bayesian model dimensionality."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
-        betalogL = self.betalogL(beta)
+        betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - logZ
         D = self.D(logw, beta)
         d = np.exp(logsumexp(logw-logZ, b=(S-D)**2, axis=0))*2
@@ -680,6 +756,8 @@ class NestedSamples(MCMCSamples):
             return d
         else:
             return Series(d, name='d', index=logw.columns).squeeze()
+
+    d.__doc__ += _logZ_function_shape
 
     def live_points(self, logL=None):
         """Get the live points within logL.
@@ -722,14 +800,19 @@ class NestedSamples(MCMCSamples):
 
     def dlogX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
-
         Parameters
         ----------
         nsamples: int, optional
-            Number of samples to generate. optional. If None, then compute the
-            statistical average. If integer, generate samples from the
-            distribution. (Default: None)
+            - If nsamples is not supplied, return mean value
+            - If nsamples is integer, return nsamples from the distribution of
+              values inferred by nested sampling
 
+        Returns
+        -------
+        if nsamples is None:
+            WeightedSeries like self
+        elif nsamples is int
+            WeightedDataFrame like self, columns range(nsamples)
         """
         logX = self.logX(nsamples)
         logXp = logX.shift(1, fill_value=0).to_numpy()
@@ -802,7 +885,7 @@ class NestedSamples(MCMCSamples):
         else:
             if logL_birth is not None:
                 samples['logL_birth'] = logL_birth
-                samples.tex['logL_birth'] = r'$\log\mathcal{L}_{\rm birth}$'
+                samples.tex['logL_birth'] = r'$\ln\mathcal{L}_{\rm birth}$'
 
             if 'logL_birth' not in samples:
                 raise RuntimeError("Cannot recompute run without "

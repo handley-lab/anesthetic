@@ -1,5 +1,7 @@
+%load_ext autoreload
+%autoreload 2
 import warnings
-import matplotlib_agg  # noqa: F401
+#import matplotlib_agg  # noqa: F401
 import sys
 import pytest
 import numpy as np
@@ -15,7 +17,7 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
 from pandas.testing import assert_frame_equal
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
-from wedding_cake import WeddingCake
+#from wedding_cake import WeddingCake
 try:
     import montepython  # noqa: F401
 except ImportError:
@@ -383,24 +385,107 @@ def test_hist_levels():
     plt.close("all")
 
 
+def test_logX():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+
+    logX = pc.logX()
+    assert isinstance(logX, WeightedSeries)
+    assert_array_equal(logX.index, pc.index)
+
+    nsamples = 10
+
+    logX = pc.logX(nsamples=nsamples)
+    assert isinstance(logX, WeightedDataFrame)
+    assert_array_equal(logX.index, pc.index)
+    assert_array_equal(logX.columns, np.arange(nsamples))
+    assert logX.columns.name == 'samples'
+
+    assert not (logX.diff(axis=0) > 0).to_numpy().any()
+
+    n = 1000
+    logX = pc.logX(n)
+    
+    assert (abs(logX.mean(axis=1) - pc.logX()) < logX.std(axis=1) * 3).all()
+
+
+def test_logbetaL():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+
+    logX = pc.logX()
+    assert isinstance(logX, WeightedSeries)
+    assert_array_equal(logX.index, pc.index)
+
+    nsamples = 10
+
+    logX = pc.logX(nsamples=nsamples)
+    assert isinstance(logX, WeightedDataFrame)
+    assert_array_equal(logX.index, pc.index)
+    assert_array_equal(logX.columns, np.arange(nsamples))
+    assert logX.columns.name == 'samples'
+
+    assert not (logX.diff(axis=0) > 0).to_numpy().any()
+
+    n = 1000
+    logX = pc.logX(n)
+    
+    assert (abs(logX.mean(axis=1) - pc.logX()) < logX.std(axis=1) * 3).all()
+
+def test_logw():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+
+    logw = pc.logw()
+    assert isinstance(logw, WeightedSeries)
+    assert_array_equal(logw.index, pc.index)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    logw = pc.logw(nsamples=nsamples)
+    assert isinstance(logw, WeightedDataFrame)
+    assert_array_equal(logw.index, pc.index)
+    assert logw.columns.name == 'samples'
+    assert_array_equal(logw.columns, range(nsamples))
+
+    logw = pc.logw(beta=beta)
+    assert isinstance(logw, WeightedDataFrame)
+    assert_array_equal(logw.index, pc.index)
+    assert logw.columns.name == 'beta'
+    assert_array_equal(logw.columns, beta)
+
+    logw = pc.logw(nsamples=nsamples, beta=beta)
+    assert isinstance(logw, WeightedDataFrame)
+    assert logw.columns.names == ['beta', 'samples']
+    assert logw.columns.levshape == (len(beta), nsamples)
+
+    n = 1000
+    logw = pc.logw(n)
+
+    assert (abs(logw.mean(axis=1) - pc.logw()) < logw.std(axis=1) * 3).all()
+
+
+
 def test_logZ():
     np.random.seed(3)
     pc = NestedSamples(root='./tests/example_data/pc')
 
-    assert isinstance(pc.logZ(), float)
+    logZ = pc.logZ()
+    assert isinstance(logZ, float)
 
     nsamples = 10
     beta = [0., 0.5, 1.]
 
     logZ = pc.logZ(nsamples=nsamples)
     assert isinstance(logZ, Series)
-    assert logZ.index.names == ['samples']
+    assert logZ.index.name == 'samples'
     assert logZ.name == 'logZ'
     assert len(logZ) == nsamples
 
     logZ = pc.logZ(beta=beta)
     assert isinstance(logZ, Series)
-    assert logZ.index.names == ['beta']
+    assert logZ.index.name == 'beta'
     assert logZ.name == 'logZ'
     assert len(logZ) == len(beta)
 
@@ -413,7 +498,76 @@ def test_logZ():
     n = 1000
     logZ = pc.logZ(n)
 
-    assert abs(logZ.mean() - pc.logZ()) < logZ.std() * n**0.5 * 3
+    assert abs(logZ.mean() - pc.logZ()) < logZ.std() * 3
+
+
+def test_D():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+
+    D = pc.D()
+    assert isinstance(D, float)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    D = pc.D(nsamples=nsamples)
+    assert isinstance(D, Series)
+    assert D.index.name == 'samples'
+    assert D.name == 'D'
+    assert len(D) == nsamples
+
+    D = pc.D(beta=beta)
+    assert isinstance(D, Series)
+    assert D.index.name == 'beta'
+    assert D.name == 'D'
+    assert len(D) == len(beta)
+
+    D = pc.D(nsamples=nsamples, beta=beta)
+    assert isinstance(D, Series)
+    assert D.index.names == ['beta', 'samples']
+    assert D.name == 'D'
+    assert D.index.levshape == (len(beta), nsamples)
+
+    n = 1000
+    D = pc.D(n)
+
+    assert abs(D.mean() - pc.D()) < D.std() * 3
+
+
+
+def test_d():
+    np.random.seed(3)
+    pc = NestedSamples(root='./tests/example_data/pc')
+
+    d = pc.d()
+    assert isinstance(d, float)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    d = pc.d(nsamples=nsamples)
+    assert isinstance(d, Series)
+    assert d.index.name == 'samples'
+    assert d.name == 'd'
+    assert len(d) == nsamples
+
+    d = pc.d(beta=beta)
+    assert isinstance(d, Series)
+    assert d.index.name == 'beta'
+    assert d.name == 'd'
+    assert len(d) == len(beta)
+
+    d = pc.d(nsamples=nsamples, beta=beta)
+    assert isinstance(d, Series)
+    assert d.index.names == ['beta', 'samples']
+    assert d.name == 'd'
+    assert d.index.levshape == (len(beta), nsamples)
+
+    n = 1000
+    d = pc.d(n)
+
+    assert abs(d.mean() - pc.d()) < d.std() * 3
 
 
 #def test_logw():
@@ -457,6 +611,50 @@ def test_logZ():
 def test_ns_output():
     np.random.seed(2)
     pc = NestedSamples(root='./tests/example_data/pc')
+    
+    vals = ['logZ', 'D', 'd', 'logL']
+    tex = {'logZ': r'$\ln\mathcal{Z}$',
+           'D': r'$\mathcal{D}$',
+           'd': r'$d$',
+           'logL': r'$\ln L$'}
+
+    ns_output = pc.ns_output()
+    assert isinstance(ns_output, Series)
+    assert_array_equal(ns_output.index, vals)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    logZ = pc.logZ(nsamples=nsamples)
+    assert isinstance(logZ, Series)
+    assert logZ.index.name == 'samples'
+    assert logZ.name == 'logZ'
+    assert len(logZ) == nsamples
+
+    logZ = pc.logZ(beta=beta)
+    assert isinstance(logZ, Series)
+    assert logZ.index.name == 'beta'
+    assert logZ.name == 'logZ'
+    assert len(logZ) == len(beta)
+
+    logZ = pc.logZ(nsamples=nsamples, beta=beta)
+    assert isinstance(logZ, Series)
+    assert logZ.index.names == ['beta', 'samples']
+    assert logZ.name == 'logZ'
+    assert logZ.index.levshape == (len(beta), nsamples)
+
+    n = 1000
+    logZ = pc.logZ(n)
+
+    assert abs(logZ.mean() - pc.logZ()) < logZ.std() * 3
+
+
+
+
+    pc.ns_output()
+    pc.ns_output(200, [0, 0.5, 1])
+    pc.ns_output(None,beta=np.linspace(0,1,100)).plot(subplots=True)
+
     for beta in [1., 0., 0.5]:
         pc.beta = beta
         n = 1000
@@ -464,9 +662,9 @@ def test_ns_output():
         assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
         assert PC['d'].mean() < 5
         assert PC.cov()['D']['logZ'] < 0
-        assert abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * n**0.5 * 2
-        assert abs(PC.D.mean() - pc.D()) < PC.D.std() * n**0.5 * 2
-        assert abs(PC.d.mean() - pc.d()) < PC.d.std() * n**0.5 * 2
+        assert abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * 3
+        assert abs(PC.D.mean() - pc.D()) < PC.D.std() * 3
+        assert abs(PC.d.mean() - pc.d()) < PC.d.std() * 3
 
         n = 100
         assert ks_2samp(pc.logZ(n), PC.logZ).pvalue > 0.05
