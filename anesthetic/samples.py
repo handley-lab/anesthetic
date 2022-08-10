@@ -232,10 +232,9 @@ class MCMCSamples(WeightedDataFrame):
         """
         kind = kwargs.pop('kind', 'default')
         kind = kwargs.pop('kinds', kind)
-        try:
-            kind = self.plot_2d_default_kinds.get(kind, kind)
-        except TypeError:
-            pass
+
+        if isinstance(kind, str):
+            kind = self.plot_2d_default_kinds.get(kind)
 
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in ['upper', 'lower', 'diagonal']}
