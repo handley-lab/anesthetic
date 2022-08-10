@@ -634,9 +634,9 @@ class NestedSamples(MCMCSamples):
             logw = betalogL.add(dlogX, axis=0)
         else:
             cols = MultiIndex.from_product([betalogL.columns, dlogX.columns])
-            logw = DataFrame(dlogX).reindex(columns=cols, level='samples')
-            logw = logw + betalogL
-            logw = WeightedDataFrame(logw, self.index)
+            dlogX = DataFrame(dlogX).reindex(columns=cols, level='samples')
+            betalogL = DataFrame(betalogL).reindex(columns=cols, level='beta')
+            logw = WeightedDataFrame(betalogL+dlogX, self.index)
         return logw
 
     def logZ(self, nsamples=None, beta=None):
