@@ -159,12 +159,6 @@ def test_plot_2d_kinds():
                                          'upper': 'scatter_2d'})
     assert (~axes.isnull()).to_numpy().sum() == 12
 
-    with pytest.raises(ValueError):
-        ns.plot_2d(params, kind={'lower': 'not a plot kind'})
-
-    with pytest.raises(ValueError):
-        ns.plot_2d(params, kind={'diagonal': 'not a plot kind'})
-
     # Check strings
     fig, axes = ns.plot_2d(params, kind='kde')
     assert (~axes.isnull()).to_numpy().sum() == 6
@@ -172,8 +166,6 @@ def test_plot_2d_kinds():
     assert (~axes.isnull()).to_numpy().sum() == 3
     fig, axes = ns.plot_2d(params, kind='kde_2d')
     assert (~axes.isnull()).to_numpy().sum() == 3
-    with pytest.raises(KeyError):
-        ns.plot_2d(params, kind='incorrect string')
 
     # Check kinds vs kind kwarg
     fig, axes = ns.plot_2d(params, kinds='kde')
@@ -183,8 +175,19 @@ def test_plot_2d_kinds():
     fig, axes = ns.plot_2d(params, kinds='kde_2d')
     assert (~axes.isnull()).to_numpy().sum() == 3
 
+    # Check incorrect inputs
     with pytest.raises(ValueError):
-        ns.plot_2d(params, kinds='foo')
+        ns.plot_2d(params, kind={'lower': 'not a plot kind'})
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind={'diagonal': 'not a plot kind'})
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind={'lower': 'kde', 'spam': 'kde'})
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind={'ham': 'kde'})
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind=0)
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind='eggs')
 
     plt.close("all")
 
