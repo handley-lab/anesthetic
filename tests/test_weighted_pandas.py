@@ -1,3 +1,5 @@
+%load_ext autoreload
+%autoreload 2
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas import Series, DataFrame, MultiIndex
 import pytest
@@ -74,6 +76,7 @@ def test_WeightedDataFrame_slice():
     assert isinstance(df['A'], WeightedSeries)
     assert isinstance(df.iloc[0], Series)
     assert not isinstance(df.iloc[0], WeightedSeries)
+    assert 'weights' not in df.iloc[0].index.names
     assert isinstance(df[:10], WeightedDataFrame)
     assert df[:10].shape == (10, 3)
     assert df[:10].weights.shape == (10,)
@@ -85,6 +88,7 @@ def test_WeightedDataFrame_mean():
     mean = df.mean()
     assert isinstance(mean, Series)
     assert not isinstance(mean, WeightedSeries)
+    assert 'weights' not in mean.index.names
     assert_allclose(mean, 0.5, atol=1e-2)
 
     mean = df.mean(axis=1)
@@ -97,6 +101,7 @@ def test_WeightedDataFrame_std():
     std = df.std()
     assert isinstance(std, Series)
     assert not isinstance(std, WeightedSeries)
+    assert 'weights' not in std.index.names
     assert_allclose(std, (1./12)**0.5, atol=1e-2)
 
     std = df.std(axis=1)
@@ -109,6 +114,7 @@ def test_WeightedDataFrame_cov():
     cov = df.cov()
     assert isinstance(cov, DataFrame)
     assert not isinstance(cov, WeightedDataFrame)
+    assert 'weights' not in cov.index.names
     assert_allclose(cov, (1./12)*np.identity(3), atol=1e-2)
 
 
@@ -117,6 +123,7 @@ def test_WeightedDataFrame_corr():
     corr = df.corr()
     assert isinstance(corr, DataFrame)
     assert not isinstance(corr, WeightedDataFrame)
+    assert 'weights' not in corr.index.names
     assert_allclose(corr, np.identity(3), atol=1e-2)
 
 
@@ -126,11 +133,13 @@ def test_WeightedDataFrame_corrwith():
     correl = df.corrwith(df.A)
     assert isinstance(correl, Series)
     assert not isinstance(correl, WeightedSeries)
+    assert 'weights' not in correl.index.names
     assert_allclose(correl, df.corr()['A'])
 
     correl = df.corrwith(df[['A', 'B']])
     assert isinstance(correl, Series)
     assert not isinstance(correl, WeightedSeries)
+    assert 'weights' not in correl.index.names
     assert_allclose(correl['A'], 1, atol=1e-2)
     assert_allclose(correl['B'], 1, atol=1e-2)
     assert np.isnan(correl['C'])
@@ -141,6 +150,7 @@ def test_WeightedDataFrame_median():
     median = df.median()
     assert isinstance(median, Series)
     assert not isinstance(median, WeightedSeries)
+    assert 'weights' not in median.index.names
     assert_allclose(median, 0.5, atol=1e-2)
 
     median = df.median(axis=1)
@@ -154,6 +164,7 @@ def test_WeightedDataFrame_sem():
     sem = df.sem()
     assert isinstance(sem, Series)
     assert not isinstance(sem, WeightedSeries)
+    assert 'weights' not in sem.index.names
     assert_allclose(sem, (1./12)**0.5/np.sqrt(df.neff()), atol=1e-2)
 
     sem = df.sem(axis=1)
@@ -165,6 +176,7 @@ def test_WeightedDataFrame_kurtosis():
     kurtosis = df.kurtosis()
     assert isinstance(kurtosis, Series)
     assert not isinstance(kurtosis, WeightedSeries)
+    assert 'weights' not in kurtosis.index.names
     assert_allclose(kurtosis, 9./5, atol=1e-2)
     assert_array_equal(df.kurtosis(), df.kurt())
 
@@ -178,6 +190,7 @@ def test_WeightedDataFrame_skew():
     skew = df.skew()
     assert isinstance(skew, Series)
     assert not isinstance(skew, WeightedSeries)
+    assert 'weights' not in skew.index.names
     assert_allclose(skew, 0., atol=2e-2)
 
     skew = df.skew(axis=1)
@@ -189,6 +202,7 @@ def test_WeightedDataFrame_mad():
     mad = df.mad()
     assert isinstance(mad, Series)
     assert not isinstance(mad, WeightedSeries)
+    assert 'weights' not in mad.index.names
     assert_allclose(mad, 0.25, atol=1e-2)
 
     mad = df.mad(axis=1)
@@ -198,12 +212,36 @@ def test_WeightedDataFrame_mad():
 def test_WeightedDataFrame_quantile():
     df = test_WeightedDataFrame_constructor()
 
+
+    df.T
+
+    DataFrame(df.T).droplevel('weights',axis=1)
+    df
+    df.mean()
+    df.T.mean(axis=1)
+    df.sum()
+    a = df.T.sum()
+    a = df.sum()
+    df.T.sum(axis=1)
+    df.mean()
+    df.mean(axis=1)
+    df.T.mean()
+    df.T.mean(axis=1)
+    df.sum()
+    df._get_axis_number(0)
+    df.T._get_axis_number(1)
+    df.mean(axis=1)
+    df.T
+    df
+
     quantile = df.quantile()
     assert isinstance(quantile, Series)
     assert not isinstance(quantile, WeightedSeries)
+    assert 'weights' not in quantile.index.names
     assert_allclose(quantile, 0.5, atol=1e-2)
 
     quantile = df.quantile(axis=1)
+    quantile
     assert isinstance(quantile, WeightedSeries)
     assert_allclose(quantile.mean(), 0.5, atol=1e-2)
 
@@ -212,6 +250,7 @@ def test_WeightedDataFrame_quantile():
         quantile = df.quantile(q)
         assert isinstance(quantile, Series)
         assert not isinstance(quantile, WeightedSeries)
+        assert 'weights' not in quantile.index.names
         assert_allclose(quantile, q, atol=1e-2)
 
         quantile = df.quantile(q, axis=1)
@@ -324,6 +363,7 @@ def test_WeightedDataFrame_nan():
 
     assert isinstance(df.mean(), Series)
     assert not isinstance(df.mean(), WeightedSeries)
+    assert 'weights' not in df.mean().index.names
     assert isinstance(df.mean(axis=1), WeightedSeries)
 
 

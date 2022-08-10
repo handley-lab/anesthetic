@@ -292,7 +292,9 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         if not numeric_only:
             raise NotImplementedError("numeric_only kwarg not implemented")
         if axis == 0:
-            data = np.array([c.quantile(q) for _, c in self.iteritems()])
+            data = np.array([c.quantile(q, interpolation=interpolation,
+                                        numeric_only=numeric_only)
+                             for _, c in self.iteritems()])
             if np.isscalar(q):
                 return Series(data, index=self.columns)
             else:
@@ -319,12 +321,12 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         df.index = df.index.droplevel('weights')
         return df
 
-    def _reduce(self, op, name, **kwargs):
-        answer = super()._reduce(op, name, **kwargs)
-        if kwargs['axis'] == 0:
-            answer = Series(answer).droplevel('weights')
-            answer.name = None
-        return answer
+    #def _reduce(self, op, name, **kwargs):
+    #    answer = super()._reduce(op, name, **kwargs)
+    #    print(kwargs['axis'])
+    #    if self._get_axis_number(kwargs['axis']) == 0 and 'weights' in self.index.names:
+    #        answer = Series(answer).droplevel('weights', 0)
+    #    return answer
 
     @property
     def _constructor_sliced(self):
@@ -334,14 +336,12 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     def _constructor(self):
         return WeightedDataFrame
 
-    def _ixs(self, i, axis=0): 
-        answer = super()._ixs(i, axis=axis)
-        #print("columns", self.columns)
-        #print("index", self.index)
-        
-        #if self._get_axis_number(axis) == 0:
-        #    answer = Series(answer.droplevel('weights'))
-        return answer
+    #def _ixs(self, i, axis=0): 
+    #    answer = super()._ixs(i, axis=axis)
+    #    
+    #    if self._get_axis_number(axis) == 0:
+    #        answer = Series(answer.droplevel('weights'))
+    #    return answer
 
 
 
