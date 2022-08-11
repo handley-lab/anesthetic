@@ -3,12 +3,12 @@ from pandas.io.formats.format import (
     DataFrameFormatter as DataFrameFormatter,
     _make_fixed_width, is_numeric_dtype
 )
-from pandas import DataFrame, MultiIndex
+from pandas import MultiIndex
 
 
 class _DataFrameFormatter(DataFrameFormatter):
 
-    def _get_formatted_column_labels(self, frame: DataFrame) -> list[list[str]]:
+    def _get_formatted_column_labels(self, frame):
         from pandas.core.indexes.multi import sparsify_labels
 
         columns = frame.columns
