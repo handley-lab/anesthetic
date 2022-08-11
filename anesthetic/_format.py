@@ -9,7 +9,10 @@ from pandas import MultiIndex
 class _DataFrameFormatter(DataFrameFormatter):
 
     def _get_formatted_column_labels(self, frame):
-        from pandas.core.indexes.multi import sparsify_labels
+        try:
+            from pandas.core.indexes.multi import sparsify_labels
+        except ImportError:
+            sparsify_labels = lambda x, *args: x
 
         columns = frame.columns
 
