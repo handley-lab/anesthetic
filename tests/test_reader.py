@@ -18,7 +18,6 @@ def test_read_chainreader():
     reader = ChainReader('root')
     assert reader.root == 'root'
     assert reader.paramnames() == (None, {})
-    assert reader.limits() == {}
     with pytest.raises(NotImplementedError):
         reader.samples()
 
@@ -90,7 +89,8 @@ def test_read_polychord():
     os.rename('./tests/example_data/pc_phys_live-birth.txt_',
               './tests/example_data/pc_phys_live-birth.txt')
 
-    ns_zero_live = NestedSamples(root='./tests/example_data/pc_zero_live')
+    with pytest.warns(UserWarning, match="loadtxt"):
+        ns_zero_live = NestedSamples(root='./tests/example_data/pc_zero_live')
 
     ns_single_live = NestedSamples(root='./tests/example_data/pc_single_live')
 
@@ -117,6 +117,14 @@ def test_discard_burn_in(root):
         if key in mcmc0:
             assert key in mcmc1
             assert_array_equal(mcmc0[key][1000:2000], mcmc1[key][:1000])
+    mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
+    mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
+
+    mcmc1 = MCMCSamples(burn_in=-1000.1, root='./tests/example_data/' + root)
+    for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
+        if key in mcmc0:
+            assert key in mcmc1
+            assert_array_equal(mcmc0[key][-1000:], mcmc1[key][1000:])
     mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
     mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
 

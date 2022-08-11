@@ -6,7 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
+from anesthetic import Samples, MCMCSamples, NestedSamples
+from anesthetic import make_1d_axes, make_2d_axes
 from anesthetic.samples import merge_nested_samples
 from anesthetic.samples import merge_samples_weighted
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
@@ -20,7 +21,7 @@ except ImportError:
     pass
 
 
-def test_build_mcmc():
+def test_build_samples():
     np.random.seed(3)
     nsamps = 1000
     ndims = 3
@@ -29,69 +30,69 @@ def test_build_mcmc():
     weights = np.random.randint(1, 20, size=nsamps)
     params = ['A', 'B', 'C']
     tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
-    limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
 
-    mcmc = MCMCSamples(data=data)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2], dtype=object))
+    s = Samples(data=data)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2], dtype=object))
 
-    mcmc = MCMCSamples(data=data, logL=logL)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    s = Samples(data=data, logL=logL)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2, 'logL'], dtype=object))
 
-    mcmc = MCMCSamples(data=data, weights=weights)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2], dtype=object))
-    assert mcmc.index.nlevels == 2
+    s = Samples(data=data, weights=weights)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2], dtype=object))
+    assert s.index.nlevels == 2
 
-    mcmc = MCMCSamples(data=data, weights=weights, logL=logL)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
-    assert mcmc.index.nlevels == 2
+    s = Samples(data=data, weights=weights, logL=logL)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    assert s.index.nlevels == 2
 
-    mcmc = MCMCSamples(data=data, columns=params)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
+    s = Samples(data=data, columns=params)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, ['A', 'B', 'C'])
 
-    mcmc = MCMCSamples(data=data, tex=tex)
+    s = Samples(data=data, tex=tex)
     for p in params:
-        assert mcmc.tex[p] == tex[p]
+        assert s.tex[p] == tex[p]
 
-    mcmc = MCMCSamples(data=data, limits=limits)
-    for p in params:
-        assert mcmc.limits[p] == limits[p]
+    mc = MCMCSamples(data=data, logL=logL, weights=weights)
+    assert len(mc) == nsamps
+    assert np.all(np.isfinite(mc.logL))
 
     ns = NestedSamples(data=data, logL=logL, weights=weights)
     assert len(ns) == nsamps
     assert np.all(np.isfinite(ns.logL))
+
     logL[:10] = -1e300
     weights[:10] = 0.
-    mcmc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e29)
+    mc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e29)
     ns = NestedSamples(data=data, logL=logL, weights=weights, logzero=-1e29)
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
-    assert mcmc.index.nlevels == 2
+    assert_array_equal(mc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
     assert_array_equal(ns.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    assert mc.index.nlevels == 2
     assert ns.index.nlevels == 2
-    assert np.all(mcmc.logL[:10] == -np.inf)
+    assert np.all(mc.logL[:10] == -np.inf)
     assert np.all(ns.logL[:10] == -np.inf)
-    assert np.all(mcmc.logL[10:] == logL[10:])
+    assert np.all(mc.logL[10:] == logL[10:])
     assert np.all(ns.logL[10:] == logL[10:])
 
-    mcmc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e301)
+    mc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e301)
     ns = NestedSamples(data=data, logL=logL, weights=weights, logzero=-1e301)
-    assert np.all(np.isfinite(mcmc.logL))
+    assert np.all(np.isfinite(mc.logL))
     assert np.all(np.isfinite(ns.logL))
-    assert np.all(mcmc.logL == logL)
+    assert np.all(mc.logL == logL)
     assert np.all(ns.logL == logL)
-
-    assert mcmc.root is None
+    assert mc.root is None
+    assert ns.root is None
 
 
 def test_NS_input_fails_in_MCMCSamples():
     with pytest.raises(ValueError) as excinfo:
         MCMCSamples(root='./tests/example_data/pc')
     assert "Please use NestedSamples instead which has the same features as " \
-           "MCMCSamples and more. MCMCSamples should be used for MCMC " \
+           "Samples and more. MCMCSamples should be used for MCMC " \
            "chains only." in str(excinfo.value)
 
 
@@ -127,55 +128,84 @@ def test_manual_columns():
     assert_array_equal(ns.columns, new_params + ns_params)
 
 
-def test_plot_2d_types():
+def test_plot_2d_kinds():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     params_x = ['x0', 'x1', 'x2', 'x3']
     params_y = ['x0', 'x1', 'x2']
     params = [params_x, params_y]
 
-    fig, axes = ns.plot_2d(params, types={'lower': 'kde'})
-    assert (~axes.isnull()).sum().sum() == 3
+    # Check dictionaries
+    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
+    assert (~axes.isnull()).to_numpy().sum() == 3
 
-    fig, axes = ns.plot_2d(params, types={'upper': 'scatter'})
-    assert (~axes.isnull()).sum().sum() == 6
+    fig, axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
+    assert (~axes.isnull()).to_numpy().sum() == 6
 
-    fig, axes = ns.plot_2d(params, types={'upper': 'kde', 'diagonal': 'kde'})
-    assert (~axes.isnull()).sum().sum() == 9
+    fig, axes = ns.plot_2d(params, kind={'upper': 'kde_2d',
+                                         'diagonal': 'kde_1d'})
+    assert (~axes.isnull()).to_numpy().sum() == 9
 
-    fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde'})
-    assert (~axes.isnull()).sum().sum() == 6
+    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
+                                         'diagonal': 'kde_1d'})
+    assert (~axes.isnull()).to_numpy().sum() == 6
 
-    fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde'})
-    assert (~axes.isnull()).sum().sum() == 6
+    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
+                                         'diagonal': 'kde_1d'})
+    assert (~axes.isnull()).to_numpy().sum() == 6
 
-    fig, axes = ns.plot_2d(params, types={'lower': 'kde', 'diagonal': 'kde',
-                                          'upper': 'scatter'})
-    assert (~axes.isnull()).sum().sum() == 12
+    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
+                                         'diagonal': 'kde_1d',
+                                         'upper': 'scatter_2d'})
+    assert (~axes.isnull()).to_numpy().sum() == 12
 
-    with pytest.raises(NotImplementedError):
-        fig, axes = ns.plot_2d(params, types={'lower': 'not a plot type'})
+    # Check strings
+    fig, axes = ns.plot_2d(params, kind='kde')
+    assert (~axes.isnull()).to_numpy().sum() == 6
+    fig, axes = ns.plot_2d(params, kind='kde_1d')
+    assert (~axes.isnull()).to_numpy().sum() == 3
+    fig, axes = ns.plot_2d(params, kind='kde_2d')
+    assert (~axes.isnull()).to_numpy().sum() == 3
 
-    with pytest.raises(NotImplementedError):
-        fig, axes = ns.plot_2d(params, types={'diagonal': 'not a plot type'})
+    # Check kinds vs kind kwarg
+    fig, axes = ns.plot_2d(params, kinds='kde')
+    assert (~axes.isnull()).to_numpy().sum() == 6
+    fig, axes = ns.plot_2d(params, kinds='kde_1d')
+    assert (~axes.isnull()).to_numpy().sum() == 3
+    fig, axes = ns.plot_2d(params, kinds='kde_2d')
+    assert (~axes.isnull()).to_numpy().sum() == 3
+
+    # Check incorrect inputs
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind={'lower': 'not a plot kind'})
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind={'diagonal': 'not a plot kind'})
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind={'lower': 'kde', 'spam': 'kde'})
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind={'ham': 'kde'})
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind=0)
+    with pytest.raises(ValueError):
+        ns.plot_2d(params, kind='eggs')
 
     plt.close("all")
 
 
-def test_plot_2d_types_multiple_calls():
+def test_plot_2d_kinds_multiple_calls():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     params = ['x0', 'x1', 'x2', 'x3']
 
-    fig, axes = ns.plot_2d(params, types={'diagonal': 'kde',
-                                          'lower': 'kde',
-                                          'upper': 'scatter'})
-    ns.plot_2d(axes, types={'diagonal': 'hist'})
+    fig, axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
+                                         'lower': 'kde_2d',
+                                         'upper': 'scatter_2d'})
+    ns.plot_2d(axes, kind={'diagonal': 'hist'})
 
-    fig, axes = ns.plot_2d(params, types={'diagonal': 'hist'})
-    ns.plot_2d(axes, types={'diagonal': 'kde',
-                            'lower': 'kde',
-                            'upper': 'scatter'})
+    fig, axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
+    ns.plot_2d(axes, kind={'diagonal': 'kde_1d',
+                           'lower': 'kde_2d',
+                           'upper': 'scatter_2d'})
     plt.close('all')
 
 
@@ -206,8 +236,8 @@ def test_plot_2d_legend():
 
     # Test label kwarg for kde
     fig, axes = make_2d_axes(params, upper=False)
-    ns.plot_2d(axes, label='l1', types=dict(diagonal='kde', lower='kde'))
-    mc.plot_2d(axes, label='l2', types=dict(diagonal='kde', lower='kde'))
+    ns.plot_2d(axes, label='l1', kind=dict(diagonal='kde_1d', lower='kde_2d'))
+    mc.plot_2d(axes, label='l2', kind=dict(diagonal='kde_1d', lower='kde_2d'))
 
     for y, row in axes.iterrows():
         for x, ax in row.iteritems():
@@ -221,12 +251,15 @@ def test_plot_2d_legend():
                     assert all([isinstance(h, Line2D) for h in handles])
                 else:
                     assert all([isinstance(h, Rectangle) for h in handles])
+
     plt.close('all')
 
     # Test label kwarg for hist and scatter
     fig, axes = make_2d_axes(params, lower=False)
-    ns.plot_2d(axes, label='l1', types=dict(diagonal='hist', upper='scatter'))
-    mc.plot_2d(axes, label='l2', types=dict(diagonal='hist', upper='scatter'))
+    ns.plot_2d(axes, label='l1', kind=dict(diagonal='hist_1d',
+                                           upper='scatter_2d'))
+    mc.plot_2d(axes, label='l2', kind=dict(diagonal='hist_1d',
+                                           upper='scatter_2d'))
 
     for y, row in axes.iterrows():
         for x, ax in row.iteritems():
@@ -281,17 +314,19 @@ def test_plot_2d_colours():
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
-    plot_types = ['kde', 'hist']
+    kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
-        plot_types += ['fastkde']
+        kinds += ['fastkde']
 
-    for types in plot_types:
+    for kind in kinds:
         fig = plt.figure()
         fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
-        types = {'diagonal': types, 'lower': types, 'upper': 'scatter'}
-        gd.plot_2d(axes, types=types, label="gd")
-        pc.plot_2d(axes, types=types, label="pc")
-        mn.plot_2d(axes, types=types, label="mn")
+        kind = {'diagonal': kind + '_1d',
+                'lower': kind + '_2d',
+                'upper': 'scatter_2d'}
+        gd.plot_2d(axes, kind=kind, label="gd")
+        pc.plot_2d(axes, kind=kind, label="pc")
+        mn.plot_2d(axes, kind=kind, label="mn")
         gd_colors = []
         pc_colors = []
         mn_colors = []
@@ -326,18 +361,16 @@ def test_plot_1d_colours():
     mn = NestedSamples(root="./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
-    plot_types = ['kde', 'hist']
-    if 'astropy' in sys.modules:
-        plot_types += ['astropyhist']
+    kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
-        plot_types += ['fastkde']
+        kinds += ['fastkde']
 
-    for plot_type in plot_types:
+    for kind in kinds:
         fig = plt.figure()
         fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
-        gd.plot_1d(axes, plot_type=plot_type, label="gd")
-        pc.plot_1d(axes, plot_type=plot_type, label="pc")
-        mn.plot_1d(axes, plot_type=plot_type, label="mn")
+        gd.plot_1d(axes, kind=kind + '_1d', label="gd")
+        pc.plot_1d(axes, kind=kind + '_1d', label="pc")
+        mn.plot_1d(axes, kind=kind + '_1d', label="mn")
         gd_colors = []
         pc_colors = []
         mn_colors = []
@@ -367,17 +400,16 @@ def test_plot_1d_colours():
                    reason="requires astropy package")
 def test_astropyhist():
     np.random.seed(3)
-    mcmc = NestedSamples(root='./tests/example_data/pc')
-    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'diagonal': 'astropyhist'})
-    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'], plot_type='astropyhist')
+    ns = NestedSamples(root='./tests/example_data/pc')
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
     plt.close("all")
 
 
 def test_hist_levels():
     np.random.seed(3)
-    mcmc = NestedSamples(root='./tests/example_data/pc')
-    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], types={'lower': 'hist'},
-                 levels=[0.95, 0.68], bins=20)
+    ns = NestedSamples(root='./tests/example_data/pc')
+    ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
+               levels=[0.95, 0.68], bins=20)
     plt.close("all")
 
 
@@ -412,17 +444,18 @@ def test_masking():
     pc = NestedSamples(root="./tests/example_data/pc")
     mask = pc['x0'] > 0
 
-    plot_types = ['kde', 'hist']
+    kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
-        plot_types += ['fastkde']
+        kinds += ['fastkde']
 
-    for ptype in plot_types:
+    for kind in kinds:
         fig, axes = make_1d_axes(['x0', 'x1', 'x2'])
-        pc[mask].plot_1d(axes=axes, plot_type=ptype)
+        pc[mask].plot_1d(axes=axes, kind=kind + '_1d')
 
-    for ptype in plot_types + ['scatter']:
+    for kind in kinds + ['scatter']:
         fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
-        pc[mask].plot_2d(axes=axes, types=dict(lower=ptype, diagonal='hist'))
+        pc[mask].plot_2d(axes=axes, kind=dict(lower=kind + '_2d',
+                                              diagonal='hist_1d'))
 
 
 def test_merging():
@@ -436,10 +469,8 @@ def test_merging():
     assert nlive_1 == 125
     assert nlive_2 == 250
     assert nlive == nlive_1 + nlive_2
-    assert (samples.logZ() < samples_1.logZ()
-            and samples.logZ() > samples_2.logZ()
-            or samples.logZ() > samples_1.logZ()
-            and samples.logZ() < samples_2.logZ())
+    assert (samples_1.logZ() > samples.logZ() > samples_2.logZ()
+            or samples_1.logZ() < samples.logZ() < samples_2.logZ())
     assert 'x0' in samples.tex
 
 
@@ -489,7 +520,7 @@ def test_weighted_merging():
     for i in range(3):
         d = {"x": np.random.uniform(size=1000),
              "y": np.random.uniform(size=1000)}
-        tmp = MCMCSamples(d)
+        tmp = Samples(d)
         prior_samples.append(tmp)
     merge_prior = merge_samples_weighted(prior_samples, weights=np.ones(3))
     merge_prior.plot_2d(["x", "y"])
@@ -576,56 +607,18 @@ def test_live_points():
     assert len(last_live_points) == pc.nlive.mode()[0]
 
 
-def test_limit_assignment():
-    np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
-    # `None` in .ranges file:
-    assert ns.limits['x0'][0] is None
-    assert ns.limits['x0'][1] is None
-    # parameter not listed in .ranges file:
-    assert ns.limits['x1'][0] == ns.x1.min()
-    assert ns.limits['x1'][1] == ns.x1.max()
-    # `None` for only one limit in .ranges file:
-    assert ns.limits['x2'][0] == 0
-    assert ns.limits['x2'][1] is None
-    # both limits specified in .ranges file:
-    assert ns.limits['x3'][0] == 0
-    assert ns.limits['x3'][1] == 1
-    # limits for logL, weights, nlive
-    assert np.isclose(ns.limits['logL'][0], -777.0115456428716)
-    assert np.isclose(ns.limits['logL'][1], 5.748335384373301)
-    assert ns.limits['nlive'][0] == 1
-    assert ns.limits['nlive'][1] == 125
-    # limits for derived parameters:
-    ns['x5'] = ns.x0 + ns.x1
-    assert 'x5' in ns.columns and 'x5' not in ns.limits
-    ns.plot_1d(['x5'])
-    assert 'x5' in ns.columns and 'x5' in ns.limits
-    ns['x6'] = ns.x2 + ns.x3
-    assert 'x6' in ns.columns and 'x6' not in ns.limits
-    ns.plot_2d(['x5', 'x6'])
-    assert 'x6' in ns.columns and 'x6' in ns.limits
-
-
-def test_xmin_xmax_1d():
+def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
-    fig, ax = ns.plot_1d('x0', plot_type='hist')
-    assert ax['x0'].get_xlim() != (-1, 1)
-    fig, ax = ns.plot_1d('x0', plot_type='hist', xmin=-1, xmax=1)
-    assert ax['x0'].get_xlim() == (-1, 1)
-
-
-def test_equal_min_max():
-    """Test to provide a solution to #89"""
-    np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
-    with pytest.raises(ValueError):
-        ns.plot_2d(['x0', 'x1', 'x2'], xmin=3, xmax=3)
-
-    ns.limits['x0'] = (3, 3)
-    ns.plot_2d(['x0', 'x1', 'x2'])
+    fig, ax = ns.plot_1d('x0', kind='hist_1d')
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 > -1
+    assert x2 < +1
+    fig, ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 <= -1
+    assert x2 >= +1
 
 
 def test_contour_plot_2d_nan():
@@ -721,13 +714,11 @@ def test_NestedSamples_importance_sample():
     assert type(ns0) is NestedSamples
     assert_array_equal(ns0, ns1)
     assert ns0.tex == ns1.tex
-    assert ns0.limits == ns1.limits
     assert ns0.root == ns1.root
     assert ns0.label == ns1.label
     assert ns0.beta == ns1.beta
     assert ns0 is not ns1
     assert ns0.tex is not ns1.tex
-    assert ns0.limits is not ns1.limits
 
 
 def test_MCMCSamples_importance_sample():
@@ -768,25 +759,21 @@ def test_MCMCSamples_importance_sample():
 
     for mc in [mc1, mc2, mc3]:
         assert mc.tex == mc0.tex
-        assert mc.limits == mc0.limits
         assert mc.root == mc0.root
         assert mc.label == mc0.label
         assert mc._metadata == mc0._metadata
         assert mc is not mc0
         assert mc.tex is not mc0.tex
-        assert mc.limits is not mc0.limits
 
     mc0.importance_sample(mask, action='mask', inplace=True)
     assert type(mc0) is MCMCSamples
     assert_array_equal(mc3, mc0)
     assert mc3.tex == mc0.tex
-    assert mc3.limits == mc0.limits
     assert mc3.root == mc0.root
     assert mc3.label == mc0.label
     assert mc3._metadata == mc0._metadata
     assert mc3 is not mc0
     assert mc3.tex is not mc0.tex
-    assert mc3.limits is not mc0.limits
 
 
 def test_logzero_mask_prior_level():
@@ -869,13 +856,13 @@ def test_copy():
     new = pc.copy()
     assert new is not pc
     assert new.tex is not pc.tex
-    assert new.limits is not pc.limits
 
 
 def test_plotting_with_integer_names():
     np.random.seed(3)
-    samples_1 = MCMCSamples(data=np.random.rand(1000, 3))
-    samples_2 = MCMCSamples(data=np.random.rand(1000, 3))
+    samples_1 = Samples(data=np.random.rand(1000, 3))
+    samples_2 = Samples(data=np.random.rand(1000, 3))
+    samples_1.compress()
     fig, ax = samples_1.plot_2d([0, 1, 2])
     samples_2.plot_2d(ax)
 
@@ -898,3 +885,47 @@ def test_logL_list():
 
     samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
     assert_array_equal(default, samples)
+    plt.close("all")
+
+
+def test_samples_dot_plot():
+    samples = NestedSamples(root='./tests/example_data/pc')
+    axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
+    assert len(axes.containers) == 5
+    axes = samples.x0.plot.kde(subplots=True)
+    assert len(axes) == 1
+    axes = samples[['x0', 'x1']].plot.kde(subplots=True)
+    assert len(axes) == 2
+    plt.close("all")
+
+    axes = samples.plot.kde_2d('x0', 'x1')
+    assert len(axes.collections) == 5
+    assert axes.get_xlabel() == 'x0'
+    assert axes.get_ylabel() == 'x1'
+    plt.close("all")
+    axes = samples.plot.hist_2d('x1', 'x0')
+    assert len(axes.collections) == 1
+    assert axes.get_xlabel() == 'x1'
+    assert axes.get_ylabel() == 'x0'
+    plt.close("all")
+    axes = samples.plot.scatter_2d('x2', 'x3')
+    assert len(axes.lines) == 1
+    plt.close("all")
+    axes = samples.x1.plot.kde_1d()
+    assert len(axes.lines) == 1
+    plt.close("all")
+    axes = samples.x2.plot.hist_1d()
+    assert len(axes.containers) == 1
+    plt.close("all")
+
+    try:
+        axes = samples.plot.fastkde_2d('x0', 'x1')
+        assert len(axes.collections) == 5
+        plt.close("all")
+        axes = samples.plot.fastkde_1d()
+        assert len(axes.lines) == 1
+        plt.close("all")
+    except ImportError:
+        pass
+
+    plt.close("all")
