@@ -93,7 +93,7 @@ class PiePlot(_PiePlot):
     # noqa: disable=D101
     def __init__(self, data, kind=None, **kwargs) -> None:
         if isinstance(data, _WeightedObject):
-            labels = data.index.get_level_values('#')._mpl_repr()
+            labels = data.index.droplevel('weights')._mpl_repr()
             kwargs['labels'] = kwargs.get('labels', labels)
         super().__init__(data, kind=kind, **kwargs)
 

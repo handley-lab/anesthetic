@@ -15,7 +15,7 @@ class _WeightedObject(object):
     def __init__(self, *args, **kwargs):
         weights = kwargs.pop('weights', None)
         super().__init__(*args, **kwargs)
-        if weights is not None and 'weights' not in self.index.names:
+        if weights is not None:
             self._set_weights(weights)
 
     @property
@@ -58,7 +58,6 @@ class _WeightedObject(object):
     def median(self, *args, **kwargs):
         """Weighted median of the sampled distribution."""
         return self.quantile(*args, **kwargs)
-
 
 
 class WeightedSeries(_WeightedObject, Series):

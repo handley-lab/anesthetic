@@ -1,5 +1,5 @@
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
-from pandas import Series, DataFrame, MultiIndex
+from pandas import DataFrame, MultiIndex
 from anesthetic.utils import channel_capacity
 import pytest
 import numpy as np
@@ -19,15 +19,17 @@ def series():
 
     series = WeightedSeries(data)
     assert_array_equal(series.weights, 1)
-    assert_array_equal(series.index.get_level_values('weights'), 1)
+    assert not series.weighted
     assert_array_equal(series, data)
 
     series = WeightedSeries(data, weights=None)
     assert_array_equal(series.weights, 1)
+    assert not series.weighted
     assert_array_equal(series, data)
 
     weights = np.random.rand(N)
     series = WeightedSeries(data, weights=weights)
+    assert series.weighted
     assert_array_equal(series, data)
 
     assert series.weights.shape == (N,)
@@ -37,6 +39,7 @@ def series():
     assert_array_equal(series.weights, weights)
     assert isinstance(series.to_frame(), WeightedDataFrame)
     assert_array_equal(series.to_frame().weights, weights)
+    assert_array_equal(series.index.get_level_values('weights'), weights)
 
     return series
 
@@ -51,20 +54,24 @@ def frame():
 
     frame = WeightedDataFrame(data, columns=cols)
     assert_array_equal(frame.weights, 1)
+    assert not frame.weighted(0) and not frame.weighted(1)
     assert_array_equal(frame, data)
 
     frame = WeightedDataFrame(data, weights=None, columns=cols)
     assert_array_equal(frame.weights, 1)
+    assert not frame.weighted(0) and not frame.weighted(1)
     assert_array_equal(frame, data)
 
     weights = np.random.rand(N)
     frame = WeightedDataFrame(data, weights=weights, columns=cols)
+    assert frame.weighted(0) and not frame.weighted(1)
     assert frame.weights.shape == (N,)
     assert frame.shape == (N, m)
     assert isinstance(frame.weights, np.ndarray)
     assert_array_equal(frame, data)
     assert_array_equal(frame.weights, weights)
     assert_array_equal(frame.columns, cols)
+    assert_array_equal(frame.index.get_level_values('weights'), weights)
     return frame
 
 
@@ -77,13 +84,14 @@ def test_WeightedDataFrame_key(frame):
 
 def test_WeightedDataFrame_slice(frame):
     assert isinstance(frame['A'], WeightedSeries)
-    assert isinstance(frame.iloc[0], Series)
-    assert not isinstance(frame.iloc[0], WeightedSeries)
-    assert 'weights' not in frame.iloc[0].index.names
+    assert isinstance(frame.iloc[0], WeightedSeries)
+    assert not frame.iloc[0].weighted
     assert isinstance(frame[:10], WeightedDataFrame)
-    assert frame[:10].shape == (10, 3)
+    assert frame[:10].weighted
+    assert frame[:10].shape == (10, 6)
     assert frame[:10].weights.shape == (10,)
-    assert frame[:10]._rand.shape == (10,)
+    assert frame[:10]._rand(0).shape == (10,)
+    assert frame[:10]._rand(1).shape == (6,)
 
 
 def test_WeightedDataFrame_mean(frame):
@@ -284,8 +292,8 @@ def test_WeightedDataFrame_quantile(frame):
 
     quantile = frame.quantile(qs)
     assert_allclose(quantile, np.transpose([qs]*6), atol=1e-2)
-    assert_array_equal(quantile.index, qs) 
-    assert_array_equal(quantile.columns, frame.columns) 
+    assert_array_equal(quantile.index, qs)
+    assert_array_equal(quantile.columns, frame.columns)
     quantile = frame.quantile(qs, axis=1)
     assert isinstance(quantile, WeightedDataFrame)
     assert_array_equal(quantile.index, qs)
@@ -357,59 +365,65 @@ def test_WeightedDataFrame_nan(frame):
     frame['A'][0] = np.nan
     assert ~frame.mean().isna().any()
     assert ~frame.mean(axis=1).isna().any()
-    assert_array_equal(frame.mean(skipna=False).isna(), [True, False, False])
+    assert_array_equal(frame.mean(skipna=False).isna(), [True] + [False]*5)
     assert_array_equal(frame.mean(axis=1, skipna=False).isna()[0:6],
                        [True, False, False, False, False, False])
 
     assert ~frame.std().isna().any()
     assert ~frame.std(axis=1).isna().any()
-    assert_array_equal(frame.std(skipna=False).isna(), [True, False, False])
+    assert_array_equal(frame.std(skipna=False).isna(), [True] + [False]*5)
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
                        [True, False, False, False, False, False])
 
     assert ~frame.cov().isna().any().any()
-    assert_array_equal(frame.cov(skipna=False).isna(), [[True, True, True],
-                                                        [True, False, False],
-                                                        [True, False, False]])
+    ans = np.zeros((6, 6), dtype=bool)
+    ans[0] = True
+    ans[:, 0] = True
+    assert_array_equal(frame.cov(skipna=False).isna(), ans)
 
     frame['B'][2] = np.nan
     assert ~frame.mean().isna().any()
-    assert_array_equal(frame.mean(skipna=False).isna(), [True, True, False])
+    assert_array_equal(frame.mean(skipna=False).isna(),
+                       [True, True] + [False]*4)
     assert_array_equal(frame.mean(axis=1, skipna=False).isna()[0:6],
                        [True, False, True, False, False, False])
 
     assert ~frame.std().isna().any()
-    assert_array_equal(frame.std(skipna=False).isna(), [True, True, False])
+    assert_array_equal(frame.std(skipna=False).isna(),
+                       [True, True] + [False]*4)
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
                        [True, False, True, False, False, False])
 
     assert ~frame.cov().isna().any().any()
-    assert_array_equal(frame.cov(skipna=False).isna(), [[True, True, True],
-                                                        [True, True, True],
-                                                        [True, True, False]])
+    ans[1] = True
+    ans[:, 1] = True
+    assert_array_equal(frame.cov(skipna=False).isna(), ans)
 
     frame['C'][4] = np.nan
+    frame['D'][5] = np.nan
+    frame['E'][6] = np.nan
+    frame['F'][7] = np.nan
     assert ~frame.mean().isna().any()
     assert frame.mean(skipna=False).isna().all()
     assert_array_equal(frame.mean(axis=1, skipna=False).isna()[0:6],
-                       [True, False, True, False, True, False])
+                       [True, False, True, False, True, True])
 
     assert ~frame.std().isna().any()
     assert frame.std(skipna=False).isna().all()
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
-                       [True, False, True, False, True, False])
+                       [True, False, True, False, True, True])
 
     assert ~frame.cov().isna().any().any()
     assert frame.cov(skipna=False).isna().all().all()
 
     assert_allclose(frame.mean(), 0.5, atol=1e-2)
     assert_allclose(frame.std(), (1./12)**0.5, atol=1e-2)
-    assert_allclose(frame.cov(), (1./12)*np.identity(3), atol=1e-2)
+    assert_allclose(frame.cov(), (1./12)*np.identity(6), atol=1e-2)
 
-    assert isinstance(frame.mean(), Series)
-    assert not isinstance(frame.mean(), WeightedSeries)
-    assert 'weights' not in frame.mean().index.names
+    assert isinstance(frame.mean(), WeightedSeries)
+    assert not frame.mean().weighted
     assert isinstance(frame.mean(axis=1), WeightedSeries)
+    assert frame.mean(axis=1).weighted
 
 
 def test_WeightedSeries_mean(series):
@@ -798,13 +812,25 @@ def test_LinePlot(mcmc_df, mcmc_wdf):
 
 
 def test_multiindex(mcmc_wdf):
-    np.random.rand(0)
-    index_1 = np.arange(len(mcmc_df.index))
-    index_2 = np.random.randint(0, len(mcmc_df.index), len(mcmc_df.index))
+    np.random.seed(0)
+    index_1 = np.arange(len(mcmc_wdf.index))
+    index_2 = np.random.randint(0, len(mcmc_wdf.index), len(mcmc_wdf.index))
     index = MultiIndex.from_arrays([index_1, index_2], names=['A', 'B'])
     weights = mcmc_wdf.weights
-    wdf = WeightedDataFrame(mcmc_wdf, weights=weights, index=index)
+    wdf = WeightedDataFrame(mcmc_wdf.values, weights=weights, index=index)
 
     assert wdf.index.names == ['A', 'B', 'weights']
     assert_allclose(np.array([*wdf.index]).T, [index_1, index_2, weights])
     assert wdf.reset_index().index.names == [None, 'weights']
+
+
+def test_weight_passing(mcmc_wdf):
+    weights = mcmc_wdf.weights.copy()
+    new_wdf = WeightedDataFrame(mcmc_wdf.copy(), weights=None)
+    assert (new_wdf.weights == mcmc_wdf.weights).all()
+
+    np.random.shuffle(weights)
+    assert (mcmc_wdf.weights != weights).any()
+
+    new_wdf = WeightedDataFrame(mcmc_wdf.copy(), weights=weights)
+    assert_array_equal(new_wdf.weights, weights)
