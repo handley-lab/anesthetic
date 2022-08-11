@@ -6,7 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from anesthetic import MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes
+from anesthetic import Samples, MCMCSamples, NestedSamples
+from anesthetic import make_1d_axes, make_2d_axes
 from anesthetic.samples import merge_nested_samples
 from anesthetic.samples import merge_samples_weighted
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
@@ -21,7 +22,7 @@ except ImportError:
     pass
 
 
-def test_build_mcmc():
+def test_build_samples():
     np.random.seed(3)
     nsamps = 1000
     ndims = 3
@@ -32,67 +33,72 @@ def test_build_mcmc():
     tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
     limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
 
-    mcmc = MCMCSamples(data=data)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2], dtype=object))
+    s = Samples(data=data)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2], dtype=object))
 
-    mcmc = MCMCSamples(data=data, logL=logL)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    s = Samples(data=data, logL=logL)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2, 'logL'], dtype=object))
 
-    mcmc = MCMCSamples(data=data, weights=weights)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2], dtype=object))
-    assert mcmc.index.nlevels == 2
+    s = Samples(data=data, weights=weights)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2], dtype=object))
+    assert s.index.nlevels == 2
 
-    mcmc = MCMCSamples(data=data, weights=weights, logL=logL)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
-    assert mcmc.index.nlevels == 2
+    s = Samples(data=data, weights=weights, logL=logL)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    assert s.index.nlevels == 2
 
-    mcmc = MCMCSamples(data=data, columns=params)
-    assert len(mcmc) == nsamps
-    assert_array_equal(mcmc.columns, ['A', 'B', 'C'])
+    s = Samples(data=data, columns=params)
+    assert len(s) == nsamps
+    assert_array_equal(s.columns, ['A', 'B', 'C'])
 
-    mcmc = MCMCSamples(data=data, tex=tex)
+    s = Samples(data=data, tex=tex)
     for p in params:
-        assert mcmc.tex[p] == tex[p]
+        assert s.tex[p] == tex[p]
 
-    mcmc = MCMCSamples(data=data, limits=limits)
+    s = Samples(data=data, limits=limits)
     for p in params:
-        assert mcmc.limits[p] == limits[p]
+        assert s.limits[p] == limits[p]
+
+    mc = MCMCSamples(data=data, logL=logL, weights=weights)
+    assert len(mc) == nsamps
+    assert np.all(np.isfinite(mc.logL))
 
     ns = NestedSamples(data=data, logL=logL, weights=weights)
     assert len(ns) == nsamps
     assert np.all(np.isfinite(ns.logL))
+
     logL[:10] = -1e300
     weights[:10] = 0.
-    mcmc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e29)
+    mc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e29)
     ns = NestedSamples(data=data, logL=logL, weights=weights, logzero=-1e29)
-    assert_array_equal(mcmc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
-    assert mcmc.index.nlevels == 2
+    assert_array_equal(mc.columns, np.array([0, 1, 2, 'logL'], dtype=object))
     assert_array_equal(ns.columns, np.array([0, 1, 2, 'logL'], dtype=object))
+    assert mc.index.nlevels == 2
     assert ns.index.nlevels == 2
-    assert np.all(mcmc.logL[:10] == -np.inf)
+    assert np.all(mc.logL[:10] == -np.inf)
     assert np.all(ns.logL[:10] == -np.inf)
-    assert np.all(mcmc.logL[10:] == logL[10:])
+    assert np.all(mc.logL[10:] == logL[10:])
     assert np.all(ns.logL[10:] == logL[10:])
 
-    mcmc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e301)
+    mc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=-1e301)
     ns = NestedSamples(data=data, logL=logL, weights=weights, logzero=-1e301)
-    assert np.all(np.isfinite(mcmc.logL))
+    assert np.all(np.isfinite(mc.logL))
     assert np.all(np.isfinite(ns.logL))
-    assert np.all(mcmc.logL == logL)
+    assert np.all(mc.logL == logL)
     assert np.all(ns.logL == logL)
-
-    assert mcmc.root is None
+    assert mc.root is None
+    assert ns.root is None
 
 
 def test_NS_input_fails_in_MCMCSamples():
     with pytest.raises(ValueError) as excinfo:
         MCMCSamples(root='./tests/example_data/pc')
     assert "Please use NestedSamples instead which has the same features as " \
-           "MCMCSamples and more. MCMCSamples should be used for MCMC " \
+           "Samples and more. MCMCSamples should be used for MCMC " \
            "chains only." in str(excinfo.value)
 
 
@@ -400,17 +406,16 @@ def test_plot_1d_colours():
                    reason="requires astropy package")
 def test_astropyhist():
     np.random.seed(3)
-    mcmc = NestedSamples(root='./tests/example_data/pc')
-    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d',
-                 plotter='astropyhist')
+    ns = NestedSamples(root='./tests/example_data/pc')
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', plotter='astropyhist')
     plt.close("all")
 
 
 def test_hist_levels():
     np.random.seed(3)
-    mcmc = NestedSamples(root='./tests/example_data/pc')
-    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
-                 levels=[0.95, 0.68], bins=20)
+    ns = NestedSamples(root='./tests/example_data/pc')
+    ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
+               levels=[0.95, 0.68], bins=20)
     plt.close("all")
 
 
@@ -470,10 +475,8 @@ def test_merging():
     assert nlive_1 == 125
     assert nlive_2 == 250
     assert nlive == nlive_1 + nlive_2
-    assert (samples.logZ() < samples_1.logZ()
-            and samples.logZ() > samples_2.logZ()
-            or samples.logZ() > samples_1.logZ()
-            and samples.logZ() < samples_2.logZ())
+    assert (samples_1.logZ() > samples.logZ() > samples_2.logZ()
+            or samples_1.logZ() < samples.logZ() < samples_2.logZ())
     assert 'x0' in samples.tex
 
 
@@ -523,7 +526,7 @@ def test_weighted_merging():
     for i in range(3):
         d = {"x": np.random.uniform(size=1000),
              "y": np.random.uniform(size=1000)}
-        tmp = MCMCSamples(d)
+        tmp = Samples(d)
         prior_samples.append(tmp)
     merge_prior = merge_samples_weighted(prior_samples, weights=np.ones(3))
     merge_prior.plot_2d(["x", "y"])
@@ -922,8 +925,8 @@ def test_copy():
 
 def test_plotting_with_integer_names():
     np.random.seed(3)
-    samples_1 = MCMCSamples(data=np.random.rand(1000, 3))
-    samples_2 = MCMCSamples(data=np.random.rand(1000, 3))
+    samples_1 = Samples(data=np.random.rand(1000, 3))
+    samples_2 = Samples(data=np.random.rand(1000, 3))
     samples_1.compress()
     fig, ax = samples_1.plot_2d([0, 1, 2])
     samples_2.plot_2d(ax)

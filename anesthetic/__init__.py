@@ -40,6 +40,7 @@ pandas.plotting._misc._get_plot_backend = \
 pandas.options.plotting.backend = 'anesthetic.plotting._matplotlib'
 
 
+Samples = anesthetic.samples.Samples
 MCMCSamples = anesthetic.samples.MCMCSamples
 NestedSamples = anesthetic.samples.NestedSamples
 make_2d_axes = anesthetic.plot.make_2d_axes
