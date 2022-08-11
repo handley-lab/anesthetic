@@ -53,9 +53,6 @@ class Samples(WeightedDataFrame):
     tex: dict
         mapping from columns to tex labels for plotting
 
-    limits: dict
-        mapping from columns to prior limits
-
     label: str
         Legend label
 
@@ -66,7 +63,7 @@ class Samples(WeightedDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'label']
+    _metadata = WeightedDataFrame._metadata + ['tex', 'label']
 
     def __init__(self, *args, **kwargs):
         logzero = kwargs.pop('logzero', -1e30)
@@ -75,15 +72,12 @@ class Samples(WeightedDataFrame):
             logL = np.array(logL)
             logL = np.where(logL <= logzero, -np.inf, logL)
         self.tex = kwargs.pop('tex', {})
-        self.limits = kwargs.pop('limits', {})
         self.label = kwargs.pop('label', None)
         super().__init__(*args, **kwargs)
 
         if logL is not None:
             self['logL'] = logL
             self.tex['logL'] = r'$\log\mathcal{L}$'
-
-        self._set_automatic_limits()
 
     @property
     def _constructor(self):
@@ -93,24 +87,11 @@ class Samples(WeightedDataFrame):
         self.__init__(root=self.root)
         return self
 
-    def _limits(self, paramname):
-        limits = self.limits.get(paramname, (None, None))
-        if limits[0] == limits[1]:
-            limits = (None, None)
-        return limits
-
-    def _set_automatic_limits(self):
-        """Set all unassigned limits to min and max of sample."""
-        for param in self.columns:
-            if param not in self.limits:
-                self.limits[param] = (self[param].min(), self[param].max())
-
     def copy(self, deep=True):
         """Copy which also includes mutable metadata."""
         new = super().copy(deep)
         if deep:
             new.tex = copy.deepcopy(self.tex)
-            new.limits = copy.deepcopy(self.limits)
         return new
 
     def plot_1d(self, axes, *args, **kwargs):
@@ -145,8 +126,6 @@ class Samples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        self._set_automatic_limits()
-
         if not isinstance(axes, pandas.Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
         else:
@@ -243,8 +222,6 @@ class Samples(WeightedDataFrame):
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in ['upper', 'lower', 'diagonal']}
         kwargs['label'] = kwargs.get('label', self.label)
-
-        self._set_automatic_limits()
 
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
@@ -359,9 +336,6 @@ class MCMCSamples(Samples):
     tex: dict
         mapping from columns to tex labels for plotting
 
-    limits: dict
-        mapping from columns to prior limits
-
     label: str
         Legend label
 
@@ -394,10 +368,9 @@ class MCMCSamples(Samples):
             weights, logL, samples = reader.samples(burn_in=burn_in)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
-            limits = reader.limits()
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=columns, weights=weights,
-                          logL=logL, tex=tex, limits=limits, *args, **kwargs)
+                          logL=logL, tex=tex, *args, **kwargs)
             self.root = root
         else:
             self.root = None
@@ -446,11 +419,6 @@ class NestedSamples(Samples):
     tex: dict
         optional mapping from column names to tex labels for plotting
 
-    limits: dict
-        mapping from columns to prior limits.
-        Defaults defined by .ranges file (if it exists)
-        otherwise defined by minimum and maximum of the nested sampling data
-
     label: str
         Legend label
         default: basename of root
@@ -475,11 +443,10 @@ class NestedSamples(Samples):
             samples, logL, logL_birth = reader.samples()
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
-            limits = reader.limits()
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=columns,
                           logL=logL, logL_birth=logL_birth,
-                          tex=tex, limits=limits, *args, **kwargs)
+                          tex=tex, *args, **kwargs)
             self.root = root
         else:
             self.root = None
@@ -494,8 +461,6 @@ class NestedSamples(Samples):
             super().__init__(logzero=logzero, *args, **kwargs)
             if logL_birth is not None:
                 self.recompute(logL_birth, inplace=True)
-
-            self._set_automatic_limits()
 
     @property
     def _constructor(self):

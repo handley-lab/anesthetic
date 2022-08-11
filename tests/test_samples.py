@@ -31,7 +31,6 @@ def test_build_samples():
     weights = np.random.randint(1, 20, size=nsamps)
     params = ['A', 'B', 'C']
     tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
-    limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
 
     s = Samples(data=data)
     assert len(s) == nsamps
@@ -58,10 +57,6 @@ def test_build_samples():
     s = Samples(data=data, tex=tex)
     for p in params:
         assert s.tex[p] == tex[p]
-
-    s = Samples(data=data, limits=limits)
-    for p in params:
-        assert s.limits[p] == limits[p]
 
     mc = MCMCSamples(data=data, logL=logL, weights=weights)
     assert len(mc) == nsamps
@@ -407,7 +402,7 @@ def test_plot_1d_colours():
 def test_astropyhist():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
-    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', plotter='astropyhist')
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
     plt.close("all")
 
 
@@ -613,56 +608,18 @@ def test_live_points():
     assert len(last_live_points) == pc.nlive.mode()[0]
 
 
-def test_limit_assignment():
-    np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
-    # `None` in .ranges file:
-    assert ns.limits['x0'][0] is None
-    assert ns.limits['x0'][1] is None
-    # parameter not listed in .ranges file:
-    assert ns.limits['x1'][0] == ns.x1.min()
-    assert ns.limits['x1'][1] == ns.x1.max()
-    # `None` for only one limit in .ranges file:
-    assert ns.limits['x2'][0] == 0
-    assert ns.limits['x2'][1] is None
-    # both limits specified in .ranges file:
-    assert ns.limits['x3'][0] == 0
-    assert ns.limits['x3'][1] == 1
-    # limits for logL, weights, nlive
-    assert np.isclose(ns.limits['logL'][0], -777.0115456428716)
-    assert np.isclose(ns.limits['logL'][1], 5.748335384373301)
-    assert ns.limits['nlive'][0] == 1
-    assert ns.limits['nlive'][1] == 125
-    # limits for derived parameters:
-    ns['x5'] = ns.x0 + ns.x1
-    assert 'x5' in ns.columns and 'x5' not in ns.limits
-    ns.plot_1d(['x5'])
-    assert 'x5' in ns.columns and 'x5' in ns.limits
-    ns['x6'] = ns.x2 + ns.x3
-    assert 'x6' in ns.columns and 'x6' not in ns.limits
-    ns.plot_2d(['x5', 'x6'])
-    assert 'x6' in ns.columns and 'x6' in ns.limits
-
-
-def test_xmin_xmax_1d():
+def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     fig, ax = ns.plot_1d('x0', kind='hist_1d')
-    assert ax['x0'].get_xlim() != (-1, 1)
-    fig, ax = ns.plot_1d('x0', kind='hist_1d', xmin=-1, xmax=1)
-    assert ax['x0'].get_xlim() == (-1, 1)
-
-
-def test_equal_min_max():
-    """Test to provide a solution to #89"""
-    np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
-    with pytest.raises(ValueError):
-        ns.plot_2d(['x0', 'x1', 'x2'], xmin=3, xmax=3)
-
-    ns.limits['x0'] = (3, 3)
-    ns.plot_2d(['x0', 'x1', 'x2'])
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 > -1
+    assert x2 < +1
+    fig, ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 <= -1
+    assert x2 >= +1
 
 
 def test_contour_plot_2d_nan():
@@ -758,13 +715,11 @@ def test_NestedSamples_importance_sample():
     assert type(ns0) is NestedSamples
     assert_array_equal(ns0, ns1)
     assert ns0.tex == ns1.tex
-    assert ns0.limits == ns1.limits
     assert ns0.root == ns1.root
     assert ns0.label == ns1.label
     assert ns0.beta == ns1.beta
     assert ns0 is not ns1
     assert ns0.tex is not ns1.tex
-    assert ns0.limits is not ns1.limits
 
 
 def test_MCMCSamples_importance_sample():
@@ -805,25 +760,21 @@ def test_MCMCSamples_importance_sample():
 
     for mc in [mc1, mc2, mc3]:
         assert mc.tex == mc0.tex
-        assert mc.limits == mc0.limits
         assert mc.root == mc0.root
         assert mc.label == mc0.label
         assert mc._metadata == mc0._metadata
         assert mc is not mc0
         assert mc.tex is not mc0.tex
-        assert mc.limits is not mc0.limits
 
     mc0.importance_sample(mask, action='mask', inplace=True)
     assert type(mc0) is MCMCSamples
     assert_array_equal(mc3, mc0)
     assert mc3.tex == mc0.tex
-    assert mc3.limits == mc0.limits
     assert mc3.root == mc0.root
     assert mc3.label == mc0.label
     assert mc3._metadata == mc0._metadata
     assert mc3 is not mc0
     assert mc3.tex is not mc0.tex
-    assert mc3.limits is not mc0.limits
 
 
 def test_wedding_cake():
@@ -918,7 +869,6 @@ def test_copy():
     new = pc.copy()
     assert new is not pc
     assert new.tex is not pc.tex
-    assert new.limits is not pc.limits
 
 
 def test_plotting_with_integer_names():
