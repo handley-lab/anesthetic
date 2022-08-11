@@ -648,6 +648,37 @@ class NestedSamples(Samples):
             t.columns.name = 'samples'
         return t.cumsum()
 
+    def dlogX(self, nsamples=None):
+        """Compute volume of shell of loglikelihood.
+
+        Parameters
+        ----------
+        nsamples: int, optional
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
+              values inferred by nested sampling
+
+        Returns
+        -------
+        if nsamples is None:
+            WeightedSeries like self
+        elif nsamples is int
+            WeightedDataFrame like self, columns range(nsamples)
+        """
+        logX = self.logX(nsamples)
+        logXp = logX.shift(1, fill_value=0).to_numpy()
+        logXm = logX.shift(-1, fill_value=-np.inf).to_numpy()
+        dlogX = logsumexp([logXp, logXm], axis=0,
+                          b=[np.ones_like(logXp), -np.ones_like(logXm)])
+        dlogX -= np.log(2)
+        if nsamples is None:
+            dlogX = WeightedSeries(dlogX, self.index)
+            dlogX.name = 'dlogX'
+        else:
+            dlogX = WeightedDataFrame(dlogX, self.index)
+            dlogX.columns.name = logX.columns.name
+        return dlogX
+
     def _betalogL(self, beta=None):
         """Log(L**beta) convenience function.
 
@@ -846,37 +877,6 @@ class NestedSamples(Samples):
     def gui(self, params=None):
         """Construct a graphical user interface for viewing samples."""
         return RunPlotter(self, params)
-
-    def dlogX(self, nsamples=None):
-        """Compute volume of shell of loglikelihood.
-
-        Parameters
-        ----------
-        nsamples: int, optional
-            - If nsamples is not supplied, calculate mean value
-            - If nsamples is integer, draw nsamples from the distribution of
-              values inferred by nested sampling
-
-        Returns
-        -------
-        if nsamples is None:
-            WeightedSeries like self
-        elif nsamples is int
-            WeightedDataFrame like self, columns range(nsamples)
-        """
-        logX = self.logX(nsamples)
-        logXp = logX.shift(1, fill_value=0).to_numpy()
-        logXm = logX.shift(-1, fill_value=-np.inf).to_numpy()
-        dlogX = logsumexp([logXp, logXm], axis=0,
-                          b=[np.ones_like(logXp), -np.ones_like(logXm)])
-        dlogX -= np.log(2)
-        if nsamples is None:
-            dlogX = WeightedSeries(dlogX, self.index)
-            dlogX.name = 'dlogX'
-        else:
-            dlogX = WeightedDataFrame(dlogX, self.index)
-            dlogX.columns.name = logX.columns.name
-        return dlogX
 
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
