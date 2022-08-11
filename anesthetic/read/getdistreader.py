@@ -42,14 +42,15 @@ class GetDistReader(ChainReader):
         for chains_file in self.chains_files:
             data_i = np.loadtxt(chains_file)
             if burn_in:
-                if 0 < burn_in < 1:
+                if isinstance(burn_in, float) and 0 < burn_in < 1:
                     index = int(len(data_i) * burn_in)
-                elif type(burn_in) is int and 1 < burn_in < len(data_i):
+                elif isinstance(burn_in, int) and 1 < burn_in < len(data_i):
                     index = burn_in
                 else:
-                    raise ValueError("`burn_in` is %s, but should be an "
-                                     "integer greater 1 and smaller len(data) "
-                                     "or a float between 0 and 1." % burn_in)
+                    raise ValueError(f"You requested `burn_in={burn_in}`, but "
+                                     f"it should be either an integer with "
+                                     f"`1<burn_in<len(data)` or a float with "
+                                     f"`0<burn_in<1`.")
                 data_i = data_i[index:]
             data = np.concatenate((data, data_i)) if data.size else data_i
         weights, minuslogL, samples = np.split(data, [1, 2], axis=1)
