@@ -419,9 +419,9 @@ class NestedSamples(Samples):
     * ``self.prior()``
     * ``self.posterior_points(beta)``
     * ``self.prior_points()``
-    * ``self.ns_output()``
+    * ``self.stats()``
     * ``self.logZ()``
-    * ``self.D()``
+    * ``self.D_KL()``
     * ``self.d()``
     * ``self.recompute()``
     * ``self.gui()``
@@ -542,13 +542,31 @@ class NestedSamples(Samples):
         """Re-weight samples at infinite temperature to get prior samples."""
         return self.set_beta(beta=0, inplace=inplace)
 
-    def ns_output(self, nsamples=None, beta=None):
-        """Compute Bayesian global quantities.
+    def stats(self, nsamples=None, beta=None):
+        """Compute Nested Sampling statistics.
 
-        Using nested sampling we can compute the evidence (logZ),
-        Kullback-Leibler divergence (D) and Bayesian model dimensionality (d).
-        More precisely, we can infer these quantities via their probability
-        distribution.
+        Using nested sampling we can compute:
+            - logZ: the Bayesian evidence
+            - D_KL: the Kullback-Leibler divergence
+            - d_G: the Gaussian model dimensionality
+            - logL_P: the posterior averaged loglikelihood
+
+        (Note that all of these are available as individual functions with the
+        same signature). See https://arxiv.org/abs/1903.06682 for more detail.
+
+        In addition to point estimates nested sampling provides an error bar
+        or more generally samples from a (correlated) distribution over the
+        variables. Samples from this distribution can be computed by providing
+        an integer nsamples.
+
+        Nested sampling as an athermal algorithm is also capable of producing
+        these as a function of inverse thermodynamic temperature beta. This is
+        provided as a vectorised function. If nsamples is also provided a
+        MultiIndex dataframe is generated.
+
+        These obey Occam's razor equation: logZ = logL_P - D_KL, which splits
+        a model's quality (logZ) into a goodness-of-fit (logL_P) and an
+        complexity penalty (D_KL) https://arxiv.org/abs/2102.11511
 
         Parameters
         ----------
@@ -563,36 +581,40 @@ class NestedSamples(Samples):
         Returns
         -------
         if beta is scalar and nsamples is None:
-            Series, index ['logZ', 'd', 'D', 'logL']
+            Series, index ['logZ', 'd_G', 'DK_L', 'logL_P']
         elif beta is scalar and nsamples is int:
-            DataFrame, index range(nsamples),
-            columns ['logZ', 'd', 'D', 'logL']
+            Samples, index range(nsamples),
+            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         elif beta is array-like and nsamples is None:
-            DataFrame, index beta,
-            columns ['logZ', 'd', 'D', 'logL']
+            Samples, index beta,
+            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         elif beta is array-like and nsamples is int:
-            DataFrame, index MultiIndex the product of beta and range(nsamples)
-            columns ['logZ', 'd', 'D', 'logL']
+            Samples, index MultiIndex the product of beta and range(nsamples)
+            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         """
         logw = self.logw(nsamples, beta)
         if nsamples is None and beta is None:
             samples = Series(dtype=float)
         else:
-            samples = DataFrame(index=logw.columns)
+            samples = Samples(index=logw.columns)
         samples['logZ'] = self.logZ(logw)
 
         betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - samples.logZ
 
-        samples['D'] = np.exp(logsumexp(logw-samples.logZ, b=S, axis=0))
-        samples['d'] = np.exp(logsumexp(logw-samples.logZ, b=(S-samples.D)**2,
-                              axis=0))*2
-        samples['logL'] = samples['logZ'] + samples['D']
+        logD_KL, s = logsumexp(logw-samples.logZ, b=S, axis=0,
+                               return_sign=True)
+        samples['D_KL'] = s * np.exp(logD_KL)
+
+        logd_G_o2, s = logsumexp(logw-samples.logZ, b=(S-samples.D_KL)**2,
+                                 axis=0, return_sign=True)
+        samples['d_G'] = s * np.exp(logd_G_o2*2)
+        samples['logL_P'] = samples['logZ'] + samples['D_KL']
 
         samples.tex = {'logZ': r'$\ln\mathcal{Z}$',
-                       'D': r'$\mathcal{D}$',
-                       'd': r'$d$',
-                       'logL': r'$\ln L$'}
+                       'D_KL': r'$\mathcal{D}_\mathrm{KL}$',
+                       'd_G': r'$d_\mathrm{G}$',
+                       'logL_P': r'$\langle\ln L\rangle_\mathcal{P}$'}
         samples.label = self.label
         return samples
 
@@ -738,34 +760,53 @@ class NestedSamples(Samples):
 
     _logZ_function_shape = '\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
 
-    def D(self, nsamples=None, beta=None):
+    def D_KL(self, nsamples=None, beta=None):
         """Kullback-Leibler divergence."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - logZ
-        D = np.exp(logsumexp(logw-logZ, b=S, axis=0))
-        if np.isscalar(D):
-            return D
+        logD_KL, s = logsumexp(logw-logZ, b=S, axis=0, return_sign=True)
+        D_KL = s * np.exp(logD_KL)
+        if np.isscalar(D_KL):
+            return D_KL
         else:
-            return Series(D, name='D', index=logw.columns).squeeze()
+            return Series(D_KL, name='D_KL', index=logw.columns).squeeze()
 
-    D.__doc__ += _logZ_function_shape
+    D_KL.__doc__ += _logZ_function_shape
 
-    def d(self, nsamples=None, beta=None):
+    def d_G(self, nsamples=None, beta=None):
         """Bayesian model dimensionality."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - logZ
-        D = self.D(logw, beta)
-        d = np.exp(logsumexp(logw-logZ, b=(S-D)**2, axis=0))*2
-        if np.isscalar(d):
-            return d
+        D_KL = self.D_KL(logw, beta)
+        logd_G_o2, s = logsumexp(logw-logZ, b=(S-D_KL)**2, axis=0,
+                                 return_sign=True)
+        d_G = s * np.exp(logd_G_o2*2)
+        if np.isscalar(d_G):
+            return d_G
         else:
-            return Series(d, name='d', index=logw.columns).squeeze()
+            return Series(d_G, name='d_G', index=logw.columns).squeeze()
 
-    d.__doc__ += _logZ_function_shape
+    d_G.__doc__ += _logZ_function_shape
+
+    def logL_P(self, nsamples=None, beta=None):
+        """Posterior averaged loglikelihood."""
+        logw = self.logw(nsamples, beta)
+        logZ = self.logZ(logw, beta)
+        betalogL = self._betalogL(beta)
+        betalogL = (logw*0).add(betalogL, axis=0)
+        loglogL_P, s = logsumexp(logw-logZ, b=betalogL, axis=0,
+                                 return_sign=True)
+        logL_P = s * np.exp(loglogL_P)
+        if np.isscalar(logL_P):
+            return logL_P
+        else:
+            return Series(logL_P, name='logL_P', index=logw.columns).squeeze()
+
+    logL_P.__doc__ += _logZ_function_shape
 
     def live_points(self, logL=None):
         """Get the live points within logL.
