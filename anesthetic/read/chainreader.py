@@ -11,10 +11,6 @@ class ChainReader(object):
         """Parameter names mapping."""
         return None, {}
 
-    def limits(self):
-        """Parameter limits mapping."""
-        return {}
-
     def samples(self):
         """Read samples from file."""
         raise NotImplementedError

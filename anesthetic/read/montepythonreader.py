@@ -57,7 +57,6 @@ class MontePythonReader(ChainReader):
             * Extracts parameter names from MontePython's log.param file.
             * Removes burn-in and non-markovian points from the data.
             * Extract tex names.
-            * Extracts parameter limits from MontePython's log.param file.
 
         """
         if 'montepython' not in sys.modules:
@@ -67,8 +66,7 @@ class MontePythonReader(ChainReader):
                 "to read the data folder. Alternatively you can pass the root "
                 "to the actual chain _files_ into `MCMCSamples` (omitting "
                 "_1.txt, _2.txt, etc.) in which case the files will be read "
-                "by the `GetDistReader` (with less functionality, though, "
-                "e.g. won't automatically detect limits).")
+                "by the `GetDistReader` (with less functionality, though).")
         # The variable and function names used here correspond to the ones
         # used in MontePython's analyze.py module.
         command_line = Namespace(files=[self.root])
@@ -119,11 +117,6 @@ class MontePythonReader(ChainReader):
         logL = -self.data[:, 1]
         samples = self.data[:, 2:]
         return weights, logL, samples
-
-    def limits(self):
-        """Return param limits as specified in MontePython's log.param file."""
-        limits = dict(zip(self.info.ref_names, self.info.boundaries))
-        return limits
 
 
 class Namespace(object):
