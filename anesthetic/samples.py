@@ -344,13 +344,13 @@ class MCMCSamples(Samples):
         Anything equal or below this value is set to `-np.inf`.
         default: -1e30
 
-    burn_in: int or float
-        if not False:
-            if 0 < burn_in < 1:
-                discard the first burn_in fraction of samples
-            else:
-                only keep samples [burn_in:]
-        Only works if `root` provided and if chains are GetDist compatible.
+    burn_in: float
+        if 0 < burn_in < 1:
+            discard the first burn_in fraction of samples
+        elif 1 < burn_in:
+            only keep samples [burn_in:]
+        Only works if `root` provided and if chains are GetDist or Cobaya
+        compatible.
         default: False
 
     """
@@ -367,7 +367,7 @@ class MCMCSamples(Samples):
                                  "instead which has the same features as "
                                  "Samples and more. MCMCSamples should be "
                                  "used for MCMC chains only." % root)
-            burn_in = kwargs.pop('burn_in', False)
+            burn_in = kwargs.pop('burn_in', None)
             weights, logL, samples = reader.samples(burn_in=burn_in)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
