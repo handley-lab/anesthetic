@@ -199,6 +199,11 @@ def test_make_2d_axes_ticks(upper, ticks):
         make_2d_axes(paramnames, upper=upper, ticks='spam')
 
 
+def test_make_2d_axes_ticks_error():
+    with pytest.raises(ValueError):
+        make_2d_axes(['a', 'b'], ticks='spam')
+
+
 def test_2d_axes_limits():
     np.random.seed(0)
     paramnames = ['A', 'B', 'C', 'D']
