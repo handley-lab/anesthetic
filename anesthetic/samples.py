@@ -894,7 +894,7 @@ class NestedSamples(Samples):
         else:
             if logL_birth is not None:
                 samples['logL_birth'] = logL_birth
-                samples.tex['logL_birth'] = r'$\ln\mathcal{L}_{\rm birth}$'
+                samples.tex['logL_birth'] = r'$\ln\mathcal{L}_\mathrm{birth}$'
 
             if 'logL_birth' not in samples:
                 raise RuntimeError("Cannot recompute run without "
@@ -919,7 +919,7 @@ class NestedSamples(Samples):
             samples.reset_index(drop=True, inplace=True)
             samples['nlive'] = compute_nlive(samples.logL, samples.logL_birth)
 
-        samples.tex['nlive'] = r'$n_{\rm live}$'
+        samples.tex['nlive'] = r'$n_\mathrm{live}$'
         samples.beta = samples._beta
 
         if np.any(pandas.isna(samples.logL)):
