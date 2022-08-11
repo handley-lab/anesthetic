@@ -324,10 +324,32 @@ def test_fastkde_min_max():
     ymin, ymax = -1, +1
     try:
         _, ax = plt.subplots()
+        line, = fastkde_plot_1d(ax, data_x, xmin=xmin)
+        assert (line.get_xdata() >= xmin).all()
+        plt.close("all")
+
+        _, ax = plt.subplots()
+        line, = fastkde_plot_1d(ax, data_x, xmax=xmax)
+        assert (line.get_xdata() <= xmax).all()
+        plt.close("all")
+
+        _, ax = plt.subplots()
         line, = fastkde_plot_1d(ax, data_x, xmin=xmin, xmax=xmax)
         assert (line.get_xdata() >= xmin).all()
         assert (line.get_xdata() <= xmax).all()
         plt.close("all")
+
+        _, ax = plt.subplots()
+        fastkde_contour_plot_2d(ax, data_x, data_y, xmin=xmin, ymin=ymin)
+        assert ax.get_xlim()[0] >= xmin
+        assert ax.get_ylim()[0] >= ymin
+        plt.close()
+
+        _, ax = plt.subplots()
+        fastkde_contour_plot_2d(ax, data_x, data_y, xmax=xmax, ymax=ymax)
+        assert ax.get_xlim()[1] <= xmax
+        assert ax.get_ylim()[1] <= ymax
+        plt.close()
 
         _, ax = plt.subplots()
         fastkde_contour_plot_2d(ax, data_x, data_y,
