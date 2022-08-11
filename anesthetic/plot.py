@@ -408,9 +408,6 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
 
-    if len(data) == 0:
-        return np.zeros(0), np.zeros(0)
-
     if data.max()-data.min() <= 0:
         return
 
@@ -500,9 +497,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         kwargs,
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
-
-    if len(data) == 0:
-        return np.zeros(0), np.zeros(0)
 
     if data.max()-data.min() <= 0:
         return
@@ -666,9 +660,6 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
 
-    if len(data_x) == 0 or len(data_y) == 0:
-        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
-
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
@@ -768,9 +759,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            color=['c'],
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
-
-    if len(data_x) == 0 or len(data_y) == 0:
-        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
 
     weights = kwargs.pop('weights', None)
     if weights is not None:
@@ -875,6 +863,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     levels = kwargs.pop('levels', None)
 
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
@@ -883,11 +872,6 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[1], weights)
     rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
-
-    if len(data_x) == 0 or len(data_y) == 0:
-        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
-
-    cmap = kwargs.pop('cmap', basic_cmap(color))
 
     if levels is None:
         pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
