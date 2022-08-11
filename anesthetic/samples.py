@@ -857,7 +857,6 @@ def merge_samples_weighted(samples, weights=None, label=None):
         new_weights = s.weights / s.weights.sum() * w/np.sum(weights)
         s = Samples(s, weights=new_weights)
         new_samples.append(s)
-        new_samples[0]
 
     new_samples = pandas.concat(new_samples)
 

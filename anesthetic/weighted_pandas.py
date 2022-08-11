@@ -1,12 +1,12 @@
 """Pandas DataFrame and Series with weighted samples."""
 
+from inspect import signature
 import numpy as np
 from pandas import Series, DataFrame, concat
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
                               temporary_seed)
-from inspect import signature
 
 
 class _WeightedObject(object):
@@ -38,6 +38,7 @@ class _WeightedObject(object):
         self.index.set_names(names, inplace=True)
 
     def reset_index(self, level=None, drop=False, inplace=False, *args):
+        """Reset the index retaining weights."""
         weights = self.weights
         answer = super().reset_index(level=level, drop=drop,
                                      inplace=inplace, *args)
@@ -62,17 +63,6 @@ class _WeightedObject(object):
 
 class WeightedSeries(_WeightedObject, Series):
     """Weighted version of pandas.Series."""
-
-    @property
-    def _rand(self):
-        """Random number for consistent compression."""
-        seed = hash_pandas_object(self.index).sum() % 2**32
-        with temporary_seed(seed):
-            return np.random.rand(len(self))
-
-    @property
-    def weighted(self):
-        return 'weights' in self.index.names
 
     def sample(self, *args, **kwargs):
         """Weighted sample."""
@@ -165,6 +155,18 @@ class WeightedSeries(_WeightedObject, Series):
         return self.repeat(i)
 
     @property
+    def _rand(self):
+        """Random number for consistent compression."""
+        seed = hash_pandas_object(self.index).sum() % 2**32
+        with temporary_seed(seed):
+            return np.random.rand(len(self))
+
+    @property
+    def _weighted(self):
+        """Determine if weights are actually present."""
+        return 'weights' in self.index.names
+
+    @property
     def _constructor(self):
         return WeightedSeries
 
@@ -176,21 +178,12 @@ class WeightedSeries(_WeightedObject, Series):
 class WeightedDataFrame(_WeightedObject, DataFrame):
     """Weighted version of pandas.DataFrame."""
 
-    def _rand(self, axis):
-        """Random number for consistent compression."""
-        seed = hash_pandas_object(self._get_axis(axis)).sum() % 2**32
-        with temporary_seed(seed):
-            return np.random.rand(self.shape[axis])
-
     def _weights(self, axis):
         return self._get_axis(axis).get_level_values('weights').to_numpy()
 
-    def weighted(self, axis):
-        return 'weights' in self._get_axis(axis).names
-
     def neff(self, axis=0):
         """Effective number of samples."""
-        if self.weighted(axis):
+        if self._weighted(axis):
             return channel_capacity(self._weights(axis))
         else:
             return self.shape[axis]
@@ -199,14 +192,14 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted sample."""
         sig = signature(DataFrame.sample)
         axis = sig.bind(self, *args, **kwargs).arguments.get('axis', 0)
-        if self.weighted(axis):
+        if self._weighted(axis):
             return super().sample(weights=self._weights(axis), *args, **kwargs)
         else:
             return super().sample(*args, **kwargs)
 
     def mean(self, axis=0, skipna=True, *args, **kwargs):
         """Weighted mean of the sampled distribution."""
-        if self.weighted(axis):
+        if self._weighted(axis):
             null = self.isnull() & skipna
             mean = np.average(masked_array(self, null),
                               weights=self._weights(axis), axis=axis)
@@ -216,7 +209,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def var(self, axis=0, skipna=True, *args, **kwargs):
         """Weighted variance of the sampled distribution."""
-        if self.weighted(axis):
+        if self._weighted(axis):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             var = np.average(masked_array((self-mean)**2, null),
@@ -227,7 +220,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def cov(self, skipna=True, *args, **kwargs):
         """Weighted covariance of the sampled distribution."""
-        if self.weighted(0):
+        if self._weighted(0):
             null = self.isnull() & skipna
             mean = self.mean(skipna=skipna)
             x = masked_array(self - mean, null)
@@ -239,7 +232,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def corr(self, skipna=True, *args, **kwargs):
         """Weighted pearson correlation matrix of the sampled distribution."""
-        if self.weighted(0):
+        if self._weighted(0):
             cov = self.cov()
             diag = np.sqrt(np.diag(cov))
             return cov.divide(diag, axis=1).divide(diag, axis=0)
@@ -248,7 +241,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def corrwith(self, other, drop=False, *args, **kwargs):
         """Pairwise weighted pearson correlation."""
-        if self.weighted(0):
+        if self._weighted(0):
             if isinstance(other, Series):
                 answer = self.apply(lambda x: other.corr(x), axis=0)
                 return WeightedSeries(answer)
@@ -283,7 +276,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def kurt(self, axis=0, skipna=True, *args, **kwargs):
         """Weighted kurtosis of the sampled distribution."""
-        if self.weighted(axis):
+        if self._weighted(axis):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             std = self.std(axis=axis, skipna=skipna)
@@ -295,7 +288,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def skew(self, axis=0, skipna=True, *args, **kwargs):
         """Weighted skewness of the sampled distribution."""
-        if self.weighted(axis):
+        if self._weighted(axis):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             std = self.std(axis=axis, skipna=skipna)
@@ -307,7 +300,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def mad(self, axis=0, skipna=True, *args, **kwargs):
         """Weighted mean absolute deviation of the sampled distribution."""
-        if self.weighted(axis):
+        if self._weighted(axis):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             mad = np.average(masked_array(abs(self-mean), null),
@@ -326,7 +319,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         """Weighted quantile of the sampled distribution."""
         if not numeric_only:
             raise NotImplementedError("numeric_only kwarg not implemented")
-        if self.weighted(axis):
+        if self._weighted(axis):
             data = np.array([c.quantile(q, interpolation=interpolation,
                                         numeric_only=numeric_only)
                              for _, c in self.iteritems()])
@@ -350,7 +343,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        if self.weighted(axis):
+        if self._weighted(axis):
             i = compress_weights(self._weights(axis), self._rand(axis),
                                  nsamples)
             data = np.repeat(self.to_numpy(), i, axis=axis)
@@ -361,6 +354,16 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return df
         else:
             return self
+
+    def _rand(self, axis):
+        """Random number for consistent compression."""
+        seed = hash_pandas_object(self._get_axis(axis)).sum() % 2**32
+        with temporary_seed(seed):
+            return np.random.rand(self.shape[axis])
+
+    def _weighted(self, axis):
+        """Determine if weights are actually present."""
+        return 'weights' in self._get_axis(axis).names
 
     @property
     def _constructor_sliced(self):
