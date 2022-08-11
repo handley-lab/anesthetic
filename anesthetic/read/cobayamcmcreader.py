@@ -32,14 +32,6 @@ class CobayaMCMCReader(ChainReader):
         except IOError:
             return super().paramnames()
 
-    def limits(self):
-        """Infer param limits from <root>.yaml in cobaya format."""
-        s = loadMCSamples(file_root=self.root)
-        return {p.name: (s.ranges.getLower(p.name), s.ranges.getUpper(p.name))
-                for p in s.paramNames.names
-                if s.ranges.getLower(p.name) is not None
-                or s.ranges.getUpper(p.name) is not None}
-
     def samples(self, burn_in=False):
         """Read <root>_1.txt in getdist format."""
         data = np.array([])

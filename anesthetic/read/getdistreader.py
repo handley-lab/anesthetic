@@ -36,27 +36,6 @@ class GetDistReader(ChainReader):
         except IOError:
             return super().paramnames()
 
-    def limits(self):
-        """Read <root>.ranges in getdist format."""
-        try:
-            with open(self.ranges_file, 'r') as f:
-                limits = {}
-                for line in f:
-                    line = line.strip().split()
-                    paramname = line[0]
-                    try:
-                        xmin = float(line[1])
-                    except ValueError:
-                        xmin = None
-                    try:
-                        xmax = float(line[2])
-                    except ValueError:
-                        xmax = None
-                    limits[paramname] = (xmin, xmax)
-                return limits
-        except IOError:
-            return super().limits()
-
     def samples(self, burn_in=False):
         """Read <root>_1.txt in getdist format."""
         data = np.array([])
@@ -80,11 +59,6 @@ class GetDistReader(ChainReader):
     def paramnames_file(self):
         """File containing parameter names."""
         return self.root + '.paramnames'
-
-    @property
-    def ranges_file(self):
-        """File containing parameter names."""
-        return self.root + '.ranges'
 
     @property
     def chains_files(self):

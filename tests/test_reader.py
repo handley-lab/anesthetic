@@ -18,7 +18,6 @@ def test_read_chainreader():
     reader = ChainReader('root')
     assert reader.root == 'root'
     assert reader.paramnames() == (None, {})
-    assert reader.limits() == {}
     with pytest.raises(NotImplementedError):
         reader.samples()
 
