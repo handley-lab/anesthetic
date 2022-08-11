@@ -13,6 +13,7 @@ from anesthetic.samples import merge_samples_weighted
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less)
 from pandas.testing import assert_frame_equal
+from pandas import DataFrame, MultiIndex
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
@@ -992,3 +993,19 @@ def test_samples_dot_plot():
         pass
 
     plt.close("all")
+
+
+def test_fixed_width():
+    samples = NestedSamples(root='./tests/example_data/pc')
+    tex = [samples.tex[t] for t in samples.columns]
+    columns = ['A really really long column label'] + list(samples.columns[1:])
+    samples.columns = columns
+    assert 'A really r...' in str(samples)
+
+    mcolumns = MultiIndex.from_arrays([columns, tex])
+    samples.columns = mcolumns
+    assert 'A really re...' in str(DataFrame(samples))
+
+    mcolumns = MultiIndex.from_arrays([columns, np.random.rand(len(columns))])
+    samples.columns = mcolumns
+    assert 'A really re...' in str(DataFrame(samples))

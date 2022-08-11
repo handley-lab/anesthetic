@@ -14,6 +14,7 @@ import anesthetic.plot
 import pandas
 import pandas.plotting._core
 import pandas.plotting._misc
+from anesthetic._format import _DataFrameFormatter
 
 
 def _anesthetic_override(_get_plot_backend):
@@ -39,6 +40,8 @@ pandas.plotting._misc._get_plot_backend = \
 # Set anesthetic.plotting._matplotlib as the actual backend
 pandas.options.plotting.backend = 'anesthetic.plotting._matplotlib'
 
+pandas.io.formats.format.DataFrameFormatter = _DataFrameFormatter
+pandas.options.display.max_colwidth = 14
 
 Samples = anesthetic.samples.Samples
 MCMCSamples = anesthetic.samples.MCMCSamples
