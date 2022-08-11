@@ -316,6 +316,33 @@ def test_kde_plot_1d(plot_1d):
             pass
 
 
+def test_fastkde_min_max():
+    np.random.seed(0)
+    data_x = np.random.randn(100)
+    data_y = np.random.randn(100)
+    xmin, xmax = -1, +1
+    ymin, ymax = -1, +1
+    try:
+        _, ax = plt.subplots()
+        line, = fastkde_plot_1d(ax, data_x, xmin=xmin, xmax=xmax)
+        assert (line.get_xdata() >= xmin).all()
+        assert (line.get_xdata() <= xmax).all()
+        plt.close("all")
+
+        _, ax = plt.subplots()
+        fastkde_contour_plot_2d(ax, data_x, data_y,
+                                xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+        assert ax.get_xlim()[0] >= xmin
+        assert ax.get_xlim()[1] <= xmax
+        assert ax.get_ylim()[0] >= ymin
+        assert ax.get_ylim()[1] <= ymax
+        plt.close()
+
+    except ImportError:
+        if 'fastkde' not in sys.modules:
+            pass
+
+
 def test_hist_plot_1d():
     fig, ax = plt.subplots()
     np.random.seed(0)
