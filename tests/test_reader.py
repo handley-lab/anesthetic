@@ -120,8 +120,13 @@ def test_discard_burn_in(root):
     mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
     mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
 
-    with pytest.raises(ValueError):
-        MCMCSamples(burn_in='spam', root='./tests/example_data/' + root)
+    mcmc1 = MCMCSamples(burn_in=-1000.1, root='./tests/example_data/' + root)
+    for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
+        if key in mcmc0:
+            assert key in mcmc1
+            assert_array_equal(mcmc0[key][-1000:], mcmc1[key][1000:])
+    mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
+    mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
 
 
 def test_read_fail():

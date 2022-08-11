@@ -38,16 +38,9 @@ class CobayaMCMCReader(ChainReader):
         for chains_file in self.chains_files:
             data_i = np.loadtxt(chains_file)
             if burn_in:
-                if isinstance(burn_in, float) and 0 < burn_in < 1:
-                    index = int(len(data_i) * burn_in)
-                elif isinstance(burn_in, int) and 1 < burn_in < len(data_i):
-                    index = burn_in
-                else:
-                    raise ValueError(f"You requested `burn_in={burn_in}`, but "
-                                     f"it should be either an integer with "
-                                     f"`1<burn_in<len(data)` or a float with "
-                                     f"`0<burn_in<1`.")
-                data_i = data_i[index:]
+                if 0 < burn_in < 1:
+                    burn_in *= len(data_i)
+                data_i = data_i[np.ceil(burn_in).astype(int):]
             data = np.concatenate((data, data_i)) if data.size else data_i
         weights, logP, samples = np.split(data, [1, 2], axis=1)
         return weights.flatten(), logP.flatten(), samples

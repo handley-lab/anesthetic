@@ -345,8 +345,11 @@ class MCMCSamples(Samples):
         default: -1e30
 
     burn_in: int or float
-        Discards the first integer number of nsamples if int
-        or the first fraction of nsamples if float.
+        if not False:
+            if 0 < burn_in < 1:
+                discard the first burn_in fraction of samples
+            else:
+                only keep samples [burn_in:]
         Only works if `root` provided and if chains are GetDist compatible.
         default: False
 
