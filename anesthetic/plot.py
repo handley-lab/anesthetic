@@ -390,6 +390,13 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         values at which to draw iso-probability lines.
         optional, default [0.95, 0.68]
 
+    q: int or float or tuple
+        Quantile to determine the data range to be plotted.
+        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
+        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
+        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
+        - tuple: quantile range, e.g. (0.16, 0.84)
+
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
         ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
@@ -435,7 +442,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     except NameError:
         raise ImportError("You need to install fastkde to use fastkde")
     p /= p.max()
-    i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[1], p)))
+    i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[-1], p)))
 
     area = np.trapz(x=x[i], y=p[i]) if density else 1
     ans = ax.plot(x[i], p[i]/area, color=color, *args, **kwargs)
@@ -479,6 +486,13 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     levels: list
         values at which to draw iso-probability lines.
         optional, default [0.95, 0.68]
+
+    q: int or float or tuple
+        Quantile to determine the data range to be plotted.
+        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
+        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
+        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
+        - tuple: quantile range, e.g. (0.16, 0.84)
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -529,7 +543,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     kde = gaussian_kde(x, weights=w, bw_method=bw_method)
     p = kde(x)
     p /= p.max()
-    i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[1], w)))
+    i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[-1], w)))
     bw = np.sqrt(kde.covariance[0, 0])
     pp = cut_and_normalise_gaussian(x[i], p[i], bw=bw,
                                     xmin=data.min(), xmax=data.max())
@@ -570,6 +584,13 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     weights: np.array, optional
         Sample weights.
 
+    q: int or float or tuple
+        Quantile to determine the data range to be plotted.
+        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
+        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
+        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
+        - tuple: quantile range, e.g. (0.16, 0.84)
+
     Returns
     -------
     patches : list or list of lists
@@ -596,7 +617,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data, q[0], weights)
-    xmax = quantile(data, q[1], weights)
+    xmax = quantile(data, q[-1], weights)
 
     if bins in ['knuth', 'freedman', 'blocks']:
         try:
@@ -850,6 +871,13 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         mass. If None defaults to usual matplotlib.axes.Axes.hist2d colouring.
         optional, default None
 
+    q: int or float or tuple
+        Quantile to determine the data range to be plotted.
+        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
+        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
+        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
+        - tuple: quantile range, e.g. (0.16, 0.84)
+
     Returns
     -------
     c: matplotlib.collections.QuadMesh
@@ -868,9 +896,9 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data_x, q[0], weights)
-    xmax = quantile(data_x, q[1], weights)
+    xmax = quantile(data_x, q[-1], weights)
     ymin = quantile(data_y, q[0], weights)
-    ymax = quantile(data_y, q[1], weights)
+    ymax = quantile(data_y, q[-1], weights)
     rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
     if levels is None:
@@ -986,7 +1014,7 @@ def quantile_plot_interval(q):
         if q > 0.5:
             q = 1 - q
         q = (q, 1-q)
-    return q
+    return tuple(np.sort(q))
 
 
 def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
