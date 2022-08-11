@@ -89,7 +89,8 @@ def test_read_polychord():
     os.rename('./tests/example_data/pc_phys_live-birth.txt_',
               './tests/example_data/pc_phys_live-birth.txt')
 
-    ns_zero_live = NestedSamples(root='./tests/example_data/pc_zero_live')
+    with pytest.warns(UserWarning, match="input contained no data"):
+        ns_zero_live = NestedSamples(root='./tests/example_data/pc_zero_live')
 
     ns_single_live = NestedSamples(root='./tests/example_data/pc_single_live')
 
