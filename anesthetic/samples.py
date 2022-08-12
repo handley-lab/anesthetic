@@ -10,7 +10,6 @@ import pandas
 import copy
 import warnings
 from collections.abc import Sequence
-from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp, modify_inplace)
 from anesthetic.gui.plot import RunPlotter
@@ -312,9 +311,8 @@ class Samples(WeightedDataFrame):
 class MCMCSamples(Samples):
     """Storage and plotting tools for MCMC samples.
 
-    We extend the Samples class with the additional methods:
-
-    * ``burn_in`` parameter
+    Any new functionality specific to MCMC (e.g. convergence criteria etc)
+    should be put here.
 
     Parameters
     ----------
@@ -343,41 +341,13 @@ class MCMCSamples(Samples):
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-np.inf`.
         default: -1e30
-
-    burn_in: float
-        if 0 < burn_in < 1:
-            discard the first burn_in fraction of samples
-        elif 1 < burn_in:
-            only keep samples [burn_in:]
-        Only works if `root` provided and if chains are GetDist or Cobaya
-        compatible.
-        default: False
-
     """
 
     _metadata = Samples._metadata + ['root']
 
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
-        if root is not None:
-            reader = SampleReader(root)
-            if hasattr(reader, 'birth_file') or hasattr(reader, 'ev_file'):
-                raise ValueError("The file root %s seems to point to a Nested "
-                                 "Sampling chain. Please use NestedSamples "
-                                 "instead which has the same features as "
-                                 "Samples and more. MCMCSamples should be "
-                                 "used for MCMC chains only." % root)
-            burn_in = kwargs.pop('burn_in', None)
-            weights, logL, samples = reader.samples(burn_in=burn_in)
-            params, tex = reader.paramnames()
-            columns = kwargs.pop('columns', params)
-            kwargs['label'] = kwargs.get('label', os.path.basename(root))
-            self.__init__(data=samples, columns=columns, weights=weights,
-                          logL=logL, tex=tex, *args, **kwargs)
-            self.root = root
-        else:
-            self.root = None
-            super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @property
     def _constructor(self):
@@ -440,30 +410,18 @@ class NestedSamples(Samples):
     _metadata = Samples._metadata + ['root', '_beta']
 
     def __init__(self, *args, **kwargs):
-        root = kwargs.pop('root', None)
-        if root is not None:
-            reader = SampleReader(root)
-            samples, logL, logL_birth = reader.samples()
-            params, tex = reader.paramnames()
-            columns = kwargs.pop('columns', params)
-            kwargs['label'] = kwargs.get('label', os.path.basename(root))
-            self.__init__(data=samples, columns=columns,
-                          logL=logL, logL_birth=logL_birth,
-                          tex=tex, *args, **kwargs)
-            self.root = root
-        else:
-            self.root = None
-            logzero = kwargs.pop('logzero', -1e30)
-            self._beta = kwargs.pop('beta', 1.)
-            logL_birth = kwargs.pop('logL_birth', None)
-            if not isinstance(logL_birth, int) and logL_birth is not None:
-                logL_birth = np.array(logL_birth)
-                logL_birth = np.where(logL_birth <= logzero, -np.inf,
-                                      logL_birth)
+        self.root = kwargs.pop('root', None)
+        logzero = kwargs.pop('logzero', -1e30)
+        self._beta = kwargs.pop('beta', 1.)
+        logL_birth = kwargs.pop('logL_birth', None)
+        if not isinstance(logL_birth, int) and logL_birth is not None:
+            logL_birth = np.array(logL_birth)
+            logL_birth = np.where(logL_birth <= logzero, -np.inf,
+                                  logL_birth)
 
-            super().__init__(logzero=logzero, *args, **kwargs)
-            if logL_birth is not None:
-                self.recompute(logL_birth, inplace=True)
+        super().__init__(logzero=logzero, *args, **kwargs)
+        if logL_birth is not None:
+            self.recompute(logL_birth, inplace=True)
 
     @property
     def _constructor(self):
