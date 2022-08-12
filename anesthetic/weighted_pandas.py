@@ -16,36 +16,40 @@ class _WeightedObject(object):
         weights = kwargs.pop('weights', None)
         super().__init__(*args, **kwargs)
         if weights is not None:
-            self._set_weights(weights)
+            self.set_weights(weights, inplace=True)
 
     def isweighted(self, axis=0):
         """Determine if weights are actually present."""
         return 'weights' in self._get_axis(axis).names
 
     def get_weights(self, axis=0):
-        """Retrieve sample weights from an axis"""
-        if isweighted(axis)
+        """Retrieve sample weights from an axis."""
+        if self.isweighted(axis):
             return self._get_axis(axis).get_level_values('weights').to_numpy()
         else:
             return np.ones_like(self._get_axis(axis))
 
-    def set_weights(self, weights, axis=0):
-        """Set sample weights along an axis"""
-        self._get_axis(axis) = [self._get_axis(axis).get_level_values(name)
+    def set_weights(self, weights, axis=0, inplace=False):
+        """Set sample weights along an axis."""
+        result = self.set_axis([self._get_axis(axis).get_level_values(name)
                                 for name in self._get_axis(axis).names
-                                if name != 'weights'] + [weights]
-        names = self._get_axis(axis).names[:-1] + ['weights']
-        self._get_axis(axis).set_names(names, inplace=True)
+                                if name != 'weights'] + [weights], axis=axis)
+        names = result._get_axis(axis).names[:-1] + ['weights']
+        result._get_axis(axis).set_names(names, inplace=True)
+        if inplace:
+            self._update_inplace(result)
+        else:
+            return result
 
     def reset_index(self, level=None, drop=False, inplace=False, *args):
         """Reset the index, retaining weights."""
         weights = self.get_weights()
         answer = super().reset_index(level=level, drop=drop,
-                                     inplace=inplace, *args)
+                                     inplace=False, *args)
+        answer.set_weights(weights)
         if inplace:
-            self._set_weights(weights)
+            self._update_inplace(answer)
         else:
-            answer._set_weights(weights)
             return answer
 
     def std(self, *args, **kwargs):
@@ -69,7 +73,7 @@ class _WeightedObject(object):
     def neff(self, axis=0):
         """Effective number of samples."""
         if self.isweighted(axis):
-            return channel_capacity(self._weights(axis))
+            return channel_capacity(self.get_weights(axis))
         else:
             return self.shape[axis]
 
@@ -183,7 +187,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         sig = signature(DataFrame.sample)
         axis = sig.bind(self, *args, **kwargs).arguments.get('axis', 0)
         if self.isweighted(axis):
-            return super().sample(weights=self._weights(axis), *args, **kwargs)
+            return super().sample(weights=self.get_weights(axis),
+                                  *args, **kwargs)
         else:
             return super().sample(*args, **kwargs)
 
@@ -192,7 +197,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         if self.isweighted(axis):
             null = self.isnull() & skipna
             mean = np.average(masked_array(self, null),
-                              weights=self._weights(axis), axis=axis)
+                              weights=self.get_weights(axis), axis=axis)
             return WeightedSeries(mean, index=self._get_axis(1-axis))
         else:
             return super().mean(axis=axis, skipna=skipna, *args, **kwargs)
@@ -203,18 +208,19 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             var = np.average(masked_array((self-mean)**2, null),
-                             weights=self._weights(axis), axis=axis)
+                             weights=self.get_weights(axis), axis=axis)
             return WeightedSeries(var, index=self._get_axis(1-axis))
         else:
             return super().var(axis=axis, skipna=skipna, *args, **kwargs)
 
     def cov(self, skipna=True, *args, **kwargs):
         """Weighted covariance of the sampled distribution."""
-        if self.isweighted(0):
+        if self.isweighted():
             null = self.isnull() & skipna
             mean = self.mean(skipna=skipna)
             x = masked_array(self - mean, null)
-            cov = np.ma.dot(self._weights(0)*x.T, x) / self._weights(0).sum().T
+            cov = np.ma.dot(self.get_weights()*x.T, x) \
+                / self.get_weights().sum().T
             return WeightedDataFrame(cov, index=self.columns,
                                      columns=self.columns)
         else:
@@ -222,7 +228,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def corr(self, skipna=True, *args, **kwargs):
         """Weighted pearson correlation matrix of the sampled distribution."""
-        if self.isweighted(0):
+        if self.isweighted():
             cov = self.cov()
             diag = np.sqrt(np.diag(cov))
             return cov.divide(diag, axis=1).divide(diag, axis=0)
@@ -231,7 +237,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def corrwith(self, other, drop=False, *args, **kwargs):
         """Pairwise weighted pearson correlation."""
-        if self.isweighted(0):
+        if self.isweighted():
             if isinstance(other, Series):
                 answer = self.apply(lambda x: other.corr(x), axis=0)
                 return WeightedSeries(answer)
@@ -246,8 +252,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             ldem = left - left.mean()
             rdem = right - right.mean()
 
-            num = (ldem * rdem * self._weights(0)[:, None]).sum()
-            dom = self._weights(0).sum() * left.std() * right.std()
+            num = (ldem * rdem * self.get_weights()[:, None]).sum()
+            dom = self.get_weights().sum() * left.std() * right.std()
 
             correl = num / dom
 
@@ -271,7 +277,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             mean = self.mean(axis=axis, skipna=skipna)
             std = self.std(axis=axis, skipna=skipna)
             kurt = np.average(masked_array(((self-mean)/std)**4, null),
-                              weights=self._weights(axis), axis=axis)
+                              weights=self.get_weights(axis), axis=axis)
             return WeightedSeries(kurt, index=self._get_axis(1-axis))
         else:
             return super().kurt(axis=axis, skipna=skipna, *args, **kwargs)
@@ -283,7 +289,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             mean = self.mean(axis=axis, skipna=skipna)
             std = self.std(axis=axis, skipna=skipna)
             skew = np.average(masked_array(((self-mean)/std)**3, null),
-                              weights=self._weights(axis), axis=axis)
+                              weights=self.get_weights(axis), axis=axis)
             return WeightedSeries(skew, index=self._get_axis(1-axis))
         else:
             return super().skew(axis=axis, skipna=skipna, *args, **kwargs)
@@ -294,7 +300,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             mad = np.average(masked_array(abs(self-mean), null),
-                             weights=self._weights(axis), axis=axis)
+                             weights=self.get_weights(axis), axis=axis)
             return WeightedSeries(mad, index=self._get_axis(1-axis))
         else:
             return super().var(axis=axis, skipna=skipna, *args, **kwargs)
@@ -334,7 +340,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
         """
         if self.isweighted(axis):
-            i = compress_weights(self._weights(axis), self._rand(axis),
+            i = compress_weights(self.get_weights(axis), self._rand(axis),
                                  nsamples)
             data = np.repeat(self.to_numpy(), i, axis=axis)
             i = self._get_axis(axis).repeat(i).droplevel('weights')

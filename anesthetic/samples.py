@@ -12,7 +12,7 @@ import warnings
 from collections.abc import Sequence
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
-                              is_int, logsumexp, modify_inplace)
+                              is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas.core.accessor import CachedAccessor
@@ -316,11 +316,15 @@ class Samples(WeightedDataFrame):
         """
         samples = self.copy()
         if action == 'add':
-            samples.weights *= np.exp(logL_new - logL_new.max())
+            new_weights = samples.get_weights()
+            new_weights *= np.exp(logL_new - logL_new.max())
+            samples.set_weights(new_weights, inplace=True)
             samples.logL += logL_new
         elif action == 'replace':
             logL_new2 = logL_new - samples.logL
-            samples.weights *= np.exp(logL_new2 - logL_new2.max())
+            new_weights = samples.get_weights()
+            new_weights *= np.exp(logL_new2 - logL_new2.max())
+            samples.set_weights(new_weights, inplace=True)
             samples.logL = logL_new
         elif action == 'mask':
             samples = samples[logL_new]
@@ -329,7 +333,10 @@ class Samples(WeightedDataFrame):
                                       "{'add', 'replace', 'mask'}, but '%s' "
                                       "was requested." % action)
 
-        return modify_inplace(self, samples, inplace)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples
 
 
 class MCMCSamples(Samples):
@@ -516,7 +523,7 @@ class NestedSamples(Samples):
         self._beta = beta
         logw = self.dlogX() + np.where(self.logL == -np.inf, -np.inf,
                                        self.beta * self.logL)
-        self.weights = np.exp(logw - logw.max())
+        self.set_weights(np.exp(logw - logw.max()), inplace=True)
 
     def set_beta(self, beta, inplace=False):
         """Change the inverse temperature.
@@ -684,11 +691,12 @@ class NestedSamples(Samples):
                           b=[np.ones_like(logXp), -np.ones_like(logXm)],
                           axis=0) - np.log(2)
 
+        weights = self.get_weights()
         if nsamples is None:
             dlogX = np.squeeze(dlogX)
-            return WeightedSeries(dlogX, self.index, weights=self.weights)
+            return WeightedSeries(dlogX, self.index, weights=weights)
         else:
-            return WeightedDataFrame(dlogX, self.index, weights=self.weights)
+            return WeightedDataFrame(dlogX, self.index, weights=weights)
 
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
@@ -718,7 +726,10 @@ class NestedSamples(Samples):
         """
         samples = super().importance_sample(logL_new, action=action)
         samples = samples[samples.logL > samples.logL_birth].recompute()
-        return modify_inplace(self, samples, inplace)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples
 
     def recompute(self, logL_birth=None, inplace=False):
         """Re-calculate the nested sampling contours and live points.
@@ -782,7 +793,10 @@ class NestedSamples(Samples):
                           RuntimeWarning)
             samples = samples[samples.logL.notna()].recompute()
 
-        return modify_inplace(self, samples, inplace)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples
 
 
 def merge_nested_samples(runs):
@@ -854,13 +868,16 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples = []
     for s, w in zip(mcmc_samples, weights):
         # Normalize the given weights
-        new_weights = s.weights / s.weights.sum() * w/np.sum(weights)
+        new_weights = s.get_weights() / s.get_weights().sum()
+        new_weights *= w/np.sum(weights)
         s = Samples(s, weights=new_weights)
         new_samples.append(s)
 
     new_samples = pandas.concat(new_samples)
 
-    new_samples.weights /= new_samples.weights.max()
+    new_weights = new_samples.get_weights()
+    new_weights /= new_weights.max()
+    new_samples.set_weights(new_weights, inplace=True)
 
     new_samples.label = label
     # Copy tex, if different values for same key exist, the last one is used.

@@ -18,27 +18,27 @@ def series():
     data = np.random.rand(N)
 
     series = WeightedSeries(data)
-    assert_array_equal(series.weights, 1)
-    assert not series._weighted
+    assert_array_equal(series.get_weights(), 1)
+    assert not series.isweighted()
     assert_array_equal(series, data)
 
     series = WeightedSeries(data, weights=None)
-    assert_array_equal(series.weights, 1)
-    assert not series._weighted
+    assert_array_equal(series.get_weights(), 1)
+    assert not series.isweighted()
     assert_array_equal(series, data)
 
     weights = np.random.rand(N)
     series = WeightedSeries(data, weights=weights)
-    assert series._weighted
+    assert series.isweighted()
     assert_array_equal(series, data)
 
-    assert series.weights.shape == (N,)
+    assert series.get_weights().shape == (N,)
     assert series.shape == (N,)
-    assert isinstance(series.weights, np.ndarray)
+    assert isinstance(series.get_weights(), np.ndarray)
     assert_array_equal(series, data)
-    assert_array_equal(series.weights, weights)
+    assert_array_equal(series.get_weights(), weights)
     assert isinstance(series.to_frame(), WeightedDataFrame)
-    assert_array_equal(series.to_frame().weights, weights)
+    assert_array_equal(series.to_frame().get_weights(), weights)
     assert_array_equal(series.index.get_level_values('weights'), weights)
 
     return series
@@ -53,23 +53,23 @@ def frame():
     data = np.random.rand(N, m)
 
     frame = WeightedDataFrame(data, columns=cols)
-    assert_array_equal(frame.weights, 1)
-    assert not frame._weighted(0) and not frame._weighted(1)
+    assert_array_equal(frame.get_weights(), 1)
+    assert not frame.isweighted(0) and not frame.isweighted(1)
     assert_array_equal(frame, data)
 
     frame = WeightedDataFrame(data, weights=None, columns=cols)
-    assert_array_equal(frame.weights, 1)
-    assert not frame._weighted(0) and not frame._weighted(1)
+    assert_array_equal(frame.get_weights(), 1)
+    assert not frame.isweighted(0) and not frame.isweighted(1)
     assert_array_equal(frame, data)
 
     weights = np.random.rand(N)
     frame = WeightedDataFrame(data, weights=weights, columns=cols)
-    assert frame._weighted(0) and not frame._weighted(1)
-    assert frame.weights.shape == (N,)
+    assert frame.isweighted(0) and not frame.isweighted(1)
+    assert frame.get_weights().shape == (N,)
     assert frame.shape == (N, m)
-    assert isinstance(frame.weights, np.ndarray)
+    assert isinstance(frame.get_weights(), np.ndarray)
     assert_array_equal(frame, data)
-    assert_array_equal(frame.weights, weights)
+    assert_array_equal(frame.get_weights(), weights)
     assert_array_equal(frame.columns, cols)
     assert_array_equal(frame.index.get_level_values('weights'), weights)
     return frame
@@ -77,19 +77,20 @@ def frame():
 
 def test_WeightedDataFrame_key(frame):
     for key1 in frame.columns:
-        assert_array_equal(frame.weights, frame[key1].weights)
+        assert_array_equal(frame.get_weights(), frame[key1].get_weights())
         for key2 in frame.columns:
-            assert_array_equal(frame[key1].weights, frame[key2].weights)
+            assert_array_equal(frame[key1].get_weights(),
+                               frame[key2].get_weights())
 
 
 def test_WeightedDataFrame_slice(frame):
     assert isinstance(frame['A'], WeightedSeries)
     assert isinstance(frame.iloc[0], WeightedSeries)
-    assert not frame.iloc[0]._weighted
+    assert not frame.iloc[0].isweighted()
     assert isinstance(frame[:10], WeightedDataFrame)
-    assert frame[:10]._weighted
+    assert frame[:10].isweighted()
     assert frame[:10].shape == (10, 6)
-    assert frame[:10].weights.shape == (10,)
+    assert frame[:10].get_weights().shape == (10,)
     assert frame[:10]._rand(0).shape == (10,)
     assert frame[:10]._rand(1).shape == (6,)
 
@@ -97,7 +98,7 @@ def test_WeightedDataFrame_slice(frame):
 def test_WeightedDataFrame_mean(frame):
     mean = frame.mean()
     assert isinstance(mean, WeightedSeries)
-    assert not mean._weighted
+    assert not mean.isweighted()
     assert_array_equal(mean.index, frame.columns)
     assert_allclose(mean, 0.5, atol=1e-2)
 
@@ -105,8 +106,8 @@ def test_WeightedDataFrame_mean(frame):
     assert isinstance(mean, WeightedSeries)
     assert_array_equal(mean, frame.T.mean())
     assert isinstance(frame.T.mean(), WeightedSeries)
-    assert mean._weighted
-    assert frame.T.mean()._weighted
+    assert mean.isweighted()
+    assert frame.T.mean().isweighted()
     assert_array_equal(mean.index, frame.index)
     assert_allclose(mean.mean(), 0.5, atol=1e-2)
 
@@ -114,7 +115,7 @@ def test_WeightedDataFrame_mean(frame):
 def test_WeightedDataFrame_std(frame):
     std = frame.std()
     assert isinstance(std, WeightedSeries)
-    assert not std._weighted
+    assert not std.isweighted()
     assert_array_equal(std.index, frame.columns)
     assert_allclose(std, (1./12)**0.5, atol=1e-2)
 
@@ -122,8 +123,8 @@ def test_WeightedDataFrame_std(frame):
     assert isinstance(std, WeightedSeries)
     assert_array_equal(std, frame.T.std())
     assert isinstance(frame.T.std(), WeightedSeries)
-    assert std._weighted
-    assert frame.T.std()._weighted
+    assert std.isweighted()
+    assert frame.T.std().isweighted()
     assert_array_equal(std.index, frame.index)
     assert_allclose(std.mean(), (1./12)**0.5, atol=1e-1)
 
@@ -131,14 +132,14 @@ def test_WeightedDataFrame_std(frame):
 def test_WeightedDataFrame_cov(frame):
     cov = frame.cov()
     assert isinstance(cov, WeightedDataFrame)
-    assert not cov._weighted(0) and not cov._weighted(1)
+    assert not cov.isweighted(0) and not cov.isweighted(1)
     assert_array_equal(cov.index, frame.columns)
     assert_array_equal(cov.columns, frame.columns)
     assert_allclose(cov, (1./12)*np.identity(6), atol=1e-2)
 
     cov = frame[:5].T.cov()
     assert isinstance(cov, WeightedDataFrame)
-    assert cov._weighted(0) and cov._weighted(1)
+    assert cov.isweighted(0) and cov.isweighted(1)
     assert_array_equal(cov.index, frame[:5].index)
     assert_array_equal(cov.columns, frame[:5].index)
 
@@ -146,14 +147,14 @@ def test_WeightedDataFrame_cov(frame):
 def test_WeightedDataFrame_corr(frame):
     corr = frame.corr()
     assert isinstance(corr, WeightedDataFrame)
-    assert not corr._weighted(0) and not corr._weighted(1)
+    assert not corr.isweighted(0) and not corr.isweighted(1)
     assert_array_equal(corr.index, frame.columns)
     assert_array_equal(corr.columns, frame.columns)
     assert_allclose(corr, np.identity(6), atol=1.1e-2)
 
     corr = frame[:5].T.corr()
     assert isinstance(corr, WeightedDataFrame)
-    assert corr._weighted(0) and corr._weighted(1)
+    assert corr.isweighted(0) and corr.isweighted(1)
     assert_array_equal(corr.index, frame[:5].index)
     assert_array_equal(corr.columns, frame[:5].index)
 
@@ -161,13 +162,13 @@ def test_WeightedDataFrame_corr(frame):
 def test_WeightedDataFrame_corrwith(frame):
     correl = frame.corrwith(frame.A)
     assert isinstance(correl, WeightedSeries)
-    assert not correl._weighted
+    assert not correl.isweighted()
     assert_array_equal(correl.index, frame.columns)
     assert_allclose(correl, frame.corr()['A'])
 
     correl = frame.corrwith(frame[['A', 'B']])
     assert isinstance(correl, WeightedSeries)
-    assert not correl._weighted
+    assert not correl.isweighted()
     assert_array_equal(correl.index, frame.columns)
     assert_allclose(correl['A'], 1, atol=1e-2)
     assert_allclose(correl['B'], 1, atol=1e-2)
@@ -177,7 +178,7 @@ def test_WeightedDataFrame_corrwith(frame):
 def test_WeightedDataFrame_median(frame):
     median = frame.median()
     assert isinstance(median, WeightedSeries)
-    assert not median._weighted
+    assert not median.isweighted()
     assert_array_equal(median.index, frame.columns)
     assert_allclose(median, 0.5, atol=1e-2)
 
@@ -185,8 +186,8 @@ def test_WeightedDataFrame_median(frame):
     assert isinstance(median, WeightedSeries)
     assert_array_equal(median, frame.T.median())
     assert isinstance(frame.T.median(), WeightedSeries)
-    assert median._weighted
-    assert frame.T.median()._weighted
+    assert median.isweighted()
+    assert frame.T.median().isweighted()
     assert_array_equal(median.index, frame.index)
     assert_allclose(median.mean(), 0.5, atol=1e-2)
 
@@ -194,7 +195,7 @@ def test_WeightedDataFrame_median(frame):
 def test_WeightedDataFrame_sem(frame):
     sem = frame.sem()
     assert isinstance(sem, WeightedSeries)
-    assert not sem._weighted
+    assert not sem.isweighted()
     assert_array_equal(sem.index, frame.columns)
     assert_allclose(sem, (1./12)**0.5/np.sqrt(frame.neff()), atol=1e-2)
 
@@ -202,15 +203,15 @@ def test_WeightedDataFrame_sem(frame):
     assert isinstance(sem, WeightedSeries)
     assert_array_equal(sem, frame.T.sem())
     assert isinstance(frame.T.sem(), WeightedSeries)
-    assert sem._weighted
-    assert frame.T.sem()._weighted
+    assert sem.isweighted()
+    assert frame.T.sem().isweighted()
     assert_array_equal(sem.index, frame.index)
 
 
 def test_WeightedDataFrame_kurtosis(frame):
     kurtosis = frame.kurtosis()
     assert isinstance(kurtosis, WeightedSeries)
-    assert not kurtosis._weighted
+    assert not kurtosis.isweighted()
     assert_array_equal(kurtosis.index, frame.columns)
     assert_allclose(kurtosis, 9./5, atol=1e-2)
     assert_array_equal(frame.kurtosis(), frame.kurt())
@@ -219,8 +220,8 @@ def test_WeightedDataFrame_kurtosis(frame):
     assert isinstance(kurtosis, WeightedSeries)
     assert_array_equal(kurtosis, frame.T.kurtosis())
     assert isinstance(frame.T.kurtosis(), WeightedSeries)
-    assert kurtosis._weighted
-    assert frame.T.kurtosis()._weighted
+    assert kurtosis.isweighted()
+    assert frame.T.kurtosis().isweighted()
     assert_array_equal(kurtosis.index, frame.index)
     assert_array_equal(frame.kurtosis(axis=1), frame.kurt(axis=1))
 
@@ -228,7 +229,7 @@ def test_WeightedDataFrame_kurtosis(frame):
 def test_WeightedDataFrame_skew(frame):
     skew = frame.skew()
     assert isinstance(skew, WeightedSeries)
-    assert not skew._weighted
+    assert not skew.isweighted()
     assert_array_equal(skew.index, frame.columns)
     assert_allclose(skew, 0., atol=2e-2)
 
@@ -236,15 +237,15 @@ def test_WeightedDataFrame_skew(frame):
     assert isinstance(skew, WeightedSeries)
     assert_array_equal(skew, frame.T.skew())
     assert isinstance(frame.T.skew(), WeightedSeries)
-    assert skew._weighted
-    assert frame.T.skew()._weighted
+    assert skew.isweighted()
+    assert frame.T.skew().isweighted()
     assert_array_equal(skew.index, frame.index)
 
 
 def test_WeightedDataFrame_mad(frame):
     mad = frame.mad()
     assert isinstance(mad, WeightedSeries)
-    assert not mad._weighted
+    assert not mad.isweighted()
     assert_array_equal(mad.index, frame.columns)
     assert_allclose(mad, 0.25, atol=1e-2)
 
@@ -252,23 +253,23 @@ def test_WeightedDataFrame_mad(frame):
     assert isinstance(mad, WeightedSeries)
     assert_array_equal(mad, frame.T.mad())
     assert isinstance(frame.T.mad(), WeightedSeries)
-    assert mad._weighted
-    assert frame.T.mad()._weighted
+    assert mad.isweighted()
+    assert frame.T.mad().isweighted()
     assert_array_equal(mad.index, frame.index)
 
 
 def test_WeightedDataFrame_quantile(frame):
     quantile = frame.quantile()
     assert isinstance(quantile, WeightedSeries)
-    assert not quantile._weighted
+    assert not quantile.isweighted()
     assert_array_equal(quantile.index, frame.columns)
     assert_allclose(quantile, 0.5, atol=1e-2)
 
     quantile = frame.quantile(axis=1)
     assert isinstance(quantile, WeightedSeries)
     assert_array_equal(quantile, frame.T.quantile())
-    assert quantile._weighted
-    assert frame.T.quantile()._weighted
+    assert quantile.isweighted()
+    assert frame.T.quantile().isweighted()
     assert_array_equal(quantile.index, frame.index)
     assert_allclose(quantile.mean(), 0.5, atol=1e-2)
 
@@ -276,7 +277,7 @@ def test_WeightedDataFrame_quantile(frame):
     for q in qs:
         quantile = frame.quantile(q)
         assert isinstance(quantile, WeightedSeries)
-        assert not quantile._weighted
+        assert not quantile.isweighted()
         assert_array_equal(quantile.index, frame.columns)
         assert_allclose(quantile, q, atol=1e-2)
 
@@ -286,8 +287,8 @@ def test_WeightedDataFrame_quantile(frame):
         quantile = frame.quantile(q, axis=1)
         assert isinstance(quantile, WeightedSeries)
         assert_array_equal(quantile, frame.T.quantile(q))
-        assert quantile._weighted
-        assert frame.T.quantile(q)._weighted
+        assert quantile.isweighted()
+        assert frame.T.quantile(q).isweighted()
         assert_array_equal(quantile.index, frame.index)
 
     quantile = frame.quantile(qs)
@@ -421,9 +422,9 @@ def test_WeightedDataFrame_nan(frame):
     assert_allclose(frame.cov(), (1./12)*np.identity(6), atol=1e-2)
 
     assert isinstance(frame.mean(), WeightedSeries)
-    assert not frame.mean()._weighted
+    assert not frame.mean().isweighted()
     assert isinstance(frame.mean(axis=1), WeightedSeries)
-    assert frame.mean(axis=1)._weighted
+    assert frame.mean(axis=1).isweighted()
 
 
 def test_WeightedSeries_mean(series):
@@ -579,7 +580,7 @@ def mcmc_df():
         if np.log(np.random.rand()) < logL1 - logL0:
             x0, logL0 = x1, logL1
 
-    return DataFrame(dat, columns=["x", "y", "z", "w"])
+    return mcmc_df = DataFrame(dat, columns=["x", "y", "z", "w"])
 
 
 @pytest.fixture
@@ -682,7 +683,7 @@ def test_scatter_matrix(mcmc_df, mcmc_wdf):
     axes = scatter_matrix(mcmc_wdf)
     data = axes[0, 1].collections[0].get_offsets().data
     n = len(data)
-    neff = channel_capacity(mcmc_wdf.weights)
+    neff = channel_capacity(mcmc_wdf.get_weights())
     assert_allclose(n, neff, atol=np.sqrt(n))
 
     axes = orig_scatter_matrix(mcmc_wdf)
@@ -749,7 +750,7 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
     ax = mcmc_wdf.plot.scatter('x', 'y')
 
     n = len(ax.collections[0].get_offsets().data)
-    neff = channel_capacity(mcmc_wdf.weights)
+    neff = channel_capacity(mcmc_wdf.get_weights())
     assert_allclose(n, neff, atol=np.sqrt(n))
 
     ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
@@ -816,21 +817,22 @@ def test_multiindex(mcmc_wdf):
     index_1 = np.arange(len(mcmc_wdf.index))
     index_2 = np.random.randint(0, len(mcmc_wdf.index), len(mcmc_wdf.index))
     index = MultiIndex.from_arrays([index_1, index_2], names=['A', 'B'])
-    weights = mcmc_wdf.weights
+    weights = mcmc_wdf.get_weights()
     wdf = WeightedDataFrame(mcmc_wdf.values, weights=weights, index=index)
 
     assert wdf.index.names == ['A', 'B', 'weights']
     assert_allclose(np.array([*wdf.index]).T, [index_1, index_2, weights])
     assert wdf.reset_index().index.names == [None, 'weights']
+    wdf.reset_index()
 
 
 def test_weight_passing(mcmc_wdf):
-    weights = mcmc_wdf.weights.copy()
+    weights = mcmc_wdf.get_weights()
     new_wdf = WeightedDataFrame(mcmc_wdf.copy(), weights=None)
-    assert (new_wdf.weights == mcmc_wdf.weights).all()
+    assert (new_wdf.get_weights() == mcmc_wdf.get_weights()).all()
 
     np.random.shuffle(weights)
-    assert (mcmc_wdf.weights != weights).any()
+    assert (mcmc_wdf.get_weights() != weights).any()
 
     new_wdf = WeightedDataFrame(mcmc_wdf.copy(), weights=weights)
-    assert_array_equal(new_wdf.weights, weights)
+    assert_array_equal(new_wdf.get_weights(), weights)
