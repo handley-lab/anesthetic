@@ -9,7 +9,14 @@ from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               iso_probability_contours_from_samples,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
-                              insertion_p_value)
+                              insertion_p_value, compress_weights)
+
+
+def test_compress_weights():
+    w = compress_weights(w=np.ones(10), u=None)
+    assert_array_equal(w, np.ones(10))
+    w = compress_weights(w=None, u=np.random.rand(10))
+    assert_array_equal(w, np.ones(10))
 
 
 def test_nest_level():
@@ -58,6 +65,7 @@ def test_unique():
                                  iso_probability_contours_from_samples])
 def test_iso_probability_contours(ipc):
     p = np.random.randn(10)
+    ipc(p)
     with pytest.raises(ValueError):
         ipc(p, contours=[0.68, 0.95])
 
