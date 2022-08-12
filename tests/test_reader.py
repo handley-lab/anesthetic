@@ -76,9 +76,9 @@ def test_read_polychord():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     for key1 in ns.columns:
-        assert_array_equal(ns.weights, ns[key1].weights)
+        assert_array_equal(ns.get_weights(), ns[key1].get_weights())
         for key2 in ns.columns:
-            assert_array_equal(ns[key1].weights, ns[key2].weights)
+            assert_array_equal(ns[key1].get_weights(), ns[key2].get_weights())
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")
