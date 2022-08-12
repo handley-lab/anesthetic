@@ -314,7 +314,11 @@ class Samples(WeightedDataFrame):
         samples: Samples/MCMCSamples/NestedSamples
             Importance re-weighted samples.
         """
-        samples = self.copy()
+        if inplace:
+            samples = self
+        else:
+            samples = self.copy()
+
         if action == 'add':
             new_weights = samples.get_weights()
             new_weights *= np.exp(logL_new - logL_new.max())
@@ -336,7 +340,7 @@ class Samples(WeightedDataFrame):
         if inplace:
             self._update_inplace(samples)
         else:
-            return samples
+            return samples.__finalize__(self, "importance_sample")
 
 
 class MCMCSamples(Samples):
@@ -729,7 +733,7 @@ class NestedSamples(Samples):
         if inplace:
             self._update_inplace(samples)
         else:
-            return samples
+            return samples.__finalize__(self, "importance_sample")
 
     def recompute(self, logL_birth=None, inplace=False):
         """Re-calculate the nested sampling contours and live points.
@@ -746,7 +750,10 @@ class NestedSamples(Samples):
             frame with contours resorted and nlive recomputed
             default: False
         """
-        samples = self.copy()
+        if inplace:
+            samples = self
+        else:
+            samples = self.copy()
 
         if is_int(logL_birth):
             nlive = logL_birth
@@ -758,7 +765,7 @@ class NestedSamples(Samples):
         else:
             if logL_birth is not None:
                 samples['logL_birth'] = logL_birth
-                samples.tex['logL_birth'] = r'$\log\mathcal{L}_{\rm birth}$'
+                samples.tex['logL_birth'] = r'$\log\mathcal{L}_\mathrm{birth}$'
 
             if 'logL_birth' not in samples:
                 raise RuntimeError("Cannot recompute run without "
@@ -783,7 +790,7 @@ class NestedSamples(Samples):
             samples.reset_index(drop=True, inplace=True)
             samples['nlive'] = compute_nlive(samples.logL, samples.logL_birth)
 
-        samples.tex['nlive'] = r'$n_{\rm live}$'
+        samples.tex['nlive'] = r'$n_\mathrm{live}$'
         samples.beta = samples._beta
 
         if np.any(pandas.isna(samples.logL)):
@@ -796,7 +803,7 @@ class NestedSamples(Samples):
         if inplace:
             self._update_inplace(samples)
         else:
-            return samples
+            return samples.__finalize__(self, "recompute")
 
 
 def merge_nested_samples(runs):

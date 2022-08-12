@@ -765,8 +765,6 @@ def test_NestedSamples_importance_sample():
     ns0.importance_sample(logL_new, inplace=True)
     assert type(ns0) is NestedSamples
     assert_array_equal(ns0, ns1)
-    ns0.tex
-    ns1.tex
     assert ns0.tex == ns1.tex
     assert ns0.limits == ns1.limits
     assert ns0.root == ns1.root

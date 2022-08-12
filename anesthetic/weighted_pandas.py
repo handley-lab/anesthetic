@@ -39,18 +39,19 @@ class _WeightedObject(object):
         if inplace:
             self._update_inplace(result)
         else:
-            return result
+            return result.__finalize__(self, "set_weights")
 
-    def reset_index(self, level=None, drop=False, inplace=False, *args):
+    def reset_index(self, level=None, drop=False, inplace=False,
+                    *args, **kwargs):
         """Reset the index, retaining weights."""
         weights = self.get_weights()
         answer = super().reset_index(level=level, drop=drop,
-                                     inplace=False, *args)
-        answer.set_weights(weights)
+                                     inplace=False, *args, **kwargs)
+        answer.set_weights(weights, inplace=True)
         if inplace:
             self._update_inplace(answer)
         else:
-            return answer
+            return answer.__finalize__(self, "reset_index")
 
     def std(self, *args, **kwargs):
         """Weighted standard deviation of the sampled distribution."""

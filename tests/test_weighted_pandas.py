@@ -580,7 +580,7 @@ def mcmc_df():
         if np.log(np.random.rand()) < logL1 - logL0:
             x0, logL0 = x1, logL1
 
-    return mcmc_df = DataFrame(dat, columns=["x", "y", "z", "w"])
+    return DataFrame(dat, columns=["x", "y", "z", "w"])
 
 
 @pytest.fixture
@@ -814,16 +814,30 @@ def test_LinePlot(mcmc_df, mcmc_wdf):
 
 def test_multiindex(mcmc_wdf):
     np.random.seed(0)
-    index_1 = np.arange(len(mcmc_wdf.index))
-    index_2 = np.random.randint(0, len(mcmc_wdf.index), len(mcmc_wdf.index))
-    index = MultiIndex.from_arrays([index_1, index_2], names=['A', 'B'])
+    i1 = np.arange(len(mcmc_wdf.index))
+    i2 = np.random.randint(0, len(mcmc_wdf.index), len(mcmc_wdf.index))
+    i3 = np.random.randint(0, len(mcmc_wdf.index), len(mcmc_wdf.index))
+    index = MultiIndex.from_arrays([i1, i2, i3], names=['A', 'B', 'C'])
     weights = mcmc_wdf.get_weights()
     wdf = WeightedDataFrame(mcmc_wdf.values, weights=weights, index=index)
 
-    assert wdf.index.names == ['A', 'B', 'weights']
-    assert_allclose(np.array([*wdf.index]).T, [index_1, index_2, weights])
+    assert wdf.index.names == ['A', 'B', 'C', 'weights']
+    assert_allclose(np.array([*wdf.index]).T, [i1, i2, i3, weights])
+
     assert wdf.reset_index().index.names == [None, 'weights']
-    wdf.reset_index()
+
+    assert not np.array_equal(wdf.reset_index().columns, wdf.columns)
+    assert_array_equal(wdf.reset_index(drop=True).columns, wdf.columns)
+
+    new = wdf.copy()
+    assert not np.array_equal(new.index, wdf.reset_index())
+    new.reset_index(inplace=True)
+    assert_array_equal(new.index, wdf.reset_index().index)
+
+    wdf_ = wdf.reset_index(level='A')
+    assert wdf_.index.names == ['B', 'C', 'weights']
+    wdf_ = wdf.reset_index(level=['A', 'C'])
+    assert wdf_.index.names == ['B', 'weights']
 
 
 def test_weight_passing(mcmc_wdf):
