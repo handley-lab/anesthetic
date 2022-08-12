@@ -606,14 +606,14 @@ def test_live_points():
         live_points_from_index = pc.live_points(i)
         assert_array_equal(live_points_from_index, live_points)
 
-    assert pc.live_points(0).index[0][0] == 0
+    assert pc.live_points(0).index[0] == 0
 
     last_live_points = pc.live_points()
     logL = pc.logL_birth.max()
     assert (last_live_points.logL >= logL).all()
     assert len(last_live_points) == pc.nlive.mode().to_numpy()[0]
 
-    len(last_live_points)
+    assert not live_points.isweighted()
 
 
 def test_hist_range_1d():

@@ -616,7 +616,7 @@ class NestedSamples(Samples):
             except KeyError:
                 pass
         i = (self.logL >= logL) & (self.logL_birth < logL)
-        return Samples(self[i], weights=np.ones(i.sum()))
+        return Samples(self[i]).set_weights(None)
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""

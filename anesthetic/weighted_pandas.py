@@ -31,15 +31,31 @@ class _WeightedObject(object):
 
     def set_weights(self, weights, axis=0, inplace=False):
         """Set sample weights along an axis."""
-        result = self.set_axis([self._get_axis(axis).get_level_values(name)
-                                for name in self._get_axis(axis).names
-                                if name != 'weights'] + [weights], axis=axis)
-        names = result._get_axis(axis).names[:-1] + ['weights']
-        result._get_axis(axis).set_names(names, inplace=True)
+        if weights is None:
+            if self.isweighted(axis=axis):
+                result = self.droplevel('weights', axis=axis)
+            elif inplace:
+                result = self
+            else:
+                result = self.copy()
+        else:
+            result = self.set_axis([self._get_axis(axis).get_level_values(name)
+                                    for name in self._get_axis(axis).names
+                                    if name != 'weights'] + [weights],
+                                   axis=axis)
+            names = result._get_axis(axis).names[:-1] + ['weights']
+            result._get_axis(axis).set_names(names, inplace=True)
+
         if inplace:
             self._update_inplace(result)
         else:
             return result.__finalize__(self, "set_weights")
+
+    def _rand(self, axis=0):
+        """Random number for consistent compression."""
+        seed = hash_pandas_object(self._get_axis(axis)).sum() % 2**32
+        with temporary_seed(seed):
+            return np.random.rand(self.shape[axis])
 
     def reset_index(self, level=None, drop=False, inplace=False,
                     *args, **kwargs):
@@ -65,12 +81,6 @@ class _WeightedObject(object):
         """Weighted median of the sampled distribution."""
         return self.quantile(*args, **kwargs)
 
-    def _rand(self, axis=0):
-        """Random number for consistent compression."""
-        seed = hash_pandas_object(self._get_axis(axis)).sum() % 2**32
-        with temporary_seed(seed):
-            return np.random.rand(self.shape[axis])
-
     def neff(self, axis=0):
         """Effective number of samples."""
         if self.isweighted(axis):
@@ -81,10 +91,6 @@ class _WeightedObject(object):
 
 class WeightedSeries(_WeightedObject, Series):
     """Weighted version of pandas.Series."""
-
-    def sample(self, *args, **kwargs):
-        """Weighted sample."""
-        return super().sample(weights=self.get_weights(), *args, **kwargs)
 
     def mean(self, skipna=True):
         """Weighted mean of the sampled distribution."""
@@ -168,6 +174,10 @@ class WeightedSeries(_WeightedObject, Series):
         i = compress_weights(self.get_weights(), self._rand(), nsamples)
         return self.repeat(i)
 
+    def sample(self, *args, **kwargs):
+        """Weighted sample."""
+        return super().sample(weights=self.get_weights(), *args, **kwargs)
+
     @property
     def _constructor(self):
         return WeightedSeries
@@ -179,19 +189,6 @@ class WeightedSeries(_WeightedObject, Series):
 
 class WeightedDataFrame(_WeightedObject, DataFrame):
     """Weighted version of pandas.DataFrame."""
-
-    def _weights(self, axis):
-        return self._get_axis(axis).get_level_values('weights').to_numpy()
-
-    def sample(self, *args, **kwargs):
-        """Weighted sample."""
-        sig = signature(DataFrame.sample)
-        axis = sig.bind(self, *args, **kwargs).arguments.get('axis', 0)
-        if self.isweighted(axis):
-            return super().sample(weights=self.get_weights(axis),
-                                  *args, **kwargs)
-        else:
-            return super().sample(*args, **kwargs)
 
     def mean(self, axis=0, skipna=True, *args, **kwargs):
         """Weighted mean of the sampled distribution."""
@@ -351,6 +348,16 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return df
         else:
             return self
+
+    def sample(self, *args, **kwargs):
+        """Weighted sample."""
+        sig = signature(DataFrame.sample)
+        axis = sig.bind(self, *args, **kwargs).arguments.get('axis', 0)
+        if self.isweighted(axis):
+            return super().sample(weights=self.get_weights(axis),
+                                  *args, **kwargs)
+        else:
+            return super().sample(*args, **kwargs)
 
     @property
     def _constructor_sliced(self):
