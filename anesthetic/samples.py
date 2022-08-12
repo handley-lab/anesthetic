@@ -87,13 +87,6 @@ class Samples(WeightedDataFrame):
         self.__init__(root=self.root)
         return self
 
-    def copy(self, deep=True):
-        """Copy which also includes mutable metadata."""
-        new = super().copy(deep)
-        if deep:
-            new.tex = copy.deepcopy(self.tex)
-        return new
-
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
 

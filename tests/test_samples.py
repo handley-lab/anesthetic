@@ -727,7 +727,6 @@ def test_NestedSamples_importance_sample():
     assert ns0.label == ns1.label
     assert ns0.beta == ns1.beta
     assert ns0 is not ns1
-    assert ns0.tex is not ns1.tex
 
 
 def test_MCMCSamples_importance_sample():
@@ -772,7 +771,6 @@ def test_MCMCSamples_importance_sample():
         assert mc.label == mc0.label
         assert mc._metadata == mc0._metadata
         assert mc is not mc0
-        assert mc.tex is not mc0.tex
 
     mc0.importance_sample(mask, action='mask', inplace=True)
     assert type(mc0) is MCMCSamples
@@ -782,7 +780,6 @@ def test_MCMCSamples_importance_sample():
     assert mc3.label == mc0.label
     assert mc3._metadata == mc0._metadata
     assert mc3 is not mc0
-    assert mc3.tex is not mc0.tex
 
 
 def test_wedding_cake():
@@ -876,7 +873,6 @@ def test_copy():
     pc = NestedSamples(root='./tests/example_data/pc')
     new = pc.copy()
     assert new is not pc
-    assert new.tex is not pc.tex
 
 
 def test_plotting_with_integer_names():
