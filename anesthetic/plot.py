@@ -483,6 +483,10 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ncompress: int, optional
         Degree of compression. Default 1000
 
+    nplot: int, optional
+        Number of plotting points to use.
+        optional, Default 100
+
     levels: list
         values at which to draw iso-probability lines.
         optional, default [0.95, 0.68]
@@ -521,6 +525,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         weights = weights[weights != 0]
 
     ncompress = kwargs.pop('ncompress', 1000)
+    nplot = kwargs.pop('nplot', 100)
     bw_method = kwargs.pop('bw_method', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
     density = kwargs.pop('density', False)
@@ -539,27 +544,28 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
 
-    x, w = sample_compression_1d(data, weights, ncompress)
-    kde = gaussian_kde(x, weights=w, bw_method=bw_method)
+    data_compressed, w = sample_compression_1d(data, weights, ncompress)
+    kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
+    xmin = quantile(data, q[0], weights)
+    xmax = quantile(data, q[-1], weights)
+    x = np.linspace(xmin, xmax, nplot)
+
     p = kde(x)
     p /= p.max()
-    i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[-1], w)))
     bw = np.sqrt(kde.covariance[0, 0])
-    pp = cut_and_normalise_gaussian(x[i], p[i], bw=bw,
-                                    xmin=data.min(), xmax=data.max())
+    pp = cut_and_normalise_gaussian(x, p, bw, xmin=data.min(), xmax=data.max())
     pp /= pp.max()
-    area = np.trapz(x=x[i], y=pp) if density else 1
-    ans = ax.plot(x[i], pp/area, color=color, *args, **kwargs)
+    area = np.trapz(x=x, y=pp) if density else 1
+    ans = ax.plot(x, pp/area, color=color, *args, **kwargs)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
             facecolor = color
-        c = iso_probability_contours_from_samples(pp, contours=levels,
-                                                  weights=w)
+        c = iso_probability_contours_from_samples(pp, contours=levels)
         cmap = basic_cmap(facecolor)
         fill = []
         for j in range(len(c)-1):
-            fill.append(ax.fill_between(x[i], pp, where=pp >= c[j],
+            fill.append(ax.fill_between(x, pp, where=pp >= c[j],
                         color=cmap(c[j]), edgecolor=edgecolor))
 
         return ans, fill
