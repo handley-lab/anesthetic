@@ -396,6 +396,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
         - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
         - tuple: quantile range, e.g. (0.16, 0.84)
+        Default 5
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -486,7 +487,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     nplot: int, optional
         Number of plotting points to use.
-        optional, Default 100
+        Default 100
 
     levels: list
         values at which to draw iso-probability lines.
@@ -498,6 +499,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
         - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
         - tuple: quantile range, e.g. (0.16, 0.84)
+        Default 5
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -597,6 +599,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
         - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
         - tuple: quantile range, e.g. (0.16, 0.84)
+        Default 5
 
     Returns
     -------
@@ -884,6 +887,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
         - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
         - tuple: quantile range, e.g. (0.16, 0.84)
+        Default 5
 
     Returns
     -------
