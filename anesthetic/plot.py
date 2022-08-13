@@ -776,7 +776,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     ncompress: int, optional
         Degree of compression.
-        optional, Default 1000
+        Default 10000
 
     nplot: int, optional
         Number of plotting points to use.
@@ -800,7 +800,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         data_y = data_y[weights != 0]
         weights = weights[weights != 0]
 
-    ncompress = kwargs.pop('ncompress', 1000)
+    ncompress = kwargs.pop('ncompress', 10000)
     nplot = kwargs.pop('nplot', 1000)
     bw_method = kwargs.pop('bw_method', None)
     label = kwargs.pop('label', None)
