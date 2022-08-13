@@ -561,7 +561,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
             facecolor = color
-        c = iso_probability_contours_from_samples(pp, contours=levels)
+        c = iso_probability_contours(pp, contours=levels)
         cmap = basic_cmap(facecolor)
         fill = []
         for j in range(len(c)-1):
