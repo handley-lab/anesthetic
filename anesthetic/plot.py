@@ -481,7 +481,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         Sample weights.
 
     ncompress: int, optional
-        Degree of compression. Default 1000
+        Degree of compression. 
+        Default 10000
 
     nplot: int, optional
         Number of plotting points to use.
@@ -524,7 +525,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         data = data[weights != 0]
         weights = weights[weights != 0]
 
-    ncompress = kwargs.pop('ncompress', 1000)
+    ncompress = kwargs.pop('ncompress', 10000)
     nplot = kwargs.pop('nplot', 100)
     bw_method = kwargs.pop('bw_method', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
