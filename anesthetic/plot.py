@@ -779,6 +779,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Degree of compression.
         optional, Default 1000
 
+    nplot: int, optional
+        Number of plotting points to use.
+        Default 1000
+
     Returns
     -------
     c: matplotlib.contour.QuadContourSet
@@ -798,6 +802,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         weights = weights[weights != 0]
 
     ncompress = kwargs.pop('ncompress', 1000)
+    nplot = kwargs.pop('nplot', 1000)
     bw_method = kwargs.pop('bw_method', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
@@ -817,12 +822,17 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                               weights, ncompress)
     kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
 
-    x, y = kde.resample(ncompress)
-    x = np.concatenate([tri.x, x])
-    y = np.concatenate([tri.y, y])
-    w = np.concatenate([w, np.zeros(ncompress)])
-    tri = scaled_triangulation(x, y, cov)
+    q = kwargs.pop('q', 5)
+    q = quantile_plot_interval(q=q)
+    xmin = quantile(data_x, q[0], weights)
+    xmax = quantile(data_x, q[-1], weights)
+    ymin = quantile(data_y, q[0], weights)
+    ymax = quantile(data_y, q[-1], weights)
+    x = np.linspace(xmin, xmax, int(np.sqrt(nplot)))
+    y = np.linspace(ymin, ymax, int(np.sqrt(nplot)))
+    x, y = np.meshgrid(x, y)
 
+    tri = scaled_triangulation(x.flatten(), y.flatten(), cov)
     p = kde([tri.x, tri.y])
 
     bw_x = np.sqrt(kde.covariance[0, 0])
@@ -832,8 +842,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     p = cut_and_normalise_gaussian(tri.y, p, bw=bw_y,
                                    xmin=data_y.min(), xmax=data_y.max())
 
-    levels = iso_probability_contours_from_samples(p, contours=levels,
-                                                   weights=w)
+    levels = iso_probability_contours(p, contours=levels)
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
