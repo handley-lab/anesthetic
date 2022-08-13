@@ -310,7 +310,7 @@ def test_kde_plot_1d(plot_1d):
         # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
         fig, ax = plt.subplots()
         data = np.random.uniform(size=1000)
-        plot_1d(ax, data)
+        plot_1d(ax, data, q=0)
         xmin, xmax = ax.get_xlim()
         assert xmin <= 0
         assert xmax >= 1
@@ -564,13 +564,19 @@ def test_contour_plot_2d(contour_plot_2d):
         fig, ax = plt.subplots()
         data_x = np.random.uniform(size=1000)
         data_y = np.random.uniform(size=1000)
-        contour_plot_2d(ax, data_x, data_y)
+        contour_plot_2d(ax, data_x, data_y, q=0)
         xmin, xmax = ax.get_xlim()
         ymin, ymax = ax.get_ylim()
-        assert xmin <= 0
-        assert xmax >= 1
-        assert ymin <= 0
-        assert ymax >= 1
+        if contour_plot_2d is fastkde_contour_plot_2d:
+            assert xmin <= 0
+            assert xmax >= 1
+            assert ymin <= 0
+            assert ymax >= 1
+        elif contour_plot_2d is kde_contour_plot_2d:
+            assert xmin == pytest.approx(0, abs=0.01)
+            assert xmax == pytest.approx(1, abs=0.01)
+            assert ymin == pytest.approx(0, abs=0.01)
+            assert ymax == pytest.approx(1, abs=0.01)
         plt.close("all")
 
     except ImportError:

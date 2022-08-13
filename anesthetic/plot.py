@@ -32,7 +32,6 @@ from anesthetic.utils import nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
-                              iso_probability_contours_from_samples,
                               scaled_triangulation, match_contour_to_contourf)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
@@ -482,7 +481,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         Sample weights.
 
     ncompress: int, optional
-        Degree of compression. 
+        Degree of compression.
         Default 10000
 
     nplot: int, optional
