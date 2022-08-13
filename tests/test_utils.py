@@ -61,13 +61,17 @@ def test_unique():
     assert unique([3, 2, 1, 4, 1, 3]) == [3, 2, 1, 4]
 
 
-@pytest.mark.parametrize('ipc', [iso_probability_contours,
-                                 iso_probability_contours_from_samples])
-def test_iso_probability_contours(ipc):
+def test_iso_probability_contours():
     p = np.random.randn(10)
-    ipc(p)
+    w = np.ones_like(p)
+    iso_probability_contours(p)
+    iso_probability_contours_from_samples(p, [0.95, 0.68], w)
+    with pytest.raises(TypeError):
+        iso_probability_contours_from_samples(p)
     with pytest.raises(ValueError):
-        ipc(p, contours=[0.68, 0.95])
+        iso_probability_contours(p, contours=[0.68, 0.95])
+    with pytest.raises(ValueError):
+        iso_probability_contours_from_samples(p, [0.68, 0.95], w)
 
 
 def test_triangular_sample_compression_2d():
