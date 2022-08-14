@@ -188,6 +188,13 @@ def test_WeightedDataFrame_corrwith(frame):
     with pytest.raises(ValueError):
         unweighted.corrwith(frame[['A', 'B']])
 
+    correl_1 = frame[:5].corrwith(frame.iloc[0], axis=1)
+    correl_2 = frame[:5].T.corrwith(unweighted.T[0])
+    assert_allclose(correl_1, correl_2)
+
+    frame.set_weights(None, inplace=True)
+    assert_array_equal(frame.corrwith(frame), unweighted.corrwith(unweighted))
+
 
 def test_WeightedDataFrame_median(frame):
     median = frame.median()
@@ -872,3 +879,18 @@ def test_weight_passing(mcmc_wdf):
 
     new_wdf = WeightedDataFrame(mcmc_wdf.copy(), weights=weights)
     assert_array_equal(new_wdf.get_weights(), weights)
+
+
+def test_set_weights(mcmc_wdf):
+    weights_1 = mcmc_wdf.get_weights()
+    weights_2 = np.random.rand(len(mcmc_wdf.index))
+
+    assert_array_equal(mcmc_wdf.set_weights(weights_2).get_weights(),
+                       weights_2)
+    assert_array_equal(mcmc_wdf.get_weights(), weights_1)
+    mcmc_wdf.set_weights(weights_2, inplace=True)
+    assert_array_equal(mcmc_wdf.get_weights(), weights_2)
+
+    assert mcmc_wdf.isweighted()
+    assert not mcmc_wdf.set_weights(None).isweighted()
+    assert_array_equal(mcmc_wdf.set_weights(None).get_weights(), 1)
