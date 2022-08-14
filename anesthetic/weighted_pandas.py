@@ -116,7 +116,7 @@ class WeightedSeries(_WeightedObject, Series):
         return np.average(masked_array((self-x)*(other-y), null),
                           weights=self.get_weights())
 
-    def corr(self, other, skipna=True):
+    def corr(self, other, method="pearson", skipna=True):
         """Weighted pearson correlation with another Series."""
         norm = self.std(skipna=skipna)*other.std(skipna=skipna)
         return self.cov(other, skipna=skipna)/norm
@@ -224,7 +224,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         else:
             return super().cov(*args, **kwargs)
 
-    def corr(self, skipna=True, *args, **kwargs):
+    def corr(self, method="pearson", skipna=True, *args, **kwargs):
         """Weighted pearson correlation matrix of the sampled distribution."""
         if self.isweighted():
             cov = self.cov()
@@ -233,14 +233,20 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         else:
             return super().corr(*args, **kwargs)
 
-    def corrwith(self, other, drop=False, *args, **kwargs):
+    def corrwith(self, other, axis=0, drop=False, method="pearson",
+                 *args, **kwargs):
         """Pairwise weighted pearson correlation."""
         if self.isweighted():
             if isinstance(other, Series):
-                answer = self.apply(lambda x: other.corr(x), axis=0)
+                answer = self.apply(lambda x: other.corr(x, method=method),
+                                    axis=axis)
                 return WeightedSeries(answer)
 
             left, right = self.align(other, join="inner", copy=False)
+
+            if axis == 1:
+                left = left.T
+                right = right.T
 
             # mask missing values
             left = left + right * 0

@@ -174,6 +174,20 @@ def test_WeightedDataFrame_corrwith(frame):
     assert_allclose(correl['B'], 1, atol=1e-2)
     assert np.isnan(correl['C'])
 
+    unweighted = DataFrame(frame).droplevel('weights')
+
+    with pytest.raises(ValueError):
+        frame.corrwith(unweighted.A)
+
+    with pytest.raises(ValueError):
+        frame.corrwith(unweighted[['A', 'B']])
+
+    with pytest.raises(ValueError):
+        unweighted.corrwith(frame.A)
+
+    with pytest.raises(ValueError):
+        unweighted.corrwith(frame[['A', 'B']])
+
 
 def test_WeightedDataFrame_median(frame):
     median = frame.median()
@@ -461,6 +475,14 @@ def test_WeightedSeries_corr(frame):
     assert_allclose(frame.A.corr(frame.B), 0, atol=1e-2)
     D = frame.A + frame.B
     assert_allclose(frame.A.corr(D), 1/np.sqrt(2), atol=1e-2)
+
+    unweighted = DataFrame(frame).droplevel('weights')
+
+    with pytest.raises(ValueError):
+        frame.A.corr(unweighted.B)
+
+    with pytest.raises(ValueError):
+        unweighted.A.corr(frame.B)
 
 
 def test_WeightedSeries_median(series):
