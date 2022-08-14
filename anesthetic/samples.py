@@ -4,7 +4,6 @@
 - ``MCMCSamples``
 - ``NestedSamples``
 """
-import os
 import numpy as np
 import pandas
 import copy
@@ -291,12 +290,15 @@ class Samples(WeightedDataFrame):
             Importance re-weighted samples.
         """
         samples = self.copy()
+        logL_new = np.array(logL_new)
         if action == 'add':
-            samples.weights *= np.exp(logL_new - logL_new.max())
+            weights = samples.weights * np.exp(logL_new - logL_new.max())
+            samples.weights = weights
             samples.logL += logL_new
         elif action == 'replace':
             logL_new2 = logL_new - samples.logL
-            samples.weights *= np.exp(logL_new2 - logL_new2.max())
+            weights = samples.weights * np.exp(logL_new2 - logL_new2.max())
+            samples.weights = weights
             samples.logL = logL_new
         elif action == 'mask':
             samples = samples[logL_new]
@@ -348,6 +350,7 @@ class MCMCSamples(Samples):
     def __init__(self, *args, **kwargs):
         root = kwargs.pop('root', None)
         super().__init__(*args, **kwargs)
+        self.root = root
 
     @property
     def _constructor(self):

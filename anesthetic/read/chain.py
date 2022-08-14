@@ -3,7 +3,8 @@ from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 
-def read_chain(root, *args, **kwargs):
+
+def read_chains(root, *args, **kwargs):
     errors = []
     for read in [read_polychord, read_getdist, read_cobaya, read_multinest]:
         try:

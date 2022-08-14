@@ -6,8 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from anesthetic import Samples, MCMCSamples, NestedSamples
-from anesthetic import make_1d_axes, make_2d_axes
+from anesthetic import (
+    Samples, MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes,
+    read_chains
+)
 from anesthetic.samples import merge_nested_samples
 from anesthetic.samples import merge_samples_weighted
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
@@ -89,20 +91,12 @@ def test_build_samples():
     assert ns.root is None
 
 
-def test_NS_input_fails_in_MCMCSamples():
-    with pytest.raises(ValueError) as excinfo:
-        MCMCSamples(root='./tests/example_data/pc')
-    assert "Please use NestedSamples instead which has the same features as " \
-           "Samples and more. MCMCSamples should be used for MCMC " \
-           "chains only." in str(excinfo.value)
-
-
 def test_different_parameters():
     np.random.seed(3)
     params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
     params_y = ['x0', 'x1', 'x2']
     fig, axes = make_1d_axes(params_x)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     ns.plot_1d(axes)
     fig, axes = make_2d_axes(params_y)
     ns.plot_2d(axes)
@@ -115,23 +109,23 @@ def test_different_parameters():
 
 def test_manual_columns():
     old_params = ['x0', 'x1', 'x2', 'x3', 'x4']
-    mcmc_params = ['logL']
+    mcmc_params = ['logL', 'chain']
     ns_params = ['logL', 'logL_birth', 'nlive']
-    mcmc = MCMCSamples(root='./tests/example_data/gd')
-    ns = NestedSamples(root='./tests/example_data/pc')
+    mcmc = read_chains('./tests/example_data/gd')
+    ns = read_chains('./tests/example_data/pc')
     assert_array_equal(mcmc.columns, old_params + mcmc_params)
     assert_array_equal(ns.columns, old_params + ns_params)
 
     new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
-    mcmc = MCMCSamples(root='./tests/example_data/gd', columns=new_params)
-    ns = NestedSamples(root='./tests/example_data/pc', columns=new_params)
+    mcmc = read_chains('./tests/example_data/gd', columns=new_params)
+    ns = read_chains('./tests/example_data/pc', columns=new_params)
     assert_array_equal(mcmc.columns, new_params + mcmc_params)
     assert_array_equal(ns.columns, new_params + ns_params)
 
 
 def test_plot_2d_kinds():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     params_x = ['x0', 'x1', 'x2', 'x3']
     params_y = ['x0', 'x1', 'x2']
     params = [params_x, params_y]
@@ -195,7 +189,7 @@ def test_plot_2d_kinds():
 
 def test_plot_2d_kinds_multiple_calls():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     params = ['x0', 'x1', 'x2', 'x3']
 
     fig, axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
@@ -212,7 +206,7 @@ def test_plot_2d_kinds_multiple_calls():
 
 def test_root_and_label():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     assert ns.root == './tests/example_data/pc'
     assert ns.label == 'pc'
 
@@ -220,7 +214,7 @@ def test_root_and_label():
     assert ns.root is None
     assert ns.label is None
 
-    mc = MCMCSamples(root='./tests/example_data/gd')
+    mc = read_chains('./tests/example_data/gd')
     assert (mc.root == './tests/example_data/gd')
     assert mc.label == 'gd'
 
@@ -231,8 +225,8 @@ def test_root_and_label():
 
 def test_plot_2d_legend():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
-    mc = MCMCSamples(root='./tests/example_data/gd')
+    ns = read_chains('./tests/example_data/pc')
+    mc = read_chains('./tests/example_data/gd')
     params = ['x0', 'x1', 'x2', 'x3']
 
     # Test label kwarg for kde
@@ -290,8 +284,8 @@ def test_plot_2d_legend():
     plt.close('all')
 
     # Test label kwarg to constructors
-    ns = NestedSamples(root='./tests/example_data/pc', label='l1')
-    mc = MCMCSamples(root='./tests/example_data/gd', label='l2')
+    ns = read_chains('./tests/example_data/pc', label='l1')
+    mc = read_chains('./tests/example_data/gd', label='l2')
     params = ['x0', 'x1', 'x2', 'x3']
 
     fig, axes = make_2d_axes(params, upper=False)
@@ -308,11 +302,11 @@ def test_plot_2d_legend():
 
 def test_plot_2d_colours():
     np.random.seed(3)
-    gd = MCMCSamples(root="./tests/example_data/gd")
+    gd = read_chains("./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True)
-    pc = NestedSamples(root="./tests/example_data/pc")
+    pc = read_chains("./tests/example_data/pc")
     pc.drop(columns='x4', inplace=True)
-    mn = NestedSamples(root="./tests/example_data/mn")
+    mn = read_chains("./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
     kinds = ['kde', 'hist']
@@ -355,11 +349,11 @@ def test_plot_2d_colours():
 
 def test_plot_1d_colours():
     np.random.seed(3)
-    gd = MCMCSamples(root="./tests/example_data/gd")
+    gd = read_chains("./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True)
-    pc = NestedSamples(root="./tests/example_data/pc")
+    pc = read_chains("./tests/example_data/pc")
     pc.drop(columns='x4', inplace=True)
-    mn = NestedSamples(root="./tests/example_data/mn")
+    mn = read_chains("./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
     kinds = ['kde', 'hist']
@@ -401,14 +395,14 @@ def test_plot_1d_colours():
                    reason="requires astropy package")
 def test_astropyhist():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
     plt.close("all")
 
 
 def test_hist_levels():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
                levels=[0.95, 0.68], bins=20)
     plt.close("all")
@@ -416,7 +410,7 @@ def test_hist_levels():
 
 def test_ns_output():
     np.random.seed(3)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     for beta in [1., 0., 0.5]:
         pc.beta = beta
         n = 1000
@@ -442,7 +436,7 @@ def test_ns_output():
 
 
 def test_masking():
-    pc = NestedSamples(root="./tests/example_data/pc")
+    pc = read_chains("./tests/example_data/pc")
     mask = pc['x0'] > 0
 
     kinds = ['kde', 'hist']
@@ -461,8 +455,8 @@ def test_masking():
 
 def test_merging():
     np.random.seed(3)
-    samples_1 = NestedSamples(root='./tests/example_data/pc')
-    samples_2 = NestedSamples(root='./tests/example_data/pc_250')
+    samples_1 = read_chains('./tests/example_data/pc')
+    samples_2 = read_chains('./tests/example_data/pc_250')
     samples = merge_nested_samples([samples_1, samples_2])
     nlive_1 = samples_1.nlive.mode()[0]
     nlive_2 = samples_2.nlive.mode()[0]
@@ -477,8 +471,8 @@ def test_merging():
 
 def test_weighted_merging():
     # Generate some data to try it out:
-    samples_1 = NestedSamples(root='./tests/example_data/pc')
-    samples_2 = NestedSamples(root='./tests/example_data/pc_250')
+    samples_1 = read_chains('./tests/example_data/pc')
+    samples_2 = read_chains('./tests/example_data/pc_250')
     samples_1['xtest'] = 7*samples_1['x3']
     samples_2['xtest'] = samples_2['x3']
     samples_1.tex['xtest'] = "$x_{t,1}$"
@@ -540,7 +534,7 @@ def test_weighted_merging():
 
 
 def test_beta():
-    pc = NestedSamples(root="./tests/example_data/pc")
+    pc = read_chains("./tests/example_data/pc")
     weights = pc.weights
     assert_array_equal(weights, pc.weights)
     assert_array_equal(pc.index.get_level_values('weights'), pc.weights)
@@ -570,7 +564,7 @@ def test_beta():
 
 
 def test_beta_with_logL_infinities():
-    ns = NestedSamples(root="./tests/example_data/pc")
+    ns = read_chains("./tests/example_data/pc")
     for i in range(10):
         ns.loc[i, 'logL'] = -np.inf
     prior = ns.set_beta(0)
@@ -580,7 +574,7 @@ def test_beta_with_logL_infinities():
 
 
 def test_prior():
-    ns = NestedSamples(root="./tests/example_data/pc")
+    ns = read_chains("./tests/example_data/pc")
     prior = ns.prior()
     assert prior.beta == 0
     assert_frame_equal(prior, ns.set_beta(0))
@@ -588,7 +582,7 @@ def test_prior():
 
 def test_live_points():
     np.random.seed(4)
-    pc = NestedSamples(root="./tests/example_data/pc")
+    pc = read_chains("./tests/example_data/pc")
 
     for i, logL in pc.logL.iloc[::49].iteritems():
         live_points = pc.live_points(logL)
@@ -611,7 +605,7 @@ def test_live_points():
 def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     fig, ax = ns.plot_1d('x0', kind='hist_1d')
     x1, x2 = ax['x0'].get_xlim()
     assert x1 > -1
@@ -625,7 +619,7 @@ def test_hist_range_1d():
 def test_contour_plot_2d_nan():
     """Contour plots with nans arising from issue #96"""
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
 
     ns.loc[:9, 'x0'] = np.nan
     with pytest.raises((np.linalg.LinAlgError, RuntimeError, ValueError)):
@@ -640,7 +634,7 @@ def test_contour_plot_2d_nan():
 
 def test_compute_insertion():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     assert 'insertion' not in ns
     ns._compute_insertion_indexes()
     assert 'insertion' in ns
@@ -659,19 +653,19 @@ def test_compute_insertion():
 
 def test_posterior_points():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     assert_array_equal(ns.posterior_points(), ns.posterior_points())
     assert_array_equal(ns.posterior_points(0.5), ns.posterior_points(0.5))
 
 
 def test_prior_points():
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     assert_array_equal(ns.prior_points(), ns.posterior_points(0))
 
 
 def test_NestedSamples_importance_sample():
     np.random.seed(3)
-    ns0 = NestedSamples(root='./tests/example_data/pc')
+    ns0 = read_chains('./tests/example_data/pc')
     pi0 = ns0.set_beta(0)
     NS0 = ns0.ns_output(nsamples=2000)
 
@@ -724,7 +718,7 @@ def test_NestedSamples_importance_sample():
 
 def test_MCMCSamples_importance_sample():
     np.random.seed(3)
-    mc0 = MCMCSamples(root='./tests/example_data/gd')
+    mc0 = read_chains('./tests/example_data/gd')
 
     with pytest.raises(NotImplementedError):
         mc0.importance_sample(mc0.logL, action='spam')
@@ -767,7 +761,7 @@ def test_MCMCSamples_importance_sample():
         assert mc.tex is not mc0.tex
 
     mc0.importance_sample(mask, action='mask', inplace=True)
-    assert type(mc0) is MCMCSamples
+    assert isinstance(mc0, MCMCSamples)
     assert_array_equal(mc3, mc0)
     assert mc3.tex == mc0.tex
     assert mc3.root == mc0.root
@@ -791,7 +785,7 @@ def test_wedding_cake():
 
 def test_logzero_mask_prior_level():
     np.random.seed(3)
-    ns0 = NestedSamples(root='./tests/example_data/pc')
+    ns0 = read_chains('./tests/example_data/pc')
     pi0 = ns0.set_beta(0)
     NS0 = ns0.ns_output(nsamples=2000)
     mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
@@ -808,14 +802,14 @@ def test_logzero_mask_prior_level():
 
 def test_logzero_mask_likelihood_level():
     np.random.seed(3)
-    ns0 = NestedSamples(root='./tests/example_data/pc')
+    ns0 = read_chains('./tests/example_data/pc')
     NS0 = ns0.ns_output(nsamples=2000)
     mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
 
     V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
     logZ_V = NS0.logZ.mean() + np.log(V_posterior)
 
-    ns1 = NestedSamples(root='./tests/example_data/pc')
+    ns1 = read_chains('./tests/example_data/pc')
     ns1.logL = np.where(mask, ns1.logL, -1e30)
     ns1 = merge_nested_samples((ns1[ns1.logL > ns1.logL_birth],))
     NS1 = ns1.ns_output(nsamples=2000)
@@ -825,7 +819,7 @@ def test_logzero_mask_likelihood_level():
 
 def test_recompute():
     np.random.seed(3)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     recompute = pc.recompute()
     assert recompute is not pc
 
@@ -834,14 +828,14 @@ def test_recompute():
         recompute = pc.recompute()
     assert len(recompute) == len(pc) - 1
 
-    mn = NestedSamples(root='./tests/example_data/mn_old')
+    mn = read_chains('./tests/example_data/mn_old')
     with pytest.raises(RuntimeError):
         mn.recompute()
 
 
 def test_NaN():
     np.random.seed(3)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         pc_new = pc.copy()
@@ -855,7 +849,7 @@ def test_NaN():
 
 def test_unsorted():
     np.random.seed(4)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     i = np.random.choice(len(pc), len(pc), replace=False)
     pc_resort = NestedSamples(data=pc.loc[i, ['x0', 'x1', 'x2', 'x3', 'x4']],
                               logL=pc.loc[i, 'logL'],
@@ -865,7 +859,7 @@ def test_unsorted():
 
 def test_copy():
     np.random.seed(3)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     new = pc.copy()
     assert new is not pc
     assert new.tex is not pc.tex
@@ -891,7 +885,7 @@ def test_plotting_with_integer_names():
 
 def test_logL_list():
     np.random.seed(5)
-    default = NestedSamples(root='./tests/example_data/pc')
+    default = read_chains('./tests/example_data/pc')
     logL = default.logL.tolist()
     logL_birth = default.logL_birth.tolist()
     data = default.iloc[:, :5].to_numpy().tolist()
@@ -902,7 +896,7 @@ def test_logL_list():
 
 
 def test_samples_dot_plot():
-    samples = NestedSamples(root='./tests/example_data/pc')
+    samples = read_chains('./tests/example_data/pc')
     axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
     assert len(axes.containers) == 5
     axes = samples.x0.plot.kde(subplots=True)

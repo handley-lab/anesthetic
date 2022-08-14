@@ -2,6 +2,9 @@ import os
 import glob
 import numpy as np
 from anesthetic.samples import MCMCSamples
+from anesthetic.read.utils import remove_burn_in
+from pandas import concat
+
 
 def read_paramnames(root):
     r"""Read <root>.paramnames in getdist format.
@@ -34,15 +37,6 @@ def read_paramnames(root):
         return None, {}
 
 
-def remove_burn_in(data, burn_in):
-    """Strip burn in from a dataset."""
-    if burn_in:
-        if 0 < burn_in < 1:
-            burn_in *= len(data)
-        return data[np.ceil(burn_in).astype(int):]
-    return data
-
-
 def read_getdist(root, *args, **kwargs):
     """Read <root>_1.txt in getdist format.
 
@@ -71,16 +65,28 @@ def read_getdist(root, *args, **kwargs):
     if not chains_files:
         chains_files = [root + '.txt']
 
-    data = np.array([])
-    for chains_file in chains_files:
-        data_i = np.loadtxt(chains_file)
-        data_i = remove_burn_in(data_i, burn_in)
-    data = np.concatenate((data, data_i)) if data.size else data_i
-    weights, minuslogL, data = np.split(data, [1, 2], axis=1)
-
     params, tex = read_paramnames(root)
     columns = kwargs.pop('columns', params)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
-    return MCMCSamples(data=data, columns=columns, weights=weights.flatten(),
-                       logL=-minuslogL, tex=tex, root=root, *args, **kwargs)
+    samples = []
+    for i, chains_file in enumerate(chains_files):
+        data = np.loadtxt(chains_file)
+        data = remove_burn_in(data, burn_in)
+        weights, minuslogL, data = np.split(data, [1, 2], axis=1)
+        mcmc = MCMCSamples(data=data, columns=columns,
+                           weights=weights.flatten(), logL=-minuslogL, tex=tex,
+                           root=root, *args, **kwargs)
+        mcmc['chain'] = i
+        samples.append(mcmc)
+
+    samples = concat(samples).reset_index(drop=True)
+    samples.root = root
+    samples.label = kwargs['label']
+
+    if (samples.chain == 0).all():
+        samples.drop('chain', inplace=True, axis=1)
+    else:
+        samples.tex['chain'] = r'$n_\mathrm{chain}$'
+
+    return samples

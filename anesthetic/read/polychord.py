@@ -3,6 +3,7 @@ import numpy as np
 from anesthetic.read.getdist import read_paramnames
 from anesthetic.samples import NestedSamples
 
+
 def read_polychord(root, *args, **kwargs):
     """Read ``<root>_dead-birth.txt`` in polychord format."""
     birth_file = root + '_dead-birth.txt'
@@ -24,7 +25,6 @@ def read_polychord(root, *args, **kwargs):
     columns = kwargs.pop('columns', params)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
-    return NestedSamples(data=data, columns=columns, 
+    return NestedSamples(data=data, columns=columns,
                          logL=logL, logL_birth=logL_birth,
                          tex=tex, root=root, *args, **kwargs)
-

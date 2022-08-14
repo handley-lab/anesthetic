@@ -1,8 +1,9 @@
 import os
 import glob
 import numpy as np
-from anesthetic.read.getdist import remove_burn_in
+from anesthetic.read.utils import remove_burn_in
 from anesthetic.samples import MCMCSamples
+from pandas import concat
 
 
 def read_paramnames(root):
@@ -22,24 +23,52 @@ def read_paramnames(root):
 
 
 def read_cobaya(root, *args, **kwargs):
-    """Read Cobaya yaml files."""
+    """Read Cobaya yaml files.
+
+    Parameters
+    ----------
+
+    burn_in: float
+        if 0 < burn_in < 1:
+            discard the first burn_in fraction of samples
+        elif 1 < burn_in:
+            only keep samples [burn_in:]
+        Only works if `root` provided and if chains are GetDist or Cobaya
+        compatible.
+        default: False
+
+    Returns
+    -------
+    MCMCSamples
+
+    """
     burn_in = kwargs.pop('burn_in', None)
 
     pattern = '.[0-9]*.txt'
     chains_files = glob.glob(root + pattern)
     if not chains_files:
-        raise FileNotFoundError(root + pattern  + " not found.")
+        raise FileNotFoundError(root + pattern + " not found.")
 
-    data = np.array([])
-    for chains_file in chains_files:
-        data_i = np.loadtxt(chains_file)
-        data_i = remove_burn_in(data_i, burn_in)
-        data = np.concatenate((data, data_i)) if data.size else data_i
-
-    weights, logP, data, _ = np.split(data, [1, 2, -4], axis=1)
     params = read_paramnames(root)
     columns = kwargs.pop('columns', params)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
-    return MCMCSamples(data=data, columns=columns, weights=weights.flatten(),
-                       logL=logP, root=root, *args, **kwargs)
+    samples = []
+    for i, chains_file in enumerate(chains_files):
+        data = np.loadtxt(chains_file)
+        data = remove_burn_in(data, burn_in)
+        weights, logP, data, _ = np.split(data, [1, 2, -4], axis=1)
+        mcmc = MCMCSamples(data=data, columns=columns,
+                           weights=weights.flatten(), logL=logP,
+                           root=root, *args, **kwargs)
+        mcmc['chain'] = i
+        samples.append(mcmc)
+
+    samples = concat(samples).reset_index(drop=True)
+
+    if (samples.chain == 0).all():
+        samples.drop('chain', inplace=True, axis=1)
+    else:
+        samples.tex['chain'] = r'$n_\mathrm{chain}$'
+
+    return samples
