@@ -1,4 +1,4 @@
-"""Tools for reading from MontePython chains files."""
+"""Read MCMCSamples from montepython chains."""
 import sys
 import os
 import warnings

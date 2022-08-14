@@ -1,3 +1,4 @@
+"""Read NestedSamples from polychord chains."""
 import os
 import numpy as np
 from anesthetic.read.getdist import read_paramnames

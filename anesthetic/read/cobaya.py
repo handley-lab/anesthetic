@@ -1,3 +1,4 @@
+"""Read MCMCSamples from cobaya chains."""
 import os
 import glob
 import numpy as np
@@ -27,7 +28,6 @@ def read_cobaya(root, *args, **kwargs):
 
     Parameters
     ----------
-
     burn_in: float
         if 0 < burn_in < 1:
             discard the first burn_in fraction of samples

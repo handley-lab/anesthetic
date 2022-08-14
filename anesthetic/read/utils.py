@@ -1,3 +1,4 @@
+"""Utilities for reading data from files."""
 import numpy as np
 
 

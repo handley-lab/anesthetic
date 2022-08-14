@@ -1,4 +1,4 @@
-"""Tools for reading from multinest chains files."""
+"""Read NestedSamples from multinest chains."""
 import os
 import numpy as np
 from anesthetic.read.getdist import read_paramnames
