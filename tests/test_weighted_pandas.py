@@ -174,6 +174,36 @@ def test_WeightedDataFrame_corrwith(frame):
     assert_allclose(correl['B'], 1, atol=1e-2)
     assert np.isnan(correl['C'])
 
+    unweighted = DataFrame(frame).droplevel('weights')
+
+    with pytest.raises(ValueError):
+        frame.corrwith(unweighted.A)
+
+    with pytest.raises(ValueError):
+        frame.corrwith(unweighted[['A', 'B']])
+
+    with pytest.raises(ValueError):
+        unweighted.corrwith(frame.A)
+
+    with pytest.raises(ValueError):
+        unweighted.corrwith(frame[['A', 'B']])
+
+    correl_1 = unweighted[:5].corrwith(unweighted[:4], axis=1)
+    correl_2 = frame[:5].corrwith(frame[:4], axis=1)
+    assert_array_equal(correl_1.values, correl_2.values)
+    assert correl_2.isweighted()
+
+    correl_3 = frame[:5].T.corrwith(frame[:4].T)
+    assert_array_equal(correl_2, correl_3)
+    assert_array_equal(correl_2.index, correl_3.index)
+
+    correl_4 = frame.T.corrwith(frame.T, axis=1)
+    correl_5 = unweighted.T.corrwith(unweighted.T, axis=1)
+    assert_allclose(correl_4, correl_5)
+
+    frame.set_weights(None, inplace=True)
+    assert_array_equal(frame.corrwith(frame), unweighted.corrwith(unweighted))
+
 
 def test_WeightedDataFrame_median(frame):
     median = frame.median()
@@ -461,6 +491,14 @@ def test_WeightedSeries_corr(frame):
     assert_allclose(frame.A.corr(frame.B), 0, atol=1e-2)
     D = frame.A + frame.B
     assert_allclose(frame.A.corr(D), 1/np.sqrt(2), atol=1e-2)
+
+    unweighted = DataFrame(frame).droplevel('weights')
+
+    with pytest.raises(ValueError):
+        frame.A.corr(unweighted.B)
+
+    with pytest.raises(ValueError):
+        unweighted.A.corr(frame.B)
 
 
 def test_WeightedSeries_median(series):
@@ -850,3 +888,27 @@ def test_weight_passing(mcmc_wdf):
 
     new_wdf = WeightedDataFrame(mcmc_wdf.copy(), weights=weights)
     assert_array_equal(new_wdf.get_weights(), weights)
+
+
+def test_set_weights(mcmc_wdf):
+    weights_1 = mcmc_wdf.get_weights()
+    weights_2 = np.random.rand(len(mcmc_wdf.index))
+
+    assert_array_equal(mcmc_wdf.set_weights(weights_2).get_weights(),
+                       weights_2)
+    assert_array_equal(mcmc_wdf.get_weights(), weights_1)
+    mcmc_wdf.set_weights(weights_2, inplace=True)
+    assert_array_equal(mcmc_wdf.get_weights(), weights_2)
+
+    assert mcmc_wdf.isweighted()
+    assert not mcmc_wdf.set_weights(None).isweighted()
+    assert_array_equal(mcmc_wdf.set_weights(None).get_weights(), 1)
+
+    mcmc_wdf.set_weights(None, inplace=True)
+    assert not mcmc_wdf.isweighted()
+    assert mcmc_wdf.set_weights(None) is not mcmc_wdf
+
+    mcmc_id = id(mcmc_wdf)
+    mcmc_wdf.set_weights(None, inplace=True)
+    assert id(mcmc_wdf) == mcmc_id
+    assert not mcmc_wdf.isweighted()

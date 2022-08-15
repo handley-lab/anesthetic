@@ -14,7 +14,8 @@ from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
-from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.weighted_pandas import WeightedDataFrame
+from anesthetic.weighted_labelled_pandas import WeightedSeries
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import make_1d_axes, make_2d_axes
 import anesthetic.weighted_pandas
@@ -82,6 +83,18 @@ class Samples(WeightedDataFrame):
     @property
     def _constructor(self):
         return Samples
+
+    @property
+    def _constructor_sliced(self):
+        return WeightedSeries
+
+    def copy(self, deep=True):
+        new = super().copy(deep)
+        for col in self:
+            new[col].label = self[col].label
+            print(col, self[col].label)
+        return new.__finalize__(self, "copy")
+
 
     def _reload_data(self):
         self.__init__(root=self.root)
