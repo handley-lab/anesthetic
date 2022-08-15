@@ -272,7 +272,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
             return WeightedSeries(correl)
         else:
-            return super().corrwith(other, drop=drop, axis=axis, *args, **kwargs)
+            return super().corrwith(other, drop=drop, axis=axis, method=method,
+                                    *args, **kwargs)
 
     def kurt(self, axis=0, skipna=True, *args, **kwargs):
         """Weighted kurtosis of the sampled distribution."""
