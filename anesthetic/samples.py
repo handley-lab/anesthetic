@@ -14,7 +14,8 @@ from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp, modify_inplace)
 from anesthetic.gui.plot import RunPlotter
-from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.weighted_pandas import WeightedDataFrame
+from anesthetic.weighted_labelled_pandas import WeightedSeries
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import make_1d_axes, make_2d_axes
 import anesthetic.weighted_pandas
@@ -83,16 +84,13 @@ class Samples(WeightedDataFrame):
     def _constructor(self):
         return Samples
 
+    @property
+    def _constructor_sliced(self):
+        return WeightedSeries
+
     def _reload_data(self):
         self.__init__(root=self.root)
         return self
-
-    def copy(self, deep=True):
-        """Copy which also includes mutable metadata."""
-        new = super().copy(deep)
-        if deep:
-            new.tex = copy.deepcopy(self.tex)
-        return new
 
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
