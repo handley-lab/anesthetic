@@ -35,6 +35,7 @@ def test_gui():
     plotter.temperature.slider.set_val(2)
     assert plotter.temperature() == 100
     plotter.type.buttons.set_active(0)
+    plotter.samples
 
     if version.parse(mpl_version) >= version.parse('3.4.0'):
         # Reload button

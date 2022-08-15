@@ -22,7 +22,7 @@ def read_chains(root, *args, **kwargs):
     for read in [read_polychord, read_getdist, read_cobaya, read_multinest]:
         try:
             return read(root, *args, **kwargs)
-        except FileNotFoundError as e:
+        except (FileNotFoundError, IOError) as e:
             errors.append(str(read) + ": " + str(e))
 
     errors = ["Could not find any compatible chains:"] + errors

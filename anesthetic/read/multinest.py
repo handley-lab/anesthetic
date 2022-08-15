@@ -23,7 +23,7 @@ def read_multinest(root, *args, **kwargs):
         logL = np.concatenate((logL, live_logL[i]))
         logL_birth = np.concatenate((logL_birth, live_logL_birth[i]))
 
-    except FileNotFoundError:
+    except (FileNotFoundError, IOError):
         data = np.loadtxt(root + 'ev.dat')
         samples, logL, _ = np.split(data, [-3, -2], axis=1)
         logL = np.squeeze(logL)
