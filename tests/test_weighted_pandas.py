@@ -894,3 +894,12 @@ def test_set_weights(mcmc_wdf):
     assert mcmc_wdf.isweighted()
     assert not mcmc_wdf.set_weights(None).isweighted()
     assert_array_equal(mcmc_wdf.set_weights(None).get_weights(), 1)
+
+    mcmc_wdf.set_weights(None, inplace=True)
+    assert not mcmc_wdf.isweighted()
+    assert mcmc_wdf.set_weights(None) is not mcmc_wdf
+
+    mcmc_id = id(mcmc_wdf)
+    mcmc_wdf.set_weights(None, inplace=True)
+    assert id(mcmc_wdf) == mcmc_id
+    assert not mcmc_wdf.isweighted()
