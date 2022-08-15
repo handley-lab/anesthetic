@@ -9,7 +9,8 @@ def test_to_getdist():
         getdist_samples = to_getdist(anesthetic_samples)
 
         assert_array_equal(getdist_samples.samples, anesthetic_samples)
-        assert_array_equal(getdist_samples.weights, anesthetic_samples.weights)
+        assert_array_equal(getdist_samples.weights,
+                           anesthetic_samples.get_weights())
 
         for param, p in zip(getdist_samples.getParamNames().names,
                             anesthetic_samples.columns):
