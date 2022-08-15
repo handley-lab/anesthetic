@@ -136,7 +136,9 @@ class Samples(WeightedDataFrame):
 
         for x, ax in axes.iteritems():
             if x in self and kwargs['kind'] is not None:
-                self[x].plot(ax=ax, *args, **kwargs)
+                xlabel = self.tex[x] if x in self.tex else x
+                self[x].plot(ax=ax, xlabel=xlabel,
+                             *args, **kwargs)
             else:
                 ax.plot([], [])
 
@@ -241,10 +243,14 @@ class Samples(WeightedDataFrame):
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
                     if x in self and y in self and lkwargs['kind'] is not None:
+                        xlabel = self.tex[x] if x in self.tex else x
+                        ylabel = self.tex[y] if y in self.tex else y
                         if x == y:
-                            self[x].plot(ax=ax.twin, *args, **lkwargs)
+                            self[x].plot(ax=ax.twin, xlabel=xlabel,
+                                         *args, **lkwargs)
                         else:
-                            self.plot(x, y, ax=ax, *args, **lkwargs)
+                            self.plot(x, y, ax=ax, xlabel=xlabel,
+                                      ylabel=ylabel, *args, **lkwargs)
                     else:
                         if x == y:
                             ax.twin.plot([], [])
