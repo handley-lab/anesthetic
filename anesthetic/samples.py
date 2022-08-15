@@ -81,10 +81,6 @@ class Samples(WeightedDataFrame):
     def _constructor(self):
         return Samples
 
-    def _reload_data(self):
-        self.__init__(root=self.root)
-        return self
-
     def copy(self, deep=True):
         """Copy which also includes mutable metadata."""
         new = super().copy(deep)

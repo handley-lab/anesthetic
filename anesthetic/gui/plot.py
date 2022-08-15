@@ -5,6 +5,7 @@ from matplotlib.gridspec import (GridSpec as GS,
                                  GridSpecFromSubplotSpec as sGS)
 from anesthetic.gui.widgets import (Widget, Slider, Button,
                                     RadioButtons, TrianglePlot, CheckButtons)
+from anesthetic.read.chain import read_chains
 
 
 class Higson(Widget):
@@ -264,7 +265,7 @@ class RunPlotter(object):
 
     def reload_file(self, _):
         """Reload the data from file."""
-        self.samples._reload_data()
+        self.samples = read_chains(self.samples.root)
         self.evolution.reset_range(valmax=len(self.samples))
         self.update(None)
 
