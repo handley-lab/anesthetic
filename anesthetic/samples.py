@@ -139,6 +139,7 @@ class Samples(WeightedDataFrame):
                 xlabel = self.tex[x] if x in self.tex else x
                 self[x].plot(ax=ax, xlabel=xlabel,
                              *args, **kwargs)
+                ax.set_xlabel(xlabel)
             else:
                 ax.plot([], [])
 
@@ -248,9 +249,12 @@ class Samples(WeightedDataFrame):
                         if x == y:
                             self[x].plot(ax=ax.twin, xlabel=xlabel,
                                          *args, **lkwargs)
+                            ax.set_xlabel(xlabel)
                         else:
                             self.plot(x, y, ax=ax, xlabel=xlabel,
                                       ylabel=ylabel, *args, **lkwargs)
+                            ax.set_xlabel(xlabel)
+                            ax.set_ylabel(ylabel)
                     else:
                         if x == y:
                             ax.twin.plot([], [])
