@@ -942,3 +942,15 @@ def test_samples_dot_plot():
         pass
 
     plt.close("all")
+
+
+def test_samples_plot_labels():
+    samples = NestedSamples(root='./tests/example_data/pc')
+    columns = ['x0', 'x1', 'x2', 'x3', 'x4']
+    fig, axes = samples.plot_2d(columns)
+
+    for col, ax in zip(columns, axes.loc['x0', :]):
+        assert samples.tex[col] == ax.get_ylabel()
+
+    for col, ax in zip(columns, axes.loc[:, 'x4']):
+        assert samples.tex[col] == ax.get_xlabel()
