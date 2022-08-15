@@ -254,7 +254,8 @@ def iso_probability_contours(pdf, contours=[0.95, 0.68]):
     return c
 
 
-def iso_probability_contours_from_samples(pdf, contours, weights):
+def iso_probability_contours_from_samples(pdf, contours=[0.95, 0.68],
+                                          weights=None):
     """Compute the iso-probability contour values."""
     if len(contours) > 1 and not np.all(contours[:-1] > contours[1:]):
         raise ValueError(
@@ -266,6 +267,8 @@ def iso_probability_contours_from_samples(pdf, contours, weights):
             "2.0.0-beta.10, in order to better match the ordering of other "
             "matplotlib kwargs."
         )
+    if weights is None:
+        weights = np.ones_like(pdf)
     contours = [1-p for p in contours]
     i = np.argsort(pdf)
     m = np.cumsum(weights[i])
