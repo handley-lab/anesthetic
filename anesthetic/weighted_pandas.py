@@ -243,6 +243,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                 return WeightedSeries(answer)
 
             left, right = self.align(other, join="inner", copy=False)
+            weights = self.get_weights(axis)
 
             if axis == 1:
                 left = left.T
@@ -256,14 +257,15 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             ldem = left - left.mean()
             rdem = right - right.mean()
 
-            num = (ldem * rdem * self.get_weights(axis)[:, None]).sum()
-            dom = self.get_weights(axis).sum() * left.std() * right.std()
+            num = (ldem * rdem * weights[:, None]).sum()
+            dom = weights.sum() * left.std() * right.std()
 
             correl = num / dom
 
             if not drop:
                 # Find non-matching labels along the given axis
-                result_index = self._get_axis(1).union(other._get_axis(1))
+                result_index = self._get_axis(1-axis).union(
+                    other._get_axis(1-axis))
                 idx_diff = result_index.difference(correl.index)
 
                 if len(idx_diff) > 0:

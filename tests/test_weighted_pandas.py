@@ -197,6 +197,10 @@ def test_WeightedDataFrame_corrwith(frame):
     assert_array_equal(correl_2, correl_3)
     assert_array_equal(correl_2.index, correl_3.index)
 
+    correl_4 = frame.T.corrwith(frame.T, axis=1)
+    correl_5 = unweighted.T.corrwith(unweighted.T, axis=1)
+    assert_allclose(correl_4, correl_5)
+
     frame.set_weights(None, inplace=True)
     assert_array_equal(frame.corrwith(frame), unweighted.corrwith(unweighted))
 
