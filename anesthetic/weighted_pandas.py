@@ -236,7 +236,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     def corrwith(self, other, axis=0, drop=False, method="pearson",
                  *args, **kwargs):
         """Pairwise weighted pearson correlation."""
-        if self.isweighted():
+        if self.isweighted(axis):
             if isinstance(other, Series):
                 answer = self.apply(lambda x: other.corr(x, method=method),
                                     axis=axis)
@@ -256,8 +256,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             ldem = left - left.mean()
             rdem = right - right.mean()
 
-            num = (ldem * rdem * self.get_weights()[:, None]).sum()
-            dom = self.get_weights().sum() * left.std() * right.std()
+            num = (ldem * rdem * self.get_weights(axis)[:, None]).sum()
+            dom = self.get_weights(axis).sum() * left.std() * right.std()
 
             correl = num / dom
 
@@ -272,7 +272,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
             return WeightedSeries(correl)
         else:
-            return super().corrwith(other, drop=drop, *args, **kwargs)
+            return super().corrwith(other, drop=drop, axis=axis, *args, **kwargs)
 
     def kurt(self, axis=0, skipna=True, *args, **kwargs):
         """Weighted kurtosis of the sampled distribution."""

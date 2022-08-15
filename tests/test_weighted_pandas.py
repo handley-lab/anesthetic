@@ -188,9 +188,14 @@ def test_WeightedDataFrame_corrwith(frame):
     with pytest.raises(ValueError):
         unweighted.corrwith(frame[['A', 'B']])
 
-    correl_1 = frame[:5].corrwith(frame.iloc[0], axis=1)
-    correl_2 = frame[:5].T.corrwith(unweighted.T[0])
-    assert_allclose(correl_1, correl_2)
+    correl_1 = unweighted[:5].corrwith(unweighted[:4], axis=1)
+    correl_2 = frame[:5].corrwith(frame[:4], axis=1)
+    assert_array_equal(correl_1.values, correl_2.values)
+    assert correl_2.isweighted()
+
+    correl_3 = frame[:5].T.corrwith(frame[:4].T)
+    assert_array_equal(correl_2, correl_3)
+    assert_array_equal(correl_2.index, correl_3.index)
 
     frame.set_weights(None, inplace=True)
     assert_array_equal(frame.corrwith(frame), unweighted.corrwith(unweighted))
