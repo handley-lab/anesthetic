@@ -88,6 +88,14 @@ class Samples(WeightedDataFrame):
     def _constructor_sliced(self):
         return WeightedSeries
 
+    def copy(self, deep=True):
+        new = super().copy(deep)
+        for col in self:
+            new[col].label = self[col].label
+            print(col, self[col].label)
+        return new.__finalize__(self, "copy")
+
+
     def _reload_data(self):
         self.__init__(root=self.root)
         return self
