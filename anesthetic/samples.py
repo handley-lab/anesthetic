@@ -15,7 +15,7 @@ from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame
-from anesthetic.weighted_labelled_pandas import WeightedSeries
+from anesthetic.weighted_pandas import WeightedSeries as _WeightedSeries
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import make_1d_axes, make_2d_axes
 import anesthetic.weighted_pandas
@@ -24,6 +24,20 @@ anesthetic.weighted_pandas._WeightedObject.plot =\
     CachedAccessor("plot", PlotAccessor)
 anesthetic.weighted_pandas._WeightedObject.plot =\
     CachedAccessor("plot", PlotAccessor)
+
+
+class WeightedSeries(_WeightedSeries):
+    """WeightedSeries with label attribute for holding tex."""
+
+    _metadata = _WeightedSeries._metadata + ['label']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.label = None
+
+    @property
+    def _constructor(self):
+        return WeightedSeries
 
 
 class Samples(WeightedDataFrame):
@@ -64,7 +78,7 @@ class Samples(WeightedDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'label']
+    _metadata = WeightedDataFrame._metadata + ['label']
 
     def __init__(self, *args, **kwargs):
         logzero = kwargs.pop('logzero', -1e30)
@@ -72,13 +86,23 @@ class Samples(WeightedDataFrame):
         if logL is not None:
             logL = np.array(logL)
             logL = np.where(logL <= logzero, -np.inf, logL)
-        self.tex = kwargs.pop('tex', {})
+        tex = kwargs.pop('tex', {})
         self.label = kwargs.pop('label', None)
         super().__init__(*args, **kwargs)
+        for col in self:
+            if col in tex:
+                self[col].label = tex[col]
+            else:
+                self[col].label = None
 
         if logL is not None:
             self['logL'] = logL
-            self.tex['logL'] = r'$\log\mathcal{L}$'
+            self['logL'].label = r'$\log\mathcal{L}$'
+
+    @property
+    def tex(self):
+        """Return dictionary mapping parameters to tex values."""
+        return {col: self[col].label for col in self}
 
     @property
     def _constructor(self):
@@ -89,12 +113,17 @@ class Samples(WeightedDataFrame):
         return WeightedSeries
 
     def copy(self, deep=True):
+        """Copy the frame, including the series labels."""
         new = super().copy(deep)
         for col in self:
             new[col].label = self[col].label
-            print(col, self[col].label)
         return new.__finalize__(self, "copy")
 
+    def _clear_item_cache(self):
+        labels = self.tex
+        super()._clear_item_cache()
+        for col in self:
+            self[col].label = labels[col]
 
     def _reload_data(self):
         self.__init__(root=self.root)
@@ -549,17 +578,17 @@ class NestedSamples(Samples):
         dlogX = self.dlogX(nsamples)
         samples = Samples(index=dlogX.columns)
         samples['logZ'] = self.logZ(dlogX)
+        samples.logZ.label = r'$\log\mathcal{Z}$'
 
         logw = dlogX.add(self.beta * self.logL, axis=0)
         logw -= samples.logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
 
         samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
+        samples.D.label = r'$\mathcal{D}$'
         samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
+        samples.d.label = r'$d$'
 
-        samples.tex = {'logZ': r'$\log\mathcal{Z}$',
-                       'D': r'$\mathcal{D}$',
-                       'd': r'$d$'}
         samples.label = self.label
         return samples
 
@@ -739,7 +768,8 @@ class NestedSamples(Samples):
         else:
             if logL_birth is not None:
                 samples['logL_birth'] = logL_birth
-                samples.tex['logL_birth'] = r'$\log\mathcal{L}_\mathrm{birth}$'
+                samples['logL_birth'].label = \
+                    r'$\log\mathcal{L}_\mathrm{birth}$'
 
             if 'logL_birth' not in samples:
                 raise RuntimeError("Cannot recompute run without "
@@ -764,7 +794,7 @@ class NestedSamples(Samples):
             samples.reset_index(drop=True, inplace=True)
             samples['nlive'] = compute_nlive(samples.logL, samples.logL_birth)
 
-        samples.tex['nlive'] = r'$n_\mathrm{live}$'
+        samples['nlive'].label = r'$n_\mathrm{live}$'
         samples.beta = samples._beta
 
         if np.any(pandas.isna(samples.logL)):
@@ -796,7 +826,9 @@ def merge_nested_samples(runs):
         Merged run.
     """
     merge = pandas.concat(runs, ignore_index=True)
-    merge.tex = {key: val for r in runs for key, val in r.tex.items()}
+    for r in runs:
+        for col in r:
+            merge[col].label = r[col].label
     return merge.recompute()
 
 
@@ -861,7 +893,9 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples.set_weights(new_weights, inplace=True)
 
     new_samples.label = label
-    # Copy tex, if different values for same key exist, the last one is used.
-    new_samples.tex = {key: val for s in samples for key, val in s.tex.items()}
+    # Copy label, if different values for same key exist, the last one is used.
+    for s in samples:
+        for col in s:
+            new_samples[col].label = s[col].label
 
     return new_samples

@@ -31,7 +31,6 @@ def test_build_samples():
     logL = np.random.rand(nsamps)
     weights = np.random.randint(1, 20, size=nsamps)
     params = ['A', 'B', 'C']
-    tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
 
     s = Samples(data=data)
     assert len(s) == nsamps
@@ -54,10 +53,6 @@ def test_build_samples():
     s = Samples(data=data, columns=params)
     assert len(s) == nsamps
     assert_array_equal(s.columns, ['A', 'B', 'C'])
-
-    s = Samples(data=data, tex=tex)
-    for p in params:
-        assert s.tex[p] == tex[p]
 
     mc = MCMCSamples(data=data, logL=logL, weights=weights)
     assert len(mc) == nsamps
@@ -474,9 +469,10 @@ def test_merging():
     assert nlive_1 == 125
     assert nlive_2 == 250
     assert nlive == nlive_1 + nlive_2
+    samples.weights
     assert (samples_1.logZ() > samples.logZ() > samples_2.logZ()
             or samples_1.logZ() < samples.logZ() < samples_2.logZ())
-    assert 'x0' in samples.tex
+    assert 'x0' == samples['x0'].label
 
 
 def test_weighted_merging():
@@ -485,8 +481,8 @@ def test_weighted_merging():
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
     samples_1['xtest'] = 7*samples_1['x3']
     samples_2['xtest'] = samples_2['x3']
-    samples_1.tex['xtest'] = "$x_{t,1}$"
-    samples_2.tex['xtest'] = "$x_{t,2}$"
+    samples_1.xtest.label = "$x_{t,1}$"
+    samples_2.xtest.label = "$x_{t,2}$"
     mean1 = samples_1.xtest.mean()
     mean2 = samples_2.xtest.mean()
 
@@ -501,9 +497,9 @@ def test_weighted_merging():
     # Test tex and label
     for key in samples.keys():
         if key in samples_2.keys():
-            assert samples.tex[key] == samples_2.tex[key]
+            assert samples[key].label == samples_2[key].label
         else:
-            assert samples.tex[key] == samples_1.tex[key]
+            assert samples[key].label == samples_1[key].label
     assert samples.label == 'Merged label'
 
     # Test that label is None when no label is passed
@@ -723,7 +719,6 @@ def test_NestedSamples_importance_sample():
     ns0.importance_sample(logL_new, inplace=True)
     assert type(ns0) is NestedSamples
     assert_array_equal(ns0, ns1)
-    assert ns0.tex == ns1.tex
     assert ns0.root == ns1.root
     assert ns0.label == ns1.label
     assert ns0.beta == ns1.beta
@@ -767,7 +762,6 @@ def test_MCMCSamples_importance_sample():
     assert np.all(mc3.x0 > -0.3)
 
     for mc in [mc1, mc2, mc3]:
-        assert mc.tex == mc0.tex
         assert mc.root == mc0.root
         assert mc.label == mc0.label
         assert mc._metadata == mc0._metadata
@@ -776,7 +770,6 @@ def test_MCMCSamples_importance_sample():
     mc0.importance_sample(mask, action='mask', inplace=True)
     assert type(mc0) is MCMCSamples
     assert_array_equal(mc3, mc0)
-    assert mc3.tex == mc0.tex
     assert mc3.root == mc0.root
     assert mc3.label == mc0.label
     assert mc3._metadata == mc0._metadata
@@ -951,7 +944,7 @@ def test_samples_dot_plot():
 
 def test_fixed_width():
     samples = NestedSamples(root='./tests/example_data/pc')
-    tex = [samples.tex[t] for t in samples.columns]
+    tex = [samples[t].label for t in samples.columns]
     columns = ['A really really long column label'] + list(samples.columns[1:])
     samples.columns = columns
     assert 'A really r...' in str(samples)
@@ -963,3 +956,20 @@ def test_fixed_width():
     mcolumns = MultiIndex.from_arrays([columns, np.random.rand(len(columns))])
     samples.columns = mcolumns
     assert 'A really re...' in str(DataFrame(samples))
+
+
+def test_labels():
+    samples = NestedSamples(root='./tests/example_data/pc')
+    fig, axes = samples.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
+    assert samples.x0.label == '$x_0$'
+    assert samples.x1.label == '$x_1$'
+    assert samples.x2.label == '$x_2$'
+    assert samples.x3.label == '$x_3$'
+    assert samples.x4.label == '$x_4$'
+
+    assert samples.nlive.label == r'$n_\mathrm{live}$'
+    assert samples.logL.label == r'$\log\mathcal{L}$'
+    assert samples.logL_birth.label == r'$\log\mathcal{L}_\mathrm{birth}$'
+
+    assert samples.copy().x0.label == '$x_0$'
+    assert samples.x0.label == '$x_0$'
