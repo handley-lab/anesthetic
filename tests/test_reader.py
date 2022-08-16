@@ -40,15 +40,15 @@ def test_read_cobayamcmc():
     np.random.seed(3)
     mcmc = read_cobaya('./tests/example_data/cb')
     assert isinstance(mcmc, MCMCSamples)
-    pn = read_paramnames("./tests/example_data/cb")
-    pn.append('chain')
-    pn.append('logL')
-    assert_array_equal(mcmc.columns.to_list(), pn)
     w = np.concatenate((
         np.loadtxt("./tests/example_data/cb.1.txt", usecols=0),
         np.loadtxt("./tests/example_data/cb.2.txt", usecols=0)
     ))
     assert_array_equal(mcmc.weights, w)
+    pn = read_paramnames("./tests/example_data/cb")
+    pn.append('chain')
+    pn.append('logL')
+    assert_array_equal(mcmc.columns.to_list(), pn)
 
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
