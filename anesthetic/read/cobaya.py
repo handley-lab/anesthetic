@@ -20,7 +20,12 @@ def read_paramnames(root):
     with open(root + ".1.txt") as f:
         header = f.readline()[1:]
         paramnames = header.split()[2:]
-        return paramnames
+        try:
+            s = loadMCSamples(file_root=self.root)
+            tex = {p.name: '$' + p.label + '$' for p in s.paramNames.names}
+            return paramnames, tex
+        except NameError:
+            return paramnames, {}
 
 
 def read_cobaya(root, *args, **kwargs):
@@ -53,7 +58,7 @@ def read_cobaya(root, *args, **kwargs):
     if not chains_files:
         raise FileNotFoundError(dirname + '/' + regex + " not found.")
 
-    params = read_paramnames(root)
+    params, tex = read_paramnames(root)
     columns = kwargs.pop('columns', params)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
@@ -63,7 +68,7 @@ def read_cobaya(root, *args, **kwargs):
         data = remove_burn_in(data, burn_in)
         weights, logP, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
-                           weights=weights.flatten(), logL=logP,
+                           weights=weights.flatten(), logL=logP, tex=tex,
                            root=root, *args, **kwargs)
         mcmc['chain'] = int(i) if i else np.nan
         samples.append(mcmc)

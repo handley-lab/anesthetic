@@ -61,10 +61,12 @@ def test_read_cobayamcmc():
         np.loadtxt("./tests/example_data/cb.2.txt", usecols=0)
     ))
     assert_array_equal(mcmc.weights, w)
-    params = rp_cb("./tests/example_data/cb")
+    params, tex = rp_cb("./tests/example_data/cb")
     params.append('logL')
     params.append('chain')
     assert_array_equal(mcmc.columns, params)
+    tex['chain'] = r'$n_\mathrm{chain}$'
+    assert mcmc.tex == tex
 
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
