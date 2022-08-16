@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains
 from anesthetic.read.polychord import read_polychord
-from anesthetic.read.getdist import read_getdist
-from anesthetic.read.cobaya import read_cobaya, read_paramnames
+from anesthetic.read.getdist import read_getdist, read_paramnames as rp_gd
+from anesthetic.read.cobaya import read_cobaya, read_paramnames as rp_cb
 from anesthetic.read.multinest import read_multinest
 try:
     import getdist
@@ -26,11 +26,23 @@ def test_read_getdist():
         np.loadtxt("./tests/example_data/gd_2.txt", usecols=0)
     ))
     assert_array_equal(mcmc.weights, w)
+    params, tex = rp_gd("./tests/example_data/gd")
+    params.append('logL')
+    params.append('chain')
+    assert_array_equal(mcmc.columns, params)
+    tex['chain'] = r'$n_\mathrm{chain}$'
+    assert mcmc.tex == tex
     assert 'chain' in mcmc
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
     mcmc = read_getdist('./tests/example_data/gd_single')
+    w = np.loadtxt("./tests/example_data/gd_single.txt", usecols=0)
+    assert_array_equal(mcmc.weights, w)
+    params.remove('chain')
+    assert_array_equal(mcmc.columns, params)
+    tex.pop('chain')
+    assert mcmc.tex == tex
     assert 'chain' not in mcmc
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -49,10 +61,10 @@ def test_read_cobayamcmc():
         np.loadtxt("./tests/example_data/cb.2.txt", usecols=0)
     ))
     assert_array_equal(mcmc.weights, w)
-    pn = read_paramnames("./tests/example_data/cb")
-    pn.append('logL')
-    pn.append('chain')
-    assert_array_equal(mcmc.columns.to_list(), pn)
+    params = rp_cb("./tests/example_data/cb")
+    params.append('logL')
+    params.append('chain')
+    assert_array_equal(mcmc.columns, params)
 
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
@@ -76,6 +88,12 @@ def test_read_montepython():
         np.loadtxt(root + '_1.txt', usecols=0),
         np.loadtxt(root + '_2.txt', usecols=0)
     ))
+    params, tex = rp_gd(root)
+    params.append('logL')
+    params.append('chain')
+    assert_array_equal(mcmc.columns, params)
+    tex['chain'] = r'$n_\mathrm{chain}$'
+    assert mcmc.tex == tex
     assert_array_equal(mcmc.weights, w)
     assert isinstance(mcmc, MCMCSamples)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
@@ -91,6 +109,7 @@ def test_read_multinest():
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
     ns = read_multinest('./tests/example_data/mn_old')
+    assert isinstance(ns, NestedSamples)
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")

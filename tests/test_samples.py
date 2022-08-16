@@ -18,10 +18,6 @@ from pandas.testing import assert_frame_equal
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
-try:
-    import montepython  # noqa: F401
-except ImportError:
-    pass
 
 
 def test_build_samples():

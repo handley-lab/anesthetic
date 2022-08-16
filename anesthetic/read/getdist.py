@@ -78,12 +78,13 @@ def read_getdist(root, *args, **kwargs):
         data = remove_burn_in(data, burn_in)
         weights, minuslogL, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
-                           weights=weights.flatten(), logL=-minuslogL, tex=tex,
+                           weights=weights.flatten(), logL=-minuslogL,
                            root=root, *args, **kwargs)
         mcmc['chain'] = int(i) if i else np.nan
         samples.append(mcmc)
 
     samples = concat(samples)
+    samples.tex = tex
     samples.sort_values(by=['chain', '#'], inplace=True)
     weights = samples.weights
     samples.reset_index(inplace=True, drop=True)
