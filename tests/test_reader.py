@@ -28,8 +28,8 @@ def test_read_getdist():
     assert_array_equal(mcmc.get_weights(), w)
     params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'chain']
     assert_array_equal(mcmc.columns, params)
-    tex = {'x0': '$x_0$', 'x1': '$x_1$', 'x2': '$x_2$', 'x3': '$x_3$', 'x4':
-           '$x_4$', 'chain': r'$n_\mathrm{chain}$'}
+    tex = {'x0': '$x_0$', 'x1': '$x_1$', 'x2': '$x_2$', 'x3': '$x_3$',
+           'x4': '$x_4$', 'chain': r'$n_\mathrm{chain}$'}
     assert mcmc.tex == tex
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -61,8 +61,12 @@ def test_read_cobayamcmc():
     params = ['x0', 'x1', 'minuslogprior', 'minuslogprior__0', 'chi2',
               'chi2__norm', 'logL', 'chain']
     assert_array_equal(mcmc.columns, params)
-    tex = {'x0': '$x0$', 'x1': '$x1$', 'chi2': r'$\chi^2$', 'chi2__norm':
-           r'$\chi^2_\mathrm{norm}$', 'chain': r'$n_\mathrm{chain}$'}
+    if 'getdist' in sys.modules:
+        tex = {'x0': '$x0$', 'x1': '$x1$', 'chi2': r'$\chi^2$',
+               'chi2__norm': r'$\chi^2_\mathrm{norm}$',
+               'chain': r'$n_\mathrm{chain}$'}
+    else:
+        tex = {'chain': r'$n_\mathrm{chain}$'}
     assert mcmc.tex == tex
 
     mcmc.plot_2d(['x0', 'x1'])
