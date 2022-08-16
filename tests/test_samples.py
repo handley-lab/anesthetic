@@ -654,7 +654,7 @@ def test_stats():
     tex = {'logZ': r'$\ln\mathcal{Z}$',
            'D_KL': r'$\mathcal{D}_\mathrm{KL}$',
            'd_G': r'$d_\mathrm{G}$',
-           'logL_P': r'$\langle\ln L\rangle_\mathcal{P}$'}
+           'logL_P': r'$\langle\ln \mathcal{L}\rangle_\mathcal{P}$'}
 
     stats = pc.stats()
     assert isinstance(stats, Series)
