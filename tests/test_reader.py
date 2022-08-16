@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
-from anesthetic import MCMCSamples
+from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains
 from anesthetic.read.montepython import read_montepython
 from anesthetic.read.polychord import read_polychord
@@ -22,6 +22,7 @@ except ImportError:
 def test_read_getdist():
     np.random.seed(3)
     mcmc = read_getdist('./tests/example_data/gd')
+    assert isinstance(mcmc, MCMCSamples)
     assert 'chain' in mcmc
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -70,6 +71,7 @@ def test_read_cobayamcmc():
 def test_read_montepython():
     np.random.seed(3)
     mcmc = read_montepython('./tests/example_data/mp')
+    assert isinstance(mcmc, MCMCSamples)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")
@@ -78,6 +80,7 @@ def test_read_montepython():
 def test_read_multinest():
     np.random.seed(3)
     ns = read_multinest('./tests/example_data/mn')
+    assert isinstance(ns, NestedSamples)
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
@@ -90,6 +93,7 @@ def test_read_multinest():
 def test_read_polychord():
     np.random.seed(3)
     ns = read_polychord('./tests/example_data/pc')
+    assert isinstance(ns, NestedSamples)
     for key1 in ns.columns:
         assert_array_equal(ns.weights, ns[key1].weights)
         for key2 in ns.columns:
@@ -122,12 +126,15 @@ def test_read_polychord():
 def test_discard_burn_in(root):
     np.random.seed(3)
     mcmc = read_chains('./tests/example_data/' + root, burn_in=0.3)
+    assert isinstance(mcmc, MCMCSamples)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
     # for 2 chains of length 1000
     mcmc0 = read_chains('./tests/example_data/' + root)
+    assert isinstance(mcmc0, MCMCSamples)
     mcmc1 = read_chains(root='./tests/example_data/' + root, burn_in=1000)
+    assert isinstance(mcmc1, MCMCSamples)
     for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
         if key in mcmc0:
             assert key in mcmc1
@@ -136,6 +143,7 @@ def test_discard_burn_in(root):
     mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
 
     mcmc1 = read_chains('./tests/example_data/' + root, burn_in=-1000.1)
+    assert isinstance(mcmc1, MCMCSamples)
     for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
         if key in mcmc0:
             assert key in mcmc1
