@@ -2,7 +2,7 @@
 
 from inspect import signature
 import numpy as np
-from pandas import Series, DataFrame, concat
+from pandas import Series, DataFrame, concat, MultiIndex
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
@@ -29,22 +29,48 @@ class _WeightedObject(object):
         else:
             return np.ones_like(self._get_axis(axis))
 
-    def set_weights(self, weights, axis=0, inplace=False):
-        """Set sample weights along an axis."""
-        if weights is None:
-            if self.isweighted(axis=axis):
-                result = self.droplevel('weights', axis=axis)
-            elif inplace:
-                result = self
-            else:
-                result = self.copy()
+    def set_weights(self, weights, axis=0, inplace=False, level=None):
+        """Set sample weights along an axis.
+
+        Parameters
+        ----------
+        weights: 1d array-like
+            The sample weights to put in an index.
+
+        axis: int (0,1), optional
+            Whether to put weights in an index or column.
+            Default 0.
+
+        inplace: bool, optional
+            Whether to operate inplace, or return a new array.
+            Default False.
+
+        level: int
+            Which level in the index to insert before.
+            Defaults to inserting at back
+
+        """
+        if inplace:
+            result = self
         else:
-            result = self.set_axis([self._get_axis(axis).get_level_values(name)
-                                    for name in self._get_axis(axis).names
-                                    if name != 'weights'] + [weights],
-                                   axis=axis)
-            names = result._get_axis(axis).names[:-1] + ['weights']
-            result._get_axis(axis).set_names(names, inplace=True)
+            result = self.copy()
+
+        if weights is None:
+            if result.isweighted(axis=axis):
+                result = result.droplevel('weights', axis=axis)
+        else:
+            names = [n for n in result._get_axis(axis).names if n != 'weights']
+            index = [result._get_axis(axis).get_level_values(n) for n in names]
+            if level is None:
+                if result.isweighted(axis):
+                    level = result._get_axis(axis).names.index('weights')
+                else:
+                    level = len(index)
+            index.insert(level, weights)
+            names.insert(level, 'weights')
+
+            index = MultiIndex.from_arrays(index, names=names)
+            result.set_axis(index, axis=axis, inplace=True)
 
         if inplace:
             self._update_inplace(result)
