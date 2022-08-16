@@ -13,7 +13,7 @@ from pandas import MultiIndex, DataFrame, Series
 from collections.abc import Sequence
 from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
-                              is_int, logsumexp, modify_inplace)
+                              is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas.core.accessor import CachedAccessor
@@ -54,9 +54,6 @@ class Samples(WeightedDataFrame):
     tex: dict
         mapping from columns to tex labels for plotting
 
-    limits: dict
-        mapping from columns to prior limits
-
     label: str
         Legend label
 
@@ -67,7 +64,7 @@ class Samples(WeightedDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'limits', 'label']
+    _metadata = WeightedDataFrame._metadata + ['tex', 'label']
 
     def __init__(self, *args, **kwargs):
         logzero = kwargs.pop('logzero', -1e30)
@@ -76,15 +73,12 @@ class Samples(WeightedDataFrame):
             logL = np.array(logL)
             logL = np.where(logL <= logzero, -np.inf, logL)
         self.tex = kwargs.pop('tex', {})
-        self.limits = kwargs.pop('limits', {})
         self.label = kwargs.pop('label', None)
         super().__init__(*args, **kwargs)
 
         if logL is not None:
             self['logL'] = logL
             self.tex['logL'] = r'$\ln\mathcal{L}$'
-
-        self._set_automatic_limits()
 
     @property
     def _constructor(self):
@@ -93,26 +87,6 @@ class Samples(WeightedDataFrame):
     def _reload_data(self):
         self.__init__(root=self.root)
         return self
-
-    def _limits(self, paramname):
-        limits = self.limits.get(paramname, (None, None))
-        if limits[0] == limits[1]:
-            limits = (None, None)
-        return limits
-
-    def _set_automatic_limits(self):
-        """Set all unassigned limits to min and max of sample."""
-        for param in self.columns:
-            if param not in self.limits:
-                self.limits[param] = (self[param].min(), self[param].max())
-
-    def copy(self, deep=True):
-        """Copy which also includes mutable metadata."""
-        new = super().copy(deep)
-        if deep:
-            new.tex = copy.deepcopy(self.tex)
-            new.limits = copy.deepcopy(self.limits)
-        return new
 
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
@@ -146,8 +120,6 @@ class Samples(WeightedDataFrame):
             Pandas array of axes objects
 
         """
-        self._set_automatic_limits()
-
         if not isinstance(axes, Series):
             fig, axes = make_1d_axes(axes, tex=self.tex)
         else:
@@ -158,7 +130,10 @@ class Samples(WeightedDataFrame):
 
         for x, ax in axes.iteritems():
             if x in self and kwargs['kind'] is not None:
-                self[x].plot(ax=ax, *args, **kwargs)
+                xlabel = self.tex[x] if x in self.tex else x
+                self[x].plot(ax=ax, xlabel=xlabel,
+                             *args, **kwargs)
+                ax.set_xlabel(xlabel)
             else:
                 ax.plot([], [])
 
@@ -245,8 +220,6 @@ class Samples(WeightedDataFrame):
                         for pos in ['upper', 'lower', 'diagonal']}
         kwargs['label'] = kwargs.get('label', self.label)
 
-        self._set_automatic_limits()
-
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
@@ -265,10 +238,17 @@ class Samples(WeightedDataFrame):
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
                     if x in self and y in self and lkwargs['kind'] is not None:
+                        xlabel = self.tex[x] if x in self.tex else x
+                        ylabel = self.tex[y] if y in self.tex else y
                         if x == y:
-                            self[x].plot(ax=ax.twin, *args, **lkwargs)
+                            self[x].plot(ax=ax.twin, xlabel=xlabel,
+                                         *args, **lkwargs)
+                            ax.set_xlabel(xlabel)
                         else:
-                            self.plot(x, y, ax=ax, *args, **lkwargs)
+                            self.plot(x, y, ax=ax, xlabel=xlabel,
+                                      ylabel=ylabel, *args, **lkwargs)
+                            ax.set_xlabel(xlabel)
+                            ax.set_ylabel(ylabel)
                     else:
                         if x == y:
                             ax.twin.plot([], [])
@@ -315,13 +295,21 @@ class Samples(WeightedDataFrame):
         samples: Samples/MCMCSamples/NestedSamples
             Importance re-weighted samples.
         """
-        samples = self.copy()
+        if inplace:
+            samples = self
+        else:
+            samples = self.copy()
+
         if action == 'add':
-            samples.weights *= np.exp(logL_new - logL_new.max())
+            new_weights = samples.get_weights()
+            new_weights *= np.exp(logL_new - logL_new.max())
+            samples.set_weights(new_weights, inplace=True)
             samples.logL += logL_new
         elif action == 'replace':
             logL_new2 = logL_new - samples.logL
-            samples.weights *= np.exp(logL_new2 - logL_new2.max())
+            new_weights = samples.get_weights()
+            new_weights *= np.exp(logL_new2 - logL_new2.max())
+            samples.set_weights(new_weights, inplace=True)
             samples.logL = logL_new
         elif action == 'mask':
             samples = samples[logL_new]
@@ -330,7 +318,10 @@ class Samples(WeightedDataFrame):
                                       "{'add', 'replace', 'mask'}, but '%s' "
                                       "was requested." % action)
 
-        return modify_inplace(self, samples, inplace)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples.__finalize__(self, "importance_sample")
 
 
 class MCMCSamples(Samples):
@@ -360,9 +351,6 @@ class MCMCSamples(Samples):
     tex: dict
         mapping from columns to tex labels for plotting
 
-    limits: dict
-        mapping from columns to prior limits
-
     label: str
         Legend label
 
@@ -371,10 +359,13 @@ class MCMCSamples(Samples):
         Anything equal or below this value is set to `-np.inf`.
         default: -1e30
 
-    burn_in: int or float
-        Discards the first integer number of nsamples if int
-        or the first fraction of nsamples if float.
-        Only works if `root` provided and if chains are GetDist compatible.
+    burn_in: float
+        if 0 < burn_in < 1:
+            discard the first burn_in fraction of samples
+        elif 1 < burn_in:
+            only keep samples [burn_in:]
+        Only works if `root` provided and if chains are GetDist or Cobaya
+        compatible.
         default: False
 
     """
@@ -391,14 +382,13 @@ class MCMCSamples(Samples):
                                  "instead which has the same features as "
                                  "Samples and more. MCMCSamples should be "
                                  "used for MCMC chains only." % root)
-            burn_in = kwargs.pop('burn_in', False)
+            burn_in = kwargs.pop('burn_in', None)
             weights, logL, samples = reader.samples(burn_in=burn_in)
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
-            limits = reader.limits()
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=columns, weights=weights,
-                          logL=logL, tex=tex, limits=limits, *args, **kwargs)
+                          logL=logL, tex=tex, *args, **kwargs)
             self.root = root
         else:
             self.root = None
@@ -447,11 +437,6 @@ class NestedSamples(Samples):
     tex: dict
         optional mapping from column names to tex labels for plotting
 
-    limits: dict
-        mapping from columns to prior limits.
-        Defaults defined by .ranges file (if it exists)
-        otherwise defined by minimum and maximum of the nested sampling data
-
     label: str
         Legend label
         default: basename of root
@@ -476,11 +461,10 @@ class NestedSamples(Samples):
             samples, logL, logL_birth = reader.samples()
             params, tex = reader.paramnames()
             columns = kwargs.pop('columns', params)
-            limits = reader.limits()
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=columns,
                           logL=logL, logL_birth=logL_birth,
-                          tex=tex, limits=limits, *args, **kwargs)
+                          tex=tex, *args, **kwargs)
             self.root = root
         else:
             self.root = None
@@ -495,8 +479,6 @@ class NestedSamples(Samples):
             super().__init__(logzero=logzero, *args, **kwargs)
             if logL_birth is not None:
                 self.recompute(logL_birth, inplace=True)
-
-            self._set_automatic_limits()
 
     @property
     def _constructor(self):
@@ -516,7 +498,7 @@ class NestedSamples(Samples):
     def beta(self, beta):
         self._beta = beta
         logw = self.logw(beta=beta)
-        self.weights = np.exp(logw - logw.max())
+        self.set_weights(np.exp(logw - logw.max()), inplace=True)
 
     def set_beta(self, beta, inplace=False):
         """Change the inverse temperature.
@@ -643,7 +625,7 @@ class NestedSamples(Samples):
             t.name = 'logX'
         else:
             r = np.log(np.random.rand(len(self), nsamples))
-            r = WeightedDataFrame(r, self.index, weights=self.weights)
+            r = WeightedDataFrame(r, self.index, weights=self.get_weights())
             t = r.divide(self.nlive, axis=0)
             t.columns.name = 'samples'
         return t.cumsum()
@@ -864,7 +846,7 @@ class NestedSamples(Samples):
             except KeyError:
                 pass
         i = (self.logL >= logL) & (self.logL_birth < logL)
-        return Samples(self[i], weights=np.ones(i.sum()))
+        return Samples(self[i]).set_weights(None)
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
@@ -906,7 +888,10 @@ class NestedSamples(Samples):
         """
         samples = super().importance_sample(logL_new, action=action)
         samples = samples[samples.logL > samples.logL_birth].recompute()
-        return modify_inplace(self, samples, inplace)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples.__finalize__(self, "importance_sample")
 
     def recompute(self, logL_birth=None, inplace=False):
         """Re-calculate the nested sampling contours and live points.
@@ -923,7 +908,10 @@ class NestedSamples(Samples):
             frame with contours resorted and nlive recomputed
             default: False
         """
-        samples = self.copy()
+        if inplace:
+            samples = self
+        else:
+            samples = self.copy()
 
         if is_int(logL_birth):
             nlive = logL_birth
@@ -970,7 +958,10 @@ class NestedSamples(Samples):
                           RuntimeWarning)
             samples = samples[samples.logL.notna()].recompute()
 
-        return modify_inplace(self, samples, inplace)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples.__finalize__(self, "recompute")
 
 
 def merge_nested_samples(runs):
@@ -1039,14 +1030,19 @@ def merge_samples_weighted(samples, weights=None, label=None):
                              "each weight is for a whole sample. Currently",
                              len(samples), len(weights))
 
-    new_samples = Samples()
+    new_samples = []
     for s, w in zip(mcmc_samples, weights):
         # Normalize the given weights
-        new_weights = s.weights / s.weights.sum() * w/np.sum(weights)
+        new_weights = s.get_weights() / s.get_weights().sum()
+        new_weights *= w/np.sum(weights)
         s = Samples(s, weights=new_weights)
-        new_samples = new_samples.append(s)
+        new_samples.append(s)
 
-    new_samples.weights /= new_samples.weights.max()
+    new_samples = pandas.concat(new_samples)
+
+    new_weights = new_samples.get_weights()
+    new_weights /= new_weights.max()
+    new_samples.set_weights(new_weights, inplace=True)
 
     new_samples.label = label
     # Copy tex, if different values for same key exist, the last one is used.

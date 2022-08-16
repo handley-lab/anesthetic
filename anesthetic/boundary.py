@@ -4,7 +4,7 @@ import numpy as np
 from scipy.special import erf
 
 
-def cut_and_normalise_gaussian(x, p, sigma, xmin=None, xmax=None):
+def cut_and_normalise_gaussian(x, p, bw, xmin=None, xmax=None):
     """Cut and normalise boundary correction for a Gaussian kernel.
 
     Parameters
@@ -15,7 +15,7 @@ def cut_and_normalise_gaussian(x, p, sigma, xmin=None, xmax=None):
     p: np.array
         probability densities for normalisation correction
 
-    sigma: float
+    bw: float
         bandwidth of KDE
 
     xmin, xmax: float
@@ -31,9 +31,9 @@ def cut_and_normalise_gaussian(x, p, sigma, xmin=None, xmax=None):
     correction = np.ones_like(x)
 
     if xmin is not None:
-        correction *= 0.5*(1 + erf((x - xmin)/sigma/np.sqrt(2)))
+        correction *= 0.5 * (1 + erf((x-xmin)/bw/np.sqrt(2)))
         correction[x < xmin] = np.inf
     if xmax is not None:
-        correction *= 0.5*(1 + erf((xmax - x)/sigma/np.sqrt(2)))
+        correction *= 0.5 * (1 + erf((xmax-x)/bw/np.sqrt(2)))
         correction[x > xmax] = np.inf
     return p/correction

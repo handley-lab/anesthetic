@@ -6,7 +6,6 @@ from scipy.interpolate import interp1d
 from scipy.stats import kstwobign
 from matplotlib.tri import Triangulation
 import contextlib
-import copy
 
 
 def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
@@ -510,11 +509,3 @@ def temporary_seed(seed):
         yield
     finally:
         np.random.set_state(state)
-
-
-def modify_inplace(orig, new, inplace):
-    """Conditionally modify object inplace or return."""
-    if inplace:
-        orig.__dict__ = copy.deepcopy(new.__dict__)
-    else:
-        return new

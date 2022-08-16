@@ -33,7 +33,6 @@ def test_build_samples():
     weights = np.random.randint(1, 20, size=nsamps)
     params = ['A', 'B', 'C']
     tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
-    limits = {'A': (-1, 1), 'B': (-2, 2), 'C': (-3, 3)}
 
     s = Samples(data=data)
     assert len(s) == nsamps
@@ -60,10 +59,6 @@ def test_build_samples():
     s = Samples(data=data, tex=tex)
     for p in params:
         assert s.tex[p] == tex[p]
-
-    s = Samples(data=data, limits=limits)
-    for p in params:
-        assert s.limits[p] == limits[p]
 
     mc = MCMCSamples(data=data, logL=logL, weights=weights)
     assert len(mc) == nsamps
@@ -409,7 +404,7 @@ def test_plot_1d_colours():
 def test_astropyhist():
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
-    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', plotter='astropyhist')
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
     plt.close("all")
 
 
@@ -649,7 +644,7 @@ def test_Occams_razor(nsamples, beta):
 
 
 def test_stats():
-    np.random.seed(2)
+    np.random.seed(3)
     pc = NestedSamples(root='./tests/example_data/pc')
 
     nsamples = 10
@@ -690,9 +685,9 @@ def test_stats():
     for beta in [1., 0., 0.5]:
         pc.beta = beta
         n = 1000
-        PC = pc.stats(n)
+        PC = pc.stats(n, beta)
         assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
-        assert PC['d_G'].mean() < 5
+        assert PC['d_G'].mean() < 5 + 3 * PC['d_G'].std()
         assert PC.cov()['D_KL']['logZ'] < 0
         assert abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * 3
         assert abs(PC.D_KL.mean() - pc.D_KL()) < PC.D_KL.std() * 3
@@ -700,17 +695,21 @@ def test_stats():
         assert abs(PC.logL_P.mean() - pc.logL_P()) < PC.logL_P.std() * 3
 
         n = 100
-        assert ks_2samp(pc.logZ(n), PC.logZ).pvalue > 0.05
-        assert ks_2samp(pc.D_KL(n), PC.D_KL).pvalue > 0.05
-        assert ks_2samp(pc.d_G(n), PC.d_G).pvalue > 0.05
-        assert ks_2samp(pc.logL_P(n), PC.logL_P).pvalue > 0.05
+        assert ks_2samp(pc.logZ(n, beta), PC.logZ).pvalue > 0.05
+        assert ks_2samp(pc.D_KL(n, beta), PC.D_KL).pvalue > 0.05
+        assert ks_2samp(pc.d_G(n, beta), PC.d_G).pvalue > 0.05
+        if beta != 0:
+            assert ks_2samp(pc.logL_P(n, beta), PC.logL_P).pvalue > 0.05
 
     assert abs(pc.set_beta(0.0).logZ()) < 1e-2
     assert pc.set_beta(0.9).logZ() < pc.set_beta(1.0).logZ()
 
-    assert_array_almost_equal(pc.set_beta(1).weights, pc.set_beta(1).weights)
-    assert_array_almost_equal(pc.set_beta(.5).weights, pc.set_beta(.5).weights)
-    assert_array_equal(pc.set_beta(0).weights, pc.set_beta(0).weights)
+    assert_array_almost_equal(pc.set_beta(1).get_weights(),
+                              pc.set_beta(1).get_weights())
+    assert_array_almost_equal(pc.set_beta(.5).get_weights(),
+                              pc.set_beta(.5).get_weights())
+    assert_array_equal(pc.set_beta(0).get_weights(),
+                       pc.set_beta(0).get_weights())
 
 
 def test_masking():
@@ -736,9 +735,9 @@ def test_merging():
     samples_1 = NestedSamples(root='./tests/example_data/pc')
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
     samples = merge_nested_samples([samples_1, samples_2])
-    nlive_1 = samples_1.nlive.mode()[0]
-    nlive_2 = samples_2.nlive.mode()[0]
-    nlive = samples.nlive.mode()[0]
+    nlive_1 = samples_1.nlive.mode().to_numpy()[0]
+    nlive_2 = samples_2.nlive.mode().to_numpy()[0]
+    nlive = samples.nlive.mode().to_numpy()[0]
     assert nlive_1 == 125
     assert nlive_2 == 250
     assert nlive == nlive_1 + nlive_2
@@ -755,15 +754,15 @@ def test_weighted_merging():
     samples_2['xtest'] = samples_2['x3']
     samples_1.tex['xtest'] = "$x_{t,1}$"
     samples_2.tex['xtest'] = "$x_{t,2}$"
-    mean1 = samples_1.mean()['xtest']
-    mean2 = samples_2.mean()['xtest']
+    mean1 = samples_1.xtest.mean()
+    mean2 = samples_2.xtest.mean()
 
     # Test with evidence weights
     weight1 = np.exp(samples_1.logZ())
     weight2 = np.exp(samples_2.logZ())
     samples = merge_samples_weighted([samples_1, samples_2],
                                      label='Merged label')
-    mean = samples.mean()['xtest']
+    mean = samples.xtest.mean()
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
     # Test tex and label
@@ -785,7 +784,7 @@ def test_weighted_merging():
     weight2 = 13
     samples = merge_samples_weighted(
         [samples_1, samples_2], weights=[weight1, weight2])
-    mean = samples.mean()['xtest']
+    mean = samples.xtest.mean()
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
     # Test plot still works (see issue #189)
@@ -813,30 +812,33 @@ def test_weighted_merging():
 
 def test_beta():
     pc = NestedSamples(root="./tests/example_data/pc")
-    weights = pc.weights
-    assert_array_equal(weights, pc.weights)
-    assert_array_equal(pc.index.get_level_values('weights'), pc.weights)
+    weights = pc.get_weights()
+    assert_array_equal(weights, pc.get_weights())
+    assert_array_equal(pc.index.get_level_values('weights'), pc.get_weights())
     assert pc.beta == 1
 
     prior = pc.set_beta(0)
     assert prior.beta == 0
-    assert_array_equal(prior.index.get_level_values('weights'), prior.weights)
+    assert_array_equal(prior.index.get_level_values('weights'),
+                       prior.get_weights())
     assert pc.beta == 1
-    assert_array_equal(pc.index.get_level_values('weights'), pc.weights)
-    assert_array_almost_equal(sorted(prior.weights, reverse=True),
-                              prior.weights)
+    assert_array_equal(pc.index.get_level_values('weights'), pc.get_weights())
+    assert_array_almost_equal(sorted(prior.get_weights(), reverse=True),
+                              prior.get_weights())
 
     for beta in np.linspace(0, 2, 10):
         pc.set_beta(beta, inplace=True)
         assert pc.beta == beta
-        assert_array_equal(pc.index.get_level_values('weights'), pc.weights)
+        assert_array_equal(pc.index.get_level_values('weights'),
+                           pc.get_weights())
         assert not np.array_equal(pc.index.get_level_values('weights'),
                                   weights)
 
     for beta in np.linspace(0, 2, 10):
         pc.beta = beta
         assert pc.beta == beta
-        assert_array_equal(pc.index.get_level_values('weights'), pc.weights)
+        assert_array_equal(pc.index.get_level_values('weights'),
+                           pc.get_weights())
         assert not np.array_equal(pc.index.get_level_values('weights'),
                                   weights)
 
@@ -872,64 +874,28 @@ def test_live_points():
         live_points_from_index = pc.live_points(i)
         assert_array_equal(live_points_from_index, live_points)
 
-    assert pc.live_points(0).index[0][0] == 0
+    assert pc.live_points(0).index[0] == 0
 
     last_live_points = pc.live_points()
     logL = pc.logL_birth.max()
     assert (last_live_points.logL >= logL).all()
-    assert len(last_live_points) == pc.nlive.mode()[0]
+    assert len(last_live_points) == pc.nlive.mode().to_numpy()[0]
+
+    assert not live_points.isweighted()
 
 
-def test_limit_assignment():
-    np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
-    # `None` in .ranges file:
-    assert ns.limits['x0'][0] is None
-    assert ns.limits['x0'][1] is None
-    # parameter not listed in .ranges file:
-    assert ns.limits['x1'][0] == ns.x1.min()
-    assert ns.limits['x1'][1] == ns.x1.max()
-    # `None` for only one limit in .ranges file:
-    assert ns.limits['x2'][0] == 0
-    assert ns.limits['x2'][1] is None
-    # both limits specified in .ranges file:
-    assert ns.limits['x3'][0] == 0
-    assert ns.limits['x3'][1] == 1
-    # limits for logL, weights, nlive
-    assert np.isclose(ns.limits['logL'][0], -777.0115456428716)
-    assert np.isclose(ns.limits['logL'][1], 5.748335384373301)
-    assert ns.limits['nlive'][0] == 1
-    assert ns.limits['nlive'][1] == 125
-    # limits for derived parameters:
-    ns['x5'] = ns.x0 + ns.x1
-    assert 'x5' in ns.columns and 'x5' not in ns.limits
-    ns.plot_1d(['x5'])
-    assert 'x5' in ns.columns and 'x5' in ns.limits
-    ns['x6'] = ns.x2 + ns.x3
-    assert 'x6' in ns.columns and 'x6' not in ns.limits
-    ns.plot_2d(['x5', 'x6'])
-    assert 'x6' in ns.columns and 'x6' in ns.limits
-
-
-def test_xmin_xmax_1d():
+def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)
     ns = NestedSamples(root='./tests/example_data/pc')
     fig, ax = ns.plot_1d('x0', kind='hist_1d')
-    assert ax['x0'].get_xlim() != (-1, 1)
-    fig, ax = ns.plot_1d('x0', kind='hist_1d', xmin=-1, xmax=1)
-    assert ax['x0'].get_xlim() == (-1, 1)
-
-
-def test_equal_min_max():
-    """Test to provide a solution to #89"""
-    np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
-    with pytest.raises(ValueError):
-        ns.plot_2d(['x0', 'x1', 'x2'], xmin=3, xmax=3)
-
-    ns.limits['x0'] = (3, 3)
-    ns.plot_2d(['x0', 'x1', 'x2'])
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 > -1
+    assert x2 < +1
+    fig, ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 <= -1
+    assert x2 >= +1
 
 
 def test_contour_plot_2d_nan():
@@ -942,9 +908,9 @@ def test_contour_plot_2d_nan():
         ns.plot_2d(['x0', 'x1'])
 
     # Check this error is removed in the case of zero weights
-    weights = ns.weights
+    weights = ns.get_weights()
     weights[:10] = 0
-    ns.weights = weights
+    ns.set_weights(weights, inplace=True)
     ns.plot_2d(['x0', 'x1'])
 
 
@@ -955,7 +921,7 @@ def test_compute_insertion():
     ns._compute_insertion_indexes()
     assert 'insertion' in ns
 
-    nlive = ns.nlive.mode()[0]
+    nlive = ns.nlive.mode().to_numpy()[0]
     assert_array_less(ns.insertion, nlive)
 
     u = ns.insertion.to_numpy()/nlive
@@ -991,22 +957,22 @@ def test_NestedSamples_importance_sample():
     ns_masked = ns0.importance_sample(ns0.logL, action='replace')
     assert_array_equal(ns0.logL, ns_masked.logL)
     assert_array_equal(ns0.logL_birth, ns_masked.logL_birth)
-    assert_array_equal(ns0.weights, ns_masked.weights)
+    assert_array_equal(ns0.get_weights(), ns_masked.get_weights())
 
     ns_masked = ns0.importance_sample(np.zeros_like(ns0.logL), action='add')
     assert_array_equal(ns0.logL, ns_masked.logL)
     assert_array_equal(ns0.logL_birth, ns_masked.logL_birth)
-    assert_array_equal(ns0.weights, ns_masked.weights)
+    assert_array_equal(ns0.get_weights(), ns_masked.get_weights())
 
     mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
     ns_masked = merge_nested_samples((ns0[mask], ))
-    V_prior = pi0[mask].weights.sum() / pi0.weights.sum()
-    V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
+    V_prior = pi0[mask].get_weights().sum() / pi0.get_weights().sum()
+    V_posterior = ns0[mask].get_weights().sum() / ns0.get_weights().sum()
 
     ns1 = ns0.importance_sample(mask, action='mask')
     assert_array_equal(ns_masked.logL, ns1.logL)
     assert_array_equal(ns_masked.logL_birth, ns1.logL_birth)
-    assert_array_equal(ns_masked.weights, ns1.weights)
+    assert_array_equal(ns_masked.get_weights(), ns1.get_weights())
 
     logL_new = np.where(mask, 0, -np.inf)
     ns1 = ns0.importance_sample(logL_new)
@@ -1025,13 +991,10 @@ def test_NestedSamples_importance_sample():
     assert type(ns0) is NestedSamples
     assert_array_equal(ns0, ns1)
     assert ns0.tex == ns1.tex
-    assert ns0.limits == ns1.limits
     assert ns0.root == ns1.root
     assert ns0.label == ns1.label
     assert ns0.beta == ns1.beta
     assert ns0 is not ns1
-    assert ns0.tex is not ns1.tex
-    assert ns0.limits is not ns1.limits
 
 
 def test_MCMCSamples_importance_sample():
@@ -1047,18 +1010,18 @@ def test_MCMCSamples_importance_sample():
     # add logL
     mc1 = mc0.importance_sample(np.zeros_like(mc0.logL), action='add')
     assert_array_equal(mc0.logL, mc1.logL)
-    assert_array_equal(mc0.weights, mc1.weights)
+    assert_array_equal(mc0.get_weights(), mc1.get_weights())
     mc1 = mc0.importance_sample(logL_new=logL_i)
     assert np.all(mc1.logL.to_numpy() != mc0.logL.to_numpy())
-    assert not np.all(mc1.weights == mc0.weights)
+    assert not np.all(mc1.get_weights() == mc0.get_weights())
 
     # replace logL
     mc2 = mc0.importance_sample(mc0.logL, action='replace')
     assert_array_equal(mc0.logL, mc2.logL)
-    assert_array_equal(mc0.weights, mc2.weights)
+    assert_array_equal(mc0.get_weights(), mc2.get_weights())
     mc2 = mc0.importance_sample(mc0.logL.to_numpy()+logL_i, action='replace')
     assert np.all(mc2.logL.to_numpy() != mc0.logL.to_numpy())
-    assert not np.all(mc2.weights == mc0.weights)
+    assert not np.all(mc2.get_weights() == mc0.get_weights())
     assert_array_equal(mc1.logL.to_numpy(), mc2.logL.to_numpy())
     assert_array_almost_equal(mc1.logL.to_numpy(), mc2.logL.to_numpy())
 
@@ -1067,30 +1030,24 @@ def test_MCMCSamples_importance_sample():
     mc_masked = mc0[mask]
     mc3 = mc0.importance_sample(mask, action='mask')
     assert_array_equal(mc_masked.logL, mc3.logL)
-    assert_array_equal(mc_masked.weights, mc3.weights)
+    assert_array_equal(mc_masked.get_weights(), mc3.get_weights())
     assert np.all(mc3.x0 > -0.3)
 
     for mc in [mc1, mc2, mc3]:
         assert mc.tex == mc0.tex
-        assert mc.limits == mc0.limits
         assert mc.root == mc0.root
         assert mc.label == mc0.label
         assert mc._metadata == mc0._metadata
         assert mc is not mc0
-        assert mc.tex is not mc0.tex
-        assert mc.limits is not mc0.limits
 
     mc0.importance_sample(mask, action='mask', inplace=True)
     assert type(mc0) is MCMCSamples
     assert_array_equal(mc3, mc0)
     assert mc3.tex == mc0.tex
-    assert mc3.limits == mc0.limits
     assert mc3.root == mc0.root
     assert mc3.label == mc0.label
     assert mc3._metadata == mc0._metadata
     assert mc3 is not mc0
-    assert mc3.tex is not mc0.tex
-    assert mc3.limits is not mc0.limits
 
 
 def test_wedding_cake():
@@ -1112,8 +1069,8 @@ def test_logzero_mask_prior_level():
     NS0 = ns0.stats(nsamples=2000)
     mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
 
-    V_prior = pi0[mask].weights.sum() / pi0.weights.sum()
-    V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
+    V_prior = pi0[mask].get_weights().sum() / pi0.get_weights().sum()
+    V_posterior = ns0[mask].get_weights().sum() / ns0.get_weights().sum()
     logZ_V = NS0.logZ.mean() + np.log(V_posterior) - np.log(V_prior)
 
     ns1 = merge_nested_samples((ns0[mask],))
@@ -1128,7 +1085,7 @@ def test_logzero_mask_likelihood_level():
     NS0 = ns0.stats(nsamples=2000)
     mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
 
-    V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
+    V_posterior = ns0[mask].get_weights().sum() / ns0.get_weights().sum()
     logZ_V = NS0.logZ.mean() + np.log(V_posterior)
 
     ns1 = NestedSamples(root='./tests/example_data/pc')
@@ -1184,8 +1141,6 @@ def test_copy():
     pc = NestedSamples(root='./tests/example_data/pc')
     new = pc.copy()
     assert new is not pc
-    assert new.tex is not pc.tex
-    assert new.limits is not pc.limits
 
 
 def test_plotting_with_integer_names():
@@ -1259,3 +1214,15 @@ def test_samples_dot_plot():
         pass
 
     plt.close("all")
+
+
+def test_samples_plot_labels():
+    samples = NestedSamples(root='./tests/example_data/pc')
+    columns = ['x0', 'x1', 'x2', 'x3', 'x4']
+    fig, axes = samples.plot_2d(columns)
+
+    for col, ax in zip(columns, axes.loc[:, 'x0']):
+        assert samples.tex[col] == ax.get_ylabel()
+
+    for col, ax in zip(columns, axes.loc['x4', :]):
+        assert samples.tex[col] == ax.get_xlabel()

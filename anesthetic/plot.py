@@ -13,6 +13,7 @@ import numpy as np
 import pandas
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
+from scipy.special import erf
 from matplotlib.gridspec import GridSpec as GS, GridSpecFromSubplotSpec as SGS
 try:
     from astropy.visualization import hist
@@ -27,7 +28,7 @@ import matplotlib.lines as mlines
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.transforms import Affine2D
-from anesthetic.utils import check_bounds, nest_level
+from anesthetic.utils import nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
@@ -362,10 +363,6 @@ def make_2d_axes(params, **kwargs):
                 for a in ax_:
                     a.tick_params('x', bottom=False, top=False,
                                   labelbottom=False, labeltop=False)
-            else:
-                raise ValueError(
-                    "ticks=%s was requested, but ticks can only be one of "
-                    "['outer', 'inner', None]." % ticks)
 
     return fig, axes
 
@@ -393,6 +390,13 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         values at which to draw iso-probability lines.
         optional, default [0.95, 0.68]
 
+    q: int or float or tuple
+        Quantile to determine the data range to be plotted.
+        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
+        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
+        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
+        - tuple: quantile range, e.g. (0.16, 0.84)
+
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
         ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
@@ -411,22 +415,18 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
 
-    if len(data) == 0:
-        return np.zeros(0), np.zeros(0)
-
     if data.max()-data.min() <= 0:
         return
 
-    levels = kwargs.pop('levels', [0.95, 0.68])
-
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
+    levels = kwargs.pop('levels', [0.95, 0.68])
     density = kwargs.pop('density', False)
+
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
     facecolor = kwargs.pop('facecolor', False)
-
     if 'edgecolor' in kwargs:
         edgecolor = kwargs.pop('edgecolor')
         if edgecolor:
@@ -434,7 +434,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     else:
         edgecolor = color
 
-    q = kwargs.pop('q', '5sigma')
+    q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
 
     try:
@@ -442,11 +442,10 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     except NameError:
         raise ImportError("You need to install fastkde to use fastkde")
     p /= p.max()
-    i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[1], p)))
+    i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[-1], p)))
 
     area = np.trapz(x=x[i], y=p[i]) if density else 1
     ans = ax.plot(x[i], p[i]/area, color=color, *args, **kwargs)
-    ax.set_xlim(xmin, xmax, auto=True)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
@@ -484,13 +483,16 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     ncompress: int, optional
         Degree of compression. Default 1000
 
-    xmin, xmax: float
-        lower/upper prior bound.
-        optional, default None
-
     levels: list
         values at which to draw iso-probability lines.
         optional, default [0.95, 0.68]
+
+    q: int or float or tuple
+        Quantile to determine the data range to be plotted.
+        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
+        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
+        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
+        - tuple: quantile range, e.g. (0.16, 0.84)
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -505,30 +507,28 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         matplotlib matplotlib.axes.Axes.plot command)
 
     """
-    if len(data) == 0:
-        return np.zeros(0), np.zeros(0)
-
-    if data.max()-data.min() <= 0:
-        return
-
     kwargs = normalize_kwargs(
         kwargs,
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
 
+    if data.max()-data.min() <= 0:
+        return
+
+    weights = kwargs.pop('weights', None)
+    if weights is not None:
+        data = data[weights != 0]
+        weights = weights[weights != 0]
+
+    ncompress = kwargs.pop('ncompress', 1000)
     bw_method = kwargs.pop('bw_method', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
-
-    xmin = kwargs.pop('xmin', None)
-    xmax = kwargs.pop('xmax', None)
-    weights = kwargs.pop('weights', None)
-    ncompress = kwargs.pop('ncompress', 1000)
     density = kwargs.pop('density', False)
+
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
     facecolor = kwargs.pop('facecolor', False)
-
     if 'edgecolor' in kwargs:
         edgecolor = kwargs.pop('edgecolor')
         if edgecolor:
@@ -536,28 +536,20 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     else:
         edgecolor = color
 
-    q = kwargs.pop('q', '5sigma')
+    q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
-
-    if weights is not None:
-        data = data[weights != 0]
-        weights = weights[weights != 0]
 
     x, w = sample_compression_1d(data, weights, ncompress)
     kde = gaussian_kde(x, weights=w, bw_method=bw_method)
     p = kde(x)
     p /= p.max()
-    i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[1], w)))
-    if xmin is not None:
-        i = i & (x > xmin)
-    if xmax is not None:
-        i = i & (x < xmax)
-    sigma = np.sqrt(kde.covariance[0, 0])
-    pp = cut_and_normalise_gaussian(x[i], p[i], sigma, xmin, xmax)
+    i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[-1], w)))
+    bw = np.sqrt(kde.covariance[0, 0])
+    pp = cut_and_normalise_gaussian(x[i], p[i], bw=bw,
+                                    xmin=data.min(), xmax=data.max())
     pp /= pp.max()
     area = np.trapz(x=x[i], y=pp) if density else 1
     ans = ax.plot(x[i], pp/area, color=color, *args, **kwargs)
-    ax.set_xlim(*check_bounds(x[i], xmin, xmax), auto=True)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
@@ -592,10 +584,12 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     weights: np.array, optional
         Sample weights.
 
-    xmin, xmax: float
-        lower/upper prior bound.
-        optional, default data.min() and data.max()
-        cannot be None (reverts to default in that case)
+    q: int or float or tuple
+        Quantile to determine the data range to be plotted.
+        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
+        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
+        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
+        - tuple: quantile range, e.g. (0.16, 0.84)
 
     Returns
     -------
@@ -611,30 +605,31 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     if data.max()-data.min() <= 0:
         return
 
-    xmin = kwargs.pop('xmin', None)
-    xmax = kwargs.pop('xmax', None)
-    plotter = kwargs.pop('plotter', '')
     weights = kwargs.pop('weights', None)
-    if xmin is None or not np.isfinite(xmin):
-        xmin = quantile(data, 0.01, weights)
-    if xmax is None or not np.isfinite(xmax):
-        xmax = quantile(data, 0.99, weights)
+    bins = kwargs.pop('bins', 10)
     histtype = kwargs.pop('histtype', 'bar')
     density = kwargs.get('density', False)
+
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
 
-    if plotter == 'astropyhist':
+    q = kwargs.pop('q', 5)
+    q = quantile_plot_interval(q=q)
+    xmin = quantile(data, q[0], weights)
+    xmax = quantile(data, q[-1], weights)
+
+    if bins in ['knuth', 'freedman', 'blocks']:
         try:
-            h, edges, bars = hist(data, ax=ax, color=color, range=(xmin, xmax),
-                                  histtype=histtype, *args, **kwargs)
+            h, edges, bars = hist(data, ax=ax, bins=bins,
+                                  range=(xmin, xmax), histtype=histtype,
+                                  color=color, *args, **kwargs)
         except NameError:
             raise ImportError("You need to install astropy to use astropyhist")
     else:
-        h, edges, bars = ax.hist(data, color=color, range=(xmin, xmax),
-                                 histtype=histtype, weights=weights,
-                                 *args, **kwargs)
+        h, edges, bars = ax.hist(data, weights=weights, bins=bins,
+                                 range=(xmin, xmax), histtype=histtype,
+                                 color=color, *args, **kwargs)
 
     if histtype == 'bar' and not density:
         for b in bars:
@@ -643,7 +638,6 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         trans = Affine2D().scale(sx=1, sy=1./h.max()) + ax.transData
         bars[0].set_transform(trans)
 
-    ax.set_xlim(*check_bounds(edges, xmin, xmax), auto=True)
     if not density:
         ax.set_ylim(0, 1.1)
     return bars
@@ -686,6 +680,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            color=['c'],
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
+
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
@@ -693,16 +688,15 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
+
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', True)
     edgecolor = kwargs.pop('edgecolor', None)
     cmap = kwargs.pop('cmap', None)
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
-    kwargs.pop('q', None)
 
-    if len(data_x) == 0 or len(data_y) == 0:
-        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
+    kwargs.pop('q', None)
 
     try:
         x, y, pdf, xmin, xmax, ymin, ymax = fastkde_2d(data_x, data_y,
@@ -775,10 +769,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Degree of compression.
         optional, Default 1000
 
-    xmin, xmax, ymin, ymax: float
-        lower/upper prior bounds in x/y coordinates.
-        optional, default None
-
     Returns
     -------
     c: matplotlib.contour.QuadContourSet
@@ -790,31 +780,27 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            color=['c'],
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
-    bw_method = kwargs.pop('bw_method', None)
-    xmin = kwargs.pop('xmin', None)
-    xmax = kwargs.pop('xmax', None)
-    ymin = kwargs.pop('ymin', None)
-    ymax = kwargs.pop('ymax', None)
+
     weights = kwargs.pop('weights', None)
+    if weights is not None:
+        data_x = data_x[weights != 0]
+        data_y = data_y[weights != 0]
+        weights = weights[weights != 0]
+
     ncompress = kwargs.pop('ncompress', 1000)
+    bw_method = kwargs.pop('bw_method', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
+
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
     facecolor = kwargs.pop('facecolor', True)
     edgecolor = kwargs.pop('edgecolor', None)
     cmap = kwargs.pop('cmap', None)
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
+
     kwargs.pop('q', None)
-
-    if len(data_x) == 0 or len(data_y) == 0:
-        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
-
-    if weights is not None:
-        data_x = data_x[weights != 0]
-        data_y = data_y[weights != 0]
-        weights = weights[weights != 0]
 
     cov = np.cov(data_x, data_y, aweights=weights)
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
@@ -829,10 +815,12 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     p = kde([tri.x, tri.y])
 
-    sigmax = np.sqrt(kde.covariance[0, 0])
-    p = cut_and_normalise_gaussian(tri.x, p, sigmax, xmin, xmax)
-    sigmay = np.sqrt(kde.covariance[1, 1])
-    p = cut_and_normalise_gaussian(tri.y, p, sigmay, ymin, ymax)
+    bw_x = np.sqrt(kde.covariance[0, 0])
+    p = cut_and_normalise_gaussian(tri.x, p, bw=bw_x,
+                                   xmin=data_x.min(), xmax=data_x.max())
+    bw_y = np.sqrt(kde.covariance[1, 1])
+    p = cut_and_normalise_gaussian(tri.y, p, bw=bw_y,
+                                   xmin=data_y.min(), xmax=data_y.max())
 
     levels = iso_probability_contours_from_samples(p, contours=levels,
                                                    weights=w)
@@ -861,8 +849,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                          vmin=vmin, vmax=vmax, linewidths=linewidths,
                          colors=edgecolor, cmap=cmap, *args, **kwargs)
 
-    ax.set_xlim(*check_bounds(tri.x, xmin, xmax), auto=True)
-    ax.set_ylim(*check_bounds(tri.y, ymin, ymax), auto=True)
     return contf, cont
 
 
@@ -880,14 +866,17 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         x and y coordinates of uniformly weighted samples to generate kernel
         density estimator.
 
-    xmin, xmax, ymin, ymax: float
-        lower/upper prior bounds in x/y coordinates
-        optional, default None
-
     levels: list
         Shade iso-probability contours containing these levels of probability
         mass. If None defaults to usual matplotlib.axes.Axes.hist2d colouring.
         optional, default None
+
+    q: int or float or tuple
+        Quantile to determine the data range to be plotted.
+        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
+        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
+        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
+        - tuple: quantile range, e.g. (0.16, 0.84)
 
     Returns
     -------
@@ -895,31 +884,22 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         A set of colors
 
     """
-    xmin = kwargs.pop('xmin', None)
-    xmax = kwargs.pop('xmax', None)
-    ymin = kwargs.pop('ymin', None)
-    ymax = kwargs.pop('ymax', None)
+    weights = kwargs.pop('weights', None)
+
     vmin = kwargs.pop('vmin', 0)
     label = kwargs.pop('label', None)
     levels = kwargs.pop('levels', None)
+
     color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
-    weights = kwargs.pop('weights', None)
-
-    if xmin is None or not np.isfinite(xmin):
-        xmin = quantile(data_x, 0.01, weights)
-    if xmax is None or not np.isfinite(xmax):
-        xmax = quantile(data_x, 0.99, weights)
-    if ymin is None or not np.isfinite(ymin):
-        ymin = quantile(data_y, 0.01, weights)
-    if ymax is None or not np.isfinite(ymax):
-        ymax = quantile(data_y, 0.99, weights)
-
-    rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
-
-    if len(data_x) == 0 or len(data_y) == 0:
-        return np.zeros(0), np.zeros(0), np.zeros((0, 0))
-
     cmap = kwargs.pop('cmap', basic_cmap(color))
+
+    q = kwargs.pop('q', 5)
+    q = quantile_plot_interval(q=q)
+    xmin = quantile(data_x, q[0], weights)
+    xmax = quantile(data_x, q[-1], weights)
+    ymin = quantile(data_y, q[0], weights)
+    ymax = quantile(data_y, q[-1], weights)
+    rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
     if levels is None:
         pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
@@ -946,8 +926,6 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ax.add_patch(plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
                                lw=2, label=label))
 
-    ax.set_xlim(*check_bounds(x, xmin, xmax), auto=True)
-    ax.set_ylim(*check_bounds(y, ymin, ymax), auto=True)
     return image
 
 
@@ -965,15 +943,11 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     data_x, data_y: np.array
         x and y coordinates of uniformly weighted samples to plot.
 
-    xmin, xmax, ymin, ymax: float
-        lower/upper prior bounds in x/y coordinates
-        optional, default None
-
     Returns
     -------
     lines: matplotlib.lines.Line2D
         A list of line objects representing the plotted data (same as
-        matplotlib matplotlib.axes.Axes.plot command)
+        matplotlib.axes.Axes.plot command)
 
     """
     kwargs = normalize_kwargs(
@@ -981,20 +955,16 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
         dict(color=['c'], mfc=['facecolor', 'fc'], mec=['edgecolor', 'ec']),
         drop=['ls', 'lw'])
     kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
-    xmin = kwargs.pop('xmin', None)
-    xmax = kwargs.pop('xmax', None)
-    ymin = kwargs.pop('ymin', None)
-    ymax = kwargs.pop('ymax', None)
-    kwargs.pop('q', None)
+
     markersize = kwargs.pop('markersize', 1)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
                                  if cmap is None else cmap(0.68)))
 
+    kwargs.pop('q', None)
+
     points = ax.plot(data_x, data_y, 'o', color=color, markersize=markersize,
                      *args, **kwargs)
-    ax.set_xlim(*check_bounds(data_x, xmin, xmax), auto=True)
-    ax.set_ylim(*check_bounds(data_y, ymin, ymax), auto=True)
     return points
 
 
@@ -1038,11 +1008,13 @@ def quantile_plot_interval(q):
                   '4sigma': 0.999936657516334,
                   '5sigma': 0.999999426696856}
         q = (1 - sigmas[q]) / 2
+    elif isinstance(q, int) and q >= 1:
+        q = (1 - erf(q / np.sqrt(2))) / 2
     if isinstance(q, float) or isinstance(q, int):
         if q > 0.5:
             q = 1 - q
         q = (q, 1-q)
-    return q
+    return tuple(np.sort(q))
 
 
 def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
