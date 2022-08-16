@@ -17,7 +17,7 @@ import numpy as np
 
 def _get_weights(kwargs, data):
     if isinstance(data, _WeightedObject):
-        kwargs['weights'] = data.weights
+        kwargs['weights'] = data.get_weights()
 
 
 class _WeightedMPLPlot(MPLPlot):
@@ -79,7 +79,7 @@ class HexBinPlot(_HexBinPlot):
     def __init__(self, data, x, y, C=None, **kwargs) -> None:
         if isinstance(data, _WeightedObject):
             C = '__weights'
-            data[C] = data.weights
+            data[C] = data.get_weights()
             kwargs['reduce_C_function'] = np.sum
         super().__init__(data, x, y, C=C, **kwargs)
 
@@ -93,7 +93,7 @@ class PiePlot(_PiePlot):
     # noqa: disable=D101
     def __init__(self, data, kind=None, **kwargs) -> None:
         if isinstance(data, _WeightedObject):
-            labels = data.index.get_level_values('#')._mpl_repr()
+            labels = data.index.droplevel('weights')._mpl_repr()
             kwargs['labels'] = kwargs.get('labels', labels)
         super().__init__(data, kind=kind, **kwargs)
 
