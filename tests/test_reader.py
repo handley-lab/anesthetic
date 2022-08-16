@@ -7,14 +7,12 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains
-from anesthetic.read.montepython import read_montepython
 from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya, read_paramnames
 from anesthetic.read.multinest import read_multinest
 try:
     import getdist
-    import montepython  # noqa: F401
 except ImportError:
     pass
 
@@ -23,6 +21,11 @@ def test_read_getdist():
     np.random.seed(3)
     mcmc = read_getdist('./tests/example_data/gd')
     assert isinstance(mcmc, MCMCSamples)
+    w = np.concatenate((
+        np.loadtxt("./tests/example_data/gd_1.txt", usecols=0),
+        np.loadtxt("./tests/example_data/gd_2.txt", usecols=0)
+    ))
+    assert_array_equal(mcmc.weights, w)
     assert 'chain' in mcmc
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -47,8 +50,8 @@ def test_read_cobayamcmc():
     ))
     assert_array_equal(mcmc.weights, w)
     pn = read_paramnames("./tests/example_data/cb")
-    pn.append('chain')
     pn.append('logL')
+    pn.append('chain')
     assert_array_equal(mcmc.columns.to_list(), pn)
 
     mcmc.plot_2d(['x0', 'x1'])
@@ -65,12 +68,15 @@ def test_read_cobayamcmc():
     assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
 
 
-@pytest.mark.xfail('montepython' not in sys.modules,
-                   raises=ImportError,
-                   reason="requires montepython package")
 def test_read_montepython():
     np.random.seed(3)
-    mcmc = read_montepython('./tests/example_data/mp')
+    root = './tests/example_data/mp/2019-01-24_200000_'
+    mcmc = read_getdist(root)
+    w = np.concatenate((
+        np.loadtxt(root + '_1.txt', usecols=0),
+        np.loadtxt(root + '_2.txt', usecols=0)
+    ))
+    assert_array_equal(mcmc.weights, w)
     assert isinstance(mcmc, MCMCSamples)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
