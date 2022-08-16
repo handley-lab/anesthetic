@@ -5,11 +5,12 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
+from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains
 from anesthetic.read.montepython import read_montepython
 from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
-from anesthetic.read.cobaya import read_cobaya
+from anesthetic.read.cobaya import read_cobaya, read_paramnames
 from anesthetic.read.multinest import read_multinest
 try:
     import getdist
@@ -38,13 +39,26 @@ def test_read_getdist():
 def test_read_cobayamcmc():
     np.random.seed(3)
     mcmc = read_cobaya('./tests/example_data/cb')
-    assert 'chain' in mcmc
+    assert isinstance(mcmc, MCMCSamples)
+    pn = read_paramnames("./tests/example_data/cb")
+    pn.append('chain')
+    pn.append('logL')
+    assert_array_equal(mcmc.columns.to_list(), pn)
+    w = np.concatenate((
+        np.loadtxt("./tests/example_data/cb.1.txt", usecols=0),
+        np.loadtxt("./tests/example_data/cb.2.txt", usecols=0)
+    ))
+    assert_array_equal(mcmc.weights, w)
+
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
     plt.close("all")
 
+    # single chain file
+    mcmc = read_cobaya('./tests/example_data/cb_single_chain')
+    assert 'chain' not in mcmc
     # compare directly with getdist
-    mcmc_gd = getdist.loadMCSamples(file_root="./tests/example_data/cb")
+    mcmc_gd = getdist.loadMCSamples(file_root="./tests/example_data/cb_single_chain")
     assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
 
 
