@@ -469,10 +469,9 @@ def test_merging():
     assert nlive_1 == 125
     assert nlive_2 == 250
     assert nlive == nlive_1 + nlive_2
-    samples.weights
     assert (samples_1.logZ() > samples.logZ() > samples_2.logZ()
             or samples_1.logZ() < samples.logZ() < samples_2.logZ())
-    assert 'x0' == samples['x0'].label
+    assert '$x_0$' == samples['x0'].label
 
 
 def test_weighted_merging():
@@ -960,7 +959,6 @@ def test_fixed_width():
 
 def test_labels():
     samples = NestedSamples(root='./tests/example_data/pc')
-    fig, axes = samples.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
     assert samples.x0.label == '$x_0$'
     assert samples.x1.label == '$x_1$'
     assert samples.x2.label == '$x_2$'
@@ -973,3 +971,9 @@ def test_labels():
 
     assert samples.copy().x0.label == '$x_0$'
     assert samples.x0.label == '$x_0$'
+
+    samples['x0'] = 1
+    assert samples.x1.label == '$x_1$'
+
+    samples.recompute()
+    assert samples.x1.label == '$x_1$'

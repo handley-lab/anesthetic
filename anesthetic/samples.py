@@ -114,14 +114,16 @@ class Samples(WeightedDataFrame):
 
     def copy(self, deep=True):
         """Copy the frame, including the series labels."""
+        labels = {col: self[col].label for col in self}
         new = super().copy(deep)
         for col in self:
-            new[col].label = self[col].label
+            new[col].label = labels[col]
+            self[col].label = labels[col]
         return new.__finalize__(self, "copy")
 
-    def _clear_item_cache(self):
-        labels = self.tex
-        super()._clear_item_cache()
+    def _update_inplace(self, new):
+        labels = {col: self[col].label for col in self}
+        super()._update_inplace(new)
         for col in self:
             self[col].label = labels[col]
 
@@ -826,10 +828,11 @@ def merge_nested_samples(runs):
         Merged run.
     """
     merge = pandas.concat(runs, ignore_index=True)
+    merge.recompute(inplace=True)
     for r in runs:
         for col in r:
             merge[col].label = r[col].label
-    return merge.recompute()
+    return merge
 
 
 def merge_samples_weighted(samples, weights=None, label=None):
