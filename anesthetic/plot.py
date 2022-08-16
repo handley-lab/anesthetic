@@ -32,7 +32,7 @@ from anesthetic.utils import nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
-                              scaled_triangulation, match_contour_to_contourf)
+                              match_contour_to_contourf)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
