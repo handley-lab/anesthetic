@@ -2,7 +2,7 @@
 
 from inspect import signature
 import numpy as np
-from pandas import Series, DataFrame, concat
+from pandas import Series, DataFrame, concat, MultiIndex
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
@@ -31,20 +31,25 @@ class _WeightedObject(object):
 
     def set_weights(self, weights, axis=0, inplace=False):
         """Set sample weights along an axis."""
-        if weights is None:
-            if self.isweighted(axis=axis):
-                result = self.droplevel('weights', axis=axis)
-            elif inplace:
-                result = self
-            else:
-                result = self.copy()
+        if inplace:
+            result = self
         else:
-            result = self.set_axis([self._get_axis(axis).get_level_values(name)
-                                    for name in self._get_axis(axis).names
-                                    if name != 'weights'] + [weights],
-                                   axis=axis)
-            names = result._get_axis(axis).names[:-1] + ['weights']
-            result._get_axis(axis).set_names(names, inplace=True)
+            result = self.copy()
+
+        if weights is None:
+            if result.isweighted(axis=axis):
+                result = result.droplevel('weights', axis=axis)
+        else:
+            names = result._get_axis(axis).names
+            index = [result._get_axis(axis).get_level_values(name)
+                     if name != 'weights' else weights
+                     for name in result._get_axis(axis).names]
+            if not result.isweighted(axis):
+                index += [weights]
+                names += ['weights']
+
+            index = MultiIndex.from_arrays(index, names=names)
+            result.set_axis(index, axis=axis, inplace=True)
 
         if inplace:
             self._update_inplace(result)
