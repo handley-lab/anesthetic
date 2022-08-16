@@ -11,8 +11,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              basic_cmap)
 from numpy.testing import assert_array_equal
 
-from matplotlib.contour import QuadContourSet
-from matplotlib.tri import TriContourSet
+from matplotlib.contour import ContourSet
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch, Polygon
 from matplotlib.colors import ColorConverter, to_rgba
@@ -499,12 +498,8 @@ def test_contour_plot_2d(contour_plot_2d):
         data_x = np.random.randn(1000)
         data_y = np.random.randn(1000)
         cf, ct = contour_plot_2d(ax, data_x, data_y)
-        if contour_plot_2d is fastkde_contour_plot_2d:
-            assert isinstance(cf, QuadContourSet)
-            assert isinstance(ct, QuadContourSet)
-        elif contour_plot_2d is kde_contour_plot_2d:
-            assert isinstance(cf, TriContourSet)
-            assert isinstance(ct, TriContourSet)
+        assert isinstance(cf, ContourSet)
+        assert isinstance(ct, ContourSet)
 
         # Check levels
         with pytest.raises(ValueError):

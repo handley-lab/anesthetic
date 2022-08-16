@@ -827,26 +827,23 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = quantile(data_x, q[-1], weights)
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
-    x = np.linspace(xmin, xmax, int(np.sqrt(nplot)))
-    y = np.linspace(ymin, ymax, int(np.sqrt(nplot)))
-    x, y = np.meshgrid(x, y)
+    X, Y = np.mgrid[xmin:xmax:1j*np.sqrt(nplot), ymin:ymax:1j*np.sqrt(nplot)]
 
-    tri = scaled_triangulation(x.flatten(), y.flatten(), cov)
-    p = kde([tri.x, tri.y])
+    P = kde([X.ravel(), Y.ravel()]).reshape(X.shape)
 
     bw_x = np.sqrt(kde.covariance[0, 0])
-    p = cut_and_normalise_gaussian(tri.x, p, bw=bw_x,
+    P = cut_and_normalise_gaussian(X, P, bw=bw_x,
                                    xmin=data_x.min(), xmax=data_x.max())
     bw_y = np.sqrt(kde.covariance[1, 1])
-    p = cut_and_normalise_gaussian(tri.y, p, bw=bw_y,
+    P = cut_and_normalise_gaussian(Y, P, bw=bw_y,
                                    xmin=data_y.min(), xmax=data_y.max())
 
-    levels = iso_probability_contours(p, contours=levels)
+    levels = iso_probability_contours(P, contours=levels)
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
-        contf = ax.tricontourf(tri, p, levels=levels, cmap=cmap, zorder=zorder,
-                               vmin=0, vmax=p.max(), *args, **kwargs)
+        contf = ax.contourf(X, Y, P, levels=levels, cmap=cmap, zorder=zorder,
+                            vmin=0, vmax=P.max(), *args, **kwargs)
         for c in contf.collections:
             c.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
@@ -862,10 +859,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                           ec=edgecolor if cmap is None else cmap(0.32))
         )
 
-    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=p.max())
-    cont = ax.tricontour(tri, p, levels=levels, zorder=zorder,
-                         vmin=vmin, vmax=vmax, linewidths=linewidths,
-                         colors=edgecolor, cmap=cmap, *args, **kwargs)
+    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=P.max())
+    cont = ax.contour(X, Y, P, levels=levels, zorder=zorder,
+                      vmin=vmin, vmax=vmax, linewidths=linewidths,
+                      colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     return contf, cont
 
