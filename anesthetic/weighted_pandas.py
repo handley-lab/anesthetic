@@ -29,8 +29,27 @@ class _WeightedObject(object):
         else:
             return np.ones_like(self._get_axis(axis))
 
-    def set_weights(self, weights, axis=0, inplace=False):
-        """Set sample weights along an axis."""
+    def set_weights(self, weights, axis=0, inplace=False, level=None):
+        """Set sample weights along an axis.
+
+        Parameters
+        ----------
+        weights: 1d array-like
+            The sample weights to put in an index.
+
+        axis: int (0,1), optional
+            Whether to put weights in an index or column.
+            Default 0.
+
+        inplace: bool, optional
+            Whether to operate inplace, or return a new array.
+            Default False.
+
+        level: int
+            Which level in the index to insert before.
+            Defaults to inserting at back
+
+        """
         if inplace:
             result = self
         else:
@@ -40,13 +59,15 @@ class _WeightedObject(object):
             if result.isweighted(axis=axis):
                 result = result.droplevel('weights', axis=axis)
         else:
-            names = result._get_axis(axis).names
+            names = list(result._get_axis(axis).names)
             index = [result._get_axis(axis).get_level_values(name)
                      if name != 'weights' else weights
                      for name in result._get_axis(axis).names]
             if not result.isweighted(axis):
-                index += [weights]
-                names += ['weights']
+                if level is None:
+                    level = len(index)
+                index.insert(level, weights)
+                names.insert(level, 'weights')
 
             index = MultiIndex.from_arrays(index, names=names)
             result.set_axis(index, axis=axis, inplace=True)

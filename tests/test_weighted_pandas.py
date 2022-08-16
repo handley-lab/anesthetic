@@ -877,6 +877,12 @@ def test_multiindex(mcmc_wdf):
     wdf_ = wdf.reset_index(level=['A', 'C'])
     assert wdf_.index.names == ['B', 'weights']
 
+    assert_array_equal(wdf.get_weights(), weights)
+    wdf_ = wdf.reorder_levels(['B', 'C', 'weights', 'A'])
+    assert_array_equal(wdf_.get_weights(), weights)
+    weights_ = np.random.rand(len(weights))
+    assert_array_equal(wdf_.set_weights(weights_).get_weights(), weights_)
+
 
 def test_weight_passing(mcmc_wdf):
     weights = mcmc_wdf.get_weights()
