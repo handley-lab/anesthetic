@@ -59,15 +59,15 @@ class _WeightedObject(object):
             if result.isweighted(axis=axis):
                 result = result.droplevel('weights', axis=axis)
         else:
-            names = list(result._get_axis(axis).names)
-            index = [result._get_axis(axis).get_level_values(name)
-                     if name != 'weights' else weights
-                     for name in result._get_axis(axis).names]
-            if not result.isweighted(axis):
-                if level is None:
+            names = [n for n in result._get_axis(axis).names if n != 'weights']
+            index = [result._get_axis(axis).get_level_values(n) for n in names]
+            if level is None:
+                if result.isweighted(axis):
+                    level = result._get_axis(axis).names.index('weights')
+                else:
                     level = len(index)
-                index.insert(level, weights)
-                names.insert(level, 'weights')
+            index.insert(level, weights)
+            names.insert(level, 'weights')
 
             index = MultiIndex.from_arrays(index, names=names)
             result.set_axis(index, axis=axis, inplace=True)
