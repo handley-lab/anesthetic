@@ -939,7 +939,7 @@ def test_samples_dot_plot():
 
 
 def test_samples_plot_labels():
-    samples = NestedSamples(root='./tests/example_data/pc')
+    samples = read_chains('./tests/example_data/pc')
     columns = ['x0', 'x1', 'x2', 'x3', 'x4']
     fig, axes = samples.plot_2d(columns)
 
