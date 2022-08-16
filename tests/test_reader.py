@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
-from anesthetic import MCMCSamples, NestedSamples
+from anesthetic import MCMCSamples
 from anesthetic import read_chains
 from anesthetic.read.montepython import read_montepython
 from anesthetic.read.polychord import read_polychord
@@ -58,7 +58,9 @@ def test_read_cobayamcmc():
     mcmc = read_cobaya('./tests/example_data/cb_single_chain')
     assert 'chain' not in mcmc
     # compare directly with getdist
-    mcmc_gd = getdist.loadMCSamples(file_root="./tests/example_data/cb_single_chain")
+    mcmc_gd = getdist.loadMCSamples(
+        file_root="./tests/example_data/cb_single_chain"
+    )
     assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
 
 
