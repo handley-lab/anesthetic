@@ -941,7 +941,6 @@ def test_samples_dot_plot():
     plt.close("all")
 
 
-<<<<<<< HEAD
 def test_fixed_width():
     samples = NestedSamples(root='./tests/example_data/pc')
     tex = [samples[t].label for t in samples.columns]
