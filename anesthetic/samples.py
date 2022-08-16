@@ -580,17 +580,13 @@ class NestedSamples(Samples):
         else:
             samples = Samples(index=logw.columns)
         samples['logZ'] = self.logZ(logw)
+        w = np.exp(logw-samples.logZ)
 
         betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - samples.logZ
 
-        logD_KL, s = logsumexp(logw-samples.logZ, b=S, axis=0,
-                               return_sign=True)
-        samples['D_KL'] = s * np.exp(logD_KL)
-
-        logd_G_o2, s = logsumexp(logw-samples.logZ, b=(S-samples.D_KL)**2,
-                                 axis=0, return_sign=True)
-        samples['d_G'] = s * np.exp(logd_G_o2*2)
+        samples['D_KL'] = (S*w).sum()
+        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()
         samples['logL_P'] = samples['logZ'] + samples['D_KL']
 
         samples.tex = {'logZ': r'$\ln\mathcal{Z}$',
@@ -779,8 +775,8 @@ class NestedSamples(Samples):
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - logZ
-        logD_KL, s = logsumexp(logw-logZ, b=S, axis=0, return_sign=True)
-        D_KL = s * np.exp(logD_KL)
+        w = np.exp(logw-logZ)
+        D_KL = (S*w).sum()
         if np.isscalar(D_KL):
             return D_KL
         else:
@@ -794,10 +790,9 @@ class NestedSamples(Samples):
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - logZ
-        D_KL = self.D_KL(logw, beta)
-        logd_G_o2, s = logsumexp(logw-logZ, b=(S-D_KL)**2, axis=0,
-                                 return_sign=True)
-        d_G = s * np.exp(logd_G_o2*2)
+        w = np.exp(logw-logZ)
+        D_KL = (S*w).sum()
+        d_G = ((S-D_KL)**2*w).sum()
         if np.isscalar(d_G):
             return d_G
         else:
@@ -811,9 +806,8 @@ class NestedSamples(Samples):
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
         betalogL = (logw*0).add(betalogL, axis=0)
-        loglogL_P, s = logsumexp(logw-logZ, b=betalogL, axis=0,
-                                 return_sign=True)
-        logL_P = s * np.exp(loglogL_P)
+        w = np.exp(logw-logZ)
+        logL_P = (betalogL*w).sum()
         if np.isscalar(logL_P):
             return logL_P
         else:
