@@ -21,10 +21,11 @@ def read_paramnames(root):
         header = f.readline()[1:]
         paramnames = header.split()[2:]
         try:
-            s = loadMCSamples(file_root=self.root)
+            from getdist import loadMCSamples
+            s = loadMCSamples(file_root=root)
             tex = {p.name: '$' + p.label + '$' for p in s.paramNames.names}
             return paramnames, tex
-        except NameError:
+        except ImportError:
             return paramnames, {}
 
 
@@ -68,18 +69,20 @@ def read_cobaya(root, *args, **kwargs):
         data = remove_burn_in(data, burn_in)
         weights, logP, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
-                           weights=weights.flatten(), logL=logP, tex=tex,
+                           weights=weights.flatten(), logL=logP,
                            root=root, *args, **kwargs)
         mcmc['chain'] = int(i) if i else np.nan
         samples.append(mcmc)
 
     samples = concat(samples)
-    samples.sort_values(by=['chain', '#'], inplace=True)
-    weights = samples.weights
+    samples.tex = tex
+    samples.index.names = ['index', 'weights']
+    samples.sort_values(by=['chain', 'index'], inplace=True)
     samples.reset_index(inplace=True, drop=True)
-    samples.weights = weights
+    samples.root = root
+    samples.label = kwargs['label']
 
-    if np.all(samples.chain == 1):
+    if (samples.chain == samples.chain.iloc[0]).all():
         samples.drop('chain', inplace=True, axis=1)
     else:
         samples.tex['chain'] = r'$n_\mathrm{chain}$'

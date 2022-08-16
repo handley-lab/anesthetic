@@ -85,15 +85,14 @@ def read_getdist(root, *args, **kwargs):
 
     samples = concat(samples)
     samples.tex = tex
-    samples.sort_values(by=['chain', '#'], inplace=True)
-    weights = samples.weights
+    samples.index.names = ['index', 'weights']
+    samples.sort_values(by=['chain', 'index'], inplace=True)
     samples.reset_index(inplace=True, drop=True)
-    samples.weights = weights
-
     samples.root = root
     samples.label = kwargs['label']
 
-    if (samples.chain == 0).all() or samples.chain.isna().all():
+    all_same_chain = (samples.chain == samples.chain.iloc[0]).all()
+    if all_same_chain or samples.chain.isna().all():
         samples.drop('chain', inplace=True, axis=1)
     else:
         samples.tex['chain'] = r'$n_\mathrm{chain}$'
