@@ -11,7 +11,20 @@ def read_chains(root, *args, **kwargs):
     Parameters
     ----------
     root: str
-        root name
+        root name for reading files
+
+    burn_in: float
+        if 0 < burn_in < 1:
+            discard the first burn_in fraction of samples
+        elif 1 < burn_in:
+            only keep samples [burn_in:]
+        Only works if `root` provided and if chains are GetDist or Cobaya
+        compatible.
+        default: False
+
+    *args, **kwargs:
+        Passed onto NestedSamples or MCMCSamples. Check their docstrings for
+        more information.
 
     Returns
     -------
