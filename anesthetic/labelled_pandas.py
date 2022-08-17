@@ -1,62 +1,102 @@
 """Pandas DataFrame and Series with weighted samples."""
-
 from pandas import Series, DataFrame
+import pandas.core.indexing
 
-import pandas.core.indexing 
 
 class _LocIndexer(pandas.core.indexing._LocIndexer):
     def __getitem__(self, key):
-        if isinstance(key, tuple):
-            key = (self.obj.label(key[0], axis=0),
-                   self.obj.label(key[1], axis=1))
-        return super().__getitem__(key)
+        orig = super().__getitem__(key)
+        if _isdroppable(orig, 0):
+            key = self.obj.conform_key(key)
+            obj = self.obj.drop_labels(0)
+            return _LocIndexer("loc", obj).__getitem__(key)
+        else:
+            return orig
 
+
+class _AtIndexer(pandas.core.indexing._AtIndexer):
+    def __getitem__(self, key):
+        orig = super().__getitem__(key)
+        if _isdroppable(orig, 0):
+            key = self.obj.conform_key(key)
+            obj = self.obj.drop_labels(0)
+            return _AtIndexer("at", obj).__getitem__(key)
+        else:
+            return orig
+
+
+def _isdroppable(x, axis=0):
+    return isinstance(x, _LabelledObject) and x.isdroppable(axis)
 
 
 class _LabelledObject(object):
     """Common methods for LabelledSeries and LabelledDataFrame."""
 
-    def label(self, x, axis=1):
-        if self.islabelled(axis):
-            frame = self._get_axis(axis).to_frame()
-            frame.reset_index('labels', drop=True, inplace=True)
-            frame = frame.apply(tuple, axis=axis) 
-            frame['x0']
-            return frame[x]
-        else:
-            return x
+    _labels = "labels"
 
     def __init__(self, *args, **kwargs):
-        labels = kwargs.pop('labels', None)
+        labels = kwargs.pop(self._labels, None)
         super().__init__(*args, **kwargs)
         if labels is not None:
             self.set_labels(labels, inplace=True)
 
-    def islabelled(self, axis=1):
+    def islabelled(self, axis=0):
         """Determine if labels are actually present."""
-        return 'labels' in self._get_axis(axis).names
+        return self._labels in self._get_axis(axis).names
 
-    def get_labels(self, axis=1):
+    def get_labels(self, axis=0):
         """Retrieve labels from an axis."""
         if self.islabelled(axis):
-            return self._get_axis(axis).get_level_values('labels').to_numpy()
+            return self._get_axis(axis).get_level_values(
+                    self._labels).to_numpy()
         else:
             return None
+
+    def drop_labels(self, axis=0):
+        return self.droplevel(self._labels, axis)
+
+    def isdroppable(self, axis=0):
+        return self.islabelled(axis) and self._get_axis(axis).nlevels == 1
+
+    def labels_index(self, axis=0):
+        return self._get_axis(0).names.index('labels')
+
+    def conform_key(self, key, axis=0):
+        li = self.labels_index(axis)
+        if isinstance(key, tuple):
+            key = tuple(k for i, k in enumerate(key) if i != li)
+            return key[0] if len(key) == 1 else key
+        else:
+            return key
 
     @property
     def loc(self):
         return _LocIndexer("loc", self)
 
-#    def __getitem__(self, x):
-#        if x in self._get_axis(1).droplevel('labels'):
-#            x = self.label(x)
-#        return super().__getitem__(x)
+    @property
+    def at(self):
+        return _AtIndexer("at", self)
 
-    def set_labels(self, labels, axis=1, inplace=False):
+    def xs(self, key, axis=0, level=None, drop_level=True):
+        orig = super().xs(key, axis, level, drop_level)
+        if _isdroppable(orig):
+            return self.drop_labels(axis).xs(self.conform_key(key),
+                                             axis, level, drop_level)
+        else:
+            return orig
+
+    def __getitem__(self, key):
+        orig = super().__getitem__(key)
+        if _isdroppable(orig):
+            return self.drop_labels(0).__getitem__(self.conform_key(key))
+        else:
+            return orig
+
+    def set_labels(self, labels, axis=0, inplace=False):
         """Set labels along an axis."""
         if labels is None:
-            if self.islabelled(axis=axis):
-                result = self.droplevel('labels', axis=axis)
+            if self.islabelled(axis):
+                result = self.drop_labels(axis)
             elif inplace:
                 result = self
             else:
@@ -64,9 +104,9 @@ class _LabelledObject(object):
         else:
             result = self.set_axis([self._get_axis(axis).get_level_values(name)
                                     for name in self._get_axis(axis).names
-                                    if name != 'labels'] + [labels],
+                                    if name != self._labels] + [labels],
                                    axis=axis)
-            names = result._get_axis(axis).names[:-1] + ['labels']
+            names = result._get_axis(axis).names[:-1] + [self._labels]
             result._get_axis(axis).set_names(names, inplace=True)
 
         if inplace:

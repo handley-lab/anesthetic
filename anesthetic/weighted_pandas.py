@@ -29,6 +29,10 @@ class _WeightedObject(object):
         else:
             return np.ones_like(self._get_axis(axis))
 
+    def drop_weights(self, axis=0):
+        """Drop weights."""
+        return self.droplevel('weights', axis)
+
     def set_weights(self, weights, axis=0, inplace=False, level=None):
         """Set sample weights along an axis.
 
@@ -57,7 +61,7 @@ class _WeightedObject(object):
 
         if weights is None:
             if result.isweighted(axis=axis):
-                result = result.droplevel('weights', axis=axis)
+                result = result.drop_weights(axis)
         else:
             names = [n for n in result._get_axis(axis).names if n != 'weights']
             index = [result._get_axis(axis).get_level_values(n) for n in names]
@@ -376,7 +380,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             i = compress_weights(self.get_weights(axis), self._rand(axis),
                                  nsamples)
             data = np.repeat(self.to_numpy(), i, axis=axis)
-            i = self._get_axis(axis).repeat(i).droplevel('weights')
+            i = self.drop_weights(axis)._get_axis(axis).repeat(i)
             df = WeightedDataFrame(data=data)
             df.set_axis(i, axis=axis, inplace=True)
             df.set_axis(self._get_axis(1-axis), axis=1-axis, inplace=True)

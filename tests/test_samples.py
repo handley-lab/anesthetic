@@ -951,7 +951,7 @@ def test_samples_dot_plot():
 
 def test_fixed_width():
     samples = NestedSamples(root='./tests/example_data/pc')
-    tex = [samples[t].label for t in samples.columns]
+    tex = [samples.tex[t] for t in samples.columns]
     columns = ['A really really long column label'] + list(samples.columns[1:])
     samples.columns = columns
     assert 'A really r...' in str(samples)
