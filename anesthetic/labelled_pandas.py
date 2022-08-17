@@ -1,29 +1,17 @@
 """Pandas DataFrame and Series with weighted samples."""
 from pandas import Series, DataFrame
-import pandas.core.indexing
-from pandas.core.indexing import check_deprecated_indexers
-from pandas.core.dtypes.common import is_iterator
-import pandas.core.common as com
+from pandas.core.indexing import (_LocIndexer as _LocIndexer_,
+                                  _AtIndexer as _AtIndexer_)
 
 
-class _LocIndexer(pandas.core.indexing._LocIndexer):
+class _LocIndexer(_LocIndexer_):
     def __getitem__(self, key):
-        if self.obj.islabelled(0):
-            key = self.obj.conform_key(key)
-            obj = self.obj.drop_labels(0)
-            return _LocIndexer("loc", obj).__getitem__(key)
-        else:
-            return super().__getitem__(key)
+        return _LocIndexer_("loc", self.obj.drop_labels()).__getitem__(key)
 
 
-class _AtIndexer(pandas.core.indexing._AtIndexer):
+class _AtIndexer(_AtIndexer_):
     def __getitem__(self, key):
-        if self.obj.islabelled(0):
-            key = self.obj.conform_key(key)
-            obj = self.obj.drop_labels(0)
-            return _LocIndexer("at", obj).__getitem__(key)
-        else:
-            return super().__getitem__(key)
+        return _AtIndexer_("at", self.obj.drop_labels()).__getitem__(key)
 
 
 class _LabelledObject(object):
@@ -49,22 +37,12 @@ class _LabelledObject(object):
         else:
             return None
 
-    def drop_labels(self, axis=0):
-        return self.droplevel(self._labels, axis)
-
-    def labels_index(self, axis=0):
-        return self._get_axis(0).names.index('labels')
-
-    def conform_key(self, key, axis=0):
-        li = self.labels_index(axis)
-        if False: #isinstance(key, tuple):
-            if self.loc._is_nested_tuple_indexer(key):
-                key[axis] = self.obj.conform_key(key, axis)
-            else:
-                key = tuple(k for i, k in enumerate(key) if i != li)
-            return key[0] if len(key) == 1 else key
-        else:
-            return key
+    def drop_labels(self):
+        result = self
+        for axis in range(self.ndim):
+            if self.islabelled(axis):
+                result = result.droplevel(self._labels, axis)
+        return result
 
     @property
     def loc(self):
@@ -75,18 +53,11 @@ class _LabelledObject(object):
         return _AtIndexer("at", self)
 
     def xs(self, key, axis=0, level=None, drop_level=True):
-        if self.islabelled(axis):
-            return self.drop_labels(axis).xs(self.conform_key(key),
-                                             axis, level, drop_level)
-        else:
-            return super().xs(key, axis, level, drop_level) 
+        return super(_LabelledObject, self.drop_labels()).xs(
+                key, axis, level, drop_level)
 
     def __getitem__(self, key):
-        if self.islabelled(0):
-            return self.drop_labels(0).__getitem__(key)
-            #return self.drop_labels(0).__getitem__(self.conform_key(key))
-        else:
-            return super().__getitem__(key)
+        return super(_LabelledObject, self.drop_labels()).__getitem__(key)
 
     def set_labels(self, labels, axis=0, inplace=False):
         """Set labels along an axis."""
