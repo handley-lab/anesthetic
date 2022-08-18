@@ -2,16 +2,46 @@
 from pandas import Series, DataFrame
 from pandas.core.indexing import (_LocIndexer as _LocIndexer_,
                                   _AtIndexer as _AtIndexer_)
+from functools import cmp_to_key
+
+
+def attempt(funcs, *args):
+    """Accessor function helper.
+
+    Given a list of callables `funcs`, and their arguments `*args`, evaluate
+    each of these, catching exceptions, and then sort results by their
+    dimensionality, smallest first. Return the non-exceptional result with the
+    smallest dimensionality.
+    """
+    results = []
+    errors = []
+    for f in funcs:
+        try:
+            results.append(f(*args))
+        except Exception as e:
+            errors.append(e)
+
+    def cmp(x, y):
+        return 1 if x.ndim > y.ndim else -1
+
+    results.sort(key=cmp_to_key(cmp))
+
+    for s in results:
+        if s is not None:
+            return s
+    raise errors[-1]
 
 
 class _LocIndexer(_LocIndexer_):
     def __getitem__(self, key):
-        return _LocIndexer_("loc", self.obj.drop_labels()).__getitem__(key)
+        return attempt([_AtIndexer_("loc", self.obj.drop_labels()).__getitem__,
+                        super().__getitem__], key)
 
 
 class _AtIndexer(_AtIndexer_):
     def __getitem__(self, key):
-        return _AtIndexer_("at", self.obj.drop_labels()).__getitem__(key)
+        return attempt([_AtIndexer_("at", self.obj.drop_labels()).__getitem__,
+                        super().__getitem__], key)
 
 
 class _LabelledObject(object):
@@ -53,11 +83,12 @@ class _LabelledObject(object):
         return _AtIndexer("at", self)
 
     def xs(self, key, axis=0, level=None, drop_level=True):
-        return super(_LabelledObject, self.drop_labels()).xs(
-                key, axis, level, drop_level)
+        return attempt([super(_LabelledObject, self.drop_labels()).xs,
+                        super().xs], key, axis, level, drop_level)
 
     def __getitem__(self, key):
-        return super(_LabelledObject, self.drop_labels()).__getitem__(key)
+        return attempt([super(_LabelledObject, self.drop_labels()).__getitem__,
+                        super().__getitem__], key)
 
     def set_labels(self, labels, axis=0, inplace=False):
         """Set labels along an axis."""
