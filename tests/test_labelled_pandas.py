@@ -190,3 +190,96 @@ def test_LabelledDataFrame_index_MultiIndex():
 
     with pytest.raises(KeyError):
         lframe['foo']
+
+
+def test_LabelledDataFrame_column():
+    columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+    labels = ['$%s$' % i for i in columns]
+    data = np.random.rand(4, len(columns))
+
+    lframe = LabelledDataFrame(data, columns=columns)
+    lframe.set_labels(labels, axis=1, inplace=True)
+    frame = DataFrame(data, columns=columns)
+
+    assert_frame_equal_not_index(lframe, frame)
+
+    assert_series_equal(lframe.A, frame.A)
+    assert_series_equal(lframe['A'], frame['A'])
+    assert_series_equal_not_name(lframe['A', '$A$'], frame['A'])
+
+    assert_series_equal(lframe.loc[:, 'A'], frame.loc[:, 'A'])
+    assert lframe.at[0, 'A'] == frame.at[0, 'A']
+    assert_series_equal(lframe.xs('A', axis=1), frame.xs('A', axis=1))
+
+    assert_array_equal(lframe.loc[:, ('A', '$A$')], frame.loc[:, 'A'])
+    assert lframe.at[0, ('A', '$A$')] == frame.at[0, 'A']
+    assert_array_equal(lframe.xs(('A', '$A$'), axis=1), frame.xs('A', axis=1))
+
+    assert_series_equal(lframe.T.loc['A'], lframe['A'])
+    assert_series_equal(lframe.T.loc['A', 0], lframe.loc[0, 'A'])
+
+    assert_series_equal(lframe.T.at['A', 0], lframe.at[0, 'A'])
+
+    assert_frame_equal_not_index(lframe.loc[0:3, 'A':'C'],
+                                 frame.loc[0:3, 'A':'C'])
+    assert_frame_equal_not_index(lframe.loc[0:3, 'A':'C'],
+                                 frame.loc[0:3, 'A':'C'])
+
+    with pytest.raises(KeyError):
+        lframe['foo']
+
+
+def test_LabelledDataFrame_column_MultiIndex():
+    columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+    vowels = ['vowel' if c in 'AEIOU' else 'consonant' for c in columns]
+    labels = ['$%s$' % i for i in columns]
+    data = np.random.rand(4, len(columns))
+
+    multiindex = MultiIndex.from_arrays([vowels, columns],
+                                        names=['vowels', None])
+    lframe = LabelledDataFrame(data, columns=multiindex)
+    lframe.set_labels(labels, axis=1, inplace=True)
+    frame = DataFrame(data, columns=multiindex)
+
+    assert_frame_equal_not_index(lframe, frame)
+
+    assert_frame_equal_not_index(lframe.vowel, frame.vowel)
+    assert_series_equal(lframe.vowel.A, frame.vowel.A)
+
+    assert_frame_equal_not_index(lframe['vowel'], frame['vowel'])
+    assert_series_equal(lframe['vowel', 'A'], frame['vowel', 'A'])
+    assert_series_equal_not_name(lframe['vowel', 'A', '$A$'],
+                                 frame['vowel', 'A'])
+
+    assert_frame_equal_not_index(lframe.xs('vowel', axis=1),
+                                 frame.xs('vowel', axis=1))
+    assert_series_equal(lframe.xs(('vowel', 'A'), axis=1),
+                        frame.xs(('vowel', 'A'), axis=1))
+    assert_series_equal_not_name(lframe.xs(('vowel', 'A', '$A$'), axis=1),
+                                 frame.xs(('vowel', 'A'), axis=1))
+
+    assert_series_equal(lframe.loc[0, ('vowel', 'A')],
+                        frame.loc[0, ('vowel', 'A')])
+    assert_series_equal(lframe.loc[0, ('vowel', 'A', '$A$')],
+                        frame.loc[0, ('vowel', 'A')])
+    assert lframe.at[0, ('vowel', 'A')] == frame.at[0, ('vowel', 'A')]
+    assert lframe.at[0, ('vowel', 'A', '$A$')] == frame.at[0, ('vowel', 'A')]
+
+    assert_frame_equal(lframe.T.loc['vowel'], lframe['vowel'].T)
+    assert_series_equal(lframe.T.loc['vowel', 'A'], lframe['vowel', 'A'])
+    assert_series_equal_not_name(lframe.T.loc['vowel', 'A', '$A$'],
+                                 lframe['vowel', 'A'])
+    assert_series_equal_not_name(lframe.T.loc[('vowel', 'A', '$A$')],
+                                 lframe[('vowel', 'A')])
+    assert_series_equal(lframe.T.loc['vowel', 0], lframe.loc[0, 'vowel'])
+    assert lframe.T.loc[('vowel', 'A'), 0] == lframe.loc[0, ('vowel', 'A')]
+    assert (lframe.T.loc[('vowel', 'A', '$A$'), 0]
+            == lframe.loc[0, ('vowel', 'A')])
+
+    assert_series_equal(lframe.T.at[('vowel', 'A'), 0],
+                        lframe.at[0, ('vowel', 'A')])
+    assert_series_equal(lframe.T.at[('vowel', 'A', '$A$'), 0],
+                        lframe.at[0, ('vowel', 'A')])
+
+    with pytest.raises(KeyError):
+        lframe['foo']
