@@ -137,8 +137,8 @@ def make_1d_axes(params, **kwargs):
         params: list(str)
             names of parameters.
 
-        tex: dict(str:str), optional
-            Dictionary mapping params to tex plot labels.
+        labels: dict(str:str), optional
+            Dictionary mapping params to plot labels.
 
         fig: matplotlib.figure.Figure, optional
             Figure to plot on.
@@ -163,7 +163,7 @@ def make_1d_axes(params, **kwargs):
     """
     axes = AxesSeries(index=np.atleast_1d(params), dtype=object)
     axes[:] = None
-    tex = kwargs.pop('tex', {})
+    labels = kwargs.pop('labels', {})
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     ncols = kwargs.pop('ncols', int(np.ceil(np.sqrt(len(axes)))))
     nrows = int(np.ceil(len(axes)/float(ncols)))
@@ -176,11 +176,11 @@ def make_1d_axes(params, **kwargs):
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
-    tex = {p: tex[p] if p in tex else p for p in axes.index}
+    labels = {p: labels[p] if p in labels else p for p in axes.index}
 
     for p, g in zip(axes.index, grid):
         axes[p] = ax = fig.add_subplot(g)
-        ax.set_xlabel(tex[p])
+        ax.set_xlabel(labels[p])
         ax.set_yticks([])
 
     for x, ax in axes.dropna().iteritems():
@@ -200,8 +200,8 @@ def make_2d_axes(params, **kwargs):
             * [list(str),list(str)] if the x and y axes are different
             Strings indicate the names of the parameters
 
-        tex: dict(str:str), optional
-            Dictionary mapping params to tex plot labels.
+        labels: dict(str:str), optional
+            Dictionary mapping params to plot labels.
             Default: params
 
         upper, lower, diagonal: logical, optional
@@ -262,8 +262,8 @@ def make_2d_axes(params, **kwargs):
     axes.dropna(axis=0, how='all', inplace=True)
     axes.dropna(axis=1, how='all', inplace=True)
 
-    tex = kwargs.pop('tex', {})
-    tex = {p: tex[p] if p in tex else p for p in all_params}
+    labels = kwargs.pop('labels', {})
+    labels = {p: labels[p] if p in labels else p for p in all_params}
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     spec = kwargs.pop('subplot_spec', None)
     if axes.shape[0] != 0 and axes.shape[1] != 0:
@@ -308,10 +308,10 @@ def make_2d_axes(params, **kwargs):
                     MaxNLocator(3, prune='both'))
 
     for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
-        ax.set_ylabel(tex[y])
+        ax.set_ylabel(labels[y])
 
     for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().iteritems():
-        ax.set_xlabel(tex[x])
+        ax.set_xlabel(labels[x])
 
     # left and right ticks and labels
     for y, ax in axes.iterrows():

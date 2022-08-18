@@ -1,5 +1,5 @@
-"""Pandas DataFrame and Series with weighted samples."""
-from pandas import Series, DataFrame
+"""Pandas DataFrame and Series with labelled columns."""
+from pandas import Series, DataFrame, MultiIndex
 from pandas.core.indexing import (_LocIndexer as _LocIndexer_,
                                   _AtIndexer as _AtIndexer_)
 from functools import cmp_to_key
@@ -67,6 +67,16 @@ class _LabelledObject(object):
         else:
             return None
 
+    def get_labels_map(self, axis=0):
+        """Retrieve mapping from paramnames to labels from an axis."""
+        labels = self.get_labels(axis)
+        params = self.drop_labels()._get_axis(axis)
+        return dict(zip(params, labels))
+
+    def get_label(self, param, axis=0):
+        """Retrieve mapping from paramnames to labels from an axis."""
+        return self.get_labels_map(axis)[param]
+
     def drop_labels(self):
         result = self
         for axis in range(self.ndim):
@@ -90,22 +100,33 @@ class _LabelledObject(object):
         return attempt([super(_LabelledObject, self.drop_labels()).__getitem__,
                         super().__getitem__], key)
 
-    def set_labels(self, labels, axis=0, inplace=False):
+    def __setitem__(self, key, val):
+        super().__setitem__(key, val)
+
+    def set_labels(self, labels, axis=0, inplace=False, level=None):
         """Set labels along an axis."""
-        if labels is None:
-            if self.islabelled(axis):
-                result = self.drop_labels(axis)
-            elif inplace:
-                result = self
-            else:
-                result = self.copy()
+        if inplace:
+            result = self
         else:
-            result = self.set_axis([self._get_axis(axis).get_level_values(name)
-                                    for name in self._get_axis(axis).names
-                                    if name != self._labels] + [labels],
-                                   axis=axis)
-            names = result._get_axis(axis).names[:-1] + [self._labels]
-            result._get_axis(axis).set_names(names, inplace=True)
+            result = self.copy()
+
+        if labels is None:
+            if result.islabelled(axis=axis):
+                result = result.drop_labels(axis)
+        else:
+            names = [n for n in result._get_axis(axis).names
+                     if n != self._labels]
+            index = [result._get_axis(axis).get_level_values(n) for n in names]
+            if level is None:
+                if result.islabelled(axis):
+                    level = result._get_axis(axis).names.index(self._labels)
+                else:
+                    level = len(index)
+            index.insert(level, labels)
+            names.insert(level, self._labels)
+
+            index = MultiIndex.from_arrays(index, names=names)
+            result.set_axis(index, axis=axis, inplace=True)
 
         if inplace:
             self._update_inplace(result)

@@ -56,7 +56,7 @@ class MontePythonReader(ChainReader):
         Uses MontePython's `analyze` module to prepare the data:
             * Extracts parameter names from MontePython's log.param file.
             * Removes burn-in and non-markovian points from the data.
-            * Extract tex names.
+            * Extract labels names.
 
         """
         if 'montepython' not in sys.modules:
@@ -78,21 +78,21 @@ class MontePythonReader(ChainReader):
         self.data = np.concatenate(data_per_chain, axis=0)
 
     def paramnames(self):
-        """Return parameter labels and corresponding tex signs.
+        """Return parameter labels and corresponding labels signs.
 
         Returns
         -------
         params: np.ndarray
             reference name for the sample, used as labels in the pandas array
 
-        tex: np.ndarray
+        labels: np.ndarray
             axis labels, possibly in tex, with the understanding that it will
             be surrounded by dollar signs
 
         """
         params = self.info.ref_names
-        tex = dict(zip(self.info.ref_names, self.info.tex_names))
-        return params, tex
+        labels = dict(zip(self.info.ref_names, self.info.tex_names))
+        return params, labels
 
     def samples(self):
         """Return weights, loglikelihood and samples.

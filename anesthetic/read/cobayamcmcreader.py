@@ -27,8 +27,9 @@ class CobayaMCMCReader(ChainReader):
                 header = f.readline()[1:]
                 paramnames = header.split()[2:]
                 s = loadMCSamples(file_root=self.root)
-                tex = {p.name: '$' + p.label + '$' for p in s.paramNames.names}
-                return paramnames, tex
+                labels = {p.name: '$' + p.label + '$'
+                          for p in s.paramNames.names}
+                return paramnames, labels
         except IOError:
             return super().paramnames()
 

@@ -213,7 +213,8 @@ class RunPlotter(object):
 
     def redraw(self, _):
         """Redraw the triangle plot upon parameter updating."""
-        self.triangle.draw(self.param_choice(), self.samples.tex)
+        self.triangle.draw(self.param_choice(),
+                           self.samples.get_labels_map(axis=1))
         self.update(None)
         self.reset_range(None)
         self.fig.tight_layout()

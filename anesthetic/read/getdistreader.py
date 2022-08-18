@@ -25,14 +25,14 @@ class GetDistReader(ChainReader):
         try:
             with open(self.paramnames_file, 'r') as f:
                 paramnames = []
-                tex = {}
+                labels = {}
                 for line in f:
                     line = line.strip().split()
                     paramname = line[0].replace('*', '')
                     paramnames.append(paramname)
                     if len(line) > 1:
-                        tex[paramname] = '$' + ' '.join(line[1:]) + '$'
-                return paramnames, tex
+                        labels[paramname] = '$' + ' '.join(line[1:]) + '$'
+                return paramnames, labels
         except IOError:
             return super().paramnames()
 

@@ -7,6 +7,7 @@
 import os
 import numpy as np
 import pandas
+from pandas import MultiIndex
 import copy
 import warnings
 from collections.abc import Sequence
@@ -15,17 +16,16 @@ from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.labelled_pandas import LabelledDataFrame
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import make_1d_axes, make_2d_axes
 import anesthetic.weighted_pandas
 from anesthetic.plotting import PlotAccessor
 anesthetic.weighted_pandas._WeightedObject.plot =\
     CachedAccessor("plot", PlotAccessor)
-anesthetic.weighted_pandas._WeightedObject.plot =\
-    CachedAccessor("plot", PlotAccessor)
 
 
-class Samples(WeightedDataFrame):
+class Samples(WeightedDataFrame, LabelledDataFrame):
     """Storage and plotting tools for general samples.
 
     Extends the pandas.DataFrame by providing plotting methods and
@@ -50,8 +50,8 @@ class Samples(WeightedDataFrame):
     logL: np.array
         loglikelihoods of samples.
 
-    tex: dict
-        mapping from columns to tex labels for plotting
+    labels: dict or array-like
+        mapping from columns to plotting labels
 
     label: str
         Legend label
@@ -63,7 +63,7 @@ class Samples(WeightedDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'label']
+    _metadata = WeightedDataFrame._metadata + ['label']
 
     def __init__(self, *args, **kwargs):
         logzero = kwargs.pop('logzero', -1e30)
@@ -71,13 +71,21 @@ class Samples(WeightedDataFrame):
         if logL is not None:
             logL = np.array(logL)
             logL = np.where(logL <= logzero, -np.inf, logL)
-        self.tex = kwargs.pop('tex', {})
+
         self.label = kwargs.pop('label', None)
+
+        labels = kwargs.pop(self._labels, None)
         super().__init__(*args, **kwargs)
+        if labels is not None:
+            if isinstance(labels, dict):
+                labels = [labels.get(p, p) for p in self]
+            self.set_labels(labels, axis=1, inplace=True)
 
         if logL is not None:
-            self['logL'] = logL
-            self.tex['logL'] = r'$\log\mathcal{L}$'
+            if self.islabelled(axis=1):
+                self[('logL', r'$\log\mathcal{L}$')] = logL
+            else:
+                self['logL'] = logL
 
     @property
     def _constructor(self):
@@ -86,6 +94,8 @@ class Samples(WeightedDataFrame):
     def _reload_data(self):
         self.__init__(root=self.root)
         return self
+
+    plot = CachedAccessor("plot", PlotAccessor)
 
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
@@ -120,7 +130,7 @@ class Samples(WeightedDataFrame):
 
         """
         if not isinstance(axes, pandas.Series):
-            fig, axes = make_1d_axes(axes, tex=self.tex)
+            fig, axes = make_1d_axes(axes, labels=self.get_labels_map(1))
         else:
             fig = axes.bfill().to_numpy().flatten()[0].figure
 
@@ -129,7 +139,7 @@ class Samples(WeightedDataFrame):
 
         for x, ax in axes.iteritems():
             if x in self and kwargs['kind'] is not None:
-                xlabel = self.tex[x] if x in self.tex else x
+                xlabel = self.get_label(x, 1)
                 self[x].plot(ax=ax, xlabel=xlabel,
                              *args, **kwargs)
                 ax.set_xlabel(xlabel)
@@ -223,7 +233,7 @@ class Samples(WeightedDataFrame):
             local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, pandas.DataFrame):
-            fig, axes = make_2d_axes(axes, tex=self.tex,
+            fig, axes = make_2d_axes(axes, labels=self.get_labels(1),
                                      upper=('upper' in kind),
                                      lower=('lower' in kind),
                                      diagonal=('diagonal' in kind))
@@ -237,8 +247,8 @@ class Samples(WeightedDataFrame):
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
                     if x in self and y in self and lkwargs['kind'] is not None:
-                        xlabel = self.tex[x] if x in self.tex else x
-                        ylabel = self.tex[y] if y in self.tex else y
+                        xlabel = self.get_label(x, 1)
+                        ylabel = self.get_label(y, 1)
                         if x == y:
                             self[x].plot(ax=ax.twin, xlabel=xlabel,
                                          *args, **lkwargs)
@@ -338,7 +348,7 @@ class MCMCSamples(Samples):
     data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
-    columns: list(str)
+    columns: array-like
         reference names of parameters
 
     weights: np.array
@@ -347,8 +357,8 @@ class MCMCSamples(Samples):
     logL: np.array
         loglikelihoods of samples.
 
-    tex: dict
-        mapping from columns to tex labels for plotting
+    labels: dict or array-like
+        mapping from columns to plotting labels
 
     label: str
         Legend label
@@ -383,11 +393,11 @@ class MCMCSamples(Samples):
                                  "used for MCMC chains only." % root)
             burn_in = kwargs.pop('burn_in', None)
             weights, logL, samples = reader.samples(burn_in=burn_in)
-            params, tex = reader.paramnames()
+            params, labels = reader.paramnames()
             columns = kwargs.pop('columns', params)
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=columns, weights=weights,
-                          logL=logL, tex=tex, *args, **kwargs)
+                          logL=logL, labels=labels, *args, **kwargs)
             self.root = root
         else:
             self.root = None
@@ -433,8 +443,8 @@ class NestedSamples(Samples):
     logL_birth: np.array or int
         birth loglikelihoods, or number of live points.
 
-    tex: dict
-        optional mapping from column names to tex labels for plotting
+    labels: dict
+        optional mapping from column names to plot labels
 
     label: str
         Legend label
@@ -458,12 +468,12 @@ class NestedSamples(Samples):
         if root is not None:
             reader = SampleReader(root)
             samples, logL, logL_birth = reader.samples()
-            params, tex = reader.paramnames()
+            params, labels = reader.paramnames()
             columns = kwargs.pop('columns', params)
             kwargs['label'] = kwargs.get('label', os.path.basename(root))
             self.__init__(data=samples, columns=columns,
                           logL=logL, logL_birth=logL_birth,
-                          tex=tex, *args, **kwargs)
+                          labels=labels, *args, **kwargs)
             self.root = root
         else:
             self.root = None
@@ -544,19 +554,17 @@ class NestedSamples(Samples):
 
         """
         dlogX = self.dlogX(nsamples)
-        samples = Samples(index=dlogX.columns)
-        samples['logZ'] = self.logZ(dlogX)
+        columns = MultiIndex.from_arrays([[]]*2, names=[None, Samples._labels])
+        samples = Samples(index=dlogX.columns, columns=columns)
+        samples[('logZ', r'$\log\mathcal{Z}$')] = self.logZ(dlogX)
 
         logw = dlogX.add(self.beta * self.logL, axis=0)
         logw -= samples.logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
 
-        samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
-        samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
-
-        samples.tex = {'logZ': r'$\log\mathcal{Z}$',
-                       'D': r'$\mathcal{D}$',
-                       'd': r'$d$'}
+        samples['D', r'$\mathcal{D}$'] = np.exp(logsumexp(logw, b=S, axis=0))
+        samples['d', r'$d$'] = np.exp(logsumexp(logw, b=(S-samples.D)**2,
+                                                axis=0))*2
         samples.label = self.label
         return samples
 
@@ -726,17 +734,18 @@ class NestedSamples(Samples):
         else:
             samples = self.copy()
 
+        nlive_label = r'$n_\mathrm{live}$'
         if is_int(logL_birth):
             nlive = logL_birth
             samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
-            samples['nlive'] = nlive
+            samples[('nlive', nlive_label)] = nlive
             descending = np.arange(nlive, 0, -1)
             samples.loc[len(samples)-nlive:, 'nlive'] = descending
         else:
             if logL_birth is not None:
-                samples['logL_birth'] = logL_birth
-                samples.tex['logL_birth'] = r'$\log\mathcal{L}_\mathrm{birth}$'
+                label = r'$\log\mathcal{L}_\mathrm{birth}$'
+                samples[('logL_birth', label)] = logL_birth
 
             if 'logL_birth' not in samples:
                 raise RuntimeError("Cannot recompute run without "
@@ -759,9 +768,9 @@ class NestedSamples(Samples):
 
             samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
-            samples['nlive'] = compute_nlive(samples.logL, samples.logL_birth)
+            samples[('nlive', nlive_label)] = compute_nlive(
+                    samples.logL, samples.logL_birth)
 
-        samples.tex['nlive'] = r'$n_\mathrm{live}$'
         samples.beta = samples._beta
 
         if np.any(pandas.isna(samples.logL)):
@@ -793,7 +802,6 @@ def merge_nested_samples(runs):
         Merged run.
     """
     merge = pandas.concat(runs, ignore_index=True)
-    merge.tex = {key: val for r in runs for key, val in r.tex.items()}
     return merge.recompute()
 
 
@@ -858,7 +866,5 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples.set_weights(new_weights, inplace=True)
 
     new_samples.label = label
-    # Copy tex, if different values for same key exist, the last one is used.
-    new_samples.tex = {key: val for s in samples for key, val in s.tex.items()}
 
     return new_samples

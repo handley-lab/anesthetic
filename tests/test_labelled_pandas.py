@@ -55,6 +55,10 @@ def test_LabelledSeries():
     assert lseries.at['A', '$A$'] == lseries['A']
     assert lseries.xs(('A', '$A$')) == lseries['A']
 
+    for c in index:
+        assert lseries.get_labels_map()[c] == '$%s$' % c
+        assert lseries.get_label(c) == '$%s$' % c
+
 
 def test_LabelledSeries_MultiIndex():
     index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -101,6 +105,10 @@ def test_LabelledSeries_MultiIndex():
     with pytest.raises(KeyError):
         lseries['foo']
 
+    for c, v in zip(index, vowels):
+        assert lseries.get_labels_map()[v, c] == '$%s$' % c
+        assert lseries.get_label((v, c)) == '$%s$' % c
+
 
 def test_LabelledDataFrame_index():
     index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -135,6 +143,10 @@ def test_LabelledDataFrame_index():
 
     with pytest.raises(KeyError):
         lframe['foo']
+
+    for c in index:
+        assert lframe.get_labels_map()[c] == '$%s$' % c
+        assert lframe.get_label(c) == '$%s$' % c
 
 
 def test_LabelledDataFrame_index_MultiIndex():
@@ -191,6 +203,10 @@ def test_LabelledDataFrame_index_MultiIndex():
     with pytest.raises(KeyError):
         lframe['foo']
 
+    for c, v in zip(index, vowels):
+        assert lframe.get_labels_map()[v, c] == '$%s$' % c
+        assert lframe.get_label((v, c)) == '$%s$' % c
+
 
 def test_LabelledDataFrame_column():
     columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -227,6 +243,10 @@ def test_LabelledDataFrame_column():
 
     with pytest.raises(KeyError):
         lframe['foo']
+
+    for c in columns:
+        assert lframe.get_labels_map(1)[c] == '$%s$' % c
+        assert lframe.get_label(c, 1) == '$%s$' % c
 
 
 def test_LabelledDataFrame_column_MultiIndex():
@@ -283,3 +303,7 @@ def test_LabelledDataFrame_column_MultiIndex():
 
     with pytest.raises(KeyError):
         lframe['foo']
+
+    for c, v in zip(columns, vowels):
+        assert lframe.get_labels_map(1)[v, c] == '$%s$' % c
+        assert lframe.get_label((v, c), 1) == '$%s$' % c

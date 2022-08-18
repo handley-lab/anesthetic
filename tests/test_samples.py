@@ -31,7 +31,8 @@ def test_build_samples():
     logL = np.random.rand(nsamps)
     weights = np.random.randint(1, 20, size=nsamps)
     params = ['A', 'B', 'C']
-    tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
+    labels = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
+    labels = [labels.get(p, p) for p in params]
 
     s = Samples(data=data)
     assert len(s) == nsamps
@@ -55,9 +56,7 @@ def test_build_samples():
     assert len(s) == nsamps
     assert_array_equal(s.columns, ['A', 'B', 'C'])
 
-    s = Samples(data=data, tex=tex)
-    for p in params:
-        assert s.tex[p] == tex[p]
+    s = Samples(data=data, columns=params, labels=labels)
 
     mc = MCMCSamples(data=data, logL=logL, weights=weights)
     assert len(mc) == nsamps
@@ -120,14 +119,14 @@ def test_manual_columns():
     ns_params = ['logL', 'logL_birth', 'nlive']
     mcmc = MCMCSamples(root='./tests/example_data/gd')
     ns = NestedSamples(root='./tests/example_data/pc')
-    assert_array_equal(mcmc.columns, old_params + mcmc_params)
-    assert_array_equal(ns.columns, old_params + ns_params)
+    assert_array_equal(mcmc.drop_labels().columns, old_params + mcmc_params)
+    assert_array_equal(ns.drop_labels().columns, old_params + ns_params)
 
     new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
     mcmc = MCMCSamples(root='./tests/example_data/gd', columns=new_params)
     ns = NestedSamples(root='./tests/example_data/pc', columns=new_params)
-    assert_array_equal(mcmc.columns, new_params + mcmc_params)
-    assert_array_equal(ns.columns, new_params + ns_params)
+    assert_array_equal(mcmc.drop_labels().columns, new_params + mcmc_params)
+    assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
 
 
 def test_plot_2d_kinds():
@@ -476,17 +475,14 @@ def test_merging():
     assert nlive == nlive_1 + nlive_2
     assert (samples_1.logZ() > samples.logZ() > samples_2.logZ()
             or samples_1.logZ() < samples.logZ() < samples_2.logZ())
-    assert 'x0' in samples.tex
 
 
 def test_weighted_merging():
     # Generate some data to try it out:
     samples_1 = NestedSamples(root='./tests/example_data/pc')
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
-    samples_1['xtest'] = 7*samples_1['x3']
-    samples_2['xtest'] = samples_2['x3']
-    samples_1.tex['xtest'] = "$x_{t,1}$"
-    samples_2.tex['xtest'] = "$x_{t,2}$"
+    samples_1[('xtest', '$x_{t,1}$')] = 7*samples_1['x3']
+    samples_2[('xtest', "$x_{t,2}$")] = samples_2['x3']
     mean1 = samples_1.xtest.mean()
     mean2 = samples_2.xtest.mean()
 
@@ -498,12 +494,6 @@ def test_weighted_merging():
     mean = samples.xtest.mean()
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
-    # Test tex and label
-    for key in samples.keys():
-        if key in samples_2.keys():
-            assert samples.tex[key] == samples_2.tex[key]
-        else:
-            assert samples.tex[key] == samples_1.tex[key]
     assert samples.label == 'Merged label'
 
     # Test that label is None when no label is passed
@@ -723,7 +713,6 @@ def test_NestedSamples_importance_sample():
     ns0.importance_sample(logL_new, inplace=True)
     assert type(ns0) is NestedSamples
     assert_array_equal(ns0, ns1)
-    assert ns0.tex == ns1.tex
     assert ns0.root == ns1.root
     assert ns0.label == ns1.label
     assert ns0.beta == ns1.beta
@@ -767,7 +756,6 @@ def test_MCMCSamples_importance_sample():
     assert np.all(mc3.x0 > -0.3)
 
     for mc in [mc1, mc2, mc3]:
-        assert mc.tex == mc0.tex
         assert mc.root == mc0.root
         assert mc.label == mc0.label
         assert mc._metadata == mc0._metadata
@@ -776,7 +764,6 @@ def test_MCMCSamples_importance_sample():
     mc0.importance_sample(mask, action='mask', inplace=True)
     assert type(mc0) is MCMCSamples
     assert_array_equal(mc3, mc0)
-    assert mc3.tex == mc0.tex
     assert mc3.root == mc0.root
     assert mc3.label == mc0.label
     assert mc3._metadata == mc0._metadata
@@ -951,12 +938,12 @@ def test_samples_dot_plot():
 
 def test_fixed_width():
     samples = NestedSamples(root='./tests/example_data/pc')
-    tex = [samples.tex[t] for t in samples.columns]
+    labels = samples.get_labes(axis=1)
     columns = ['A really really long column label'] + list(samples.columns[1:])
     samples.columns = columns
     assert 'A really r...' in str(samples)
 
-    mcolumns = MultiIndex.from_arrays([columns, tex])
+    mcolumns = MultiIndex.from_arrays([columns, labels])
     samples.columns = mcolumns
     assert 'A really re...' in str(DataFrame(samples))
 
@@ -971,7 +958,7 @@ def test_samples_plot_labels():
     fig, axes = samples.plot_2d(columns)
 
     for col, ax in zip(columns, axes.loc[:, 'x0']):
-        assert samples.tex[col] == ax.get_ylabel()
+        assert samples.get_label(col, 1) == ax.get_ylabel()
 
     for col, ax in zip(columns, axes.loc['x4', :]):
-        assert samples.tex[col] == ax.get_xlabel()
+        assert samples.get_label(col, 1) == ax.get_xlabel()
