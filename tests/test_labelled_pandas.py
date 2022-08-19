@@ -347,3 +347,10 @@ def test_constructors():
     assert isinstance(lframe, LabelledDataFrame)
     assert isinstance(lframe[0], LabelledSeries)
     assert isinstance(lframe.loc['A'], LabelledSeries)
+
+
+def test_transpose():
+    lframe = test_LabelledDataFrame_index()
+    lframe._labels = ("labels0", "labels")
+    assert lframe.T._labels == ("labels", "labels0")
+    assert lframe.transpose()._labels == ("labels", "labels0")

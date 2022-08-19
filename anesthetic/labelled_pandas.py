@@ -6,7 +6,7 @@ import numpy as np
 from functools import cmp_to_key
 
 
-def acc(funcs, *args):
+def ac(funcs, *args):
     """Accessor function helper.
 
     Given a list of callables `funcs`, and their arguments `*args`, evaluate
@@ -35,36 +35,35 @@ def acc(funcs, *args):
 
 class _LocIndexer(_LocIndexer_):
     def __getitem__(self, key):
-        return acc([_AtIndexer_("loc", self.obj.drop_labels(i)).__getitem__
-                    for i in self.obj._all_axes()] + [super().__getitem__], key)
+        return ac([_AtIndexer_("loc", self.obj.drop_labels(i)).__getitem__
+                   for i in self.obj._all_axes()] + [super().__getitem__], key)
 
 
 class _AtIndexer(_AtIndexer_):
     def __getitem__(self, key):
-        return acc([_AtIndexer_("at", self.obj.drop_labels(i)).__getitem__
-                    for i in self.obj._all_axes()] + [super().__getitem__], key)
+        return ac([_AtIndexer_("at", self.obj.drop_labels(i)).__getitem__
+                   for i in self.obj._all_axes()] + [super().__getitem__], key)
 
 
 class _LabelledObject(object):
     """Common methods for LabelledSeries and LabelledDataFrame."""
 
-    _labels = "labels"
-
     def __init__(self, *args, **kwargs):
-        labels = kwargs.pop(self._labels, None)
+        self._labels = ("labels", "labels")
+        labels = kwargs.pop(self._labels[0], None)
         super().__init__(*args, **kwargs)
         if labels is not None:
             self.set_labels(labels, inplace=True)
 
     def islabelled(self, axis=0):
         """Determine if labels are actually present."""
-        return self._labels in self._get_axis(axis).names
+        return self._labels[axis] in self._get_axis(axis).names
 
     def get_labels(self, axis=0):
         """Retrieve labels from an axis."""
         if self.islabelled(axis):
             return self._get_axis(axis).get_level_values(
-                    self._labels).to_numpy()
+                    self._labels[axis]).to_numpy()
         else:
             return None
 
@@ -85,7 +84,7 @@ class _LabelledObject(object):
         result = self
         for axis in axes:
             if self.islabelled(axis):
-                result = result.droplevel(self._labels, axis)
+                result = result.droplevel(self._labels[axis], axis)
         return result
 
     def _all_axes(self):
@@ -103,13 +102,13 @@ class _LabelledObject(object):
         return _AtIndexer("at", self)
 
     def xs(self, key, axis=0, level=None, drop_level=True):
-        return acc([super(_LabelledObject, self.drop_labels(i)).xs
-                    for i in self._all_axes()] + [super().xs],
-                   key, axis, level, drop_level)
+        return ac([super(_LabelledObject, self.drop_labels(i)).xs
+                   for i in self._all_axes()] + [super().xs],
+                  key, axis, level, drop_level)
 
     def __getitem__(self, key):
-        return acc([super(_LabelledObject, self.drop_labels(i)).__getitem__
-                    for i in self._all_axes()] + [super().__getitem__], key)
+        return ac([super(_LabelledObject, self.drop_labels(i)).__getitem__
+                   for i in self._all_axes()] + [super().__getitem__], key)
 
     def __setitem__(self, key, val):
         super().__setitem__(key, val)
@@ -126,15 +125,16 @@ class _LabelledObject(object):
                 result = result.drop_labels(axis)
         else:
             names = [n for n in result._get_axis(axis).names
-                     if n != self._labels]
+                     if n != self._labels[axis]]
             index = [result._get_axis(axis).get_level_values(n) for n in names]
             if level is None:
                 if result.islabelled(axis):
-                    level = result._get_axis(axis).names.index(self._labels)
+                    level = result._get_axis(axis
+                                             ).names.index(self._labels[axis])
                 else:
                     level = len(index)
             index.insert(level, labels)
-            names.insert(level, self._labels)
+            names.insert(level, self._labels[axis])
 
             index = MultiIndex.from_arrays(index, names=names)
             result.set_axis(index, axis=axis, inplace=True)
@@ -160,6 +160,8 @@ class _LabelledObject(object):
 class LabelledSeries(_LabelledObject, Series):
     """Labelled version of pandas.Series."""
 
+    _metadata = Series._metadata + ['_labels']
+
     @property
     def _constructor(self):
         return LabelledSeries
@@ -172,6 +174,8 @@ class LabelledSeries(_LabelledObject, Series):
 class LabelledDataFrame(_LabelledObject, DataFrame):
     """Labelled version of pandas.DataFrame."""
 
+    _metadata = DataFrame._metadata + ['_labels']
+
     @property
     def _constructor_sliced(self):
         return LabelledSeries
@@ -179,3 +183,9 @@ class LabelledDataFrame(_LabelledObject, DataFrame):
     @property
     def _constructor(self):
         return LabelledDataFrame
+
+    def transpose(self, copy=False):
+        """Transpose."""
+        result = super().transpose(copy=copy)
+        result._labels = (result._labels[1], result._labels[0])
+        return result

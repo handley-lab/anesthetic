@@ -63,7 +63,8 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['label']
+    _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata 
+    _metadata += ['label']
 
     def __init__(self, *args, **kwargs):
         logzero = kwargs.pop('logzero', -1e30)
@@ -73,12 +74,13 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
             logL = np.where(logL <= logzero, -np.inf, logL)
         self.label = kwargs.pop('label', None)
 
-        labels = kwargs.pop(self._labels, None)
+        labels = kwargs.pop('labels', None)
         super().__init__(*args, **kwargs)
         if labels is not None:
             if isinstance(labels, dict):
                 labels = [labels.get(p, p) for p in self]
             self.set_labels(labels, axis=1, inplace=True)
+            self._labels = (self._labels[0], 'labels')
 
         if logL is not None:
             if self.islabelled(axis=1):
@@ -554,7 +556,7 @@ class NestedSamples(Samples):
 
         """
         dlogX = self.dlogX(nsamples)
-        columns = MultiIndex.from_arrays([[]]*2, names=[None, Samples._labels])
+        columns = MultiIndex.from_arrays([[]]*2, names=[None, 'labels'])
         samples = Samples(index=dlogX.columns, columns=columns)
         samples[('logZ', r'$\log\mathcal{Z}$')] = self.logZ(dlogX)
 
