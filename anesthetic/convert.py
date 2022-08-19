@@ -15,7 +15,7 @@ def to_getdist(nested_samples):
         getdist equivalent samples
     """
     import getdist
-    nested_samples = nested_samples.drop_labels()
+    nested_samples = nested_samples.drop_labels(1)
     samples = nested_samples.to_numpy()
     weights = nested_samples.get_weights()
     loglikes = -nested_samples.logL.to_numpy()

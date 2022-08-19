@@ -28,7 +28,7 @@ def assert_frame_equal(x, y):
 
 
 def assert_frame_equal_not_index(x, y):
-    assert_frame_equal(x.drop_labels(), y)
+    assert_frame_equal(x.drop_labels([0, 1]), y)
     with pytest.raises(AssertionError):
         assert_frame_equal(x, y)
 
@@ -42,6 +42,7 @@ def test_LabelledSeries():
     series = Series(data, index)
 
     assert_series_equal_not_index(lseries, series)
+    isinstance(lseries, LabelledSeries) 
 
     assert lseries.A == series.A
     assert lseries['A'] == series['A']

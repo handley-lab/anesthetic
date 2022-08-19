@@ -119,14 +119,14 @@ def test_manual_columns():
     ns_params = ['logL', 'logL_birth', 'nlive']
     mcmc = MCMCSamples(root='./tests/example_data/gd')
     ns = NestedSamples(root='./tests/example_data/pc')
-    assert_array_equal(mcmc.drop_labels().columns, old_params + mcmc_params)
-    assert_array_equal(ns.drop_labels().columns, old_params + ns_params)
+    assert_array_equal(mcmc.drop_labels(1).columns, old_params + mcmc_params)
+    assert_array_equal(ns.drop_labels(1).columns, old_params + ns_params)
 
     new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
     mcmc = MCMCSamples(root='./tests/example_data/gd', columns=new_params)
     ns = NestedSamples(root='./tests/example_data/pc', columns=new_params)
-    assert_array_equal(mcmc.drop_labels().columns, new_params + mcmc_params)
-    assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
+    assert_array_equal(mcmc.drop_labels(1).columns, new_params + mcmc_params)
+    assert_array_equal(ns.drop_labels(1).columns, new_params + ns_params)
 
 
 def test_plot_2d_kinds():
