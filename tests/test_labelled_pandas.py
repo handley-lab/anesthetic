@@ -59,6 +59,8 @@ def test_LabelledSeries():
         assert lseries.get_labels_map()[c] == '$%s$' % c
         assert lseries.get_label(c) == '$%s$' % c
 
+    return lseries
+
 
 def test_LabelledSeries_MultiIndex():
     index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -109,6 +111,8 @@ def test_LabelledSeries_MultiIndex():
         assert lseries.get_labels_map()[v, c] == '$%s$' % c
         assert lseries.get_label((v, c)) == '$%s$' % c
 
+    return lseries
+
 
 def test_LabelledDataFrame_index():
     index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -147,6 +151,8 @@ def test_LabelledDataFrame_index():
     for c in index:
         assert lframe.get_labels_map()[c] == '$%s$' % c
         assert lframe.get_label(c) == '$%s$' % c
+
+    return lframe
 
 
 def test_LabelledDataFrame_index_MultiIndex():
@@ -207,6 +213,7 @@ def test_LabelledDataFrame_index_MultiIndex():
         assert lframe.get_labels_map()[v, c] == '$%s$' % c
         assert lframe.get_label((v, c)) == '$%s$' % c
 
+    return lframe
 
 def test_LabelledDataFrame_column():
     columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -247,6 +254,8 @@ def test_LabelledDataFrame_column():
     for c in columns:
         assert lframe.get_labels_map(1)[c] == '$%s$' % c
         assert lframe.get_label(c, 1) == '$%s$' % c
+
+    return lframe
 
 
 def test_LabelledDataFrame_column_MultiIndex():
@@ -307,3 +316,31 @@ def test_LabelledDataFrame_column_MultiIndex():
     for c, v in zip(columns, vowels):
         assert lframe.get_labels_map(1)[v, c] == '$%s$' % c
         assert lframe.get_label((v, c), 1) == '$%s$' % c
+
+    return lframe
+
+def test_set_labels():
+    lseries = test_LabelledSeries()
+    labels = lseries.get_labels()
+    labels[1] = '$b$'
+    assert_array_equal(lseries.set_labels(labels).get_labels(), labels)
+    assert lseries.get_labels()[1] != labels[1]
+    lseries.set_labels(labels, inplace=True)
+    assert lseries.get_labels()[1] == labels[1]
+
+    assert lseries.drop_labels().get_labels() is None
+    assert lseries.get_labels() is not None
+    assert lseries.set_labels(None).get_labels() is None
+    assert lseries.get_labels() is not None
+    lseries.set_labels(None, inplace=True)
+    assert lseries.get_labels() is None
+
+
+def test_constructors():
+    lseries = test_LabelledSeries()
+    lframe = test_LabelledDataFrame_index()
+    assert isinstance (lseries, LabelledSeries)
+    assert isinstance (lseries.to_frame(), LabelledDataFrame)
+    assert isinstance (lframe, LabelledDataFrame)
+    assert isinstance (lframe[0], LabelledSeries)
+    assert isinstance (lframe.loc['A'], LabelledSeries)
