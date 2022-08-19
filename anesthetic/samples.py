@@ -15,7 +15,7 @@ from anesthetic.read.samplereader import SampleReader
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
-from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.weighted_pandas import WeightedDataFrame
 from anesthetic.labelled_pandas import LabelledDataFrame
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import make_1d_axes, make_2d_axes
@@ -71,7 +71,6 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
         if logL is not None:
             logL = np.array(logL)
             logL = np.where(logL <= logzero, -np.inf, logL)
-
         self.label = kwargs.pop('label', None)
 
         labels = kwargs.pop(self._labels, None)
@@ -83,7 +82,7 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
 
         if logL is not None:
             if self.islabelled(axis=1):
-                self[('logL', r'$\log\mathcal{L}$')] = logL
+                self['logL', r'$\log\mathcal{L}$'] = logL
             else:
                 self['logL'] = logL
 
@@ -253,6 +252,7 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
                             self[x].plot(ax=ax.twin, xlabel=xlabel,
                                          *args, **lkwargs)
                             ax.set_xlabel(xlabel)
+                            ax.set_ylabel(ylabel)
                         else:
                             self.plot(x, y, ax=ax, xlabel=xlabel,
                                       ylabel=ylabel, *args, **lkwargs)
@@ -677,9 +677,9 @@ class NestedSamples(Samples):
         weights = self.get_weights()
         if nsamples is None:
             dlogX = np.squeeze(dlogX)
-            return WeightedSeries(dlogX, self.index, weights=weights)
+            return self._constructor_sliced(dlogX, self.index, weights=weights)
         else:
-            return WeightedDataFrame(dlogX, self.index, weights=weights)
+            return self._constructor(dlogX, self.index, weights=weights)
 
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
@@ -745,7 +745,10 @@ class NestedSamples(Samples):
         else:
             if logL_birth is not None:
                 label = r'$\log\mathcal{L}_\mathrm{birth}$'
-                samples[('logL_birth', label)] = logL_birth
+                if self.islabelled(axis=1):
+                    samples['logL_birth', label] = logL_birth
+                else:
+                    samples['logL_birth'] = logL_birth
 
             if 'logL_birth' not in samples:
                 raise RuntimeError("Cannot recompute run without "
@@ -768,8 +771,11 @@ class NestedSamples(Samples):
 
             samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
-            samples[('nlive', nlive_label)] = compute_nlive(
-                    samples.logL, samples.logL_birth)
+            nlive = compute_nlive(samples.logL, samples.logL_birth)
+            if self.islabelled(axis=1):
+                samples['nlive', nlive_label] = nlive
+            else:
+                samples['nlive'] = nlive
 
         samples.beta = samples._beta
 

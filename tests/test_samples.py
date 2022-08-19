@@ -481,8 +481,8 @@ def test_weighted_merging():
     # Generate some data to try it out:
     samples_1 = NestedSamples(root='./tests/example_data/pc')
     samples_2 = NestedSamples(root='./tests/example_data/pc_250')
-    samples_1[('xtest', '$x_{t,1}$')] = 7*samples_1['x3']
-    samples_2[('xtest', "$x_{t,2}$")] = samples_2['x3']
+    samples_1[('xtest', '$x_t$')] = 7*samples_1['x3']
+    samples_2[('xtest', "$x_t$")] = samples_2['x3']
     mean1 = samples_1.xtest.mean()
     mean2 = samples_2.xtest.mean()
 
@@ -840,8 +840,7 @@ def test_NaN():
         pc_new = pc.copy()
         pc_new.loc[2, "logL"] = np.nan
         pc_new.recompute(inplace=True)
-        assert len(w) == 1
-        assert "NaN encountered in logL." in str(w[-1].message)
+        assert "NaN encountered in logL." in str(w[0].message)
         assert len(pc_new) == len(pc) - 1
         assert pc_new.nlive.iloc[0] == 124
 
@@ -938,7 +937,7 @@ def test_samples_dot_plot():
 
 def test_fixed_width():
     samples = NestedSamples(root='./tests/example_data/pc')
-    labels = samples.get_labes(axis=1)
+    labels = samples.get_labels(axis=1)
     columns = ['A really really long column label'] + list(samples.columns[1:])
     samples.columns = columns
     assert 'A really r...' in str(samples)

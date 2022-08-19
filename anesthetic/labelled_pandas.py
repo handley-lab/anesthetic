@@ -71,6 +71,8 @@ class _LabelledObject(object):
         """Retrieve mapping from paramnames to labels from an axis."""
         labels = self.get_labels(axis)
         params = self.drop_labels()._get_axis(axis)
+        if labels is None:
+            labels = params
         return dict(zip(params, labels))
 
     def get_label(self, param, axis=0):

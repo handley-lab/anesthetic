@@ -163,7 +163,7 @@ def make_1d_axes(params, **kwargs):
     """
     axes = AxesSeries(index=np.atleast_1d(params), dtype=object)
     axes[:] = None
-    labels = kwargs.pop('labels', {})
+    labels = kwargs.pop('labels', None)
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     ncols = kwargs.pop('ncols', int(np.ceil(np.sqrt(len(axes)))))
     nrows = int(np.ceil(len(axes)/float(ncols)))
@@ -176,6 +176,8 @@ def make_1d_axes(params, **kwargs):
     if kwargs:
         raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
+    if labels is None:
+        labels = {}
     labels = {p: labels[p] if p in labels else p for p in axes.index}
 
     for p, g in zip(axes.index, grid):
@@ -262,7 +264,9 @@ def make_2d_axes(params, **kwargs):
     axes.dropna(axis=0, how='all', inplace=True)
     axes.dropna(axis=1, how='all', inplace=True)
 
-    labels = kwargs.pop('labels', {})
+    labels = kwargs.pop('labels', None)
+    if labels is None:
+        labels = {}
     labels = {p: labels[p] if p in labels else p for p in all_params}
     fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     spec = kwargs.pop('subplot_spec', None)

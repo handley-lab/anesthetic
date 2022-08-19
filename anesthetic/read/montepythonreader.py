@@ -56,7 +56,7 @@ class MontePythonReader(ChainReader):
         Uses MontePython's `analyze` module to prepare the data:
             * Extracts parameter names from MontePython's log.param file.
             * Removes burn-in and non-markovian points from the data.
-            * Extract labels names.
+            * Extract label names.
 
         """
         if 'montepython' not in sys.modules:
@@ -78,7 +78,7 @@ class MontePythonReader(ChainReader):
         self.data = np.concatenate(data_per_chain, axis=0)
 
     def paramnames(self):
-        """Return parameter labels and corresponding labels signs.
+        """Return parameter labels and corresponding labels.
 
         Returns
         -------
