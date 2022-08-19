@@ -215,6 +215,7 @@ def test_LabelledDataFrame_index_MultiIndex():
 
     return lframe
 
+
 def test_LabelledDataFrame_column():
     columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
     labels = ['$%s$' % i for i in columns]
@@ -319,6 +320,7 @@ def test_LabelledDataFrame_column_MultiIndex():
 
     return lframe
 
+
 def test_set_labels():
     lseries = test_LabelledSeries()
     labels = lseries.get_labels()
@@ -339,8 +341,8 @@ def test_set_labels():
 def test_constructors():
     lseries = test_LabelledSeries()
     lframe = test_LabelledDataFrame_index()
-    assert isinstance (lseries, LabelledSeries)
-    assert isinstance (lseries.to_frame(), LabelledDataFrame)
-    assert isinstance (lframe, LabelledDataFrame)
-    assert isinstance (lframe[0], LabelledSeries)
-    assert isinstance (lframe.loc['A'], LabelledSeries)
+    assert isinstance(lseries, LabelledSeries)
+    assert isinstance(lseries.to_frame(), LabelledDataFrame)
+    assert isinstance(lframe, LabelledDataFrame)
+    assert isinstance(lframe[0], LabelledSeries)
+    assert isinstance(lframe.loc['A'], LabelledSeries)

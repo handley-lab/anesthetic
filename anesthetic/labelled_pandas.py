@@ -114,7 +114,7 @@ class _LabelledObject(object):
 
         if labels is None:
             if result.islabelled(axis=axis):
-                result = result.drop_labels(axis)
+                result = result.drop_labels()
         else:
             names = [n for n in result._get_axis(axis).names
                      if n != self._labels]

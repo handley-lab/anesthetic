@@ -40,7 +40,7 @@ class _DataFrameFormatter(DataFrameFormatter):
             if self.sparsify and len(str_columns):
                 str_columns = sparsify_labels(str_columns)
 
-            str_columns = [_make_fixed_width(list(x)) for x in zip(*str_columns)]
+            str_columns = [list(x) for x in zip(*str_columns)]
             str_columns = [_make_fixed_width(x) for x in str_columns]
         else:
             fmt_columns = columns.format()
