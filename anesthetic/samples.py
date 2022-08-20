@@ -7,7 +7,6 @@
 import os
 import numpy as np
 import pandas
-from pandas import MultiIndex
 import copy
 import warnings
 from collections.abc import Sequence
@@ -63,7 +62,7 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata 
+    _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata
     _metadata += ['label']
 
     def __init__(self, *args, **kwargs):
@@ -78,15 +77,15 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
         super().__init__(*args, **kwargs)
         if labels is not None:
             if isinstance(labels, dict):
-                labels = [labels.get(p, p) for p in self]
+                labels = [labels.get(p, '') for p in self]
             self.set_labels(labels, axis=1, inplace=True)
             self._labels = (self._labels[0], 'labels')
 
         if logL is not None:
+            self['logL'] = logL
             if self.islabelled(axis=1):
-                self['logL', r'$\log\mathcal{L}$'] = logL
-            else:
-                self['logL'] = logL
+                self.set_label('logL', r'$\log\mathcal{L}$',
+                               axis=1, inplace=True)
 
     @property
     def _constructor(self):
@@ -140,7 +139,7 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
 
         for x, ax in axes.iteritems():
             if x in self and kwargs['kind'] is not None:
-                xlabel = self.get_label(x, 1)
+                xlabel = self.get_label(x, axis=1)
                 self[x].plot(ax=ax, xlabel=xlabel,
                              *args, **kwargs)
                 ax.set_xlabel(xlabel)
@@ -248,8 +247,8 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
                     if x in self and y in self and lkwargs['kind'] is not None:
-                        xlabel = self.get_label(x, 1)
-                        ylabel = self.get_label(y, 1)
+                        xlabel = self.get_label(x, axis=1)
+                        ylabel = self.get_label(y, axis=1)
                         if x == y:
                             self[x].plot(ax=ax.twin, xlabel=xlabel,
                                          *args, **lkwargs)
@@ -556,17 +555,20 @@ class NestedSamples(Samples):
 
         """
         dlogX = self.dlogX(nsamples)
-        columns = MultiIndex.from_arrays([[]]*2, names=[None, 'labels'])
-        samples = Samples(index=dlogX.columns, columns=columns)
-        samples[('logZ', r'$\log\mathcal{Z}$')] = self.logZ(dlogX)
+        samples = Samples()
+        samples['logZ'] = self.logZ(dlogX)
+        samples.set_label('logZ', r'$\log\mathcal{Z}$', axis=1, inplace=True)
 
         logw = dlogX.add(self.beta * self.logL, axis=0)
         logw -= samples.logZ
         S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
 
-        samples['D', r'$\mathcal{D}$'] = np.exp(logsumexp(logw, b=S, axis=0))
-        samples['d', r'$d$'] = np.exp(logsumexp(logw, b=(S-samples.D)**2,
-                                                axis=0))*2
+        samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
+        samples.set_label('D', r'$\mathcal{D}$', axis=1, inplace=True)
+
+        samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
+        samples.set_label('d', r'$d$', axis=1, inplace=True)
+
         samples.label = self.label
         return samples
 
@@ -747,10 +749,10 @@ class NestedSamples(Samples):
         else:
             if logL_birth is not None:
                 label = r'$\log\mathcal{L}_\mathrm{birth}$'
+                samples['logL_birth'] = logL_birth
                 if self.islabelled(axis=1):
-                    samples['logL_birth', label] = logL_birth
-                else:
-                    samples['logL_birth'] = logL_birth
+                    samples.set_label('logL_birth', label,
+                                      axis=1, inplace=True)
 
             if 'logL_birth' not in samples:
                 raise RuntimeError("Cannot recompute run without "
@@ -774,10 +776,10 @@ class NestedSamples(Samples):
             samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
             nlive = compute_nlive(samples.logL, samples.logL_birth)
+            samples['nlive'] = nlive
             if self.islabelled(axis=1):
-                samples['nlive', nlive_label] = nlive
-            else:
-                samples['nlive'] = nlive
+                samples.set_label('nlive', nlive_label,
+                                  axis=1, inplace=True)
 
         samples.beta = samples._beta
 

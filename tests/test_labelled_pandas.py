@@ -42,7 +42,7 @@ def test_LabelledSeries():
     series = Series(data, index)
 
     assert_series_equal_not_index(lseries, series)
-    isinstance(lseries, LabelledSeries) 
+    isinstance(lseries, LabelledSeries)
 
     assert lseries.A == series.A
     assert lseries['A'] == series['A']
@@ -354,3 +354,65 @@ def test_transpose():
     lframe._labels = ("labels0", "labels")
     assert lframe.T._labels == ("labels", "labels0")
     assert lframe.transpose()._labels == ("labels", "labels0")
+
+
+def test_multiaxis():
+    lframe = test_LabelledDataFrame_index().iloc[:4]
+    lframe._labels = ('labels', 'aliases')
+    lframe._labels = ('labels', 'aliases')
+    columns = MultiIndex.from_arrays([['one', 'two', 'three', 'four'],
+                                      [1, 2, 3, 4]],
+                                     names=[None, 'aliases'])
+    lframe.columns = columns
+
+    assert_array_equal(lframe.get_labels(0), ['$A$', '$B$', '$C$', '$D$'])
+    assert_array_equal(lframe.get_labels(1), [1, 2, 3, 4])
+    assert_array_equal(lframe.T.get_labels(1), ['$A$', '$B$', '$C$', '$D$'])
+    assert_array_equal(lframe.T.get_labels(0), [1, 2, 3, 4])
+
+    assert lframe.islabelled(0)
+    assert lframe.islabelled(1)
+
+    assert isinstance(lframe.loc['A'], LabelledSeries)
+    assert isinstance(lframe['one'], LabelledSeries)
+    lframe._labels = ('labels', 'foo')
+    assert isinstance(lframe.loc['A'], LabelledSeries)
+    assert isinstance(lframe['one'], LabelledDataFrame)
+
+    assert lframe.islabelled(0)
+    assert not lframe.islabelled(1)
+
+    lframe._labels = ('labels', None)
+    assert isinstance(lframe['one'], LabelledDataFrame)
+
+    assert lframe.islabelled(0)
+    assert not lframe.islabelled(1)
+
+
+def test_set_label():
+    lseries = test_LabelledSeries()
+    assert isinstance(lseries.get_labels_map(), Series)
+
+    nolabels_map = lseries.drop_labels().get_labels_map()
+    assert isinstance(nolabels_map, Series)
+    assert_array_equal(nolabels_map, '')
+    assert_array_equal(nolabels_map.index, lseries.drop_labels().index)
+
+    assert lseries.get_label('A') == '$A$'
+    assert lseries.set_label('A', '$a$').get_label('A') == '$a$'
+    lseries.set_label('A', '$a$')
+    assert lseries.get_label('A') == '$A$'
+    lseries.set_label('A', '$a$', inplace=True)
+    assert lseries.get_label('A') == '$a$'
+
+    lseries = lseries.drop_labels()
+    assert lseries.get_label('A') == ''
+    assert lseries.index.nlevels == 1
+
+    lseries.set_label('A', '$A$', inplace=True)
+    assert lseries.get_label('A') == '$A$'
+    assert lseries.get_label('B') == ''
+    assert lseries.index.nlevels == 2
+
+    lseries['Z'] = 1.0
+    assert lseries.get_label('Z') == ''

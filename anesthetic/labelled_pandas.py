@@ -57,7 +57,8 @@ class _LabelledObject(object):
 
     def islabelled(self, axis=0):
         """Determine if labels are actually present."""
-        return self._labels[axis] in self._get_axis(axis).names
+        return (self._labels[axis] is not None
+                and self._labels[axis] in self._get_axis(axis).names)
 
     def get_labels(self, axis=0):
         """Retrieve labels from an axis."""
@@ -69,15 +70,20 @@ class _LabelledObject(object):
 
     def get_labels_map(self, axis=0):
         """Retrieve mapping from paramnames to labels from an axis."""
-        labels = self.get_labels(axis)
-        params = self.drop_labels(axis)._get_axis(axis)
-        if labels is None:
-            labels = params
-        return dict(zip(params, labels))
+        index = self._get_axis(axis)
+        if self.islabelled(axis):
+            return index.to_frame().droplevel('labels')['labels']
+        else:
+            return Series('', index=index)
 
     def get_label(self, param, axis=0):
         """Retrieve mapping from paramnames to labels from an axis."""
         return self.get_labels_map(axis)[param]
+
+    def set_label(self, param, value, axis=0, inplace=False):
+        labels = self.get_labels_map(axis)
+        labels[param] = value
+        return self.set_labels(labels, axis=axis, inplace=inplace)
 
     def drop_labels(self, axis=0):
         axes = np.atleast_1d(axis)
