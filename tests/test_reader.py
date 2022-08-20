@@ -65,9 +65,7 @@ def test_read_cobayamcmc():
         labels = ['$x0$', '$x1$', '', '', r'$\chi^2$',
                   r'$\chi^2_\mathrm{norm}$', r'$\log\mathcal{L}$',
                   r'$n_\mathrm{chain}$']
-    else:
-        labels = {'chain': r'$n_\mathrm{chain}$'}
-    assert_array_equal(mcmc.get_labels(axis=1), labels)
+        assert_array_equal(mcmc.get_labels(axis=1), labels)
 
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
