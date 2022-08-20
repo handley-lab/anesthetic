@@ -5,7 +5,7 @@ alternative kernel density estimators
 """
 import warnings
 from fastkde import fastKDE
-from anesthetic.utils import check_bounds, mirror_1d, mirror_2d
+from anesthetic.utils import mirror_1d, mirror_2d
 
 
 def fastkde_1d(d, xmin=None, xmax=None):
@@ -31,7 +31,6 @@ def fastkde_1d(d, xmin=None, xmax=None):
         kernel density estimates
 
     """
-    xmin, xmax = check_bounds(d, xmin, xmax)
     f = xmax is None or xmin is None
     d_ = mirror_1d(d, xmin, xmax)
     with warnings.catch_warnings():
@@ -74,8 +73,6 @@ def fastkde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
         kernel density estimates. Two-dimensional array
 
     """
-    xmin, xmax = check_bounds(d_x, xmin, xmax)
-    ymin, ymax = check_bounds(d_y, ymin, ymax)
     f = [xmax is None or xmin is None,
          ymax is None or ymin is None]
     d_x_, d_y_ = mirror_2d(d_x, d_y, xmin, xmax, ymin, ymax)

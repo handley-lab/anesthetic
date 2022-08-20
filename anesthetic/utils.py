@@ -6,7 +6,6 @@ from scipy.interpolate import interp1d
 from scipy.stats import kstwobign
 from matplotlib.tri import Triangulation
 import contextlib
-import copy
 
 
 def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
@@ -35,7 +34,7 @@ def channel_capacity(w):
 
     .. math::
 
-        H = \sum_i p_i \log p_i
+        H = \sum_i p_i \ln p_i
 
         p_i = \frac{w_i}{\sum_j w_j}
 
@@ -83,16 +82,6 @@ def quantile(a, q, w=None, interpolation='linear'):
     if isinstance(q, float):
         quant = float(quant)
     return quant
-
-
-def check_bounds(d, xmin=None, xmax=None):
-    """Check if we need to apply strict bounds."""
-    if len(d) > 0:
-        if xmin is not None and (d.min() - xmin) > 1e-2*(d.max()-d.min()):
-            xmin = None
-        if xmax is not None and (xmax - d.max()) > 1e-2*(d.max()-d.min()):
-            xmax = None
-    return xmin, xmax
 
 
 def mirror_1d(d, xmin=None, xmax=None):
@@ -245,12 +234,6 @@ def iso_probability_contours(pdf, contours=[0.95, 0.68]):
     interp = interp1d([0]+list(m), [0]+list(p))
     c = list(interp(contours))+[max(p)]
 
-    # Correct level sets
-    for i in range(1, len(c)):
-        if c[i-1] == c[i]:
-            for j in range(i):
-                c[j] = c[j] - 1e-5
-
     return c
 
 
@@ -275,12 +258,6 @@ def iso_probability_contours_from_samples(pdf, contours=[0.95, 0.68],
     m /= m[-1]
     interp = interp1d([0]+list(m), [0]+list(pdf[i]))
     c = list(interp(contours))+[max(pdf)]
-
-    # Correct level sets
-    for i in range(1, len(c)):
-        if c[i-1] == c[i]:
-            for j in range(i):
-                c[j] = c[j] - 1e-5
 
     return c
 
@@ -495,9 +472,7 @@ def insertion_p_value(indexes, nlive, batch=0):
         ks_result["iterations"] = (index * batch, (index + 1) * batch)
         ks_result["nbatches"] = n = len(batches)
         ks_result["uncorrected p-value"] = p = ks_result["p-value"]
-        ks_result["p-value"] = 1. - (1. - p)**n
-        if ks_result["p-value"] == 0.:
-            ks_result["p-value"] = p * n
+        ks_result["p-value"] = 1. - (1. - p)**n if p != 1 else p * n
         return ks_result
 
 
@@ -510,11 +485,3 @@ def temporary_seed(seed):
         yield
     finally:
         np.random.set_state(state)
-
-
-def modify_inplace(orig, new, inplace):
-    """Conditionally modify object inplace or return."""
-    if inplace:
-        orig.__dict__ = copy.deepcopy(new.__dict__)
-    else:
-        return new

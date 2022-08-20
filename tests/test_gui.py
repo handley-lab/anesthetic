@@ -1,11 +1,11 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 from packaging import version
 from matplotlib import __version__ as mpl_version
-from anesthetic import NestedSamples
+from anesthetic import read_chains
 
 
 def test_gui():
-    plotter = NestedSamples(root='./tests/example_data/pc').gui()
+    plotter = read_chains('./tests/example_data/pc').gui()
 
     # Type buttons
     plotter.type.buttons.set_active(1)
@@ -48,3 +48,17 @@ def test_gui():
 
         # Reset button
         plotter.reset.button.observers[0](None)
+
+
+def test_gui_params():
+    plotter = read_chains('./tests/example_data/pc').gui()
+    assert len(plotter.param_choice.buttons.labels) == 8
+
+    plotter = read_chains('./tests/example_data/pc').gui(params=['x0', 'x1'])
+    assert len(plotter.param_choice.buttons.labels) == 2
+
+
+def test_slider_reset_range():
+    plotter = read_chains('./tests/example_data/pc').gui()
+    plotter.evolution.reset_range(-3, 3)
+    assert plotter.evolution.ax.get_xlim() == (-3.0, 3.0)

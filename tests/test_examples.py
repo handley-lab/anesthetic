@@ -64,8 +64,8 @@ def test_perfect_ns_gaussian():
     cov = samples[np.arange(ndims)].cov()
     assert_allclose(cov, np.eye(ndims)*sigma**2, atol=1e-3)
 
-    D = log_volume_n_ball(ndims) - ndims/2*np.log(2*np.pi*np.e*sigma**2)
-    assert_allclose(samples.D(), D, atol=3*samples.D(12).std())
+    D_KL = log_volume_n_ball(ndims) - ndims/2*np.log(2*np.pi*np.e*sigma**2)
+    assert_allclose(samples.D_KL(), D_KL, atol=3*samples.D_KL(12).std())
 
     logZ = ndims/2 * np.log(2*np.pi*sigma**2) - log_volume_n_ball(ndims, R)
     assert_allclose(samples.logZ(), logZ, atol=3*samples.logZ(12).std())

@@ -107,7 +107,7 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
     points = np.random.uniform(*bounds.T, (2*nlive, ndims))
     samples = NestedSamples(points, logL=logLike(points), logL_birth=-np.inf)
 
-    while (1/samples.nlive.iloc[:-nlive]).sum() < samples.D()*2:
+    while (1/samples.nlive.iloc[:-nlive]).sum() < samples.D_KL()*2:
         logLs = samples.logL.iloc[-nlive]
 
         # Cube round
@@ -186,8 +186,8 @@ def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
         live_likes[j] = logL(x_)
 
         samps = NestedSamples(points, logL=death_likes, logL_birth=birth_likes)
-
-        if samps.iloc[-nlive:].weights.sum()/samps.weights.sum() < 0.001:
+        weights = samps.get_weights()
+        if weights[-nlive:].sum() < 0.001 * weights.sum():
             break
 
     death_likes = np.concatenate([death_likes, live_likes])

@@ -3,22 +3,21 @@ import anesthetic.examples._matplotlib_agg  # noqa: F401
 import sys
 import pytest
 import numpy as np
+from pandas import DataFrame, Series
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from anesthetic import Samples, MCMCSamples, NestedSamples
-from anesthetic import make_1d_axes, make_2d_axes
-from anesthetic.samples import merge_nested_samples
-from anesthetic.samples import merge_samples_weighted
+from anesthetic.weighted_pandas import WeightedSeries, WeightedDataFrame
+from anesthetic.samples import merge_nested_samples, merge_samples_weighted
+from anesthetic import (
+    Samples, MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes,
+    read_chains
+)
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
-                           assert_array_less)
+                           assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
-try:
-    import montepython  # noqa: F401
-except ImportError:
-    pass
 
 
 def test_build_samples():
@@ -88,20 +87,12 @@ def test_build_samples():
     assert ns.root is None
 
 
-def test_NS_input_fails_in_MCMCSamples():
-    with pytest.raises(ValueError) as excinfo:
-        MCMCSamples(root='./tests/example_data/pc')
-    assert "Please use NestedSamples instead which has the same features as " \
-           "Samples and more. MCMCSamples should be used for MCMC " \
-           "chains only." in str(excinfo.value)
-
-
 def test_different_parameters():
     np.random.seed(3)
     params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
     params_y = ['x0', 'x1', 'x2']
     fig, axes = make_1d_axes(params_x)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     ns.plot_1d(axes)
     fig, axes = make_2d_axes(params_y)
     ns.plot_2d(axes)
@@ -114,23 +105,23 @@ def test_different_parameters():
 
 def test_manual_columns():
     old_params = ['x0', 'x1', 'x2', 'x3', 'x4']
-    mcmc_params = ['logL']
+    mcmc_params = ['logL', 'chain']
     ns_params = ['logL', 'logL_birth', 'nlive']
-    mcmc = MCMCSamples(root='./tests/example_data/gd')
-    ns = NestedSamples(root='./tests/example_data/pc')
+    mcmc = read_chains('./tests/example_data/gd')
+    ns = read_chains('./tests/example_data/pc')
     assert_array_equal(mcmc.columns, old_params + mcmc_params)
     assert_array_equal(ns.columns, old_params + ns_params)
 
     new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
-    mcmc = MCMCSamples(root='./tests/example_data/gd', columns=new_params)
-    ns = NestedSamples(root='./tests/example_data/pc', columns=new_params)
+    mcmc = read_chains('./tests/example_data/gd', columns=new_params)
+    ns = read_chains('./tests/example_data/pc', columns=new_params)
     assert_array_equal(mcmc.columns, new_params + mcmc_params)
     assert_array_equal(ns.columns, new_params + ns_params)
 
 
 def test_plot_2d_kinds():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     params_x = ['x0', 'x1', 'x2', 'x3']
     params_y = ['x0', 'x1', 'x2']
     params = [params_x, params_y]
@@ -194,7 +185,7 @@ def test_plot_2d_kinds():
 
 def test_plot_2d_kinds_multiple_calls():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     params = ['x0', 'x1', 'x2', 'x3']
 
     fig, axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
@@ -211,7 +202,7 @@ def test_plot_2d_kinds_multiple_calls():
 
 def test_root_and_label():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     assert ns.root == './tests/example_data/pc'
     assert ns.label == 'pc'
 
@@ -219,7 +210,7 @@ def test_root_and_label():
     assert ns.root is None
     assert ns.label is None
 
-    mc = MCMCSamples(root='./tests/example_data/gd')
+    mc = read_chains('./tests/example_data/gd')
     assert (mc.root == './tests/example_data/gd')
     assert mc.label == 'gd'
 
@@ -230,8 +221,8 @@ def test_root_and_label():
 
 def test_plot_2d_legend():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
-    mc = MCMCSamples(root='./tests/example_data/gd')
+    ns = read_chains('./tests/example_data/pc')
+    mc = read_chains('./tests/example_data/gd')
     params = ['x0', 'x1', 'x2', 'x3']
 
     # Test label kwarg for kde
@@ -289,8 +280,8 @@ def test_plot_2d_legend():
     plt.close('all')
 
     # Test label kwarg to constructors
-    ns = NestedSamples(root='./tests/example_data/pc', label='l1')
-    mc = MCMCSamples(root='./tests/example_data/gd', label='l2')
+    ns = read_chains('./tests/example_data/pc', label='l1')
+    mc = read_chains('./tests/example_data/gd', label='l2')
     params = ['x0', 'x1', 'x2', 'x3']
 
     fig, axes = make_2d_axes(params, upper=False)
@@ -307,11 +298,11 @@ def test_plot_2d_legend():
 
 def test_plot_2d_colours():
     np.random.seed(3)
-    gd = MCMCSamples(root="./tests/example_data/gd")
+    gd = read_chains("./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True)
-    pc = NestedSamples(root="./tests/example_data/pc")
+    pc = read_chains("./tests/example_data/pc")
     pc.drop(columns='x4', inplace=True)
-    mn = NestedSamples(root="./tests/example_data/mn")
+    mn = read_chains("./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
     kinds = ['kde', 'hist']
@@ -354,11 +345,11 @@ def test_plot_2d_colours():
 
 def test_plot_1d_colours():
     np.random.seed(3)
-    gd = MCMCSamples(root="./tests/example_data/gd")
+    gd = read_chains("./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True)
-    pc = NestedSamples(root="./tests/example_data/pc")
+    pc = read_chains("./tests/example_data/pc")
     pc.drop(columns='x4', inplace=True)
-    mn = NestedSamples(root="./tests/example_data/mn")
+    mn = read_chains("./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True)
 
     kinds = ['kde', 'hist']
@@ -400,48 +391,317 @@ def test_plot_1d_colours():
                    reason="requires astropy package")
 def test_astropyhist():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
     plt.close("all")
 
 
 def test_hist_levels():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
                levels=[0.95, 0.68], bins=20)
     plt.close("all")
 
 
-def test_ns_output():
+def test_logX():
     np.random.seed(3)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
+
+    logX = pc.logX()
+    assert isinstance(logX, WeightedSeries)
+    assert_array_equal(logX.index, pc.index)
+
+    nsamples = 10
+
+    logX = pc.logX(nsamples=nsamples)
+    assert isinstance(logX, WeightedDataFrame)
+    assert_array_equal(logX.index, pc.index)
+    assert_array_equal(logX.columns, np.arange(nsamples))
+    assert logX.columns.name == 'samples'
+
+    assert not (logX.diff(axis=0) > 0).to_numpy().any()
+
+    n = 1000
+    logX = pc.logX(n)
+
+    assert (abs(logX.mean(axis=1) - pc.logX()) < logX.std(axis=1) * 3).all()
+
+
+def test_logbetaL():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+
+    logX = pc.logX()
+    assert isinstance(logX, WeightedSeries)
+    assert_array_equal(logX.index, pc.index)
+
+    nsamples = 10
+
+    logX = pc.logX(nsamples=nsamples)
+    assert isinstance(logX, WeightedDataFrame)
+    assert_array_equal(logX.index, pc.index)
+    assert_array_equal(logX.columns, np.arange(nsamples))
+    assert logX.columns.name == 'samples'
+
+    assert not (logX.diff(axis=0) > 0).to_numpy().any()
+
+    n = 1000
+    logX = pc.logX(n)
+
+    assert (abs(logX.mean(axis=1) - pc.logX()) < logX.std(axis=1) * 3).all()
+
+
+def test_logw():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+
+    logw = pc.logw()
+    assert isinstance(logw, WeightedSeries)
+    assert_array_equal(logw.index, pc.index)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    logw = pc.logw(nsamples=nsamples)
+    assert isinstance(logw, WeightedDataFrame)
+    assert_array_equal(logw.index, pc.index)
+    assert logw.columns.name == 'samples'
+    assert_array_equal(logw.columns, range(nsamples))
+
+    logw = pc.logw(beta=beta)
+    assert isinstance(logw, WeightedDataFrame)
+    assert_array_equal(logw.index, pc.index)
+    assert logw.columns.name == 'beta'
+    assert_array_equal(logw.columns, beta)
+
+    logw = pc.logw(nsamples=nsamples, beta=beta)
+    assert isinstance(logw, WeightedDataFrame)
+    assert logw.columns.names == ['beta', 'samples']
+    assert logw.columns.levshape == (len(beta), nsamples)
+
+    n = 1000
+    logw = pc.logw(n)
+
+    assert (abs(logw.mean(axis=1) - pc.logw()) < logw.std(axis=1) * 3).all()
+
+
+def test_logZ():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+
+    logZ = pc.logZ()
+    assert isinstance(logZ, float)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    logZ = pc.logZ(nsamples=nsamples)
+    assert isinstance(logZ, Series)
+    assert logZ.index.name == 'samples'
+    assert logZ.name == 'logZ'
+    assert_array_equal(logZ.index, range(nsamples))
+
+    logZ = pc.logZ(beta=beta)
+    assert isinstance(logZ, Series)
+    assert logZ.index.name == 'beta'
+    assert logZ.name == 'logZ'
+    assert len(logZ) == len(beta)
+
+    logZ = pc.logZ(nsamples=nsamples, beta=beta)
+    assert isinstance(logZ, Series)
+    assert logZ.index.names == ['beta', 'samples']
+    assert logZ.name == 'logZ'
+    assert logZ.index.levshape == (len(beta), nsamples)
+
+    n = 1000
+    logZ = pc.logZ(n)
+
+    assert abs(logZ.mean() - pc.logZ()) < logZ.std() * 3
+
+
+def test_D_KL():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+
+    D_KL = pc.D_KL()
+    assert isinstance(D_KL, float)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    D_KL = pc.D_KL(nsamples=nsamples)
+    assert isinstance(D_KL, Series)
+    assert D_KL.index.name == 'samples'
+    assert D_KL.name == 'D_KL'
+    assert_array_equal(D_KL.index, range(nsamples))
+
+    D_KL = pc.D_KL(beta=beta)
+    assert isinstance(D_KL, Series)
+    assert D_KL.index.name == 'beta'
+    assert D_KL.name == 'D_KL'
+    assert len(D_KL) == len(beta)
+
+    D_KL = pc.D_KL(nsamples=nsamples, beta=beta)
+    assert isinstance(D_KL, Series)
+    assert D_KL.index.names == ['beta', 'samples']
+    assert D_KL.name == 'D_KL'
+    assert D_KL.index.levshape == (len(beta), nsamples)
+
+    n = 1000
+    D_KL = pc.D_KL(n)
+
+    assert abs(D_KL.mean() - pc.D_KL()) < D_KL.std() * 3
+
+
+def test_d_G():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+
+    d_G = pc.d_G()
+    assert isinstance(d_G, float)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    d_G = pc.d_G(nsamples=nsamples)
+    assert isinstance(d_G, Series)
+    assert d_G.index.name == 'samples'
+    assert d_G.name == 'd_G'
+    assert_array_equal(d_G.index, range(nsamples))
+
+    d_G = pc.d_G(beta=beta)
+    assert isinstance(d_G, Series)
+    assert d_G.index.name == 'beta'
+    assert d_G.name == 'd_G'
+    assert len(d_G) == len(beta)
+
+    d_G = pc.d_G(nsamples=nsamples, beta=beta)
+    assert isinstance(d_G, Series)
+    assert d_G.index.names == ['beta', 'samples']
+    assert d_G.name == 'd_G'
+    assert d_G.index.levshape == (len(beta), nsamples)
+
+    n = 1000
+    d_G = pc.d_G(n)
+
+    assert abs(d_G.mean() - pc.d_G()) < d_G.std() * 3
+
+
+def test_logL_P():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+
+    logL_P = pc.logL_P()
+    assert isinstance(logL_P, float)
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    logL_P = pc.logL_P(nsamples=nsamples)
+    assert isinstance(logL_P, Series)
+    assert logL_P.index.name == 'samples'
+    assert logL_P.name == 'logL_P'
+    assert_array_equal(logL_P.index, range(nsamples))
+
+    logL_P = pc.logL_P(beta=beta)
+    assert isinstance(logL_P, Series)
+    assert logL_P.index.name == 'beta'
+    assert logL_P.name == 'logL_P'
+    assert len(logL_P) == len(beta)
+
+    logL_P = pc.logL_P(nsamples=nsamples, beta=beta)
+    assert isinstance(logL_P, Series)
+    assert logL_P.index.names == ['beta', 'samples']
+    assert logL_P.name == 'logL_P'
+    assert logL_P.index.levshape == (len(beta), nsamples)
+
+    n = 1000
+    logL_P = pc.logL_P(n)
+
+    assert abs(logL_P.mean() - pc.logL_P()) < logL_P.std() * 3
+
+
+@pytest.mark.parametrize('beta', [None, 0.5, [0, 0.5, 1]])
+@pytest.mark.parametrize('nsamples', [None, 10, 100])
+def test_Occams_razor(nsamples, beta):
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+    logw = pc.logw(nsamples, beta)
+    assert_allclose(pc.logZ(logw), pc.logL_P(logw) - pc.D_KL(logw))
+
+
+def test_stats():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+
+    nsamples = 10
+    beta = [0., 0.5, 1.]
+
+    vals = ['logZ', 'D_KL', 'd_G', 'logL_P']
+    tex = {'logZ': r'$\ln\mathcal{Z}$',
+           'D_KL': r'$\mathcal{D}_\mathrm{KL}$',
+           'd_G': r'$d_\mathrm{G}$',
+           'logL_P': r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$'}
+
+    stats = pc.stats()
+    assert isinstance(stats, Series)
+    assert_array_equal(stats.index, vals)
+    assert stats.tex == tex
+
+    stats = pc.stats(nsamples=nsamples)
+    assert isinstance(stats, DataFrame)
+    assert_array_equal(stats.columns, vals)
+    assert stats.tex == tex
+    assert stats.index.name == 'samples'
+    assert_array_equal(stats.index, range(nsamples))
+
+    stats = pc.stats(beta=beta)
+    assert isinstance(stats, DataFrame)
+    assert_array_equal(stats.columns, vals)
+    assert stats.tex == tex
+    assert stats.index.name == 'beta'
+    assert_array_equal(stats.index, beta)
+
+    stats = pc.stats(nsamples=nsamples, beta=beta)
+    assert isinstance(stats, DataFrame)
+    assert_array_equal(stats.columns, vals)
+    assert stats.tex == tex
+    assert stats.index.names == ['beta', 'samples']
+    assert stats.index.levshape == (len(beta), nsamples)
+
     for beta in [1., 0., 0.5]:
         pc.beta = beta
         n = 1000
-        PC = pc.ns_output(n)
+        PC = pc.stats(n, beta)
         assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
-        assert PC['d'].mean() < 5
-        assert PC.cov()['D']['logZ'] < 0
-        assert abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * n**0.5 * 2
-        assert abs(PC.D.mean() - pc.D()) < PC.D.std() * n**0.5 * 2
-        assert abs(PC.d.mean() - pc.d()) < PC.d.std() * n**0.5 * 2
+        assert PC['d_G'].mean() < 5 + 3 * PC['d_G'].std()
+        assert PC.cov()['D_KL']['logZ'] < 0
+        assert abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * 3
+        assert abs(PC.D_KL.mean() - pc.D_KL()) < PC.D_KL.std() * 3
+        assert abs(PC.d_G.mean() - pc.d_G()) < PC.d_G.std() * 3
+        assert abs(PC.logL_P.mean() - pc.logL_P()) < PC.logL_P.std() * 3
 
         n = 100
-        assert ks_2samp(pc.logZ(n), PC.logZ).pvalue > 0.05
-        assert ks_2samp(pc.D(n), PC.D).pvalue > 0.05
-        assert ks_2samp(pc.d(n), PC.d).pvalue > 0.05
+        assert ks_2samp(pc.logZ(n, beta), PC.logZ).pvalue > 0.05
+        assert ks_2samp(pc.D_KL(n, beta), PC.D_KL).pvalue > 0.05
+        assert ks_2samp(pc.d_G(n, beta), PC.d_G).pvalue > 0.05
+        if beta != 0:
+            assert ks_2samp(pc.logL_P(n, beta), PC.logL_P).pvalue > 0.05
 
     assert abs(pc.set_beta(0.0).logZ()) < 1e-2
     assert pc.set_beta(0.9).logZ() < pc.set_beta(1.0).logZ()
 
-    assert_array_almost_equal(pc.set_beta(1).weights, pc.set_beta(1).weights)
-    assert_array_almost_equal(pc.set_beta(.5).weights, pc.set_beta(.5).weights)
-    assert_array_equal(pc.set_beta(0).weights, pc.set_beta(0).weights)
+    assert_array_almost_equal(pc.set_beta(1).get_weights(),
+                              pc.set_beta(1).get_weights())
+    assert_array_almost_equal(pc.set_beta(.5).get_weights(),
+                              pc.set_beta(.5).get_weights())
+    assert_array_equal(pc.set_beta(0).get_weights(),
+                       pc.set_beta(0).get_weights())
 
 
 def test_masking():
-    pc = NestedSamples(root="./tests/example_data/pc")
+    pc = read_chains("./tests/example_data/pc")
     mask = pc['x0'] > 0
 
     kinds = ['kde', 'hist']
@@ -460,12 +720,12 @@ def test_masking():
 
 def test_merging():
     np.random.seed(3)
-    samples_1 = NestedSamples(root='./tests/example_data/pc')
-    samples_2 = NestedSamples(root='./tests/example_data/pc_250')
+    samples_1 = read_chains('./tests/example_data/pc')
+    samples_2 = read_chains('./tests/example_data/pc_250')
     samples = merge_nested_samples([samples_1, samples_2])
-    nlive_1 = samples_1.nlive.mode()[0]
-    nlive_2 = samples_2.nlive.mode()[0]
-    nlive = samples.nlive.mode()[0]
+    nlive_1 = samples_1.nlive.mode().to_numpy()[0]
+    nlive_2 = samples_2.nlive.mode().to_numpy()[0]
+    nlive = samples.nlive.mode().to_numpy()[0]
     assert nlive_1 == 125
     assert nlive_2 == 250
     assert nlive == nlive_1 + nlive_2
@@ -476,21 +736,21 @@ def test_merging():
 
 def test_weighted_merging():
     # Generate some data to try it out:
-    samples_1 = NestedSamples(root='./tests/example_data/pc')
-    samples_2 = NestedSamples(root='./tests/example_data/pc_250')
+    samples_1 = read_chains('./tests/example_data/pc')
+    samples_2 = read_chains('./tests/example_data/pc_250')
     samples_1['xtest'] = 7*samples_1['x3']
     samples_2['xtest'] = samples_2['x3']
     samples_1.tex['xtest'] = "$x_{t,1}$"
     samples_2.tex['xtest'] = "$x_{t,2}$"
-    mean1 = samples_1.mean()['xtest']
-    mean2 = samples_2.mean()['xtest']
+    mean1 = samples_1.xtest.mean()
+    mean2 = samples_2.xtest.mean()
 
     # Test with evidence weights
     weight1 = np.exp(samples_1.logZ())
     weight2 = np.exp(samples_2.logZ())
     samples = merge_samples_weighted([samples_1, samples_2],
                                      label='Merged label')
-    mean = samples.mean()['xtest']
+    mean = samples.xtest.mean()
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
     # Test tex and label
@@ -512,7 +772,7 @@ def test_weighted_merging():
     weight2 = 13
     samples = merge_samples_weighted(
         [samples_1, samples_2], weights=[weight1, weight2])
-    mean = samples.mean()['xtest']
+    mean = samples.xtest.mean()
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
     # Test plot still works (see issue #189)
@@ -539,47 +799,49 @@ def test_weighted_merging():
 
 
 def test_beta():
-    pc = NestedSamples(root="./tests/example_data/pc")
-    weights = pc.weights
-    assert_array_equal(weights, pc.weights)
-    assert_array_equal(pc.index.get_level_values('weights'), pc.weights)
+    pc = read_chains("./tests/example_data/pc")
+    weights = pc.get_weights()
+    assert_array_equal(weights, pc.get_weights())
+    assert_array_equal(pc.index.get_level_values('weights'), pc.get_weights())
     assert pc.beta == 1
 
     prior = pc.set_beta(0)
     assert prior.beta == 0
-    assert_array_equal(prior.index.get_level_values('weights'), prior.weights)
+    assert_array_equal(prior.index.get_level_values('weights'),
+                       prior.get_weights())
     assert pc.beta == 1
-    assert_array_equal(pc.index.get_level_values('weights'), pc.weights)
-    assert_array_almost_equal(sorted(prior.weights, reverse=True),
-                              prior.weights)
+    assert_array_equal(pc.index.get_level_values('weights'), pc.get_weights())
+    assert_array_almost_equal(sorted(prior.get_weights(), reverse=True),
+                              prior.get_weights())
 
     for beta in np.linspace(0, 2, 10):
         pc.set_beta(beta, inplace=True)
         assert pc.beta == beta
-        assert_array_equal(pc.index.get_level_values('weights'), pc.weights)
+        assert_array_equal(pc.index.get_level_values('weights'),
+                           pc.get_weights())
         assert not np.array_equal(pc.index.get_level_values('weights'),
                                   weights)
 
     for beta in np.linspace(0, 2, 10):
         pc.beta = beta
         assert pc.beta == beta
-        assert_array_equal(pc.index.get_level_values('weights'), pc.weights)
+        assert_array_equal(pc.index.get_level_values('weights'),
+                           pc.get_weights())
         assert not np.array_equal(pc.index.get_level_values('weights'),
                                   weights)
 
 
 def test_beta_with_logL_infinities():
-    ns = NestedSamples(root="./tests/example_data/pc")
+    ns = read_chains("./tests/example_data/pc")
     for i in range(10):
         ns.loc[i, 'logL'] = -np.inf
-    prior = ns.set_beta(0)
-    assert np.all(prior.logL[:10] == -np.inf)
-    assert np.all(prior.weights[:10] == 0)
-    ns.plot_1d(['x0', 'x1'])
+
+    ns.recompute(inplace=True)
+    assert (ns.logL == -np.inf).sum() == 0
 
 
 def test_prior():
-    ns = NestedSamples(root="./tests/example_data/pc")
+    ns = read_chains("./tests/example_data/pc")
     prior = ns.prior()
     assert prior.beta == 0
     assert_frame_equal(prior, ns.set_beta(0))
@@ -587,7 +849,7 @@ def test_prior():
 
 def test_live_points():
     np.random.seed(4)
-    pc = NestedSamples(root="./tests/example_data/pc")
+    pc = read_chains("./tests/example_data/pc")
 
     for i, logL in pc.logL.iloc[::49].iteritems():
         live_points = pc.live_points(logL)
@@ -599,18 +861,20 @@ def test_live_points():
         live_points_from_index = pc.live_points(i)
         assert_array_equal(live_points_from_index, live_points)
 
-    assert pc.live_points(0).index[0][0] == 0
+    assert pc.live_points(0).index[0] == 0
 
     last_live_points = pc.live_points()
     logL = pc.logL_birth.max()
     assert (last_live_points.logL >= logL).all()
-    assert len(last_live_points) == pc.nlive.mode()[0]
+    assert len(last_live_points) == pc.nlive.mode().to_numpy()[0]
+
+    assert not live_points.isweighted()
 
 
 def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     fig, ax = ns.plot_1d('x0', kind='hist_1d')
     x1, x2 = ax['x0'].get_xlim()
     assert x1 > -1
@@ -624,27 +888,27 @@ def test_hist_range_1d():
 def test_contour_plot_2d_nan():
     """Contour plots with nans arising from issue #96"""
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
 
     ns.loc[:9, 'x0'] = np.nan
     with pytest.raises((np.linalg.LinAlgError, RuntimeError, ValueError)):
         ns.plot_2d(['x0', 'x1'])
 
     # Check this error is removed in the case of zero weights
-    weights = ns.weights
+    weights = ns.get_weights()
     weights[:10] = 0
-    ns.weights = weights
+    ns.set_weights(weights, inplace=True)
     ns.plot_2d(['x0', 'x1'])
 
 
 def test_compute_insertion():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     assert 'insertion' not in ns
     ns._compute_insertion_indexes()
     assert 'insertion' in ns
 
-    nlive = ns.nlive.mode()[0]
+    nlive = ns.nlive.mode().to_numpy()[0]
     assert_array_less(ns.insertion, nlive)
 
     u = ns.insertion.to_numpy()/nlive
@@ -658,21 +922,21 @@ def test_compute_insertion():
 
 def test_posterior_points():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     assert_array_equal(ns.posterior_points(), ns.posterior_points())
     assert_array_equal(ns.posterior_points(0.5), ns.posterior_points(0.5))
 
 
 def test_prior_points():
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     assert_array_equal(ns.prior_points(), ns.posterior_points(0))
 
 
 def test_NestedSamples_importance_sample():
     np.random.seed(3)
-    ns0 = NestedSamples(root='./tests/example_data/pc')
+    ns0 = read_chains('./tests/example_data/pc')
     pi0 = ns0.set_beta(0)
-    NS0 = ns0.ns_output(nsamples=2000)
+    NS0 = ns0.stats(nsamples=2000)
 
     with pytest.raises(NotImplementedError):
         ns0.importance_sample(ns0.logL, action='spam')
@@ -680,33 +944,33 @@ def test_NestedSamples_importance_sample():
     ns_masked = ns0.importance_sample(ns0.logL, action='replace')
     assert_array_equal(ns0.logL, ns_masked.logL)
     assert_array_equal(ns0.logL_birth, ns_masked.logL_birth)
-    assert_array_equal(ns0.weights, ns_masked.weights)
+    assert_array_equal(ns0.get_weights(), ns_masked.get_weights())
 
     ns_masked = ns0.importance_sample(np.zeros_like(ns0.logL), action='add')
     assert_array_equal(ns0.logL, ns_masked.logL)
     assert_array_equal(ns0.logL_birth, ns_masked.logL_birth)
-    assert_array_equal(ns0.weights, ns_masked.weights)
+    assert_array_equal(ns0.get_weights(), ns_masked.get_weights())
 
     mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
     ns_masked = merge_nested_samples((ns0[mask], ))
-    V_prior = pi0[mask].weights.sum() / pi0.weights.sum()
-    V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
+    V_prior = pi0[mask].get_weights().sum() / pi0.get_weights().sum()
+    V_posterior = ns0[mask].get_weights().sum() / ns0.get_weights().sum()
 
     ns1 = ns0.importance_sample(mask, action='mask')
     assert_array_equal(ns_masked.logL, ns1.logL)
     assert_array_equal(ns_masked.logL_birth, ns1.logL_birth)
-    assert_array_equal(ns_masked.weights, ns1.weights)
+    assert_array_equal(ns_masked.get_weights(), ns1.get_weights())
 
     logL_new = np.where(mask, 0, -np.inf)
     ns1 = ns0.importance_sample(logL_new)
-    NS1 = ns1.ns_output(nsamples=2000)
+    NS1 = ns1.stats(nsamples=2000)
     assert_array_equal(ns1, ns_masked)
     logZ_V = NS0.logZ.mean() + np.log(V_posterior) - np.log(V_prior)
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
 
     logL_new = np.where(mask, 0, -1e30)
     ns1 = ns0.importance_sample(logL_new)
-    NS1 = ns1.ns_output(nsamples=2000)
+    NS1 = ns1.stats(nsamples=2000)
     logZ_V = NS0.logZ.mean() + np.log(V_posterior)
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
 
@@ -718,12 +982,11 @@ def test_NestedSamples_importance_sample():
     assert ns0.label == ns1.label
     assert ns0.beta == ns1.beta
     assert ns0 is not ns1
-    assert ns0.tex is not ns1.tex
 
 
 def test_MCMCSamples_importance_sample():
     np.random.seed(3)
-    mc0 = MCMCSamples(root='./tests/example_data/gd')
+    mc0 = read_chains('./tests/example_data/gd')
 
     with pytest.raises(NotImplementedError):
         mc0.importance_sample(mc0.logL, action='spam')
@@ -734,18 +997,18 @@ def test_MCMCSamples_importance_sample():
     # add logL
     mc1 = mc0.importance_sample(np.zeros_like(mc0.logL), action='add')
     assert_array_equal(mc0.logL, mc1.logL)
-    assert_array_equal(mc0.weights, mc1.weights)
+    assert_array_equal(mc0.get_weights(), mc1.get_weights())
     mc1 = mc0.importance_sample(logL_new=logL_i)
     assert np.all(mc1.logL.to_numpy() != mc0.logL.to_numpy())
-    assert not np.all(mc1.weights == mc0.weights)
+    assert not np.all(mc1.get_weights() == mc0.get_weights())
 
     # replace logL
     mc2 = mc0.importance_sample(mc0.logL, action='replace')
     assert_array_equal(mc0.logL, mc2.logL)
-    assert_array_equal(mc0.weights, mc2.weights)
+    assert_array_equal(mc0.get_weights(), mc2.get_weights())
     mc2 = mc0.importance_sample(mc0.logL.to_numpy()+logL_i, action='replace')
     assert np.all(mc2.logL.to_numpy() != mc0.logL.to_numpy())
-    assert not np.all(mc2.weights == mc0.weights)
+    assert not np.all(mc2.get_weights() == mc0.get_weights())
     assert_array_equal(mc1.logL.to_numpy(), mc2.logL.to_numpy())
     assert_array_almost_equal(mc1.logL.to_numpy(), mc2.logL.to_numpy())
 
@@ -754,7 +1017,7 @@ def test_MCMCSamples_importance_sample():
     mc_masked = mc0[mask]
     mc3 = mc0.importance_sample(mask, action='mask')
     assert_array_equal(mc_masked.logL, mc3.logL)
-    assert_array_equal(mc_masked.weights, mc3.weights)
+    assert_array_equal(mc_masked.get_weights(), mc3.get_weights())
     assert np.all(mc3.x0 > -0.3)
 
     for mc in [mc1, mc2, mc3]:
@@ -763,56 +1026,54 @@ def test_MCMCSamples_importance_sample():
         assert mc.label == mc0.label
         assert mc._metadata == mc0._metadata
         assert mc is not mc0
-        assert mc.tex is not mc0.tex
 
     mc0.importance_sample(mask, action='mask', inplace=True)
-    assert type(mc0) is MCMCSamples
+    assert isinstance(mc0, MCMCSamples)
     assert_array_equal(mc3, mc0)
     assert mc3.tex == mc0.tex
     assert mc3.root == mc0.root
     assert mc3.label == mc0.label
     assert mc3._metadata == mc0._metadata
     assert mc3 is not mc0
-    assert mc3.tex is not mc0.tex
 
 
 def test_logzero_mask_prior_level():
     np.random.seed(3)
-    ns0 = NestedSamples(root='./tests/example_data/pc')
+    ns0 = read_chains('./tests/example_data/pc')
     pi0 = ns0.set_beta(0)
-    NS0 = ns0.ns_output(nsamples=2000)
+    NS0 = ns0.stats(nsamples=2000)
     mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
 
-    V_prior = pi0[mask].weights.sum() / pi0.weights.sum()
-    V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
+    V_prior = pi0[mask].get_weights().sum() / pi0.get_weights().sum()
+    V_posterior = ns0[mask].get_weights().sum() / ns0.get_weights().sum()
     logZ_V = NS0.logZ.mean() + np.log(V_posterior) - np.log(V_prior)
 
     ns1 = merge_nested_samples((ns0[mask],))
-    NS1 = ns1.ns_output(nsamples=2000)
+    NS1 = ns1.stats(nsamples=2000)
 
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
 
 
 def test_logzero_mask_likelihood_level():
     np.random.seed(3)
-    ns0 = NestedSamples(root='./tests/example_data/pc')
-    NS0 = ns0.ns_output(nsamples=2000)
+    ns0 = read_chains('./tests/example_data/pc')
+    NS0 = ns0.stats(nsamples=2000)
     mask = ((ns0.x0 > -0.3) & (ns0.x2 > 0.2) & (ns0.x4 < 3.5)).to_numpy()
 
-    V_posterior = ns0[mask].weights.sum() / ns0.weights.sum()
+    V_posterior = ns0[mask].get_weights().sum() / ns0.get_weights().sum()
     logZ_V = NS0.logZ.mean() + np.log(V_posterior)
 
-    ns1 = NestedSamples(root='./tests/example_data/pc')
+    ns1 = read_chains('./tests/example_data/pc')
     ns1.logL = np.where(mask, ns1.logL, -1e30)
     ns1 = merge_nested_samples((ns1[ns1.logL > ns1.logL_birth],))
-    NS1 = ns1.ns_output(nsamples=2000)
+    NS1 = ns1.stats(nsamples=2000)
 
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
 
 
 def test_recompute():
     np.random.seed(3)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     recompute = pc.recompute()
     assert recompute is not pc
 
@@ -821,14 +1082,14 @@ def test_recompute():
         recompute = pc.recompute()
     assert len(recompute) == len(pc) - 1
 
-    mn = NestedSamples(root='./tests/example_data/mn_old')
+    mn = read_chains('./tests/example_data/mn_old')
     with pytest.raises(RuntimeError):
         mn.recompute()
 
 
 def test_NaN():
     np.random.seed(3)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         pc_new = pc.copy()
@@ -842,7 +1103,7 @@ def test_NaN():
 
 def test_unsorted():
     np.random.seed(4)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     i = np.random.choice(len(pc), len(pc), replace=False)
     pc_resort = NestedSamples(data=pc.loc[i, ['x0', 'x1', 'x2', 'x3', 'x4']],
                               logL=pc.loc[i, 'logL'],
@@ -852,10 +1113,9 @@ def test_unsorted():
 
 def test_copy():
     np.random.seed(3)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     new = pc.copy()
     assert new is not pc
-    assert new.tex is not pc.tex
 
 
 def test_plotting_with_integer_names():
@@ -878,7 +1138,7 @@ def test_plotting_with_integer_names():
 
 def test_logL_list():
     np.random.seed(5)
-    default = NestedSamples(root='./tests/example_data/pc')
+    default = read_chains('./tests/example_data/pc')
     logL = default.logL.tolist()
     logL_birth = default.logL_birth.tolist()
     data = default.iloc[:, :5].to_numpy().tolist()
@@ -889,7 +1149,7 @@ def test_logL_list():
 
 
 def test_samples_dot_plot():
-    samples = NestedSamples(root='./tests/example_data/pc')
+    samples = read_chains('./tests/example_data/pc')
     axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
     assert len(axes.containers) == 5
     axes = samples.x0.plot.kde(subplots=True)
@@ -929,3 +1189,15 @@ def test_samples_dot_plot():
         pass
 
     plt.close("all")
+
+
+def test_samples_plot_labels():
+    samples = read_chains('./tests/example_data/pc')
+    columns = ['x0', 'x1', 'x2', 'x3', 'x4']
+    fig, axes = samples.plot_2d(columns)
+
+    for col, ax in zip(columns, axes.loc[:, 'x0']):
+        assert samples.tex[col] == ax.get_ylabel()
+
+    for col, ax in zip(columns, axes.loc['x4', :]):
+        assert samples.tex[col] == ax.get_xlabel()
