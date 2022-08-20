@@ -10,6 +10,7 @@ Key routines:
 """
 import anesthetic.samples
 import anesthetic.plot
+import anesthetic.read.chain
 
 import pandas
 import pandas.plotting._core
@@ -48,3 +49,5 @@ MCMCSamples = anesthetic.samples.MCMCSamples
 NestedSamples = anesthetic.samples.NestedSamples
 make_2d_axes = anesthetic.plot.make_2d_axes
 make_1d_axes = anesthetic.plot.make_1d_axes
+
+read_chains = anesthetic.read.chain.read_chains

@@ -265,7 +265,8 @@ class RunPlotter(object):
 
     def reload_file(self, _):
         """Reload the data from file."""
-        self.samples._reload_data()
+        from anesthetic import read_chains
+        self.samples = read_chains(self.samples.root)
         self.evolution.reset_range(valmax=len(self.samples))
         self.update(None)
 
