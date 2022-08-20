@@ -28,8 +28,9 @@ class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
 
     def __init__(self, *args, **kwargs):
         labels = kwargs.pop('labels', None)
+        if not hasattr(self, '_labels'):
+            self._labels = ('weights', 'labels')
         super().__init__(*args, **kwargs)
-        self._labels = ('weights', 'labels')
         if labels is not None:
             if isinstance(labels, dict):
                 labels = [labels.get(p, '') for p in self]
@@ -49,9 +50,9 @@ class WeightedLabelledSeries(WeightedSeries, LabelledSeries):
     _metadata = WeightedSeries._metadata + LabelledSeries._metadata
 
     def __init__(self, *args, **kwargs):
+        if not hasattr(self, '_labels'):
+            self._labels = ('weights', 'labels')
         super().__init__(*args, **kwargs)
-        if self.isweighted():
-            self._labels = ('weights', self._labels[1])
 
     @property
     def _constructor(self):

@@ -960,15 +960,11 @@ def test_constructors():
     assert isinstance(samples['x0'], WeightedLabelledSeries)
     assert isinstance(samples.loc[0], WeightedLabelledSeries)
     assert samples['x0'].islabelled()
-    assert samples['x0']._labels == ('weights', 'labels')
     assert samples.loc[0].islabelled()
-    assert samples.loc[0]._labels == ('labels', 'labels')
 
     assert isinstance(samples.T.loc['x0'], WeightedLabelledSeries)
     assert isinstance(samples.T[0], WeightedLabelledSeries)
     assert samples.T.loc['x0'].islabelled()
-    assert samples.T.loc['x0']._labels == ('weights', 'labels')
     assert samples.T[0].islabelled()
-    assert samples.T[0]._labels == ('labels', 'weights')
 
     assert isinstance(samples['x0'].to_frame(), WeightedLabelledDataFrame)

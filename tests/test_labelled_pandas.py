@@ -359,7 +359,6 @@ def test_transpose():
 def test_multiaxis():
     lframe = test_LabelledDataFrame_index().iloc[:4]
     lframe._labels = ('labels', 'aliases')
-    lframe._labels = ('labels', 'aliases')
     columns = MultiIndex.from_arrays([['one', 'two', 'three', 'four'],
                                       [1, 2, 3, 4]],
                                      names=[None, 'aliases'])
@@ -383,7 +382,7 @@ def test_multiaxis():
     assert lframe.islabelled(0)
     assert not lframe.islabelled(1)
 
-    lframe._labels = ('labels', None)
+    lframe._labels = ('labels', 'foo')
     assert isinstance(lframe['one'], LabelledDataFrame)
 
     assert lframe.islabelled(0)
