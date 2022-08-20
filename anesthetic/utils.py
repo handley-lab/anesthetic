@@ -34,7 +34,7 @@ def channel_capacity(w):
 
     .. math::
 
-        H = \sum_i p_i \log p_i
+        H = \sum_i p_i \ln p_i
 
         p_i = \frac{w_i}{\sum_j w_j}
 

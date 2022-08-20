@@ -19,7 +19,7 @@ except ImportError:
 
 def test_read_getdist():
     np.random.seed(3)
-    mcmc = read_getdist(root='./tests/example_data/gd')
+    mcmc = read_getdist('./tests/example_data/gd')
     assert isinstance(mcmc, MCMCSamples)
     w = np.concatenate((
         np.loadtxt("./tests/example_data/gd_1.txt", usecols=0),
@@ -29,7 +29,7 @@ def test_read_getdist():
     params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'chain']
     assert_array_equal(mcmc.drop_labels(axis=1).columns, params)
     labels = ['$x_0$', '$x_1$', '$x_2$', '$x_3$', '$x_4$',
-              r'$\log\mathcal{L}$', r'$n_\mathrm{chain}$']
+              r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
     assert_array_equal(mcmc.get_labels(axis=1), labels)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -53,7 +53,7 @@ def test_read_getdist():
 
     params = [0, 1, 2, 3, 4, 'logL', 'chain']
     assert all(mcmc.drop_labels(axis=1).columns == params)
-    labels = ['', '', '', '', '', r'$\log\mathcal{L}$', r'$n_\mathrm{chain}$']
+    labels = ['', '', '', '', '', r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
     assert_array_equal(mcmc.get_labels(axis=1), labels)
 
 
@@ -74,7 +74,7 @@ def test_read_cobayamcmc():
     assert_array_equal(mcmc.drop_labels(axis=1).columns, params)
     if 'getdist' in sys.modules:
         labels = ['$x0$', '$x1$', '', '', r'$\chi^2$',
-                  r'$\chi^2_\mathrm{norm}$', r'$\log\mathcal{L}$',
+                  r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
                   r'$n_\mathrm{chain}$']
         assert_array_equal(mcmc.get_labels(axis=1), labels)
 
@@ -136,7 +136,7 @@ def test_read_montepython():
               '$YHe$',
               '$H0$',
               '$10^{-9}A_{s }$',
-              r'$\log\mathcal{L}$',
+              r'$\ln\mathcal{L}$',
               r'$n_\mathrm{chain}$']
     assert_array_equal(mcmc.get_labels(axis=1), labels)
     assert_array_equal(mcmc.get_weights(), w)
@@ -156,8 +156,8 @@ def test_read_multinest():
               '$x_2$',
               '$x_3$',
               '$x_4$',
-              r'$\log\mathcal{L}$',
-              r'$\log\mathcal{L}_\mathrm{birth}$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
               r'$n_\mathrm{live}$']
     assert_array_equal(ns.get_labels(axis=1), labels)
 
@@ -168,7 +168,7 @@ def test_read_multinest():
     ns = read_multinest('./tests/example_data/mn_old')
     params.remove('logL_birth')
     assert_array_equal(ns.drop_labels(axis=1).columns, params)
-    labels.remove(r'$\log\mathcal{L}_\mathrm{birth}$')
+    labels.remove(r'$\ln\mathcal{L}_\mathrm{birth}$')
     assert_array_equal(ns.get_labels(axis=1), labels)
     assert isinstance(ns, NestedSamples)
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
@@ -191,8 +191,8 @@ def test_read_polychord():
               '$x_2$',
               '$x_3$',
               '$x_4$',
-              r'$\log\mathcal{L}$',
-              r'$\log\mathcal{L}_\mathrm{birth}$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
               r'$n_\mathrm{live}$']
     assert_array_equal(ns.get_labels(axis=1), labels)
 
@@ -231,7 +231,7 @@ def test_discard_burn_in(root):
     # for 2 chains of length 1000
     mcmc0 = read_chains('./tests/example_data/' + root)
     assert isinstance(mcmc0, MCMCSamples)
-    mcmc1 = read_chains(root='./tests/example_data/' + root, burn_in=1000)
+    mcmc1 = read_chains('./tests/example_data/' + root, burn_in=1000)
     assert isinstance(mcmc1, MCMCSamples)
     for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
         if key in mcmc0:

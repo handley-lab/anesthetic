@@ -8,6 +8,7 @@ import numpy as np
 import pandas
 import copy
 import warnings
+from pandas import MultiIndex, DataFrame, Series
 from collections.abc import Sequence
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
@@ -23,6 +24,7 @@ anesthetic.weighted_pandas._WeightedObject.plot =\
 
 
 class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
+    """DataFrame with weights and labels."""
 
     _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata
 
@@ -46,6 +48,7 @@ class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
 
 
 class WeightedLabelledSeries(WeightedSeries, LabelledSeries):
+    """Series with weights and labels."""
 
     _metadata = WeightedSeries._metadata + LabelledSeries._metadata
 
@@ -116,7 +119,7 @@ class Samples(WeightedLabelledDataFrame):
         if logL is not None:
             self['logL'] = logL
             if self.islabelled(axis=1):
-                self.set_label('logL', r'$\log\mathcal{L}$',
+                self.set_label('logL', r'$\ln\mathcal{L}$',
                                axis=1, inplace=True)
 
     @property
@@ -157,7 +160,7 @@ class Samples(WeightedLabelledDataFrame):
             Pandas array of axes objects
 
         """
-        if not isinstance(axes, pandas.Series):
+        if not isinstance(axes, Series):
             fig, axes = make_1d_axes(axes, labels=self.get_labels_map(1))
         else:
             fig = axes.bfill().to_numpy().flatten()[0].figure
@@ -260,7 +263,7 @@ class Samples(WeightedLabelledDataFrame):
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
-        if not isinstance(axes, pandas.DataFrame):
+        if not isinstance(axes, DataFrame):
             fig, axes = make_2d_axes(axes, labels=self.get_labels(1),
                                      upper=('upper' in kind),
                                      lower=('lower' in kind),
@@ -419,9 +422,9 @@ class NestedSamples(Samples):
     * ``self.prior()``
     * ``self.posterior_points(beta)``
     * ``self.prior_points()``
-    * ``self.ns_output()``
+    * ``self.stats()``
     * ``self.logZ()``
-    * ``self.D()``
+    * ``self.D_KL()``
     * ``self.d()``
     * ``self.recompute()``
     * ``self.gui()``
@@ -495,8 +498,7 @@ class NestedSamples(Samples):
     @beta.setter
     def beta(self, beta):
         self._beta = beta
-        logw = self.dlogX() + np.where(self.logL == -np.inf, -np.inf,
-                                       self.beta * self.logL)
+        logw = self.logw(beta=beta)
         self.set_weights(np.exp(logw - logw.max()), inplace=True)
 
     def set_beta(self, beta, inplace=False):
@@ -523,83 +525,304 @@ class NestedSamples(Samples):
         """Re-weight samples at infinite temperature to get prior samples."""
         return self.set_beta(beta=0, inplace=inplace)
 
-    def ns_output(self, nsamples=200):
-        """Compute Bayesian global quantities.
+    def stats(self, nsamples=None, beta=None):
+        """Compute Nested Sampling statistics.
 
-        Using nested sampling we can compute the evidence (logZ),
-        Kullback-Leibler divergence (D) and Bayesian model dimensionality (d).
-        More precisely, we can infer these quantities via their probability
-        distribution.
+        Using nested sampling we can compute:
+            - logZ: the Bayesian evidence
+            - D_KL: the Kullback-Leibler divergence
+            - d_G: the Gaussian model dimensionality
+            - logL_P: the posterior averaged loglikelihood
+
+        (Note that all of these are available as individual functions with the
+        same signature). See https://arxiv.org/abs/1903.06682 for more detail.
+
+        In addition to point estimates nested sampling provides an error bar
+        or more generally samples from a (correlated) distribution over the
+        variables. Samples from this distribution can be computed by providing
+        an integer nsamples.
+
+        Nested sampling as an athermal algorithm is also capable of producing
+        these as a function of inverse thermodynamic temperature beta. This is
+        provided as a vectorised function. If nsamples is also provided a
+        MultiIndex dataframe is generated.
+
+        These obey Occam's razor equation: logZ = logL_P - D_KL, which splits
+        a model's quality (logZ) into a goodness-of-fit (logL_P) and an
+        complexity penalty (D_KL) https://arxiv.org/abs/2102.11511
 
         Parameters
         ----------
         nsamples: int, optional
-            number of samples to generate (Default: 100)
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
+              values inferred by nested sampling
+
+        beta: float, array-like, optional
+            inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
         -------
-        pandas.DataFrame
-            Samples from the P(logZ, D, d) distribution
-
+        if beta is scalar and nsamples is None:
+            Series, index ['logZ', 'd_G', 'DK_L', 'logL_P']
+        elif beta is scalar and nsamples is int:
+            Samples, index range(nsamples),
+            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
+        elif beta is array-like and nsamples is None:
+            Samples, index beta,
+            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
+        elif beta is array-like and nsamples is int:
+            Samples, index MultiIndex the product of beta and range(nsamples)
+            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         """
-        dlogX = self.dlogX(nsamples)
-        samples = LabelledDataFrame()
-        samples['logZ'] = self.logZ(dlogX)
-        samples.set_label('logZ', r'$\log\mathcal{Z}$', axis=1, inplace=True)
+        logw = self.logw(nsamples, beta)
+        if nsamples is None and beta is None:
+            samples = self._constructor_sliced(index=self.columns[:0])
+            axis = 0
+        else:
+            samples = WeightedLabelledDataFrame(index=logw.columns,
+                                                columns=self.columns[:0])
+            axis = 1
+        samples['logZ'] = self.logZ(logw)
+        samples.set_label('logZ', r'$\ln\mathcal{Z}$', axis=axis, inplace=True)
+        w = np.exp(logw-samples['logZ'])
 
-        logw = dlogX.add(self.beta * self.logL, axis=0)
-        logw -= samples.logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - samples.logZ
+        betalogL = self._betalogL(beta)
+        S = (logw*0).add(betalogL, axis=0) - samples.logZ
 
-        samples['D'] = np.exp(logsumexp(logw, b=S, axis=0))
-        samples.set_label('D', r'$\mathcal{D}$', axis=1, inplace=True)
+        samples['D_KL'] = (S*w).sum()
+        samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$',
+                          axis=axis, inplace=True)
 
-        samples['d'] = np.exp(logsumexp(logw, b=(S-samples.D)**2, axis=0))*2
-        samples.set_label('d', r'$d$', axis=1, inplace=True)
+        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()
+        samples.set_label('d_G', r'$d_\mathrm{G}$', axis=axis, inplace=True)
 
+        samples['logL_P'] = samples['logZ'] + samples['D_KL']
+        samples.set_label('logL_P',
+                          r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$',
+                          axis=axis, inplace=True)
         samples.label = self.label
         return samples
 
-    def logZ(self, nsamples=None):
+    def logX(self, nsamples=None):
+        """Log-Volume.
+
+        The log of the prior volume contained within each iso-likelihood
+        contour.
+
+        Parameters
+        ----------
+        nsamples: int, optional
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
+              values inferred by nested sampling
+
+        Returns
+        -------
+        if nsamples is None:
+            WeightedSeries like self
+        elif nsamples is int
+            WeightedDataFrame like self, columns range(nsamples)
+        """
+        if nsamples is None:
+            t = np.log(self.nlive/(self.nlive+1))
+        else:
+            r = np.log(np.random.rand(len(self), nsamples))
+            w = self.get_weights()
+            r = self.nlive._constructor_expanddim(r, self.index, weights=w)
+            t = r.divide(self.nlive, axis=0)
+            t.columns.name = 'samples'
+        logX = t.cumsum()
+        logX.name = 'logX'
+        return logX
+
+    def dlogX(self, nsamples=None):
+        """Compute volume of shell of loglikelihood.
+
+        Parameters
+        ----------
+        nsamples: int, optional
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
+              values inferred by nested sampling
+
+        Returns
+        -------
+        if nsamples is None:
+            WeightedSeries like self
+        elif nsamples is int
+            WeightedDataFrame like self, columns range(nsamples)
+        """
+        logX = self.logX(nsamples)
+        logXp = logX.shift(1, fill_value=0)
+        logXm = logX.shift(-1, fill_value=-np.inf)
+        dlogX = np.log(1 - np.exp(logXm-logXp)) + logXp - np.log(2)
+        dlogX.name = 'dlogX'
+
+        return dlogX
+
+    def _betalogL(self, beta=None):
+        """Log(L**beta) convenience function.
+
+        Parameters
+        ----------
+        beta, scalar or array-like, optional
+            inverse temperature(s) beta=1/kT. Default self.beta
+
+        Returns
+        -------
+        if beta is scalar:
+            WeightedSeries like self
+        elif beta is array-like:
+            WeightedDataFrame like self, columns of beta
+        """
+        if beta is None:
+            beta = self.beta
+        logL = self.logL
+        if np.isscalar(beta):
+            betalogL = beta * logL
+            betalogL.name = 'betalogL'
+        else:
+            betalogL = logL._constructor_expanddim(np.outer(self.logL, beta),
+                                                   self.index, columns=beta)
+            betalogL.columns.name = 'beta'
+        return betalogL
+
+    def logw(self, nsamples=None, beta=None):
+        """Log-nested sampling weight.
+
+        The logarithm of the (unnormalised) sampling weight log(L**beta*dX).
+
+        Parameters
+        ----------
+        nsamples: int, optional
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
+              values inferred by nested sampling
+            - If nsamples is array, nsamples is assumed to be logw and returned
+              (implementation convenience functionality)
+
+        beta: float, array-like, optional
+            inverse temperature(s) beta=1/kT. Default self.beta
+
+        Returns
+        -------
+        if nsamples is array-like
+            WeightedDataFrame equal to nsamples
+        elif beta is scalar and nsamples is None:
+            WeightedSeries like self
+        elif beta is array-like and nsamples is None:
+            WeightedDataFrame like self, columns of beta
+        elif beta is scalar and nsamples is int:
+            WeightedDataFrame like self, columns of range(nsamples)
+        elif beta is array-like and nsamples is int:
+            WeightedDataFrame like self, MultiIndex columns the product of beta
+            and range(nsamples)
+        """
+        if np.ndim(nsamples) > 0:
+            return nsamples
+
+        dlogX = self.dlogX(nsamples)
+        betalogL = self._betalogL(beta)
+
+        if dlogX.ndim == 1 and betalogL.ndim == 1:
+            logw = dlogX + betalogL
+        elif dlogX.ndim > 1 and betalogL.ndim == 1:
+            logw = dlogX.add(betalogL, axis=0)
+        elif dlogX.ndim == 1 and betalogL.ndim > 1:
+            logw = betalogL.add(dlogX, axis=0)
+        else:
+            cols = MultiIndex.from_product([betalogL.columns, dlogX.columns])
+            dlogX = dlogX.reindex(columns=cols, level='samples')
+            betalogL = betalogL.reindex(columns=cols, level='beta')
+            logw = betalogL+dlogX
+        return logw
+
+    def logZ(self, nsamples=None, beta=None):
         """Log-Evidence.
 
-        - If nsamples is not supplied, return mean log evidence
-        - If nsamples is integer, return nsamples from the distribution
-        - If nsamples is array, use nsamples as volumes of evidence shells
+        Parameters
+        ----------
+        nsamples: int, optional
+            - If nsamples is not supplied, calculate mean value
+            - If nsamples is integer, draw nsamples from the distribution of
+              values inferred by nested sampling
+            - If nsamples is array, nsamples is assumed to be logw
 
+        beta: float, array-like, optional
+            inverse temperature(s) beta=1/kT. Default self.beta
+
+        Returns
+        -------
+        if nsamples is array-like:
+            Series, index nsamples.columns
+        elif beta is scalar and nsamples is None:
+            float
+        elif beta is array-like and nsamples is None:
+            Series, index beta
+        elif beta is scalar and nsamples is int:
+            Series, index range(nsamples)
+        elif beta is array-like and nsamples is int:
+            Series, MultiIndex columns the product of beta and range(nsamples)
         """
-        dlogX = self.dlogX(nsamples)
-        logw = dlogX.add(self.beta * self.logL, axis=0)
-        return logsumexp(logw, axis=0)
+        logw = self.logw(nsamples, beta)
+        logZ = logsumexp(logw, axis=0)
+        if np.isscalar(logZ):
+            return logZ
+        else:
+            return logw._constructor_sliced(logZ, name='logZ',
+                                            index=logw.columns).squeeze()
 
-    def D(self, nsamples=None):
-        """Kullback-Leibler divergence.
+    _logZ_function_shape = '\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
 
-        - If nsamples is not supplied, return mean KL divergence
-        - If nsamples is integer, return nsamples from the distribution
-        - If nsamples is array, use nsamples as volumes of evidence shells
+    def D_KL(self, nsamples=None, beta=None):
+        """Kullback-Leibler divergence."""
+        logw = self.logw(nsamples, beta)
+        logZ = self.logZ(logw, beta)
+        betalogL = self._betalogL(beta)
+        S = (logw*0).add(betalogL, axis=0) - logZ
+        w = np.exp(logw-logZ)
+        D_KL = (S*w).sum()
+        if np.isscalar(D_KL):
+            return D_KL
+        else:
+            return self._constructor_sliced(D_KL, name='D_KL',
+                                            index=logw.columns).squeeze()
 
-        """
-        dlogX = self.dlogX(nsamples)
-        logZ = self.logZ(dlogX)
-        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
-        return np.exp(logsumexp(logw, b=S, axis=0))
+    D_KL.__doc__ += _logZ_function_shape
 
-    def d(self, nsamples=None):
-        """Bayesian model dimensionality.
+    def d_G(self, nsamples=None, beta=None):
+        """Bayesian model dimensionality."""
+        logw = self.logw(nsamples, beta)
+        logZ = self.logZ(logw, beta)
+        betalogL = self._betalogL(beta)
+        S = (logw*0).add(betalogL, axis=0) - logZ
+        w = np.exp(logw-logZ)
+        D_KL = (S*w).sum()
+        d_G = ((S-D_KL)**2*w).sum()
+        if np.isscalar(d_G):
+            return d_G
+        else:
+            return self._constructor_sliced(d_G, name='d_G',
+                                            index=logw.columns).squeeze()
 
-        - If nsamples is not supplied, return mean BMD
-        - If nsamples is integer, return nsamples from the distribution
-        - If nsamples is array, use nsamples as volumes of evidence shells
+    d_G.__doc__ += _logZ_function_shape
 
-        """
-        dlogX = self.dlogX(nsamples)
-        logZ = self.logZ(dlogX)
-        D = self.D(dlogX)
-        logw = dlogX.add(self.beta * self.logL, axis=0) - logZ
-        S = (dlogX*0).add(self.beta * self.logL, axis=0) - logZ
-        return np.exp(logsumexp(logw, b=(S-D)**2, axis=0))*2
+    def logL_P(self, nsamples=None, beta=None):
+        """Posterior averaged loglikelihood."""
+        logw = self.logw(nsamples, beta)
+        logZ = self.logZ(logw, beta)
+        betalogL = self._betalogL(beta)
+        betalogL = (logw*0).add(betalogL, axis=0)
+        w = np.exp(logw-logZ)
+        logL_P = (betalogL*w).sum()
+        if np.isscalar(logL_P):
+            return logL_P
+        else:
+            return self._constructor_sliced(logL_P, name='logL_P',
+                                            index=logw.columns).squeeze()
+
+    logL_P.__doc__ += _logZ_function_shape
 
     def live_points(self, logL=None):
         """Get the live points within logL.
@@ -639,39 +862,6 @@ class NestedSamples(Samples):
     def gui(self, params=None):
         """Construct a graphical user interface for viewing samples."""
         return RunPlotter(self, params)
-
-    def dlogX(self, nsamples=None):
-        """Compute volume of shell of loglikelihood.
-
-        Parameters
-        ----------
-        nsamples: int, optional
-            Number of samples to generate. optional. If None, then compute the
-            statistical average. If integer, generate samples from the
-            distribution. (Default: None)
-
-        """
-        if np.ndim(nsamples) > 0:
-            return nsamples
-        elif nsamples is None:
-            t = np.log(self.nlive/(self.nlive+1)).to_frame()
-        else:
-            r = np.log(np.random.rand(len(self), nsamples))
-            t = pandas.DataFrame(r, self.index).divide(self.nlive, axis=0)
-
-        logX = t.cumsum()
-        logXp = logX.shift(1, fill_value=0)
-        logXm = logX.shift(-1, fill_value=-np.inf)
-        dlogX = logsumexp([logXp.to_numpy(), logXm.to_numpy()],
-                          b=[np.ones_like(logXp), -np.ones_like(logXm)],
-                          axis=0) - np.log(2)
-
-        weights = self.get_weights()
-        if nsamples is None:
-            dlogX = np.squeeze(dlogX)
-            return self._constructor_sliced(dlogX, self.index, weights=weights)
-        else:
-            return self._constructor(dlogX, self.index, weights=weights)
 
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
@@ -736,7 +926,7 @@ class NestedSamples(Samples):
             samples['nlive', nlive_label] = n
         else:
             if logL_birth is not None:
-                label = r'$\log\mathcal{L}_\mathrm{birth}$'
+                label = r'$\ln\mathcal{L}_\mathrm{birth}$'
                 samples['logL_birth'] = logL_birth
                 if self.islabelled(axis=1):
                     samples.set_label('logL_birth', label,
@@ -829,7 +1019,7 @@ def merge_samples_weighted(samples, weights=None, label=None):
         Merged (weighted) run.
     """
     if not (isinstance(samples, Sequence) or
-            isinstance(samples, pandas.Series)):
+            isinstance(samples, Series)):
         raise TypeError("samples must be a list of samples "
                         "(Sequence or pandas.Series)")
 
