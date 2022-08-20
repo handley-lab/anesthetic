@@ -250,10 +250,7 @@ class RunPlotter(object):
         LX = np.exp(LX-LX.max())
         i = self.evolution()
         logL = self.samples.logL.iloc[i]
-        try:
-            n = self.samples.nlive.iloc[i]
-        except IndexError:
-            n = 0
+        n = self.samples.nlive.iloc[i]
 
         self.triangle.update(self.points)
 
