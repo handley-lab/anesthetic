@@ -1,5 +1,4 @@
 import matplotlib_agg  # noqa: F401
-import os
 import sys
 import pytest
 import numpy as np
@@ -45,15 +44,11 @@ def test_read_getdist():
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")
 
-    os.rename('./tests/example_data/gd.paramnames',
-              './tests/example_data/gd.paramnames_')
-    mcmc = read_getdist('./tests/example_data/gd')
-    os.rename('./tests/example_data/gd.paramnames_',
-              './tests/example_data/gd.paramnames')
+    mcmc = read_getdist('./tests/example_data/gd_no_paramnames')
 
-    params = [0, 1, 2, 3, 4, 'logL', 'chain']
+    params = [0, 1, 2, 3, 4, 'logL']
     assert all(mcmc.columns == params)
-    tex = {'chain': r'$n_\mathrm{chain}$'}
+    tex = {}
     assert mcmc.tex == tex
 
 
@@ -201,20 +196,14 @@ def test_read_polychord():
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")
 
-    os.rename('./tests/example_data/pc_phys_live-birth.txt',
-              './tests/example_data/pc_phys_live-birth.txt_')
-    ns_nolive = read_polychord('./tests/example_data/pc')
-    os.rename('./tests/example_data/pc_phys_live-birth.txt_',
-              './tests/example_data/pc_phys_live-birth.txt')
-
     with pytest.warns(UserWarning, match="loadtxt"):
         ns_zero_live = read_polychord('./tests/example_data/pc_zero_live')
-
+    ns_nolive = read_polychord('./tests/example_data/pc_no_live')
     ns_single_live = read_polychord('./tests/example_data/pc_single_live')
 
     cols = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth']
-    assert_array_equal(ns_nolive[cols], ns[cols][:ns_nolive.shape[0]])
     assert_array_equal(ns_zero_live[cols], ns[cols])
+    assert_array_equal(ns_nolive[cols], ns[cols][:ns_nolive.shape[0]])
     assert_array_equal(ns_single_live[cols], ns[cols])
 
 
