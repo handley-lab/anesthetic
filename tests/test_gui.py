@@ -52,13 +52,13 @@ def test_gui():
 
 def test_gui_params():
     plotter = read_chains('./tests/example_data/pc').gui()
-    assert len(plotter.param_choice.buttons.labels) == 10
+    assert len(plotter.param_choice.buttons.labels) == 8
 
-    plotter = read_chains('./tests/example_data/pc').gui(params=['x0','x1'])
+    plotter = read_chains('./tests/example_data/pc').gui(params=['x0', 'x1'])
     assert len(plotter.param_choice.buttons.labels) == 2
+
 
 def test_slider_reset_range():
     plotter = read_chains('./tests/example_data/pc').gui()
-    plotter.evolution.reset_range(-3,3)
+    plotter.evolution.reset_range(-3, 3)
     assert plotter.evolution.ax.get_xlim() == (-3.0, 3.0)
-
