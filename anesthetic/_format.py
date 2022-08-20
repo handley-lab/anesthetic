@@ -30,8 +30,7 @@ class _DataFrameFormatter(DataFrameFormatter):
                     y not in self.formatters
                     and need_leadsp[x]
                     and not restrict_formatting
-                ):
-                    return " " + y
+                ): return " " + y
                 return y
 
             str_columns = list(

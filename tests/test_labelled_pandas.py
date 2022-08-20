@@ -438,3 +438,16 @@ def test_multiaxis_slice():
     assert_series_equal_not_name(lframe.loc[['A', 'B'], 'one'],
                                  lframe.loc[[('A', '$A$'), ('B', '$B$')],
                                             ('one',  1)])
+
+
+def test_reset_index():
+    ldf = test_LabelledDataFrame_index()
+    assert ldf.reset_index().index.names == [None, 'labels']
+
+    assert not np.array_equal(ldf.reset_index().columns, ldf.columns)
+    assert_array_equal(ldf.reset_index(drop=True).columns, ldf.columns)
+
+    new = ldf.copy()
+    assert not np.array_equal(new.index, ldf.reset_index())
+    new.reset_index(inplace=True)
+    assert_array_equal(new.index, ldf.reset_index().index)
