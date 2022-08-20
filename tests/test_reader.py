@@ -45,6 +45,17 @@ def test_read_getdist():
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")
 
+    os.rename('./tests/example_data/gd.paramnames',
+              './tests/example_data/gd.paramnames_')
+    mcmc = read_getdist('./tests/example_data/gd')
+    os.rename('./tests/example_data/gd.paramnames_',
+              './tests/example_data/gd.paramnames')
+
+    params = [0, 1, 2, 3, 4, 'logL', 'chain']
+    assert all(mcmc.columns == params)
+    tex = {'chain': r'$n_\mathrm{chain}$'}
+    assert mcmc.tex == tex
+
 
 @pytest.mark.xfail('getdist' not in sys.modules,
                    raises=NameError,
