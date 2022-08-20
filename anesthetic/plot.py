@@ -478,8 +478,11 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         Sample weights.
 
     ncompress: int, optional
-        Degree of compression. `ncompress=None` means no compression.
-        Default None
+        Degree of compression.
+        If int: number of samples returned.
+        If True: compresses to the channel capacity.
+        If False: no compression.
+        Default False
 
     nplot_1d: int, optional
         Number of plotting points to use.
@@ -520,7 +523,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         data = data[weights != 0]
         weights = weights[weights != 0]
 
-    ncompress = kwargs.pop('ncompress', None)
+    ncompress = kwargs.pop('ncompress', False)
     nplot = kwargs.pop('nplot_1d', 100)
     bw_method = kwargs.pop('bw_method', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
@@ -767,7 +770,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     ncompress: int, optional
         Degree of compression.
-        Default 10000
+        If int: number of samples returned.
+        If True: compresses to the channel capacity.
+        If False: no compression.
+        Default 1000
 
     nplot_2d: int, optional
         Number of plotting points to use.
@@ -791,7 +797,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         data_y = data_y[weights != 0]
         weights = weights[weights != 0]
 
-    ncompress = kwargs.pop('ncompress', 10000)
+    ncompress = kwargs.pop('ncompress', 1000)
     nplot = kwargs.pop('nplot_2d', 1000)
     bw_method = kwargs.pop('bw_method', None)
     label = kwargs.pop('label', None)

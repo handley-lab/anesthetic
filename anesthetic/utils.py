@@ -46,7 +46,7 @@ def channel_capacity(w):
         return np.exp(-H)
 
 
-def compress_weights(w, u=None, nsamples=None):
+def compress_weights(w, u=None, ncompress=True):
     """Compresses weights to their approximate channel capacity."""
     if u is None:
         u = np.random.rand(len(w))
@@ -54,13 +54,15 @@ def compress_weights(w, u=None, nsamples=None):
     if w is None:
         w = np.ones_like(u)
 
-    if nsamples is None:
-        nsamples = channel_capacity(w)
+    if ncompress is True:
+        ncompress = channel_capacity(w)
+    elif ncompress is False:
+        return w
 
-    if nsamples <= 0:
+    if ncompress <= 0:
         W = w/w.max()
     else:
-        W = w * nsamples / w.sum()
+        W = w * ncompress / w.sum()
 
     fraction, integer = np.modf(W)
     extra = (u < fraction).astype(int)
@@ -344,7 +346,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     return tri, w_
 
 
-def sample_compression_1d(x, w=None, n=1000):
+def sample_compression_1d(x, w=None, ncompress=True):
     """Histogram a 1D set of weighted samples via subsampling.
 
     This compresses the number of samples, combining weights.
@@ -357,24 +359,30 @@ def sample_compression_1d(x, w=None, n=1000):
     w: pandas.Series, optional
         weights of samples
 
-    n: int, optional
-        number of samples returned. Default 1000
+    ncompress: int, optional
+        Degree of compression.
+        If int: number of samples returned.
+        If True: compresses to the channel capacity.
+        If False: no compression.
+        Default True
 
     Returns
     -------
     x, w, array-like
         Compressed samples and weights
     """
-    if n is None:
+    if ncompress is False:
         return x, w
+    elif ncompress is True:
+        ncompress = channel_capacity(w)
     x = np.array(x)
     if w is None:
         w = np.ones_like(x)
     w = np.array(w)
 
     # Select inner samples for triangulation
-    if len(x) > n:
-        x_ = np.random.choice(x, size=n, replace=False)
+    if len(x) > ncompress:
+        x_ = np.random.choice(x, size=ncompress, replace=False)
     else:
         x_ = x.copy()
     x_.sort()
