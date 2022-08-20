@@ -415,9 +415,6 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
 
-    if data.max()-data.min() <= 0:
-        return
-
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
@@ -512,9 +509,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
              facecolor=['fc'], edgecolor=['ec']))
 
-    if data.max()-data.min() <= 0:
-        return
-
     weights = kwargs.pop('weights', None)
     if weights is not None:
         data = data[weights != 0]
@@ -602,9 +596,6 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     **kwargs : `~matplotlib.axes.Axes.hist` properties
 
     """
-    if data.max()-data.min() <= 0:
-        return
-
     weights = kwargs.pop('weights', None)
     bins = kwargs.pop('bins', 10)
     histtype = kwargs.pop('histtype', 'bar')
