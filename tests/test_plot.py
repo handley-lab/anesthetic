@@ -8,7 +8,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d, quantile_plot_interval,
-                             basic_cmap)
+                             basic_cmap, AxesSeries, AxesDataFrame)
 from numpy.testing import assert_array_equal
 
 from matplotlib.contour import ContourSet
@@ -450,6 +450,11 @@ def test_hist_plot_2d():
     ymin, ymax = ax.get_ylim()
     assert xmin > -6 and xmax < 6 and ymin > -6 and ymax < 6
 
+    fig, ax = plt.subplots()
+    data_x, data_y = np.random.randn(2, 1000)
+    hist_plot_2d(ax, data_x, data_y, levels=[0.95, 0.68], cmin=50)
+    hist_plot_2d(ax, data_x, data_y, levels=[0.95, 0.68], cmax=50)
+
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
 @pytest.mark.parametrize('s', [1, 2])
@@ -681,3 +686,14 @@ def test_quantile_plot_interval_tuple(q1, q2):
     _q1, _q2 = quantile_plot_interval(q=(q1, q2))
     assert _q1 == q1
     assert _q2 == q2
+
+
+def test_AxesObjects():
+    paramnames = ['A', 'B', 'C', 'D', 'E']
+    fig, axes = make_1d_axes(paramnames)
+    assert isinstance(axes, AxesSeries)
+    assert isinstance(axes.to_frame(), AxesDataFrame)
+
+    fig, axes = make_2d_axes(paramnames)
+    assert isinstance(axes, AxesDataFrame)
+    assert isinstance(axes['A'], AxesSeries)

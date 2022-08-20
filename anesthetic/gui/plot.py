@@ -25,7 +25,7 @@ class Higson(Widget):
         self.ax.set_yticks([])
         self.ax.set_ylim(-0.1, 1.1)
         self.ax.set_ylabel(r'$LX$')
-        self.ax.set_xlabel(r'$\log X$')
+        self.ax.set_xlabel(r'$\ln X$')
 
         self.curve, = self.ax.plot([None], [None], 'k-')
         self.point, = self.ax.plot([None], [None], 'ko')
@@ -83,7 +83,7 @@ class Evolution(Slider):
                 Current number of live points of evolution stage
 
         """
-        text = r'$\log L$: %.6g, $n_\mathrm{live}$: %i' % (logL, n)
+        text = r'$\ln L$: %.6g, $n_\mathrm{live}$: %i' % (logL, n)
         return super().set_text(text)
 
 
@@ -249,10 +249,7 @@ class RunPlotter(object):
         LX = np.exp(LX-LX.max())
         i = self.evolution()
         logL = self.samples.logL.iloc[i]
-        try:
-            n = self.samples.nlive.iloc[i]
-        except IndexError:
-            n = 0
+        n = self.samples.nlive.iloc[i]
 
         self.triangle.update(self.points)
 
