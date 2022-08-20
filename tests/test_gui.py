@@ -1,11 +1,11 @@
 import matplotlib_agg  # noqa: F401
 from packaging import version
 from matplotlib import __version__ as mpl_version
-from anesthetic import NestedSamples
+from anesthetic import read_chains
 
 
 def test_gui():
-    plotter = NestedSamples(root='./tests/example_data/pc').gui()
+    plotter = read_chains('./tests/example_data/pc').gui()
 
     # Type buttons
     plotter.type.buttons.set_active(1)

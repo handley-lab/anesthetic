@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from scipy import special as sp
 from numpy.testing import assert_array_equal
-from anesthetic import NestedSamples
+from anesthetic import read_chains
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
@@ -155,7 +155,7 @@ def test_insertion_p_value():
 
 def test_p_values_from_sample():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     ns._compute_insertion_indexes()
     nlive = len(ns.live_points())
 
