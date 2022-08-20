@@ -438,8 +438,6 @@ def test_hist_plot_2d():
     ymin, ymax = ax.get_ylim()
     assert xmin > -5 and xmax < 5 and ymin > -5 and ymax < 5
 
-    hist_plot_2d(ax, data_x, data_y, cmin=50)
-
     data_x, data_y = np.random.uniform(-10, 10, (2, 1000))
     hist_plot_2d(ax, data_x, data_y)
     xmin, xmax = ax.get_xlim()
@@ -453,9 +451,10 @@ def test_hist_plot_2d():
     ymin, ymax = ax.get_ylim()
     assert xmin > -6 and xmax < 6 and ymin > -6 and ymax < 6
 
+    fig, ax = plt.subplots()
     data_x, data_y = np.random.randn(2, 1000)
-    hist_plot_2d(ax, data_x, data_y, cmin=50)
-    hist_plot_2d(ax, data_x, data_y, cmax=50)
+    hist_plot_2d(ax, data_x, data_y, levels=[0.95, 0.68], cmin=50)
+    hist_plot_2d(ax, data_x, data_y, levels=[0.95, 0.68], cmax=50)
 
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
