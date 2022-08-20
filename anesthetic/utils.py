@@ -388,6 +388,8 @@ def sample_compression_1d(x, w=None, n=1000):
     x, w, array-like
         Compressed samples and weights
     """
+    if n is None:
+        return x, w
     x = np.array(x)
     if w is None:
         w = np.ones_like(x)
