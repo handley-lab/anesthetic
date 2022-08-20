@@ -583,7 +583,7 @@ def test_kde_plot_nplot():
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(1000)
-    line, = kde_plot_1d(ax, data, ncompress=1000, nplot=200)
+    line, = kde_plot_1d(ax, data, ncompress=1000, nplot_1d=200)
     assert line.get_xdata().size == 200
     plt.close("all")
 
@@ -591,7 +591,7 @@ def test_kde_plot_nplot():
     np.random.seed(0)
     data_x = np.random.randn(1000)
     data_y = np.random.randn(1000)
-    kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot=900)
+    kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
     plt.close("all")
 
 
