@@ -12,8 +12,8 @@ from collections.abc import Sequence
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
-from anesthetic.weighted_pandas import WeightedDataFrame
-from anesthetic.labelled_pandas import LabelledDataFrame
+from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import make_1d_axes, make_2d_axes
 import anesthetic.weighted_pandas
@@ -22,7 +22,47 @@ anesthetic.weighted_pandas._WeightedObject.plot =\
     CachedAccessor("plot", PlotAccessor)
 
 
-class Samples(WeightedDataFrame, LabelledDataFrame):
+class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
+
+    _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata
+
+    def __init__(self, *args, **kwargs):
+        labels = kwargs.pop('labels', None)
+        super().__init__(*args, **kwargs)
+        self._labels = ('weights', 'labels')
+        if labels is not None:
+            if isinstance(labels, dict):
+                labels = [labels.get(p, '') for p in self]
+            self.set_labels(labels, axis=1, inplace=True)
+
+    @property
+    def _constructor(self):
+        return WeightedLabelledDataFrame
+
+    @property
+    def _constructor_sliced(self):
+        return WeightedLabelledSeries
+
+
+class WeightedLabelledSeries(WeightedSeries, LabelledSeries):
+
+    _metadata = WeightedSeries._metadata + LabelledSeries._metadata
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.isweighted():
+            self._labels = ('weights', self._labels[1])
+
+    @property
+    def _constructor(self):
+        return WeightedLabelledSeries
+
+    @property
+    def _constructor_expanddim(self):
+        return WeightedLabelledDataFrame
+
+
+class Samples(WeightedLabelledDataFrame):
     """Storage and plotting tools for general samples.
 
     Extends the pandas.DataFrame by providing plotting methods and
@@ -60,8 +100,7 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata
-    _metadata += ['label']
+    _metadata = WeightedLabelledDataFrame._metadata + ['label']
 
     def __init__(self, *args, **kwargs):
         logzero = kwargs.pop('logzero', -1e30)
@@ -71,13 +110,7 @@ class Samples(WeightedDataFrame, LabelledDataFrame):
             logL = np.where(logL <= logzero, -np.inf, logL)
         self.label = kwargs.pop('label', None)
 
-        labels = kwargs.pop('labels', None)
         super().__init__(*args, **kwargs)
-        if labels is not None:
-            if isinstance(labels, dict):
-                labels = [labels.get(p, '') for p in self]
-            self.set_labels(labels, axis=1, inplace=True)
-            self._labels = (self._labels[0], 'labels')
 
         if logL is not None:
             self['logL'] = logL
