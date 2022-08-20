@@ -364,6 +364,7 @@ def test_multiaxis():
                                       [1, 2, 3, 4]],
                                      names=[None, 'aliases'])
     lframe.columns = columns
+    result = lframe.copy()
 
     assert_array_equal(lframe.get_labels(0), ['$A$', '$B$', '$C$', '$D$'])
     assert_array_equal(lframe.get_labels(1), [1, 2, 3, 4])
@@ -387,6 +388,8 @@ def test_multiaxis():
 
     assert lframe.islabelled(0)
     assert not lframe.islabelled(1)
+
+    return result
 
 
 def test_set_label():
@@ -416,3 +419,22 @@ def test_set_label():
 
     lseries['Z'] = 1.0
     assert lseries.get_label('Z') == ''
+
+
+def test_multiaxis_slice():
+    lframe = test_multiaxis()
+    assert_series_equal_not_name(lframe['one'], lframe[('one', 1)])
+    assert_series_equal_not_name(lframe.loc['A'], lframe.loc[('A', '$A$')])
+    assert_series_equal_not_name(lframe.loc[:, 'one'],
+                                 lframe.loc[:, ('one', 1)])
+
+    assert_frame_equal(lframe.loc[['A', 'B'], ['one', 'two']],
+                       lframe.loc[[('A', '$A$'), ('B', '$B$')],
+                                  [('one', 1), ('two', 2)]])
+
+    assert_series_equal_not_name(lframe.loc['A', ['one', 'two']],
+                                 lframe.loc[('A', '$A$'),
+                                            [('one',  1), ('two', 2)]])
+    assert_series_equal_not_name(lframe.loc[['A', 'B'], 'one'],
+                                 lframe.loc[[('A', '$A$'), ('B', '$B$')],
+                                            ('one',  1)])

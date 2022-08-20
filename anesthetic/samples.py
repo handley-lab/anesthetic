@@ -509,7 +509,7 @@ class NestedSamples(Samples):
 
         """
         dlogX = self.dlogX(nsamples)
-        samples = Samples()
+        samples = LabelledDataFrame()
         samples['logZ'] = self.logZ(dlogX)
         samples.set_label('logZ', r'$\log\mathcal{Z}$', axis=1, inplace=True)
 
@@ -697,9 +697,9 @@ class NestedSamples(Samples):
             nlive = logL_birth
             samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
-            samples[('nlive', nlive_label)] = nlive
-            descending = np.arange(nlive, 0, -1)
-            samples.loc[len(samples)-nlive:, 'nlive'] = descending
+            n = np.ones(len(self), int) * nlive
+            n[-nlive:] = np.arange(nlive, 0, -1)
+            samples['nlive', nlive_label] = n
         else:
             if logL_birth is not None:
                 label = r'$\log\mathcal{L}_\mathrm{birth}$'

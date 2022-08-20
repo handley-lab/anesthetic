@@ -558,8 +558,7 @@ def test_beta():
 
 def test_beta_with_logL_infinities():
     ns = read_chains("./tests/example_data/pc")
-    for i in range(10):
-        ns.loc[i, 'logL'] = -np.inf
+    ns.loc[:10, ('logL', r'$\log\mathcal{L}$')] = -np.inf
     prior = ns.set_beta(0)
     assert np.all(prior.logL[:10] == -np.inf)
     assert np.all(prior.get_weights()[:10] == 0)
@@ -616,7 +615,7 @@ def test_contour_plot_2d_nan():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
 
-    ns.loc[:9, 'x0'] = np.nan
+    ns.loc[:9, ('x0', '$x_0$')] = np.nan
     with pytest.raises((np.linalg.LinAlgError, RuntimeError, ValueError)):
         ns.plot_2d(['x0', 'x1'])
 
@@ -812,7 +811,7 @@ def test_recompute():
     recompute = pc.recompute()
     assert recompute is not pc
 
-    pc.loc[1000, 'logL'] = pc.logL_birth.iloc[1000]-1
+    pc.loc[1000, ('logL', r'$\log\mathcal{L}$')] = pc.logL_birth.iloc[1000]-1
     with pytest.warns(RuntimeWarning):
         recompute = pc.recompute()
     assert len(recompute) == len(pc) - 1
@@ -828,7 +827,7 @@ def test_NaN():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         pc_new = pc.copy()
-        pc_new.loc[2, "logL"] = np.nan
+        pc_new.loc[2, ('logL', r'$\log\mathcal{L}$')] = np.nan
         pc_new.recompute(inplace=True)
         assert "NaN encountered in logL." in str(w[0].message)
         assert len(pc_new) == len(pc) - 1

@@ -23,7 +23,26 @@ def ac(funcs, *args):
             errors.append(e)
 
     def cmp(x, y):
-        return 1 if x.ndim > y.ndim else -1
+        if x.ndim > y.ndim:
+            return 1
+        elif x.ndim < y.ndim:
+            return -1
+        else:
+            x_levels = 0
+            y_levels = 0
+            if x.ndim > 0:
+                x_levels += x.index.nlevels
+                y_levels += y.index.nlevels
+            if x.ndim > 1:
+                x_levels += x.columns.nlevels
+                y_levels += y.columns.nlevels
+
+            if x_levels < y_levels:
+                return 1
+            elif x_levels > y_levels:
+                return -1
+            else:
+                return 0
 
     results.sort(key=cmp_to_key(cmp))
 
@@ -35,7 +54,7 @@ def ac(funcs, *args):
 
 class _LocIndexer(_LocIndexer_):
     def __getitem__(self, key):
-        return ac([_AtIndexer_("loc", self.obj.drop_labels(i)).__getitem__
+        return ac([_LocIndexer_("loc", self.obj.drop_labels(i)).__getitem__
                    for i in self.obj._all_axes()] + [super().__getitem__], key)
 
 
