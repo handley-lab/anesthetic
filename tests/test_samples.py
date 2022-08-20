@@ -627,7 +627,7 @@ def test_logL_P():
 @pytest.mark.parametrize('nsamples', [None, 10, 100])
 def test_Occams_razor(nsamples, beta):
     np.random.seed(3)
-    pc = NestedSamples(root='./tests/example_data/pc')
+    pc = read_chains('./tests/example_data/pc')
     logw = pc.logw(nsamples, beta)
     assert_allclose(pc.logZ(logw), pc.logL_P(logw) - pc.D_KL(logw))
 
@@ -670,7 +670,6 @@ def test_stats():
     assert stats.tex == tex
     assert stats.index.names == ['beta', 'samples']
     assert stats.index.levshape == (len(beta), nsamples)
-
 
     for beta in [1., 0., 0.5]:
         pc.beta = beta
@@ -831,7 +830,6 @@ def test_beta():
                            pc.get_weights())
         assert not np.array_equal(pc.index.get_level_values('weights'),
                                   weights)
-
 
 
 def test_beta_with_logL_infinities():

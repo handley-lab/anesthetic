@@ -146,8 +146,8 @@ def test_read_multinest():
            'x2': '$x_2$',
            'x3': '$x_3$',
            'x4': '$x_4$',
-           'logL': r'$\log\mathcal{L}$',
-           'logL_birth': r'$\log\mathcal{L}_\mathrm{birth}$',
+           'logL': r'$\ln\mathcal{L}$',
+           'logL_birth': r'$\ln\mathcal{L}_\mathrm{birth}$',
            'nlive': r'$n_\mathrm{live}$'}
     assert ns.tex == tex
 
@@ -181,8 +181,8 @@ def test_read_polychord():
            'x2': '$x_2$',
            'x3': '$x_3$',
            'x4': '$x_4$',
-           'logL': r'$\log\mathcal{L}$',
-           'logL_birth': r'$\log\mathcal{L}_\mathrm{birth}$',
+           'logL': r'$\ln\mathcal{L}$',
+           'logL_birth': r'$\ln\mathcal{L}_\mathrm{birth}$',
            'nlive': r'$n_\mathrm{live}$'}
     assert ns.tex == tex
 
