@@ -52,9 +52,9 @@ def test_read_getdist():
               './tests/example_data/gd.paramnames')
 
     params = [0, 1, 2, 3, 4, 'logL', 'chain']
-    assert all(mcmc.columns == params)
-    tex = {'chain': r'$n_\mathrm{chain}$'}
-    assert mcmc.tex == tex
+    assert all(mcmc.drop_labels(axis=1).columns == params)
+    labels = ['', '', '', '', '', r'$\log\mathcal{L}$', r'$n_\mathrm{chain}$']
+    assert_array_equal(mcmc.get_labels(axis=1), labels)
 
 
 @pytest.mark.xfail('getdist' not in sys.modules,
