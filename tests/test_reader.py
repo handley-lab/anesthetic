@@ -18,7 +18,7 @@ except ImportError:
 
 def test_read_getdist():
     np.random.seed(3)
-    mcmc = read_getdist(root='./tests/example_data/gd')
+    mcmc = read_getdist('./tests/example_data/gd')
     assert isinstance(mcmc, MCMCSamples)
     w = np.concatenate((
         np.loadtxt("./tests/example_data/gd_1.txt", usecols=0),
@@ -152,8 +152,8 @@ def test_read_multinest():
            'x2': '$x_2$',
            'x3': '$x_3$',
            'x4': '$x_4$',
-           'logL': r'$\log\mathcal{L}$',
-           'logL_birth': r'$\log\mathcal{L}_\mathrm{birth}$',
+           'logL': r'$\ln\mathcal{L}$',
+           'logL_birth': r'$\ln\mathcal{L}_\mathrm{birth}$',
            'nlive': r'$n_\mathrm{live}$'}
     assert ns.tex == tex
 
@@ -187,8 +187,8 @@ def test_read_polychord():
            'x2': '$x_2$',
            'x3': '$x_3$',
            'x4': '$x_4$',
-           'logL': r'$\log\mathcal{L}$',
-           'logL_birth': r'$\log\mathcal{L}_\mathrm{birth}$',
+           'logL': r'$\ln\mathcal{L}$',
+           'logL_birth': r'$\ln\mathcal{L}_\mathrm{birth}$',
            'nlive': r'$n_\mathrm{live}$'}
     assert ns.tex == tex
 
@@ -221,7 +221,7 @@ def test_discard_burn_in(root):
     # for 2 chains of length 1000
     mcmc0 = read_chains('./tests/example_data/' + root)
     assert isinstance(mcmc0, MCMCSamples)
-    mcmc1 = read_chains(root='./tests/example_data/' + root, burn_in=1000)
+    mcmc1 = read_chains('./tests/example_data/' + root, burn_in=1000)
     assert isinstance(mcmc1, MCMCSamples)
     for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
         if key in mcmc0:
