@@ -484,7 +484,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         Degree of compression.
         Default 10000
 
-    nplot: int, optional
+    nplot_1d: int, optional
         Number of plotting points to use.
         Default 100
 
@@ -527,7 +527,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         weights = weights[weights != 0]
 
     ncompress = kwargs.pop('ncompress', 10000)
-    nplot = kwargs.pop('nplot', 100)
+    nplot = kwargs.pop('nplot_1d', 100)
     bw_method = kwargs.pop('bw_method', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
     density = kwargs.pop('density', False)
@@ -778,7 +778,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Degree of compression.
         Default 10000
 
-    nplot: int, optional
+    nplot_2d: int, optional
         Number of plotting points to use.
         Default 1000
 
@@ -801,7 +801,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         weights = weights[weights != 0]
 
     ncompress = kwargs.pop('ncompress', 10000)
-    nplot = kwargs.pop('nplot', 1000)
+    nplot = kwargs.pop('nplot_2d', 1000)
     bw_method = kwargs.pop('bw_method', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
