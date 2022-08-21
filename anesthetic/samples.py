@@ -14,17 +14,92 @@ from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import make_1d_axes, make_2d_axes
 import anesthetic.weighted_pandas
 from anesthetic.plotting import PlotAccessor
 anesthetic.weighted_pandas._WeightedObject.plot =\
     CachedAccessor("plot", PlotAccessor)
-anesthetic.weighted_pandas._WeightedObject.plot =\
-    CachedAccessor("plot", PlotAccessor)
 
 
-class Samples(WeightedDataFrame):
+class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
+    """DataFrame with weights and labels."""
+
+    _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata
+
+    def __init__(self, *args, **kwargs):
+        labels = kwargs.pop('labels', None)
+        if not hasattr(self, '_labels'):
+            self._labels = ('weights', 'labels')
+        super().__init__(*args, **kwargs)
+        if labels is not None:
+            if isinstance(labels, dict):
+                labels = [labels.get(p, '') for p in self]
+            self.set_labels(labels, inplace=True)
+
+    def islabelled(self, axis=1):
+        """Search for existence of labels."""
+        return super().islabelled(axis=axis)
+
+    def get_labels(self, axis=1):
+        """Retrieve labels from an axis."""
+        return super().get_labels(axis=axis)
+
+    def get_labels_map(self, axis=1):
+        """Retrieve mapping from paramnames to labels from an axis."""
+        return super().get_labels_map(axis=axis)
+
+    def get_label(self, param, axis=1):
+        """Retrieve mapping from paramnames to labels from an axis."""
+        return super().get_label(param, axis=axis)
+
+    def set_label(self, param, value, axis=1):
+        """Set a specific label to a specific value on an axis."""
+        return super().set_label(param, value, axis=axis, inplace=True)
+
+    def drop_labels(self, axis=1):
+        """Drop the labels from an axis if present."""
+        return super().drop_labels(axis)
+
+    def set_labels(self, labels, axis=1, inplace=False, level=None):
+        """Set labels along an axis."""
+        return super().set_labels(labels, axis=axis,
+                                  inplace=inplace, level=level)
+
+    @property
+    def _constructor(self):
+        return WeightedLabelledDataFrame
+
+    @property
+    def _constructor_sliced(self):
+        return WeightedLabelledSeries
+
+
+class WeightedLabelledSeries(WeightedSeries, LabelledSeries):
+    """Series with weights and labels."""
+
+    _metadata = WeightedSeries._metadata + LabelledSeries._metadata
+
+    def __init__(self, *args, **kwargs):
+        if not hasattr(self, '_labels'):
+            self._labels = ('weights', 'labels')
+        super().__init__(*args, **kwargs)
+
+    def set_label(self, param, value, axis=0):
+        """Set a specific label to a specific value."""
+        return super().set_label(param, value, axis=axis, inplace=True)
+
+    @property
+    def _constructor(self):
+        return WeightedLabelledSeries
+
+    @property
+    def _constructor_expanddim(self):
+        return WeightedLabelledDataFrame
+
+
+class Samples(WeightedLabelledDataFrame):
     """Storage and plotting tools for general samples.
 
     Extends the pandas.DataFrame by providing plotting methods and
@@ -49,8 +124,8 @@ class Samples(WeightedDataFrame):
     logL: np.array
         loglikelihoods of samples.
 
-    tex: dict
-        mapping from columns to tex labels for plotting
+    labels: dict or array-like
+        mapping from columns to plotting labels
 
     label: str
         Legend label
@@ -62,7 +137,7 @@ class Samples(WeightedDataFrame):
 
     """
 
-    _metadata = WeightedDataFrame._metadata + ['tex', 'label']
+    _metadata = WeightedLabelledDataFrame._metadata + ['label']
 
     def __init__(self, *args, **kwargs):
         logzero = kwargs.pop('logzero', -1e30)
@@ -70,17 +145,20 @@ class Samples(WeightedDataFrame):
         if logL is not None:
             logL = np.array(logL)
             logL = np.where(logL <= logzero, -np.inf, logL)
-        self.tex = kwargs.pop('tex', {})
         self.label = kwargs.pop('label', None)
+
         super().__init__(*args, **kwargs)
 
         if logL is not None:
             self['logL'] = logL
-            self.tex['logL'] = r'$\ln\mathcal{L}$'
+            if self.islabelled(axis=1):
+                self.set_label('logL', r'$\ln\mathcal{L}$')
 
     @property
     def _constructor(self):
         return Samples
+
+    plot = CachedAccessor("plot", PlotAccessor)
 
     def plot_1d(self, axes, *args, **kwargs):
         """Create an array of 1D plots.
@@ -115,7 +193,7 @@ class Samples(WeightedDataFrame):
 
         """
         if not isinstance(axes, Series):
-            fig, axes = make_1d_axes(axes, tex=self.tex)
+            fig, axes = make_1d_axes(axes, labels=self.get_labels_map())
         else:
             fig = axes.bfill().to_numpy().flatten()[0].figure
 
@@ -124,7 +202,7 @@ class Samples(WeightedDataFrame):
 
         for x, ax in axes.iteritems():
             if x in self and kwargs['kind'] is not None:
-                xlabel = self.tex[x] if x in self.tex else x
+                xlabel = self.get_label(x)
                 self[x].plot(ax=ax, xlabel=xlabel,
                              *args, **kwargs)
                 ax.set_xlabel(xlabel)
@@ -218,7 +296,7 @@ class Samples(WeightedDataFrame):
             local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, DataFrame):
-            fig, axes = make_2d_axes(axes, tex=self.tex,
+            fig, axes = make_2d_axes(axes, labels=self.get_labels(),
                                      upper=('upper' in kind),
                                      lower=('lower' in kind),
                                      diagonal=('diagonal' in kind))
@@ -232,12 +310,13 @@ class Samples(WeightedDataFrame):
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
                     if x in self and y in self and lkwargs['kind'] is not None:
-                        xlabel = self.tex[x] if x in self.tex else x
-                        ylabel = self.tex[y] if y in self.tex else y
+                        xlabel = self.get_label(x)
+                        ylabel = self.get_label(y)
                         if x == y:
                             self[x].plot(ax=ax.twin, xlabel=xlabel,
                                          *args, **lkwargs)
                             ax.set_xlabel(xlabel)
+                            ax.set_ylabel(ylabel)
                         else:
                             self.plot(x, y, ax=ax, xlabel=xlabel,
                                       ylabel=ylabel, *args, **lkwargs)
@@ -332,7 +411,7 @@ class MCMCSamples(Samples):
     data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
-    columns: list(str)
+    columns: array-like
         reference names of parameters
 
     weights: np.array
@@ -341,8 +420,8 @@ class MCMCSamples(Samples):
     logL: np.array
         loglikelihoods of samples.
 
-    tex: dict
-        mapping from columns to tex labels for plotting
+    labels: dict or array-like
+        mapping from columns to plotting labels
 
     label: str
         Legend label
@@ -400,8 +479,8 @@ class NestedSamples(Samples):
     logL_birth: np.array or int
         birth loglikelihoods, or number of live points.
 
-    tex: dict
-        optional mapping from column names to tex labels for plotting
+    labels: dict
+        optional mapping from column names to plot labels
 
     label: str
         Legend label
@@ -530,23 +609,27 @@ class NestedSamples(Samples):
         """
         logw = self.logw(nsamples, beta)
         if nsamples is None and beta is None:
-            samples = Series(dtype=float)
+            samples = self._constructor_sliced(index=self.columns[:0],
+                                               dtype=float)
         else:
-            samples = Samples(index=logw.columns)
+            samples = WeightedLabelledDataFrame(index=logw.columns,
+                                                columns=self.columns[:0])
         samples['logZ'] = self.logZ(logw)
-        w = np.exp(logw-samples.logZ)
+        samples.set_label('logZ', r'$\ln\mathcal{Z}$')
+        w = np.exp(logw-samples['logZ'])
 
         betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - samples.logZ
 
         samples['D_KL'] = (S*w).sum()
-        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()
-        samples['logL_P'] = samples['logZ'] + samples['D_KL']
+        samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$')
 
-        samples.tex = {'logZ': r'$\ln\mathcal{Z}$',
-                       'D_KL': r'$\mathcal{D}_\mathrm{KL}$',
-                       'd_G': r'$d_\mathrm{G}$',
-                       'logL_P': r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$'}
+        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()
+        samples.set_label('d_G', r'$d_\mathrm{G}$')
+
+        samples['logL_P'] = samples['logZ'] + samples['D_KL']
+        samples.set_label('logL_P',
+                          r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$')
         samples.label = self.label
         return samples
 
@@ -572,13 +655,15 @@ class NestedSamples(Samples):
         """
         if nsamples is None:
             t = np.log(self.nlive/(self.nlive+1))
-            t.name = 'logX'
         else:
             r = np.log(np.random.rand(len(self), nsamples))
-            r = WeightedDataFrame(r, self.index, weights=self.get_weights())
+            w = self.get_weights()
+            r = self.nlive._constructor_expanddim(r, self.index, weights=w)
             t = r.divide(self.nlive, axis=0)
             t.columns.name = 'samples'
-        return t.cumsum()
+        logX = t.cumsum()
+        logX.name = 'logX'
+        return logX
 
     def dlogX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
@@ -598,17 +683,11 @@ class NestedSamples(Samples):
             WeightedDataFrame like self, columns range(nsamples)
         """
         logX = self.logX(nsamples)
-        logXp = logX.shift(1, fill_value=0).to_numpy()
-        logXm = logX.shift(-1, fill_value=-np.inf).to_numpy()
-        dlogX = logsumexp([logXp, logXm], axis=0,
-                          b=[np.ones_like(logXp), -np.ones_like(logXm)])
-        dlogX -= np.log(2)
-        if nsamples is None:
-            dlogX = WeightedSeries(dlogX, self.index)
-            dlogX.name = 'dlogX'
-        else:
-            dlogX = WeightedDataFrame(dlogX, self.index)
-            dlogX.columns.name = logX.columns.name
+        logXp = logX.shift(1, fill_value=0)
+        logXm = logX.shift(-1, fill_value=-np.inf)
+        dlogX = np.log(1 - np.exp(logXm-logXp)) + logXp - np.log(2)
+        dlogX.name = 'dlogX'
+
         return dlogX
 
     def _betalogL(self, beta=None):
@@ -628,12 +707,13 @@ class NestedSamples(Samples):
         """
         if beta is None:
             beta = self.beta
+        logL = self.logL
         if np.isscalar(beta):
-            betalogL = WeightedSeries(beta*self.logL, self.index)
+            betalogL = beta * logL
             betalogL.name = 'betalogL'
         else:
-            betalogL = WeightedDataFrame(np.outer(self.logL, beta),
-                                         self.index, columns=beta)
+            betalogL = logL._constructor_expanddim(np.outer(self.logL, beta),
+                                                   self.index, columns=beta)
             betalogL.columns.name = 'beta'
         return betalogL
 
@@ -682,9 +762,9 @@ class NestedSamples(Samples):
             logw = betalogL.add(dlogX, axis=0)
         else:
             cols = MultiIndex.from_product([betalogL.columns, dlogX.columns])
-            dlogX = DataFrame(dlogX).reindex(columns=cols, level='samples')
-            betalogL = DataFrame(betalogL).reindex(columns=cols, level='beta')
-            logw = WeightedDataFrame(betalogL+dlogX, self.index)
+            dlogX = dlogX.reindex(columns=cols, level='samples')
+            betalogL = betalogL.reindex(columns=cols, level='beta')
+            logw = betalogL+dlogX
         return logw
 
     def logZ(self, nsamples=None, beta=None):
@@ -719,7 +799,8 @@ class NestedSamples(Samples):
         if np.isscalar(logZ):
             return logZ
         else:
-            return Series(logZ, name='logZ', index=logw.columns).squeeze()
+            return logw._constructor_sliced(logZ, name='logZ',
+                                            index=logw.columns).squeeze()
 
     _logZ_function_shape = '\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
 
@@ -734,7 +815,8 @@ class NestedSamples(Samples):
         if np.isscalar(D_KL):
             return D_KL
         else:
-            return Series(D_KL, name='D_KL', index=logw.columns).squeeze()
+            return self._constructor_sliced(D_KL, name='D_KL',
+                                            index=logw.columns).squeeze()
 
     D_KL.__doc__ += _logZ_function_shape
 
@@ -750,7 +832,8 @@ class NestedSamples(Samples):
         if np.isscalar(d_G):
             return d_G
         else:
-            return Series(d_G, name='d_G', index=logw.columns).squeeze()
+            return self._constructor_sliced(d_G, name='d_G',
+                                            index=logw.columns).squeeze()
 
     d_G.__doc__ += _logZ_function_shape
 
@@ -765,7 +848,8 @@ class NestedSamples(Samples):
         if np.isscalar(logL_P):
             return logL_P
         else:
-            return Series(logL_P, name='logL_P', index=logw.columns).squeeze()
+            return self._constructor_sliced(logL_P, name='logL_P',
+                                            index=logw.columns).squeeze()
 
     logL_P.__doc__ += _logZ_function_shape
 
@@ -861,17 +945,20 @@ class NestedSamples(Samples):
         else:
             samples = self.copy()
 
+        nlive_label = r'$n_\mathrm{live}$'
         if is_int(logL_birth):
             nlive = logL_birth
             samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
-            samples['nlive'] = nlive
-            descending = np.arange(nlive, 0, -1)
-            samples.loc[len(samples)-nlive:, 'nlive'] = descending
+            n = np.ones(len(self), int) * nlive
+            n[-nlive:] = np.arange(nlive, 0, -1)
+            samples['nlive', nlive_label] = n
         else:
             if logL_birth is not None:
+                label = r'$\ln\mathcal{L}_\mathrm{birth}$'
                 samples['logL_birth'] = logL_birth
-                samples.tex['logL_birth'] = r'$\ln\mathcal{L}_\mathrm{birth}$'
+                if self.islabelled():
+                    samples.set_label('logL_birth', label)
 
             if 'logL_birth' not in samples:
                 raise RuntimeError("Cannot recompute run without "
@@ -894,9 +981,11 @@ class NestedSamples(Samples):
 
             samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
-            samples['nlive'] = compute_nlive(samples.logL, samples.logL_birth)
+            nlive = compute_nlive(samples.logL, samples.logL_birth)
+            samples['nlive'] = nlive
+            if self.islabelled():
+                samples.set_label('nlive', nlive_label)
 
-        samples.tex['nlive'] = r'$n_\mathrm{live}$'
         samples.beta = samples._beta
 
         if np.any(pandas.isna(samples.logL)):
@@ -928,7 +1017,6 @@ def merge_nested_samples(runs):
         Merged run.
     """
     merge = pandas.concat(runs, ignore_index=True)
-    merge.tex = {key: val for r in runs for key, val in r.tex.items()}
     return merge.recompute()
 
 
@@ -993,7 +1081,5 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples.set_weights(new_weights, inplace=True)
 
     new_samples.label = label
-    # Copy tex, if different values for same key exist, the last one is used.
-    new_samples.tex = {key: val for s in samples for key, val in s.tex.items()}
 
     return new_samples
