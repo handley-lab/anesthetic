@@ -76,23 +76,24 @@ class _LabelledObject(object):
             self.set_labels(labels, inplace=True)
 
     def islabelled(self, axis=0):
-        """Determine if labels are actually present."""
+        """Search for existence of labels."""
         intersection = set(self._labels) & set(self._get_axis(axis).names)
         return min(intersection) if intersection else False
 
     def get_labels(self, axis=0):
         """Retrieve labels from an axis."""
-        if self.islabelled(axis):
-            return self._get_axis(axis).get_level_values(
-                    self.islabelled(axis)).to_numpy()
+        labs = self.islabelled(axis)
+        if labs:
+            return self._get_axis(axis).get_level_values(labs).to_numpy()
         else:
             return None
 
     def get_labels_map(self, axis=0):
         """Retrieve mapping from paramnames to labels from an axis."""
+        labs = self.islabelled(axis)
         index = self._get_axis(axis)
-        if self.islabelled(axis):
-            return index.to_frame().droplevel('labels')['labels']
+        if labs:
+            return index.to_frame().droplevel(labs)[labs]
         else:
             return Series('', index=index)
 
@@ -101,11 +102,13 @@ class _LabelledObject(object):
         return self.get_labels_map(axis)[param]
 
     def set_label(self, param, value, axis=0, inplace=False):
+        """Set a specific label to a specific value on an axis."""
         labels = self.get_labels_map(axis)
         labels[param] = value
         return self.set_labels(labels, axis=axis, inplace=inplace)
 
     def drop_labels(self, axis=0):
+        """Drop the labels from an axis if present."""
         axes = np.atleast_1d(axis)
         result = self
         for axis in axes:
@@ -143,19 +146,19 @@ class _LabelledObject(object):
         else:
             result = self.copy()
 
-        islabelled = result.islabelled(axis)
+        labs = result.islabelled(axis)
 
         if labels is None:
-            if islabelled:
+            if labs:
                 result = result.drop_labels(axis)
         else:
             names = [n for n in result._get_axis(axis).names
-                     if n != islabelled]
+                     if n != labs]
             index = [result._get_axis(axis).get_level_values(n) for n in names]
             if level is None:
-                if islabelled:
-                    level = result._get_axis(axis).names.index(islabelled)
-                    names.insert(level, islabelled)
+                if labs:
+                    level = result._get_axis(axis).names.index(labs)
+                    names.insert(level, labs)
                 else:
                     level = len(index)
                     names.insert(level, result._labels[axis])

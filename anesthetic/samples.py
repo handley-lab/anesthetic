@@ -36,7 +36,36 @@ class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
         if labels is not None:
             if isinstance(labels, dict):
                 labels = [labels.get(p, '') for p in self]
-            self.set_labels(labels, axis=1, inplace=True)
+            self.set_labels(labels, inplace=True)
+
+    def islabelled(self, axis=1):
+        """Search for existence of labels."""
+        return super().islabelled(axis=axis)
+
+    def get_labels(self, axis=1):
+        """Retrieve labels from an axis."""
+        return super().get_labels(axis=axis)
+
+    def get_labels_map(self, axis=1):
+        """Retrieve mapping from paramnames to labels from an axis."""
+        return super().get_labels_map(axis=axis)
+
+    def get_label(self, param, axis=1):
+        """Retrieve mapping from paramnames to labels from an axis."""
+        return super().get_label(param, axis=axis)
+
+    def set_label(self, param, value, axis=1):
+        """Set a specific label to a specific value on an axis."""
+        return super().set_label(param, value, axis=axis, inplace=True)
+
+    def drop_labels(self, axis=1):
+        """Drop the labels from an axis if present."""
+        return super().drop_labels(axis)
+
+    def set_labels(self, labels, axis=1, inplace=False, level=None):
+        """Set labels along an axis."""
+        return super().set_labels(labels, axis=axis,
+                                  inplace=inplace, level=level)
 
     @property
     def _constructor(self):
@@ -56,6 +85,10 @@ class WeightedLabelledSeries(WeightedSeries, LabelledSeries):
         if not hasattr(self, '_labels'):
             self._labels = ('weights', 'labels')
         super().__init__(*args, **kwargs)
+
+    def set_label(self, param, value, axis=0):
+        """Set a specific label to a specific value."""
+        return super().set_label(param, value, axis=axis, inplace=True)
 
     @property
     def _constructor(self):
@@ -119,8 +152,7 @@ class Samples(WeightedLabelledDataFrame):
         if logL is not None:
             self['logL'] = logL
             if self.islabelled(axis=1):
-                self.set_label('logL', r'$\ln\mathcal{L}$',
-                               axis=1, inplace=True)
+                self.set_label('logL', r'$\ln\mathcal{L}$')
 
     @property
     def _constructor(self):
@@ -577,30 +609,27 @@ class NestedSamples(Samples):
         """
         logw = self.logw(nsamples, beta)
         if nsamples is None and beta is None:
-            samples = self._constructor_sliced(index=self.columns[:0])
-            axis = 0
+            samples = self._constructor_sliced(index=self.columns[:0],
+                                               dtype=float)
         else:
             samples = WeightedLabelledDataFrame(index=logw.columns,
                                                 columns=self.columns[:0])
-            axis = 1
         samples['logZ'] = self.logZ(logw)
-        samples.set_label('logZ', r'$\ln\mathcal{Z}$', axis=axis, inplace=True)
+        samples.set_label('logZ', r'$\ln\mathcal{Z}$')
         w = np.exp(logw-samples['logZ'])
 
         betalogL = self._betalogL(beta)
         S = (logw*0).add(betalogL, axis=0) - samples.logZ
 
         samples['D_KL'] = (S*w).sum()
-        samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$',
-                          axis=axis, inplace=True)
+        samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$')
 
         samples['d_G'] = ((S-samples.D_KL)**2*w).sum()
-        samples.set_label('d_G', r'$d_\mathrm{G}$', axis=axis, inplace=True)
+        samples.set_label('d_G', r'$d_\mathrm{G}$')
 
         samples['logL_P'] = samples['logZ'] + samples['D_KL']
         samples.set_label('logL_P',
-                          r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$',
-                          axis=axis, inplace=True)
+                          r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$')
         samples.label = self.label
         return samples
 
@@ -929,8 +958,7 @@ class NestedSamples(Samples):
                 label = r'$\ln\mathcal{L}_\mathrm{birth}$'
                 samples['logL_birth'] = logL_birth
                 if self.islabelled(axis=1):
-                    samples.set_label('logL_birth', label,
-                                      axis=1, inplace=True)
+                    samples.set_label('logL_birth', label)
 
             if 'logL_birth' not in samples:
                 raise RuntimeError("Cannot recompute run without "
@@ -956,8 +984,7 @@ class NestedSamples(Samples):
             nlive = compute_nlive(samples.logL, samples.logL_birth)
             samples['nlive'] = nlive
             if self.islabelled(axis=1):
-                samples.set_label('nlive', nlive_label,
-                                  axis=1, inplace=True)
+                samples.set_label('nlive', nlive_label)
 
         samples.beta = samples._beta
 

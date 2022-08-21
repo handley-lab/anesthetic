@@ -84,6 +84,6 @@ def read_cobaya(root, *args, **kwargs):
     if (samples.chain == samples.chain.iloc[0]).all():
         samples.drop('chain', inplace=True, axis=1)
     else:
-        samples.set_label('chain', r'$n_\mathrm{chain}$', axis=1, inplace=True)
+        samples.set_label('chain', r'$n_\mathrm{chain}$')
 
     return samples
