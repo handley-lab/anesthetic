@@ -111,14 +111,14 @@ def test_manual_columns():
     ns_params = ['logL', 'logL_birth', 'nlive']
     mcmc = read_chains('./tests/example_data/gd')
     ns = read_chains('./tests/example_data/pc')
-    assert_array_equal(mcmc.drop_labels(1).columns, old_params + mcmc_params)
-    assert_array_equal(ns.drop_labels(1).columns, old_params + ns_params)
+    assert_array_equal(mcmc.drop_labels().columns, old_params + mcmc_params)
+    assert_array_equal(ns.drop_labels().columns, old_params + ns_params)
 
     new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
     mcmc = read_chains('./tests/example_data/gd', columns=new_params)
     ns = read_chains('./tests/example_data/pc', columns=new_params)
-    assert_array_equal(mcmc.drop_labels(1).columns, new_params + mcmc_params)
-    assert_array_equal(ns.drop_labels(1).columns, new_params + ns_params)
+    assert_array_equal(mcmc.drop_labels().columns, new_params + mcmc_params)
+    assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
 
 
 def test_plot_2d_kinds():
@@ -654,22 +654,22 @@ def test_stats():
 
     stats = pc.stats(nsamples=nsamples)
     assert isinstance(stats, WeightedLabelledDataFrame)
-    assert_array_equal(stats.drop_labels(1).columns, vals)
-    assert_array_equal(stats.get_labels(1), labels)
+    assert_array_equal(stats.drop_labels().columns, vals)
+    assert_array_equal(stats.get_labels(), labels)
     assert stats.index.name == 'samples'
     assert_array_equal(stats.index, range(nsamples))
 
     stats = pc.stats(beta=beta)
     assert isinstance(stats, WeightedLabelledDataFrame)
-    assert_array_equal(stats.drop_labels(1).columns, vals)
-    assert_array_equal(stats.get_labels(1), labels)
+    assert_array_equal(stats.drop_labels().columns, vals)
+    assert_array_equal(stats.get_labels(), labels)
     assert stats.index.name == 'beta'
     assert_array_equal(stats.index, beta)
 
     stats = pc.stats(nsamples=nsamples, beta=beta)
     assert isinstance(stats, WeightedLabelledDataFrame)
-    assert_array_equal(stats.drop_labels(1).columns, vals)
-    assert_array_equal(stats.get_labels(1), labels)
+    assert_array_equal(stats.drop_labels().columns, vals)
+    assert_array_equal(stats.get_labels(), labels)
     assert stats.index.names == ['beta', 'samples']
     assert stats.index.levshape == (len(beta), nsamples)
 
@@ -1194,7 +1194,7 @@ def test_samples_dot_plot():
 
 def test_fixed_width():
     samples = read_chains('./tests/example_data/pc')
-    labels = samples.get_labels(axis=1)
+    labels = samples.get_labels()
     columns = ['A really really long column label'] + list(samples.columns[1:])
     samples.columns = columns
     assert 'A really r...' in str(samples)

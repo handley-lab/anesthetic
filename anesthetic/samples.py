@@ -193,7 +193,7 @@ class Samples(WeightedLabelledDataFrame):
 
         """
         if not isinstance(axes, Series):
-            fig, axes = make_1d_axes(axes, labels=self.get_labels_map(1))
+            fig, axes = make_1d_axes(axes, labels=self.get_labels_map())
         else:
             fig = axes.bfill().to_numpy().flatten()[0].figure
 
@@ -202,7 +202,7 @@ class Samples(WeightedLabelledDataFrame):
 
         for x, ax in axes.iteritems():
             if x in self and kwargs['kind'] is not None:
-                xlabel = self.get_label(x, axis=1)
+                xlabel = self.get_label(x)
                 self[x].plot(ax=ax, xlabel=xlabel,
                              *args, **kwargs)
                 ax.set_xlabel(xlabel)
@@ -296,7 +296,7 @@ class Samples(WeightedLabelledDataFrame):
             local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, DataFrame):
-            fig, axes = make_2d_axes(axes, labels=self.get_labels(1),
+            fig, axes = make_2d_axes(axes, labels=self.get_labels(),
                                      upper=('upper' in kind),
                                      lower=('lower' in kind),
                                      diagonal=('diagonal' in kind))
@@ -310,8 +310,8 @@ class Samples(WeightedLabelledDataFrame):
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
                     if x in self and y in self and lkwargs['kind'] is not None:
-                        xlabel = self.get_label(x, axis=1)
-                        ylabel = self.get_label(y, axis=1)
+                        xlabel = self.get_label(x)
+                        ylabel = self.get_label(y)
                         if x == y:
                             self[x].plot(ax=ax.twin, xlabel=xlabel,
                                          *args, **lkwargs)
@@ -957,7 +957,7 @@ class NestedSamples(Samples):
             if logL_birth is not None:
                 label = r'$\ln\mathcal{L}_\mathrm{birth}$'
                 samples['logL_birth'] = logL_birth
-                if self.islabelled(axis=1):
+                if self.islabelled():
                     samples.set_label('logL_birth', label)
 
             if 'logL_birth' not in samples:
@@ -983,7 +983,7 @@ class NestedSamples(Samples):
             samples.reset_index(drop=True, inplace=True)
             nlive = compute_nlive(samples.logL, samples.logL_birth)
             samples['nlive'] = nlive
-            if self.islabelled(axis=1):
+            if self.islabelled():
                 samples.set_label('nlive', nlive_label)
 
         samples.beta = samples._beta

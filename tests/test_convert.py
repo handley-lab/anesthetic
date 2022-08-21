@@ -13,7 +13,7 @@ def test_to_getdist():
                            anesthetic_samples.get_weights())
 
         for param, p in zip(getdist_samples.getParamNames().names,
-                            anesthetic_samples.drop_labels(1).columns):
+                            anesthetic_samples.drop_labels().columns):
 
             assert param.name == p
     except ModuleNotFoundError:
