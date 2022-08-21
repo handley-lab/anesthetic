@@ -1,4 +1,3 @@
-import matplotlib_agg  # noqa: F401
 import pytest
 import numpy as np
 import sys
