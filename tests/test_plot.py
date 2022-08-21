@@ -11,8 +11,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              basic_cmap, AxesSeries, AxesDataFrame)
 from numpy.testing import assert_array_equal
 
-from matplotlib.contour import QuadContourSet
-from matplotlib.tri import TriContourSet
+from matplotlib.contour import ContourSet
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch, Polygon
 from matplotlib.colors import ColorConverter, to_rgba
@@ -310,7 +309,7 @@ def test_kde_plot_1d(plot_1d):
         # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
         fig, ax = plt.subplots()
         data = np.random.uniform(size=1000)
-        plot_1d(ax, data)
+        plot_1d(ax, data, q=0)
         xmin, xmax = ax.get_xlim()
         assert xmin <= 0
         assert xmax >= 1
@@ -504,12 +503,8 @@ def test_contour_plot_2d(contour_plot_2d):
         data_x = np.random.randn(1000)
         data_y = np.random.randn(1000)
         cf, ct = contour_plot_2d(ax, data_x, data_y)
-        if contour_plot_2d is fastkde_contour_plot_2d:
-            assert isinstance(cf, QuadContourSet)
-            assert isinstance(ct, QuadContourSet)
-        elif contour_plot_2d is kde_contour_plot_2d:
-            assert isinstance(cf, TriContourSet)
-            assert isinstance(ct, TriContourSet)
+        assert isinstance(cf, ContourSet)
+        assert isinstance(ct, ContourSet)
 
         # Check levels
         with pytest.raises(ValueError):
@@ -569,18 +564,40 @@ def test_contour_plot_2d(contour_plot_2d):
         fig, ax = plt.subplots()
         data_x = np.random.uniform(size=1000)
         data_y = np.random.uniform(size=1000)
-        contour_plot_2d(ax, data_x, data_y)
+        contour_plot_2d(ax, data_x, data_y, q=0)
         xmin, xmax = ax.get_xlim()
         ymin, ymax = ax.get_ylim()
-        assert xmin <= 0
-        assert xmax >= 1
-        assert ymin <= 0
-        assert ymax >= 1
+        if contour_plot_2d is fastkde_contour_plot_2d:
+            assert xmin <= 0
+            assert xmax >= 1
+            assert ymin <= 0
+            assert ymax >= 1
+        elif contour_plot_2d is kde_contour_plot_2d:
+            assert xmin == pytest.approx(0, abs=0.01)
+            assert xmax == pytest.approx(1, abs=0.01)
+            assert ymin == pytest.approx(0, abs=0.01)
+            assert ymax == pytest.approx(1, abs=0.01)
         plt.close("all")
 
     except ImportError:
         if 'fastkde' not in sys.modules:
             pass
+
+
+def test_kde_plot_nplot():
+    fig, ax = plt.subplots()
+    np.random.seed(0)
+    data = np.random.randn(1000)
+    line, = kde_plot_1d(ax, data, ncompress=1000, nplot_1d=200)
+    assert line.get_xdata().size == 200
+    plt.close("all")
+
+    fig, ax = plt.subplots()
+    np.random.seed(0)
+    data_x = np.random.randn(1000)
+    data_y = np.random.randn(1000)
+    kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
+    plt.close("all")
 
 
 @pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
