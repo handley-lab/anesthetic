@@ -226,13 +226,13 @@ class TrianglePlot(Widget):
         self.fig.delaxes(self.ax)
         _, self.ax = make_2d_axes([], fig=self.fig, subplot_spec=self.gridspec)
 
-    def draw(self, labels, tex={}):
-        """Draw a new triangular grid for list of parameters labels.
+    def draw(self, params, labels={}):
+        """Draw a new triangular grid for list of parameters.
 
         Parameters
         ----------
-            labels: list(str)
-                labels for the triangular grid.
+            params: list(str)
+                params for the triangular grid.
 
         """
         # Remove any existing axes
@@ -244,7 +244,7 @@ class TrianglePlot(Widget):
                     self.fig.delaxes(ax)
 
         # Set up the axes
-        _, self.ax = make_2d_axes(labels, upper=False, tex=tex,
+        _, self.ax = make_2d_axes(params, upper=False, labels=labels,
                                   fig=self.fig, subplot_spec=self.gridspec)
 
         # Plot no points  points.

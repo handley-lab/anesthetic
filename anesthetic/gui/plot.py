@@ -159,7 +159,7 @@ class RunPlotter(object):
         if params:
             self.params = np.array(params)
         else:
-            self.params = np.array(self.samples.columns[:10])
+            self.params = np.array(self.samples.drop_labels().columns[:10])
 
         self.fig = plt.figure()
         self._set_up()
@@ -213,7 +213,8 @@ class RunPlotter(object):
 
     def redraw(self, _):
         """Redraw the triangle plot upon parameter updating."""
-        self.triangle.draw(self.param_choice(), self.samples.tex)
+        self.triangle.draw(self.param_choice(),
+                           self.samples.get_labels_map())
         self.update(None)
         self.reset_range(None)
         self.fig.tight_layout()

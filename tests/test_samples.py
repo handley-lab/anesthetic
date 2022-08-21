@@ -2,16 +2,18 @@ import warnings
 import sys
 import pytest
 import numpy as np
-from pandas import DataFrame, Series
+from pandas import MultiIndex
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from anesthetic.weighted_pandas import WeightedSeries, WeightedDataFrame
-from anesthetic.samples import merge_nested_samples, merge_samples_weighted
 from anesthetic import (
     Samples, MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes,
     read_chains
 )
+from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
+                                WeightedLabelledSeries,
+                                WeightedLabelledDataFrame)
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
@@ -28,7 +30,8 @@ def test_build_samples():
     logL = np.random.rand(nsamps)
     weights = np.random.randint(1, 20, size=nsamps)
     params = ['A', 'B', 'C']
-    tex = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
+    labels = {'A': '$A$', 'B': '$B$', 'C': '$C$'}
+    labels = [labels.get(p, p) for p in params]
 
     s = Samples(data=data)
     assert len(s) == nsamps
@@ -52,9 +55,7 @@ def test_build_samples():
     assert len(s) == nsamps
     assert_array_equal(s.columns, ['A', 'B', 'C'])
 
-    s = Samples(data=data, tex=tex)
-    for p in params:
-        assert s.tex[p] == tex[p]
+    s = Samples(data=data, columns=params, labels=labels)
 
     mc = MCMCSamples(data=data, logL=logL, weights=weights)
     assert len(mc) == nsamps
@@ -109,14 +110,14 @@ def test_manual_columns():
     ns_params = ['logL', 'logL_birth', 'nlive']
     mcmc = read_chains('./tests/example_data/gd')
     ns = read_chains('./tests/example_data/pc')
-    assert_array_equal(mcmc.columns, old_params + mcmc_params)
-    assert_array_equal(ns.columns, old_params + ns_params)
+    assert_array_equal(mcmc.drop_labels().columns, old_params + mcmc_params)
+    assert_array_equal(ns.drop_labels().columns, old_params + ns_params)
 
     new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
     mcmc = read_chains('./tests/example_data/gd', columns=new_params)
     ns = read_chains('./tests/example_data/pc', columns=new_params)
-    assert_array_equal(mcmc.columns, new_params + mcmc_params)
-    assert_array_equal(ns.columns, new_params + ns_params)
+    assert_array_equal(mcmc.drop_labels().columns, new_params + mcmc_params)
+    assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
 
 
 def test_plot_2d_kinds():
@@ -497,19 +498,19 @@ def test_logZ():
     beta = [0., 0.5, 1.]
 
     logZ = pc.logZ(nsamples=nsamples)
-    assert isinstance(logZ, Series)
+    assert isinstance(logZ, WeightedLabelledSeries)
     assert logZ.index.name == 'samples'
     assert logZ.name == 'logZ'
     assert_array_equal(logZ.index, range(nsamples))
 
     logZ = pc.logZ(beta=beta)
-    assert isinstance(logZ, Series)
+    assert isinstance(logZ, WeightedLabelledSeries)
     assert logZ.index.name == 'beta'
     assert logZ.name == 'logZ'
     assert len(logZ) == len(beta)
 
     logZ = pc.logZ(nsamples=nsamples, beta=beta)
-    assert isinstance(logZ, Series)
+    assert isinstance(logZ, WeightedLabelledSeries)
     assert logZ.index.names == ['beta', 'samples']
     assert logZ.name == 'logZ'
     assert logZ.index.levshape == (len(beta), nsamples)
@@ -531,19 +532,19 @@ def test_D_KL():
     beta = [0., 0.5, 1.]
 
     D_KL = pc.D_KL(nsamples=nsamples)
-    assert isinstance(D_KL, Series)
+    assert isinstance(D_KL, WeightedLabelledSeries)
     assert D_KL.index.name == 'samples'
     assert D_KL.name == 'D_KL'
     assert_array_equal(D_KL.index, range(nsamples))
 
     D_KL = pc.D_KL(beta=beta)
-    assert isinstance(D_KL, Series)
+    assert isinstance(D_KL, WeightedLabelledSeries)
     assert D_KL.index.name == 'beta'
     assert D_KL.name == 'D_KL'
     assert len(D_KL) == len(beta)
 
     D_KL = pc.D_KL(nsamples=nsamples, beta=beta)
-    assert isinstance(D_KL, Series)
+    assert isinstance(D_KL, WeightedLabelledSeries)
     assert D_KL.index.names == ['beta', 'samples']
     assert D_KL.name == 'D_KL'
     assert D_KL.index.levshape == (len(beta), nsamples)
@@ -565,19 +566,19 @@ def test_d_G():
     beta = [0., 0.5, 1.]
 
     d_G = pc.d_G(nsamples=nsamples)
-    assert isinstance(d_G, Series)
+    assert isinstance(d_G, WeightedLabelledSeries)
     assert d_G.index.name == 'samples'
     assert d_G.name == 'd_G'
     assert_array_equal(d_G.index, range(nsamples))
 
     d_G = pc.d_G(beta=beta)
-    assert isinstance(d_G, Series)
+    assert isinstance(d_G, WeightedLabelledSeries)
     assert d_G.index.name == 'beta'
     assert d_G.name == 'd_G'
     assert len(d_G) == len(beta)
 
     d_G = pc.d_G(nsamples=nsamples, beta=beta)
-    assert isinstance(d_G, Series)
+    assert isinstance(d_G, WeightedLabelledSeries)
     assert d_G.index.names == ['beta', 'samples']
     assert d_G.name == 'd_G'
     assert d_G.index.levshape == (len(beta), nsamples)
@@ -599,19 +600,19 @@ def test_logL_P():
     beta = [0., 0.5, 1.]
 
     logL_P = pc.logL_P(nsamples=nsamples)
-    assert isinstance(logL_P, Series)
+    assert isinstance(logL_P, WeightedLabelledSeries)
     assert logL_P.index.name == 'samples'
     assert logL_P.name == 'logL_P'
     assert_array_equal(logL_P.index, range(nsamples))
 
     logL_P = pc.logL_P(beta=beta)
-    assert isinstance(logL_P, Series)
+    assert isinstance(logL_P, WeightedLabelledSeries)
     assert logL_P.index.name == 'beta'
     assert logL_P.name == 'logL_P'
     assert len(logL_P) == len(beta)
 
     logL_P = pc.logL_P(nsamples=nsamples, beta=beta)
-    assert isinstance(logL_P, Series)
+    assert isinstance(logL_P, WeightedLabelledSeries)
     assert logL_P.index.names == ['beta', 'samples']
     assert logL_P.name == 'logL_P'
     assert logL_P.index.levshape == (len(beta), nsamples)
@@ -639,34 +640,35 @@ def test_stats():
     beta = [0., 0.5, 1.]
 
     vals = ['logZ', 'D_KL', 'd_G', 'logL_P']
-    tex = {'logZ': r'$\ln\mathcal{Z}$',
-           'D_KL': r'$\mathcal{D}_\mathrm{KL}$',
-           'd_G': r'$d_\mathrm{G}$',
-           'logL_P': r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$'}
+
+    labels = [r'$\ln\mathcal{Z}$',
+              r'$\mathcal{D}_\mathrm{KL}$',
+              r'$d_\mathrm{G}$',
+              r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$']
 
     stats = pc.stats()
-    assert isinstance(stats, Series)
-    assert_array_equal(stats.index, vals)
-    assert stats.tex == tex
+    assert isinstance(stats, WeightedLabelledSeries)
+    assert_array_equal(stats.drop_labels().index, vals)
+    assert_array_equal(stats.get_labels(), labels)
 
     stats = pc.stats(nsamples=nsamples)
-    assert isinstance(stats, DataFrame)
-    assert_array_equal(stats.columns, vals)
-    assert stats.tex == tex
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals)
+    assert_array_equal(stats.get_labels(), labels)
     assert stats.index.name == 'samples'
     assert_array_equal(stats.index, range(nsamples))
 
     stats = pc.stats(beta=beta)
-    assert isinstance(stats, DataFrame)
-    assert_array_equal(stats.columns, vals)
-    assert stats.tex == tex
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals)
+    assert_array_equal(stats.get_labels(), labels)
     assert stats.index.name == 'beta'
     assert_array_equal(stats.index, beta)
 
     stats = pc.stats(nsamples=nsamples, beta=beta)
-    assert isinstance(stats, DataFrame)
-    assert_array_equal(stats.columns, vals)
-    assert stats.tex == tex
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals)
+    assert_array_equal(stats.get_labels(), labels)
     assert stats.index.names == ['beta', 'samples']
     assert stats.index.levshape == (len(beta), nsamples)
 
@@ -731,17 +733,14 @@ def test_merging():
     assert nlive == nlive_1 + nlive_2
     assert (samples_1.logZ() > samples.logZ() > samples_2.logZ()
             or samples_1.logZ() < samples.logZ() < samples_2.logZ())
-    assert 'x0' in samples.tex
 
 
 def test_weighted_merging():
     # Generate some data to try it out:
     samples_1 = read_chains('./tests/example_data/pc')
     samples_2 = read_chains('./tests/example_data/pc_250')
-    samples_1['xtest'] = 7*samples_1['x3']
-    samples_2['xtest'] = samples_2['x3']
-    samples_1.tex['xtest'] = "$x_{t,1}$"
-    samples_2.tex['xtest'] = "$x_{t,2}$"
+    samples_1[('xtest', '$x_t$')] = 7*samples_1['x3']
+    samples_2[('xtest', "$x_t$")] = samples_2['x3']
     mean1 = samples_1.xtest.mean()
     mean2 = samples_2.xtest.mean()
 
@@ -753,12 +752,6 @@ def test_weighted_merging():
     mean = samples.xtest.mean()
     assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
-    # Test tex and label
-    for key in samples.keys():
-        if key in samples_2.keys():
-            assert samples.tex[key] == samples_2.tex[key]
-        else:
-            assert samples.tex[key] == samples_1.tex[key]
     assert samples.label == 'Merged label'
 
     # Test that label is None when no label is passed
@@ -833,8 +826,7 @@ def test_beta():
 
 def test_beta_with_logL_infinities():
     ns = read_chains("./tests/example_data/pc")
-    for i in range(10):
-        ns.loc[i, 'logL'] = -np.inf
+    ns.loc[:10, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
 
     ns.recompute(inplace=True)
     assert (ns.logL == -np.inf).sum() == 0
@@ -890,7 +882,7 @@ def test_contour_plot_2d_nan():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
 
-    ns.loc[:9, 'x0'] = np.nan
+    ns.loc[:9, ('x0', '$x_0$')] = np.nan
     with pytest.raises((np.linalg.LinAlgError, RuntimeError, ValueError)):
         ns.plot_2d(['x0', 'x1'])
 
@@ -977,7 +969,6 @@ def test_NestedSamples_importance_sample():
     ns0.importance_sample(logL_new, inplace=True)
     assert type(ns0) is NestedSamples
     assert_array_equal(ns0, ns1)
-    assert ns0.tex == ns1.tex
     assert ns0.root == ns1.root
     assert ns0.label == ns1.label
     assert ns0.beta == ns1.beta
@@ -1021,7 +1012,6 @@ def test_MCMCSamples_importance_sample():
     assert np.all(mc3.x0 > -0.3)
 
     for mc in [mc1, mc2, mc3]:
-        assert mc.tex == mc0.tex
         assert mc.root == mc0.root
         assert mc.label == mc0.label
         assert mc._metadata == mc0._metadata
@@ -1030,7 +1020,6 @@ def test_MCMCSamples_importance_sample():
     mc0.importance_sample(mask, action='mask', inplace=True)
     assert isinstance(mc0, MCMCSamples)
     assert_array_equal(mc3, mc0)
-    assert mc3.tex == mc0.tex
     assert mc3.root == mc0.root
     assert mc3.label == mc0.label
     assert mc3._metadata == mc0._metadata
@@ -1089,7 +1078,7 @@ def test_recompute():
     recompute = pc.recompute()
     assert recompute is not pc
 
-    pc.loc[1000, 'logL'] = pc.logL_birth.iloc[1000]-1
+    pc.loc[1000, ('logL', r'$\ln\mathcal{L}$')] = pc.logL_birth.iloc[1000]-1
     with pytest.warns(RuntimeWarning):
         recompute = pc.recompute()
     assert len(recompute) == len(pc) - 1
@@ -1105,10 +1094,9 @@ def test_NaN():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         pc_new = pc.copy()
-        pc_new.loc[2, "logL"] = np.nan
+        pc_new.loc[2, ('logL', r'$\ln\mathcal{L}$')] = np.nan
         pc_new.recompute(inplace=True)
-        assert len(w) == 1
-        assert "NaN encountered in logL." in str(w[-1].message)
+        assert "NaN encountered in logL." in str(w[0].message)
         assert len(pc_new) == len(pc) - 1
         assert pc_new.nlive.iloc[0] == 124
 
@@ -1203,13 +1191,45 @@ def test_samples_dot_plot():
     plt.close("all")
 
 
+def test_fixed_width():
+    samples = read_chains('./tests/example_data/pc')
+    labels = samples.get_labels()
+    columns = ['A really really long column label'] + list(samples.columns[1:])
+    samples.columns = columns
+    assert 'A really r...' in str(samples)
+
+    mcolumns = MultiIndex.from_arrays([columns, labels])
+    samples.columns = mcolumns
+    assert 'A really re...' in str(WeightedLabelledDataFrame(samples))
+
+    mcolumns = MultiIndex.from_arrays([columns, np.random.rand(len(columns))])
+    samples.columns = mcolumns
+    assert 'A really re...' in str(WeightedLabelledDataFrame(samples))
+
+
 def test_samples_plot_labels():
     samples = read_chains('./tests/example_data/pc')
     columns = ['x0', 'x1', 'x2', 'x3', 'x4']
     fig, axes = samples.plot_2d(columns)
 
     for col, ax in zip(columns, axes.loc[:, 'x0']):
-        assert samples.tex[col] == ax.get_ylabel()
+        assert samples.get_label(col, 1) == ax.get_ylabel()
 
     for col, ax in zip(columns, axes.loc['x4', :]):
-        assert samples.tex[col] == ax.get_xlabel()
+        assert samples.get_label(col, 1) == ax.get_xlabel()
+
+
+def test_constructors():
+    samples = read_chains('./tests/example_data/pc')
+
+    assert isinstance(samples['x0'], WeightedLabelledSeries)
+    assert isinstance(samples.loc[0], WeightedLabelledSeries)
+    assert samples['x0'].islabelled()
+    assert samples.loc[0].islabelled()
+
+    assert isinstance(samples.T.loc['x0'], WeightedLabelledSeries)
+    assert isinstance(samples.T[0], WeightedLabelledSeries)
+    assert samples.T.loc['x0'].islabelled()
+    assert samples.T[0].islabelled()
+
+    assert isinstance(samples['x0'].to_frame(), WeightedLabelledDataFrame)
