@@ -32,8 +32,7 @@ from anesthetic.utils import nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
-                              iso_probability_contours_from_samples,
-                              scaled_triangulation, match_contour_to_contourf)
+                              match_contour_to_contourf)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
@@ -396,6 +395,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
         - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
         - tuple: quantile range, e.g. (0.16, 0.84)
+        Default 5
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -478,7 +478,15 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         Sample weights.
 
     ncompress: int, optional
-        Degree of compression. Default 1000
+        Degree of compression.
+        If int: number of samples returned.
+        If True: compresses to the channel capacity.
+        If False: no compression.
+        Default False
+
+    nplot_1d: int, optional
+        Number of plotting points to use.
+        Default 100
 
     levels: list
         values at which to draw iso-probability lines.
@@ -490,6 +498,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
         - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
         - tuple: quantile range, e.g. (0.16, 0.84)
+        Default 5
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
@@ -514,7 +523,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         data = data[weights != 0]
         weights = weights[weights != 0]
 
-    ncompress = kwargs.pop('ncompress', 1000)
+    ncompress = kwargs.pop('ncompress', False)
+    nplot = kwargs.pop('nplot_1d', 100)
     bw_method = kwargs.pop('bw_method', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
     density = kwargs.pop('density', False)
@@ -533,27 +543,28 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
 
-    x, w = sample_compression_1d(data, weights, ncompress)
-    kde = gaussian_kde(x, weights=w, bw_method=bw_method)
+    data_compressed, w = sample_compression_1d(data, weights, ncompress)
+    kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
+    xmin = quantile(data, q[0], weights)
+    xmax = quantile(data, q[-1], weights)
+    x = np.linspace(xmin, xmax, nplot)
+
     p = kde(x)
     p /= p.max()
-    i = ((x > quantile(x, q[0], w)) & (x < quantile(x, q[-1], w)))
     bw = np.sqrt(kde.covariance[0, 0])
-    pp = cut_and_normalise_gaussian(x[i], p[i], bw=bw,
-                                    xmin=data.min(), xmax=data.max())
+    pp = cut_and_normalise_gaussian(x, p, bw, xmin=data.min(), xmax=data.max())
     pp /= pp.max()
-    area = np.trapz(x=x[i], y=pp) if density else 1
-    ans = ax.plot(x[i], pp/area, color=color, *args, **kwargs)
+    area = np.trapz(x=x, y=pp) if density else 1
+    ans = ax.plot(x, pp/area, color=color, *args, **kwargs)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
             facecolor = color
-        c = iso_probability_contours_from_samples(pp, contours=levels,
-                                                  weights=w)
+        c = iso_probability_contours(pp, contours=levels)
         cmap = basic_cmap(facecolor)
         fill = []
         for j in range(len(c)-1):
-            fill.append(ax.fill_between(x[i], pp, where=pp >= c[j],
+            fill.append(ax.fill_between(x, pp, where=pp >= c[j],
                         color=cmap(c[j]), edgecolor=edgecolor))
 
         return ans, fill
@@ -584,6 +595,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
         - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
         - tuple: quantile range, e.g. (0.16, 0.84)
+        Default 5
 
     Returns
     -------
@@ -758,7 +770,14 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     ncompress: int, optional
         Degree of compression.
-        optional, Default 1000
+        If int: number of samples returned.
+        If True: compresses to the channel capacity.
+        If False: no compression.
+        Default 1000
+
+    nplot_2d: int, optional
+        Number of plotting points to use.
+        Default 1000
 
     Returns
     -------
@@ -779,6 +798,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         weights = weights[weights != 0]
 
     ncompress = kwargs.pop('ncompress', 1000)
+    nplot = kwargs.pop('nplot_2d', 1000)
     bw_method = kwargs.pop('bw_method', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
@@ -798,28 +818,29 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                               weights, ncompress)
     kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
 
-    x, y = kde.resample(ncompress)
-    x = np.concatenate([tri.x, x])
-    y = np.concatenate([tri.y, y])
-    w = np.concatenate([w, np.zeros(ncompress)])
-    tri = scaled_triangulation(x, y, cov)
+    q = kwargs.pop('q', 5)
+    q = quantile_plot_interval(q=q)
+    xmin = quantile(data_x, q[0], weights)
+    xmax = quantile(data_x, q[-1], weights)
+    ymin = quantile(data_y, q[0], weights)
+    ymax = quantile(data_y, q[-1], weights)
+    X, Y = np.mgrid[xmin:xmax:1j*np.sqrt(nplot), ymin:ymax:1j*np.sqrt(nplot)]
 
-    p = kde([tri.x, tri.y])
+    P = kde([X.ravel(), Y.ravel()]).reshape(X.shape)
 
     bw_x = np.sqrt(kde.covariance[0, 0])
-    p = cut_and_normalise_gaussian(tri.x, p, bw=bw_x,
+    P = cut_and_normalise_gaussian(X, P, bw=bw_x,
                                    xmin=data_x.min(), xmax=data_x.max())
     bw_y = np.sqrt(kde.covariance[1, 1])
-    p = cut_and_normalise_gaussian(tri.y, p, bw=bw_y,
+    P = cut_and_normalise_gaussian(Y, P, bw=bw_y,
                                    xmin=data_y.min(), xmax=data_y.max())
 
-    levels = iso_probability_contours_from_samples(p, contours=levels,
-                                                   weights=w)
+    levels = iso_probability_contours(P, contours=levels)
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
-        contf = ax.tricontourf(tri, p, levels=levels, cmap=cmap, zorder=zorder,
-                               vmin=0, vmax=p.max(), *args, **kwargs)
+        contf = ax.contourf(X, Y, P, levels=levels, cmap=cmap, zorder=zorder,
+                            vmin=0, vmax=P.max(), *args, **kwargs)
         for c in contf.collections:
             c.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
@@ -835,10 +856,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                           ec=edgecolor if cmap is None else cmap(0.32))
         )
 
-    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=p.max())
-    cont = ax.tricontour(tri, p, levels=levels, zorder=zorder,
-                         vmin=vmin, vmax=vmax, linewidths=linewidths,
-                         colors=edgecolor, cmap=cmap, *args, **kwargs)
+    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=P.max())
+    cont = ax.contour(X, Y, P, levels=levels, zorder=zorder,
+                      vmin=vmin, vmax=vmax, linewidths=linewidths,
+                      colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     return contf, cont
 
@@ -868,6 +889,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
         - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
         - tuple: quantile range, e.g. (0.16, 0.84)
+        Default 5
 
     Returns
     -------

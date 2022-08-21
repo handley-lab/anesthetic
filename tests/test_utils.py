@@ -17,6 +17,9 @@ def test_compress_weights():
     assert_array_equal(w, np.ones(10))
     w = compress_weights(w=None, u=np.random.rand(10))
     assert_array_equal(w, np.ones(10))
+    r = np.random.rand(10)
+    w = compress_weights(w=r, u=None, ncompress=False)
+    assert_array_equal(w, r)
 
 
 def test_nest_level():
@@ -92,6 +95,11 @@ def test_sample_compression_1d():
     assert len(x) == n
     assert len(w) == n
     assert np.isclose(w.sum(), w_.sum())
+
+    x_ = np.random.rand(N)
+    w_ = np.random.randn(N)
+    x, w = sample_compression_1d(x_, w_, ncompress=True)
+    assert len(w) <= N
 
 
 def test_is_int():
