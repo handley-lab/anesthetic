@@ -27,10 +27,10 @@ def test_read_getdist():
     ))
     assert_array_equal(mcmc.get_weights(), w)
     params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'chain']
-    assert_array_equal(mcmc.columns, params)
-    tex = {'x0': '$x_0$', 'x1': '$x_1$', 'x2': '$x_2$', 'x3': '$x_3$',
-           'x4': '$x_4$', 'chain': r'$n_\mathrm{chain}$'}
-    assert mcmc.tex == tex
+    assert_array_equal(mcmc.drop_labels().columns, params)
+    labels = ['$x_0$', '$x_1$', '$x_2$', '$x_3$', '$x_4$',
+              r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
+    assert_array_equal(mcmc.get_labels(), labels)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
@@ -38,9 +38,9 @@ def test_read_getdist():
     w = np.loadtxt("./tests/example_data/gd_single.txt", usecols=0)
     assert_array_equal(mcmc.get_weights(), w)
     params.remove('chain')
-    assert_array_equal(mcmc.columns, params)
-    tex.pop('chain')
-    assert mcmc.tex == tex
+    assert_array_equal(mcmc.drop_labels().columns, params)
+    labels.remove(r'$n_\mathrm{chain}$')
+    assert_array_equal(mcmc.get_labels(), labels)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
     plt.close("all")
@@ -52,9 +52,9 @@ def test_read_getdist():
               './tests/example_data/gd.paramnames')
 
     params = [0, 1, 2, 3, 4, 'logL', 'chain']
-    assert all(mcmc.columns == params)
-    tex = {'chain': r'$n_\mathrm{chain}$'}
-    assert mcmc.tex == tex
+    assert all(mcmc.drop_labels().columns == params)
+    labels = ['', '', '', '', '', r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
+    assert_array_equal(mcmc.get_labels(), labels)
 
 
 @pytest.mark.xfail('getdist' not in sys.modules,
@@ -71,14 +71,12 @@ def test_read_cobayamcmc():
     assert_array_equal(mcmc.get_weights(), w)
     params = ['x0', 'x1', 'minuslogprior', 'minuslogprior__0', 'chi2',
               'chi2__norm', 'logL', 'chain']
-    assert_array_equal(mcmc.columns, params)
+    assert_array_equal(mcmc.drop_labels().columns, params)
     if 'getdist' in sys.modules:
-        tex = {'x0': '$x0$', 'x1': '$x1$', 'chi2': r'$\chi^2$',
-               'chi2__norm': r'$\chi^2_\mathrm{norm}$',
-               'chain': r'$n_\mathrm{chain}$'}
-    else:
-        tex = {'chain': r'$n_\mathrm{chain}$'}
-    assert mcmc.tex == tex
+        labels = ['$x0$', '$x1$', '', '', r'$\chi^2$',
+                  r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
+                  r'$n_\mathrm{chain}$']
+        assert_array_equal(mcmc.get_labels(), labels)
 
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
@@ -86,10 +84,10 @@ def test_read_cobayamcmc():
 
     # single chain file
     mcmc = read_cobaya('./tests/example_data/cb_single_chain')
-    tex.pop('chain')
-    assert mcmc.tex == tex
     params.remove('chain')
-    assert_array_equal(mcmc.columns, params)
+    assert_array_equal(mcmc.drop_labels().columns, params)
+    labels.remove(r'$n_\mathrm{chain}$')
+    assert_array_equal(mcmc.get_labels(), labels)
     # compare directly with getdist
     mcmc_gd = getdist.loadMCSamples(
         file_root="./tests/example_data/cb_single_chain"
@@ -111,35 +109,36 @@ def test_read_montepython():
               'gal545_A_143', 'gal545_A_143_217', 'gal545_A_217', 'calib_100T',
               'calib_217T', 'A_planck', 'z_reio', 'Omega_Lambda', 'YHe', 'H0',
               'A_s', 'logL', 'chain']
-    assert_array_equal(mcmc.columns, params)
-    tex = {'x0': r'$10^{-2}\omega_{b }$',
-           'x1': r'$\omega_{cdm }$',
-           'x2': r'$100\theta_{s }$',
-           'x3': '$ln10^{10}A_{s }$',
-           'n_s': '$n_{s }$',
-           'tau_reio': r'$\tau_{reio }$',
-           'A_cib_217': '$A_{cib 217 }$',
-           'xi_sz_cib': '$xi_{sz cib }$',
-           'A_sz': '$A_{sz }$',
-           'ps_A_100_100': '$ps_{A 100 100 }$',
-           'ps_A_143_143': '$ps_{A 143 143 }$',
-           'ps_A_143_217': '$ps_{A 143 217 }$',
-           'ps_A_217_217': '$ps_{A 217 217 }$',
-           'ksz_norm': '$ksz_{norm }$',
-           'gal545_A_100': '$gal545_{A 100 }$',
-           'gal545_A_143': '$gal545_{A 143 }$',
-           'gal545_A_143_217': '$gal545_{A 143 217 }$',
-           'gal545_A_217': '$gal545_{A 217 }$',
-           'calib_100T': '$10^{-3}calib_{100T }$',
-           'calib_217T': '$10^{-3}calib_{217T }$',
-           'A_planck': '$10^{-2}A_{planck }$',
-           'z_reio': '$z_{reio }$',
-           'Omega_Lambda': r'$\Omega_{\Lambda }$',
-           'YHe': '$YHe$',
-           'H0': '$H0$',
-           'A_s': '$10^{-9}A_{s }$',
-           'chain': r'$n_\mathrm{chain}$'}
-    assert mcmc.tex == tex
+    assert_array_equal(mcmc.drop_labels().columns, params)
+    labels = [r'$10^{-2}\omega_{b }$',
+              r'$\omega_{cdm }$',
+              r'$100\theta_{s }$',
+              '$ln10^{10}A_{s }$',
+              '$n_{s }$',
+              r'$\tau_{reio }$',
+              '$A_{cib 217 }$',
+              '$xi_{sz cib }$',
+              '$A_{sz }$',
+              '$ps_{A 100 100 }$',
+              '$ps_{A 143 143 }$',
+              '$ps_{A 143 217 }$',
+              '$ps_{A 217 217 }$',
+              '$ksz_{norm }$',
+              '$gal545_{A 100 }$',
+              '$gal545_{A 143 }$',
+              '$gal545_{A 143 217 }$',
+              '$gal545_{A 217 }$',
+              '$10^{-3}calib_{100T }$',
+              '$10^{-3}calib_{217T }$',
+              '$10^{-2}A_{planck }$',
+              '$z_{reio }$',
+              r'$\Omega_{\Lambda }$',
+              '$YHe$',
+              '$H0$',
+              '$10^{-9}A_{s }$',
+              r'$\ln\mathcal{L}$',
+              r'$n_\mathrm{chain}$']
+    assert_array_equal(mcmc.get_labels(), labels)
     assert_array_equal(mcmc.get_weights(), w)
     assert isinstance(mcmc, MCMCSamples)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
@@ -151,26 +150,26 @@ def test_read_multinest():
     np.random.seed(3)
     ns = read_multinest('./tests/example_data/mn')
     params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth', 'nlive']
-    assert_array_equal(ns.columns, params)
-    tex = {'x0': '$x_0$',
-           'x1': '$x_1$',
-           'x2': '$x_2$',
-           'x3': '$x_3$',
-           'x4': '$x_4$',
-           'logL': r'$\ln\mathcal{L}$',
-           'logL_birth': r'$\ln\mathcal{L}_\mathrm{birth}$',
-           'nlive': r'$n_\mathrm{live}$'}
-    assert ns.tex == tex
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = ['$x_0$',
+              '$x_1$',
+              '$x_2$',
+              '$x_3$',
+              '$x_4$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+    assert_array_equal(ns.get_labels(), labels)
 
     assert isinstance(ns, NestedSamples)
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
     ns = read_multinest('./tests/example_data/mn_old')
-    tex.pop('logL_birth')
     params.remove('logL_birth')
-    assert_array_equal(ns.columns, params)
-    assert ns.tex == tex
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels.remove(r'$\ln\mathcal{L}_\mathrm{birth}$')
+    assert_array_equal(ns.get_labels(), labels)
     assert isinstance(ns, NestedSamples)
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
@@ -186,16 +185,16 @@ def test_read_polychord():
         for key2 in ns.columns:
             assert_array_equal(ns[key1].get_weights(), ns[key2].get_weights())
     params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth', 'nlive']
-    assert_array_equal(ns.columns, params)
-    tex = {'x0': '$x_0$',
-           'x1': '$x_1$',
-           'x2': '$x_2$',
-           'x3': '$x_3$',
-           'x4': '$x_4$',
-           'logL': r'$\ln\mathcal{L}$',
-           'logL_birth': r'$\ln\mathcal{L}_\mathrm{birth}$',
-           'nlive': r'$n_\mathrm{live}$'}
-    assert ns.tex == tex
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = ['$x_0$',
+              '$x_1$',
+              '$x_2$',
+              '$x_3$',
+              '$x_4$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+    assert_array_equal(ns.get_labels(), labels)
 
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])

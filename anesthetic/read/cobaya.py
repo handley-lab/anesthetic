@@ -23,8 +23,8 @@ def read_paramnames(root):
         try:
             from getdist import loadMCSamples
             s = loadMCSamples(file_root=root)
-            tex = {p.name: '$' + p.label + '$' for p in s.paramNames.names}
-            return paramnames, tex
+            labels = {p.name: '$' + p.label + '$' for p in s.paramNames.names}
+            return paramnames, labels
         except ImportError:
             return paramnames, {}
 
@@ -59,7 +59,7 @@ def read_cobaya(root, *args, **kwargs):
     if not chains_files:
         raise FileNotFoundError(dirname + '/' + regex + " not found.")
 
-    params, tex = read_paramnames(root)
+    params, labels = read_paramnames(root)
     columns = kwargs.pop('columns', params)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
@@ -70,12 +70,11 @@ def read_cobaya(root, *args, **kwargs):
         weights, logP, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
                            weights=weights.flatten(), logL=logP,
-                           root=root, *args, **kwargs)
+                           root=root, labels=labels, *args, **kwargs)
         mcmc['chain'] = int(i) if i else np.nan
         samples.append(mcmc)
 
     samples = concat(samples)
-    samples.tex = tex
     samples.index.names = ['index', 'weights']
     samples.sort_values(by=['chain', 'index'], inplace=True)
     samples.reset_index(inplace=True, drop=True)
@@ -85,6 +84,6 @@ def read_cobaya(root, *args, **kwargs):
     if (samples.chain == samples.chain.iloc[0]).all():
         samples.drop('chain', inplace=True, axis=1)
     else:
-        samples.tex['chain'] = r'$n_\mathrm{chain}$'
+        samples.set_label('chain', r'$n_\mathrm{chain}$')
 
     return samples

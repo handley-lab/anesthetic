@@ -24,7 +24,7 @@ from scipy.interpolate import interp1d
 
 def test_make_1d_axes():
     paramnames = ['A', 'B', 'C', 'D', 'E']
-    tex = {'A': 'tA', 'B': 'tB', 'C': 'tC', 'D': 'tD', 'E': 'tE'}
+    labels = {'A': 'tA', 'B': 'tB', 'C': 'tC', 'D': 'tD', 'E': 'tE'}
 
     # Check no optional arguments
     fig, axes = make_1d_axes(paramnames)
@@ -34,11 +34,11 @@ def test_make_1d_axes():
     for p, ax in axes.iteritems():
         assert ax.get_xlabel() == p
 
-    # Check tex argument
-    fig, axes = make_1d_axes(paramnames, tex=tex)
-    for t in tex:
+    # Check labels argument
+    fig, axes = make_1d_axes(paramnames, labels=labels)
+    for t in labels:
         assert axes[t].get_xlabel() != t
-        assert axes[t].get_xlabel() == tex[t]
+        assert axes[t].get_xlabel() == labels[t]
 
     # Check fig argument
     fig0 = plt.figure()

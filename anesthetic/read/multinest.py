@@ -37,8 +37,9 @@ def read_multinest(root, *args, **kwargs):
         logL = np.concatenate((logL, live_logL[i]))
 
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
-    columns, tex = read_paramnames(root)
+    columns, labels = read_paramnames(root)
     data = samples
 
     return NestedSamples(data=data, logL=logL, logL_birth=logL_birth,
-                         root=root, columns=columns, tex=tex, *args, **kwargs)
+                         root=root, columns=columns, labels=labels,
+                         *args, **kwargs)
