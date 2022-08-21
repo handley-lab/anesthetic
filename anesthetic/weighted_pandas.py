@@ -186,18 +186,18 @@ class WeightedSeries(_WeightedObject, Series):
             raise NotImplementedError("numeric_only kwarg not implemented")
         return quantile(self.to_numpy(), q, self.get_weights(), interpolation)
 
-    def compress(self, nsamples=None):
+    def compress(self, ncompress=True):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
         ----------
-        neff: int, optional
-            effective number of samples after compression. If not supplied,
-            then reduce to the channel capacity (theoretical optimum
+        ncompress: int, optional
+            effective number of samples after compression. If not supplied
+            (or True), then reduce to the channel capacity (theoretical optimum
             compression). If <=0, then compress so that all weights are unity.
 
         """
-        i = compress_weights(self.get_weights(), self._rand(), nsamples)
+        i = compress_weights(self.get_weights(), self._rand(), ncompress)
         return self.repeat(i)
 
     def sample(self, *args, **kwargs):
@@ -361,20 +361,20 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
                                     interpolation=interpolation)
 
-    def compress(self, nsamples=None, axis=0):
+    def compress(self, ncompress=True, axis=0):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
         ----------
-        neff: int, optional
-            effective number of samples after compression. If not supplied,
-            then reduce to the channel capacity (theoretical optimum
+        ncompress: int, optional
+            effective number of samples after compression. If not supplied
+            (or True), then reduce to the channel capacity (theoretical optimum
             compression). If <=0, then compress so that all weights are unity.
 
         """
         if self.isweighted(axis):
             i = compress_weights(self.get_weights(axis), self._rand(axis),
-                                 nsamples)
+                                 ncompress)
             data = np.repeat(self.to_numpy(), i, axis=axis)
             i = self._get_axis(axis).repeat(i).droplevel('weights')
             df = WeightedDataFrame(data=data)
