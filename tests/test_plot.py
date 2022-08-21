@@ -59,9 +59,19 @@ def test_make_1d_axes():
     fig, axes = make_1d_axes(paramnames, subplot_spec=g00)
     assert g00 is axes[0].get_subplotspec().get_topmost_subplotspec()
 
+    # Check gridspec kwargs
+    fig, axes = make_1d_axes(paramnames, gridspec_kw=dict(wspace=0.1))
+    ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+    assert ws == 0.1
+
+    # Check figure kwargs
+    fig, axes = make_1d_axes(paramnames, figsize=(5, 5))
+    assert fig.get_figwidth() == 5
+    assert fig.get_figheight() == 5
+
     # Check unexpected kwargs
-    with pytest.raises(TypeError):
-        make_1d_axes(paramnames, foo='bar')
+    with pytest.raises(AttributeError):
+        make_1d_axes(paramnames, spam='ham')
     plt.close("all")
 
 
@@ -101,9 +111,19 @@ def test_make_2d_axes_inputs_outputs():
     fig, axes = make_2d_axes(paramnames_x, subplot_spec=g00)
     assert g00 is axes.iloc[0, 0].get_subplotspec().get_topmost_subplotspec()
 
+    # Check gridspec kwargs
+    fig, axes = make_1d_axes(paramnames_x, gridspec_kw=dict(wspace=0.1))
+    ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+    assert ws == 0.1
+
+    # Check figure kwargs
+    fig, axes = make_2d_axes(paramnames_x, figsize=(5, 5))
+    assert fig.get_figwidth() == 5
+    assert fig.get_figheight() == 5
+
     # Check unexpected kwargs
-    with pytest.raises(TypeError):
-        make_2d_axes(paramnames_x, foo='bar')
+    with pytest.raises(AttributeError):
+        make_2d_axes(paramnames_x, spam='ham')
 
 
 def test_make_2d_axes_behaviour():

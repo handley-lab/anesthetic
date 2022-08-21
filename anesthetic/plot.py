@@ -163,17 +163,17 @@ def make_1d_axes(params, **kwargs):
     axes = AxesSeries(index=np.atleast_1d(params), dtype=object)
     axes[:] = None
     tex = kwargs.pop('tex', {})
-    fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     ncols = kwargs.pop('ncols', int(np.ceil(np.sqrt(len(axes)))))
     nrows = int(np.ceil(len(axes)/float(ncols)))
-    if 'subplot_spec' in kwargs:
-        grid = SGS(nrows, ncols, wspace=0,
-                   subplot_spec=kwargs.pop('subplot_spec'))
+    spec = kwargs.pop('subplot_spec', None)
+    gridspec_kw = kwargs.pop('gridspec_kw', {})
+    wspace = gridspec_kw.pop('wspace', 0)
+    fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure(**kwargs)
+    if spec is not None:
+        grid = SGS(nrows, ncols, wspace=wspace, subplot_spec=spec,
+                   **gridspec_kw)
     else:
-        grid = GS(nrows, ncols, wspace=0)
-
-    if kwargs:
-        raise TypeError('Unexpected **kwargs: %r' % kwargs)
+        grid = GS(nrows, ncols, wspace=wspace, **gridspec_kw)
 
     tex = {p: tex[p] if p in tex else p for p in axes.index}
 
@@ -263,16 +263,17 @@ def make_2d_axes(params, **kwargs):
 
     tex = kwargs.pop('tex', {})
     tex = {p: tex[p] if p in tex else p for p in all_params}
-    fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
     spec = kwargs.pop('subplot_spec', None)
+    gridspec_kw = kwargs.pop('gridspec_kw', {})
+    fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure(**kwargs)
     if axes.shape[0] != 0 and axes.shape[1] != 0:
+        hspace = gridspec_kw.pop('hspace', 0)
+        wspace = gridspec_kw.pop('wspace', 0)
         if spec is not None:
-            grid = SGS(*axes.shape, hspace=0, wspace=0, subplot_spec=spec)
+            grid = SGS(*axes.shape, hspace=hspace, wspace=wspace,
+                       subplot_spec=spec, **gridspec_kw)
         else:
-            grid = GS(*axes.shape, hspace=0, wspace=0)
-
-    if kwargs:
-        raise TypeError('Unexpected **kwargs: %r' % kwargs)
+            grid = GS(*axes.shape, hspace=hspace, wspace=wspace, **gridspec_kw)
 
     if axes.size == 0:
         return fig, axes
