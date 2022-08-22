@@ -185,17 +185,12 @@ class Samples(WeightedLabelledDataFrame):
 
         Returns
         -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
         axes: pandas.Series of matplotlib.axes.Axes
             Pandas array of axes objects
 
         """
         if not isinstance(axes, Series):
-            fig, axes = make_1d_axes(axes, labels=self.get_labels_map())
-        else:
-            fig = axes.bfill().to_numpy().flatten()[0].figure
+            _, axes = make_1d_axes(axes, labels=self.get_labels_map())
 
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
@@ -209,7 +204,7 @@ class Samples(WeightedLabelledDataFrame):
             else:
                 ax.plot([], [])
 
-        return fig, axes
+        return axes
 
     def plot_2d(self, axes, *args, **kwargs):
         """Create an array of 2D plots.
@@ -268,9 +263,6 @@ class Samples(WeightedLabelledDataFrame):
 
         Returns
         -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
         axes: pandas.DataFrame of matplotlib.axes.Axes
             Pandas array of axes objects
 
@@ -296,12 +288,10 @@ class Samples(WeightedLabelledDataFrame):
             local_kwargs[pos].update(kwargs)
 
         if not isinstance(axes, DataFrame):
-            fig, axes = make_2d_axes(axes, labels=self.get_labels(),
+            _, axes = make_2d_axes(axes, labels=self.get_labels(),
                                      upper=('upper' in kind),
                                      lower=('lower' in kind),
                                      diagonal=('diagonal' in kind))
-        else:
-            fig = axes.bfill().to_numpy().flatten()[0].figure
 
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():
@@ -328,7 +318,7 @@ class Samples(WeightedLabelledDataFrame):
                         else:
                             ax.plot([], [])
 
-        return fig, axes
+        return axes
 
     plot_2d_default_kinds = {
         'default': {'diagonal': 'kde_1d',

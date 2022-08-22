@@ -129,43 +129,43 @@ def test_plot_2d_kinds():
     params = [params_x, params_y]
 
     # Check dictionaries
-    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
     assert (~axes.isnull()).to_numpy().sum() == 3
 
-    fig, axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
+    axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
     assert (~axes.isnull()).to_numpy().sum() == 6
 
-    fig, axes = ns.plot_2d(params, kind={'upper': 'kde_2d',
+    axes = ns.plot_2d(params, kind={'upper': 'kde_2d',
                                          'diagonal': 'kde_1d'})
     assert (~axes.isnull()).to_numpy().sum() == 9
 
-    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d'})
     assert (~axes.isnull()).to_numpy().sum() == 6
 
-    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d'})
     assert (~axes.isnull()).to_numpy().sum() == 6
 
-    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
                                          'diagonal': 'kde_1d',
                                          'upper': 'scatter_2d'})
     assert (~axes.isnull()).to_numpy().sum() == 12
 
     # Check strings
-    fig, axes = ns.plot_2d(params, kind='kde')
+    axes = ns.plot_2d(params, kind='kde')
     assert (~axes.isnull()).to_numpy().sum() == 6
-    fig, axes = ns.plot_2d(params, kind='kde_1d')
+    axes = ns.plot_2d(params, kind='kde_1d')
     assert (~axes.isnull()).to_numpy().sum() == 3
-    fig, axes = ns.plot_2d(params, kind='kde_2d')
+    axes = ns.plot_2d(params, kind='kde_2d')
     assert (~axes.isnull()).to_numpy().sum() == 3
 
     # Check kinds vs kind kwarg
-    fig, axes = ns.plot_2d(params, kinds='kde')
+    axes = ns.plot_2d(params, kinds='kde')
     assert (~axes.isnull()).to_numpy().sum() == 6
-    fig, axes = ns.plot_2d(params, kinds='kde_1d')
+    axes = ns.plot_2d(params, kinds='kde_1d')
     assert (~axes.isnull()).to_numpy().sum() == 3
-    fig, axes = ns.plot_2d(params, kinds='kde_2d')
+    axes = ns.plot_2d(params, kinds='kde_2d')
     assert (~axes.isnull()).to_numpy().sum() == 3
 
     # Check incorrect inputs
@@ -190,12 +190,12 @@ def test_plot_2d_kinds_multiple_calls():
     ns = read_chains('./tests/example_data/pc')
     params = ['x0', 'x1', 'x2', 'x3']
 
-    fig, axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
+    axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
                                          'lower': 'kde_2d',
                                          'upper': 'scatter_2d'})
     ns.plot_2d(axes, kind={'diagonal': 'hist'})
 
-    fig, axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
+    axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
     ns.plot_2d(axes, kind={'diagonal': 'kde_1d',
                            'lower': 'kde_2d',
                            'upper': 'scatter_2d'})
@@ -868,11 +868,11 @@ def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
-    fig, ax = ns.plot_1d('x0', kind='hist_1d')
+    ax = ns.plot_1d('x0', kind='hist_1d')
     x1, x2 = ax['x0'].get_xlim()
     assert x1 > -1
     assert x2 < +1
-    fig, ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
+    ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
     x1, x2 = ax['x0'].get_xlim()
     assert x1 <= -1
     assert x2 >= +1
@@ -1124,10 +1124,10 @@ def test_plotting_with_integer_names():
     samples_1 = Samples(data=np.random.rand(1000, 3))
     samples_2 = Samples(data=np.random.rand(1000, 3))
     samples_1.compress()
-    fig, ax = samples_1.plot_2d([0, 1, 2])
+    ax = samples_1.plot_2d([0, 1, 2])
     samples_2.plot_2d(ax)
 
-    fig, ax = samples_1.plot_1d([0, 1, 2])
+    ax = samples_1.plot_1d([0, 1, 2])
     samples_2.plot_1d(ax)
 
     assert samples_1[0].shape == (1000,)
@@ -1211,7 +1211,7 @@ def test_fixed_width():
 def test_samples_plot_labels():
     samples = read_chains('./tests/example_data/pc')
     columns = ['x0', 'x1', 'x2', 'x3', 'x4']
-    fig, axes = samples.plot_2d(columns)
+    axes = samples.plot_2d(columns)
 
     for col, ax in zip(columns, axes.loc[:, 'x0']):
         assert samples.get_label(col, 1) == ax.get_ylabel()
