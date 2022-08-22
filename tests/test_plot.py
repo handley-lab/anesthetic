@@ -70,7 +70,7 @@ def test_make_1d_axes():
     assert fig.get_figheight() == 5
 
     # Check unexpected kwargs
-    with pytest.raises(AttributeError):
+    with pytest.raises((AttributeError, TypeError)):
         make_1d_axes(paramnames, spam='ham')
     plt.close("all")
 
@@ -122,7 +122,7 @@ def test_make_2d_axes_inputs_outputs():
     assert fig.get_figheight() == 5
 
     # Check unexpected kwargs
-    with pytest.raises(AttributeError):
+    with pytest.raises((AttributeError, TypeError)):
         make_2d_axes(paramnames_x, spam='ham')
 
 
