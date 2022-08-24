@@ -34,6 +34,13 @@ def test_make_1d_axes():
     for p, ax in axes.iteritems():
         assert ax.get_xlabel() == p
 
+    # Check single string input
+    fig, axes = make_1d_axes(paramnames[0])
+    assert isinstance(fig, Figure)
+    assert isinstance(axes, Series)
+    assert axes.index.size == 1
+    assert_array_equal(axes.index, paramnames[0])
+
     # Check labels argument
     fig, axes = make_1d_axes(paramnames, labels=labels)
     for t in labels:
