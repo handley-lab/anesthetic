@@ -289,9 +289,9 @@ class Samples(WeightedLabelledDataFrame):
 
         if not isinstance(axes, DataFrame):
             _, axes = make_2d_axes(axes, labels=self.get_labels(),
-                                     upper=('upper' in kind),
-                                     lower=('lower' in kind),
-                                     diagonal=('diagonal' in kind))
+                                   upper=('upper' in kind),
+                                   lower=('lower' in kind),
+                                   diagonal=('diagonal' in kind))
 
         for y, row in axes.iterrows():
             for x, ax in row.iteritems():

@@ -135,21 +135,18 @@ def test_plot_2d_kinds():
     axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
     assert (~axes.isnull()).to_numpy().sum() == 6
 
-    axes = ns.plot_2d(params, kind={'upper': 'kde_2d',
-                                         'diagonal': 'kde_1d'})
+    axes = ns.plot_2d(params, kind={'upper': 'kde_2d', 'diagonal': 'kde_1d'})
     assert (~axes.isnull()).to_numpy().sum() == 9
 
-    axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
-                                         'diagonal': 'kde_1d'})
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
+    assert (~axes.isnull()).to_numpy().sum() == 6
+
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
     assert (~axes.isnull()).to_numpy().sum() == 6
 
     axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
-                                         'diagonal': 'kde_1d'})
-    assert (~axes.isnull()).to_numpy().sum() == 6
-
-    axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
-                                         'diagonal': 'kde_1d',
-                                         'upper': 'scatter_2d'})
+                                    'diagonal': 'kde_1d',
+                                    'upper': 'scatter_2d'})
     assert (~axes.isnull()).to_numpy().sum() == 12
 
     # Check strings
@@ -191,8 +188,8 @@ def test_plot_2d_kinds_multiple_calls():
     params = ['x0', 'x1', 'x2', 'x3']
 
     axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
-                                         'lower': 'kde_2d',
-                                         'upper': 'scatter_2d'})
+                                    'lower': 'kde_2d',
+                                    'upper': 'scatter_2d'})
     ns.plot_2d(axes, kind={'diagonal': 'hist'})
 
     axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
