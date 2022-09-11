@@ -1,6 +1,6 @@
 #| # anesthetic plot gallery
 #| This functions as both some examples of plots that can be produced, and a tutorial.
-#| Any difficulties/issues/requests should be posted as a [GitHub issue](https://github.com/williamjameshandley/anesthetic/issues)
+#| Any difficulties/issues/requests should be posted as a [GitHub issue](https://github.com/handley-lab/anesthetic/issues)
 
 #--------------------------
 
@@ -14,7 +14,7 @@ import requests
 import tarfile
 
 for filename in ["plikHM_TTTEEE_lowl_lowE_lensing.tar.gz","plikHM_TTTEEE_lowl_lowE_lensing_NS.tar.gz"]:
-    github_url = "https://github.com/williamjameshandley/cosmo_example/raw/master/"
+    github_url = "https://github.com/handley-lab/cosmo_example/raw/master/"
     url = github_url + filename
     open(filename, 'wb').write(requests.get(url).content)
     tarfile.open(filename).extractall()
