@@ -450,3 +450,12 @@ def test_reset_index():
     assert not np.array_equal(new.index, ldf.reset_index())
     new.reset_index(inplace=True)
     assert_array_equal(new.index, ldf.reset_index().index)
+
+
+def test_drop_labels():
+    ldf = test_LabelledDataFrame_index()
+    assert ldf.islabelled()
+    nolabels = ldf.drop_labels()
+    assert not nolabels.islabelled()
+    assert_array_equal(nolabels.drop_labels(), nolabels)
+    assert nolabels.drop_labels() is not nolabels
