@@ -55,10 +55,10 @@ def test_make_1d_axes():
     fig, axes = make_1d_axes(paramnames, fig=fig0)
     assert fig is fig0
 
-    # Check ncols argument
-    fig, axes = make_1d_axes(paramnames, ncols=2)
-    nrows, ncols = axes[0].get_subplotspec().get_gridspec().get_geometry()
-    assert ncols == 2
+    # Check ncol argument
+    fig, axes = make_1d_axes(paramnames, ncol=2)
+    nrows, ncol = axes[0].get_subplotspec().get_gridspec().get_geometry()
+    assert ncol == 2
 
     # Check gridspec argument
     grid = gs.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[3, 1])

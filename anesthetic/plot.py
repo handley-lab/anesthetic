@@ -39,7 +39,7 @@ from anesthetic.boundary import cut_and_normalise_gaussian
 class AxesSeries(pandas.Series):
     """Anesthetic's axes version of `pandas.Series`."""
 
-    def __init__(self, data=None, index=None, fig=None, ncols=None, labels=None,
+    def __init__(self, data=None, index=None, fig=None, ncol=None, labels=None,
                  gridspec_kw=None, subplot_spec=None, *args, **kwargs):
         if data is None and index is not None:
             data = np.full(np.shape(index), None)
@@ -48,10 +48,10 @@ class AxesSeries(pandas.Series):
         if fig is None:
             fig = plt.figure()
 
-        if ncols is None:
-            ncols = int(np.ceil(np.sqrt(len(index))))
-        ncols = ncols
-        nrows = int(np.ceil(len(index) / ncols))
+        if ncol is None:
+            ncol = int(np.ceil(np.sqrt(len(index))))
+        ncol = ncol
+        nrows = int(np.ceil(len(index) / ncol))
 
         if labels is None:
             labels = {}
@@ -61,9 +61,9 @@ class AxesSeries(pandas.Series):
             gridspec_kw = {}
         wspace = gridspec_kw.pop('wspace', 0)
         if subplot_spec is None:
-            gs = GridSpec(nrows, ncols, wspace=wspace, **gridspec_kw)
+            gs = GridSpec(nrows, ncol, wspace=wspace, **gridspec_kw)
         else:
-            gs = GridSpecFromSubplotSpec(nrows, ncols, wspace=wspace,
+            gs = GridSpecFromSubplotSpec(nrows, ncol, wspace=wspace,
                                          subplot_spec=subplot_spec,
                                          **gridspec_kw)
 
@@ -79,7 +79,6 @@ class AxesSeries(pandas.Series):
     @property
     def _constructor_expanddim(self):
         return AxesDataFrame
-
 
 
 class AxesDataFrame(pandas.DataFrame):
@@ -151,7 +150,6 @@ class AxesDataFrame(pandas.DataFrame):
                     for a in ax_:
                         a.tick_params('x', bottom=False, top=False,
                                       labelbottom=False, labeltop=False)
-
 
     def axlines(self, params, values, **kwargs):
         """Add vertical and horizontal lines across all axes.
@@ -309,7 +307,7 @@ def axes_matrix(position, fig=None, labels=None,
     return axes
 
 
-def make_1d_axes(params, ncols=None, labels=None,
+def make_1d_axes(params, ncol=None, labels=None,
                  gridspec_kw=None, subplot_spec=None, **fig_kw):
     """Create a set of axes for plotting 1D marginalised posteriors.
 
@@ -318,7 +316,7 @@ def make_1d_axes(params, ncols=None, labels=None,
         params : list(str)
             names of parameters.
 
-        ncols : int
+        ncol : int
             Number of columns of the subplot grid.
             default: ceil(sqrt(num_params))
 
@@ -351,7 +349,7 @@ def make_1d_axes(params, ncols=None, labels=None,
     fig = fig_kw.pop('fig') if 'fig' in fig_kw else plt.figure(**fig_kw)
     axes = AxesSeries(index=np.atleast_1d(params),
                       fig=fig,
-                      ncols=ncols,
+                      ncol=ncol,
                       labels=labels,
                       gridspec_kw=gridspec_kw,
                       subplot_spec=subplot_spec)
