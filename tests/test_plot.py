@@ -11,6 +11,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              basic_cmap, AxesSeries, AxesDataFrame)
 from numpy.testing import assert_array_equal
 
+from matplotlib.axes._subplots import SubplotBase
 from matplotlib.contour import ContourSet
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch, Polygon
@@ -711,12 +712,28 @@ def test_quantile_plot_interval_tuple(q1, q2):
 
 
 def test_AxesObjects():
-    paramnames = ['A', 'B', 'C', 'D', 'E']
+    paramnames = ['a', 'b', 'c']
+    axes = AxesSeries(index=paramnames)
+    assert isinstance(axes, AxesSeries)
+    assert isinstance(axes.iloc[0], SubplotBase)
+    assert axes.iloc[0].get_xlabel() == 'a'
+    axes.set_xlabels(labels=dict(a='A', b='B', c='C'))
+    assert axes.iloc[0].get_xlabel() == 'A'
+
+    axes = AxesDataFrame(index=paramnames, columns=paramnames)
+    assert isinstance(axes, AxesDataFrame)
+    assert isinstance(axes.iloc[0, 0], SubplotBase)
+    assert axes.iloc[-1, 0].get_xlabel() == 'a'
+    assert axes.iloc[-1, 0].get_ylabel() == 'c'
+    axes.set_labels(labels=dict(a='A', b='B', c='C'))
+    assert axes.iloc[-1, 0].get_xlabel() == 'A'
+    assert axes.iloc[-1, 0].get_ylabel() == 'C'
+
     fig, axes = make_1d_axes(paramnames)
     assert isinstance(axes, AxesSeries)
     assert isinstance(axes.to_frame(), AxesDataFrame)
 
     fig, axes = make_2d_axes(paramnames)
     assert isinstance(axes, AxesDataFrame)
-    assert isinstance(axes['A'], AxesSeries)
-    assert isinstance(axes.loc['A':'B', 'C':'D'], AxesDataFrame)
+    assert isinstance(axes['a'], AxesSeries)
+    assert isinstance(axes.loc['a':'b', 'b':'c'], AxesDataFrame)
