@@ -61,7 +61,7 @@ def read_getdist(root, *args, **kwargs):
     dirname, basename = os.path.split(root)
 
     files = os.listdir(os.path.dirname(root))
-    regex = basename + r'((_|.)([0-9]+)|)\.txt'
+    regex = re.escape(basename) + r'((_|.)([0-9]+)|)\.txt'
     matches = [re.match(regex, f) for f in files]
     chains_files = [(m.group(3), os.path.join(dirname, m.group(0)))
                     for m in matches if m]
