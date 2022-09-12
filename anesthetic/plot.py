@@ -58,21 +58,15 @@ class AxesSeries(pandas.Series):
         return AxesDataFrame
 
     @staticmethod
-    def axes_series(data=None, fig=None, ncol=None,
-                    gridspec_kw=None, subplot_spec=None):
+    def axes_series(data, fig, ncol=None, gridspec_kw=None, subplot_spec=None):
         """Set up subplots for `AxesSeries`."""
         axes = data.copy()
-        if axes.size == 0:
-            return axes
-
         if fig is None:
             fig = plt.figure()
-
         if ncol is None:
             ncol = int(np.ceil(np.sqrt(axes.index.size)))
         ncol = ncol
         nrow = int(np.ceil(axes.index.size / ncol))
-
         if gridspec_kw is None:
             gridspec_kw = {}
         wspace = gridspec_kw.pop('wspace', 0)
@@ -82,11 +76,9 @@ class AxesSeries(pandas.Series):
             gs = GridSpecFromSubplotSpec(nrow, ncol, wspace=wspace,
                                          subplot_spec=subplot_spec,
                                          **gridspec_kw)
-
         for p, g in zip(axes.index, gs):
             axes[p] = ax = fig.add_subplot(g)
             ax.set_yticks([])
-
         return axes
 
     @staticmethod
@@ -164,17 +156,15 @@ class AxesDataFrame(pandas.DataFrame):
         return position
 
     @staticmethod
-    def _axes_frame(position, fig=None, gridspec_kw=None, subplot_spec=None):
+    def _axes_frame(position, fig, gridspec_kw=None, subplot_spec=None):
         """Set up subplots for `AxesDataFrame`."""
         axes = position.copy()
         axes.dropna(axis=0, how='all', inplace=True)
         axes.dropna(axis=1, how='all', inplace=True)
         if axes.size == 0:
             return axes
-
         if fig is None:
             fig = plt.figure()
-
         if gridspec_kw is None:
             gridspec_kw = {}
         hspace = gridspec_kw.pop('hspace', 0)
@@ -187,7 +177,6 @@ class AxesDataFrame(pandas.DataFrame):
                                          hspace=hspace, wspace=wspace,
                                          subplot_spec=subplot_spec,
                                          **gridspec_kw)
-
         axes[:][:] = None
         for j, y in enumerate(axes.index[::-1]):
             for i, x in enumerate(axes.columns):
