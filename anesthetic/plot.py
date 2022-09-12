@@ -221,6 +221,7 @@ class AxesDataFrame(pandas.DataFrame):
 
 
 def position_matrix(index, columns, lower, diagonal, upper):
+    """Compute position matrix with lower=+1, diagonal=0, upper=-1."""
     data = np.full((np.size(index), np.size(columns)), None)
     data = pandas.DataFrame(data=data, index=index, columns=columns)
     all_params = list(columns) + list(index)
@@ -239,6 +240,7 @@ def position_matrix(index, columns, lower, diagonal, upper):
 
 def axes_matrix(position, fig=None, labels=None,
                 gridspec_kw=None, subplot_spec=None):
+    """Set up axes grid for `AxesDataFrame`."""
     axes = position.copy()
     axes.dropna(axis=0, how='all', inplace=True)
     axes.dropna(axis=1, how='all', inplace=True)
