@@ -42,35 +42,12 @@ class AxesSeries(pandas.Series):
     def __init__(self, data=None, index=None, fig=None, ncol=None, labels=None,
                  gridspec_kw=None, subplot_spec=None, *args, **kwargs):
         if data is None and index is not None:
-            data = np.full(np.shape(index), None)
+            data = pandas.Series(np.full(np.shape(index), None), index=index)
+            data = self.axes_series(data=data, fig=fig, ncol=ncol,
+                                    gridspec_kw=gridspec_kw,
+                                    subplot_spec=subplot_spec)
+            self._set_xlabels(axes=data, labels=labels)
         super().__init__(data=data, index=index, *args, **kwargs)
-
-        if fig is None:
-            fig = plt.figure()
-
-        if ncol is None:
-            ncol = int(np.ceil(np.sqrt(len(index))))
-        ncol = ncol
-        nrows = int(np.ceil(len(index) / ncol))
-
-        if labels is None:
-            labels = {}
-        labels = {p: labels[p] if p in labels else p for p in index}
-
-        if gridspec_kw is None:
-            gridspec_kw = {}
-        wspace = gridspec_kw.pop('wspace', 0)
-        if subplot_spec is None:
-            gs = GridSpec(nrows, ncol, wspace=wspace, **gridspec_kw)
-        else:
-            gs = GridSpecFromSubplotSpec(nrows, ncol, wspace=wspace,
-                                         subplot_spec=subplot_spec,
-                                         **gridspec_kw)
-
-        for p, g in zip(index, gs):
-            self[p] = ax = fig.add_subplot(g)
-            ax.set_xlabel(labels[p])
-            ax.set_yticks([])
 
     @property
     def _constructor(self):
@@ -80,76 +57,259 @@ class AxesSeries(pandas.Series):
     def _constructor_expanddim(self):
         return AxesDataFrame
 
+    @staticmethod
+    def axes_series(data=None, fig=None, ncol=None,
+                    gridspec_kw=None, subplot_spec=None):
+        """Set up subplots for `AxesSeries`."""
+        axes = data.copy()
+        if axes.size == 0:
+            return axes
+
+        if fig is None:
+            fig = plt.figure()
+
+        if ncol is None:
+            ncol = int(np.ceil(np.sqrt(axes.index.size)))
+        ncol = ncol
+        nrow = int(np.ceil(axes.index.size / ncol))
+
+        if gridspec_kw is None:
+            gridspec_kw = {}
+        wspace = gridspec_kw.pop('wspace', 0)
+        if subplot_spec is None:
+            gs = GridSpec(nrow, ncol, wspace=wspace, **gridspec_kw)
+        else:
+            gs = GridSpecFromSubplotSpec(nrow, ncol, wspace=wspace,
+                                         subplot_spec=subplot_spec,
+                                         **gridspec_kw)
+
+        for p, g in zip(axes.index, gs):
+            axes[p] = ax = fig.add_subplot(g)
+            ax.set_yticks([])
+
+        return axes
+
+    @staticmethod
+    def _set_xlabels(axes, labels=None, **kwargs):
+        if labels is None:
+            labels = {}
+        labels = {p: labels[p] if p in labels else p for p in axes.index}
+        for p, ax in axes.iteritems():
+            ax.set_xlabel(labels[p], **kwargs)
+
+    def set_xlabels(self, labels=None, **kwargs):
+        """Set the labels for the x-axes.
+
+        Parameters
+        ----------
+            labels : dict
+                Dictionary of the axes labels.
+            kwargs
+                Any kwarg that can be passed to `plt.xlabel`.
+
+        """
+        self._set_xlabels(axes=self, labels=labels, **kwargs)
+
 
 class AxesDataFrame(pandas.DataFrame):
     """Anesthetic's axes version of `pandas.DataFrame`."""
 
-    def __init__(self, index=None, columns=None, fig=None,
+    def __init__(self, data=None, index=None, columns=None, fig=None,
                  lower=True, diagonal=True, upper=True, labels=None,
                  ticks='outer', gridspec_kw=None, subplot_spec=None,
                  *args, **kwargs):
-        position = position_matrix(index=index, columns=columns,
-                                   lower=lower, diagonal=diagonal, upper=upper)
-        axes = axes_matrix(position=position, fig=fig, labels=labels,
-                           gridspec_kw=gridspec_kw, subplot_spec=subplot_spec)
-        super().__init__(data=axes.values,
-                         index=axes.index,
-                         columns=axes.columns,
+        if data is None and index is not None and columns is not None:
+            position = self._position_frame(index=index,
+                                            columns=columns,
+                                            lower=lower,
+                                            diagonal=diagonal,
+                                            upper=upper)
+            data = self._axes_frame(position=position,
+                                    fig=fig,
+                                    gridspec_kw=gridspec_kw,
+                                    subplot_spec=subplot_spec)
+            self._set_labels(axes=data, labels=labels)
+            index = data.index
+            columns = data.columns
+            self._tick_params(axes=data, direction=ticks, which='major')
+        super().__init__(data=data,
+                         index=index,
+                         columns=columns,
                          *args, **kwargs)
-        if self.size == 0:
-            return
 
-        if ticks not in ['inner', 'outer', None]:
-            raise ValueError("ticks=%s was requested, but ticks can only be "
-                             "one of ['outer', 'inner', None]." % ticks)
+    @property
+    def _constructor(self):
+        return AxesDataFrame
+
+    @property
+    def _constructor_sliced(self):
+        return AxesSeries
+
+    @staticmethod
+    def _position_frame(index, columns, lower, diagonal, upper):
+        """Compute positions with lower=-1, diagonal=0, upper=+1."""
+        data = np.full((np.size(index), np.size(columns)), None)
+        position = pandas.DataFrame(data=data, index=index, columns=columns)
+        all_params = list(columns) + list(index)
+        for j, y in enumerate(index):
+            for i, x in enumerate(columns):
+                if all_params.index(x) < all_params.index(y):
+                    if lower:
+                        position[x][y] = -1
+                elif all_params.index(x) > all_params.index(y):
+                    if upper:
+                        position[x][y] = +1
+                elif diagonal:
+                    position[x][y] = 0
+        return position
+
+    @staticmethod
+    def _axes_frame(position, fig=None, gridspec_kw=None, subplot_spec=None):
+        """Set up subplots for `AxesDataFrame`."""
+        axes = position.copy()
+        axes.dropna(axis=0, how='all', inplace=True)
+        axes.dropna(axis=1, how='all', inplace=True)
+        if axes.size == 0:
+            return axes
+
+        if fig is None:
+            fig = plt.figure()
+
+        if gridspec_kw is None:
+            gridspec_kw = {}
+        hspace = gridspec_kw.pop('hspace', 0)
+        wspace = gridspec_kw.pop('wspace', 0)
+        if subplot_spec is None:
+            gs = GridSpec(*axes.shape, hspace=hspace, wspace=wspace,
+                          **gridspec_kw)
+        else:
+            gs = GridSpecFromSubplotSpec(*axes.shape,
+                                         hspace=hspace, wspace=wspace,
+                                         subplot_spec=subplot_spec,
+                                         **gridspec_kw)
+
+        axes[:][:] = None
+        for j, y in enumerate(axes.index[::-1]):
+            for i, x in enumerate(axes.columns):
+                if position[x][y] is not None:
+                    sx = list(axes[x].dropna())
+                    sx = sx[0] if sx else None
+                    sy = list(axes.T[y].dropna())
+                    sy = sy[0] if sy else None
+                    axes[x][y] = fig.add_subplot(
+                        gs[axes.index.size - 1 - j, i], sharex=sx, sharey=sy
+                    )
+                    if position[x][y] == 0:
+                        axes[x][y].twin = axes[x][y].twinx()
+                        axes[x][y].twin.set_yticks([])
+                        axes[x][y].twin.set_ylim(0, 1.1)
+                        make_diagonal(axes[x][y])
+                        axes[x][y].position = 'diagonal'
+                        axes[x][y].twin.xaxis.set_major_locator(
+                            MaxNLocator(3, prune='both'))
+                        axes[x][y].yaxis.set_major_locator(
+                            MaxNLocator(3, prune='both'))
+                    else:
+                        if position[x][y] == 1:
+                            axes[x][y].position = 'upper'
+                        elif position[x][y] == -1:
+                            axes[x][y].position = 'lower'
+                        axes[x][y].yaxis.set_major_locator(
+                            MaxNLocator(3, prune='both'))
+                    axes[x][y].xaxis.set_major_locator(
+                        MaxNLocator(3, prune='both'))
+        return axes
+
+    @staticmethod
+    def _set_labels(axes, labels=None, **kwargs):
+        all_params = list(axes.columns) + list(axes.index)
+        if labels is None:
+            labels = {}
+        labels = {p: labels[p] if p in labels else p for p in all_params}
+
+        for y, axes_row in axes.iterrows():
+            if axes_row.size:
+                axes_row.dropna(inplace=True)
+                axes_row.iloc[0].set_ylabel(labels[y], **kwargs)
+
+        for x, axes_col in axes.iteritems():
+            if axes_col.size:
+                axes_col.dropna(inplace=True)
+                axes_col.iloc[-1].set_xlabel(labels[x], **kwargs)
+
+    def set_labels(self, labels=None, **kwargs):
+        """Set the labels for the axes.
+
+        Parameters
+        ----------
+            labels : dict
+                Dictionary of the axes labels.
+            kwargs
+                Any kwarg that can be passed to `plt.xlabel` or `plt.ylabel`.
+
+        """
+        self._set_labels(axes=self, labels=labels, **kwargs)
+
+    @staticmethod
+    def _tick_params(axes, direction='outer', **kwargs):
+        if direction not in ['inner', 'outer', None]:
+            raise ValueError("tick direction=%s was requested, but tick "
+                             "direction can only be one of "
+                             "['outer', 'inner', None]." % direction)
 
         # left and right ticks and labels
-        for y, ax in self.iterrows():
+        for y, ax in axes.iterrows():
             ax_ = ax.dropna()
-            if len(ax_) and ticks == 'inner':
+            if len(ax_) and direction == 'inner':
                 for i, a in enumerate(ax_):
                     if i == 0:  # first column
                         if a.position == 'diagonal' and len(ax_) == 1:
-                            a.tick_params('y', left=False, labelleft=False)
+                            a.tick_params('y', left=False, labelleft=False,
+                                          **kwargs)
                         else:
-                            a.tick_params('y', left=True, labelleft=True)
+                            a.tick_params('y', left=True, labelleft=True,
+                                          **kwargs)
                     elif a.position == 'diagonal':  # not first column
                         tl = a.yaxis.majorTicks[0].tick1line.get_markersize()
-                        a.tick_params('y', direction='out', length=tl/2,
-                                      left=True, labelleft=False)
+                        a.tick_params('y', direction='out', length=tl / 2,
+                                      left=True, labelleft=False, **kwargs)
                     else:  # not diagonal and not first column
                         a.tick_params('y', direction='inout',
-                                      left=True, labelleft=False)
-            elif len(ax_) and ticks == 'outer':  # no inner ticks
+                                      left=True, labelleft=False, **kwargs)
+            elif len(ax_) and direction == 'outer':  # no inner ticks
                 for a in ax_[1:]:
-                    a.tick_params('y', left=False, labelleft=False)
-            elif len(ax_) and ticks is None:  # no ticks at all
+                    a.tick_params('y', left=False, labelleft=False, **kwargs)
+            elif len(ax_) and direction is None:  # no ticks at all
                 for a in ax_:
                     a.tick_params('y', left=False, right=False,
-                                  labelleft=False, labelright=False)
+                                  labelleft=False, labelright=False, **kwargs)
 
         # bottom and top ticks and labels
-        for x, ax in self.iteritems():
+        for x, ax in axes.iteritems():
             ax_ = ax.dropna()
             if len(ax_):
-                if ticks == 'inner':
+                if direction == 'inner':
                     for i, a in enumerate(ax_):
                         if i == len(ax_) - 1:  # bottom row
-                            a.tick_params('x', bottom=True, labelbottom=True)
+                            a.tick_params('x', bottom=True, labelbottom=True,
+                                          **kwargs)
                         else:  # not bottom row
                             a.tick_params('x', direction='inout',
-                                          bottom=True, labelbottom=False)
+                                          bottom=True, labelbottom=False,
+                                          **kwargs)
                             if a.position == 'diagonal':
                                 a.twin.tick_params('x', direction='inout',
                                                    bottom=True,
-                                                   labelbottom=False)
-                elif ticks == 'outer':  # no inner ticks
+                                                   labelbottom=False, **kwargs)
+                elif direction == 'outer':  # no inner ticks
                     for a in ax_[:-1]:
-                        a.tick_params('x', bottom=False, labelbottom=False)
-                elif ticks is None:  # no ticks at all
+                        a.tick_params('x', bottom=False, labelbottom=False,
+                                      **kwargs)
+                elif direction is None:  # no ticks at all
                     for a in ax_:
                         a.tick_params('x', bottom=False, top=False,
-                                      labelbottom=False, labeltop=False)
+                                      labelbottom=False, labeltop=False,
+                                      **kwargs)
 
     def axlines(self, params, values, **kwargs):
         """Add vertical and horizontal lines across all axes.
@@ -218,95 +378,6 @@ class AxesDataFrame(pandas.DataFrame):
                 for ax in self.loc[param, self.columns != param]:
                     if ax is not None:
                         ax.axhspan(vmins[i], vmaxs[i], **kwargs)
-
-
-def position_matrix(index, columns, lower, diagonal, upper):
-    """Compute position matrix with lower=+1, diagonal=0, upper=-1."""
-    data = np.full((np.size(index), np.size(columns)), None)
-    data = pandas.DataFrame(data=data, index=index, columns=columns)
-    all_params = list(columns) + list(index)
-    for j, y in enumerate(index):
-        for i, x in enumerate(columns):
-            if all_params.index(x) < all_params.index(y):
-                if lower:
-                    data[x][y] = -1
-            elif all_params.index(x) > all_params.index(y):
-                if upper:
-                    data[x][y] = +1
-            elif diagonal:
-                data[x][y] = 0
-    return data
-
-
-def axes_matrix(position, fig=None, labels=None,
-                gridspec_kw=None, subplot_spec=None):
-    """Set up axes grid for `AxesDataFrame`."""
-    axes = position.copy()
-    axes.dropna(axis=0, how='all', inplace=True)
-    axes.dropna(axis=1, how='all', inplace=True)
-    if axes.size == 0:
-        return axes
-
-    if fig is None:
-        fig = plt.figure()
-
-    if gridspec_kw is None:
-        gridspec_kw = {}
-    if axes.shape[0] != 0 and axes.shape[1] != 0:
-        hspace = gridspec_kw.pop('hspace', 0)
-        wspace = gridspec_kw.pop('wspace', 0)
-        if subplot_spec is None:
-            gs = GridSpec(*axes.shape, hspace=hspace, wspace=wspace,
-                          **gridspec_kw)
-        else:
-            gs = GridSpecFromSubplotSpec(*axes.shape,
-                                         hspace=hspace, wspace=wspace,
-                                         subplot_spec=subplot_spec,
-                                         **gridspec_kw)
-
-    axes[:][:] = None
-    for j, y in enumerate(axes.index[::-1]):
-        for i, x in enumerate(axes.columns):
-            if position[x][y] is not None:
-                sx = list(axes[x].dropna())
-                sx = sx[0] if sx else None
-                sy = list(axes.T[y].dropna())
-                sy = sy[0] if sy else None
-                axes[x][y] = fig.add_subplot(gs[axes.index.size - 1 - j, i],
-                                             sharex=sx, sharey=sy)
-
-                if position[x][y] == 0:
-                    axes[x][y].twin = axes[x][y].twinx()
-                    axes[x][y].twin.set_yticks([])
-                    axes[x][y].twin.set_ylim(0, 1.1)
-                    make_diagonal(axes[x][y])
-                    axes[x][y].position = 'diagonal'
-                    axes[x][y].twin.xaxis.set_major_locator(
-                        MaxNLocator(3, prune='both'))
-                    axes[x][y].yaxis.set_major_locator(
-                        MaxNLocator(3, prune='both'))
-                else:
-                    if position[x][y] == 1:
-                        axes[x][y].position = 'upper'
-                    elif position[x][y] == -1:
-                        axes[x][y].position = 'lower'
-                    axes[x][y].yaxis.set_major_locator(
-                        MaxNLocator(3, prune='both'))
-                axes[x][y].xaxis.set_major_locator(
-                    MaxNLocator(3, prune='both'))
-
-    all_params = list(axes.columns) + list(axes.index)
-    if labels is None:
-        labels = {}
-    labels = {p: labels[p] if p in labels else p for p in all_params}
-
-    for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
-        ax.set_ylabel(labels[y])
-
-    for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().iteritems():
-        ax.set_xlabel(labels[x])
-
-    return axes
 
 
 def make_1d_axes(params, ncol=None, labels=None,
