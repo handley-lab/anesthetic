@@ -52,7 +52,7 @@ def read_cobaya(root, *args, **kwargs):
     dirname, basename = os.path.split(root)
 
     files = os.listdir(os.path.dirname(root))
-    regex = basename + r'.([0-9]+)\.txt'
+    regex = re.escape(basename) + r'.([0-9]+)\.txt'
     matches = [re.match(regex, f) for f in files]
     chains_files = [(m.group(1), os.path.join(dirname, m.group(0)))
                     for m in matches if m]
