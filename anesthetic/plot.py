@@ -82,14 +82,14 @@ class AxesSeries(pandas.Series):
         return axes
 
     @staticmethod
-    def _set_xlabels(axes, labels=None, **kwargs):
+    def _set_xlabels(axes, labels, **kwargs):
         if labels is None:
             labels = {}
         labels = {p: labels[p] if p in labels else p for p in axes.index}
         for p, ax in axes.iteritems():
             ax.set_xlabel(labels[p], **kwargs)
 
-    def set_xlabels(self, labels=None, **kwargs):
+    def set_xlabels(self, labels, **kwargs):
         """Set the labels for the x-axes.
 
         Parameters
@@ -210,7 +210,7 @@ class AxesDataFrame(pandas.DataFrame):
         return axes
 
     @staticmethod
-    def _set_labels(axes, labels=None, **kwargs):
+    def _set_labels(axes, labels, **kwargs):
         all_params = list(axes.columns) + list(axes.index)
         if labels is None:
             labels = {}
@@ -226,7 +226,7 @@ class AxesDataFrame(pandas.DataFrame):
                 axes_col.dropna(inplace=True)
                 axes_col.iloc[-1].set_xlabel(labels[x], **kwargs)
 
-    def set_labels(self, labels=None, **kwargs):
+    def set_labels(self, labels, **kwargs):
         """Set the labels for the axes.
 
         Parameters
