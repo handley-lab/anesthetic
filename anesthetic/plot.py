@@ -102,7 +102,7 @@ class AxesDataFrame(pandas.DataFrame):
         if ticks not in ['inner', 'outer', None]:
             raise ValueError("ticks=%s was requested, but ticks can only be "
                              "one of ['outer', 'inner', None]." % ticks)
-        
+
         # left and right ticks and labels
         for y, ax in self.iterrows():
             ax_ = ax.dropna()
@@ -127,7 +127,7 @@ class AxesDataFrame(pandas.DataFrame):
                 for a in ax_:
                     a.tick_params('y', left=False, right=False,
                                   labelleft=False, labelright=False)
-        
+
         # bottom and top ticks and labels
         for x, ax in self.iteritems():
             ax_ = ax.dropna()
