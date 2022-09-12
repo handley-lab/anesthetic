@@ -155,8 +155,8 @@ class AxesDataFrame(pandas.DataFrame):
                     position[x][y] = 0
         return position
 
-    @staticmethod
-    def _axes_frame(position, fig, gridspec_kw=None, subplot_spec=None):
+    @classmethod
+    def _axes_frame(cls, position, fig, gridspec_kw=None, subplot_spec=None):
         """Set up subplots for `AxesDataFrame`."""
         axes = position.copy()
         axes.dropna(axis=0, how='all', inplace=True)
@@ -192,7 +192,7 @@ class AxesDataFrame(pandas.DataFrame):
                         axes[x][y].twin = axes[x][y].twinx()
                         axes[x][y].twin.set_yticks([])
                         axes[x][y].twin.set_ylim(0, 1.1)
-                        make_diagonal(axes[x][y])
+                        cls.make_diagonal(axes[x][y])
                         axes[x][y].position = 'diagonal'
                         axes[x][y].twin.xaxis.set_major_locator(
                             MaxNLocator(3, prune='both'))
@@ -208,6 +208,33 @@ class AxesDataFrame(pandas.DataFrame):
                     axes[x][y].xaxis.set_major_locator(
                         MaxNLocator(3, prune='both'))
         return axes
+
+    @staticmethod
+    def make_diagonal(ax):
+        """Link x and y axes limits."""
+
+        class DiagonalAxes(type(ax)):
+            def set_xlim(self, left=None, right=None, emit=True, auto=False,
+                         xmin=None, xmax=None):
+                super().set_ylim(bottom=left, top=right, emit=True, auto=auto,
+                                 ymin=xmin, ymax=xmax)
+                return super().set_xlim(left=left, right=right, emit=emit,
+                                        auto=auto, xmin=xmin, xmax=xmax)
+
+            def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
+                         ymin=None, ymax=None):
+                super().set_xlim(left=bottom, right=top, emit=True, auto=auto,
+                                 xmin=ymin, xmax=ymax)
+                return super().set_ylim(bottom=bottom, top=top, emit=emit,
+                                        auto=auto, ymin=ymin, ymax=ymax)
+
+            def get_legend_handles_labels(self, *args, **kwargs):
+                return self.twin.get_legend_handles_labels(*args, **kwargs)
+
+            def legend(self, *args, **kwargs):
+                return self.twin.legend(*args, **kwargs)
+
+        ax.__class__ = DiagonalAxes
 
     @staticmethod
     def _set_labels(axes, labels, **kwargs):
@@ -1104,32 +1131,6 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 def basic_cmap(color):
     """Construct basic colormap a single color."""
     return LinearSegmentedColormap.from_list(color, ['#ffffff', color])
-
-
-def make_diagonal(ax):
-    """Link x and y axes limits."""
-    class DiagonalAxes(type(ax)):
-        def set_xlim(self, left=None, right=None, emit=True, auto=False,
-                     xmin=None, xmax=None):
-            super().set_ylim(bottom=left, top=right, emit=True, auto=auto,
-                             ymin=xmin, ymax=xmax)
-            return super().set_xlim(left=left, right=right, emit=emit,
-                                    auto=auto, xmin=xmin, xmax=xmax)
-
-        def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
-                     ymin=None, ymax=None):
-            super().set_xlim(left=bottom, right=top, emit=True, auto=auto,
-                             xmin=ymin, xmax=ymax)
-            return super().set_ylim(bottom=bottom, top=top, emit=emit,
-                                    auto=auto, ymin=ymin, ymax=ymax)
-
-        def get_legend_handles_labels(self, *args, **kwargs):
-            return self.twin.get_legend_handles_labels(*args, **kwargs)
-
-        def legend(self, *args, **kwargs):
-            return self.twin.legend(*args, **kwargs)
-
-    ax.__class__ = DiagonalAxes
 
 
 def quantile_plot_interval(q):
