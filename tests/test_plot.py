@@ -133,7 +133,10 @@ def test_make_2d_axes_inputs_outputs():
         make_2d_axes(paramnames_x, spam='ham')
 
 
-def test_make_2d_axes_behaviour():
+@pytest.mark.parametrize('upper', [False, True])
+@pytest.mark.parametrize('lower', [False, True])
+@pytest.mark.parametrize('diagonal', [False, True])
+def test_make_2d_axes_behaviour(diagonal, lower, upper):
     np.random.seed(0)
 
     def calc_n(axes):
@@ -148,17 +151,14 @@ def test_make_2d_axes_behaviour():
     # Check for only paramnames_x
     paramnames_x = ['A', 'B', 'C', 'D']
     nx = len(paramnames_x)
-    for upper in [True, False]:
-        for lower in [True, False]:
-            for diagonal in [True, False]:
-                fig, axes = make_2d_axes(paramnames_x,
-                                         upper=upper,
-                                         lower=lower,
-                                         diagonal=diagonal)
-                ns = calc_n(axes)
-                assert ns['upper'] == upper * nx*(nx-1)//2
-                assert ns['lower'] == lower * nx*(nx-1)//2
-                assert ns['diagonal'] == diagonal * nx
+    fig, axes = make_2d_axes(paramnames_x,
+                             upper=upper,
+                             lower=lower,
+                             diagonal=diagonal)
+    ns = calc_n(axes)
+    assert ns['upper'] == upper * nx*(nx-1)//2
+    assert ns['lower'] == lower * nx*(nx-1)//2
+    assert ns['diagonal'] == diagonal * nx
 
     plt.close("all")
 
@@ -184,17 +184,14 @@ def test_make_2d_axes_behaviour():
                 elif all_params.index(x) > all_params.index(y):
                     nu += 1
 
-        for upper in [True, False]:
-            for lower in [True, False]:
-                for diagonal in [True, False]:
-                    fig, axes = make_2d_axes(params,
-                                             upper=upper,
-                                             lower=lower,
-                                             diagonal=diagonal)
-                    ns = calc_n(axes)
-                    assert ns['upper'] == upper * nu
-                    assert ns['lower'] == lower * nl
-                    assert ns['diagonal'] == diagonal * nd
+        fig, axes = make_2d_axes(params,
+                                 upper=upper,
+                                 lower=lower,
+                                 diagonal=diagonal)
+        ns = calc_n(axes)
+        assert ns['upper'] == upper * nu
+        assert ns['lower'] == lower * nl
+        assert ns['diagonal'] == diagonal * nd
         plt.close("all")
 
 
