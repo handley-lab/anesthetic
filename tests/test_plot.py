@@ -16,8 +16,6 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Patch, Polygon
 from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
-from pandas.core.series import Series
-from pandas.core.frame import DataFrame
 from scipy.special import erf
 from scipy.interpolate import interp1d
 
@@ -29,7 +27,7 @@ def test_make_1d_axes():
     # Check no optional arguments
     fig, axes = make_1d_axes(paramnames)
     assert isinstance(fig, Figure)
-    assert isinstance(axes, Series)
+    assert isinstance(axes, AxesSeries)
     assert_array_equal(axes.index, paramnames)
     for p, ax in axes.iteritems():
         assert ax.get_xlabel() == p
@@ -37,7 +35,7 @@ def test_make_1d_axes():
     # Check single string input
     fig, axes = make_1d_axes(paramnames[0])
     assert isinstance(fig, Figure)
-    assert isinstance(axes, Series)
+    assert isinstance(axes, AxesSeries)
     assert axes.index.size == 1
     assert_array_equal(axes.index, paramnames[0])
 
@@ -89,7 +87,7 @@ def test_make_2d_axes_inputs_outputs():
     # 2D axes
     fig, axes = make_2d_axes([paramnames_x, paramnames_y])
     assert isinstance(fig, Figure)
-    assert isinstance(axes, DataFrame)
+    assert isinstance(axes, AxesDataFrame)
     assert_array_equal(axes.index, paramnames_y)
     assert_array_equal(axes.columns, paramnames_x)
 
@@ -721,3 +719,4 @@ def test_AxesObjects():
     fig, axes = make_2d_axes(paramnames)
     assert isinstance(axes, AxesDataFrame)
     assert isinstance(axes['A'], AxesSeries)
+    assert isinstance(axes.loc['A':'B', 'C':'D'], AxesDataFrame)
