@@ -327,21 +327,29 @@ class AxesDataFrame(pandas.DataFrame):
                                       labelbottom=False, labeltop=False,
                                       **kwargs)
 
-    def axlines(self, params, values, **kwargs):
+    def axlines(self, params, values, lower=True, diagonal=True, upper=True,
+                **kwargs):
         """Add vertical and horizontal lines across all axes.
 
         Parameters
         ----------
-            params : str or list(str)
-                parameter label(s).
-                Should match the size of `values`.
-            values : float or list(float)
-                value(s) at which vertical and horizontal lines shall be added.
-                Should match the size of `params`.
-            kwargs
-                Any kwarg that can be passed to `plt.axvline` or `plt.axhline`.
+        params : str or list(str)
+            Parameter label(s).
+            Should match the size of `values`.
+        values : float or list(float)
+            Value(s) at which vertical and horizontal lines shall be added.
+            Should match the size of `params`.
+        lower, diagonal, upper : bool
+            Whether to plot the lines on the lower, diagonal,
+            and/or upper triangle plots.
+            Default: True
+        kwargs
+            Any kwarg that can be passed to `plt.axvline` or `plt.axhline`.
 
         """
+        positions = ['lower' if lower else None,
+                     'diagonal' if diagonal else None,
+                     'upper' if upper else None]
         params = np.ravel(params)
         values = np.ravel(values)
         if params.size != values.size:
@@ -351,32 +359,40 @@ class AxesDataFrame(pandas.DataFrame):
         for i, param in enumerate(params):
             if param in self.columns:
                 for ax in self.loc[:, param]:
-                    if ax is not None:
+                    if ax is not None and ax.position in positions:
                         ax.axvline(values[i], **kwargs)
             if param in self.index:
                 for ax in self.loc[param, self.columns != param]:
-                    if ax is not None:
+                    if ax is not None and ax.position in positions:
                         ax.axhline(values[i], **kwargs)
 
-    def axspans(self, params, vmins, vmaxs, **kwargs):
+    def axspans(self, params, vmins, vmaxs,
+                lower=True, diagonal=True, upper=True, **kwargs):
         """Add vertical and horizontal spans across all axes.
 
         Parameters
         ----------
-            params : str or list(str)
-                parameter label(s).
-                Should match the size of `vmins` and `vmaxs`.
-            vmins : float or list(float)
-                Minimum value of the vertical and horizontal axes spans.
-                Should match the size of `params`.
-            vmaxs : float or list(float)
-                Maximum value of the vertical and horizontal axes spans.
-                Should match the size of `params`.
-            kwargs
-                Any kwarg that can be passed to `plt.axvspan` or `plt.axhspan`.
+        params : str or list(str)
+            parameter label(s).
+            Should match the size of `vmins` and `vmaxs`.
+        vmins : float or list(float)
+            Minimum value of the vertical and horizontal axes spans.
+            Should match the size of `params`.
+        vmaxs : float or list(float)
+            Maximum value of the vertical and horizontal axes spans.
+            Should match the size of `params`.
+        lower, diagonal, upper : bool
+            Whether to plot the spans on the lower, diagonal,
+            and/or upper triangle plots.
+            Default: True
+        kwargs
+            Any kwarg that can be passed to `plt.axvspan` or `plt.axhspan`.
 
         """
         kwargs = normalize_kwargs(kwargs, dict(color=['c']))
+        positions = ['lower' if lower else None,
+                     'diagonal' if diagonal else None,
+                     'upper' if upper else None]
         params = np.ravel(params)
         vmins = np.ravel(vmins)
         vmaxs = np.ravel(vmaxs)
@@ -388,11 +404,11 @@ class AxesDataFrame(pandas.DataFrame):
         for i, param in enumerate(params):
             if param in self.columns:
                 for ax in self.loc[:, param]:
-                    if ax is not None:
+                    if ax is not None and ax.position in positions:
                         ax.axvspan(vmins[i], vmaxs[i], **kwargs)
             if param in self.index:
                 for ax in self.loc[param, self.columns != param]:
-                    if ax is not None:
+                    if ax is not None and ax.position in positions:
                         ax.axhspan(vmins[i], vmaxs[i], **kwargs)
 
 
@@ -402,29 +418,29 @@ def make_1d_axes(params, ncol=None, labels=None,
 
     Parameters
     ----------
-        params : list(str)
-            names of parameters.
+    params : list(str)
+        names of parameters.
 
-        ncol : int
-            Number of columns of the subplot grid.
-            default: ceil(sqrt(num_params))
+    ncol : int
+        Number of columns of the subplot grid.
+        Default: ceil(sqrt(num_params))
 
-        labels : dict(str:str), optional
-            Dictionary mapping params to plot labels.
-            Default: params
+    labels : dict(str:str), optional
+        Dictionary mapping params to plot labels.
+        Default: params
 
-        gridspec_kw : dict, optional
-            Dict with keywords passed to the `~matplotlib.gridspec.GridSpec`
-            constructor used to create the grid the subplots are placed on.
+    gridspec_kw : dict, optional
+        Dict with keywords passed to the `~matplotlib.gridspec.GridSpec`
+        constructor used to create the grid the subplots are placed on.
 
-        subplot_spec : matplotlib.gridspec.GridSpec, optional
-            gridspec to plot array as part of a subfigure
-            Default: None
+    subplot_spec : matplotlib.gridspec.GridSpec, optional
+        GridSpec instance to plot array as part of a subfigure.
+        Default: None
 
-        **fig_kw
-            All additional keyword arguments are passed to the
-            `.pyplot.figure` call.
-            Or directly pass the figure to plot on via the keyword 'fig'.
+    **fig_kw
+        All additional keyword arguments are passed to the
+        `.pyplot.figure` call.
+        Or directly pass the figure to plot on via the keyword 'fig'.
 
     Returns
     -------
@@ -452,39 +468,39 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
 
     Parameters
     ----------
-        params : lists of parameters
-            Can be either:
-            * list(str) if the x and y axes are the same
-            * [list(str),list(str)] if the x and y axes are different
-            Strings indicate the names of the parameters
+    params : lists of parameters
+        Can be either:
+        * list(str) if the x and y axes are the same
+        * [list(str),list(str)] if the x and y axes are different
+        Strings indicate the names of the parameters
 
-        labels : dict(str:str), optional
-            Dictionary mapping params to plot labels.
-            Default: params
+    labels : dict(str:str), optional
+        Dictionary mapping params to plot labels.
+        Default: params
 
-        lower, diagonal, upper : logical, optional
-            Whether to create 2D marginalised plots above or below the
-            diagonal, or to create a 1D marginalised plot on the diagonal.
-            Default: True
+    lower, diagonal, upper : logical, optional
+        Whether to create 2D marginalised plots above or below the
+        diagonal, or to create a 1D marginalised plot on the diagonal.
+        Default: True
 
-        ticks : str
-            If 'outer', plot ticks only on the very left and very bottom.
-            If 'inner', plot ticks also in inner subplots.
-            If None, plot no ticks at all.
-            Default: 'outer'
+    ticks : str
+        If 'outer', plot ticks only on the very left and very bottom.
+        If 'inner', plot ticks also in inner subplots.
+        If None, plot no ticks at all.
+        Default: 'outer'
 
-        gridspec_kw : dict, optional
-            Dict with keywords passed to the `~matplotlib.gridspec.GridSpec`
-            constructor used to create the grid the subplots are placed on.
+    gridspec_kw : dict, optional
+        Dict with keywords passed to the `~matplotlib.gridspec.GridSpec`
+        constructor used to create the grid the subplots are placed on.
 
-        subplot_spec : matplotlib.gridspec.GridSpec, optional
-            gridspec to plot array as part of a subfigure.
-            Default: None
+    subplot_spec : matplotlib.gridspec.GridSpec, optional
+        GridSpec instance to plot array as part of a subfigure.
+        Default: None
 
-        **fig_kw
-            All additional keyword arguments are passed to the
-            `.pyplot.figure` call.
-            Or directly pass the figure to plot on via the keyword 'fig'.
+    **fig_kw
+        All additional keyword arguments are passed to the
+        `.pyplot.figure` call.
+        Or directly pass the figure to plot on via the keyword 'fig'.
 
     Returns
     -------
@@ -492,7 +508,7 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
         New or original (if supplied) figure object.
 
     axes : pandas.DataFrame(matplotlib.axes.Axes)
-        Pandas array of axes objects
+        Pandas array of axes objects.
 
     """
     fig = fig_kw.pop('fig') if 'fig' in fig_kw else plt.figure(**fig_kw)
@@ -523,18 +539,18 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     Parameters
     ----------
     ax: matplotlib.axes.Axes
-        axis object to plot on
+        Axis object to plot on.
 
     data: np.array
         Uniformly weighted samples to generate kernel density estimator.
 
     xmin, xmax: float
         lower/upper prior bound
-        optional, default None
+        Optional, default None
 
     levels: list
-        values at which to draw iso-probability lines.
-        optional, default [0.95, 0.68]
+        Values at which to draw iso-probability lines.
+        Optional, default [0.95, 0.68]
 
     q: int or float or tuple
         Quantile to determine the data range to be plotted.
@@ -548,13 +564,13 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         If set to True then the 1d plot will be shaded with the value of the
         ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
         to define the color of the shading directly.
-        optional, default False
+        Optional, default False
 
     Returns
     -------
     lines: matplotlib.lines.Line2D
         A list of line objects representing the plotted data (same as
-        matplotlib matplotlib.axes.Axes.plot command)
+        matplotlib matplotlib.axes.Axes.plot command).
 
     """
     kwargs = normalize_kwargs(
@@ -616,7 +632,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     Parameters
     ----------
     ax: matplotlib.axes.Axes
-        axis object to plot on.
+        Axis object to plot on.
 
     data: np.array
         Samples to generate kernel density estimator.
@@ -636,8 +652,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         Default 100
 
     levels: list
-        values at which to draw iso-probability lines.
-        optional, default [0.95, 0.68]
+        Values at which to draw iso-probability lines.
+        Optional, default [0.95, 0.68]
 
     q: int or float or tuple
         Quantile to determine the data range to be plotted.
@@ -651,13 +667,13 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         If set to True then the 1d plot will be shaded with the value of the
         ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
         to define the color of the shading directly.
-        optional, default False
+        Optional, default False
 
     Returns
     -------
     lines: matplotlib.lines.Line2D
         A list of line objects representing the plotted data (same as
-        matplotlib matplotlib.axes.Axes.plot command)
+        matplotlib matplotlib.axes.Axes.plot command).
 
     """
     kwargs = normalize_kwargs(
@@ -728,7 +744,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     Parameters
     ----------
     ax: matplotlib.axes.Axes
-        axis object to plot on
+        Axis object to plot on.
 
     data: np.array
         Samples to generate histogram from
@@ -804,25 +820,25 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     Parameters
     ----------
     ax: matplotlib.axes.Axes
-        axis object to plot on
+        Axis object to plot on.
 
     data_x, data_y: np.array
-        x and y coordinates of uniformly weighted samples to generate kernel
-        density estimator.
+        The x and y coordinates of uniformly weighted samples to generate
+        kernel density estimator.
 
     levels: list
-        amount of mass within each iso-probability contour.
+        Amount of mass within each iso-probability contour.
         Has to be ordered from outermost to innermost contour.
-        optional, default [0.95, 0.68]
+        Optional, default [0.95, 0.68]
 
     xmin, xmax, ymin, ymax: float
-        lower/upper prior bounds in x/y coordinates
-        optional, default None
+        The lower/upper prior bounds in x/y coordinates.
+        Optional, default None
 
     Returns
     -------
     c: matplotlib.contour.QuadContourSet
-        A set of contourlines or filled regions
+        A set of contourlines or filled regions.
 
     """
     kwargs = normalize_kwargs(kwargs, dict(linewidths=['linewidth', 'lw'],
@@ -901,19 +917,19 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     Parameters
     ----------
     ax: matplotlib.axes.Axes
-        axis object to plot on.
+        Axis object to plot on.
 
     data_x, data_y: np.array
-        x and y coordinates of uniformly weighted samples to generate kernel
-        density estimator.
+        The x and y coordinates of uniformly weighted samples to generate
+        kernel density estimator.
 
     weights: np.array, optional
         Sample weights.
 
     levels: list, optional
-        amount of mass within each iso-probability contour.
+        Amount of mass within each iso-probability contour.
         Has to be ordered from outermost to innermost contour.
-        optional, default [0.95, 0.68]
+        Optional, default [0.95, 0.68]
 
     ncompress: int, optional
         Degree of compression.
@@ -929,7 +945,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     Returns
     -------
     c: matplotlib.contour.QuadContourSet
-        A set of contourlines or filled regions
+        A set of contourlines or filled regions.
 
     """
     kwargs = normalize_kwargs(kwargs, dict(linewidths=['linewidth', 'lw'],
@@ -1019,16 +1035,16 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     Parameters
     ----------
     ax: matplotlib.axes.Axes
-        axis object to plot on
+        Axis object to plot on.
 
     data_x, data_y: np.array
-        x and y coordinates of uniformly weighted samples to generate kernel
-        density estimator.
+        The x and y coordinates of uniformly weighted samples to generate a
+        two dimensional histogram.
 
     levels: list
         Shade iso-probability contours containing these levels of probability
         mass. If None defaults to usual matplotlib.axes.Axes.hist2d colouring.
-        optional, default None
+        Optional, default None
 
     q: int or float or tuple
         Quantile to determine the data range to be plotted.
@@ -1041,7 +1057,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     Returns
     -------
     c: matplotlib.collections.QuadMesh
-        A set of colors
+        A set of colors.
 
     """
     weights = kwargs.pop('weights', None)
