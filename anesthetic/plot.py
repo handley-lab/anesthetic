@@ -114,7 +114,7 @@ class AxesDataFrame(pandas.DataFrame):
 
     def __init__(self, data=None, index=None, columns=None, fig=None,
                  lower=True, diagonal=True, upper=True, labels=None,
-                 ticks='outer', gridspec_kw=None, subplot_spec=None,
+                 ticks='inner', gridspec_kw=None, subplot_spec=None,
                  *args, **kwargs):
         if data is None and index is not None and columns is not None:
             position = self._position_frame(index=index,
@@ -280,7 +280,7 @@ class AxesDataFrame(pandas.DataFrame):
         self._set_labels(axes=self, labels=labels, **kwargs)
 
     @staticmethod
-    def _tick_params(axes, direction='outer', **kwargs):
+    def _tick_params(axes, direction='inner', **kwargs):
         if direction not in ['inner', 'outer', None]:
             raise ValueError("tick direction=%s was requested, but tick "
                              "direction can only be one of "
@@ -483,7 +483,7 @@ def make_1d_axes(params, ncol=None, labels=None,
 
 
 def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
-                 ticks='outer', gridspec_kw=None, subplot_spec=None, **fig_kw):
+                 ticks='inner', gridspec_kw=None, subplot_spec=None, **fig_kw):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
     Parameters
@@ -507,7 +507,7 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
         If 'outer', plot ticks only on the very left and very bottom.
         If 'inner', plot ticks also in inner subplots.
         If None, plot no ticks at all.
-        Default: 'outer'
+        Default: 'inner'
 
     gridspec_kw : dict, optional
         Dict with keywords passed to the `~matplotlib.gridspec.GridSpec`
