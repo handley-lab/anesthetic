@@ -342,10 +342,27 @@ class AxesDataFrame(pandas.DataFrame):
 
     def tick_params(self, *args, **kwargs):
         """Apply `matplotlib.axes.tick_params` to entire `AxesDataFrame`."""
-        for x, rows in self.iterrows():
-            for y, ax in rows.iteritems():
+        for y, rows in self.iterrows():
+            for x, ax in rows.iteritems():
                 if isinstance(ax, Axes):
                     ax.tick_params(*args, **kwargs)
+
+    def set_margins(self, m):
+        """Apply `matplotlib.axes.set_xmargin` to entire `AxesDataFrame`."""
+        unique_params = list(np.unique(list(self.index) + list(self.columns)))
+        for y, rows in self.iterrows():
+            for x, ax in rows.iteritems():
+                if isinstance(ax, Axes):
+                    if x in unique_params:
+                        xmin, xmax = ax.get_xlim()
+                        xdelta = xmax - xmin
+                        ax.set_xlim(xmin - m * xdelta, xmax + m * xdelta)
+                        unique_params.remove(x)
+                    if y in unique_params:
+                        ymin, ymax = ax.get_ylim()
+                        ydelta = ymax - ymin
+                        ax.set_ylim(ymin - m * ydelta, ymax + m * ydelta)
+                        unique_params.remove(y)
 
     def axlines(self, params, values, lower=True, diagonal=True, upper=True,
                 **kwargs):
