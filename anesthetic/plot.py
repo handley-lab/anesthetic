@@ -725,12 +725,12 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
-
-    data_compressed, w = sample_compression_1d(data, weights, ncompress)
-    kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
     x = np.linspace(xmin, xmax, nplot)
+
+    data_compressed, w = sample_compression_1d(data, weights, ncompress)
+    kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
 
     p = kde(x)
     p /= p.max()
@@ -996,11 +996,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     kwargs.pop('q', None)
 
-    cov = np.cov(data_x, data_y, aweights=weights)
-    tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
-                                              weights, ncompress)
-    kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
-
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data_x, q[0], weights)
@@ -1008,6 +1003,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
     X, Y = np.mgrid[xmin:xmax:1j*np.sqrt(nplot), ymin:ymax:1j*np.sqrt(nplot)]
+
+    cov = np.cov(data_x, data_y, aweights=weights)
+    tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
+                                              weights, ncompress)
+    kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
 
     P = kde([X.ravel(), Y.ravel()]).reshape(X.shape)
 
