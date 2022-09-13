@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 from scipy.special import erf
 from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
+from matplotlib.axes import Axes
 try:
     from astropy.visualization import hist
 except ImportError:
@@ -25,7 +26,7 @@ except ImportError:
     pass
 import matplotlib.cbook as cbook
 import matplotlib.lines as mlines
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MaxNLocator, AutoMinorLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.transforms import Affine2D
 from anesthetic.utils import nest_level
@@ -102,6 +103,11 @@ class AxesSeries(pandas.Series):
         """
         self._set_xlabels(axes=self, labels=labels, **kwargs)
 
+    def tick_params(self, *args, **kwargs):
+        """Apply `matplotlib.axes.tick_params` to entire `AxesSeries`."""
+        for p, ax in self.iteritems():
+            ax.tick_params(*args, **kwargs)
+
 
 class AxesDataFrame(pandas.DataFrame):
     """Anesthetic's axes version of `pandas.DataFrame`."""
@@ -123,11 +129,13 @@ class AxesDataFrame(pandas.DataFrame):
             self._set_labels(axes=data, labels=labels)
             index = data.index
             columns = data.columns
-            self._tick_params(axes=data, direction=ticks, which='major')
+            self._tick_params(axes=data, direction=ticks, which='both')
         super().__init__(data=data,
                          index=index,
                          columns=columns,
                          *args, **kwargs)
+        self.tick_params(axis='both', which='both', labelrotation=45,
+                         labelsize='small')
 
     @property
     def _constructor(self):
@@ -196,8 +204,11 @@ class AxesDataFrame(pandas.DataFrame):
                         axes[x][y].position = 'diagonal'
                         axes[x][y].twin.xaxis.set_major_locator(
                             MaxNLocator(3, prune='both'))
+                        axes[x][y].twin.xaxis.set_minor_locator(
+                            AutoMinorLocator(1))
                         axes[x][y].yaxis.set_major_locator(
                             MaxNLocator(3, prune='both'))
+                        axes[x][y].yaxis.set_minor_locator(AutoMinorLocator(1))
                     else:
                         if position[x][y] == 1:
                             axes[x][y].position = 'upper'
@@ -205,8 +216,10 @@ class AxesDataFrame(pandas.DataFrame):
                             axes[x][y].position = 'lower'
                         axes[x][y].yaxis.set_major_locator(
                             MaxNLocator(3, prune='both'))
+                        axes[x][y].yaxis.set_minor_locator(AutoMinorLocator(1))
                     axes[x][y].xaxis.set_major_locator(
                         MaxNLocator(3, prune='both'))
+                    axes[x][y].xaxis.set_minor_locator(AutoMinorLocator(1))
         return axes
 
     @staticmethod
@@ -326,6 +339,13 @@ class AxesDataFrame(pandas.DataFrame):
                         a.tick_params('x', bottom=False, top=False,
                                       labelbottom=False, labeltop=False,
                                       **kwargs)
+
+    def tick_params(self, *args, **kwargs):
+        """Apply `matplotlib.axes.tick_params` to entire `AxesDataFrame`."""
+        for x, rows in self.iterrows():
+            for y, ax in rows.iteritems():
+                if isinstance(ax, Axes):
+                    ax.tick_params(*args, **kwargs)
 
     def axlines(self, params, values, lower=True, diagonal=True, upper=True,
                 **kwargs):

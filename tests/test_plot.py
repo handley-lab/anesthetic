@@ -23,13 +23,17 @@ from scipy.interpolate import interp1d
 
 def test_AxesObjects():
     paramnames = ['a', 'b', 'c']
+
+    # AxesSeries
     axes = AxesSeries(index=paramnames)
     assert isinstance(axes, AxesSeries)
     assert isinstance(axes.iloc[0], SubplotBase)
     assert axes.iloc[0].get_xlabel() == 'a'
     axes.set_xlabels(labels=dict(a='A', b='B', c='C'))
     assert axes.iloc[0].get_xlabel() == 'A'
+    axes.tick_params(labelrotation=0, labelsize='medium')
 
+    # AxesDataFrame
     axes = AxesDataFrame(index=paramnames, columns=paramnames)
     assert isinstance(axes, AxesDataFrame)
     assert isinstance(axes.iloc[0, 0], SubplotBase)
@@ -38,15 +42,7 @@ def test_AxesObjects():
     axes.set_labels(labels=dict(a='A', b='B', c='C'))
     assert axes.iloc[-1, 0].get_xlabel() == 'A'
     assert axes.iloc[-1, 0].get_ylabel() == 'C'
-
-    fig, axes = make_1d_axes(paramnames)
-    assert isinstance(axes, AxesSeries)
-    assert isinstance(axes.to_frame(), AxesDataFrame)
-
-    fig, axes = make_2d_axes(paramnames)
-    assert isinstance(axes, AxesDataFrame)
-    assert isinstance(axes['a'], AxesSeries)
-    assert isinstance(axes.loc['a':'b', 'b':'c'], AxesDataFrame)
+    axes.tick_params(labelrotation=0, labelsize='medium')
 
 
 def test_make_1d_axes():
@@ -57,6 +53,7 @@ def test_make_1d_axes():
     fig, axes = make_1d_axes(paramnames)
     assert isinstance(fig, Figure)
     assert isinstance(axes, AxesSeries)
+    assert isinstance(axes.to_frame(), AxesDataFrame)
     assert_array_equal(axes.index, paramnames)
     for p, ax in axes.iteritems():
         assert ax.get_xlabel() == p
@@ -117,6 +114,8 @@ def test_make_2d_axes_inputs_outputs():
     fig, axes = make_2d_axes([paramnames_x, paramnames_y])
     assert isinstance(fig, Figure)
     assert isinstance(axes, AxesDataFrame)
+    assert isinstance(axes['A'], AxesSeries)
+    assert isinstance(axes.loc['A':'B', 'B':'C'], AxesDataFrame)
     assert_array_equal(axes.index, paramnames_y)
     assert_array_equal(axes.columns, paramnames_x)
 
