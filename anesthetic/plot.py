@@ -58,7 +58,8 @@ class AxesSeries(Series):
         return AxesDataFrame
 
     @staticmethod
-    def axes_series(index, fig, ncol=None, gridspec_kw=None, subplot_spec=None):
+    def axes_series(index, fig, ncol=None, gridspec_kw=None,
+                    subplot_spec=None):
         """Set up subplots for `AxesSeries`."""
         axes = Series(np.full(np.shape(index), None), index=index)
         if fig is None:
