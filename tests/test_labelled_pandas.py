@@ -457,5 +457,5 @@ def test_drop_labels():
     assert ldf.islabelled()
     nolabels = ldf.drop_labels()
     assert not nolabels.islabelled()
-    assert_array_equal(nolabels.drop_labels(), nolabels)
+    assert_frame_equal(nolabels.drop_labels(), nolabels)
     assert nolabels.drop_labels() is not nolabels
