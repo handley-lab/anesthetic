@@ -168,13 +168,13 @@ class Samples(WeightedLabelledDataFrame):
         ----------
         axes: plotting axes
             Can be:
-                - list(str) or str
-                - pandas.Series(matplotlib.axes.Axes)
+            - list(str) or str
+            - pandas.Series(matplotlib.axes.Axes)
             If a pandas.Series is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise a new set of axes are
             created using the list or lists of strings.
 
-        kind: str, optional
+        kind: str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
             {'hist', 'box', 'kde', 'density'}, anesthetic also provides
             {'hist_1d', 'kde_1d', 'fastkde_1d'}.
@@ -182,7 +182,6 @@ class Samples(WeightedLabelledDataFrame):
             {'line', 'bar', 'barh', 'area', 'pie'} are also accessible, these
             can be hard to interpret/expensive for Samples, MCMCSamples, or
             NestedSamples.
-            Default kde_1d
 
         Returns
         -------
@@ -218,9 +217,11 @@ class Samples(WeightedLabelledDataFrame):
         ----------
         axes: plotting axes
             Can be:
+
                 - list(str) if the x and y axes are the same
                 - [list(str),list(str)] if the x and y axes are different
                 - pandas.DataFrame(matplotlib.axes.Axes)
+
             If a pandas.DataFrame is provided as an existing set of axes, then
             this is used for creating the plot. Otherwise, a new set of axes
             are created using the list or lists of strings.
@@ -229,6 +230,7 @@ class Samples(WeightedLabelledDataFrame):
             What kinds of plots to produce. Dictionary takes the keys
             'diagonal' for the 1D plots and 'lower' and 'upper' for the 2D
             plots. The options for 'diagonal' are:
+
                 - 'kde_1d'
                 - 'hist_1d'
                 - 'fastkde_1d'
@@ -237,7 +239,9 @@ class Samples(WeightedLabelledDataFrame):
                 - 'box'
                 - 'kde'
                 - 'density'
+
             The options for 'lower' and 'upper' are:
+
                 - 'kde_2d'
                 - 'hist_2d'
                 - 'scatter_2d'
@@ -245,15 +249,20 @@ class Samples(WeightedLabelledDataFrame):
                 - 'kde'
                 - 'scatter'
                 - 'hexbin'
+
             There are also a set of shortcuts provided in
             Samples.plot_2d_default_kinds:
+
                 - 'kde_1d': 1d kde plots down the diagonal
                 - 'kde_2d': 2d kde plots in lower triangle
                 - 'kde': 1d & 2d kde plots in lower & diagonal
+                - 'hist_1d': 1d histograms down the diagonal
+                - 'hist_2d': 2d histograms in lower triangle
+                - 'hist': 1d & 2d histograms in lower & diagonal
+
             Feel free to add your own to this list!
-            Default: {'diagonal': 'kde_1d',
-                      'lower': 'kde_2d',
-                      'upper':'scatter_2d'}
+            Default:
+            {'diagonal': 'kde_1d', 'lower': 'kde_2d', 'upper':'scatter_2d'}
 
         diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
             kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
@@ -336,28 +345,30 @@ class Samples(WeightedLabelledDataFrame):
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
 
+        Spam, ham and eggs.
+
         Parameters
         ----------
         logL_new: np.array
             New log-likelihood values. Should have the same shape as `logL`.
 
-        action: str, optional
+        action: str, default='add'
             Can be any of {'add', 'replace', 'mask'}.
-                * add: Add the new `logL_new` to the current `logL`.
-                * replace: Replace the current `logL` with the new `logL_new`.
-                * mask: treat `logL_new` as a boolean mask and only keep the
-                        corresponding (True) samples.
-            default: 'add'
 
-        inplace: bool, optional
+            * add: Add the new `logL_new` to the current `logL`.
+            * replace: Replace the current `logL` with the new `logL_new`.
+            * mask: treat `logL_new` as a boolean mask and only keep the
+              corresponding (True) samples.
+
+        inplace: bool, default=False
             Indicates whether to modify the existing array, or return a new
             frame with importance sampling applied.
-            default: False
 
         Returns
         -------
         samples: Samples/MCMCSamples/NestedSamples
             Importance re-weighted samples.
+
         """
         if inplace:
             samples = self
@@ -893,10 +904,10 @@ class NestedSamples(Samples):
 
         action: str, optional
             Can be any of {'add', 'replace', 'mask'}.
-                * add: Add the new `logL_new` to the current `logL`.
-                * replace: Replace the current `logL` with the new `logL_new`.
-                * mask: treat `logL_new` as a boolean mask and only keep the
-                        corresponding (True) samples.
+            * add: Add the new `logL_new` to the current `logL`.
+            * replace: Replace the current `logL` with the new `logL_new`.
+            * mask: treat `logL_new` as a boolean mask and only keep the
+            corresponding (True) samples.
             default: 'add'
 
         inplace: bool, optional
@@ -908,6 +919,7 @@ class NestedSamples(Samples):
         -------
         samples: NestedSamples
             Importance re-weighted samples.
+
         """
         samples = super().importance_sample(logL_new, action=action)
         samples = samples[samples.logL > samples.logL_birth].recompute()

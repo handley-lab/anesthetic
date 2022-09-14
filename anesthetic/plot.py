@@ -110,7 +110,40 @@ class AxesSeries(pandas.Series):
 
 
 class AxesDataFrame(pandas.DataFrame):
-    """Anesthetic's axes version of `pandas.DataFrame`."""
+    """Anesthetic's axes version of `pandas.DataFrame`.
+
+    Parameters
+    ----------
+    index: list(str)
+        Parameters to be placed on the y-axes.
+    columns: list(str)
+        Parameters to be placed on the x-axes.
+    fig : `~matplotlib.figure.Figure`
+    lower, diagonal, upper : bool, optional
+        Whether to create 2D marginalised plots above or below the
+        diagonal, or to create a 1D marginalised plot on the diagonal.
+        Default: True
+    labels : dict(str:str), optional
+        Dictionary mapping params to plot labels.
+        Default: params
+    ticks : str
+        If 'outer', plot ticks only on the very left and very bottom.
+        If 'inner', plot ticks also in inner subplots.
+        If None, plot no ticks at all.
+        Default: 'inner'
+    gridspec_kw : dict, optional
+        Dict with keywords passed to the `~matplotlib.gridspec.GridSpec`
+        constructor used to create the grid the subplots are placed on.
+    subplot_spec : matplotlib.gridspec.GridSpec, optional
+        GridSpec instance to plot array as part of a subfigure.
+        Default: None
+
+    Methods
+    -------
+    axlines:
+        Add vertical and horizontal lines across all axes.
+
+    """
 
     def __init__(self, data=None, index=None, columns=None, fig=None,
                  lower=True, diagonal=True, upper=True, labels=None,

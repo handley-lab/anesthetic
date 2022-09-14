@@ -27,7 +27,7 @@ def get_version(short=False):
 
 project = 'anesthetic'
 copyright = '2019, Will Handley'
-author = 'Will Handley'
+author = 'Will Handley and Lukas Hergt'
 
 # The short X.Y version
 version = get_version(True)
@@ -75,7 +75,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -85,6 +85,16 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+
+# -- Options for autodoc -------------------------------------------------
+autodoc_default_options = {
+    'undoc-members': False,
+}
+
+
+# -- Options for numpydoc -------------------------------------------------
+numpydoc_show_inherited_class_members = False
+numpydoc_show_class_members = False 
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -146,7 +156,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'anesthetic.tex', 'anesthetic Documentation',
-     'Will Handley', 'manual'),
+     'Will Handley and Lukas Hergt', 'manual'),
 ]
 
 
@@ -208,3 +218,9 @@ intersphinx_mapping = {
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+
+
+
+
+

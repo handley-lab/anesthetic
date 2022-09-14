@@ -43,14 +43,11 @@ def read_getdist(root, *args, **kwargs):
 
     Parameters
     ----------
-    burn_in: float
-        if 0 < burn_in < 1:
-            discard the first burn_in fraction of samples
-        elif 1 < burn_in:
-            only keep samples [burn_in:]
+    burn_in: float, default=False
+        if 0 < burn_in < 1: discard the first burn_in fraction of samples
+        elif 1 < burn_in: only keep samples[burn_in:]
         Only works if `root` provided and if chains are GetDist or Cobaya
         compatible.
-        default: False
 
     Returns
     -------
