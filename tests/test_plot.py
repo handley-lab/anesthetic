@@ -280,32 +280,42 @@ def test_2d_axes_limits():
 @pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
                                         [['A', 'B', 'C', 'D'], ['A', 'B']],
                                         [['A', 'B'], ['A', 'B', 'C', 'D']]])
-@pytest.mark.parametrize('params, values', [('A', 0),
-                                            (['A', 'C', 'E'], [0, 0, 0]),
-                                            (['A', 'C', 'C'], [0, 0, 0.5])])
+@pytest.mark.parametrize('params', [{'A': 0},
+                                    {'A': 0, 'C': 0, 'E': 0},
+                                    {'A': 0, 'C': [0, 0.5]}])
 @pytest.mark.parametrize('upper', [True, False])
-def test_2d_axlines_axspans(axesparams, params, values, upper):
-    values = np.array(values)
-    line_kwargs = dict(c='k', ls='--', lw=0.5)
-    span_kwargs = dict(c='k', alpha=0.5)
+def test_2d_axes_axlines(axesparams, params, upper):
+    kwargs = dict(c='k', ls='--', lw=0.5)
     fig, axes = make_2d_axes(axesparams, upper=upper)
-    axes.axlines(params, values, **line_kwargs)
-    axes.axspans(params, values-0.1, values+0.1, **span_kwargs)
+    axes.axlines(params, **kwargs)
     plt.close("all")
 
 
-@pytest.mark.parametrize('params, values', [('A', [0, 0]),
-                                            (['A', 'C'], 0),
-                                            (['A', 'C'], [0, 0, 0.5]),
-                                            (['A', 'C', 'C'], [0, 0])])
-def test_2d_axlines_axspans_error(params, values):
-    values = np.array(values)
-    axesparams = ['A', 'B', 'C', 'D']
-    fig, axes = make_2d_axes(axesparams)
-    with pytest.raises(ValueError):
-        axes.axlines(params, values)
-    with pytest.raises(ValueError):
-        axes.axspans(params, values-0.1, values+0.1)
+@pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
+                                        [['A', 'B', 'C', 'D'], ['A', 'B']],
+                                        [['A', 'B'], ['A', 'B', 'C', 'D']]])
+@pytest.mark.parametrize('params', [{'A': (0, 0.1)},
+                                    {'A': (0, 1), 'C': (0, 1), 'E': (0, 1)},
+                                    {'A': (0, 1), 'C': [(-0.1, 0), (0.5, 1)]}])
+@pytest.mark.parametrize('upper', [True, False])
+def test_2d_axes_axspans(axesparams, params, upper):
+    kwargs = dict(c='k', alpha=0.5)
+    fig, axes = make_2d_axes(axesparams, upper=upper)
+    axes.axspans(params, **kwargs)
+    plt.close("all")
+
+
+@pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
+                                        [['A', 'B', 'C', 'D'], ['A', 'B']],
+                                        [['A', 'B'], ['A', 'B', 'C', 'D']]])
+@pytest.mark.parametrize('params', [{'A': 0},
+                                    {'A': 0, 'C': 0, 'E': 0},
+                                    {'A': [0, 0.1], 'C': [0, 0.5]}])
+@pytest.mark.parametrize('upper', [True, False])
+def test_2d_axes_scatter(axesparams, params, upper):
+    kwargs = dict(c='k', marker='*')
+    fig, axes = make_2d_axes(axesparams, upper=upper)
+    axes.scatter(params, **kwargs)
     plt.close("all")
 
 

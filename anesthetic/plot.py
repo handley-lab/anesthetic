@@ -364,18 +364,14 @@ class AxesDataFrame(pandas.DataFrame):
                         ax.set_ylim(ymin - m * ydelta, ymax + m * ydelta)
                         unique_params.remove(y)
 
-    def axlines(self, params, values, lower=True, diagonal=True, upper=True,
-                **kwargs):
+    def axlines(self, params, lower=True, diagonal=True, upper=True, **kwargs):
         """Add vertical and horizontal lines across all axes.
 
         Parameters
         ----------
-        params : str or list(str)
-            Parameter label(s).
-            Should match the size of `values`.
-        values : float or list(float)
-            Value(s) at which vertical and horizontal lines shall be added.
-            Should match the size of `params`.
+        params : dict(array_like)
+            Dictionary of parameter labels and desired values.
+            Can provide more than one value per label.
         lower, diagonal, upper : bool
             Whether to plot the lines on the lower, diagonal,
             and/or upper triangle plots.
@@ -387,37 +383,25 @@ class AxesDataFrame(pandas.DataFrame):
         positions = ['lower' if lower else None,
                      'diagonal' if diagonal else None,
                      'upper' if upper else None]
-        params = np.ravel(params)
-        values = np.ravel(values)
-        if params.size != values.size:
-            raise ValueError("The sizes of `params` and `values` must match "
-                             "exactly, but params.size=%s and values.size=%s."
-                             % (params.size, values.size))
-        for i, param in enumerate(params):
-            if param in self.columns:
-                for ax in self.loc[:, param]:
-                    if ax is not None and ax.position in positions:
-                        ax.axvline(values[i], **kwargs)
-            if param in self.index:
-                for ax in self.loc[param, self.columns != param]:
-                    if ax is not None and ax.position in positions:
-                        ax.axhline(values[i], **kwargs)
+        for y, rows in self.iterrows():
+            for x, ax in rows.iteritems():
+                if ax is not None and ax.position in positions:
+                    if x in params:
+                        for v in np.atleast_1d(params[x]):
+                            ax.axvline(v, **kwargs)
+                    if y in params and ax.position != 'diagonal':
+                        for v in np.atleast_1d(params[y]):
+                            ax.axhline(v, **kwargs)
 
-    def axspans(self, params, vmins, vmaxs,
-                lower=True, diagonal=True, upper=True, **kwargs):
+    def axspans(self, params, lower=True, diagonal=True, upper=True, **kwargs):
         """Add vertical and horizontal spans across all axes.
 
         Parameters
         ----------
-        params : str or list(str)
-            parameter label(s).
-            Should match the size of `vmins` and `vmaxs`.
-        vmins : float or list(float)
-            Minimum value of the vertical and horizontal axes spans.
-            Should match the size of `params`.
-        vmaxs : float or list(float)
-            Maximum value of the vertical and horizontal axes spans.
-            Should match the size of `params`.
+        params : dict(array_like(2-tuple))
+            Dictionary of parameter labels and desired value tuples.
+            Can provide more than one value tuple per label.
+            Each value tuple provides the min and max value for an axis span.
         lower, diagonal, upper : bool
             Whether to plot the spans on the lower, diagonal,
             and/or upper triangle plots.
@@ -430,23 +414,15 @@ class AxesDataFrame(pandas.DataFrame):
         positions = ['lower' if lower else None,
                      'diagonal' if diagonal else None,
                      'upper' if upper else None]
-        params = np.ravel(params)
-        vmins = np.ravel(vmins)
-        vmaxs = np.ravel(vmaxs)
-        if params.size != vmins.size:
-            raise ValueError("The sizes of `params`, `vmins` and `vmaxs` must "
-                             "match exactly, but params.size=%s, "
-                             "vmins.size=%s and vmaxs.size=%s."
-                             % (params.size, vmins.size, vmaxs.size))
-        for i, param in enumerate(params):
-            if param in self.columns:
-                for ax in self.loc[:, param]:
-                    if ax is not None and ax.position in positions:
-                        ax.axvspan(vmins[i], vmaxs[i], **kwargs)
-            if param in self.index:
-                for ax in self.loc[param, self.columns != param]:
-                    if ax is not None and ax.position in positions:
-                        ax.axhspan(vmins[i], vmaxs[i], **kwargs)
+        for y, rows in self.iterrows():
+            for x, ax in rows.iteritems():
+                if ax is not None and ax.position in positions:
+                    if x in params:
+                        for vmin, vmax in np.atleast_2d(params[x]):
+                            ax.axvspan(vmin, vmax, **kwargs)
+                    if y in params and ax.position != 'diagonal':
+                        for vmin, vmax in np.atleast_2d(params[y]):
+                            ax.axhspan(vmin, vmax, **kwargs)
 
     def scatter(self, params, lower=True, upper=True, **kwargs):
         """Add scatter points across all axes.
@@ -471,8 +447,8 @@ class AxesDataFrame(pandas.DataFrame):
             for x, ax in rows.iteritems():
                 if ax is not None and ax.position in positions:
                     if x in params and y in params:
-                        z = max(z.get_zorder() for z in ax.artists
-                                + ax.collections + ax.lines + ax.patches)
+                        z = max([z.get_zorder() for z in ax.artists +
+                                 ax.collections + ax.lines + ax.patches] + [0])
                         z = z+1 if zorder is None else zorder
                         ax.scatter(params[x], params[y], zorder=z, **kwargs)
 
