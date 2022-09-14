@@ -58,7 +58,8 @@ class AxesSeries(Series):
         return AxesDataFrame
 
     @staticmethod
-    def axes_series(index, fig, ncol=None, gridspec_kw=None, subplot_spec=None):
+    def axes_series(index, fig, ncol=None, gridspec_kw=None,
+                    subplot_spec=None):
         """Set up subplots for `AxesSeries`."""
         axes = Series(np.full(np.shape(index), None), index=index)
         if fig is None:
@@ -231,7 +232,6 @@ class AxesDataFrame(DataFrame):
                     if position[x][y] == 0:
                         axes[x][y].twin = axes[x][y].twinx()
                         axes[x][y].twin.set_yticks([])
-                        axes[x][y].twin.set_ylim(0, 1.1)
                         cls.make_diagonal(axes[x][y])
                         axes[x][y].position = 'diagonal'
                         axes[x][y].twin.xaxis.set_major_locator(
@@ -803,7 +803,12 @@ def kde_plot_1d(ax, data, *args, **kwargs):
             fill.append(ax.fill_between(x, pp, where=pp >= c[j],
                         color=cmap(c[j]), edgecolor=edgecolor))
 
-        return ans, fill
+        ans = ans, fill
+
+    if density:
+        ax.set_ylim(bottom=0)
+    else:
+        ax.set_ylim(0, 1.1)
 
     return ans
 
