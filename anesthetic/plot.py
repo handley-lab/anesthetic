@@ -43,8 +43,7 @@ class AxesSeries(Series):
     def __init__(self, data=None, index=None, fig=None, ncol=None, labels=None,
                  gridspec_kw=None, subplot_spec=None, *args, **kwargs):
         if data is None and index is not None:
-            data = Series(np.full(np.shape(index), None), index=index)
-            data = self.axes_series(data=data, fig=fig, ncol=ncol,
+            data = self.axes_series(index=index, fig=fig, ncol=ncol,
                                     gridspec_kw=gridspec_kw,
                                     subplot_spec=subplot_spec)
             self._set_xlabels(axes=data, labels=labels)
@@ -59,9 +58,9 @@ class AxesSeries(Series):
         return AxesDataFrame
 
     @staticmethod
-    def axes_series(data, fig, ncol=None, gridspec_kw=None, subplot_spec=None):
+    def axes_series(index, fig, ncol=None, gridspec_kw=None, subplot_spec=None):
         """Set up subplots for `AxesSeries`."""
-        axes = data.copy()
+        axes = Series(np.full(np.shape(index), None), index=index)
         if fig is None:
             fig = plt.figure()
         if ncol is None:
