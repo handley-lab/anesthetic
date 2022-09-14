@@ -448,6 +448,34 @@ class AxesDataFrame(pandas.DataFrame):
                     if ax is not None and ax.position in positions:
                         ax.axhspan(vmins[i], vmaxs[i], **kwargs)
 
+    def scatter(self, params, lower=True, upper=True, **kwargs):
+        """Add scatter points across all axes.
+
+        Parameters
+        ----------
+        params : dict(array_like)
+            Dictionary of parameter labels and desired values.
+            Can provide more than one value per label, but length has to
+            match for all parameter labels.
+        lower, upper : bool
+            Whether to plot the spans on the lower and/or upper triangle plots.
+            Default: True
+        kwargs
+            Any kwarg that can be passed to `plt.scatter`.
+
+        """
+        positions = ['lower' if lower else None,
+                     'upper' if upper else None]
+        zorder = kwargs.pop('zorder', None)
+        for y, rows in self.iterrows():
+            for x, ax in rows.iteritems():
+                if ax is not None and ax.position in positions:
+                    if x in params and y in params:
+                        z = max(z.get_zorder() for z in ax.artists
+                                + ax.collections + ax.lines + ax.patches)
+                        z = z+1 if zorder is None else zorder
+                        ax.scatter(params[x], params[y], zorder=z, **kwargs)
+
 
 def make_1d_axes(params, ncol=None, labels=None,
                  gridspec_kw=None, subplot_spec=None, **fig_kw):
