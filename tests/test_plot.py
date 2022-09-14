@@ -34,15 +34,24 @@ def test_AxesObjects():
     axes.tick_params(labelrotation=0, labelsize='medium')
 
     # AxesDataFrame
-    axes = AxesDataFrame(index=paramnames, columns=paramnames)
+    axes = AxesDataFrame(index=paramnames + ['d'], columns=paramnames)
     assert isinstance(axes, AxesDataFrame)
     assert isinstance(axes.iloc[0, 0], SubplotBase)
     assert axes.iloc[-1, 0].get_xlabel() == 'a'
-    assert axes.iloc[-1, 0].get_ylabel() == 'c'
-    axes.set_labels(labels=dict(a='A', b='B', c='C'))
+    assert axes.iloc[-1, 0].get_ylabel() == 'd'
+    axes.set_labels(labels=dict(a='A', b='B', c='C', d='D'))
     assert axes.iloc[-1, 0].get_xlabel() == 'A'
-    assert axes.iloc[-1, 0].get_ylabel() == 'C'
+    assert axes.iloc[-1, 0].get_ylabel() == 'D'
     axes.tick_params(labelrotation=0, labelsize='medium')
+    xmin1, xmax1 = axes.iloc[0, 0].get_xlim()
+    ymin1, ymax1 = axes.iloc[0, 0].get_ylim()
+    axes.set_margins(m=0.5)
+    xmin2, xmax2 = axes.iloc[0, 0].get_xlim()
+    ymin2, ymax2 = axes.iloc[0, 0].get_ylim()
+    assert xmin2 == xmin1 - 0.5 * (xmax1 - xmin1)
+    assert xmax2 == xmax1 + 0.5 * (xmax1 - xmin1)
+    assert ymin2 == ymin1 - 0.5 * (ymax1 - ymin1)
+    assert ymax2 == ymax1 + 0.5 * (ymax1 - ymin1)
 
 
 def test_make_1d_axes():
