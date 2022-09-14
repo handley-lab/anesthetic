@@ -457,5 +457,6 @@ def test_drop_labels():
     assert ldf.islabelled()
     nolabels = ldf.drop_labels()
     assert not nolabels.islabelled()
+    assert_frame_equal_not_index(ldf, nolabels)
     assert_frame_equal(nolabels.drop_labels(), nolabels)
     assert nolabels.drop_labels() is not nolabels
