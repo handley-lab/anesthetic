@@ -933,4 +933,4 @@ def test_drop_weights(mcmc_wdf):
     noweights = mcmc_wdf.drop_weights()
     assert not noweights.isweighted()
     assert_array_equal(noweights.drop_weights(), mcmc_wdf)
-    assert noweights.drop_weights is not noweights
+    assert noweights.drop_weights() is not noweights
