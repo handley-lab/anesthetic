@@ -10,7 +10,7 @@ to create a set of axes and legend proxies.
 
 """
 import numpy as np
-import pandas
+from pandas import Series, DataFrame
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 from scipy.special import erf
@@ -37,14 +37,13 @@ from anesthetic.utils import (sample_compression_1d, quantile,
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
-class AxesSeries(pandas.Series):
-    """Anesthetic's axes version of `pandas.Series`."""
+class AxesSeries(Series):
+    """Anesthetic's axes version of `~pandas.Series`."""
 
     def __init__(self, data=None, index=None, fig=None, ncol=None, labels=None,
                  gridspec_kw=None, subplot_spec=None, *args, **kwargs):
         if data is None and index is not None:
-            data = pandas.Series(np.full(np.shape(index), None), index=index)
-            data = self.axes_series(data=data, fig=fig, ncol=ncol,
+            data = self.axes_series(index=index, fig=fig, ncol=ncol,
                                     gridspec_kw=gridspec_kw,
                                     subplot_spec=subplot_spec)
             self._set_xlabels(axes=data, labels=labels)
@@ -59,9 +58,9 @@ class AxesSeries(pandas.Series):
         return AxesDataFrame
 
     @staticmethod
-    def axes_series(data, fig, ncol=None, gridspec_kw=None, subplot_spec=None):
+    def axes_series(index, fig, ncol=None, gridspec_kw=None, subplot_spec=None):
         """Set up subplots for `AxesSeries`."""
-        axes = data.copy()
+        axes = Series(np.full(np.shape(index), None), index=index)
         if fig is None:
             fig = plt.figure()
         if ncol is None:
@@ -109,8 +108,8 @@ class AxesSeries(pandas.Series):
             ax.tick_params(*args, **kwargs)
 
 
-class AxesDataFrame(pandas.DataFrame):
-    """Anesthetic's axes version of `pandas.DataFrame`.
+class AxesDataFrame(DataFrame):
+    """Anesthetic's axes version of `~pandas.DataFrame`.
 
     Parameters
     ----------
@@ -182,7 +181,7 @@ class AxesDataFrame(pandas.DataFrame):
     def _position_frame(index, columns, lower, diagonal, upper):
         """Compute positions with lower=-1, diagonal=0, upper=+1."""
         data = np.full((np.size(index), np.size(columns)), None)
-        position = pandas.DataFrame(data=data, index=index, columns=columns)
+        position = DataFrame(data=data, index=index, columns=columns)
         all_params = list(columns) + list(index)
         for j, y in enumerate(index):
             for i, x in enumerate(columns):
@@ -521,7 +520,7 @@ def make_1d_axes(params, ncol=None, labels=None,
     fig : `~matplotlib.figure.Figure`
         New or original (if supplied) figure object.
 
-    axes: pandas.Series(matplotlib.axes.Axes)
+    axes: `~pandas.Series(matplotlib.axes.Axes)`
         Pandas array of axes objects.
 
     """
@@ -581,7 +580,7 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
     fig : `~matplotlib.figure.Figure`
         New or original (if supplied) figure object.
 
-    axes : pandas.DataFrame(matplotlib.axes.Axes)
+    axes : `~pandas.DataFrame(matplotlib.axes.Axes)`
         Pandas array of axes objects.
 
     """
