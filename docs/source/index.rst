@@ -6,7 +6,6 @@
 
    Introduction <intro>
    anesthetic <anesthetic>
-   rhinestone <rhinestone>
 
 .. include:: ../../README.rst
 

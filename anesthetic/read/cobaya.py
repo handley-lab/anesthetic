@@ -8,7 +8,7 @@ from pandas import concat
 
 
 def read_paramnames(root):
-    r"""Read header of <root>.1.txt to infer the paramnames.
+    """Read header of <root>.1.txt to infer the paramnames.
 
     This is the data file of the first chain. It should have as many
     columns as there are parameters (sampled and derived) plus an
@@ -34,14 +34,11 @@ def read_cobaya(root, *args, **kwargs):
 
     Parameters
     ----------
-    burn_in: float
-        if 0 < burn_in < 1:
-            discard the first burn_in fraction of samples
-        elif 1 < burn_in:
-            only keep samples [burn_in:]
+    burn_in: float, default=False
+        if 0 < burn_in < 1: discard the first `burn_in` fraction of samples
+        elif 1 < burn_in: only keep samples[burn_in:]
         Only works if `root` provided and if chains are GetDist or Cobaya
         compatible.
-        default: False
 
     Returns
     -------

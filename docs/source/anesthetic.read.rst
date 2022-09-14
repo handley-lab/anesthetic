@@ -4,10 +4,10 @@ anesthetic.read package
 Submodules
 ----------
 
-anesthetic.read.base module
----------------------------
+anesthetic.read.chain module
+----------------------------
 
-.. automodule:: anesthetic.read.base
+.. automodule:: anesthetic.read.chain
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,18 +20,18 @@ anesthetic.read.getdist module
     :undoc-members:
     :show-inheritance:
 
-anesthetic.read.multinest module
---------------------------------
+anesthetic.read.cobaya module
+-----------------------------
 
-.. automodule:: anesthetic.read.multinest
+.. automodule:: anesthetic.read.cobaya
     :members:
     :undoc-members:
     :show-inheritance:
 
-anesthetic.read.nested module
------------------------------
+anesthetic.read.multinest module
+--------------------------------
 
-.. automodule:: anesthetic.read.nested
+.. automodule:: anesthetic.read.multinest
     :members:
     :undoc-members:
     :show-inheritance:
