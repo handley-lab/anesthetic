@@ -30,13 +30,13 @@ class _WeightedMPLPlot(MPLPlot):
 
     def _get_index_name(self):
         if isinstance(self.data, _WeightedObject):
-            return np.squeeze(self.data.index.droplevel('weights').names)
+            return np.squeeze(self.data.drop_weights().index.names)
         else:
             return super()._get_index_name()
 
     def _get_xticks(self, convert_period: bool = False):
         if isinstance(self.data, _WeightedObject):
-            return self.data.index.droplevel('weights')._mpl_repr()
+            return self.data.drop_weights().index._mpl_repr()
         else:
             return super()._get_xticks(convert_period)
 
@@ -96,7 +96,7 @@ class PiePlot(_PiePlot):
     # noqa: disable=D101
     def __init__(self, data, kind=None, **kwargs) -> None:
         if isinstance(data, _WeightedObject):
-            labels = data.index.droplevel('weights')._mpl_repr()
+            labels = data.drop_weights().index._mpl_repr()
             kwargs['labels'] = kwargs.get('labels', labels)
         super().__init__(data, kind=kind, **kwargs)
 

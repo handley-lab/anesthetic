@@ -1,5 +1,6 @@
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas import DataFrame, MultiIndex
+import pandas.testing
 from anesthetic.utils import channel_capacity
 import pytest
 import numpy as np
@@ -926,3 +927,12 @@ def test_set_weights(mcmc_wdf):
     mcmc_wdf.set_weights(None, inplace=True)
     assert id(mcmc_wdf) == mcmc_id
     assert not mcmc_wdf.isweighted()
+
+
+def test_drop_weights(mcmc_wdf):
+    assert mcmc_wdf.isweighted()
+    noweights = mcmc_wdf.drop_weights()
+    assert not noweights.isweighted()
+    assert_array_equal(noweights, mcmc_wdf)
+    pandas.testing.assert_frame_equal(noweights.drop_weights(), noweights)
+    assert noweights.drop_weights() is not noweights
