@@ -76,7 +76,7 @@ class _WeightedObject(object):
             names.insert(level, 'weights')
 
             index = MultiIndex.from_arrays(index, names=names)
-            result.set_axis(index, axis=axis, inplace=True)
+            result = result.set_axis(index, axis=axis, copy=False)
 
         if inplace:
             self._update_inplace(result)
@@ -385,8 +385,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             data = np.repeat(self.to_numpy(), i, axis=axis)
             i = self.drop_weights(axis)._get_axis(axis).repeat(i)
             df = self._constructor(data=data)
-            df.set_axis(i, axis=axis, inplace=True)
-            df.set_axis(self._get_axis(1-axis), axis=1-axis, inplace=True)
+            df = df.set_axis(i, axis=axis, copy=False)
+            df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
             return df
         else:
             return self
