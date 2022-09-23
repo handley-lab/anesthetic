@@ -233,7 +233,7 @@ def test_plot_2d_legend():
     mc.plot_2d(axes, label='l2', kind=dict(diagonal='kde_1d', lower='kde_2d'))
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 leg = ax.legend()
                 assert leg.get_texts()[0].get_text() == 'l1'
@@ -255,7 +255,7 @@ def test_plot_2d_legend():
                                            upper='scatter_2d'))
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 leg = ax.legend()
                 assert leg.get_texts()[0].get_text() == 'l1'
@@ -275,7 +275,7 @@ def test_plot_2d_legend():
     mc.plot_2d(axes)
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
                 assert labels == ['pc', 'gd']
@@ -291,7 +291,7 @@ def test_plot_2d_legend():
     mc.plot_2d(axes)
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
                 assert labels == ['l1', 'l2']
@@ -324,7 +324,7 @@ def test_plot_2d_colours():
         pc_colors = []
         mn_colors = []
         for y, rows in axes.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 handles, labels = ax.get_legend_handles_labels()
                 for handle, label in zip(handles, labels):
                     if isinstance(handle, Rectangle):
@@ -367,7 +367,7 @@ def test_plot_1d_colours():
         gd_colors = []
         pc_colors = []
         mn_colors = []
-        for x, ax in axes.iteritems():
+        for x, ax in axes.items():
             handles, labels = ax.get_legend_handles_labels()
             for handle, label in zip(handles, labels):
                 if isinstance(handle, Rectangle):
@@ -844,7 +844,7 @@ def test_live_points():
     np.random.seed(4)
     pc = read_chains("./tests/example_data/pc")
 
-    for i, logL in pc.logL.iloc[::49].iteritems():
+    for i, logL in pc.logL.iloc[::49].items():
         live_points = pc.live_points(logL)
         assert len(live_points) == int(pc.nlive[i[0]])
 

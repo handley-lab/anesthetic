@@ -357,7 +357,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         if self.isweighted(axis):
             data = np.array([c.quantile(q, interpolation=interpolation,
                                         numeric_only=numeric_only)
-                             for _, c in self.iteritems()])
+                             for _, c in self.items()])
             if np.isscalar(q):
                 return self._constructor_sliced(data,
                                                 index=self._get_axis(1-axis))

@@ -200,7 +200,7 @@ class Samples(WeightedLabelledDataFrame):
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
 
-        for x, ax in axes.iteritems():
+        for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
                 self[x].plot(ax=ax, xlabel=xlabel,
@@ -304,7 +304,7 @@ class Samples(WeightedLabelledDataFrame):
             fig = axes.bfill().to_numpy().flatten()[0].figure
 
         for y, row in axes.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     pos = ax.position
                     lkwargs = local_kwargs.get(pos, {})
