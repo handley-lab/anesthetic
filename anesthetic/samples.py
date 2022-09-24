@@ -878,7 +878,7 @@ class NestedSamples(Samples):
             except KeyError:
                 pass
         i = (self.logL >= logL) & (self.logL_birth < logL)
-        return Samples(self[i]).set_weights(None)
+        return Samples(self.loc[i]).set_weights(None)
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
@@ -919,7 +919,7 @@ class NestedSamples(Samples):
             Importance re-weighted samples.
         """
         samples = super().importance_sample(logL_new, action=action)
-        samples = samples[samples.logL > samples.logL_birth].recompute()
+        samples = samples.loc[samples.logL > samples.logL_birth].recompute()
         if inplace:
             self._update_inplace(samples)
         else:
@@ -977,7 +977,7 @@ class NestedSamples(Samples):
                               "\nDropping the invalid samples." %
                               (n_bad, len(samples), n_equal),
                               RuntimeWarning)
-                samples = samples[~invalid].reset_index(drop=True)
+                samples = samples.loc[~invalid].reset_index(drop=True)
 
             samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
@@ -993,7 +993,7 @@ class NestedSamples(Samples):
                           " should investigate why your likelihood is throwing"
                           " NaNs. Dropping these samples at prior level",
                           RuntimeWarning)
-            samples = samples[samples.logL.notna()].recompute()
+            samples = samples.loc[samples.logL.notna()].recompute()
 
         if inplace:
             self._update_inplace(samples)
