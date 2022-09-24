@@ -350,7 +350,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         return np.sqrt(self.var(axis=axis, skipna=skipna)/n)
 
     def quantile(self, q=0.5, axis=0, numeric_only=True,
-                 interpolation='linear'):
+                 interpolation='linear', method="single"):
         """Weighted quantile of the sampled distribution."""
         if not numeric_only:
             raise NotImplementedError("numeric_only kwarg not implemented")
@@ -366,7 +366,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                                          columns=self._get_axis(1-axis))
         else:
             return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
-                                    interpolation=interpolation)
+                                    interpolation=interpolation, method=method)
 
     def compress(self, ncompress=True, axis=0):
         """Reduce the number of samples by discarding low-weights.
