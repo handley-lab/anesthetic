@@ -301,11 +301,11 @@ def test_plot_2d_legend():
 def test_plot_2d_colours():
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
-    gd.drop(columns='x3', inplace=True)
+    gd.drop(columns='x3', inplace=True, level=0)
     pc = read_chains("./tests/example_data/pc")
-    pc.drop(columns='x4', inplace=True)
+    pc.drop(columns='x4', inplace=True, level=0)
     mn = read_chains("./tests/example_data/mn")
-    mn.drop(columns='x2', inplace=True)
+    mn.drop(columns='x2', inplace=True, level=0)
 
     kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
@@ -348,11 +348,11 @@ def test_plot_2d_colours():
 def test_plot_1d_colours():
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
-    gd.drop(columns='x3', inplace=True)
+    gd.drop(columns='x3', inplace=True, level=0)
     pc = read_chains("./tests/example_data/pc")
-    pc.drop(columns='x4', inplace=True)
+    pc.drop(columns='x4', inplace=True, level=0)
     mn = read_chains("./tests/example_data/mn")
-    mn.drop(columns='x2', inplace=True)
+    mn.drop(columns='x2', inplace=True, level=0)
 
     kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:

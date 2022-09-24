@@ -92,7 +92,7 @@ def read_getdist(root, *args, **kwargs):
 
     all_same_chain = (samples.chain == samples.chain.iloc[0]).all()
     if all_same_chain or samples.chain.isna().all():
-        samples.drop('chain', inplace=True, axis=1)
+        samples.drop('chain', inplace=True, axis=1, level=0)
     elif samples.islabelled():
         samples.set_label('chain', r'$n_\mathrm{chain}$')
 
