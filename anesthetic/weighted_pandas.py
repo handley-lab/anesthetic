@@ -351,7 +351,35 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def quantile(self, q=0.5, axis=0, numeric_only=True,
                  interpolation='linear', method="single"):
-        """Weighted quantile of the sampled distribution."""
+        """
+        Weighted quantile of the sampled distribution.
+
+        Parameters
+        ----------
+        q : float or array-like, default 0.5 (50% quantile)
+            Value between 0 <= q <= 1, the quantile(s) to compute.
+        axis : {0 or 'index', 1 or 'columns'}, default 0
+            Equals 0 or 'index' for row-wise, 1 or 'columns' for column-wise.
+        numeric_only : bool, default True
+            If False, the quantile of datetime and timedelta data will be
+            computed as well.
+            .. deprecated:: 1.5.0
+                The default value of ``numeric_only`` will be ``False`` in a future
+                version of pandas.
+        interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+            This optional parameter specifies the interpolation method to use,
+            when the desired quantile lies between two data points `i` and `j`:
+            * linear: `i + (j - i) * fraction`, where `fraction` is the
+              fractional part of the index surrounded by `i` and `j`.
+            * lower: `i`.
+            * higher: `j`.
+            * nearest: `i` or `j` whichever is nearest.
+            * midpoint: (`i` + `j`) / 2.
+        method : {'single', 'table'}, default 'single'
+            Whether to compute quantiles per-column ('single') or over all columns
+            ('table'). When 'table', the only allowed interpolation methods are
+            'nearest', 'lower', and 'higher'. 
+        """
         if not numeric_only:
             raise NotImplementedError("numeric_only kwarg not implemented")
         if self.isweighted(axis):
