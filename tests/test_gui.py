@@ -36,7 +36,10 @@ def test_gui():
     assert plotter.temperature() == 100
     plotter.type.buttons.set_active(0)
 
-    if version.parse(mpl_version) >= version.parse('3.4.0'):
+    if version.parse(mpl_version) >= version.parse('3.6.0'):
+        pass
+        # TODO: observers have been removed in mpl 3.6
+    elif version.parse(mpl_version) >= version.parse('3.4.0'):
         # Reload button
         plotter.reload.button.observers[0]()
 
