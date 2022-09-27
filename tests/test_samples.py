@@ -717,8 +717,10 @@ def test_masking():
 
     for kind in kinds + ['scatter']:
         fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
-        pc.loc[mask].plot_2d(axes=axes, kind=dict(lower=kind + '_2d',
-                                              diagonal='hist_1d'))
+        pc.loc[mask].plot_2d(
+            axes=axes,
+            kind=dict(lower=kind + '_2d', diagonal='hist_1d'),
+        )
 
 
 def test_merging():

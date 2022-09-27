@@ -364,8 +364,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             If False, the quantile of datetime and timedelta data will be
             computed as well.
             .. deprecated:: 1.5.0
-                The default value of ``numeric_only`` will be ``False`` in a future
-                version of pandas.
+                The default value of ``numeric_only`` will be ``False`` in a
+                future version of pandas.
         interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
             This optional parameter specifies the interpolation method to use,
             when the desired quantile lies between two data points `i` and `j`:
@@ -376,9 +376,9 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             * nearest: `i` or `j` whichever is nearest.
             * midpoint: (`i` + `j`) / 2.
         method : {'single', 'table'}, default 'single'
-            Whether to compute quantiles per-column ('single') or over all columns
-            ('table'). When 'table', the only allowed interpolation methods are
-            'nearest', 'lower', and 'higher'. 
+            Whether to compute quantiles per-column ('single') or over all
+            columns ('table'). When 'table', the only allowed interpolation methods
+            are 'nearest', 'lower', and 'higher'.
         """
         if not numeric_only:
             raise NotImplementedError("numeric_only kwarg not implemented")

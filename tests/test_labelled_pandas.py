@@ -36,7 +36,10 @@ def assert_frame_equal_not_index(x, y):
 
 def test_LabelledSeries():
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message=".*indexing past lexsort depth may impact performance.*")
+        warnings.filterwarnings(
+            "ignore",
+            message=".*indexing past lexsort depth may impact performance.*",
+        )
         index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         labels = ['$%s$' % i for i in index]
         data = np.random.rand(len(index))
@@ -68,7 +71,10 @@ def test_LabelledSeries():
 
 def test_LabelledSeries_MultiIndex():
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message=".*indexing past lexsort depth may impact performance.*")
+        warnings.filterwarnings(
+            "ignore",
+            message=".*indexing past lexsort depth may impact performance.*",
+        )
         index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 
         vowels = ['vowel' if c in 'AEIOU' else 'consonant' for c in index]
@@ -92,11 +98,12 @@ def test_LabelledSeries_MultiIndex():
         assert_series_equal_not_index(lseries['vowel', :], series['vowel', :])
 
         assert lseries.loc['vowel', 'A'] == series.loc['vowel', 'A']
-        assert_series_equal_not_index(lseries.loc['vowel'], series.loc['vowel'])
+        assert_series_equal_not_index(
+            lseries.loc['vowel'], series.loc['vowel'])
 
         assert_series_equal_not_index(lseries.loc[:, 'A'], series.loc[:, 'A'])
         assert_series_equal_not_index(lseries.loc['vowel', :],
-                                    series.loc['vowel', :])
+                                      series.loc['vowel', :])
         assert lseries.loc['vowel', 'A'] == lseries.loc['vowel', 'A']
 
         assert lseries.at['vowel', 'A'] == series.at['vowel', 'A']
@@ -105,11 +112,11 @@ def test_LabelledSeries_MultiIndex():
         assert (lseries.xs(('vowel', 'A')) == series.xs(('vowel', 'A')))
 
         assert_series_equal_not_index(lseries.xs('A', level=1),
-                                    series.xs('A', level=1))
+                                      series.xs('A', level=1))
         assert_series_equal_not_index(lseries.xs('vowel', level=0),
-                                    series.xs('vowel', level=0))
+                                      series.xs('vowel', level=0))
         assert_array_equal(lseries.xs(('vowel', 'A'), level=[0, 1]),
-                        series.xs(('vowel', 'A'), level=[0, 1]))
+                           series.xs(('vowel', 'A'), level=[0, 1]))
 
         with pytest.raises(KeyError):
             lseries['foo']
@@ -123,7 +130,10 @@ def test_LabelledSeries_MultiIndex():
 
 def test_LabelledDataFrame_index():
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message=".*indexing past lexsort depth may impact performance.*")
+        warnings.filterwarnings(
+            "ignore",
+            message=".*indexing past lexsort depth may impact performance.*",
+        )
         index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         labels = ['$%s$' % i for i in index]
         data = np.random.rand(len(index), 4)
@@ -150,9 +160,9 @@ def test_LabelledDataFrame_index():
 
         assert_frame_equal_not_index(lframe['A':'C'], frame['A':'C'])
         assert_frame_equal_not_index(lframe.loc['A':'C', 0:3],
-                                    frame.loc['A':'C', 0:3])
+                                     frame.loc['A':'C', 0:3])
         assert_frame_equal_not_index(lframe.loc['A':'C', 0:3],
-                                    frame.loc['A':'C', 0:3])
+                                     frame.loc['A':'C', 0:3])
 
         with pytest.raises(KeyError):
             lframe['foo']
@@ -166,7 +176,10 @@ def test_LabelledDataFrame_index():
 
 def test_LabelledDataFrame_index_MultiIndex():
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message=".*indexing past lexsort depth may impact performance.*")
+        warnings.filterwarnings(
+            "ignore",
+            message=".*indexing past lexsort depth may impact performance.*",
+            )
         index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         vowels = ['vowel' if c in 'AEIOU' else 'consonant' for c in index]
         labels = ['$%s$' % i for i in index]
@@ -182,31 +195,34 @@ def test_LabelledDataFrame_index_MultiIndex():
         assert_frame_equal_not_index(lframe.loc['vowel'], frame.loc['vowel'])
         assert_series_equal(lframe.loc['vowel', 'A'], frame.loc['vowel', 'A'])
         assert_series_equal_not_name(lframe.loc['vowel', 'A', '$A$'],
-                                    frame.loc['vowel', 'A'])
+                                     frame.loc['vowel', 'A'])
 
         assert_frame_equal_not_index(lframe.xs('vowel'), frame.xs('vowel'))
-        assert_series_equal(lframe.xs(('vowel', 'A')), frame.xs(('vowel', 'A')))
+        assert_series_equal(lframe.xs(('vowel', 'A')),
+                            frame.xs(('vowel', 'A')))
         assert_series_equal_not_name(lframe.xs(('vowel', 'A', '$A$')),
-                                    frame.xs(('vowel', 'A')))
+                                     frame.xs(('vowel', 'A')))
 
         assert_series_equal(lframe.loc[('vowel', 'A'), 0],
                             frame.loc[('vowel', 'A'), 0])
         assert_series_equal(lframe.loc[('vowel', 'A', '$A$'), 0],
                             frame.loc[('vowel', 'A'), 0])
         assert lframe.at[('vowel', 'A'), 0] == frame.at[('vowel', 'A'), 0]
-        assert lframe.at[('vowel', 'A', '$A$'), 0] == frame.at[('vowel', 'A'), 0]
+        assert lframe.at[('vowel', 'A', '$A$'),
+                         0] == frame.at[('vowel', 'A'), 0]
 
         assert_frame_equal(lframe.T['vowel'], lframe.loc['vowel'].T)
         assert_series_equal(lframe.T['vowel', 'A'], lframe.loc['vowel', 'A'])
         assert_series_equal_not_name(lframe.T['vowel', 'A', '$A$'],
-                                    lframe.loc['vowel', 'A'])
+                                     lframe.loc['vowel', 'A'])
         assert_frame_equal(lframe.T.vowel, lframe.loc['vowel'].T)
-        assert_series_equal_not_name(lframe.T.vowel.A, lframe.loc['vowel', 'A'])
+        assert_series_equal_not_name(
+            lframe.T.vowel.A, lframe.loc['vowel', 'A'])
         assert_frame_equal(lframe.T.loc[:, 'vowel'], lframe.loc['vowel'].T)
         assert_series_equal(lframe.T.loc[:, ('vowel', 'A')],
                             lframe.loc[('vowel', 'A')])
         assert_series_equal_not_name(lframe.T.loc[:, ('vowel', 'A', '$A$')],
-                                    lframe.loc[('vowel', 'A')])
+                                     lframe.loc[('vowel', 'A')])
         assert_series_equal(lframe.T.loc[0, 'vowel'], lframe.loc['vowel', 0])
         assert lframe.T.loc[0, ('vowel', 'A')] == lframe.loc[('vowel', 'A'), 0]
         assert (lframe.T.loc[0, ('vowel', 'A', '$A$')]
@@ -229,7 +245,10 @@ def test_LabelledDataFrame_index_MultiIndex():
 
 def test_LabelledDataFrame_column():
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message=".*indexing past lexsort depth may impact performance.*")
+        warnings.filterwarnings(
+            "ignore",
+            message=".*indexing past lexsort depth may impact performance.*",
+        )
         columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         labels = ['$%s$' % i for i in columns]
         data = np.random.rand(4, len(columns))
@@ -250,7 +269,8 @@ def test_LabelledDataFrame_column():
 
         assert_array_equal(lframe.loc[:, ('A', '$A$')], frame.loc[:, 'A'])
         assert lframe.at[0, ('A', '$A$')] == frame.at[0, 'A']
-        assert_array_equal(lframe.xs(('A', '$A$'), axis=1), frame.xs('A', axis=1))
+        assert_array_equal(lframe.xs(('A', '$A$'), axis=1),
+                           frame.xs('A', axis=1))
 
         assert_series_equal(lframe.T.loc['A'], lframe['A'])
         assert_series_equal(lframe.T.loc['A', 0], lframe.loc[0, 'A'])
@@ -258,9 +278,9 @@ def test_LabelledDataFrame_column():
         assert_series_equal(lframe.T.at['A', 0], lframe.at[0, 'A'])
 
         assert_frame_equal_not_index(lframe.loc[0:3, 'A':'C'],
-                                    frame.loc[0:3, 'A':'C'])
+                                     frame.loc[0:3, 'A':'C'])
         assert_frame_equal_not_index(lframe.loc[0:3, 'A':'C'],
-                                    frame.loc[0:3, 'A':'C'])
+                                     frame.loc[0:3, 'A':'C'])
 
         with pytest.raises(KeyError):
             lframe['foo']
@@ -274,7 +294,10 @@ def test_LabelledDataFrame_column():
 
 def test_LabelledDataFrame_column_MultiIndex():
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message=".*indexing past lexsort depth may impact performance.*")
+        warnings.filterwarnings(
+            "ignore",
+            message=".*indexing past lexsort depth may impact performance.*",
+        )
         columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         vowels = ['vowel' if c in 'AEIOU' else 'consonant' for c in columns]
         labels = ['$%s$' % i for i in columns]
@@ -294,28 +317,29 @@ def test_LabelledDataFrame_column_MultiIndex():
         assert_frame_equal_not_index(lframe['vowel'], frame['vowel'])
         assert_series_equal(lframe['vowel', 'A'], frame['vowel', 'A'])
         assert_series_equal_not_name(lframe['vowel', 'A', '$A$'],
-                                    frame['vowel', 'A'])
+                                     frame['vowel', 'A'])
 
         assert_frame_equal_not_index(lframe.xs('vowel', axis=1),
-                                    frame.xs('vowel', axis=1))
+                                     frame.xs('vowel', axis=1))
         assert_series_equal(lframe.xs(('vowel', 'A'), axis=1),
                             frame.xs(('vowel', 'A'), axis=1))
         assert_series_equal_not_name(lframe.xs(('vowel', 'A', '$A$'), axis=1),
-                                    frame.xs(('vowel', 'A'), axis=1))
+                                     frame.xs(('vowel', 'A'), axis=1))
 
         assert_series_equal(lframe.loc[0, ('vowel', 'A')],
                             frame.loc[0, ('vowel', 'A')])
         assert_series_equal(lframe.loc[0, ('vowel', 'A', '$A$')],
                             frame.loc[0, ('vowel', 'A')])
         assert lframe.at[0, ('vowel', 'A')] == frame.at[0, ('vowel', 'A')]
-        assert lframe.at[0, ('vowel', 'A', '$A$')] == frame.at[0, ('vowel', 'A')]
+        assert lframe.at[0, ('vowel', 'A', '$A$')
+                         ] == frame.at[0, ('vowel', 'A')]
 
         assert_frame_equal(lframe.T.loc['vowel'], lframe['vowel'].T)
         assert_series_equal(lframe.T.loc['vowel', 'A'], lframe['vowel', 'A'])
         assert_series_equal_not_name(lframe.T.loc['vowel', 'A', '$A$'],
-                                    lframe['vowel', 'A'])
+                                     lframe['vowel', 'A'])
         assert_series_equal_not_name(lframe.T.loc[('vowel', 'A', '$A$')],
-                                    lframe[('vowel', 'A')])
+                                     lframe[('vowel', 'A')])
         assert_series_equal(lframe.T.loc['vowel', 0], lframe.loc[0, 'vowel'])
         assert lframe.T.loc[('vowel', 'A'), 0] == lframe.loc[0, ('vowel', 'A')]
         assert (lframe.T.loc[('vowel', 'A', '$A$'), 0]
