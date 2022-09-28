@@ -20,7 +20,8 @@ from anesthetic.plot import (
     fastkde_contour_plot_2d,
     kde_plot_1d,
     fastkde_plot_1d,
-    hist_plot_1d
+    hist_plot_1d,
+    _hist_plot_1d
 )
 
 
@@ -86,14 +87,12 @@ class Kde1dPlot(KdePlot):
         ax,
         y,
         style=None,
-        bw_method=None,
         ind=None,
         column_num=None,
         stacking_id=None,
         **kwds,
     ):
         args = (style,) if style is not None else tuple()
-        kwds['bw_method'] = bw_method
         return kde_plot_1d(ax, y, *args, **kwds)
 
     def _post_plot_logic(self, ax, data):
@@ -101,32 +100,64 @@ class Kde1dPlot(KdePlot):
         ax.set_yticks([])
 
 
-class FastKde1dPlot(_CompressedMPLPlot):
+class FastKde1dPlot(_CompressedMPLPlot, _HistPlot):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["fastkde_1d"]:
         return "fastkde_1d"
 
-    def _make_plot(self):
-        return fastkde_plot_1d(
-            self.axes[0],
-            self.data.values[:, 0],
-            label=self.label,
-            **self.kwds)
+    @classmethod
+    def _plot(
+        cls,
+        ax,
+        y,
+        style=None,
+        ind=None,
+        column_num=None,
+        stacking_id=None,
+        **kwds,
+    ):
+        args = (style,) if style is not None else tuple()
+        return fastkde_plot_1d(ax, y, *args, **kwds)
+
+    def _post_plot_logic(self, ax, data):
+        ax.set_ylim(0,1)
+        ax.set_yticks([])
 
 
-class Hist1dPlot(_WeightedMPLPlot):
+class Hist1dPlot(HistPlot):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["hist_1d"]:
         return "hist_1d"
 
-    def _make_plot(self):
-        return hist_plot_1d(
-            self.axes[0],
-            self.data.values[:, 0],
-            label=self.label,
-            **self.kwds)
+    @classmethod
+    def _plot(
+        cls,
+        ax,
+        y,
+        style=None,
+        bottom: int | np.ndarray = 0,
+        column_num=None,
+        stacking_id=None,
+        *,
+        bins,
+        **kwds,
+    ):
+        if column_num == 0:
+            cls._initialize_stacker(ax, stacking_id, len(bins) - 1)
+
+        base = np.zeros(len(bins) - 1)
+        bottom = bottom + cls._get_stacked_values(ax, stacking_id, base, kwds["label"])
+        # ignore style 
+        n, bins, patches = _hist_plot_1d(ax, y, bins=bins, bottom=bottom, **kwds)
+        cls._update_stacker(ax, stacking_id, n)
+        return patches
+
+    def _post_plot_logic(self, ax, data):
+        ax.set_ylim(0,1)
+        ax.set_xlim(self.bins[0], self.bins[-1])
+        ax.set_yticks([])
 
 
 class Kde2dPlot(_WeightedMPLPlot, PlanePlot):

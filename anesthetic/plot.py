@@ -576,41 +576,10 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     return ans
 
 
-def hist_plot_1d(ax, data, *args, **kwargs):
-    """Plot a 1d histogram.
-
-    This functions is a wrapper around matplotlib.axes.Axes.hist. All remaining
-    keyword arguments are passed onwards.
-
-    Parameters
-    ----------
-    ax: matplotlib.axes.Axes
-        axis object to plot on
-
-    data: np.array
-        Samples to generate histogram from
-
-    weights: np.array, optional
-        Sample weights.
-
-    q: int or float or tuple
-        Quantile to determine the data range to be plotted.
-        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
-        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
-        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
-        - tuple: quantile range, e.g. (0.16, 0.84)
-        Default 5
-
-    Returns
-    -------
-    patches : list or list of lists
-        Silent list of individual patches used to create the histogram
-        or list of such list if multiple input datasets.
-
-    Other Parameters
-    ----------------
-    **kwargs : `~matplotlib.axes.Axes.hist` properties
-
+def _hist_plot_1d(ax, data, *args, **kwargs):
+    """
+    Same as hist_plot_1d, but returns n, bins, patches
+    instead of just patches.
     """
     weights = kwargs.pop('weights', None)
     bins = kwargs.pop('bins', 10)
@@ -647,6 +616,46 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     if not density:
         ax.set_ylim(0, 1.1)
+    return h, edges, bars
+
+
+def hist_plot_1d(ax, data, *args, **kwargs):
+    """Plot a 1d histogram.
+
+    This functions is a wrapper around matplotlib.axes.Axes.hist. All remaining
+    keyword arguments are passed onwards.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+        axis object to plot on
+
+    data: np.array
+        Samples to generate histogram from
+
+    weights: np.array, optional
+        Sample weights.
+
+    q: int or float or tuple
+        Quantile to determine the data range to be plotted.
+        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
+        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
+        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
+        - tuple: quantile range, e.g. (0.16, 0.84)
+        Default 5
+
+    Returns
+    -------
+    patches : list or list of lists
+        Silent list of individual patches used to create the histogram
+        or list of such list if multiple input datasets.
+
+    Other Parameters
+    ----------------
+    **kwargs : `~matplotlib.axes.Axes.hist` properties
+
+    """
+    h, edges, bars = _hist_plot_1d(ax, data, *args, **kwargs)
     return bars
 
 
