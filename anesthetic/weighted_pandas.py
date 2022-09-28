@@ -377,8 +377,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             * midpoint: (`i` + `j`) / 2.
         method : {'single', 'table'}, default 'single'
             Whether to compute quantiles per-column ('single') or over all
-            columns ('table'). When 'table', the only allowed interpolation methods
-            are 'nearest', 'lower', and 'higher'.
+            columns ('table'). When 'table', the only allowed interpolation
+            methods are 'nearest', 'lower', and 'higher'.
         """
         if not numeric_only:
             raise NotImplementedError("numeric_only kwarg not implemented")
