@@ -110,11 +110,11 @@ class _LabelledObject(object):
     def drop_labels(self, axis=0):
         """Drop the labels from an axis if present."""
         axes = np.atleast_1d(axis)
-        result = self
+        result = self.copy()
         for axis in axes:
             if self.islabelled(axis):
                 result = result.droplevel(self.islabelled(axis), axis)
-        return result
+        return result.__finalize__(self, "drop_weights")
 
     def _all_axes(self):
         if isinstance(self, LabelledSeries):
