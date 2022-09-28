@@ -73,18 +73,32 @@ class KdePlot(HistPlot, _KdePlot):
         return lines
 
 
-class Kde1dPlot(_WeightedMPLPlot):
+class Kde1dPlot(KdePlot):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["kde_1d"]:
         return "kde_1d"
 
-    def _make_plot(self):
-        return kde_plot_1d(
-            self.axes[0],
-            self.data.values[:, 0],
-            label=self.label,
-            **self.kwds)
+    # noqa: disable=D101
+    @classmethod
+    def _plot(
+        cls,
+        ax,
+        y,
+        style=None,
+        bw_method=None,
+        ind=None,
+        column_num=None,
+        stacking_id=None,
+        **kwds,
+    ):
+        args = (style,) if style is not None else tuple()
+        kwds['bw_method'] = bw_method
+        return kde_plot_1d(ax, y, *args, **kwds)
+
+    def _post_plot_logic(self, ax, data):
+        ax.set_ylim(0,1)
+        ax.set_yticks([])
 
 
 class FastKde1dPlot(_CompressedMPLPlot):
