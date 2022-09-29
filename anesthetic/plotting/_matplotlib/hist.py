@@ -46,6 +46,44 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             weights=weights
         )
         return bins
+    
+    def _make_plot(self) -> None:
+        from pandas.core.dtypes.common import is_extension_array_dtype
+        from pandas.core.dtypes.missing import notna
+        from pandas.plotting._matplotlib.groupby import (
+            create_iter_data_given_by,
+        )
+        def remove_na_arraylike_idx(arr):
+            if is_extension_array_dtype(arr):
+                return notna(arr)
+            return notna(np.asarray(arr))
+        def reformat_hist_weights_given_y(y, weights, by):
+            if y.shape != weights.shape:
+                raise ValueError("data and weights must have the same shape")
+            if by is not None and len(y.shape) > 1:
+                return (
+                    np.array([wcol.T[remove_na_arraylike_idx(ycol)] for ycol, wcol in zip(y.T, weights.T)]).T,
+                )
+            return weights[remove_na_arraylike_idx(y)]
+
+        kwds = self.kwds.copy()
+        weights = kwds.get("weights", None)
+        data = (
+            create_iter_data_given_by(self.data, self._kind)
+            if self.by is not None
+            else self.data
+        )
+        
+        if weights is not None:
+            for i, (label, y) in enumerate(self._iter_data(data=data)):
+                if np.ndim(weights) != 1:
+                    raise ValueError("different weights not implemented") 
+                    temp_weights = weights[:, i]
+                else:
+                    temp_weights = weights
+                temp_weights = reformat_hist_weights_given_y(y, weights, self.by)
+            self.kwds["weights"] = temp_weights
+        return super()._make_plot()
 
 
 class KdePlot(HistPlot, _KdePlot):
