@@ -21,7 +21,6 @@ from anesthetic.plot import (
     kde_plot_1d,
     fastkde_plot_1d,
     hist_plot_1d,
-    _hist_plot_1d
 )
 
 
@@ -150,7 +149,7 @@ class Hist1dPlot(HistPlot):
         base = np.zeros(len(bins) - 1)
         bottom = bottom + cls._get_stacked_values(ax, stacking_id, base, kwds["label"])
         # ignore style 
-        n, bins, patches = _hist_plot_1d(ax, y, bins=bins, bottom=bottom, **kwds)
+        n, bins, patches = hist_plot_1d(ax, y, bins=bins, bottom=bottom, **kwds)
         cls._update_stacker(ax, stacking_id, n)
         return patches
 
