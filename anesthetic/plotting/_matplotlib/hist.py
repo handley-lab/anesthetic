@@ -75,14 +75,21 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
         )
         
         if weights is not None:
-            for i, (label, y) in enumerate(self._iter_data(data=data)):
-                if np.ndim(weights) != 1:
-                    raise ValueError("different weights not implemented") 
-                    temp_weights = weights[:, i]
-                else:
-                    temp_weights = weights
-                temp_weights = reformat_hist_weights_given_y(y, weights, self.by)
-            self.kwds["weights"] = temp_weights
+            print(data.shape)
+            print(weights.shape)
+            if np.ndim(weights) != 1:
+                if data.shape != weights.T.shape:
+                    raise ValueError("weights must be broadcastable to same shape as data.")
+            else:
+                weights = np.broadcast_to(weights, data.T.shape)
+            # for i, (label, y) in enumerate(self._iter_data(data=data)):
+            #     temp_weights = weights
+            mask =  ~remove_na_arraylike_idx(data).T
+            print(mask.shape)
+            print(weights.shape)
+            weights = np.ma.masked_array(weights, mask=mask)
+            self.kwds["weights"] = np.squeeze(weights)
+            print(weights)
         return super()._make_plot()
 
 
