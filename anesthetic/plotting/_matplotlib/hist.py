@@ -174,7 +174,7 @@ class Hist1dPlot(HistPlot):
         ax,
         y,
         style=None,
-        bottom: int | np.ndarray = 0,
+        bottom=0,
         column_num=None,
         stacking_id=None,
         *,
