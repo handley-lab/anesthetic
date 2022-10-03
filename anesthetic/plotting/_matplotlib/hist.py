@@ -103,7 +103,11 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
                 ax.set_title(pprint_thing(label))
 
             self._append_legend_handles_labels(artists[0], label)
-
+            
+    def _post_plot_logic(self, ax, data):
+        ax.set_yticks([])
+        ax.set_ylim(0, 1.1)
+        ax.set_xlim(self.bins[0], self.bins[-1])
 
 
 class KdePlot(HistPlot, _KdePlot):
@@ -130,6 +134,10 @@ class KdePlot(HistPlot, _KdePlot):
         lines = MPLPlot._plot(ax, ind, y, style=style, **kwds)
         return lines
 
+    def _post_plot_logic(self, ax, data):
+        ax.set_yticks([])
+        ax.set_ylim(0.0, 1.1)
+
 
 class Kde1dPlot(KdePlot):
     # noqa: disable=D101
@@ -152,10 +160,6 @@ class Kde1dPlot(KdePlot):
         args = (style,) if style is not None else tuple()
         return kde_plot_1d(ax, y, *args, **kwds)
 
-    def _post_plot_logic(self, ax, data):
-        ax.set_ylim(0,1)
-        ax.set_yticks([])
-
 
 class FastKde1dPlot(_CompressedMPLPlot, _HistPlot):
     # noqa: disable=D101
@@ -176,10 +180,6 @@ class FastKde1dPlot(_CompressedMPLPlot, _HistPlot):
     ):
         args = (style,) if style is not None else tuple()
         return fastkde_plot_1d(ax, y, *args, **kwds)
-
-    def _post_plot_logic(self, ax, data):
-        ax.set_ylim(0,1)
-        ax.set_yticks([])
 
 
 class Hist1dPlot(HistPlot):
