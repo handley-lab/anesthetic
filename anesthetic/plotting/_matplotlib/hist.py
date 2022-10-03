@@ -47,7 +47,7 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
         )
         return bins
     
-    def _make_plot(self) -> None:
+    def _make_plot(self):
         from pandas.core.dtypes.missing import notna
         from pandas.io.formats.printing import pprint_thing
         from pandas.plotting._matplotlib.groupby import create_iter_data_given_by, reformat_hist_y_given_by
