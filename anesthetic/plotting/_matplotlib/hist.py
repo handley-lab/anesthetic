@@ -6,13 +6,15 @@ from pandas.core.dtypes.missing import (
     isna,
     remove_na_arraylike,
 )
+from pandas.io.formats.printing import pprint_thing
 from pandas.plotting._matplotlib.core import MPLPlot, PlanePlot
+from pandas.plotting._matplotlib.groupby import create_iter_data_given_by, reformat_hist_y_given_by
 try:
     from typing import Literal
 except ImportError:
     from typing_extensions import Literal
 from anesthetic.plotting._matplotlib.core import (
-    _WeightedMPLPlot, _CompressedMPLPlot, _get_weights
+    _WeightedMPLPlot, _CompressedMPLPlot, PlanePlot2d, _get_weights
 )
 from anesthetic.plot import (
     kde_contour_plot_2d,
@@ -48,9 +50,6 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
         return bins
     
     def _make_plot(self):
-        from pandas.core.dtypes.missing import notna
-        from pandas.io.formats.printing import pprint_thing
-        from pandas.plotting._matplotlib.groupby import create_iter_data_given_by, reformat_hist_y_given_by
         colors = self._get_colors()
         stacking_id = self._get_stacking_id()
 
@@ -211,56 +210,41 @@ class Hist1dPlot(HistPlot):
         cls._update_stacker(ax, stacking_id, n)
         return patches
 
-    def _post_plot_logic(self, ax, data):
-        ax.set_ylim(0,1)
-        ax.set_xlim(self.bins[0], self.bins[-1])
-        ax.set_yticks([])
+
+        
 
 
-class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
+class Kde2dPlot(_WeightedMPLPlot, PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["kde_2d"]:
         return "kde_2d"
 
-    def _make_plot(self):
-        return kde_contour_plot_2d(
-            self.axes[0],
-            self.data[self.x].values,
-            self.data[self.y].values,
-            label=self.label,
-            **self.kwds)
+    @classmethod
+    def _plot(cls, ax, x, y, **kwds):
+        return kde_contour_plot_2d(ax, x, y, **kwds)
 
 
-class FastKde2dPlot(_CompressedMPLPlot, PlanePlot):
+class FastKde2dPlot(_CompressedMPLPlot, PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["fastkde_2d"]:
         return "fastkde_2d"
 
-    def _make_plot(self):
-        return fastkde_contour_plot_2d(
-            self.axes[0],
-            self.data[self.x].values,
-            self.data[self.y].values,
-            label=self.label,
-            **self.kwds)
+    @classmethod
+    def _plot(cls, ax, x, y, **kwds):
+        return fastkde_contour_plot_2d(ax, x, y, **kwds)
 
 
-class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
+class Hist2dPlot(_WeightedMPLPlot, PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["hist_2d"]:
         return "hist_2d"
 
-    def _make_plot(self):
-        return hist_plot_2d(
-            self.axes[0],
-            self.data[self.x].values,
-            self.data[self.y].values,
-            label=self.label,
-            **self.kwds,
-        )
+    @classmethod
+    def _plot(cls, ax, x, y, **kwds):
+        return hist_plot_2d(ax, x, y, **kwds)
 
 
 def hist_frame(data, *args, **kwds):

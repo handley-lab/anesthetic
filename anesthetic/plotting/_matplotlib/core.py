@@ -6,6 +6,7 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               AreaPlot as _AreaPlot,
                                               PiePlot as _PiePlot,
                                               MPLPlot, PlanePlot)
+from pandas.io.formats.printing import pprint_thing
 from anesthetic.weighted_pandas import _WeightedObject
 from anesthetic.plot import scatter_plot_2d
 try:
@@ -59,19 +60,40 @@ class ScatterPlot(_CompressedMPLPlot, _ScatterPlot):
         super().__init__(data, x, y, s, c, **kwargs)
 
 
-class ScatterPlot2d(_CompressedMPLPlot, PlanePlot):
+class PlanePlot2d(PlanePlot):
+
+    def _make_plot(self):
+        colors = self._get_colors()
+        print(self.data)
+        data = (
+            create_iter_data_given_by(self.data, self.kind) # safe for now
+            if self.by is not None
+            else self.data
+        )
+        x = data[self.x]
+        y = data[self.y]
+        ax = self._get_ax(0) # another one of these hard-coded 0s
+
+        kwds = self.kwds.copy()
+        label = pprint_thing(self.label)
+        kwds["label"] = label
+
+        style, kwds = self._apply_style_colors(colors, kwds, 0, label)
+        if style is not None:
+            kwds["style"] = style
+
+        artists = self._plot(ax, x, y, **kwds)
+
+
+class ScatterPlot2d(_CompressedMPLPlot, PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["scatter_2d"]:
         return "scatter_2d"
 
-    def _make_plot(self):
-        return scatter_plot_2d(
-            self.axes[0],
-            self.data[self.x].values,
-            self.data[self.y].values,
-            label=self.label,
-            **self.kwds)
+    @classmethod
+    def _plot(cls, ax, x, y, **kwds):
+        return scatter_plot_2d(ax, x, y, **kwds)
 
 
 class HexBinPlot(_HexBinPlot):
