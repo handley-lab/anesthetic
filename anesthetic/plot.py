@@ -524,8 +524,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     weights = kwargs.pop('weights', None)
     if weights is not None:
-        if np.ma.is_masked(weights):
-            weights = weights[~weights.mask]
         data = data[weights != 0]
         weights = weights[weights != 0]
 
