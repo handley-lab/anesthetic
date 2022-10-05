@@ -203,8 +203,10 @@ class Hist1dPlot(HistPlot):
         if column_num == 0:
             cls._initialize_stacker(ax, stacking_id, len(bins) - 1)
 
-        base = np.zeros(len(bins) - 1)
-        bottom = bottom + cls._get_stacked_values(ax, stacking_id, base, kwds["label"])
+        if not isinstance(bins, str):
+            base = np.zeros(len(bins) - 1)
+            bottom = bottom + cls._get_stacked_values(ax, stacking_id, base, kwds["label"])
+
         # ignore style 
         n, bins, patches = hist_plot_1d(ax, y, bins=bins, bottom=bottom, **kwds)
         cls._update_stacker(ax, stacking_id, n)
