@@ -55,6 +55,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.imgconverter',
+    'matplotlib.sphinxext.plot_directive',
     'numpydoc',
 ]
 
@@ -95,6 +96,9 @@ autodoc_default_options = {
 # -- Options for numpydoc -------------------------------------------------
 numpydoc_show_inherited_class_members = False
 numpydoc_show_class_members = False 
+
+plot_rcparams = {'savefig.bbox': 'tight'}
+plot_apply_rcparams = True  # if context option is used
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -211,6 +215,7 @@ epub_exclude_files = ['search.html']
 intersphinx_mapping = {
         'numpy':('http://docs.scipy.org/doc/numpy/', None),
         'scipy':('http://docs.scipy.org/doc/scipy/reference', None),
+        'pandas':('https://pandas.pydata.org/pandas-docs/stable/', None),
         'matplotlib':('http://matplotlib.org', None)
         }
 

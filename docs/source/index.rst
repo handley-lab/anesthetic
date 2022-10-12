@@ -5,6 +5,7 @@
    :caption: Contents
 
    Introduction <intro>
+   Quickstart <quickstart>
    anesthetic <anesthetic>
 
 .. include:: ../../README.rst
