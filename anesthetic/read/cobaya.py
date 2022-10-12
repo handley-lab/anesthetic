@@ -61,7 +61,7 @@ def read_cobaya(root, *args, **kwargs):
 
     columns, labels = read_paramnames(root)
     columns = kwargs.pop('columns', columns)
-    labels = kwargs.pop("labels", labels)
+    labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
     samples = []
