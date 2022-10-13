@@ -713,7 +713,7 @@ def test_masking():
 
     for kind in kinds:
         fig, axes = make_1d_axes(['x0', 'x1', 'x2'])
-        pc.loc[mask].plot_1d(axes=axes, kind=kind + '_1d')
+        pc[mask].plot_1d(axes=axes, kind=kind + '_1d')
 
     for kind in kinds + ['scatter']:
         fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)

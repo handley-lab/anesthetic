@@ -978,7 +978,7 @@ class NestedSamples(Samples):
                               "\nDropping the invalid samples." %
                               (n_bad, len(samples), n_equal),
                               RuntimeWarning)
-                samples = samples.loc[~invalid].reset_index(drop=True)
+                samples = samples[~invalid].reset_index(drop=True)
 
             samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
@@ -994,7 +994,7 @@ class NestedSamples(Samples):
                           " should investigate why your likelihood is throwing"
                           " NaNs. Dropping these samples at prior level",
                           RuntimeWarning)
-            samples = samples.loc[samples.logL.notna().to_numpy()].recompute()
+            samples = samples[samples.logL.notna().to_numpy()].recompute()
 
         if inplace:
             self._update_inplace(samples)
