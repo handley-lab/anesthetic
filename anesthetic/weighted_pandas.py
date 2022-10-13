@@ -184,10 +184,8 @@ class WeightedSeries(_WeightedObject, Series):
         """Weighted standard error of the mean."""
         return np.sqrt(self.var(skipna=skipna)/self.neff())
 
-    def quantile(self, q=0.5, numeric_only=True, interpolation='linear'):
+    def quantile(self, q=0.5, interpolation='linear'):
         """Weighted quantile of the sampled distribution."""
-        if not numeric_only:
-            raise NotImplementedError("numeric_only kwarg not implemented")
         return quantile(self.to_numpy(), q, self.get_weights(), interpolation)
 
     def compress(self, ncompress=True):
@@ -347,14 +345,16 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         n = self.neff(axis)
         return np.sqrt(self.var(axis=axis, skipna=skipna)/n)
 
-    def quantile(self, q=0.5, axis=0, numeric_only=True,
-                 interpolation='linear'):
+    def quantile(self, q=0.5, axis=0, numeric_only=None,
+                 interpolation='linear', method=None):
         """Weighted quantile of the sampled distribution."""
-        if not numeric_only:
-            raise NotImplementedError("numeric_only kwarg not implemented")
         if self.isweighted(axis):
-            data = np.array([c.quantile(q, interpolation=interpolation,
-                                        numeric_only=numeric_only)
+            if numeric_only is not None or method is not None:
+                raise NotImplementedError(
+                    "`numeric_only` kwarg not implemented for "
+                    "`WeightedSeries` and `WeightedDataFrame`."
+                )
+            data = np.array([c.quantile(q, interpolation=interpolation)
                              for _, c in self.iteritems()])
             if np.isscalar(q):
                 return self._constructor_sliced(data,
@@ -363,8 +363,12 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                 return self._constructor(data.T, index=q,
                                          columns=self._get_axis(1-axis))
         else:
+            if numeric_only is None:
+                numeric_only = True
+            if method is None:
+                method = 'single'
             return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
-                                    interpolation=interpolation)
+                                    interpolation=interpolation, method=method)
 
     def compress(self, ncompress=True, axis=0):
         """Reduce the number of samples by discarding low-weights.
