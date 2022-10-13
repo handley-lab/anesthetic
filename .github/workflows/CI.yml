@@ -75,6 +75,7 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
+        conda config --append channels conda-forge
         conda install pytest pytest-cov pytest-xdist
         conda install --file requirements.txt
 
