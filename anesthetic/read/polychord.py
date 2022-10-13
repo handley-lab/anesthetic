@@ -24,7 +24,7 @@ def read_polychord(root, *args, **kwargs):
     columns, labels = read_paramnames(root)
 
     columns = kwargs.pop('columns', columns)
-    labels = kwargs.pop("labels", labels)
+    labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
     return NestedSamples(data=data, columns=columns,
