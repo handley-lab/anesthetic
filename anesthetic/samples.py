@@ -877,8 +877,8 @@ class NestedSamples(Samples):
                 logL = float(self.logL[logL])
             except KeyError:
                 pass
-        i = (self.logL >= logL) & (self.logL_birth < logL)
-        return Samples(self.loc[i]).set_weights(None)
+        i = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
+        return Samples(self[i]).set_weights(None)
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
@@ -919,7 +919,7 @@ class NestedSamples(Samples):
             Importance re-weighted samples.
         """
         samples = super().importance_sample(logL_new, action=action)
-        samples = samples.loc[samples.logL > samples.logL_birth].recompute()
+        samples = samples[(samples.logL > samples.logL_birth).to_numpy()].recompute()
         if inplace:
             self._update_inplace(samples)
         else:
@@ -964,7 +964,7 @@ class NestedSamples(Samples):
                 raise RuntimeError("Cannot recompute run without "
                                    "birth contours logL_birth.")
 
-            invalid = samples.logL <= samples.logL_birth
+            invalid = (samples.logL <= samples.logL_birth).to_numpy()
             n_bad = invalid.sum()
             n_equal = (samples.logL == samples.logL_birth).sum()
             if n_bad:
@@ -993,7 +993,7 @@ class NestedSamples(Samples):
                           " should investigate why your likelihood is throwing"
                           " NaNs. Dropping these samples at prior level",
                           RuntimeWarning)
-            samples = samples.loc[samples.logL.notna()].recompute()
+            samples = samples.loc[samples.logL.notna().to_numpy()].recompute()
 
         if inplace:
             self._update_inplace(samples)

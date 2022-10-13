@@ -705,7 +705,7 @@ def test_stats():
 
 def test_masking():
     pc = read_chains("./tests/example_data/pc")
-    mask = pc['x0'] > 0
+    mask = pc['x0'].to_numpy() > 0
 
     kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
@@ -717,11 +717,8 @@ def test_masking():
 
     for kind in kinds + ['scatter']:
         fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
-        pc.loc[mask].plot_2d(
-            axes=axes,
-            kind=dict(lower=kind + '_2d', diagonal='hist_1d'),
-        )
-
+        pc[mask].plot_2d(axes=axes, kind=dict(lower=kind + '_2d',
+                                              diagonal='hist_1d'))
 
 def test_merging():
     np.random.seed(3)
@@ -1070,7 +1067,9 @@ def test_logzero_mask_likelihood_level():
 
     ns1 = read_chains('./tests/example_data/pc')
     ns1.logL = np.where(mask, ns1.logL, -1e30)
-    ns1 = merge_nested_samples((ns1.loc[ns1.logL > ns1.logL_birth],))
+
+    mask2 = ns1.logL.to_numpy() > ns1.logL_birth.to_numpy()
+    ns1 = merge_nested_samples((ns1[mask2],))
     NS1 = ns1.stats(nsamples=2000)
 
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
