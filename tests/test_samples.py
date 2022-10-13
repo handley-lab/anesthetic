@@ -1068,8 +1068,8 @@ def test_logzero_mask_likelihood_level():
     ns1 = read_chains('./tests/example_data/pc')
     ns1.logL = np.where(mask, ns1.logL, -1e30)
 
-    mask2 = ns1.logL.to_numpy() > ns1.logL_birth.to_numpy()
-    ns1 = merge_nested_samples((ns1[mask2],))
+    mask = ns1.logL.to_numpy() > ns1.logL_birth.to_numpy()
+    ns1 = merge_nested_samples((ns1[mask],))
     NS1 = ns1.stats(nsamples=2000)
 
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
