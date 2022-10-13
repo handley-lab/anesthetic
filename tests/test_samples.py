@@ -1,4 +1,3 @@
-import warnings
 import matplotlib_agg  # noqa: F401
 import sys
 import pytest
