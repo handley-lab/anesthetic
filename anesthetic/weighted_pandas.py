@@ -350,7 +350,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         return np.sqrt(self.var(axis=axis, skipna=skipna)/n)
 
     def quantile(self, q=0.5, axis=0, numeric_only=True,
-                 interpolation='linear', method="single"):
+                 interpolation='linear', method='single'):
         """Weighted quantile of the sampled distribution."""
         if not numeric_only:
             raise NotImplementedError("numeric_only kwarg not implemented")
