@@ -720,6 +720,7 @@ def test_masking():
         pc[mask].plot_2d(axes=axes, kind=dict(lower=kind + '_2d',
                                               diagonal='hist_1d'))
 
+
 def test_merging():
     np.random.seed(3)
     samples_1 = read_chains('./tests/example_data/pc')

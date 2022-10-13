@@ -919,7 +919,8 @@ class NestedSamples(Samples):
             Importance re-weighted samples.
         """
         samples = super().importance_sample(logL_new, action=action)
-        samples = samples[(samples.logL > samples.logL_birth).to_numpy()].recompute()
+        mask = (samples.logL > samples.logL_birth).to_numpy()
+        samples = samples[mask].recompute()
         if inplace:
             self._update_inplace(samples)
         else:
