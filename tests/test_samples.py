@@ -824,11 +824,11 @@ def test_beta():
                                   weights)
 
 
-@pytest.mark.filterwarnings("ignore:.*samples have logL <= logL_birth.*")
 def test_beta_with_logL_infinities():
     ns = read_chains("./tests/example_data/pc")
     ns.loc[:10, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
-    ns.recompute(inplace=True)
+    with pytest.warns(RuntimeWarning):
+        ns.recompute(inplace=True)
     assert (ns.logL == -np.inf).sum() == 0
 
 
