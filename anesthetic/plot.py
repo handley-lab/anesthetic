@@ -1019,7 +1019,7 @@ def make_diagonal(ax):
 
 
 def make_offdiagonal(ax):
-    """Helper for linking x and y axes limits in triangle plots."""
+    """Linking x to y axes limits in triangle plots."""
 
     class OffDiagonalAxes(type(ax)):
         def set_xlim(self, left=None, right=None, emit=True, auto=False,
