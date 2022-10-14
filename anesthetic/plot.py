@@ -303,8 +303,10 @@ def make_2d_axes(params, **kwargs):
                 else:
                     if position[x][y] == 1:
                         axes[x][y].position = 'upper'
+                        make_offdiagonal(axes[x][y])
                     elif position[x][y] == -1:
                         axes[x][y].position = 'lower'
+                        make_offdiagonal(axes[x][y])
                     axes[x][y].yaxis.set_major_locator(
                         MaxNLocator(3, prune='both'))
                 axes[x][y].xaxis.set_major_locator(
@@ -1014,6 +1016,36 @@ def make_diagonal(ax):
             return self.twin.legend(*args, **kwargs)
 
     ax.__class__ = DiagonalAxes
+
+
+def make_offdiagonal(ax):
+
+    class OffDiagonalAxes(type(ax)):
+        def set_xlim(self, left=None, right=None, emit=True, auto=False,
+                     xmin=None, xmax=None):
+            left, right = super().set_xlim(left=left, right=right, emit=emit,
+                                           auto=auto, xmin=xmin, xmax=xmax)
+            if emit:
+                self.callbacks.process('xlim_changed', self)
+                # Call all of the other x-axes that are shared with this one
+                for other in self._shared_axes['x'].get_siblings(self):
+                    if other is not self:
+                        other.set_xlim(left, right, emit=False, auto=auto)
+            return left, right
+
+        def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
+                     ymin=None, ymax=None):
+            bottom, top = super().set_ylim(bottom=bottom, top=top, emit=emit,
+                                           auto=auto, ymin=ymin, ymax=ymax)
+            if emit:
+                self.callbacks.process('ylim_changed', self)
+                # Call all of the other y-axes that are shared with this one
+                for other in self._shared_axes['y'].get_siblings(self):
+                    if other is not self:
+                        other.set_ylim(bottom, top, emit=False, auto=auto)
+            return bottom, top
+
+    ax.__class__ = OffDiagonalAxes
 
 
 def quantile_plot_interval(q):
