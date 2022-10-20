@@ -26,14 +26,14 @@ def read_paramnames(root):
         paramnames_file = root + '.paramnames'
         with open(paramnames_file, 'r') as f:
             paramnames = []
-            tex = {}
+            labels = {}
             for line in f:
                 line = line.strip().split()
                 paramname = line[0].replace('*', '')
                 paramnames.append(paramname)
                 if len(line) > 1:
-                    tex[paramname] = '$' + ' '.join(line[1:]) + '$'
-            return paramnames, tex
+                    labels[paramname] = '$' + ' '.join(line[1:]) + '$'
+            return paramnames, labels
     except IOError:
         return None, {}
 
@@ -61,14 +61,14 @@ def read_getdist(root, *args, **kwargs):
     dirname, basename = os.path.split(root)
 
     files = os.listdir(os.path.dirname(root))
-    regex = basename + r'((_|.)([0-9]+)|)\.txt'
+    regex = re.escape(basename) + r'((_|.)([0-9]+)|)\.txt'
     matches = [re.match(regex, f) for f in files]
     chains_files = [(m.group(3), os.path.join(dirname, m.group(0)))
                     for m in matches if m]
     if not chains_files:
         raise FileNotFoundError(dirname + '/' + regex + " not found.")
 
-    params, tex = read_paramnames(root)
+    params, labels = read_paramnames(root)
     columns = kwargs.pop('columns', params)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
@@ -79,12 +79,11 @@ def read_getdist(root, *args, **kwargs):
         weights, minuslogL, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
                            weights=weights.flatten(), logL=-minuslogL,
-                           root=root, *args, **kwargs)
+                           labels=labels, root=root, *args, **kwargs)
         mcmc['chain'] = int(i) if i else np.nan
         samples.append(mcmc)
 
     samples = concat(samples)
-    samples.tex = tex
     samples.index.names = ['index', 'weights']
     samples.sort_values(by=['chain', 'index'], inplace=True)
     samples.reset_index(inplace=True, drop=True)
@@ -94,7 +93,7 @@ def read_getdist(root, *args, **kwargs):
     all_same_chain = (samples.chain == samples.chain.iloc[0]).all()
     if all_same_chain or samples.chain.isna().all():
         samples.drop('chain', inplace=True, axis=1)
-    else:
-        samples.tex['chain'] = r'$n_\mathrm{chain}$'
+    elif samples.islabelled():
+        samples.set_label('chain', r'$n_\mathrm{chain}$')
 
     return samples

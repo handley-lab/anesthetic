@@ -29,6 +29,12 @@ class _WeightedObject(object):
         else:
             return np.ones_like(self._get_axis(axis))
 
+    def drop_weights(self, axis=0):
+        """Drop weights."""
+        if self.isweighted(axis):
+            return self.droplevel('weights', axis)
+        return self.copy().__finalize__(self, "drop_weights")
+
     def set_weights(self, weights, axis=0, inplace=False, level=None):
         """Set sample weights along an axis.
 
@@ -57,7 +63,7 @@ class _WeightedObject(object):
 
         if weights is None:
             if result.isweighted(axis=axis):
-                result = result.droplevel('weights', axis=axis)
+                result = result.drop_weights(axis)
         else:
             names = [n for n in result._get_axis(axis).names if n != 'weights']
             index = [result._get_axis(axis).get_level_values(n) for n in names]
@@ -222,7 +228,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             null = self.isnull() & skipna
             mean = np.average(masked_array(self, null),
                               weights=self.get_weights(axis), axis=axis)
-            return WeightedSeries(mean, index=self._get_axis(1-axis))
+            return self._constructor_sliced(mean, index=self._get_axis(1-axis))
         else:
             return super().mean(axis=axis, skipna=skipna, *args, **kwargs)
 
@@ -233,7 +239,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             mean = self.mean(axis=axis, skipna=skipna)
             var = np.average(masked_array((self-mean)**2, null),
                              weights=self.get_weights(axis), axis=axis)
-            return WeightedSeries(var, index=self._get_axis(1-axis))
+            return self._constructor_sliced(var, index=self._get_axis(1-axis))
         else:
             return super().var(axis=axis, skipna=skipna, *args, **kwargs)
 
@@ -245,7 +251,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             x = masked_array(self - mean, null)
             cov = np.ma.dot(self.get_weights()*x.T, x) \
                 / self.get_weights().sum().T
-            return WeightedDataFrame(cov, index=self.columns,
+            return self._constructor(cov, index=self.columns,
                                      columns=self.columns)
         else:
             return super().cov(*args, **kwargs)
@@ -266,7 +272,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             if isinstance(other, Series):
                 answer = self.apply(lambda x: other.corr(x, method=method),
                                     axis=axis)
-                return WeightedSeries(answer)
+                return self._constructor_sliced(answer)
 
             left, right = self.align(other, join="inner", copy=False)
             weights = self.get_weights(axis)
@@ -298,7 +304,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                     correl = concat([correl, Series([np.nan] * len(idx_diff),
                                                     index=idx_diff)])
 
-            return WeightedSeries(correl)
+            return self._constructor_sliced(correl)
         else:
             return super().corrwith(other, drop=drop, axis=axis, method=method,
                                     *args, **kwargs)
@@ -311,7 +317,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             std = self.std(axis=axis, skipna=skipna)
             kurt = np.average(masked_array(((self-mean)/std)**4, null),
                               weights=self.get_weights(axis), axis=axis)
-            return WeightedSeries(kurt, index=self._get_axis(1-axis))
+            return self._constructor_sliced(kurt, index=self._get_axis(1-axis))
         else:
             return super().kurt(axis=axis, skipna=skipna, *args, **kwargs)
 
@@ -323,7 +329,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             std = self.std(axis=axis, skipna=skipna)
             skew = np.average(masked_array(((self-mean)/std)**3, null),
                               weights=self.get_weights(axis), axis=axis)
-            return WeightedSeries(skew, index=self._get_axis(1-axis))
+            return self._constructor_sliced(skew, index=self._get_axis(1-axis))
         else:
             return super().skew(axis=axis, skipna=skipna, *args, **kwargs)
 
@@ -334,7 +340,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             mean = self.mean(axis=axis, skipna=skipna)
             mad = np.average(masked_array(abs(self-mean), null),
                              weights=self.get_weights(axis), axis=axis)
-            return WeightedSeries(mad, index=self._get_axis(1-axis))
+            return self._constructor_sliced(mad, index=self._get_axis(1-axis))
         else:
             return super().var(axis=axis, skipna=skipna, *args, **kwargs)
 
@@ -353,9 +359,10 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                                         numeric_only=numeric_only)
                              for _, c in self.iteritems()])
             if np.isscalar(q):
-                return WeightedSeries(data, index=self._get_axis(1-axis))
+                return self._constructor_sliced(data,
+                                                index=self._get_axis(1-axis))
             else:
-                return WeightedDataFrame(data.T, index=q,
+                return self._constructor(data.T, index=q,
                                          columns=self._get_axis(1-axis))
         else:
             return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
@@ -376,8 +383,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             i = compress_weights(self.get_weights(axis), self._rand(axis),
                                  ncompress)
             data = np.repeat(self.to_numpy(), i, axis=axis)
-            i = self._get_axis(axis).repeat(i).droplevel('weights')
-            df = WeightedDataFrame(data=data)
+            i = self.drop_weights(axis)._get_axis(axis).repeat(i)
+            df = self._constructor(data=data)
             df.set_axis(i, axis=axis, inplace=True)
             df.set_axis(self._get_axis(1-axis), axis=1-axis, inplace=True)
             return df
