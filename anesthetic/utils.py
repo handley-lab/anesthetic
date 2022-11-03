@@ -85,6 +85,18 @@ def cdf(a, w=None, inverse=False, interpolation='linear'):
         return interp1d(a[i], c, kind=interpolation)
 
 
+def sample_cdf(samples, interpolation='linear'):
+    """Sample the empirical cdf for a 1d array."""
+    samples = np.array(samples)
+    samples.sort()
+    ngaps = len(samples)-1
+    gaps = np.random.dirichlet(np.ones(ngaps))
+    cdf = np.array([0, *np.cumsum(gaps)])
+    assert np.isclose(cdf[-1], 1, atol=1e-9, rtol=1e-9), "Error: CDF does not reach 1"+str(cdf[-1])
+    cdf[-1] = 1
+    return interp1d(cdf, samples, kind=interpolation)
+
+
 def quantile(a, q, w=None, interpolation='linear'):
     """Compute the weighted quantile for a one dimensional array."""
     icdf = cdf(a, w, inverse=True, interpolation=interpolation)
@@ -94,7 +106,8 @@ def quantile(a, q, w=None, interpolation='linear'):
     return quant
 
 
-def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
+def credibility_interval(samples, weights=None, level=0.68, method="hpd",
+    u=None, n_iter=12, verbose=True):
     """Compute the credibility interval of weighted samples.
 
     Based on linear interpolation of the cumulative density function, thus
@@ -106,7 +119,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
     ----------
     samples: array
         Samples to compute the credibility interval of.
-    samples: array, optional
+    weights: array, optional
         Weights corresponding to samples. Default: ones
     level: float, optional
         Credibility level (probability, <1). Default: 0.68
@@ -119,6 +132,11 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
           `level` fraction of the samples lie above / below the limit.
         * et: Equal-tailed interval with the same fraction of samples
           below and above the interval region.
+    u: array, optional
+        Random values to use for reproducable sample compression.
+        Default: np.random.rand(len(weights)) if non-unit weights used.
+    n_iter: int, optional
+        Number of CDF samples to improve mean and std estimate. Default: 12
 
     Returns
     -------
@@ -132,24 +150,62 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd"):
     if weights is not None and np.shape(samples) != np.shape(weights):
         raise ValueError('Shape of samples and weights differs')
 
-    invCDF = cdf(samples, weights, inverse=True)
-
-    if method == "hpd":
-        # Find smallest interval
-        def distance(Y, level=level):
-            return invCDF(Y+level)-invCDF(Y)
-        res = minimize_scalar(distance, bounds=(0, 1-level), method="Bounded")
-        return np.array([invCDF(res.x), invCDF(res.x+level)])
-    elif method == "ll":
-        # Get value from which we reach the desired level
-        return invCDF(1-level)
-    elif method == "ul":
-        # Get value to which we reach the desired level
-        return invCDF(level)
-    elif method == "et":
-        return np.array([invCDF((1-level)/2), invCDF((1+level)/2)])
+    # Convert to numpy to unify indexing
+    samples = np.array(samples.copy())
+    if weights is None:
+        weights = np.ones(len(samples))
     else:
-        raise ValueError("Method '{0:}' unknown".format(method))
+        weights = np.array(weights.copy())
+
+    # Convert samples to unit weight if necessary
+    if not np.all(np.logical_or(weights==0, weights==1)):
+        # compress_weights with nsamples<=0 assures weights==1
+        weights = compress_weights(weights, nsamples=-1, u=u)
+        if verbose:
+            print("Compressing weights to", np.sum(weights), \
+                "unit weight samples.")
+        assert np.all(np.logical_or(weights==0, weights==1)), \
+            "Error in compress_weights, weights not binary"
+
+    indices = np.where(weights)[0]
+    x = samples[indices]
+
+    ci_samples = []
+    for i in range(n_iter):
+        invCDF = sample_cdf(x)
+
+        if method == "hpd":
+            # Find smallest interval
+            def distance(Y, level=level):
+                return invCDF(Y+level)-invCDF(Y)
+            res = minimize_scalar(distance, bounds=(0, 1-level), method="Bounded")
+            ci_samples.append(np.array([invCDF(res.x), invCDF(res.x+level)]))
+        elif method == "ll":
+            # Get value from which we reach the desired level
+            ci_samples.append(invCDF(1-level))
+        elif method == "ul":
+            # Get value to which we reach the desired level
+            ci_samples.append(invCDF(level))
+        elif method == "et":
+            ci_samples.append(np.array([invCDF((1-level)/2), invCDF((1+level)/2)]))
+        else:
+            raise ValueError("Method '{0:}' unknown".format(method))
+    ci_samples = np.array(ci_samples)
+    if np.shape(ci_samples) == (n_iter, ):
+        return np.mean(ci_samples), np.std(ci_samples)
+    elif np.shape(ci_samples) == (n_iter, 2):
+        mean_lower = np.mean(ci_samples[:,0])
+        mean_upper = np.mean(ci_samples[:,1])
+        std_lower = np.std(ci_samples[:,0])
+        std_upper = np.std(ci_samples[:,1])
+        if verbose:
+            print("The {0:.0%} credibility interval is",
+                "[{1:.2g} +/- {2:.1g}, {3:.2g} +/- {4:.1g}]".format(
+                level, mean_lower, std_lower, mean_upper, std_upper))
+
+        return [mean_lower, mean_upper], [std_lower, std_upper]
+    else:
+        raise ValueError('ci_samples in unregonized shape')
 
 
 def check_bounds(d, xmin=None, xmax=None):
