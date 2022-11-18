@@ -334,7 +334,7 @@ def make_2d_axes(params, **kwargs):
                     a.tick_params('y', direction='inout',
                                   left=True, labelleft=False)
         elif len(ax_) and ticks == 'outer':  # no inner ticks
-            for a in ax_[1:]:
+            for a in ax_.iloc[1:]:
                 a.tick_params('y', left=False, labelleft=False)
         elif len(ax_) and ticks is None:  # no ticks at all
             for a in ax_:
@@ -360,7 +360,7 @@ def make_2d_axes(params, **kwargs):
                             a.twin.tick_params('x', direction='inout',
                                                bottom=True, labelbottom=False)
             elif ticks == 'outer':  # no inner ticks
-                for a in ax_[:-1]:
+                for a in ax_.iloc[:-1]:
                     a.tick_params('x', bottom=False, labelbottom=False)
             elif ticks is None:  # no ticks at all
                 for a in ax_:
