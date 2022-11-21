@@ -367,7 +367,6 @@ def test_transpose():
     assert lframe.T._labels == ("labels", "labels0")
     assert lframe.transpose()._labels == ("labels", "labels0")
 
-
 def setup_multiaxis_lframe():
     lframe = setup_lframe().iloc[:4]
     lframe._labels = ('labels', 'aliases')
