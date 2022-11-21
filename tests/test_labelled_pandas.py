@@ -33,8 +33,9 @@ def assert_frame_equal_not_index(x, y):
         assert_frame_equal(x, y)
 
 
+@pytest.fixture
 @pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
-def test_LabelledSeries():
+def lseries():
     index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
     labels = ['$%s$' % i for i in index]
     data = np.random.rand(len(index))
@@ -114,11 +115,12 @@ def test_LabelledSeries_MultiIndex():
         assert lseries.get_labels_map()[v, c] == '$%s$' % c
         assert lseries.get_label((v, c)) == '$%s$' % c
 
-    return lseries
+    # return lseries
 
 
+@pytest.fixture
 @pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
-def test_LabelledDataFrame_index():
+def lframe_index():
     index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
     labels = ['$%s$' % i for i in index]
     data = np.random.rand(len(index), 4)
@@ -218,7 +220,7 @@ def test_LabelledDataFrame_index_MultiIndex():
         assert lframe.get_labels_map()[v, c] == '$%s$' % c
         assert lframe.get_label((v, c)) == '$%s$' % c
 
-    return lframe
+    # return lframe
 
 
 @pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
@@ -262,7 +264,7 @@ def test_LabelledDataFrame_column():
         assert lframe.get_labels_map(1)[c] == '$%s$' % c
         assert lframe.get_label(c, 1) == '$%s$' % c
 
-    return lframe
+    # return lframe
 
 
 @pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
@@ -325,11 +327,10 @@ def test_LabelledDataFrame_column_MultiIndex():
         assert lframe.get_labels_map(1)[v, c] == '$%s$' % c
         assert lframe.get_label((v, c), 1) == '$%s$' % c
 
-    return lframe
+    # return lframe
 
 
-def test_set_labels():
-    lseries = test_LabelledSeries()
+def test_set_labels(lseries):
     labels = lseries.get_labels()
     labels[1] = '$b$'
     assert_array_equal(lseries.set_labels(labels).get_labels(), labels)
@@ -345,9 +346,8 @@ def test_set_labels():
     assert lseries.get_labels() is None
 
 
-def test_constructors():
-    lseries = test_LabelledSeries()
-    lframe = test_LabelledDataFrame_index()
+def test_constructors(lseries, lframe_index):
+    lframe = lframe_index
     assert isinstance(lseries, LabelledSeries)
     assert isinstance(lseries.to_frame(), LabelledDataFrame)
     assert isinstance(lframe, LabelledDataFrame)
@@ -355,15 +355,16 @@ def test_constructors():
     assert isinstance(lframe.loc['A'], LabelledSeries)
 
 
-def test_transpose():
-    lframe = test_LabelledDataFrame_index()
+def test_transpose(lframe_index):
+    lframe = lframe_index
     lframe._labels = ("labels0", "labels")
     assert lframe.T._labels == ("labels", "labels0")
     assert lframe.transpose()._labels == ("labels", "labels0")
 
 
-def test_multiaxis():
-    lframe = test_LabelledDataFrame_index().iloc[:4]
+@pytest.fixture
+def test_multiaxis(lframe_index):
+    lframe = lframe_index.iloc[:4]
     lframe._labels = ('labels', 'aliases')
     columns = MultiIndex.from_arrays([['one', 'two', 'three', 'four'],
                                       [1, 2, 3, 4]],
@@ -397,8 +398,7 @@ def test_multiaxis():
     return result
 
 
-def test_set_label():
-    lseries = test_LabelledSeries()
+def test_set_label(lseries):
     assert isinstance(lseries.get_labels_map(), Series)
 
     nolabels_map = lseries.drop_labels().get_labels_map()
@@ -426,8 +426,8 @@ def test_set_label():
     assert lseries.get_label('Z') == ''
 
 
-def test_multiaxis_slice():
-    lframe = test_multiaxis()
+def test_multiaxis_slice(test_multiaxis):
+    lframe = test_multiaxis
     assert_series_equal_not_name(lframe['one'], lframe[('one', 1)])
     assert_series_equal_not_name(lframe.loc['A'], lframe.loc[('A', '$A$')])
     assert_series_equal_not_name(lframe.loc[:, 'one'],
@@ -445,8 +445,8 @@ def test_multiaxis_slice():
                                             ('one',  1)])
 
 
-def test_reset_index():
-    ldf = test_LabelledDataFrame_index()
+def test_reset_index(lframe_index):
+    ldf = lframe_index
     assert ldf.reset_index().index.names == [None, 'labels']
 
     assert not np.array_equal(ldf.reset_index().columns, ldf.columns)
@@ -458,8 +458,8 @@ def test_reset_index():
     assert_array_equal(new.index, ldf.reset_index().index)
 
 
-def test_drop_labels():
-    ldf = test_LabelledDataFrame_index()
+def test_drop_labels(lframe_index):
+    ldf = lframe_index
     assert ldf.islabelled()
     nolabels = ldf.drop_labels()
     assert not nolabels.islabelled()
