@@ -31,7 +31,9 @@ class _WeightedObject(object):
 
     def drop_weights(self, axis=0):
         """Drop weights."""
-        return self.droplevel('weights', axis)
+        if self.isweighted(axis):
+            return self.droplevel('weights', axis)
+        return self.copy().__finalize__(self, "drop_weights")
 
     def set_weights(self, weights, axis=0, inplace=False, level=None):
         """Set sample weights along an axis.

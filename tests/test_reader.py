@@ -4,6 +4,7 @@ import sys
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+from pandas.testing import assert_frame_equal
 import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains
@@ -253,3 +254,9 @@ def test_discard_burn_in(root):
 def test_read_fail():
     with pytest.raises(FileNotFoundError):
         read_chains('./tests/example_data/foo')
+
+
+def test_regex_escape():
+    mcmc_1 = read_chains('./tests/example_data/gd_single+X')
+    mcmc_2 = read_chains('./tests/example_data/gd_single')
+    assert_frame_equal(mcmc_1, mcmc_2)
