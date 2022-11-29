@@ -25,26 +25,8 @@ def replace_inner_function(outer, new_inner):
         for const in outer.__code__.co_consts)
 
     # create a new code object with the new constants
-    try:
-        # Python 3.8 added code.replace(), so much more convenient!
-        ncode = ocode.replace(co_consts=new_consts)
-    except AttributeError:
-        # older Python versions, argument counts vary so we need to check
-        # for specifics.
-        args = [
-            ocode.co_argcount, ocode.co_nlocals, ocode.co_stacksize,
-            ocode.co_flags, ocode.co_code,
-            new_consts,  # replacing the constants
-            ocode.co_names, ocode.co_varnames, ocode.co_filename,
-            ocode.co_name, ocode.co_firstlineno, ocode.co_lnotab,
-            ocode.co_freevars, ocode.co_cellvars,
-        ]
-        if hasattr(ocode, 'co_kwonlyargcount'):
-            # Python 3+, insert after co_argcount
-            args.insert(1, ocode.co_kwonlyargcount)
-        # Python 3.8 adds co_posonlyargcount, but also has code.replace(), used
-        # above
-        ncode = code(*args)
+    # Python 3.8 added code.replace(), so much more convenient!
+    ncode = ocode.replace(co_consts=new_consts)
 
     # and a new function object using the updated code object
     return function(
