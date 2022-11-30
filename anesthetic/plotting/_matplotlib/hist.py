@@ -1,16 +1,13 @@
+from typing import Literal
+import numpy as np
 from pandas.plotting._matplotlib.hist import (HistPlot as _HistPlot,
                                               KdePlot as _KdePlot)
 import pandas.plotting._matplotlib.hist
-import numpy as np
 from pandas.core.dtypes.missing import (
     isna,
     remove_na_arraylike,
 )
 from pandas.plotting._matplotlib.core import MPLPlot, PlanePlot
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal
 from anesthetic.plotting._matplotlib.core import (
     _WeightedMPLPlot, _CompressedMPLPlot, _get_weights
 )
