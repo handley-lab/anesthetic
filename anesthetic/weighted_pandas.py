@@ -356,7 +356,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                     "`numeric_only` and `method` kwargs not implemented for "
                     "`WeightedSeries` and `WeightedDataFrame`."
                 )
-            data = np.array([c.quantile(q, interpolation=interpolation, 
+            data = np.array([c.quantile(q, interpolation=interpolation,
                                         numeric_only=True, method='single')
                              for _, c in self.items()])
             if np.isscalar(q):
