@@ -184,9 +184,6 @@ def test_WeightedDataFrame_corrwith(frame):
         frame.corrwith(unweighted[['A', 'B']])
 
     with pytest.raises(ValueError):
-        unweighted.corrwith(frame.A)
-
-    with pytest.raises(ValueError):
         unweighted.corrwith(frame[['A', 'B']])
 
     correl_1 = unweighted[:5].corrwith(unweighted[:4], axis=1)
@@ -333,6 +330,8 @@ def test_WeightedDataFrame_quantile(frame):
 
     with pytest.raises(NotImplementedError):
         frame.quantile(numeric_only=False)
+    with pytest.raises(NotImplementedError):
+        frame.quantile(method='single')
 
 
 def test_WeightedDataFrame_sample(frame):
@@ -558,9 +557,6 @@ def test_WeightedSeries_quantile(series):
         assert_allclose(quantile, q, atol=1e-2)
 
     assert_allclose(series.quantile(qs), qs, atol=1e-2)
-
-    with pytest.raises(NotImplementedError):
-        series.quantile(numeric_only=False)
 
 
 def test_WeightedSeries_sample(series):
