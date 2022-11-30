@@ -25,7 +25,6 @@ def replace_inner_function(outer, new_inner):
         for const in outer.__code__.co_consts)
 
     # create a new code object with the new constants
-    # Python 3.8 added code.replace(), so much more convenient!
     ncode = ocode.replace(co_consts=new_consts)
 
     # and a new function object using the updated code object
