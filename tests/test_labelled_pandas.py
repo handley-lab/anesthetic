@@ -34,7 +34,6 @@ def assert_frame_equal_not_index(x, y):
 
 
 @pytest.fixture
-@pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
 def lseries():
     index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
     labels = ['$%s$' % i for i in index]
@@ -117,7 +116,6 @@ def test_LabelledSeries_MultiIndex():
 
 
 @pytest.fixture
-@pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
 def lframe_index():
     index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
     labels = ['$%s$' % i for i in index]
@@ -219,7 +217,6 @@ def test_LabelledDataFrame_index_MultiIndex():
         assert lframe.get_label((v, c)) == '$%s$' % c
 
 
-@pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
 def test_LabelledDataFrame_column():
     columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
     labels = ['$%s$' % i for i in columns]
