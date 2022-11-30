@@ -115,8 +115,6 @@ def test_LabelledSeries_MultiIndex():
         assert lseries.get_labels_map()[v, c] == '$%s$' % c
         assert lseries.get_label((v, c)) == '$%s$' % c
 
-    # return lseries
-
 
 @pytest.fixture
 @pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
@@ -220,8 +218,6 @@ def test_LabelledDataFrame_index_MultiIndex():
         assert lframe.get_labels_map()[v, c] == '$%s$' % c
         assert lframe.get_label((v, c)) == '$%s$' % c
 
-    # return lframe
-
 
 @pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
 def test_LabelledDataFrame_column():
@@ -263,8 +259,6 @@ def test_LabelledDataFrame_column():
     for c in columns:
         assert lframe.get_labels_map(1)[c] == '$%s$' % c
         assert lframe.get_label(c, 1) == '$%s$' % c
-
-    # return lframe
 
 
 @pytest.mark.filterwarnings("ignore::pandas.errors.PerformanceWarning")
@@ -326,8 +320,6 @@ def test_LabelledDataFrame_column_MultiIndex():
     for c, v in zip(columns, vowels):
         assert lframe.get_labels_map(1)[v, c] == '$%s$' % c
         assert lframe.get_label((v, c), 1) == '$%s$' % c
-
-    # return lframe
 
 
 def test_set_labels(lseries):
