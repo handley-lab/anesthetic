@@ -76,7 +76,7 @@ class _WeightedObject(object):
             names.insert(level, 'weights')
 
             index = MultiIndex.from_arrays(index, names=names)
-            result.set_axis(index, axis=axis, inplace=True)
+            result = result.set_axis(index, axis=axis, copy=False)
 
         if inplace:
             self._update_inplace(result)
@@ -353,11 +353,11 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         if self.isweighted(axis):
             if numeric_only is not None or method is not None:
                 raise NotImplementedError(
-                    "`numeric_only` kwarg not implemented for "
+                    "`numeric_only` and `method` kwargs not implemented for "
                     "`WeightedSeries` and `WeightedDataFrame`."
                 )
-            data = np.array([c.quantile(q, interpolation=interpolation)
-                             for _, c in self.iteritems()])
+            data = np.array([c.quantile(q=q, interpolation=interpolation)
+                             for _, c in self.items()])
             if np.isscalar(q):
                 return self._constructor_sliced(data,
                                                 index=self._get_axis(1-axis))
@@ -389,8 +389,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             data = np.repeat(self.to_numpy(), i, axis=axis)
             i = self.drop_weights(axis)._get_axis(axis).repeat(i)
             df = self._constructor(data=data)
-            df.set_axis(i, axis=axis, inplace=True)
-            df.set_axis(self._get_axis(1-axis), axis=1-axis, inplace=True)
+            df = df.set_axis(i, axis=axis, copy=False)
+            df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
             return df
         else:
             return self

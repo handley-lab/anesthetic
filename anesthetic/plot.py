@@ -184,7 +184,7 @@ def make_1d_axes(params, **kwargs):
         ax.set_xlabel(labels[p])
         ax.set_yticks([])
 
-    for x, ax in axes.dropna().iteritems():
+    for x, ax in axes.dropna().items():
         ax.xaxis.set_major_locator(MaxNLocator(2, integer=True))
 
     return fig, axes
@@ -312,10 +312,10 @@ def make_2d_axes(params, **kwargs):
                 axes[x][y].xaxis.set_major_locator(
                     MaxNLocator(3, prune='both'))
 
-    for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
+    for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().items():
         ax.set_ylabel(labels[y])
 
-    for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().iteritems():
+    for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().items():
         ax.set_xlabel(labels[x])
 
     # left and right ticks and labels
@@ -336,7 +336,7 @@ def make_2d_axes(params, **kwargs):
                     a.tick_params('y', direction='inout',
                                   left=True, labelleft=False)
         elif len(ax_) and ticks == 'outer':  # no inner ticks
-            for a in ax_[1:]:
+            for a in ax_.iloc[1:]:
                 a.tick_params('y', left=False, labelleft=False)
         elif len(ax_) and ticks is None:  # no ticks at all
             for a in ax_:
@@ -348,7 +348,7 @@ def make_2d_axes(params, **kwargs):
                 "['outer', 'inner', None]." % ticks)
 
     # bottom and top ticks and labels
-    for x, ax in axes.iteritems():
+    for x, ax in axes.items():
         ax_ = ax.dropna()
         if len(ax_):
             if ticks == 'inner':
@@ -362,7 +362,7 @@ def make_2d_axes(params, **kwargs):
                             a.twin.tick_params('x', direction='inout',
                                                bottom=True, labelbottom=False)
             elif ticks == 'outer':  # no inner ticks
-                for a in ax_[:-1]:
+                for a in ax_.iloc[:-1]:
                     a.tick_params('x', bottom=False, labelbottom=False)
             elif ticks is None:  # no ticks at all
                 for a in ax_:
@@ -628,7 +628,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
 
-    if bins in ['knuth', 'freedman', 'blocks']:
+    if type(bins) == str and bins in ['knuth', 'freedman', 'blocks']:
         try:
             h, edges, bars = hist(data, ax=ax, bins=bins,
                                   range=(xmin, xmax), histtype=histtype,
