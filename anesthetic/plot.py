@@ -87,7 +87,7 @@ class AxesSeries(Series):
         if labels is None:
             labels = {}
         labels = {p: labels[p] if p in labels else p for p in axes.index}
-        for p, ax in axes.iteritems():
+        for p, ax in axes.items():
             ax.set_xlabel(labels[p], **kwargs)
 
     def set_xlabels(self, labels, **kwargs):
@@ -105,7 +105,7 @@ class AxesSeries(Series):
 
     def tick_params(self, *args, **kwargs):
         """Apply `matplotlib.axes.tick_params` to entire `AxesSeries`."""
-        for p, ax in self.iteritems():
+        for p, ax in self.items():
             ax.tick_params(*args, **kwargs)
 
 
@@ -293,7 +293,7 @@ class AxesDataFrame(DataFrame):
                 axes_row.dropna(inplace=True)
                 axes_row.iloc[0].set_ylabel(labels[y], **kwargs)
 
-        for x, axes_col in axes.iteritems():
+        for x, axes_col in axes.items():
             if axes_col.size:
                 axes_col.dropna(inplace=True)
                 axes_col.iloc[-1].set_xlabel(labels[x], **kwargs)
@@ -346,7 +346,7 @@ class AxesDataFrame(DataFrame):
                                   labelleft=False, labelright=False, **kwargs)
 
         # bottom and top ticks and labels
-        for x, ax in axes.iteritems():
+        for x, ax in axes.items():
             ax_ = ax.dropna()
             if len(ax_):
                 if direction == 'inner':
@@ -375,7 +375,7 @@ class AxesDataFrame(DataFrame):
     def tick_params(self, *args, **kwargs):
         """Apply `matplotlib.axes.tick_params` to entire `AxesDataFrame`."""
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if isinstance(ax, Axes):
                     ax.tick_params(*args, **kwargs)
 
@@ -383,7 +383,7 @@ class AxesDataFrame(DataFrame):
         """Apply `matplotlib.axes.set_xmargin` to entire `AxesDataFrame`."""
         unique_params = list(np.unique(list(self.index) + list(self.columns)))
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if isinstance(ax, Axes):
                     if x in unique_params:
                         xmin, xmax = ax.get_xlim()
@@ -416,7 +416,7 @@ class AxesDataFrame(DataFrame):
                      'diagonal' if diagonal else None,
                      'upper' if upper else None]
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if ax is not None and ax.position in positions:
                     if x in params:
                         for v in np.atleast_1d(params[x]):
@@ -447,7 +447,7 @@ class AxesDataFrame(DataFrame):
                      'diagonal' if diagonal else None,
                      'upper' if upper else None]
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if ax is not None and ax.position in positions:
                     if x in params:
                         for vmin, vmax in np.atleast_2d(params[x]):
@@ -476,7 +476,7 @@ class AxesDataFrame(DataFrame):
                      'upper' if upper else None]
         zorder = kwargs.pop('zorder', None)
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if ax is not None and ax.position in positions:
                     if x in params and y in params:
                         z = max([z.get_zorder() for z in ax.artists +
