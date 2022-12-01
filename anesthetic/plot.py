@@ -184,7 +184,7 @@ def make_1d_axes(params, **kwargs):
         ax.set_xlabel(labels[p])
         ax.set_yticks([])
 
-    for x, ax in axes.dropna().iteritems():
+    for x, ax in axes.dropna().items():
         ax.xaxis.set_major_locator(MaxNLocator(2, integer=True))
 
     return fig, axes
@@ -303,17 +303,19 @@ def make_2d_axes(params, **kwargs):
                 else:
                     if position[x][y] == 1:
                         axes[x][y].position = 'upper'
+                        make_offdiagonal(axes[x][y])
                     elif position[x][y] == -1:
                         axes[x][y].position = 'lower'
+                        make_offdiagonal(axes[x][y])
                     axes[x][y].yaxis.set_major_locator(
                         MaxNLocator(3, prune='both'))
                 axes[x][y].xaxis.set_major_locator(
                     MaxNLocator(3, prune='both'))
 
-    for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
+    for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().items():
         ax.set_ylabel(labels[y])
 
-    for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().iteritems():
+    for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().items():
         ax.set_xlabel(labels[x])
 
     # left and right ticks and labels
@@ -334,7 +336,7 @@ def make_2d_axes(params, **kwargs):
                     a.tick_params('y', direction='inout',
                                   left=True, labelleft=False)
         elif len(ax_) and ticks == 'outer':  # no inner ticks
-            for a in ax_[1:]:
+            for a in ax_.iloc[1:]:
                 a.tick_params('y', left=False, labelleft=False)
         elif len(ax_) and ticks is None:  # no ticks at all
             for a in ax_:
@@ -346,7 +348,7 @@ def make_2d_axes(params, **kwargs):
                 "['outer', 'inner', None]." % ticks)
 
     # bottom and top ticks and labels
-    for x, ax in axes.iteritems():
+    for x, ax in axes.items():
         ax_ = ax.dropna()
         if len(ax_):
             if ticks == 'inner':
@@ -360,7 +362,7 @@ def make_2d_axes(params, **kwargs):
                             a.twin.tick_params('x', direction='inout',
                                                bottom=True, labelbottom=False)
             elif ticks == 'outer':  # no inner ticks
-                for a in ax_[:-1]:
+                for a in ax_.iloc[:-1]:
                     a.tick_params('x', bottom=False, labelbottom=False)
             elif ticks is None:  # no ticks at all
                 for a in ax_:
@@ -626,7 +628,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
 
-    if bins in ['knuth', 'freedman', 'blocks']:
+    if type(bins) == str and bins in ['knuth', 'freedman', 'blocks']:
         try:
             h, edges, bars = hist(data, ax=ax, bins=bins,
                                   range=(xmin, xmax), histtype=histtype,
@@ -1014,6 +1016,37 @@ def make_diagonal(ax):
             return self.twin.legend(*args, **kwargs)
 
     ax.__class__ = DiagonalAxes
+
+
+def make_offdiagonal(ax):
+    """Linking x to y axes limits in triangle plots."""
+
+    class OffDiagonalAxes(type(ax)):
+        def set_xlim(self, left=None, right=None, emit=True, auto=False,
+                     xmin=None, xmax=None):
+            left, right = super().set_xlim(left=left, right=right, emit=emit,
+                                           auto=auto, xmin=xmin, xmax=xmax)
+            if emit:
+                self.callbacks.process('xlim_changed', self)
+                # Call all of the other x-axes that are shared with this one
+                for other in self._shared_axes['x'].get_siblings(self):
+                    if other is not self:
+                        other.set_xlim(left, right, emit=False, auto=auto)
+            return left, right
+
+        def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
+                     ymin=None, ymax=None):
+            bottom, top = super().set_ylim(bottom=bottom, top=top, emit=emit,
+                                           auto=auto, ymin=ymin, ymax=ymax)
+            if emit:
+                self.callbacks.process('ylim_changed', self)
+                # Call all of the other y-axes that are shared with this one
+                for other in self._shared_axes['y'].get_siblings(self):
+                    if other is not self:
+                        other.set_ylim(bottom, top, emit=False, auto=auto)
+            return bottom, top
+
+    ax.__class__ = OffDiagonalAxes
 
 
 def quantile_plot_interval(q):

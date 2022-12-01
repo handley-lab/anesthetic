@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.6, '3.10']
+        python-version: [3.8, '3.10']
         extras: [true, false]
 
     steps:
@@ -63,7 +63,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.6, '3.10']
+        python-version: [3.8, '3.10']
 
     steps:
     - uses: actions/checkout@v2
@@ -75,6 +75,7 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
+        conda config --append channels conda-forge
         conda install pytest pytest-cov pytest-xdist
         conda install --file requirements.txt
 

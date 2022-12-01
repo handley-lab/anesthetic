@@ -1,7 +1,8 @@
+from typing import Literal
+import numpy as np
 from pandas.plotting._matplotlib.hist import (HistPlot as _HistPlot,
                                               KdePlot as _KdePlot)
 import pandas.plotting._matplotlib.hist
-import numpy as np
 from pandas.core.dtypes.missing import (
     isna,
     remove_na_arraylike,

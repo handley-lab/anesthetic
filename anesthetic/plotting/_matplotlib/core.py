@@ -1,3 +1,5 @@
+from typing import Literal
+import numpy as np
 from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               HexBinPlot as _HexBinPlot,
                                               LinePlot as _LinePlot,
@@ -9,11 +11,6 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
 from pandas.io.formats.printing import pprint_thing
 from anesthetic.weighted_pandas import _WeightedObject
 from anesthetic.plot import scatter_plot_2d
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal
-import numpy as np
 
 
 def _get_weights(kwargs, data):
