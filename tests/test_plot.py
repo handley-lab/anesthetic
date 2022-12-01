@@ -465,7 +465,8 @@ def test_1d_density_kwarg(plot_1d, s):
         fig, ax = plt.subplots()
 
         # hist density = False:
-        h = hist_plot_1d(ax, x, density=False, bins=np.linspace(-5.5, 5.5, 12))[2]
+        h = hist_plot_1d(ax, x, density=False,
+                         bins=np.linspace(-5.5, 5.5, 12))[2]
         bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
         assert bar_height == pytest.approx(1, rel=0.1)
 
@@ -476,7 +477,8 @@ def test_1d_density_kwarg(plot_1d, s):
         assert kde_height == pytest.approx(1, rel=0.1)
 
         # hist density = True:
-        h = hist_plot_1d(ax, x, density=True, bins=np.linspace(-5.5, 5.5, 12))[2]
+        h = hist_plot_1d(ax, x, density=True,
+                         bins=np.linspace(-5.5, 5.5, 12))[2]
         bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
         assert bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1)
 

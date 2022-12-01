@@ -1,4 +1,3 @@
-from typing import Literal
 import numpy as np
 from pandas.plotting._matplotlib.hist import (HistPlot as _HistPlot,
                                               KdePlot as _KdePlot)
@@ -8,8 +7,9 @@ from pandas.core.dtypes.missing import (
     remove_na_arraylike,
 )
 from pandas.io.formats.printing import pprint_thing
-from pandas.plotting._matplotlib.core import MPLPlot, PlanePlot
-from pandas.plotting._matplotlib.groupby import create_iter_data_given_by, reformat_hist_y_given_by
+from pandas.plotting._matplotlib.core import MPLPlot
+from pandas.plotting._matplotlib.groupby import (create_iter_data_given_by,
+                                                 reformat_hist_y_given_by)
 try:
     from typing import Literal
 except ImportError:
@@ -49,7 +49,7 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             weights=weights
         )
         return bins
-    
+
     def _make_plot(self):
         colors = self._get_colors()
         stacking_id = self._get_stacking_id()
@@ -76,16 +76,17 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
 
             kwds = self._make_plot_keywords(kwds, y)
 
-            # the bins is multi-dimension array now and each plot need only 1-d and
-            # when by is applied, label should be columns that are grouped
+            # the bins is multi-dimension array now and each plot need only 1-d
+            # and when by is applied, label should be columns that are grouped
             if self.by is not None:
                 kwds["bins"] = kwds["bins"][i]
                 kwds["label"] = self.columns
                 kwds.pop("color")
 
-            # We allow weights to be a multi-dimensional array, e.g. a (10, 2) array,
-            # and each sub-array (10,) will be called in each iteration. If users only
-            # provide 1D array, we assume the same weights is used for all iterations
+            # We allow weights to be a multi-dimensional array, e.g. a (10, 2)
+            # array, and each sub-array (10,) will be called in each iteration.
+            # If users only provide 1D array, we assume the same weights are
+            # used for all columns
             weights = kwds.get("weights", None)
             if weights is not None and np.ndim(weights) != 1:
                 weights = weights[:, i]
@@ -96,14 +97,16 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
 
             y = reformat_hist_y_given_by(y, self.by)
 
-            artists = self._plot(ax, y, column_num=i, stacking_id=stacking_id, **kwds)
+            artists = self._plot(ax, y, column_num=i,
+                                 stacking_id=stacking_id, **kwds)
 
-            # when by is applied, show title for subplots to know which group it is
+            # when by is applied, show title for subplots to
+            # know which group it is
             if self.by is not None:
                 ax.set_title(pprint_thing(label))
 
             self._append_legend_handles_labels(artists[0], label)
-            
+
     def _post_plot_logic(self, ax, data):
         ax.set_yticks([])
         ax.set_ylim(0, 1.1)
@@ -206,15 +209,14 @@ class Hist1dPlot(HistPlot):
 
         if not isinstance(bins, str):
             base = np.zeros(len(bins) - 1)
-            bottom = bottom + cls._get_stacked_values(ax, stacking_id, base, kwds["label"])
+            bottom = bottom + cls._get_stacked_values(ax, stacking_id,
+                                                      base, kwds["label"])
 
-        # ignore style 
-        n, bins, patches = hist_plot_1d(ax, y, bins=bins, bottom=bottom, **kwds)
+        # ignore style
+        n, bins, patches = hist_plot_1d(ax, y, bins=bins,
+                                        bottom=bottom, **kwds)
         cls._update_stacker(ax, stacking_id, n)
         return patches
-
-
-        
 
 
 class Kde2dPlot(_WeightedMPLPlot, PlanePlot2d):

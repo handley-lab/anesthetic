@@ -8,6 +8,7 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               AreaPlot as _AreaPlot,
                                               PiePlot as _PiePlot,
                                               MPLPlot, PlanePlot)
+from pandas.plotting._matplotlib.groupby import create_iter_data_given_by
 from pandas.io.formats.printing import pprint_thing
 from anesthetic.weighted_pandas import _WeightedObject
 from anesthetic.plot import scatter_plot_2d
@@ -63,13 +64,13 @@ class PlanePlot2d(PlanePlot):
         colors = self._get_colors()
         print(self.data)
         data = (
-            create_iter_data_given_by(self.data, self.kind) # safe for now
+            create_iter_data_given_by(self.data, self.kind)  # safe for now
             if self.by is not None
             else self.data
         )
         x = data[self.x]
         y = data[self.y]
-        ax = self._get_ax(0) # another one of these hard-coded 0s
+        ax = self._get_ax(0)  # another one of these hard-coded 0s
 
         kwds = self.kwds.copy()
         label = pprint_thing(self.label)
@@ -79,7 +80,7 @@ class PlanePlot2d(PlanePlot):
         if style is not None:
             kwds["style"] = style
 
-        artists = self._plot(ax, x, y, **kwds)
+        self._plot(ax, x, y, **kwds)
 
 
 class ScatterPlot2d(_CompressedMPLPlot, PlanePlot2d):
