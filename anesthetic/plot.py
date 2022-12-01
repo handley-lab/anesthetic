@@ -211,8 +211,10 @@ class AxesDataFrame(DataFrame):
                     else:
                         if position[x][y] == 1:
                             axes[x][y].position = 'upper'
+                            cls.make_offdiagonal(axes[x][y])
                         elif position[x][y] == -1:
                             axes[x][y].position = 'lower'
+                            cls.make_offdiagonal(axes[x][y])
                         axes[x][y].yaxis.set_major_locator(
                             MaxNLocator(3, prune='both'))
                         axes[x][y].yaxis.set_minor_locator(AutoMinorLocator(1))
@@ -260,7 +262,7 @@ class AxesDataFrame(DataFrame):
                                                auto=auto, xmin=xmin, xmax=xmax)
                 if emit:
                     self.callbacks.process('xlim_changed', self)
-                    # Call all of the other x-axes that are shared with this one
+                    # Call all other x-axes that are shared with this one
                     for other in self._shared_axes['x'].get_siblings(self):
                         if other is not self:
                             other.set_xlim(left, right, emit=False, auto=auto)
@@ -273,7 +275,7 @@ class AxesDataFrame(DataFrame):
                                                auto=auto, ymin=ymin, ymax=ymax)
                 if emit:
                     self.callbacks.process('ylim_changed', self)
-                    # Call all of the other y-axes that are shared with this one
+                    # Call all other y-axes that are shared with this one
                     for other in self._shared_axes['y'].get_siblings(self):
                         if other is not self:
                             other.set_ylim(bottom, top, emit=False, auto=auto)
