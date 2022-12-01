@@ -249,6 +249,39 @@ class AxesDataFrame(DataFrame):
         ax.__class__ = DiagonalAxes
 
     @staticmethod
+    def make_offdiagonal(ax):
+        """Linking x to y axes limits in triangle plots."""
+
+        class OffDiagonalAxes(type(ax)):
+            def set_xlim(self, left=None, right=None, emit=True, auto=False,
+                         xmin=None, xmax=None):
+                left, right = super().set_xlim(left=left, right=right,
+                                               emit=emit,
+                                               auto=auto, xmin=xmin, xmax=xmax)
+                if emit:
+                    self.callbacks.process('xlim_changed', self)
+                    # Call all of the other x-axes that are shared with this one
+                    for other in self._shared_axes['x'].get_siblings(self):
+                        if other is not self:
+                            other.set_xlim(left, right, emit=False, auto=auto)
+                return left, right
+
+            def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
+                         ymin=None, ymax=None):
+                bottom, top = super().set_ylim(bottom=bottom, top=top,
+                                               emit=emit,
+                                               auto=auto, ymin=ymin, ymax=ymax)
+                if emit:
+                    self.callbacks.process('ylim_changed', self)
+                    # Call all of the other y-axes that are shared with this one
+                    for other in self._shared_axes['y'].get_siblings(self):
+                        if other is not self:
+                            other.set_ylim(bottom, top, emit=False, auto=auto)
+                return bottom, top
+
+        ax.__class__ = OffDiagonalAxes
+
+    @staticmethod
     def _set_labels(axes, labels, **kwargs):
         all_params = list(axes.columns) + list(axes.index)
         if labels is None:
@@ -556,12 +589,6 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
         xparams, yparams = params
     else:
         xparams = yparams = params
-
-    ticks = kwargs.pop('ticks', 'outer')
-    upper = kwargs.pop('upper', True)
-    lower = kwargs.pop('lower', True)
-    diagonal = kwargs.pop('diagonal', True)
-
     axes = AxesDataFrame(index=yparams,
                          columns=xparams,
                          fig=fig,
@@ -571,131 +598,7 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
                          labels=labels,
                          ticks=ticks,
                          gridspec_kw=gridspec_kw,
-                         subplot_spec=subplot_spec,
-                         dtype=object)
-    axes[:][:] = None
-    all_params = list(axes.columns) + list(axes.index)
-
-    for j, y in enumerate(axes.index):
-        for i, x in enumerate(axes.columns):
-            if all_params.index(x) < all_params.index(y):
-                if lower:
-                    axes[x][y] = -1
-            elif all_params.index(x) > all_params.index(y):
-                if upper:
-                    axes[x][y] = +1
-            elif diagonal:
-                axes[x][y] = 0
-
-    axes.dropna(axis=0, how='all', inplace=True)
-    axes.dropna(axis=1, how='all', inplace=True)
-
-    labels = kwargs.pop('labels', None)
-    if labels is None:
-        labels = {}
-    labels = {p: labels[p] if p in labels else p for p in all_params}
-    fig = kwargs.pop('fig') if 'fig' in kwargs else plt.figure()
-    spec = kwargs.pop('subplot_spec', None)
-    if axes.shape[0] != 0 and axes.shape[1] != 0:
-        if spec is not None:
-            grid = SGS(*axes.shape, hspace=0, wspace=0, subplot_spec=spec)
-        else:
-            grid = GS(*axes.shape, hspace=0, wspace=0)
-
-    if kwargs:
-        raise TypeError('Unexpected **kwargs: %r' % kwargs)
-
-    if axes.size == 0:
-        return fig, axes
-    position = axes.copy()
-    axes[:][:] = None
-    for j, y in enumerate(axes.index[::-1]):
-        for i, x in enumerate(axes.columns):
-            if position[x][y] is not None:
-                sx = list(axes[x].dropna())
-                sx = sx[0] if sx else None
-                sy = list(axes.T[y].dropna())
-                sy = sy[0] if sy else None
-                axes[x][y] = fig.add_subplot(grid[axes.index.size-1-j, i],
-                                             sharex=sx, sharey=sy)
-
-                if position[x][y] == 0:
-                    axes[x][y].twin = axes[x][y].twinx()
-                    axes[x][y].twin.set_yticks([])
-                    axes[x][y].twin.set_ylim(0, 1.1)
-                    make_diagonal(axes[x][y])
-                    axes[x][y].position = 'diagonal'
-                    axes[x][y].twin.xaxis.set_major_locator(
-                        MaxNLocator(3, prune='both'))
-                else:
-                    if position[x][y] == 1:
-                        axes[x][y].position = 'upper'
-                        make_offdiagonal(axes[x][y])
-                    elif position[x][y] == -1:
-                        axes[x][y].position = 'lower'
-                        make_offdiagonal(axes[x][y])
-                    axes[x][y].yaxis.set_major_locator(
-                        MaxNLocator(3, prune='both'))
-                axes[x][y].xaxis.set_major_locator(
-                    MaxNLocator(3, prune='both'))
-
-    for y, ax in axes.bfill(axis=1).iloc[:, 0].dropna().iteritems():
-        ax.set_ylabel(labels[y])
-
-    for x, ax in axes.ffill(axis=0).iloc[-1, :].dropna().iteritems():
-        ax.set_xlabel(labels[x])
-
-    # left and right ticks and labels
-    for y, ax in axes.iterrows():
-        ax_ = ax.dropna()
-        if len(ax_) and ticks == 'inner':
-            for i, a in enumerate(ax_):
-                if i == 0:  # first column
-                    if a.position == 'diagonal' and len(ax_) == 1:
-                        a.tick_params('y', left=False, labelleft=False)
-                    else:
-                        a.tick_params('y', left=True, labelleft=True)
-                elif a.position == 'diagonal':  # not first column
-                    tl = a.yaxis.majorTicks[0].tick1line.get_markersize()
-                    a.tick_params('y', direction='out', length=tl/2,
-                                  left=True, labelleft=False)
-                else:  # not diagonal and not first column
-                    a.tick_params('y', direction='inout',
-                                  left=True, labelleft=False)
-        elif len(ax_) and ticks == 'outer':  # no inner ticks
-            for a in ax_[1:]:
-                a.tick_params('y', left=False, labelleft=False)
-        elif len(ax_) and ticks is None:  # no ticks at all
-            for a in ax_:
-                a.tick_params('y', left=False, right=False,
-                              labelleft=False, labelright=False)
-        else:
-            raise ValueError(
-                "ticks=%s was requested, but ticks can only be one of "
-                "['outer', 'inner', None]." % ticks)
-
-    # bottom and top ticks and labels
-    for x, ax in axes.iteritems():
-        ax_ = ax.dropna()
-        if len(ax_):
-            if ticks == 'inner':
-                for i, a in enumerate(ax_):
-                    if i == len(ax_) - 1:  # bottom row
-                        a.tick_params('x', bottom=True, labelbottom=True)
-                    else:  # not bottom row
-                        a.tick_params('x', direction='inout',
-                                      bottom=True, labelbottom=False)
-                        if a.position == 'diagonal':
-                            a.twin.tick_params('x', direction='inout',
-                                               bottom=True, labelbottom=False)
-            elif ticks == 'outer':  # no inner ticks
-                for a in ax_[:-1]:
-                    a.tick_params('x', bottom=False, labelbottom=False)
-            elif ticks is None:  # no ticks at all
-                for a in ax_:
-                    a.tick_params('x', bottom=False, top=False,
-                                  labelbottom=False, labeltop=False)
-
+                         subplot_spec=subplot_spec)
     return fig, axes
 
 
@@ -1322,63 +1225,6 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 def basic_cmap(color):
     """Construct basic colormap a single color."""
     return LinearSegmentedColormap.from_list(color, ['#ffffff', color])
-
-
-def make_diagonal(ax):
-    """Link x and y axes limits."""
-    class DiagonalAxes(type(ax)):
-        def set_xlim(self, left=None, right=None, emit=True, auto=False,
-                     xmin=None, xmax=None):
-            super().set_ylim(bottom=left, top=right, emit=True, auto=auto,
-                             ymin=xmin, ymax=xmax)
-            return super().set_xlim(left=left, right=right, emit=emit,
-                                    auto=auto, xmin=xmin, xmax=xmax)
-
-        def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
-                     ymin=None, ymax=None):
-            super().set_xlim(left=bottom, right=top, emit=True, auto=auto,
-                             xmin=ymin, xmax=ymax)
-            return super().set_ylim(bottom=bottom, top=top, emit=emit,
-                                    auto=auto, ymin=ymin, ymax=ymax)
-
-        def get_legend_handles_labels(self, *args, **kwargs):
-            return self.twin.get_legend_handles_labels(*args, **kwargs)
-
-        def legend(self, *args, **kwargs):
-            return self.twin.legend(*args, **kwargs)
-
-    ax.__class__ = DiagonalAxes
-
-
-def make_offdiagonal(ax):
-    """Linking x to y axes limits in triangle plots."""
-
-    class OffDiagonalAxes(type(ax)):
-        def set_xlim(self, left=None, right=None, emit=True, auto=False,
-                     xmin=None, xmax=None):
-            left, right = super().set_xlim(left=left, right=right, emit=emit,
-                                           auto=auto, xmin=xmin, xmax=xmax)
-            if emit:
-                self.callbacks.process('xlim_changed', self)
-                # Call all of the other x-axes that are shared with this one
-                for other in self._shared_axes['x'].get_siblings(self):
-                    if other is not self:
-                        other.set_xlim(left, right, emit=False, auto=auto)
-            return left, right
-
-        def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
-                     ymin=None, ymax=None):
-            bottom, top = super().set_ylim(bottom=bottom, top=top, emit=emit,
-                                           auto=auto, ymin=ymin, ymax=ymax)
-            if emit:
-                self.callbacks.process('ylim_changed', self)
-                # Call all of the other y-axes that are shared with this one
-                for other in self._shared_axes['y'].get_siblings(self):
-                    if other is not self:
-                        other.set_ylim(bottom, top, emit=False, auto=auto)
-            return bottom, top
-
-    ax.__class__ = OffDiagonalAxes
 
 
 def quantile_plot_interval(q):
