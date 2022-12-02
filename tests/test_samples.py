@@ -1,5 +1,6 @@
 import warnings
 import anesthetic.examples._matplotlib_agg  # noqa: F401
+
 import sys
 import pytest
 import numpy as np
@@ -232,7 +233,7 @@ def test_plot_2d_legend():
     mc.plot_2d(axes, label='l2', kind=dict(diagonal='kde_1d', lower='kde_2d'))
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 leg = ax.legend()
                 assert leg.get_texts()[0].get_text() == 'l1'
@@ -254,7 +255,7 @@ def test_plot_2d_legend():
                                            upper='scatter_2d'))
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 leg = ax.legend()
                 assert leg.get_texts()[0].get_text() == 'l1'
@@ -274,7 +275,7 @@ def test_plot_2d_legend():
     mc.plot_2d(axes)
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
                 assert labels == ['pc', 'gd']
@@ -290,7 +291,7 @@ def test_plot_2d_legend():
     mc.plot_2d(axes)
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
                 assert labels == ['l1', 'l2']
@@ -300,11 +301,11 @@ def test_plot_2d_legend():
 def test_plot_2d_colours():
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
-    gd.drop(columns='x3', inplace=True)
+    gd.drop(columns='x3', inplace=True, level=0)
     pc = read_chains("./tests/example_data/pc")
-    pc.drop(columns='x4', inplace=True)
+    pc.drop(columns='x4', inplace=True, level=0)
     mn = read_chains("./tests/example_data/mn")
-    mn.drop(columns='x2', inplace=True)
+    mn.drop(columns='x2', inplace=True, level=0)
 
     kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
@@ -323,7 +324,7 @@ def test_plot_2d_colours():
         pc_colors = []
         mn_colors = []
         for y, rows in axes.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 handles, labels = ax.get_legend_handles_labels()
                 for handle, label in zip(handles, labels):
                     if isinstance(handle, Rectangle):
@@ -347,11 +348,11 @@ def test_plot_2d_colours():
 def test_plot_1d_colours():
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
-    gd.drop(columns='x3', inplace=True)
+    gd.drop(columns='x3', inplace=True, level=0)
     pc = read_chains("./tests/example_data/pc")
-    pc.drop(columns='x4', inplace=True)
+    pc.drop(columns='x4', inplace=True, level=0)
     mn = read_chains("./tests/example_data/mn")
-    mn.drop(columns='x2', inplace=True)
+    mn.drop(columns='x2', inplace=True, level=0)
 
     kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
@@ -366,7 +367,7 @@ def test_plot_1d_colours():
         gd_colors = []
         pc_colors = []
         mn_colors = []
-        for x, ax in axes.iteritems():
+        for x, ax in axes.items():
             handles, labels = ax.get_legend_handles_labels()
             for handle, label in zip(handles, labels):
                 if isinstance(handle, Rectangle):
@@ -704,7 +705,7 @@ def test_stats():
 
 def test_masking():
     pc = read_chains("./tests/example_data/pc")
-    mask = pc['x0'] > 0
+    mask = pc['x0'].to_numpy() > 0
 
     kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
@@ -827,8 +828,8 @@ def test_beta():
 def test_beta_with_logL_infinities():
     ns = read_chains("./tests/example_data/pc")
     ns.loc[:10, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
-
-    ns.recompute(inplace=True)
+    with pytest.warns(RuntimeWarning):
+        ns.recompute(inplace=True)
     assert (ns.logL == -np.inf).sum() == 0
 
 
@@ -843,7 +844,7 @@ def test_live_points():
     np.random.seed(4)
     pc = read_chains("./tests/example_data/pc")
 
-    for i, logL in pc.logL.iloc[::49].iteritems():
+    for i, logL in pc.logL.iloc[::49].items():
         live_points = pc.live_points(logL)
         assert len(live_points) == int(pc.nlive[i[0]])
 
@@ -1054,7 +1055,9 @@ def test_logzero_mask_likelihood_level():
 
     ns1 = read_chains('./tests/example_data/pc')
     ns1.logL = np.where(mask, ns1.logL, -1e30)
-    ns1 = merge_nested_samples((ns1[ns1.logL > ns1.logL_birth],))
+
+    mask = ns1.logL.to_numpy() > ns1.logL_birth.to_numpy()
+    ns1 = merge_nested_samples((ns1[mask],))
     NS1 = ns1.stats(nsamples=2000)
 
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
@@ -1079,14 +1082,12 @@ def test_recompute():
 def test_NaN():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
+    with pytest.warns(RuntimeWarning, match="NaN encountered in logL."):
         pc_new = pc.copy()
         pc_new.loc[2, ('logL', r'$\ln\mathcal{L}$')] = np.nan
         pc_new.recompute(inplace=True)
-        assert "NaN encountered in logL." in str(w[0].message)
-        assert len(pc_new) == len(pc) - 1
-        assert pc_new.nlive.iloc[0] == 124
+    assert len(pc_new) == len(pc) - 1
+    assert pc_new.nlive.iloc[0] == 124
 
 
 def test_unsorted():

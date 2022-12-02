@@ -165,7 +165,7 @@ class _LabelledObject(object):
 
             index.insert(level, labels)
             index = MultiIndex.from_arrays(index, names=names)
-            result.set_axis(index, axis=axis, inplace=True)
+            result = result.set_axis(index, axis=axis, copy=False)
 
         if inplace:
             self._update_inplace(result)
