@@ -1,4 +1,3 @@
-import warnings
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 
 import sys
