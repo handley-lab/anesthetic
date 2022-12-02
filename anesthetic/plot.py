@@ -533,7 +533,8 @@ def make_1d_axes(params, ncol=None, labels=None,
                       labels=labels,
                       gridspec_kw=gridspec_kw,
                       subplot_spec=subplot_spec)
-    fig.tight_layout()
+    if gridspec_kw is None:
+        fig.tight_layout()
     return fig, axes
 
 
