@@ -196,7 +196,7 @@ class Samples(WeightedLabelledDataFrame):
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
 
-        for x, ax in axes.iteritems():
+        for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
                 self[x].plot(ax=ax, xlabel=xlabel,
@@ -295,7 +295,7 @@ class Samples(WeightedLabelledDataFrame):
                                    diagonal=('diagonal' in kind))
 
         for y, row in axes.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     pos = ax.position
                     lkwargs = local_kwargs.get(pos, {})
@@ -868,7 +868,7 @@ class NestedSamples(Samples):
                 logL = float(self.logL[logL])
             except KeyError:
                 pass
-        i = (self.logL >= logL) & (self.logL_birth < logL)
+        i = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
 
     def posterior_points(self, beta=1):
@@ -910,7 +910,8 @@ class NestedSamples(Samples):
             Importance re-weighted samples.
         """
         samples = super().importance_sample(logL_new, action=action)
-        samples = samples[samples.logL > samples.logL_birth].recompute()
+        mask = (samples.logL > samples.logL_birth).to_numpy()
+        samples = samples[mask].recompute()
         if inplace:
             self._update_inplace(samples)
         else:
@@ -955,7 +956,7 @@ class NestedSamples(Samples):
                 raise RuntimeError("Cannot recompute run without "
                                    "birth contours logL_birth.")
 
-            invalid = samples.logL <= samples.logL_birth
+            invalid = (samples.logL <= samples.logL_birth).to_numpy()
             n_bad = invalid.sum()
             n_equal = (samples.logL == samples.logL_birth).sum()
             if n_bad:
@@ -984,7 +985,7 @@ class NestedSamples(Samples):
                           " should investigate why your likelihood is throwing"
                           " NaNs. Dropping these samples at prior level",
                           RuntimeWarning)
-            samples = samples[samples.logL.notna()].recompute()
+            samples = samples[samples.logL.notna().to_numpy()].recompute()
 
         if inplace:
             self._update_inplace(samples)

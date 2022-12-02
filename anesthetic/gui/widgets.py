@@ -237,7 +237,7 @@ class TrianglePlot(Widget):
         """
         # Remove any existing axes
         for y, row in self.ax.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     if x == y:
                         self.fig.delaxes(ax.twin)
@@ -249,7 +249,7 @@ class TrianglePlot(Widget):
 
         # Plot no points  points.
         for y, row in self.ax.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     if x == y:
                         ax.twin.plot([None], [None], 'k-')
@@ -267,7 +267,7 @@ class TrianglePlot(Widget):
 
         """
         for y, row in self.ax.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     if x == y:
                         datx, daty = histogram(f(x), bins='auto')
@@ -280,7 +280,7 @@ class TrianglePlot(Widget):
     def reset_range(self):
         """Reset the range of each grid."""
         for y, row in self.ax.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     if x == y:
                         ax.twin.relim()
