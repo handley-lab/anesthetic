@@ -18,6 +18,9 @@ def _get_weights(kwargs, data):
 
 
 class _WeightedMPLPlot(MPLPlot):
+
+    _default_rot = None
+
     def __init__(self, data, *args, **kwargs):
         _get_weights(kwargs, data)
         super().__init__(data, *args, **kwargs)
