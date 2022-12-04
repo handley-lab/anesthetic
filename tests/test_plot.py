@@ -11,15 +11,47 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              basic_cmap, AxesSeries, AxesDataFrame)
 from numpy.testing import assert_array_equal
 
+from matplotlib.axes._subplots import SubplotBase
 from matplotlib.contour import ContourSet
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch, Polygon
 from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
-from pandas.core.series import Series
-from pandas.core.frame import DataFrame
 from scipy.special import erf
 from scipy.interpolate import interp1d
+
+
+def test_AxesObjects():
+    paramnames = ['a', 'b', 'c']
+
+    # AxesSeries
+    axes = AxesSeries(index=paramnames)
+    assert isinstance(axes, AxesSeries)
+    assert isinstance(axes.iloc[0], SubplotBase)
+    assert axes.iloc[0].get_xlabel() == 'a'
+    axes.set_xlabels(labels=dict(a='A', b='B', c='C'))
+    assert axes.iloc[0].get_xlabel() == 'A'
+    axes.tick_params(labelrotation=0, labelsize='medium')
+
+    # AxesDataFrame
+    axes = AxesDataFrame(index=paramnames + ['d'], columns=paramnames)
+    assert isinstance(axes, AxesDataFrame)
+    assert isinstance(axes.iloc[0, 0], SubplotBase)
+    assert axes.iloc[-1, 0].get_xlabel() == 'a'
+    assert axes.iloc[-1, 0].get_ylabel() == 'd'
+    axes.set_labels(labels=dict(a='A', b='B', c='C', d='D'))
+    assert axes.iloc[-1, 0].get_xlabel() == 'A'
+    assert axes.iloc[-1, 0].get_ylabel() == 'D'
+    axes.tick_params(labelrotation=0, labelsize='medium')
+    xmin1, xmax1 = axes.iloc[0, 0].get_xlim()
+    ymin1, ymax1 = axes.iloc[0, 0].get_ylim()
+    axes.set_margins(m=0.5)
+    xmin2, xmax2 = axes.iloc[0, 0].get_xlim()
+    ymin2, ymax2 = axes.iloc[0, 0].get_ylim()
+    assert xmin2 == xmin1 - 0.5 * (xmax1 - xmin1)
+    assert xmax2 == xmax1 + 0.5 * (xmax1 - xmin1)
+    assert ymin2 == ymin1 - 0.5 * (ymax1 - ymin1)
+    assert ymax2 == ymax1 + 0.5 * (ymax1 - ymin1)
 
 
 def test_make_1d_axes():
@@ -29,10 +61,18 @@ def test_make_1d_axes():
     # Check no optional arguments
     fig, axes = make_1d_axes(paramnames)
     assert isinstance(fig, Figure)
-    assert isinstance(axes, Series)
+    assert isinstance(axes, AxesSeries)
+    assert isinstance(axes.to_frame(), AxesDataFrame)
     assert_array_equal(axes.index, paramnames)
     for p, ax in axes.items():
         assert ax.get_xlabel() == p
+
+    # Check single string input
+    fig, axes = make_1d_axes(paramnames[0])
+    assert isinstance(fig, Figure)
+    assert isinstance(axes, AxesSeries)
+    assert axes.index.size == 1
+    assert_array_equal(axes.index, paramnames[0])
 
     # Check labels argument
     fig, axes = make_1d_axes(paramnames, labels=labels)
@@ -48,10 +88,10 @@ def test_make_1d_axes():
     fig, axes = make_1d_axes(paramnames, fig=fig0)
     assert fig is fig0
 
-    # Check ncols argument
-    fig, axes = make_1d_axes(paramnames, ncols=2)
-    nrows, ncols = axes[0].get_subplotspec().get_gridspec().get_geometry()
-    assert ncols == 2
+    # Check ncol argument
+    fig, axes = make_1d_axes(paramnames, ncol=2)
+    nrows, ncol = axes[0].get_subplotspec().get_gridspec().get_geometry()
+    assert ncol == 2
 
     # Check gridspec argument
     grid = gs.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[3, 1])
@@ -59,9 +99,19 @@ def test_make_1d_axes():
     fig, axes = make_1d_axes(paramnames, subplot_spec=g00)
     assert g00 is axes[0].get_subplotspec().get_topmost_subplotspec()
 
+    # Check gridspec kwargs
+    fig, axes = make_1d_axes(paramnames, gridspec_kw=dict(wspace=0.1))
+    ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+    assert ws == 0.1
+
+    # Check figure kwargs
+    fig, axes = make_1d_axes(paramnames, figsize=(5, 5))
+    assert fig.get_figwidth() == 5
+    assert fig.get_figheight() == 5
+
     # Check unexpected kwargs
-    with pytest.raises(TypeError):
-        make_1d_axes(paramnames, foo='bar')
+    with pytest.raises((AttributeError, TypeError)):
+        make_1d_axes(paramnames, spam='ham')
     plt.close("all")
 
 
@@ -72,7 +122,9 @@ def test_make_2d_axes_inputs_outputs():
     # 2D axes
     fig, axes = make_2d_axes([paramnames_x, paramnames_y])
     assert isinstance(fig, Figure)
-    assert isinstance(axes, DataFrame)
+    assert isinstance(axes, AxesDataFrame)
+    assert isinstance(axes['A'], AxesSeries)
+    assert isinstance(axes.loc['A':'B', 'B':'C'], AxesDataFrame)
     assert_array_equal(axes.index, paramnames_y)
     assert_array_equal(axes.columns, paramnames_x)
 
@@ -101,12 +153,34 @@ def test_make_2d_axes_inputs_outputs():
     fig, axes = make_2d_axes(paramnames_x, subplot_spec=g00)
     assert g00 is axes.iloc[0, 0].get_subplotspec().get_topmost_subplotspec()
 
+    # Check gridspec kwargs
+    fig, axes = make_1d_axes(paramnames_x, gridspec_kw=dict(wspace=0.1))
+    ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+    assert ws == 0.1
+
+    # Check figure kwargs
+    fig, axes = make_2d_axes(paramnames_x, figsize=(5, 5))
+    assert fig.get_figwidth() == 5
+    assert fig.get_figheight() == 5
+
     # Check unexpected kwargs
-    with pytest.raises(TypeError):
-        make_2d_axes(paramnames_x, foo='bar')
+    with pytest.raises((AttributeError, TypeError)):
+        make_2d_axes(paramnames_x, spam='ham')
 
 
-def test_make_2d_axes_behaviour():
+@pytest.mark.parametrize('paramnames_y', [['A', 'B', 'C', 'D'],
+                                          ['A', 'C', 'B', 'D'],
+                                          ['D', 'C', 'B', 'A'],
+                                          ['C', 'B', 'A'],
+                                          ['E', 'F', 'G', 'H'],
+                                          ['A', 'B', 'E', 'F'],
+                                          ['B', 'E', 'A', 'F'],
+                                          ['B', 'F', 'A', 'H', 'G'],
+                                          ['B', 'A', 'H', 'G']])
+@pytest.mark.parametrize('upper', [False, True])
+@pytest.mark.parametrize('lower', [False, True])
+@pytest.mark.parametrize('diagonal', [False, True])
+def test_make_2d_axes_behaviour(diagonal, lower, upper, paramnames_y):
     np.random.seed(0)
 
     def calc_n(axes):
@@ -121,54 +195,36 @@ def test_make_2d_axes_behaviour():
     # Check for only paramnames_x
     paramnames_x = ['A', 'B', 'C', 'D']
     nx = len(paramnames_x)
-    for upper in [True, False]:
-        for lower in [True, False]:
-            for diagonal in [True, False]:
-                fig, axes = make_2d_axes(paramnames_x,
-                                         upper=upper,
-                                         lower=lower,
-                                         diagonal=diagonal)
-                ns = calc_n(axes)
-                assert ns['upper'] == upper * nx*(nx-1)//2
-                assert ns['lower'] == lower * nx*(nx-1)//2
-                assert ns['diagonal'] == diagonal * nx
-
+    fig, axes = make_2d_axes(paramnames_x,
+                             upper=upper,
+                             lower=lower,
+                             diagonal=diagonal)
+    ns = calc_n(axes)
+    assert ns['upper'] == upper * nx*(nx-1)//2
+    assert ns['lower'] == lower * nx*(nx-1)//2
+    assert ns['diagonal'] == diagonal * nx
     plt.close("all")
 
-    for paramnames_y in [['A', 'B', 'C', 'D'],
-                         ['A', 'C', 'B', 'D'],
-                         ['D', 'C', 'B', 'A'],
-                         ['C', 'B', 'A'],
-                         ['E', 'F', 'G', 'H'],
-                         ['A', 'B', 'E', 'F'],
-                         ['B', 'E', 'A', 'F'],
-                         ['B', 'F', 'A', 'H', 'G'],
-                         ['B', 'A', 'H', 'G']]:
-        params = [paramnames_x, paramnames_y]
-        all_params = paramnames_x + paramnames_y
-
-        nu, nl, nd = 0, 0, 0
-        for x in paramnames_x:
-            for y in paramnames_y:
-                if x == y:
-                    nd += 1
-                elif all_params.index(x) < all_params.index(y):
-                    nl += 1
-                elif all_params.index(x) > all_params.index(y):
-                    nu += 1
-
-        for upper in [True, False]:
-            for lower in [True, False]:
-                for diagonal in [True, False]:
-                    fig, axes = make_2d_axes(params,
-                                             upper=upper,
-                                             lower=lower,
-                                             diagonal=diagonal)
-                    ns = calc_n(axes)
-                    assert ns['upper'] == upper * nu
-                    assert ns['lower'] == lower * nl
-                    assert ns['diagonal'] == diagonal * nd
-        plt.close("all")
+    params = [paramnames_x, paramnames_y]
+    all_params = paramnames_x + paramnames_y
+    nu, nl, nd = 0, 0, 0
+    for x in paramnames_x:
+        for y in paramnames_y:
+            if x == y:
+                nd += 1
+            elif all_params.index(x) < all_params.index(y):
+                nl += 1
+            elif all_params.index(x) > all_params.index(y):
+                nu += 1
+    fig, axes = make_2d_axes(params,
+                             upper=upper,
+                             lower=lower,
+                             diagonal=diagonal)
+    ns = calc_n(axes)
+    assert ns['upper'] == upper * nu
+    assert ns['lower'] == lower * nl
+    assert ns['diagonal'] == diagonal * nd
+    plt.close("all")
 
 
 @pytest.mark.parametrize('upper', [False, True])
@@ -224,32 +280,42 @@ def test_2d_axes_limits():
 @pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
                                         [['A', 'B', 'C', 'D'], ['A', 'B']],
                                         [['A', 'B'], ['A', 'B', 'C', 'D']]])
-@pytest.mark.parametrize('params, values', [('A', 0),
-                                            (['A', 'C', 'E'], [0, 0, 0]),
-                                            (['A', 'C', 'C'], [0, 0, 0.5])])
+@pytest.mark.parametrize('params', [{'A': 0},
+                                    {'A': 0, 'C': 0, 'E': 0},
+                                    {'A': 0, 'C': [0, 0.5]}])
 @pytest.mark.parametrize('upper', [True, False])
-def test_2d_axlines_axspans(axesparams, params, values, upper):
-    values = np.array(values)
-    line_kwargs = dict(c='k', ls='--', lw=0.5)
-    span_kwargs = dict(c='k', alpha=0.5)
+def test_2d_axes_axlines(axesparams, params, upper):
+    kwargs = dict(c='k', ls='--', lw=0.5)
     fig, axes = make_2d_axes(axesparams, upper=upper)
-    axes.axlines(params, values, **line_kwargs)
-    axes.axspans(params, values-0.1, values+0.1, **span_kwargs)
+    axes.axlines(params, **kwargs)
     plt.close("all")
 
 
-@pytest.mark.parametrize('params, values', [('A', [0, 0]),
-                                            (['A', 'C'], 0),
-                                            (['A', 'C'], [0, 0, 0.5]),
-                                            (['A', 'C', 'C'], [0, 0])])
-def test_2d_axlines_axspans_error(params, values):
-    values = np.array(values)
-    axesparams = ['A', 'B', 'C', 'D']
-    fig, axes = make_2d_axes(axesparams)
-    with pytest.raises(ValueError):
-        axes.axlines(params, values)
-    with pytest.raises(ValueError):
-        axes.axspans(params, values-0.1, values+0.1)
+@pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
+                                        [['A', 'B', 'C', 'D'], ['A', 'B']],
+                                        [['A', 'B'], ['A', 'B', 'C', 'D']]])
+@pytest.mark.parametrize('params', [{'A': (0, 0.1)},
+                                    {'A': (0, 1), 'C': (0, 1), 'E': (0, 1)},
+                                    {'A': (0, 1), 'C': [(-0.1, 0), (0.5, 1)]}])
+@pytest.mark.parametrize('upper', [True, False])
+def test_2d_axes_axspans(axesparams, params, upper):
+    kwargs = dict(c='k', alpha=0.5)
+    fig, axes = make_2d_axes(axesparams, upper=upper)
+    axes.axspans(params, **kwargs)
+    plt.close("all")
+
+
+@pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
+                                        [['A', 'B', 'C', 'D'], ['A', 'B']],
+                                        [['A', 'B'], ['A', 'B', 'C', 'D']]])
+@pytest.mark.parametrize('params', [{'A': 0},
+                                    {'A': 0, 'C': 0, 'E': 0},
+                                    {'A': [0, 0.1], 'C': [0, 0.5]}])
+@pytest.mark.parametrize('upper', [True, False])
+def test_2d_axes_scatter(axesparams, params, upper):
+    kwargs = dict(c='k', marker='*')
+    fig, axes = make_2d_axes(axesparams, upper=upper)
+    axes.scatter(params, **kwargs)
     plt.close("all")
 
 
@@ -688,14 +754,3 @@ def test_quantile_plot_interval_tuple(q1, q2):
     _q1, _q2 = quantile_plot_interval(q=(q1, q2))
     assert _q1 == q1
     assert _q2 == q2
-
-
-def test_AxesObjects():
-    paramnames = ['A', 'B', 'C', 'D', 'E']
-    fig, axes = make_1d_axes(paramnames)
-    assert isinstance(axes, AxesSeries)
-    assert isinstance(axes.to_frame(), AxesDataFrame)
-
-    fig, axes = make_2d_axes(paramnames)
-    assert isinstance(axes, AxesDataFrame)
-    assert isinstance(axes['A'], AxesSeries)

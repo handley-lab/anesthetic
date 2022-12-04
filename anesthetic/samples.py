@@ -8,7 +8,7 @@ import numpy as np
 import pandas
 import copy
 import warnings
-from pandas import MultiIndex, DataFrame, Series
+from pandas import MultiIndex, Series
 from collections.abc import Sequence
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
@@ -16,7 +16,8 @@ from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
 from pandas.core.accessor import CachedAccessor
-from anesthetic.plot import make_1d_axes, make_2d_axes
+from anesthetic.plot import (make_1d_axes, make_2d_axes,
+                             AxesSeries, AxesDataFrame)
 import anesthetic.weighted_pandas
 from anesthetic.plotting import PlotAccessor
 anesthetic.weighted_pandas._WeightedObject.plot =\
@@ -185,17 +186,12 @@ class Samples(WeightedLabelledDataFrame):
 
         Returns
         -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
         axes: pandas.Series of matplotlib.axes.Axes
             Pandas array of axes objects
 
         """
-        if not isinstance(axes, Series):
-            fig, axes = make_1d_axes(axes, labels=self.get_labels_map())
-        else:
-            fig = axes.bfill().to_numpy().flatten()[0].figure
+        if not isinstance(axes, AxesSeries):
+            _, axes = make_1d_axes(axes, labels=self.get_labels_map())
 
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
@@ -209,7 +205,7 @@ class Samples(WeightedLabelledDataFrame):
             else:
                 ax.plot([], [])
 
-        return fig, axes
+        return axes
 
     def plot_2d(self, axes, *args, **kwargs):
         """Create an array of 2D plots.
@@ -268,9 +264,6 @@ class Samples(WeightedLabelledDataFrame):
 
         Returns
         -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
         axes: pandas.DataFrame of matplotlib.axes.Axes
             Pandas array of axes objects
 
@@ -295,13 +288,11 @@ class Samples(WeightedLabelledDataFrame):
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
-        if not isinstance(axes, DataFrame):
-            fig, axes = make_2d_axes(axes, labels=self.get_labels(),
-                                     upper=('upper' in kind),
-                                     lower=('lower' in kind),
-                                     diagonal=('diagonal' in kind))
-        else:
-            fig = axes.bfill().to_numpy().flatten()[0].figure
+        if not isinstance(axes, AxesDataFrame):
+            _, axes = make_2d_axes(axes, labels=self.get_labels(),
+                                   upper=('upper' in kind),
+                                   lower=('lower' in kind),
+                                   diagonal=('diagonal' in kind))
 
         for y, row in axes.iterrows():
             for x, ax in row.items():
@@ -328,7 +319,7 @@ class Samples(WeightedLabelledDataFrame):
                         else:
                             ax.plot([], [])
 
-        return fig, axes
+        return axes
 
     plot_2d_default_kinds = {
         'default': {'diagonal': 'kde_1d',
