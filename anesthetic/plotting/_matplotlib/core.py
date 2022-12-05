@@ -71,8 +71,8 @@ class PlanePlot2d(PlanePlot):
             if self.by is not None
             else self.data
         )
-        x = data[self.x]
-        y = data[self.y]
+        x = data[self.x].values
+        y = data[self.y].values
         ax = self._get_ax(0)  # another one of these hard-coded 0s
 
         kwds = self.kwds.copy()
