@@ -179,11 +179,12 @@ class FastKde1dPlot(_CompressedMPLPlot, Kde1dPlot):
         ind=None,
         column_num=None,
         stacking_id=None,
-        weights=None,
-        bw_method=None,
         **kwds,
     ):
         args = (style,) if style is not None else tuple()
+        # weights and bw_method are not valid for fastkde
+        kwds.pop('weights', None)
+        kwds.pop('bw_method', None)
         return fastkde_plot_1d(ax, y, *args, **kwds)
 
 
