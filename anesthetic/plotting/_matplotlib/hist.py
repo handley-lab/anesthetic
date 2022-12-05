@@ -164,7 +164,7 @@ class Kde1dPlot(KdePlot):
         return kde_plot_1d(ax, y, *args, **kwds)
 
 
-class FastKde1dPlot(_CompressedMPLPlot, _HistPlot):
+class FastKde1dPlot(_CompressedMPLPlot, Kde1dPlot):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["fastkde_1d"]:
@@ -179,6 +179,8 @@ class FastKde1dPlot(_CompressedMPLPlot, _HistPlot):
         ind=None,
         column_num=None,
         stacking_id=None,
+        weights=None,
+        bw_method=None,
         **kwds,
     ):
         args = (style,) if style is not None else tuple()
