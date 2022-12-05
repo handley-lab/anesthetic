@@ -1179,7 +1179,7 @@ def test_samples_dot_plot():
         axes = samples.plot.fastkde_2d('x0', 'x1')
         assert len(axes.collections) == 5
         plt.close("all")
-        axes = samples.plot.fastkde_1d()
+        axes = samples.x1.plot.fastkde_1d()
         assert len(axes.lines) == 1
         plt.close("all")
     except ImportError:
