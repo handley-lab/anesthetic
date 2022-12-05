@@ -15,7 +15,7 @@ try:
 except ImportError:
     from typing_extensions import Literal
 from anesthetic.plotting._matplotlib.core import (
-    _WeightedMPLPlot, _CompressedMPLPlot, PlanePlot2d, _get_weights
+    _WeightedMPLPlot, _CompressedMPLPlot, _PlanePlot2d, _get_weights
 )
 from anesthetic.plot import (
     kde_contour_plot_2d,
@@ -222,7 +222,7 @@ class Hist1dPlot(HistPlot):
         return patches
 
 
-class Kde2dPlot(_WeightedMPLPlot, PlanePlot2d):
+class Kde2dPlot(_WeightedMPLPlot, _PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["kde_2d"]:
@@ -233,7 +233,7 @@ class Kde2dPlot(_WeightedMPLPlot, PlanePlot2d):
         return kde_contour_plot_2d(ax, x, y, **kwds)
 
 
-class FastKde2dPlot(_CompressedMPLPlot, PlanePlot2d):
+class FastKde2dPlot(_CompressedMPLPlot, _PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["fastkde_2d"]:
@@ -244,7 +244,7 @@ class FastKde2dPlot(_CompressedMPLPlot, PlanePlot2d):
         return fastkde_contour_plot_2d(ax, x, y, **kwds)
 
 
-class Hist2dPlot(_WeightedMPLPlot, PlanePlot2d):
+class Hist2dPlot(_WeightedMPLPlot, _PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["hist_2d"]:

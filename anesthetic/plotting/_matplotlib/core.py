@@ -61,7 +61,7 @@ class ScatterPlot(_CompressedMPLPlot, _ScatterPlot):
         super().__init__(data, x, y, s, c, **kwargs)
 
 
-class PlanePlot2d(PlanePlot):
+class _PlanePlot2d(PlanePlot):
 
     def _make_plot(self):
         colors = self._get_colors()
@@ -86,7 +86,7 @@ class PlanePlot2d(PlanePlot):
         self._plot(ax, x, y, **kwds)
 
 
-class ScatterPlot2d(_CompressedMPLPlot, PlanePlot2d):
+class ScatterPlot2d(_CompressedMPLPlot, _PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["scatter_2d"]:
