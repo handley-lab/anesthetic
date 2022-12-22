@@ -1,5 +1,6 @@
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas import DataFrame, MultiIndex
+import pandas.testing
 from anesthetic.utils import channel_capacity
 import pytest
 import numpy as np
@@ -183,9 +184,6 @@ def test_WeightedDataFrame_corrwith(frame):
         frame.corrwith(unweighted[['A', 'B']])
 
     with pytest.raises(ValueError):
-        unweighted.corrwith(frame.A)
-
-    with pytest.raises(ValueError):
         unweighted.corrwith(frame[['A', 'B']])
 
     correl_1 = unweighted[:5].corrwith(unweighted[:4], axis=1)
@@ -332,6 +330,8 @@ def test_WeightedDataFrame_quantile(frame):
 
     with pytest.raises(NotImplementedError):
         frame.quantile(numeric_only=False)
+    with pytest.raises(NotImplementedError):
+        frame.quantile(method='single')
 
 
 def test_WeightedDataFrame_sample(frame):
@@ -557,9 +557,6 @@ def test_WeightedSeries_quantile(series):
         assert_allclose(quantile, q, atol=1e-2)
 
     assert_allclose(series.quantile(qs), qs, atol=1e-2)
-
-    with pytest.raises(NotImplementedError):
-        series.quantile(numeric_only=False)
 
 
 def test_WeightedSeries_sample(series):
@@ -926,3 +923,12 @@ def test_set_weights(mcmc_wdf):
     mcmc_wdf.set_weights(None, inplace=True)
     assert id(mcmc_wdf) == mcmc_id
     assert not mcmc_wdf.isweighted()
+
+
+def test_drop_weights(mcmc_wdf):
+    assert mcmc_wdf.isweighted()
+    noweights = mcmc_wdf.drop_weights()
+    assert not noweights.isweighted()
+    assert_array_equal(noweights, mcmc_wdf)
+    pandas.testing.assert_frame_equal(noweights.drop_weights(), noweights)
+    assert noweights.drop_weights() is not noweights

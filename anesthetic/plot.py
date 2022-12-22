@@ -87,7 +87,7 @@ class AxesSeries(Series):
         if labels is None:
             labels = {}
         labels = {p: labels[p] if p in labels else p for p in axes.index}
-        for p, ax in axes.iteritems():
+        for p, ax in axes.items():
             ax.set_xlabel(labels[p], **kwargs)
 
     def set_xlabels(self, labels, **kwargs):
@@ -105,7 +105,7 @@ class AxesSeries(Series):
 
     def tick_params(self, *args, **kwargs):
         """Apply `matplotlib.axes.tick_params` to entire `AxesSeries`."""
-        for p, ax in self.iteritems():
+        for p, ax in self.items():
             ax.tick_params(*args, **kwargs)
 
 
@@ -244,8 +244,10 @@ class AxesDataFrame(DataFrame):
                     else:
                         if position[x][y] == 1:
                             axes[x][y].position = 'upper'
+                            cls.make_offdiagonal(axes[x][y])
                         elif position[x][y] == -1:
                             axes[x][y].position = 'lower'
+                            cls.make_offdiagonal(axes[x][y])
                         axes[x][y].yaxis.set_major_locator(
                             MaxNLocator(3, prune='both'))
                         axes[x][y].yaxis.set_minor_locator(AutoMinorLocator(1))
@@ -282,6 +284,39 @@ class AxesDataFrame(DataFrame):
         ax.__class__ = DiagonalAxes
 
     @staticmethod
+    def make_offdiagonal(ax):
+        """Linking x to y axes limits in triangle plots."""
+
+        class OffDiagonalAxes(type(ax)):
+            def set_xlim(self, left=None, right=None, emit=True, auto=False,
+                         xmin=None, xmax=None):
+                left, right = super().set_xlim(left=left, right=right,
+                                               emit=emit,
+                                               auto=auto, xmin=xmin, xmax=xmax)
+                if emit:
+                    self.callbacks.process('xlim_changed', self)
+                    # Call all other x-axes that are shared with this one
+                    for other in self._shared_axes['x'].get_siblings(self):
+                        if other is not self:
+                            other.set_xlim(left, right, emit=False, auto=auto)
+                return left, right
+
+            def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
+                         ymin=None, ymax=None):
+                bottom, top = super().set_ylim(bottom=bottom, top=top,
+                                               emit=emit,
+                                               auto=auto, ymin=ymin, ymax=ymax)
+                if emit:
+                    self.callbacks.process('ylim_changed', self)
+                    # Call all other y-axes that are shared with this one
+                    for other in self._shared_axes['y'].get_siblings(self):
+                        if other is not self:
+                            other.set_ylim(bottom, top, emit=False, auto=auto)
+                return bottom, top
+
+        ax.__class__ = OffDiagonalAxes
+
+    @staticmethod
     def _set_labels(axes, labels, **kwargs):
         all_params = list(axes.columns) + list(axes.index)
         if labels is None:
@@ -293,7 +328,7 @@ class AxesDataFrame(DataFrame):
                 axes_row.dropna(inplace=True)
                 axes_row.iloc[0].set_ylabel(labels[y], **kwargs)
 
-        for x, axes_col in axes.iteritems():
+        for x, axes_col in axes.items():
             if axes_col.size:
                 axes_col.dropna(inplace=True)
                 axes_col.iloc[-1].set_xlabel(labels[x], **kwargs)
@@ -346,7 +381,7 @@ class AxesDataFrame(DataFrame):
                                   labelleft=False, labelright=False, **kwargs)
 
         # bottom and top ticks and labels
-        for x, ax in axes.iteritems():
+        for x, ax in axes.items():
             ax_ = ax.dropna()
             if len(ax_):
                 if direction == 'inner':
@@ -375,7 +410,7 @@ class AxesDataFrame(DataFrame):
     def tick_params(self, *args, **kwargs):
         """Apply `matplotlib.axes.tick_params` to entire `AxesDataFrame`."""
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if isinstance(ax, Axes):
                     ax.tick_params(*args, **kwargs)
 
@@ -383,7 +418,7 @@ class AxesDataFrame(DataFrame):
         """Apply `matplotlib.axes.set_xmargin` to entire `AxesDataFrame`."""
         unique_params = list(np.unique(list(self.index) + list(self.columns)))
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if isinstance(ax, Axes):
                     if x in unique_params:
                         xmin, xmax = ax.get_xlim()
@@ -416,7 +451,7 @@ class AxesDataFrame(DataFrame):
                      'diagonal' if diagonal else None,
                      'upper' if upper else None]
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if ax is not None and ax.position in positions:
                     if x in params:
                         for v in np.atleast_1d(params[x]):
@@ -447,7 +482,7 @@ class AxesDataFrame(DataFrame):
                      'diagonal' if diagonal else None,
                      'upper' if upper else None]
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if ax is not None and ax.position in positions:
                     if x in params:
                         for vmin, vmax in np.atleast_2d(params[x]):
@@ -476,7 +511,7 @@ class AxesDataFrame(DataFrame):
                      'upper' if upper else None]
         zorder = kwargs.pop('zorder', None)
         for y, rows in self.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 if ax is not None and ax.position in positions:
                     if x in params and y in params:
                         z = max([z.get_zorder() for z in ax.artists +
@@ -531,7 +566,8 @@ def make_1d_axes(params, ncol=None, labels=None,
                       labels=labels,
                       gridspec_kw=gridspec_kw,
                       subplot_spec=subplot_spec)
-    fig.tight_layout()
+    if gridspec_kw is None:
+        fig.tight_layout()
     return fig, axes
 
 
@@ -863,7 +899,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
 
-    if bins in ['knuth', 'freedman', 'blocks']:
+    if type(bins) == str and bins in ['knuth', 'freedman', 'blocks']:
         try:
             h, edges, bars = hist(data, ax=ax, bins=bins,
                                   range=(xmin, xmax), histtype=histtype,

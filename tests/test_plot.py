@@ -64,7 +64,7 @@ def test_make_1d_axes():
     assert isinstance(axes, AxesSeries)
     assert isinstance(axes.to_frame(), AxesDataFrame)
     assert_array_equal(axes.index, paramnames)
-    for p, ax in axes.iteritems():
+    for p, ax in axes.items():
         assert ax.get_xlabel() == p
 
     # Check single string input
@@ -129,10 +129,10 @@ def test_make_2d_axes_inputs_outputs():
     assert_array_equal(axes.columns, paramnames_x)
 
     # Axes labels
-    for p, ax in axes.iloc[:, 0].iteritems():
+    for p, ax in axes.iloc[:, 0].items():
         assert ax.get_ylabel() == p
 
-    for p, ax in axes.iloc[-1].iteritems():
+    for p, ax in axes.iloc[-1].items():
         assert ax.get_xlabel() == p
 
     for ax in axes.iloc[:-1, 1:].to_numpy().flatten():
@@ -187,7 +187,7 @@ def test_make_2d_axes_behaviour(diagonal, lower, upper, paramnames_y):
         """Compute the number of upper, lower and diagonal plots."""
         n = {'upper': 0, 'lower': 0, 'diagonal': 0}
         for y, row in axes.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     n[ax.position] += 1
         return n
@@ -238,7 +238,7 @@ def test_make_2d_axes_ticks(upper, ticks):
         axes[k][k].set_xticks(xticks)
         axes[k][k].set_yticks(yticks)
         for i, row in axes.iterrows():
-            for j, ax in row.iteritems():
+            for j, ax in row.items():
                 if ax is None:
                     break
                 if i == k:

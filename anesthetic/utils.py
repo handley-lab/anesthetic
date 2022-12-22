@@ -459,7 +459,11 @@ def insertion_p_value(indexes, nlive, batch=0):
     """
     if batch == 0:
         bins = np.arange(-0.5, nlive + 0.5, 1.)
-        empirical_pmf = np.histogram(indexes, bins=bins, density=True)[0]
+        empirical_pmf = np.histogram(
+            np.array(indexes),
+            bins=bins,
+            density=True,
+        )[0]
         empirical_cmf = np.cumsum(empirical_pmf)
         uniform_cmf = np.arange(1., nlive + 1., 1.) / nlive
 
@@ -474,7 +478,10 @@ def insertion_p_value(indexes, nlive, batch=0):
         return ks_result
     else:
         batch = int(batch * nlive)
-        batches = [indexes[i:i + batch] for i in range(0, len(indexes), batch)]
+        batches = [
+            np.array(indexes)[i:i + batch]
+            for i in range(0, len(indexes), batch)
+        ]
         ks_results = [insertion_p_value(c, nlive) for c in batches]
         ks_result = min(ks_results, key=lambda t: t["p-value"])
         index = ks_results.index(ks_result)
