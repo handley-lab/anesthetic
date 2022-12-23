@@ -97,8 +97,15 @@ autodoc_default_options = {
 numpydoc_show_inherited_class_members = False
 numpydoc_show_class_members = False 
 
+
+# -- Options for matplotlib extension ----------------------------------------
+
 plot_rcparams = {'savefig.bbox': 'tight'}
 plot_apply_rcparams = True  # if context option is used
+plot_include_source = True
+plot_html_show_source_link = False
+plot_html_show_formats = False
+
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -223,9 +230,3 @@ intersphinx_mapping = {
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-
-
-
-
-
-
