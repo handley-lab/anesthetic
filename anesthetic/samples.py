@@ -614,8 +614,7 @@ class NestedSamples(Samples):
             samples = self._constructor_sliced(index=self.columns[:0],
                                                dtype=float)
         else:
-            samples = WeightedLabelledDataFrame(index=logw.columns,
-                                                columns=self.columns[:0])
+            samples = Samples(index=logw.columns, columns=self.columns[:0])
         samples['logZ'] = self.logZ(logw)
         samples.set_label('logZ', r'$\ln\mathcal{Z}$')
         w = np.exp(logw-samples['logZ'])
