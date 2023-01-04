@@ -88,10 +88,15 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             # If users only provide 1D array, we assume the same weights are
             # used for all columns
             weights = kwds.get("weights", None)
-            if weights is not None and np.ndim(weights) != 1:
-                weights = weights[:, i]
-
             if weights is not None:
+                if np.ndim(weights) != 1 and np.shape(weights)[-1] != 1:
+                    try:
+                        weights = weights[:, i]
+                    except IndexError as err:
+                        raise ValueError(
+                            "weights must have the same shape as data, "
+                            "or be a single column"
+                        ) from err
                 weights = weights[~isna(y)]
                 kwds["weights"] = weights
 
