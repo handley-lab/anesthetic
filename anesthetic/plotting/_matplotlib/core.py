@@ -141,7 +141,7 @@ class BarhPlot(_BarhPlot, _WeightedMPLPlot):
 
 class AreaPlot(_AreaPlot, _WeightedMPLPlot):
     # noqa: disable=D101
-    def _post_plot_logic(self, ax: Axes, data) -> None:
+    def _post_plot_logic(self, ax, data):
         LinePlot._post_plot_logic(self, ax, data)
 
         # is_shared_y = len(list(ax.get_shared_y_axes())) > 0
@@ -152,4 +152,3 @@ class AreaPlot(_AreaPlot, _WeightedMPLPlot):
                 ax.set_ylim(0, None)
             elif (data <= 0).all().all():
                 ax.set_ylim(None, 0)
-
