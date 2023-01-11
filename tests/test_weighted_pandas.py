@@ -606,7 +606,6 @@ def mcmc_df():
     def logL(x):
         return x, -((x-m)**2).sum(axis=-1)/2/s**2
 
-    np.random.seed(0)
     x0, logL0 = logL(np.random.normal(m, s, 4))
     dat = []
     for _ in range(3000):
