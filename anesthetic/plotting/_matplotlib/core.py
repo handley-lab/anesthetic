@@ -123,7 +123,7 @@ class AreaPlot(_AreaPlot, _WeightedMPLPlot):
 
         is_shared_y = len(list(ax.get_shared_y_axes())) > 0
         print(f"is_shared_y: {is_shared_y}")
-        print(f"ax.get_shared_y_axes(): {list(ax.get_shared_y_axes()}")
+        print(f"ax.get_shared_y_axes(): {list(ax.get_shared_y_axes())}")
         # do not override the default axis behaviour in case of shared y axes
         if self.ylim is None and not is_shared_y:
             if (data >= 0).all().all():
