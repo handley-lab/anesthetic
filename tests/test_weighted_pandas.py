@@ -740,7 +740,6 @@ def test_bootstrap_plot(mcmc_df, mcmc_wdf):
 
 
 def test_BoxPlot(mcmc_df, mcmc_wdf):
-    print(id(mcmc_df))
     mcmc_df.plot.box()
     mcmc_wdf.plot.box()
 
