@@ -807,6 +807,8 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
     wdf_colors = wdf_axes.collections[0].get_facecolors()
     assert_allclose(df_colors, wdf_colors)
 
+    plt.close()
+
 
 def test_AreaPlot(mcmc_df, mcmc_wdf):
     axes_wdf = mcmc_wdf.plot.area()
@@ -814,6 +816,9 @@ def test_AreaPlot(mcmc_df, mcmc_wdf):
 
     assert_allclose(axes_df.get_xlim(), axes_wdf.get_xlim(), rtol=1e-3)
     assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-3)
+
+    print(f"axes_df ylim: {axes_df.get_ylim()}")
+    print(f"axes_wdf ylim: {axes_df.get_ylim()}")
 
     plt.close("all")
 
