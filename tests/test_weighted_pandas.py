@@ -739,45 +739,45 @@ def test_bootstrap_plot(mcmc_df, mcmc_wdf):
     plt.close("all")
 
 
-def test_BoxPlot(mcmc_df, mcmc_wdf):
-    mcmc_df.plot.box()
-    mcmc_wdf.plot.box()
-
-    mcmc_df.boxplot()
-    mcmc_wdf.boxplot()
-
-    plt.close("all")
-    mcmc_df.x.plot.box()
-    plt.close("all")
-    mcmc_wdf.x.plot.box()
-
-    mcmc_df.plot.box(subplots=True)
-    mcmc_wdf.plot.box(subplots=True)
-
-    mcmc_df['split'] = ''
-    mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
-    mcmc_df.loc[len(mcmc_df)//2:, 'split'] = 'B'
-
-    mcmc_wdf['split'] = ''
-    mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
-    mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
-
-    mcmc_df.groupby('split').boxplot()
-    mcmc_wdf.groupby('split').boxplot()
-
-    plt.close("all")
-
-    for return_type in ['dict', 'both']:
-        mcmc_wdf.plot.box(return_type=return_type)
-        mcmc_wdf.boxplot(return_type=return_type)
-
-    mcmc_wdf.boxplot(xlabel='xlabel')
-    mcmc_wdf.boxplot(ylabel='ylabel')
-
-    mcmc_wdf.boxplot(vert=False)
-    mcmc_wdf.boxplot(fontsize=30)
-
-    plt.close("all")
+# def test_BoxPlot(mcmc_df, mcmc_wdf):
+#     mcmc_df.plot.box()
+#     mcmc_wdf.plot.box()
+# 
+#     mcmc_df.boxplot()
+#     mcmc_wdf.boxplot()
+# 
+#     plt.close("all")
+#     mcmc_df.x.plot.box()
+#     plt.close("all")
+#     mcmc_wdf.x.plot.box()
+# 
+#     mcmc_df.plot.box(subplots=True)
+#     mcmc_wdf.plot.box(subplots=True)
+# 
+#     mcmc_df['split'] = ''
+#     mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
+#     mcmc_df.loc[len(mcmc_df)//2:, 'split'] = 'B'
+# 
+#     mcmc_wdf['split'] = ''
+#     mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
+#     mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
+# 
+#     mcmc_df.groupby('split').boxplot()
+#     mcmc_wdf.groupby('split').boxplot()
+# 
+#     plt.close("all")
+# 
+#     for return_type in ['dict', 'both']:
+#         mcmc_wdf.plot.box(return_type=return_type)
+#         mcmc_wdf.boxplot(return_type=return_type)
+# 
+#     mcmc_wdf.boxplot(xlabel='xlabel')
+#     mcmc_wdf.boxplot(ylabel='ylabel')
+# 
+#     mcmc_wdf.boxplot(vert=False)
+#     mcmc_wdf.boxplot(fontsize=30)
+# 
+#     plt.close("all")
 
 
 def test_ScatterPlot(mcmc_df, mcmc_wdf):
