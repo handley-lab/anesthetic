@@ -762,8 +762,8 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
     mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
 
-    # mcmc_df.groupby('split').boxplot()
-    # mcmc_wdf.groupby('split').boxplot()
+    mcmc_df.groupby('split').boxplot()
+    mcmc_wdf.groupby('split').boxplot()
 
     plt.close("all")
 
