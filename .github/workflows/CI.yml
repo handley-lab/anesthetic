@@ -34,6 +34,11 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.8, '3.10']
         extras: [true, false]
+		exclude:
+		  - os: macos-latest
+			python-version: 3.8
+		  - os: windows-latest
+			python-version: 3.8
 
     steps:
     - uses: actions/checkout@v2
@@ -64,6 +69,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.8, '3.10']
+		exclude:
+		  - os: macos-latest
+			python-version: 3.8
+		  - os: windows-latest
+			python-version: 3.8
 
     steps:
     - uses: actions/checkout@v2
