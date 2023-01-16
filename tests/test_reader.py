@@ -24,11 +24,6 @@ def close_figures_on_teardown():
     plt.close("all")
 
 
-@pytest.fixture(autouse=True)
-def open_new_figure_on_setup(close_figures_on_teardown):
-    plt.figure()
-
-
 def test_read_getdist():
     np.random.seed(3)
     mcmc = read_getdist('./tests/example_data/gd')

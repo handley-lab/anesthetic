@@ -28,11 +28,6 @@ def close_figures_on_teardown():
     plt.close("all")
 
 
-@pytest.fixture(autouse=True)
-def open_new_figure_on_setup(close_figures_on_teardown):
-    plt.figure()
-
-
 def test_build_samples():
     np.random.seed(3)
     nsamps = 1000
