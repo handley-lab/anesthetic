@@ -196,6 +196,13 @@ class Samples(WeightedLabelledDataFrame):
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
 
+        if kwargs['kind'] == 'kde':
+            warnings.warn(
+                "You are using \'kde\' as a plot kind. "
+                "\'kde_1d\' is the appropriate keyword for anesthetic. "
+                "Your plots may look odd if you use this argument."
+                )
+
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
@@ -300,6 +307,13 @@ class Samples(WeightedLabelledDataFrame):
                     pos = ax.position
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
+                    if lkwargs['kind'] == 'kde':
+                        warnings.warn(
+                            "You are using \'kde\' as a plot kind. "
+                            "\'kde_1d\' and \'kde_2d\' are the appropriate "
+                            "keywords for anesthetic. Your plots may look "
+                            "odd if you use this argument."
+                            )
                     if x in self and y in self and lkwargs['kind'] is not None:
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)

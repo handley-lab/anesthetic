@@ -1234,4 +1234,14 @@ def test_constructors():
 
 def test_old_gui():
     with pytest.raises(TypeError):
-        MCMCSamples(root='./tests/example_data/pc')
+        Samples(root='./tests/example_data/gd')
+    with pytest.raises(TypeError):
+        MCMCSamples(root='./tests/example_data/gd')
+    with pytest.raises(TypeError):
+        NestedSamples(root='./tests/example_data/pc')
+
+    samples = read_chains('./tests/example_data/pc')
+    with pytest.warns(UserWarning):
+        samples.plot_2d(['x0', 'x1', 'x2'], kind={'lower': 'kde'})
+    with pytest.warns(UserWarning):
+        samples.plot_1d(['x0', 'x1', 'x2'], kind='kde')
