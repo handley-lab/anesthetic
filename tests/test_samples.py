@@ -1241,11 +1241,7 @@ def test_old_gui():
         NestedSamples(root='./tests/example_data/pc')
 
     samples = read_chains('./tests/example_data/pc')
-    fig, ax = plt.subplots()
-    import matplotlib.axes
-    isinstance(ax, matplotlib.axes.Axes)
-    samples.plot(x='x0', y='x1', kind='kde_2d')
-    samples.plot(x='x1', kind='kde_2d')
+
     with pytest.warns(UserWarning):
         samples.plot_2d(['x0', 'x1', 'x2'], kind={'lower': 'kde'})
     with pytest.warns(UserWarning):

@@ -73,4 +73,4 @@ class PlotAccessor(_PlotAccessor):
                 "samples.plot(x=x, y=y, ax=ax, kind='kde_2d')\n"
                 "samples.plot.kde_2d(x=x, y=y, ax=ax)"
                 )
-        super().__call__(*args, **kwargs)
+        return super().__call__(*args, **kwargs)

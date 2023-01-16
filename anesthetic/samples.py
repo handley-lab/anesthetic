@@ -403,16 +403,17 @@ class Samples(WeightedLabelledDataFrame):
         else:
             return samples.__finalize__(self, "importance_sample")
 
-        # TODO: remove this in version >= 2.1
-        @property
-        def tex(self):
-            raise NotImplementedError(
-                "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
-                "samples.tex[label] = tex        # anesthetic 1.0\n"
-                "samples.set_label(label, tex)   # anesthetic 2.0\n\n"
-                "tex = samples.tex[label]        # anesthetic 1.0\n"
-                "tex = samples.get_label(label)  # anesthetic 2.0"
-                )
+    # TODO: remove this in version >= 2.1
+    @property
+    def tex(self):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.tex[label] = tex        # anesthetic 1.0\n"
+            "samples.set_label(label, tex)   # anesthetic 2.0\n\n"
+            "tex = samples.tex[label]        # anesthetic 1.0\n"
+            "tex = samples.get_label(label)  # anesthetic 2.0"
+            )
 
 
 class MCMCSamples(Samples):
