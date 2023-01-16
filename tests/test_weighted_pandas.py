@@ -14,9 +14,13 @@ from pandas.plotting._matplotlib.misc import (
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    plt.figure()
     yield
     plt.close("all")
+
+
+@pytest.fixture(autouse=True)
+def open_new_figure_on_setup(close_figures_on_teardown):
+    plt.figure()
 
 
 @pytest.fixture
@@ -801,7 +805,6 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
 
 
 def test_AreaPlot(mcmc_df, mcmc_wdf):
-    plt.figure()
     axes_wdf = mcmc_wdf.plot.area()
     axes_df = mcmc_df.plot.area()
 
