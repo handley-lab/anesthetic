@@ -84,8 +84,8 @@ def test_build_samples():
     assert np.all(np.isfinite(ns.logL))
     assert np.all(mc.logL == logL)
     assert np.all(ns.logL == logL)
-    assert mc.root is None
-    assert ns.root is None
+    assert not hasattr(mc, 'root')
+    assert not hasattr(ns, 'root')
 
 
 def test_different_parameters():
@@ -205,7 +205,7 @@ def test_root_and_label():
     assert ns.label == 'pc'
 
     ns = NestedSamples()
-    assert ns.root is None
+    assert not hasattr(ns, 'root')
     assert ns.label is None
 
     mc = read_chains('./tests/example_data/gd')
@@ -213,7 +213,7 @@ def test_root_and_label():
     assert mc.label == 'gd'
 
     mc = MCMCSamples()
-    assert mc.root is None
+    assert not hasattr(mc, 'root')
     assert mc.label is None
 
 
@@ -1230,3 +1230,8 @@ def test_constructors():
     assert samples.T[0].islabelled()
 
     assert isinstance(samples['x0'].to_frame(), WeightedLabelledDataFrame)
+
+
+def test_old_gui():
+    with pytest.raises(TypeError):
+        MCMCSamples(root='./tests/example_data/pc')

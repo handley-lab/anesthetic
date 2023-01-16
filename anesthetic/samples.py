@@ -396,9 +396,6 @@ class MCMCSamples(Samples):
 
     Parameters
     ----------
-    root: str, optional
-        root for reading chains from file. Overrides all other arguments.
-
     data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
@@ -425,11 +422,6 @@ class MCMCSamples(Samples):
 
     _metadata = Samples._metadata + ['root']
 
-    def __init__(self, *args, **kwargs):
-        root = kwargs.pop('root', None)
-        super().__init__(*args, **kwargs)
-        self.root = root
-
     @property
     def _constructor(self):
         return MCMCSamples
@@ -455,9 +447,6 @@ class NestedSamples(Samples):
 
     Parameters
     ----------
-    root: str, optional
-        root for reading chains from file. Overrides all other arguments.
-
     data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
@@ -491,7 +480,6 @@ class NestedSamples(Samples):
     _metadata = Samples._metadata + ['root', '_beta']
 
     def __init__(self, *args, **kwargs):
-        self.root = kwargs.pop('root', None)
         logzero = kwargs.pop('logzero', -1e30)
         self._beta = kwargs.pop('beta', 1.)
         logL_birth = kwargs.pop('logL_birth', None)

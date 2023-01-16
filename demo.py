@@ -24,9 +24,9 @@ for filename in ["plikHM_TTTEEE_lowl_lowE_lensing.tar.gz","plikHM_TTTEEE_lowl_lo
 #| Import anesthetic and load the MCMC samples:
 
 import matplotlib.pyplot as plt
-from anesthetic import MCMCSamples, make_2d_axes
+from anesthetic import read_chains, make_2d_axes
 mcmc_root = 'plikHM_TTTEEE_lowl_lowE_lensing/base_plikHM_TTTEEE_lowl_lowE_lensing'
-mcmc = MCMCSamples(root=mcmc_root)
+mcmc = read_chains(mcmc_root)
 
 #| We have plotting tools for 1D plots ...
 
@@ -105,9 +105,8 @@ mcmc.plot_1d('omegab');
 #| Anethestic really comes to the fore for nested sampling. We can do all of
 #| the above, and more with the power that NS chains provide
 
-from anesthetic import NestedSamples
 nested_root = 'plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing'
-nested = NestedSamples(root=nested_root)
+nested = read_chains(nested_root)
 
 #| We can infer the evidence, KL divergence and Bayesian model dimensionality:
 

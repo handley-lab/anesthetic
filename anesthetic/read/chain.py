@@ -34,7 +34,9 @@ def read_chains(root, *args, **kwargs):
     errors = []
     for read in [read_polychord, read_multinest, read_cobaya, read_getdist]:
         try:
-            return read(root, *args, **kwargs)
+            samples = read(root, *args, **kwargs)
+            samples.root = root
+            return samples
         except (FileNotFoundError, IOError) as e:
             errors.append(str(read) + ": " + str(e))
 
