@@ -24,6 +24,7 @@ from wedding_cake import WeddingCake
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
+    plt.figure()
     yield
     plt.close("all")
 

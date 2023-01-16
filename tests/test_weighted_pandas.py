@@ -14,6 +14,7 @@ from pandas.plotting._matplotlib.misc import (
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
+    plt.figure()
     yield
     plt.close("all")
 
