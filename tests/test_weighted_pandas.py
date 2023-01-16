@@ -801,6 +801,8 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
 
 
 def test_AreaPlot(mcmc_df, mcmc_wdf):
+    plt.figure()
+    
     axes_wdf = mcmc_wdf.plot.area()
     axes_df = mcmc_df.plot.area()
 
