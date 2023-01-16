@@ -22,6 +22,12 @@ from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
 
 
+@pytest.fixture(autouse=True)
+def close_figures_on_teardown():
+    yield
+    plt.close("all")
+
+
 def test_build_samples():
     np.random.seed(3)
     nsamps = 1000
@@ -101,7 +107,6 @@ def test_different_parameters():
     ns.plot_2d(axes)
     fig, axes = make_2d_axes([params_x, params_y])
     ns.plot_2d(axes)
-    plt.close('all')
 
 
 def test_manual_columns():
@@ -178,8 +183,6 @@ def test_plot_2d_kinds():
     with pytest.raises(ValueError):
         ns.plot_2d(params, kind='eggs')
 
-    plt.close("all")
-
 
 def test_plot_2d_kinds_multiple_calls():
     np.random.seed(3)
@@ -195,7 +198,6 @@ def test_plot_2d_kinds_multiple_calls():
     ns.plot_2d(axes, kind={'diagonal': 'kde_1d',
                            'lower': 'kde_2d',
                            'upper': 'scatter_2d'})
-    plt.close('all')
 
 
 def test_root_and_label():
@@ -241,8 +243,6 @@ def test_plot_2d_legend():
                 else:
                     assert all([isinstance(h, Rectangle) for h in handles])
 
-    plt.close('all')
-
     # Test label kwarg for hist and scatter
     fig, axes = make_2d_axes(params, lower=False)
     ns.plot_2d(axes, label='l1', kind=dict(diagonal='hist_1d',
@@ -263,7 +263,6 @@ def test_plot_2d_legend():
                 else:
                     assert all([isinstance(h, Line2D)
                                 for h in handles])
-    plt.close('all')
 
     # test default labelling
     fig, axes = make_2d_axes(params, upper=False)
@@ -275,7 +274,6 @@ def test_plot_2d_legend():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
                 assert labels == ['pc', 'gd']
-    plt.close('all')
 
     # Test label kwarg to constructors
     ns = read_chains('./tests/example_data/pc', label='l1')
@@ -291,7 +289,6 @@ def test_plot_2d_legend():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
                 assert labels == ['l1', 'l2']
-    plt.close('all')
 
 
 def test_plot_2d_colours():
@@ -338,7 +335,6 @@ def test_plot_2d_colours():
         assert len(set(gd_colors)) == 1
         assert len(set(mn_colors)) == 1
         assert len(set(pc_colors)) == 1
-        plt.close("all")
 
 
 def test_plot_1d_colours():
@@ -381,7 +377,6 @@ def test_plot_1d_colours():
         assert len(set(gd_colors)) == 1
         assert len(set(mn_colors)) == 1
         assert len(set(pc_colors)) == 1
-        plt.close("all")
 
 
 @pytest.mark.xfail('astropy' not in sys.modules,
@@ -391,7 +386,6 @@ def test_astropyhist():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
-    plt.close("all")
 
 
 def test_hist_levels():
@@ -399,7 +393,6 @@ def test_hist_levels():
     ns = read_chains('./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
                levels=[0.95, 0.68], bins=20)
-    plt.close("all")
 
 
 def test_logX():
@@ -774,7 +767,6 @@ def test_weighted_merging():
         prior_samples.append(tmp)
     merge_prior = merge_samples_weighted(prior_samples, weights=np.ones(3))
     merge_prior.plot_2d(["x", "y"])
-    plt.close('all')
 
     # Test if correct exceptions are raised:
     # MCMCSamples are passed without weights
@@ -1142,7 +1134,6 @@ def test_logL_list():
 
     samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
     assert_array_equal(default, samples)
-    plt.close("all")
 
 
 def test_samples_dot_plot():
@@ -1153,39 +1144,30 @@ def test_samples_dot_plot():
     assert len(axes) == 1
     axes = samples[['x0', 'x1']].plot.kde(subplots=True)
     assert len(axes) == 2
-    plt.close("all")
 
     axes = samples.plot.kde_2d('x0', 'x1')
     assert len(axes.collections) == 5
     assert axes.get_xlabel() == 'x0'
     assert axes.get_ylabel() == 'x1'
-    plt.close("all")
     axes = samples.plot.hist_2d('x1', 'x0')
     assert len(axes.collections) == 1
     assert axes.get_xlabel() == 'x1'
     assert axes.get_ylabel() == 'x0'
-    plt.close("all")
     axes = samples.plot.scatter_2d('x2', 'x3')
     assert len(axes.lines) == 1
     plt.close("all")
     axes = samples.x1.plot.kde_1d()
     assert len(axes.lines) == 1
-    plt.close("all")
     axes = samples.x2.plot.hist_1d()
     assert len(axes.containers) == 1
-    plt.close("all")
 
     try:
         axes = samples.plot.fastkde_2d('x0', 'x1')
         assert len(axes.collections) == 5
-        plt.close("all")
         axes = samples.plot.fastkde_1d()
         assert len(axes.lines) == 1
-        plt.close("all")
     except ImportError:
         pass
-
-    plt.close("all")
 
 
 def test_fixed_width():
