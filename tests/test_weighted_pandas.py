@@ -753,8 +753,12 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     plt.close("all")
     mcmc_wdf.x.plot.box()
 
-    mcmc_df.plot.box(subplots=True)
-    mcmc_wdf.plot.box(subplots=True)
+    axes_df = mcmc_df.plot.box(subplots=True)
+    axes_wdf = mcmc_wdf.plot.box(subplots=True)
+    for ax in axes_df:
+        plt.close(ax.get_figure())
+    for ax in axes_wdf:
+        plt.close(ax.get_figure())
 
     mcmc_df['split'] = ''
     mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
