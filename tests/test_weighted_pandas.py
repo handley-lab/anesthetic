@@ -763,8 +763,12 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
     mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
 
-    mcmc_df.groupby('split').boxplot()
-    mcmc_wdf.groupby('split').boxplot()
+    axes_df = mcmc_df.groupby('split').boxplot()
+    axes_wdf = mcmc_wdf.groupby('split').boxplot()
+    for ax in axes_df:
+        plt.close(ax.get_figure())
+    for ax in axes_wdf:
+        plt.close(ax.get_figure())
 
     for return_type in ['dict', 'both']:
         mcmc_wdf.plot.box(return_type=return_type)
