@@ -1241,7 +1241,29 @@ def test_old_gui():
         NestedSamples(root='./tests/example_data/pc')
 
     samples = read_chains('./tests/example_data/pc')
+    fig, ax = plt.subplots()
+    import matplotlib.axes
+    isinstance(ax, matplotlib.axes.Axes)
+    samples.plot(x='x0', y='x1', kind='kde_2d')
+    samples.plot(x='x1', kind='kde_2d')
     with pytest.warns(UserWarning):
         samples.plot_2d(['x0', 'x1', 'x2'], kind={'lower': 'kde'})
     with pytest.warns(UserWarning):
         samples.plot_1d(['x0', 'x1', 'x2'], kind='kde')
+
+    with pytest.raises(NotImplementedError):
+        samples.tex['x0'] = '$x_0$'
+
+    fig, ax = plt.subplots()
+    with pytest.raises(ValueError):
+        samples.plot(ax, 'x0')
+    with pytest.raises(ValueError):
+        samples.plot(ax, 'x0', 'y0')
+
+    with pytest.raises(NotImplementedError):
+        make_2d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})
+
+    with pytest.raises(NotImplementedError):
+        make_2d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})
+    with pytest.raises(NotImplementedError):
+        make_1d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})

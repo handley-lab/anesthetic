@@ -196,6 +196,7 @@ class Samples(WeightedLabelledDataFrame):
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
 
+        # TODO: remove this in version >= 2.1
         if kwargs['kind'] == 'kde':
             warnings.warn(
                 "You are using \'kde\' as a plot kind. "
@@ -307,6 +308,7 @@ class Samples(WeightedLabelledDataFrame):
                     pos = ax.position
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
+                    # TODO: remove this in version >= 2.1
                     if lkwargs['kind'] == 'kde':
                         warnings.warn(
                             "You are using \'kde\' as a plot kind. "
@@ -400,6 +402,17 @@ class Samples(WeightedLabelledDataFrame):
             self._update_inplace(samples)
         else:
             return samples.__finalize__(self, "importance_sample")
+
+        # TODO: remove this in version >= 2.1
+        @property
+        def tex(self):
+            raise NotImplementedError(
+                "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+                "samples.tex[label] = tex        # anesthetic 1.0\n"
+                "samples.set_label(label, tex)   # anesthetic 2.0\n\n"
+                "tex = samples.tex[label]        # anesthetic 1.0\n"
+                "tex = samples.get_label(label)  # anesthetic 2.0"
+                )
 
 
 class MCMCSamples(Samples):
@@ -549,6 +562,16 @@ class NestedSamples(Samples):
     def prior(self, inplace=False):
         """Re-weight samples at infinite temperature to get prior samples."""
         return self.set_beta(beta=0, inplace=inplace)
+
+    # TODO: remove this in version >= 2.1
+    def ns_output(self, *args, **kwargs):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.ns_output(1000)  # anesthetic 1.0\n"
+            "samples.stats(1000)      # anesthetic 2.0\n\n"
+            "Check out the new temperature functionality: help(samples.stats)"
+            )
 
     def stats(self, nsamples=None, beta=None):
         """Compute Nested Sampling statistics.
