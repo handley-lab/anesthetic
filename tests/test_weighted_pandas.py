@@ -657,8 +657,6 @@ class TestWeightedPlots(TestPlotBase):
         wdf_xys = [p.get_xy() for ax in wdf_axes for p in ax.patches]
         assert df_xys == wdf_xys
 
-        plt.close("all")
-
 
     def test_WeightedSeries_hist(self, mcmc_df, mcmc_wdf):
 
@@ -694,8 +692,6 @@ class TestWeightedPlots(TestPlotBase):
         wdf_xys = [p.get_xy() for p in axes[1].patches]
         assert df_xys == wdf_xys
 
-        plt.close("all")
-
 
     def test_KdePlot(self, mcmc_df, mcmc_wdf):
         bw_method = 0.3
@@ -705,8 +701,6 @@ class TestWeightedPlots(TestPlotBase):
         df_line, wdf_line = axes[0].lines[0], axes[1].lines[0]
         assert (df_line.get_xdata() == wdf_line.get_xdata()).all()
         assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-4)
-
-        plt.close("all")
 
 
     def test_scatter_matrix(self, mcmc_df, mcmc_wdf):
@@ -732,14 +726,10 @@ class TestWeightedPlots(TestPlotBase):
         n = len(axes[0, 1].collections[0].get_offsets().data)
         assert_allclose(n, 50, atol=np.sqrt(n))
 
-        plt.close("all")
-
 
     def test_bootstrap_plot(self, mcmc_df, mcmc_wdf):
         bootstrap_plot(mcmc_wdf.x)
         bootstrap_plot(mcmc_wdf.x, ncompress=500)
-        plt.close("all")
-
 
     def test_BoxPlot(self, mcmc_df, mcmc_wdf):
         mcmc_df.plot.box()
@@ -779,8 +769,6 @@ class TestWeightedPlots(TestPlotBase):
         mcmc_wdf.boxplot(vert=False)
         mcmc_wdf.boxplot(fontsize=30)
 
-        plt.close("all")
-
 
     def test_ScatterPlot(self, mcmc_df, mcmc_wdf):
         mcmc_df.plot.scatter('x', 'y')
@@ -793,8 +781,6 @@ class TestWeightedPlots(TestPlotBase):
         ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
         n = len(ax.collections[0].get_offsets().data)
         assert_allclose(n, 50, atol=np.sqrt(50))
-
-        plt.close("all")
 
 
     def test_HexBinPlot(self, mcmc_df, mcmc_wdf):
@@ -809,8 +795,6 @@ class TestWeightedPlots(TestPlotBase):
         wdf_colors = wdf_axes.collections[0].get_facecolors()
         assert_allclose(df_colors, wdf_colors)
 
-        plt.close("all")
-
 
     def test_AreaPlot(self, mcmc_df, mcmc_wdf):
         axes_wdf = mcmc_wdf.plot.area()
@@ -822,8 +806,6 @@ class TestWeightedPlots(TestPlotBase):
         print(f"axes_df ylim: {axes_df.get_ylim()}")
         print(f"axes_wdf ylim: {axes_df.get_ylim()}")
 
-        plt.close("all")
-
 
     def test_BarPlot(self, mcmc_df, mcmc_wdf):
         axes_bar = mcmc_wdf[5:10].plot.bar()
@@ -831,14 +813,10 @@ class TestWeightedPlots(TestPlotBase):
         assert_array_equal(axes_bar.get_xticks(), axes_barh.get_yticks())
         assert_array_equal(axes_bar.get_yticks(), axes_barh.get_xticks())
 
-        plt.close("all")
-
 
     def test_PiePlot(self, mcmc_df, mcmc_wdf):
         mcmc_wdf[5:10].x.plot.pie()
         mcmc_wdf[5:10].plot.pie(subplots=True)
-
-        plt.close("all")
 
 
     def test_LinePlot(self, mcmc_df, mcmc_wdf):
@@ -851,7 +829,6 @@ class TestWeightedPlots(TestPlotBase):
         plt.close("all")
         wdf_axes = mcmc_wdf.plot.line()
         assert len(wdf_axes.lines) == len(mcmc_wdf.columns)
-        plt.close("all")
 
 
 def test_multiindex(mcmc_wdf):
