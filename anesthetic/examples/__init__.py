@@ -1,1 +1,1 @@
-"""Module for generating nested sampling examples."""
+"""Module for generating example data of nested sampling."""
