@@ -805,8 +805,9 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
 
 
 def test_AreaPlot(mcmc_df, mcmc_wdf):
-    axes_wdf = mcmc_wdf.plot.area()
-    axes_df = mcmc_df.plot.area()
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    axes_df = mcmc_df.plot.area(ax=ax1)
+    axes_wdf = mcmc_wdf.plot.area(ax=ax2)
 
     assert_allclose(axes_df.get_xlim(), axes_wdf.get_xlim(), rtol=1e-3)
     assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-3)
