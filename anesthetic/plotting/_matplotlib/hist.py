@@ -1,4 +1,6 @@
+from packaging import version
 import numpy as np
+import pandas as pd
 from pandas.plotting._matplotlib.hist import (HistPlot as _HistPlot,
                                               KdePlot as _KdePlot)
 import pandas.plotting._matplotlib.hist
@@ -51,6 +53,9 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
         return bins
 
     def _make_plot(self):
+        if version.parse(pd.__version__) >= version.parse("2.0.0"):
+            super._make_plot()
+            return
         colors = self._get_colors()
         stacking_id = self._get_stacking_id()
 
