@@ -734,20 +734,20 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_df.plot.box()
     mcmc_wdf.plot.box()
 
-    mcmc_df.boxplot()
-    mcmc_wdf.boxplot()
+    fig, ax = plt.subplots()
+    mcmc_df.boxplot(ax=ax)
 
-    plt.close("all")
-    mcmc_df.x.plot.box()
-    plt.close("all")
-    mcmc_wdf.x.plot.box()
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(ax=ax)
+
+    fig, ax = plt.subplots()
+    mcmc_df.x.plot.box(ax=ax)
+
+    fig, ax = plt.subplots()
+    mcmc_wdf.x.plot.box(ax=ax)
 
     axes_df = mcmc_df.plot.box(subplots=True)
     axes_wdf = mcmc_wdf.plot.box(subplots=True)
-    for ax in axes_df:
-        plt.close(ax.get_figure())
-    for ax in axes_wdf:
-        plt.close(ax.get_figure())
 
     mcmc_df['split'] = ''
     mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
@@ -757,15 +757,25 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
     mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
 
+    mcmc_df.groupby('split').boxplot()
+    mcmc_wdf.groupby('split').boxplot()
+
     for return_type in ['dict', 'both']:
-        mcmc_wdf.plot.box(return_type=return_type)
-        mcmc_wdf.boxplot(return_type=return_type)
+        fig, ax = plt.subplots()
+        mcmc_wdf.plot.box(return_type=return_type, ax=ax)
+        fig, ax = plt.subplots()
+        mcmc_wdf.boxplot(return_type=return_type, ax=ax)
 
-    mcmc_wdf.boxplot(xlabel='xlabel')
-    mcmc_wdf.boxplot(ylabel='ylabel')
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(xlabel='xlabel', ax=ax)
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(ylabel='ylabel', ax=ax)
 
-    mcmc_wdf.boxplot(vert=False)
-    mcmc_wdf.boxplot(fontsize=30)
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(vert=False, ax=ax)
+
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(fontsize=30, ax=ax)
 
 
 def test_ScatterPlot(mcmc_df, mcmc_wdf):
