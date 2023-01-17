@@ -68,8 +68,16 @@ Rectangle plots are pretty flexible with what they can do.
 Plotting kinds: KDE, histogram, and more
 ========================================
 
+Anesthetic allows for different plotting kinds, which can be specified through
+the `kind` (or `kinds`) keyword. The currently implemented plotting kinds are
+kernel density estimation (KDE) plots (`'kde_1d'` and `'kde_2d'`), histograms
+(`'hist_1d'` and `'hist_2d'`), and scatter plots (`'scatter_2d'`).
+
 KDE
 ---
+
+The KDE plots make use of `scipy.stats.gaussian_kde`, whose keyword argument
+`bw_method` is forwarded on.
 
 .. plot:: :context: close-figs
 
@@ -82,6 +90,14 @@ KDE
     fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
     samples.plot_2d(axes, kinds=dict(diagonal='kde_1d', lower='kde_2d'), label="KDE")
     axes.iloc[-1, 0].legend(loc='upper right', bbox_to_anchor=(len(axes), len(axes)))
+
+By default, the two-dimensional plots draw the 68 and 95 percent levels.
+Different levels can be requested via the `levels` keyword:
+    
+.. plot:: :context: close-figs
+
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
+    samples.plot_2d(axes, kinds='kde', levels=[0.99994, 0.99730, 0.95450, 0.68269])
 
 Histograms
 ----------
@@ -140,14 +156,29 @@ Changing the appearance
 =======================
 
 Anesthetic tries to follow matplotlib conventions as much as possible, so most
-changes to the appearance should be relatively straight forward. In the
-following some examples. Wishing for an example that is missing here? Raise an
-issue on the anesthetic GitHub page: 
+changes to the appearance should be relatively straight forward for those
+familiar with matplotlib. In the following we present some examples, which we
+think might be useful. Are you wishing for an example that is missing here?
+Please feel free to raise an issue on the anesthetic GitHub page:
 
 https://github.com/williamjameshandley/anesthetic/issues.
 
 Colour
 ------
+
+There are multiple options when it comes to specifying colours. The simplest is
+by providing the `color` (or short `c`) keyword argument. For some other
+plotting kinds it might be desirable to distinguish between `facecolor` and
+`edgecolor` (or  short `fc` and `ec`), e.g. for unfilled contours (see also
+below "`Unfilled contours`_"). Yet in other cases you might prefer specifying a
+matplotlib colormap through the `cmap` keyword.
+
+.. plot:: :context: close-figs
+
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2'])
+    samples.plot_2d(axes.iloc[0:1, :], kinds=dict(diagonal='kde_1d', lower='kde_2d', upper='kde_2d'), c='r')
+    samples.plot_2d(axes.iloc[1:2, :], kinds=dict(diagonal='kde_1d', lower='kde_2d', upper='kde_2d'), fc='C0', ec='C1')
+    samples.plot_2d(axes.iloc[2:3, :], kinds=dict(diagonal='kde_1d', lower='kde_2d', upper='kde_2d'), cmap=plt.cm.viridis_r, levels=[0.99994, 0.997, 0.954, 0.683])
 
 Figure size
 -----------
