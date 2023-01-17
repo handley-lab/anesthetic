@@ -5,17 +5,25 @@ Reading and writing
 Reading chain files from PolyChord, MultiNest, CosmoMC, or Cobaya
 =================================================================
 
-If you have finished nested sampling or MCMC runs from PolyChord, MultiNest, CosmoMC, or Cobaya, then you should be able to read in the chain files directly, by passing the ``root`` to the :func:`anesthetic.read.chain.read_chains` function.
+If you have finished nested sampling or MCMC runs from PolyChord, MultiNest,
+CosmoMC, or Cobaya, then you should be able to read in the chain files
+directly, by passing the ``root`` to the
+:func:`anesthetic.read.chain.read_chains` function.
 
-Feel free to use the testing data in ``anesthetic/tests/example_data`` to try out the examples listed here.
+Feel free to use the testing data in ``anesthetic/tests/example_data`` to try
+out the examples listed here.
 
-* PolyChord samples, which will be an instance of the :class:`anesthetic.samples.NestedSamples` class:
+* PolyChord samples, which will be an instance of the
+  :class:`anesthetic.samples.NestedSamples` class:
+
   ::
       
       from anesthetic import read_chains
       samples = read_chains("anesthetic/tests/example_data/pc")
 
-* Cobaya samples, which will be an instance of the :class:`anesthetic.samples.MCMCSamples` class:
+* Cobaya samples, which will be an instance of the
+  :class:`anesthetic.samples.MCMCSamples` class:
+
   ::
       
       from anesthetic import read_chains
@@ -25,7 +33,10 @@ Feel free to use the testing data in ``anesthetic/tests/example_data`` to try ou
 Passing data as arguments
 =========================
 
-You can also pass your own (weighted) data directly to the main sample classes :class:`anesthetic.samples.Samples`, :class:`anesthetic.samples.MCMCSamples`, or :class:`anesthetic.samples.NestedSamples`, e.g. here with randomly generated data:
+You can also pass your own (weighted) data directly to the main sample classes
+:class:`anesthetic.samples.Samples`, :class:`anesthetic.samples.MCMCSamples`,
+or :class:`anesthetic.samples.NestedSamples`, e.g. here with randomly generated
+data:
 
 ::
 
@@ -44,11 +55,19 @@ You can also pass your own (weighted) data directly to the main sample classes :
 Saving ``NestedSamples`` or ``MCMCSamples``
 ===========================================
 
-In principle you can use any of pandas options for saving your samples. However, since our weighted samples here make heavy use of pandas multiindex feature, we recommended using either ``CSV`` files or ``parquet`` files for reading and writing.
+In principle you can use any of pandas options for saving your samples.
+However, since our weighted samples here make heavy use of pandas multiindex
+feature, we recommended using either ``CSV`` files or ``parquet`` files for
+reading and writing.
 
-* ``samples.to_csv("filename.csv")``: ``CSV`` files are a useful option when you would like to have a human readable file. Check out :py:func:`pandas.DataFrame.to_csv` for the various option of saving the data (e.g. choosing the delimiter etc.).
+* ``samples.to_csv("filename.csv")``: ``CSV`` files are a useful option when
+  you would like to have a human readable file. Check out
+  :py:func:`pandas.DataFrame.to_csv` for the various options of saving the data
+  (e.g. choosing the delimiter etc.).
 
-* ``samples.to_parquet("filename.parquet")``: When reading and writing speed is an issue, we recommend using the ``parquet`` file format, which should be faster than ``to_csv`` while still capable of handling the multiindex format.
+* ``samples.to_parquet("filename.parquet")``: When reading and writing speed is
+  an issue, we recommend using the ``parquet`` file format, which should be
+  faster than ``to_csv`` while still capable of handling the multiindex format.
 
 
 
