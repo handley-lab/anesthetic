@@ -62,12 +62,13 @@ reading and writing.
 
 * ``samples.to_csv("filename.csv")``: ``CSV`` files are a useful option when
   you would like to have a human readable file. Check out
-  :py:func:`pandas.DataFrame.to_csv` for the various options of saving the data
+  :py:meth:`pandas.DataFrame.to_csv` for the various options of saving the data
   (e.g. choosing the delimiter etc.).
 
 * ``samples.to_parquet("filename.parquet")``: When reading and writing speed is
   an issue, we recommend using the ``parquet`` file format, which should be
   faster than ``to_csv`` while still capable of handling the multiindex format.
+  Check out :py:meth:`pandas.DataFrame.to_parquet` for more information.
 
 
 
