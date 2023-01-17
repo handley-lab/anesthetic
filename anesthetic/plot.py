@@ -885,6 +885,11 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     **kwargs : `~matplotlib.axes.Axes.hist` properties
 
     """
+    kwargs = normalize_kwargs(
+        kwargs,
+        dict(linewidth=['lw'], linestyle=['ls'],
+             color=['c'], facecolor=['fc'], edgecolor=['ec'])
+    )
     weights = kwargs.pop('weights', None)
     bins = kwargs.pop('bins', 10)
     histtype = kwargs.pop('histtype', 'bar')
