@@ -345,11 +345,12 @@ def test_plot_2d_colours():
     'kind', ['kde', 'hist', dict(diagonal='fastkde_1d', lower='fastkde_2d')]
 )
 def test_plot_2d_kwargs(kind):
-    np.random.seed(42)
-    pc = read_chains("./tests/example_data/pc")
-    fig, axes = make_2d_axes(['x0', 'x1'])
-    pc.plot_2d(axes, kind=kind, color='r')
-    pc.plot_2d(axes, kind=kind, cmap=plt.cm.RdBu)
+    if isinstance(kind, str) or 'fastkde' in sys.modules:
+        np.random.seed(42)
+        pc = read_chains("./tests/example_data/pc")
+        fig, axes = make_2d_axes(['x0', 'x1'])
+        pc.plot_2d(axes, kind=kind, color='r')
+        pc.plot_2d(axes, kind=kind, cmap=plt.cm.RdBu)
 
 
 def test_plot_1d_colours():
