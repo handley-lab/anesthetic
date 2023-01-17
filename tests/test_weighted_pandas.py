@@ -655,8 +655,6 @@ def test_WeightedDataFrame_hist(mcmc_df, mcmc_wdf):
     wdf_xys = [p.get_xy() for ax in wdf_axes for p in ax.patches]
     assert df_xys == wdf_xys
 
-    plt.close("all")
-
 
 def test_WeightedSeries_hist(mcmc_df, mcmc_wdf):
 
@@ -692,8 +690,6 @@ def test_WeightedSeries_hist(mcmc_df, mcmc_wdf):
     wdf_xys = [p.get_xy() for p in axes[1].patches]
     assert df_xys == wdf_xys
 
-    plt.close("all")
-
 
 def test_KdePlot(mcmc_df, mcmc_wdf):
     bw_method = 0.3
@@ -703,8 +699,6 @@ def test_KdePlot(mcmc_df, mcmc_wdf):
     df_line, wdf_line = axes[0].lines[0], axes[1].lines[0]
     assert (df_line.get_xdata() == wdf_line.get_xdata()).all()
     assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-4)
-
-    plt.close("all")
 
 
 def test_scatter_matrix(mcmc_df, mcmc_wdf):
@@ -730,26 +724,27 @@ def test_scatter_matrix(mcmc_df, mcmc_wdf):
     n = len(axes[0, 1].collections[0].get_offsets().data)
     assert_allclose(n, 50, atol=np.sqrt(n))
 
-    plt.close("all")
-
 
 def test_bootstrap_plot(mcmc_df, mcmc_wdf):
     bootstrap_plot(mcmc_wdf.x)
     bootstrap_plot(mcmc_wdf.x, ncompress=500)
-    plt.close("all")
 
 
 def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_df.plot.box()
     mcmc_wdf.plot.box()
 
-    mcmc_df.boxplot()
-    mcmc_wdf.boxplot()
+    fig, ax = plt.subplots()
+    mcmc_df.boxplot(ax=ax)
 
-    plt.close("all")
-    mcmc_df.x.plot.box()
-    plt.close("all")
-    mcmc_wdf.x.plot.box()
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(ax=ax)
+
+    fig, ax = plt.subplots()
+    mcmc_df.x.plot.box(ax=ax)
+
+    fig, ax = plt.subplots()
+    mcmc_wdf.x.plot.box(ax=ax)
 
     mcmc_df.plot.box(subplots=True)
     mcmc_wdf.plot.box(subplots=True)
@@ -765,19 +760,22 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_df.groupby('split').boxplot()
     mcmc_wdf.groupby('split').boxplot()
 
-    plt.close("all")
-
     for return_type in ['dict', 'both']:
-        mcmc_wdf.plot.box(return_type=return_type)
-        mcmc_wdf.boxplot(return_type=return_type)
+        fig, ax = plt.subplots()
+        mcmc_wdf.plot.box(return_type=return_type, ax=ax)
+        fig, ax = plt.subplots()
+        mcmc_wdf.boxplot(return_type=return_type, ax=ax)
 
-    mcmc_wdf.boxplot(xlabel='xlabel')
-    mcmc_wdf.boxplot(ylabel='ylabel')
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(xlabel='xlabel', ax=ax)
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(ylabel='ylabel', ax=ax)
 
-    mcmc_wdf.boxplot(vert=False)
-    mcmc_wdf.boxplot(fontsize=30)
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(vert=False, ax=ax)
 
-    plt.close("all")
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(fontsize=30, ax=ax)
 
 
 def test_ScatterPlot(mcmc_df, mcmc_wdf):
@@ -791,8 +789,6 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
     ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
     n = len(ax.collections[0].get_offsets().data)
     assert_allclose(n, 50, atol=np.sqrt(50))
-
-    plt.close("all")
 
 
 def test_HexBinPlot(mcmc_df, mcmc_wdf):
@@ -809,13 +805,12 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
 
 
 def test_AreaPlot(mcmc_df, mcmc_wdf):
-    axes_wdf = mcmc_wdf.plot.area()
-    axes_df = mcmc_df.plot.area()
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    axes_df = mcmc_df.plot.area(ax=ax1)
+    axes_wdf = mcmc_wdf.plot.area(ax=ax2)
 
     assert_allclose(axes_df.get_xlim(), axes_wdf.get_xlim(), rtol=1e-3)
     assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-3)
-
-    plt.close("all")
 
 
 def test_BarPlot(mcmc_df, mcmc_wdf):
@@ -824,27 +819,23 @@ def test_BarPlot(mcmc_df, mcmc_wdf):
     assert_array_equal(axes_bar.get_xticks(), axes_barh.get_yticks())
     assert_array_equal(axes_bar.get_yticks(), axes_barh.get_xticks())
 
-    plt.close("all")
-
 
 def test_PiePlot(mcmc_df, mcmc_wdf):
-    mcmc_wdf[5:10].x.plot.pie()
+    fig, ax = plt.subplots()
+    mcmc_wdf[5:10].x.plot.pie(ax=ax)
     mcmc_wdf[5:10].plot.pie(subplots=True)
-
-    plt.close("all")
 
 
 def test_LinePlot(mcmc_df, mcmc_wdf):
-    df_axes = mcmc_df.x.plot.line()
+    fig, ax = plt.subplots()
+    df_axes = mcmc_df.x.plot.line(ax=ax)
     assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())
-    plt.close("all")
-    wdf_axes = mcmc_wdf.x.plot.line()
+    fig, ax = plt.subplots()
+    wdf_axes = mcmc_wdf.x.plot.line(ax=ax)
     assert_array_equal(mcmc_wdf.index.droplevel('weights'),
                        wdf_axes.lines[0].get_xdata())
-    plt.close("all")
     wdf_axes = mcmc_wdf.plot.line()
     assert len(wdf_axes.lines) == len(mcmc_wdf.columns)
-    plt.close("all")
 
 
 def test_multiindex(mcmc_wdf):

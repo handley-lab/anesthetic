@@ -38,6 +38,8 @@ def read_multinest(root, *args, **kwargs):
 
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
     columns, labels = read_paramnames(root)
+    columns = kwargs.pop('columns', columns)
+    labels = kwargs.pop('labels', labels)
     data = samples
 
     return NestedSamples(data=data, logL=logL, logL_birth=logL_birth,
