@@ -42,7 +42,8 @@ jobs:
     - name: build documentation
       run: |
         cd docs
-        make html
+        make clean
+        make html SPHINXOPTS="-W"
 
   pip:
     runs-on: ${{ matrix.os }}
