@@ -76,7 +76,7 @@ kernel density estimation (KDE) plots (`'kde_1d'` and `'kde_2d'`), histograms
 KDE
 ---
 
-The KDE plots make use of `scipy.stats.gaussian_kde`, whose keyword argument
+The KDE plots make use of :py:class:`scipy.stats.gaussian_kde`, whose keyword argument
 `bw_method` is forwarded on.
 
 .. plot:: :context: close-figs
