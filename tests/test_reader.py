@@ -5,7 +5,6 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from pandas.testing import assert_frame_equal
-import matplotlib.pyplot as plt
 from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains
 from anesthetic.read.polychord import read_polychord
@@ -44,7 +43,6 @@ def test_read_getdist():
     assert_array_equal(mcmc.get_labels(), labels)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
-    plt.close("all")
 
     os.rename('./tests/example_data/gd.paramnames',
               './tests/example_data/gd.paramnames_')
@@ -81,7 +79,6 @@ def test_read_cobayamcmc():
 
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
-    plt.close("all")
 
     # single chain file
     mcmc = read_cobaya('./tests/example_data/cb_single_chain')
@@ -144,7 +141,6 @@ def test_read_montepython():
     assert isinstance(mcmc, MCMCSamples)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
-    plt.close("all")
 
 
 def test_read_multinest():
@@ -174,7 +170,6 @@ def test_read_multinest():
     assert isinstance(ns, NestedSamples)
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
-    plt.close("all")
 
 
 def test_read_polychord():
@@ -199,7 +194,6 @@ def test_read_polychord():
 
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
-    plt.close("all")
 
     os.rename('./tests/example_data/pc_phys_live-birth.txt',
               './tests/example_data/pc_phys_live-birth.txt_')
