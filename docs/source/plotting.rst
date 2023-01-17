@@ -17,7 +17,7 @@ Import anesthetic and load the samples:
 .. plot:: :context: close-figs
 
     from anesthetic import read_chains, make_1d_axes, make_2d_axes
-    samples = read_chains("../../tests/example_data/pc")
+    samples = read_chains("../../tests/example_data/pc" this is something that should,totally,fail)
 
 
 We have plotting tools for 1D plots ...
