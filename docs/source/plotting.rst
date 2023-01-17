@@ -69,15 +69,15 @@ Plotting kinds: KDE, histogram, and more
 ========================================
 
 Anesthetic allows for different plotting kinds, which can be specified through
-the `kind` (or `kinds`) keyword. The currently implemented plotting kinds are
-kernel density estimation (KDE) plots (`'kde_1d'` and `'kde_2d'`), histograms
-(`'hist_1d'` and `'hist_2d'`), and scatter plots (`'scatter_2d'`).
+the ``kind`` (or ``kinds``) keyword. The currently implemented plotting kinds are
+kernel density estimation (KDE) plots (``'kde_1d'`` and ``'kde_2d'``), histograms
+(``'hist_1d'`` and ``'hist_2d'``), and scatter plots (``'scatter_2d'``).
 
 KDE
 ---
 
 The KDE plots make use of :py:class:`scipy.stats.gaussian_kde`, whose keyword argument
-`bw_method` is forwarded on.
+``bw_method`` is forwarded on.
 
 .. plot:: :context: close-figs
 
@@ -92,7 +92,7 @@ The KDE plots make use of :py:class:`scipy.stats.gaussian_kde`, whose keyword ar
     axes.iloc[-1, 0].legend(loc='upper right', bbox_to_anchor=(len(axes), len(axes)))
 
 By default, the two-dimensional plots draw the 68 and 95 percent levels.
-Different levels can be requested via the `levels` keyword:
+Different levels can be requested via the ``levels`` keyword:
     
 .. plot:: :context: close-figs
 
@@ -167,11 +167,11 @@ Colour
 ------
 
 There are multiple options when it comes to specifying colours. The simplest is
-by providing the `color` (or short `c`) keyword argument. For some other
-plotting kinds it might be desirable to distinguish between `facecolor` and
-`edgecolor` (or  short `fc` and `ec`), e.g. for unfilled contours (see also
+by providing the ``color`` (or short ``c``) keyword argument. For some other
+plotting kinds it might be desirable to distinguish between ``facecolor`` and
+``edgecolor`` (or  short ``fc`` and ``ec``), e.g. for unfilled contours (see also
 below "`Unfilled contours`_"). Yet in other cases you might prefer specifying a
-matplotlib colormap through the `cmap` keyword.
+matplotlib colormap through the ``cmap`` keyword.
 
 .. plot:: :context: close-figs
 
