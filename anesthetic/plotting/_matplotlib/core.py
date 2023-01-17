@@ -29,7 +29,7 @@ class _WeightedMPLPlot(MPLPlot):
         _get_weights(kwargs, data)
         super().__init__(data, *args, **kwargs)
 
-    def _get_index_name(self) -> str | None:
+    def _get_index_name(self):
         if isinstance(self.data, _WeightedObject):
             if isinstance(self.data.drop_weights().index, ABCMultiIndex):
                 name = self.data.drop_weights().index.names
