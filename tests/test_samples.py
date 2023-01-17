@@ -341,6 +341,14 @@ def test_plot_2d_colours():
         plt.close("all")
 
 
+def test_plot_2d_kwargs():
+    np.random.seed(42)
+    pc = read_chains("./tests/example_data/pc")
+    fig, axes = make_2d_axes(['x0', 'x1'])
+    pc.plot_2d(axes, color='r')
+    pc.plot_2d(axes, cmap=plt.cm.RdBu)
+
+
 def test_plot_1d_colours():
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
