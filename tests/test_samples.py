@@ -1182,6 +1182,9 @@ def test_samples_dot_plot():
         axes = samples.x0.plot.fastkde_1d()
         assert len(axes.lines) == 1
         plt.close("all")
+        axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.fastkde_1d()
+        assert len(axes.lines) == 5
+        plt.close("all")
     except ImportError:
         pass
 
