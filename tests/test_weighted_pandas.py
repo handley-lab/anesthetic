@@ -746,8 +746,8 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     fig, ax = plt.subplots()
     mcmc_wdf.x.plot.box(ax=ax)
 
-    axes_df = mcmc_df.plot.box(subplots=True)
-    axes_wdf = mcmc_wdf.plot.box(subplots=True)
+    mcmc_df.plot.box(subplots=True)
+    mcmc_wdf.plot.box(subplots=True)
 
     mcmc_df['split'] = ''
     mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
@@ -820,19 +820,19 @@ def test_BarPlot(mcmc_df, mcmc_wdf):
 
 
 def test_PiePlot(mcmc_df, mcmc_wdf):
-    mcmc_wdf[5:10].x.plot.pie()
+    fig, ax = plt.subplots()
+    mcmc_wdf[5:10].x.plot.pie(ax=ax)
     mcmc_wdf[5:10].plot.pie(subplots=True)
 
 
 def test_LinePlot(mcmc_df, mcmc_wdf):
-    plt.figure()
-    df_axes = mcmc_df.x.plot.line()
+    fig, ax = plt.subplots()
+    df_axes = mcmc_df.x.plot.line(ax=ax)
     assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())
-    plt.close()
-    wdf_axes = mcmc_wdf.x.plot.line()
+    fig, ax = plt.subplots()
+    wdf_axes = mcmc_wdf.x.plot.line(ax=ax)
     assert_array_equal(mcmc_wdf.index.droplevel('weights'),
                        wdf_axes.lines[0].get_xdata())
-    plt.close()
     wdf_axes = mcmc_wdf.plot.line()
     assert len(wdf_axes.lines) == len(mcmc_wdf.columns)
 

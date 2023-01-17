@@ -1134,7 +1134,8 @@ def test_samples_dot_plot():
     samples = read_chains('./tests/example_data/pc')
     axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
     assert len(axes.containers) == 5
-    axes = samples.x0.plot.kde(subplots=True)
+    fig, ax = plt.subplots()
+    axes = samples.x0.plot.kde(subplots=True, ax=ax)
     assert len(axes) == 1
     axes = samples[['x0', 'x1']].plot.kde(subplots=True)
     assert len(axes) == 2
@@ -1149,10 +1150,11 @@ def test_samples_dot_plot():
     assert axes.get_ylabel() == 'x0'
     axes = samples.plot.scatter_2d('x2', 'x3')
     assert len(axes.lines) == 1
-    plt.close("all")
-    axes = samples.x1.plot.kde_1d()
+    fig, ax = plt.subplots()
+    axes = samples.x1.plot.kde_1d(ax=ax)
     assert len(axes.lines) == 1
-    axes = samples.x2.plot.hist_1d()
+    fig, ax = plt.subplots()
+    axes = samples.x2.plot.hist_1d(ax=ax)
     assert len(axes.containers) == 1
 
     try:
