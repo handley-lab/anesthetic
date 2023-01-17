@@ -351,7 +351,7 @@ def test_kde_plot_1d(plot_1d):
 
         # Check levels
         with pytest.raises(ValueError):
-            ax = plt.gca()
+            fig, ax = plt.subplots()
             plot_1d(ax, data, fc=True, levels=[0.68, 0.95])
 
         # Check xlim, Gaussian (i.e. limits reduced to relevant data range)
@@ -542,7 +542,7 @@ def test_1d_density_kwarg(plot_1d, s):
                                              fastkde_contour_plot_2d])
 def test_contour_plot_2d(contour_plot_2d):
     try:
-        ax = plt.gca()
+        fig, ax = plt.subplots()
         np.random.seed(1)
         data_x = np.random.randn(1000)
         data_y = np.random.randn(1000)
@@ -552,17 +552,16 @@ def test_contour_plot_2d(contour_plot_2d):
 
         # Check levels
         with pytest.raises(ValueError):
-            ax = plt.gca()
+            fig, ax = plt.subplots()
             contour_plot_2d(ax, data_x, data_y, levels=[0.68, 0.95])
 
         # Check q
-        ax = plt.gca()
+        fig, ax = plt.subplots()
         contour_plot_2d(ax, data_x, data_y, q=0)
-        plt.close()
 
         # Check unfilled
         cmap = basic_cmap('C2')
-        ax = plt.gca()
+        fig, ax = plt.subplots()
         cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
         cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
         # filled `contourf` and unfilled `contour` colors are the same:
@@ -573,8 +572,7 @@ def test_contour_plot_2d(contour_plot_2d):
         cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
         assert cf.get_cmap() == plt.cm.Reds
         assert ct.colors == 'C0'
-        plt.close()
-        ax = plt.gca()
+        fig, ax = plt.subplots()
         cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None)
         assert cf is None
         assert ct.colors is None
@@ -652,9 +650,8 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
         y = np.random.randn(1000)
         cmap = plt.cm.viridis
 
-        ax1 = plt.subplot(211)
+        fig, (ax1, ax2) = plt.subplots(2)
         contour_plot_2d(ax1, x, y, levels=levels, cmap=cmap)
-        ax2 = plt.subplot(212)
         contour_plot_2d(ax2, x, y, levels=levels, cmap=cmap, fc=None)
 
         # assert that color between filled and unfilled contours matches
@@ -680,7 +677,7 @@ def test_scatter_plot_2d():
     lines, = scatter_plot_2d(ax, data_x, data_y)
     assert isinstance(lines, Line2D)
 
-    ax = plt.gca()
+    fig, ax = plt.subplots()
     points, = scatter_plot_2d(ax, data_x, data_y, color='C0', lw=1)
     assert (points.get_color() == 'C0')
     points, = scatter_plot_2d(ax, data_x, data_y, cmap=plt.cm.viridis)
@@ -691,7 +688,7 @@ def test_scatter_plot_2d():
     assert (points.get_markeredgecolor() == 'C2')
 
     # Check that q is ignored
-    ax = plt.gca()
+    fig, ax = plt.subplots()
     scatter_plot_2d(ax, data_x, data_y, q=0)
 
 

@@ -815,6 +815,7 @@ def test_PiePlot(mcmc_df, mcmc_wdf):
 
 
 def test_LinePlot(mcmc_df, mcmc_wdf):
+    plt.figure()
     df_axes = mcmc_df.x.plot.line()
     assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())
     plt.close()
