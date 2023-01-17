@@ -34,6 +34,7 @@ anesthetic.samples module
 .. automodule:: anesthetic.samples
     :members:
     :undoc-members:
+    :exclude-members: plot
     :show-inheritance:
 
 anesthetic.utils module
@@ -44,19 +45,20 @@ anesthetic.utils module
     :undoc-members:
     :show-inheritance:
 
+anesthetic.labelled\_pandas module
+----------------------------------
+
+.. automodule:: anesthetic.labelled_pandas
+    :members:
+    :private-members: _LabelledObject
+    :show-inheritance:
+
 anesthetic.weighted\_pandas module
 ----------------------------------
 
 .. automodule:: anesthetic.weighted_pandas
     :members:
-    :undoc-members:
+    :private-members: _WeightedObject
+    :exclude-members: plot
     :show-inheritance:
 
-
-Module contents
----------------
-
-.. automodule:: anesthetic
-    :members:
-    :undoc-members:
-    :show-inheritance:
