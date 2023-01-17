@@ -749,16 +749,16 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_df.plot.box(subplots=True)
     mcmc_wdf.plot.box(subplots=True)
 
-    # mcmc_df['split'] = ''
-    # mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
-    # mcmc_df.loc[len(mcmc_df)//2:, 'split'] = 'B'
-    #
-    # mcmc_wdf['split'] = ''
-    # mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
-    # mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
-    #
-    # mcmc_df.groupby('split').boxplot()
-    # mcmc_wdf.groupby('split').boxplot()
+    mcmc_df['split'] = ''
+    mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
+    mcmc_df.loc[len(mcmc_df)//2:, 'split'] = 'B'
+
+    mcmc_wdf['split'] = ''
+    mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
+    mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
+
+    mcmc_df.groupby('split').boxplot()
+    mcmc_wdf.groupby('split').boxplot()
 
     for return_type in ['dict', 'both']:
         fig, ax = plt.subplots()
