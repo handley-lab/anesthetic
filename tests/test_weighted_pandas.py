@@ -763,7 +763,6 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
     mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
 
-
     for return_type in ['dict', 'both']:
         mcmc_wdf.plot.box(return_type=return_type)
         mcmc_wdf.boxplot(return_type=return_type)
