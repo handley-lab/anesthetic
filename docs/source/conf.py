@@ -220,10 +220,10 @@ epub_exclude_files = ['search.html']
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-        'numpy':('http://docs.scipy.org/doc/numpy/', None),
-        'scipy':('http://docs.scipy.org/doc/scipy/reference', None),
-        'pandas':('https://pandas.pydata.org/pandas-docs/stable/', None),
-        'matplotlib':('http://matplotlib.org', None)
+        'numpy':('https://numpy.org/doc/stable', None),
+        'scipy':('https://docs.scipy.org/doc/scipy', None),
+        'pandas':('https://pandas.pydata.org/pandas-docs/stable', None),
+        'matplotlib':('https://matplotlib.org/stable', None)
         }
 
 # -- Options for todo extension ----------------------------------------------
