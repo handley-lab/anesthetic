@@ -12,12 +12,6 @@ from pandas.plotting._matplotlib.misc import (
 )
 
 
-@pytest.fixture(autouse=True)
-def close_figures_on_teardown():
-    yield
-    plt.close("all")
-
-
 @pytest.fixture
 def series():
     np.random.seed(0)

@@ -21,12 +21,6 @@ from scipy.special import erf
 from scipy.interpolate import interp1d
 
 
-@pytest.fixture(autouse=True)
-def close_figures_on_teardown():
-    yield
-    plt.close("all")
-
-
 def test_AxesObjects():
     paramnames = ['a', 'b', 'c']
 

@@ -18,12 +18,6 @@ except ImportError:
     pass
 
 
-@pytest.fixture(autouse=True)
-def close_figures_on_teardown():
-    yield
-    plt.close("all")
-
-
 def test_read_getdist():
     np.random.seed(3)
     mcmc = read_getdist('./tests/example_data/gd')

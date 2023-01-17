@@ -22,12 +22,6 @@ from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
 
 
-@pytest.fixture(autouse=True)
-def close_figures_on_teardown():
-    yield
-    plt.close("all")
-
-
 def test_build_samples():
     np.random.seed(3)
     nsamps = 1000
