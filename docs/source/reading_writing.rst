@@ -2,6 +2,9 @@
 Reading and writing
 *******************
 
+
+.. _reading chains:
+
 Reading chain files from PolyChord, MultiNest, CosmoMC, or Cobaya
 =================================================================
 
@@ -29,6 +32,8 @@ out the examples listed here.
       from anesthetic import read_chains
       samples = read_chains("anesthetic/tests/example_data/cb", burn_in=0.1)
 
+
+.. _passing data:
 
 Passing data as arguments
 =========================

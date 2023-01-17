@@ -2,11 +2,18 @@
 Plotting
 ********
 
-You can download the example data used here from GitHub or alternatively use
-your own chains files.
+You can download the example data used in this documentation from the
+anesthetic GitHub page: 
+| https://github.com/williamjameshandley/anesthetic/tree/master/tests/example_data
 
-Example data on GitHub:
-https://github.com/williamjameshandley/anesthetic/tree/master/tests/example_data
+You will have the data automatically if you git clone anesthetic:
+
+.. code-block:: console
+
+   git clone https://github.com/williamjameshandley/anesthetic.git
+
+Alternatively you can :ref:`use your own chains files <reading chains>` or
+:ref:`generate new random data <passing data>`.
 
 
 Marginalised posterior plotting
