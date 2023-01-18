@@ -38,7 +38,34 @@ from anesthetic.boundary import cut_and_normalise_gaussian
 
 
 class AxesSeries(Series):
-    """Anesthetic's axes version of `~pandas.Series`."""
+    """Anesthetic's axes version of :class:`pandas.Series`.
+
+    Parameters
+    ----------
+    index: list(str)
+        Parameters to be placed on the y-axes.
+    fig : :class:`matplotlib.figure.Figure`
+    ncol : int
+        Number of axes columns. Decides after how many axes the AxesSeries is
+        split to continue in a new row.
+    labels : dict(str:str), optional
+        Dictionary mapping params to plot labels.
+        Default: params
+    gridspec_kw : dict, optional
+        Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
+        constructor used to create the grid the subplots are placed on.
+    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, optional
+        GridSpec instance to plot array as part of a subfigure.
+        Default: None
+
+    Methods
+    -------
+    set_xlabels:
+        Set the labels for the x-axes.
+    tick_params:
+        Set tick parameters across all axes.
+
+    """
 
     def __init__(self, data=None, index=None, fig=None, ncol=None, labels=None,
                  gridspec_kw=None, subplot_spec=None, *args, **kwargs):
@@ -98,19 +125,20 @@ class AxesSeries(Series):
             labels : dict
                 Dictionary of the axes labels.
             kwargs
-                Any kwarg that can be passed to `plt.xlabel`.
+                Any kwarg that can be passed to
+                :meth:`matplotlib.axes.Axes.set_xlabel`.
 
         """
         self._set_xlabels(axes=self, labels=labels, **kwargs)
 
     def tick_params(self, *args, **kwargs):
-        """Apply `matplotlib.axes.tick_params` to entire `AxesSeries`."""
+        """Apply :meth:`matplotlib.axes.Axes.tick_params` across all axes."""
         for p, ax in self.items():
             ax.tick_params(*args, **kwargs)
 
 
 class AxesDataFrame(DataFrame):
-    """Anesthetic's axes version of `~pandas.DataFrame`.
+    """Anesthetic's axes version of :class:`pandas.DataFrame`.
 
     Parameters
     ----------
@@ -118,7 +146,7 @@ class AxesDataFrame(DataFrame):
         Parameters to be placed on the y-axes.
     columns: list(str)
         Parameters to be placed on the x-axes.
-    fig : `~matplotlib.figure.Figure`
+    fig : :class:`matplotlib.figure.Figure`
     lower, diagonal, upper : bool, optional
         Whether to create 2D marginalised plots above or below the
         diagonal, or to create a 1D marginalised plot on the diagonal.
@@ -132,9 +160,9 @@ class AxesDataFrame(DataFrame):
         If None, plot no ticks at all.
         Default: 'inner'
     gridspec_kw : dict, optional
-        Dict with keywords passed to the `~matplotlib.gridspec.GridSpec`
+        Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
-    subplot_spec : matplotlib.gridspec.GridSpec, optional
+    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, optional
         GridSpec instance to plot array as part of a subfigure.
         Default: None
 
@@ -142,6 +170,16 @@ class AxesDataFrame(DataFrame):
     -------
     axlines:
         Add vertical and horizontal lines across all axes.
+    axspans:
+        Add vertical and horizontal spans across all axes.
+    scatter:
+        Add scatter points across all axes.
+    set_labels:
+        Set the labels for the axes.
+    set_margins:
+        Set margins across all axes.
+    tick_params:
+        Set tick parameters across all axes.
 
     """
 
@@ -232,7 +270,7 @@ class AxesDataFrame(DataFrame):
                     if position[x][y] == 0:
                         axes[x][y].twin = axes[x][y].twinx()
                         axes[x][y].twin.set_yticks([])
-                        cls.make_diagonal(axes[x][y])
+                        cls._make_diagonal(axes[x][y])
                         axes[x][y].position = 'diagonal'
                         axes[x][y].twin.xaxis.set_major_locator(
                             MaxNLocator(3, prune='both'))
@@ -244,10 +282,10 @@ class AxesDataFrame(DataFrame):
                     else:
                         if position[x][y] == 1:
                             axes[x][y].position = 'upper'
-                            cls.make_offdiagonal(axes[x][y])
+                            cls._make_offdiagonal(axes[x][y])
                         elif position[x][y] == -1:
                             axes[x][y].position = 'lower'
-                            cls.make_offdiagonal(axes[x][y])
+                            cls._make_offdiagonal(axes[x][y])
                         axes[x][y].yaxis.set_major_locator(
                             MaxNLocator(3, prune='both'))
                         axes[x][y].yaxis.set_minor_locator(AutoMinorLocator(1))
@@ -257,7 +295,7 @@ class AxesDataFrame(DataFrame):
         return axes
 
     @staticmethod
-    def make_diagonal(ax):
+    def _make_diagonal(ax):
         """Link x and y axes limits."""
 
         class DiagonalAxes(type(ax)):
@@ -284,7 +322,7 @@ class AxesDataFrame(DataFrame):
         ax.__class__ = DiagonalAxes
 
     @staticmethod
-    def make_offdiagonal(ax):
+    def _make_offdiagonal(ax):
         """Linking x to y axes limits in triangle plots."""
 
         class OffDiagonalAxes(type(ax)):
@@ -341,7 +379,9 @@ class AxesDataFrame(DataFrame):
             labels : dict
                 Dictionary of the axes labels.
             kwargs
-                Any kwarg that can be passed to `plt.xlabel` or `plt.ylabel`.
+                Any kwarg that can be passed to
+                :meth:`matplotlib.axes.Axes.set_xlabel` or
+                :meth:`matplotlib.axes.Axes.set_ylabel`.
 
         """
         self._set_labels(axes=self, labels=labels, **kwargs)
@@ -408,14 +448,14 @@ class AxesDataFrame(DataFrame):
                                       **kwargs)
 
     def tick_params(self, *args, **kwargs):
-        """Apply `matplotlib.axes.tick_params` to entire `AxesDataFrame`."""
+        """Apply :meth:`matplotlib.axes.Axes.tick_params` across all axes."""
         for y, rows in self.iterrows():
             for x, ax in rows.items():
                 if isinstance(ax, Axes):
                     ax.tick_params(*args, **kwargs)
 
     def set_margins(self, m):
-        """Apply `matplotlib.axes.set_xmargin` to entire `AxesDataFrame`."""
+        """Apply :meth:`matplotlib.axes.Axes.set_xmargin` across all axes."""
         unique_params = list(np.unique(list(self.index) + list(self.columns)))
         for y, rows in self.iterrows():
             for x, ax in rows.items():
@@ -444,7 +484,9 @@ class AxesDataFrame(DataFrame):
             and/or upper triangle plots.
             Default: True
         kwargs
-            Any kwarg that can be passed to `plt.axvline` or `plt.axhline`.
+            Any kwarg that can be passed to
+            :meth:`matplotlib.axes.Axes.axvline` or
+            :meth:`matplotlib.axes.Axes.axhline`.
 
         """
         positions = ['lower' if lower else None,
@@ -474,7 +516,9 @@ class AxesDataFrame(DataFrame):
             and/or upper triangle plots.
             Default: True
         kwargs
-            Any kwarg that can be passed to `plt.axvspan` or `plt.axhspan`.
+            Any kwarg that can be passed to
+            :meth:`matplotlib.axes.Axes.axvspan` or
+            :meth:`matplotlib.axes.Axes.axhspan`.
 
         """
         kwargs = normalize_kwargs(kwargs, dict(color=['c']))
@@ -504,7 +548,8 @@ class AxesDataFrame(DataFrame):
             Whether to plot the spans on the lower and/or upper triangle plots.
             Default: True
         kwargs
-            Any kwarg that can be passed to `plt.scatter`.
+            Any kwarg that can be passed to
+            :meth:`matplotlib.axes.Axes.scatter`.
 
         """
         positions = ['lower' if lower else None,
@@ -538,24 +583,24 @@ def make_1d_axes(params, ncol=None, labels=None,
         Default: params
 
     gridspec_kw : dict, optional
-        Dict with keywords passed to the `~matplotlib.gridspec.GridSpec`
+        Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
 
-    subplot_spec : matplotlib.gridspec.GridSpec, optional
+    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, optional
         GridSpec instance to plot array as part of a subfigure.
         Default: None
 
     **fig_kw
         All additional keyword arguments are passed to the
-        `.pyplot.figure` call.
+        :func:`matplotlib.pyplot.figure` call.
         Or directly pass the figure to plot on via the keyword 'fig'.
 
     Returns
     -------
-    fig : `~matplotlib.figure.Figure`
+    fig : :class:`matplotlib.figure.Figure`
         New or original (if supplied) figure object.
 
-    axes: `~pandas.Series(matplotlib.axes.Axes)`
+    axes: :class:`anesthetic.plot.AxesSeries`
         Pandas array of axes objects.
 
     """
@@ -599,24 +644,24 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
         Default: 'inner'
 
     gridspec_kw : dict, optional
-        Dict with keywords passed to the `~matplotlib.gridspec.GridSpec`
+        Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
 
-    subplot_spec : matplotlib.gridspec.GridSpec, optional
+    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, optional
         GridSpec instance to plot array as part of a subfigure.
         Default: None
 
     **fig_kw
         All additional keyword arguments are passed to the
-        `.pyplot.figure` call.
+        :func:`matplotlib.pyplot.figure` call.
         Or directly pass the figure to plot on via the keyword 'fig'.
 
     Returns
     -------
-    fig : `~matplotlib.figure.Figure`
+    fig : :class:`matplotlib.figure.Figure`
         New or original (if supplied) figure object.
 
-    axes : `~pandas.DataFrame(matplotlib.axes.Axes)`
+    axes : :class:`anesthetic.plot.AxesDataFrame`
         Pandas array of axes objects.
 
     """
@@ -641,9 +686,9 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
 def fastkde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
-    This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
-    density estimation computation provided by the package fastkde in between.
-    All remaining keyword arguments are passed onwards.
+    This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
+    a kernel density estimation (KDE) computation provided by the package
+    fastkde in-between. All remaining keyword arguments are passed onwards.
 
     Parameters
     ----------
@@ -677,9 +722,9 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     Returns
     -------
-    lines: matplotlib.lines.Line2D
+    lines: :class:`matplotlib.lines.Line2D`
         A list of line objects representing the plotted data (same as
-        matplotlib matplotlib.axes.Axes.plot command).
+        :meth:`matplotlib.axes.Axes.plot` command).
 
     """
     kwargs = normalize_kwargs(
@@ -734,9 +779,10 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 def kde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
-    This functions as a wrapper around matplotlib.axes.Axes.plot, with a kernel
-    density estimation computation provided by scipy.stats.gaussian_kde in
-    between. All remaining keyword arguments are passed onwards.
+    This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
+    a kernel density estimation computation provided by
+    :class:`scipy.stats.gaussian_kde` in-between. All remaining keyword
+    arguments are passed onwards.
 
     Parameters
     ----------
@@ -778,11 +824,14 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         to define the color of the shading directly.
         Optional, default False
 
+    bw_method: str, scalar or callable, optional
+        Forwarded to :class:`scipy.stats.gaussian_kde`.
+
     Returns
     -------
-    lines: matplotlib.lines.Line2D
+    lines: :class:`matplotlib.lines.Line2D`
         A list of line objects representing the plotted data (same as
-        matplotlib matplotlib.axes.Axes.plot command).
+        :meth:`matplotlib.axes.Axes.plot` command).
 
     """
     kwargs = normalize_kwargs(
@@ -852,8 +901,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 def hist_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d histogram.
 
-    This functions is a wrapper around matplotlib.axes.Axes.hist. All remaining
-    keyword arguments are passed onwards.
+    This functions is a wrapper around :meth:`matplotlib.axes.Axes.hist`. All
+    remaining keyword arguments are passed onwards.
 
     Parameters
     ----------
@@ -882,7 +931,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     Other Parameters
     ----------------
-    **kwargs : `~matplotlib.axes.Axes.hist` properties
+    **kwargs : :meth:`matplotlib.axes.Axes.hist` properties
 
     """
     kwargs = normalize_kwargs(
@@ -931,10 +980,10 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """Plot a 2d marginalised distribution as contours.
 
-    This functions as a wrapper around matplotlib.axes.Axes.contour, and
-    matplotlib.axes.Axes.contourf with a kernel density estimation computation
-    in between. All remaining keyword arguments are passed onwards to both
-    functions.
+    This functions as a wrapper around :meth:`matplotlib.axes.Axes.contour`,
+    and :meth:`matplotlib.axes.Axes.contourf` with a kernel density estimation
+    (KDE) computation in-between. All remaining keyword arguments are passed
+    onwards to both functions.
 
     Parameters
     ----------
@@ -956,7 +1005,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Returns
     -------
-    c: matplotlib.contour.QuadContourSet
+    c: :class:`matplotlib.contour.QuadContourSet`
         A set of contourlines or filled regions.
 
     """
@@ -1028,10 +1077,11 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """Plot a 2d marginalised distribution as contours.
 
-    This functions as a wrapper around matplotlib.axes.Axes.tricontour, and
-    matplotlib.axes.Axes.tricontourf with a kernel density estimation
-    computation provided by scipy.stats.gaussian_kde in between. All remaining
-    keyword arguments are passed onwards to both functions.
+    This functions as a wrapper around :meth:`matplotlib.axes.Axes.contour`
+    and :meth:`matplotlib.axes.Axes.contourf` with a kernel density
+    estimation (KDE) computation provided by :class:`scipy.stats.gaussian_kde`
+    in-between. All remaining keyword arguments are passed onwards to both
+    functions.
 
     Parameters
     ----------
@@ -1061,9 +1111,12 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Number of plotting points to use.
         Default 1000
 
+    bw_method: str, scalar or callable, optional
+        Forwarded to :class:`scipy.stats.gaussian_kde`.
+
     Returns
     -------
-    c: matplotlib.contour.QuadContourSet
+    c: :class:`matplotlib.contour.QuadContourSet`
         A set of contourlines or filled regions.
 
     """
@@ -1149,7 +1202,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """Plot a 2d marginalised distribution as a histogram.
 
-    This functions as a wrapper around matplotlib.axes.Axes.hist2d
+    This functions as a wrapper around :meth:`matplotlib.axes.Axes.hist2d`.
 
     Parameters
     ----------
@@ -1158,11 +1211,12 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     data_x, data_y: np.array
         The x and y coordinates of uniformly weighted samples to generate a
-        two dimensional histogram.
+        two-dimensional histogram.
 
     levels: list
         Shade iso-probability contours containing these levels of probability
-        mass. If None defaults to usual matplotlib.axes.Axes.hist2d colouring.
+        mass. If None defaults to usual :meth:`matplotlib.axes.Axes.hist2d`
+        colouring.
         Optional, default None
 
     q: int or float or tuple
@@ -1175,7 +1229,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Returns
     -------
-    c: matplotlib.collections.QuadMesh
+    c: :class:`matplotlib.collections.QuadMesh`
         A set of colors.
 
     """
@@ -1227,8 +1281,9 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """Plot samples from a 2d marginalised distribution.
 
-    This functions as a wrapper around matplotlib.axes.Axes.plot, enforcing any
-    prior bounds. All remaining keyword arguments are passed onwards.
+    This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`,
+    enforcing any prior bounds. All remaining keyword arguments are passed
+    onwards.
 
     Parameters
     ----------
@@ -1240,9 +1295,9 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Returns
     -------
-    lines: matplotlib.lines.Line2D
+    lines: :class:`matplotlib.lines.Line2D`
         A list of line objects representing the plotted data (same as
-        matplotlib.axes.Axes.plot command)
+        :meth:`matplotlib.axes.Axes.plot` command).
 
     """
     kwargs = normalize_kwargs(
