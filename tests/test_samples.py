@@ -332,7 +332,8 @@ def test_plot_2d_colours():
 
 
 @pytest.mark.parametrize(
-    'kind', ['kde', 'hist', dict(diagonal='fastkde_1d', lower='fastkde_2d')]
+    'kind', ['kde', 'hist', 'default',
+             dict(diagonal='fastkde_1d', lower='fastkde_2d')]
 )
 def test_plot_2d_kwargs(kind):
     if isinstance(kind, str) or 'fastkde' in sys.modules:
