@@ -160,12 +160,30 @@ passing `axes.iloc[0, 0]` does not work, instead you should pass
 Vertical lines or truth values
 ==============================
 
+The :class:`anesthetic.plot.AxesDataFrame` class has three convenience methods
+``scatter``, ``axlines``, and ``axspans``, which help highlight specific points
+or areas in parameter space across all subplots.
+
+:meth:`anesthetic.plot.AxesDataFrame.scatter` is for example particularly
+useful when pointing out the input "truth" from simulations or the best-fit
+parameter set of an MCMC run.
+
+:meth:`anesthetic.plot.AxesDataFrame.axlines` is particularly useful when
+wanting to separate the parameter space in two. A cosmological example could be
+the separation into closed and open universes along the line where the spatial
+curvature is zero.
+
+:meth:`anesthetic.plot.AxesDataFrame.axlines` is particularly useful when
+wanting to highlight a range of a parameter across the full parameter space,
+e.g. the range of sensitivity of an instrument.
+
 .. plot:: :context: close-figs
 
     fig, axes = make_2d_axes(['x0', 'x1', 'x2'])
     samples.plot_2d(axes, label="posterior samples")
     axes.scatter({'x0': 0, 'x1': 0, 'x2': 0}, marker='*', c='r', label="some truth")
     axes.axlines({'x2': 0.3}, ls=':', c='k', label="some threshold")
+    axes.axspans({'x0': (-0.1, 0.1)}, c='0.5', alpha=0.3, upper=False, label="some range")
     axes.iloc[-1,  0].legend(loc='lower center', bbox_to_anchor=(len(axes)/2, len(axes)))
 
 |
