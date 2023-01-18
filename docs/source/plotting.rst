@@ -98,8 +98,8 @@ The KDE plots make use of :py:class:`scipy.stats.gaussian_kde`, whose keyword ar
     samples.plot_2d(axes, kinds=dict(diagonal='kde_1d', lower='kde_2d'), label="KDE")
     axes.iloc[-1, 0].legend(loc='upper right', bbox_to_anchor=(len(axes), len(axes)))
 
-By default, the two-dimensional plots draw the 68 and 95 percent levels.
-Different levels can be requested via the ``levels`` keyword:
+By default, the two-dimensional plots draw the 68 and 95 percent levels as
+shown above. Different levels can be requested via the ``levels`` keyword:
     
 .. plot:: :context: close-figs
 
@@ -108,6 +108,9 @@ Different levels can be requested via the ``levels`` keyword:
 
 Histograms
 ----------
+
+The histograms make use of :py:meth:`matplotlib.axes.Axes.hist` with all
+keywords piped through.
 
 .. plot:: :context: close-figs
 
@@ -135,6 +138,14 @@ Scatter plot
 
 More finegrained control
 ------------------------
+
+It is possible to have different kinds of plots in the lower/upper triangle or
+on the diagonal. To achieve this you can pass only a slice of the ``axes``
+(which is of type :class:`anesthetic.plot.AxesDataFrame`) to the ``plot_2d``
+command. It is important, however, that the slice remains two-dimensional, e.g.
+passing `axes.iloc[0, 0]` does not work, instead you should pass
+`axes.iloc[0:1, 0:1]` (to ensure it is still of type
+:class:`anesthetic.plot.AxesDataFrame`).
 
 .. plot:: :context: close-figs
 
