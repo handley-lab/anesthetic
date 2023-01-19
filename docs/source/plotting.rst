@@ -227,6 +227,11 @@ Figure size
 Legends
 -------
 
+The easiest way of working with legends in anesthetic is probably by picking
+your favourite subplot and calling the :meth:`matplotlib.axes.Axes.legend`
+method from there, directing it to the correct position with the ``loc`` and
+``bbox_to_anchor`` keywords:
+
 .. plot:: :context: close-figs
 
     fig, axes = make_2d_axes(['x0', 'x1', 'x2'])
@@ -237,6 +242,12 @@ Legends
 
 Unfilled contours
 -----------------
+
+You can get unfilled contours by setting the ``facecolor`` (or ``fc``) keyword
+to one of ``None`` or ``'None'``. By default this will then cause the lines to
+be plotted in the colours that otherwise the faces would have been coloured in.
+If you would prefer the same colour for all level lines, you can enforce that
+by explicitly providing the keyword ``edgecolor`` (or ``ec``):
 
 .. plot:: :context: close-figs
 
