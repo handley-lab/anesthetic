@@ -59,8 +59,9 @@ def read_cobaya(root, *args, **kwargs):
     if not chains_files:
         raise FileNotFoundError(dirname + '/' + regex + " not found.")
 
-    params, labels = read_paramnames(root)
-    columns = kwargs.pop('columns', params)
+    columns, labels = read_paramnames(root)
+    columns = kwargs.pop('columns', columns)
+    labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
     samples = []

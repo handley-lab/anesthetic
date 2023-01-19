@@ -21,9 +21,10 @@ def read_polychord(root, *args, **kwargs):
     except IOError:
         pass
     data, logL, logL_birth = np.split(data, [-2, -1], axis=1)
-    params, labels = read_paramnames(root)
+    columns, labels = read_paramnames(root)
 
-    columns = kwargs.pop('columns', params)
+    columns = kwargs.pop('columns', columns)
+    labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
     return NestedSamples(data=data, columns=columns,
