@@ -118,6 +118,7 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             self._append_legend_handles_labels(artists[0], label)
 
     def _post_plot_logic(self, ax, data):
+        super()._post_plot_logic(ax, data)
         ax.set_yticks([])
         ax.set_ylim(0, 1.1)
         ax.set_xlim(self.bins[0], self.bins[-1])
