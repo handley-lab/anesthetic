@@ -1257,6 +1257,12 @@ def test_old_gui():
     with pytest.raises(NotImplementedError):
         samples.tex['x0'] = '$x_0$'
 
+    with pytest.raises(NotImplementedError):
+        samples.D(1000)
+
+    with pytest.raises(NotImplementedError):
+        samples.d(1000)
+
     fig, ax = plt.subplots()
     with pytest.raises(ValueError):
         samples.plot(ax, 'x0')

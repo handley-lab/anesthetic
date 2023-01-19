@@ -599,7 +599,8 @@ class NestedSamples(Samples):
             "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
             "samples.ns_output(1000)  # anesthetic 1.0\n"
             "samples.stats(1000)      # anesthetic 2.0\n\n"
-            "Check out the new temperature functionality: help(samples.stats)"
+            "Check out the new temperature functionality: help(samples.stats),"
+            " as well as average loglikelihoods: help(samples.logL_P)"
             )
 
     def stats(self, nsamples=None, beta=None):
@@ -849,6 +850,17 @@ class NestedSamples(Samples):
 
     _logZ_function_shape = '\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
 
+    # TODO: remove this in version >= 2.1
+    def D(self, nsamples=None):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.D(1000)     # anesthetic 1.0\n"
+            "samples.D_KL(1000)  # anesthetic 2.0\n\n"
+            "Check out the new temperature functionality: help(samples.D_KL), "
+            "as well as average loglikelihoods: help(samples.logL_P)"
+            )
+
     def D_KL(self, nsamples=None, beta=None):
         """Kullback-Leibler divergence."""
         logw = self.logw(nsamples, beta)
@@ -864,6 +876,17 @@ class NestedSamples(Samples):
                                             index=logw.columns).squeeze()
 
     D_KL.__doc__ += _logZ_function_shape
+
+    # TODO: remove this in version >= 2.1
+    def d(self, nsamples=None):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.d(1000)     # anesthetic 1.0\n"
+            "samples.d_G(1000)  # anesthetic 2.0\n\n"
+            "Check out the new temperature functionality: help(samples.d_G), "
+            "as well as average loglikelihoods: help(samples.logL_P)"
+            )
 
     def d_G(self, nsamples=None, beta=None):
         """Bayesian model dimensionality."""
