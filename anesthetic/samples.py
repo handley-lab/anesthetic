@@ -190,6 +190,13 @@ class Samples(WeightedLabelledDataFrame):
             Pandas array of axes objects
 
         """
+        # TODO: remove this in version >= 2.1
+        if 'plot_type' in kwargs:
+            raise ValueError(
+                "You are using the anesthetic 1.0 kwarg \'plot_type\' instead "
+                "of anesthetic 2.0 \'kind\'. Please update your code."
+                )
+
         if not isinstance(axes, AxesSeries):
             _, axes = make_1d_axes(axes, labels=self.get_labels_map())
 
@@ -201,6 +208,12 @@ class Samples(WeightedLabelledDataFrame):
             warnings.warn(
                 "You are using \'kde\' as a plot kind. "
                 "\'kde_1d\' is the appropriate keyword for anesthetic. "
+                "Your plots may look odd if you use this argument."
+                )
+        elif kwargs['kind'] == 'hist':
+            warnings.warn(
+                "You are using \'hist\' as a plot kind. "
+                "\'hist_1d\' is the appropriate keyword for anesthetic. "
                 "Your plots may look odd if you use this argument."
                 )
 
@@ -276,8 +289,16 @@ class Samples(WeightedLabelledDataFrame):
             Pandas array of axes objects
 
         """
+        # TODO: remove this in version >= 2.1
+        if 'types' in kwargs:
+            raise ValueError(
+                "You are using the anesthetic 1.0 kwarg \'types\' instead of "
+                "anesthetic 2.0 \'kind' or \'kinds\' (synonyms). "
+                "Please update your code."
+                )
         kind = kwargs.pop('kind', 'default')
         kind = kwargs.pop('kinds', kind)
+
         if isinstance(kind, str) and kind in self.plot_2d_default_kinds:
             kind = self.plot_2d_default_kinds.get(kind)
         if (not isinstance(kind, dict) or
@@ -313,6 +334,13 @@ class Samples(WeightedLabelledDataFrame):
                         warnings.warn(
                             "You are using \'kde\' as a plot kind. "
                             "\'kde_1d\' and \'kde_2d\' are the appropriate "
+                            "keywords for anesthetic. Your plots may look "
+                            "odd if you use this argument."
+                            )
+                    elif lkwargs['kind'] == 'hist':
+                        warnings.warn(
+                            "You are using \'hist\' as a plot kind. "
+                            "\'hist_1d\' and \'hist_2d\' are the appropriate "
                             "keywords for anesthetic. Your plots may look "
                             "odd if you use this argument."
                             )

@@ -1242,10 +1242,17 @@ def test_old_gui():
 
     samples = read_chains('./tests/example_data/pc')
 
-    with pytest.warns(UserWarning):
-        samples.plot_2d(['x0', 'x1', 'x2'], kind={'lower': 'kde'})
-    with pytest.warns(UserWarning):
-        samples.plot_1d(['x0', 'x1', 'x2'], kind='kde')
+    for kind in ['kde', 'hist']:
+        with pytest.warns(UserWarning):
+            samples.plot_2d(['x0', 'x1', 'x2'], kind={'lower': kind})
+        with pytest.warns(UserWarning):
+            samples.plot_1d(['x0', 'x1', 'x2'], kind=kind)
+
+    with pytest.raises(ValueError):
+        samples.plot_2d(['x0', 'x1', 'x2'], types={'lower': 'kde'})
+
+    with pytest.raises(ValueError):
+        samples.plot_1d(['x0', 'x1', 'x2'], plot_type='kde')
 
     with pytest.raises(NotImplementedError):
         samples.tex['x0'] = '$x_0$'
