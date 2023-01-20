@@ -102,7 +102,8 @@ class TestPlotAnesthetic(TestPlotBase):
 
         # Check gridspec kwargs
         fig, axes = make_1d_axes(paramnames, gridspec_kw=dict(wspace=0.1))
-        ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+        ws = axes[0].get_subplotspec(
+        ).get_gridspec().get_subplot_params().wspace
         assert ws == 0.1
 
         # Check figure kwargs
@@ -149,11 +150,13 @@ class TestPlotAnesthetic(TestPlotBase):
         grid = gs.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[3, 1])
         g00 = grid[0, 0]
         fig, axes = make_2d_axes(paramnames_x, subplot_spec=g00)
-        assert g00 is axes.iloc[0, 0].get_subplotspec().get_topmost_subplotspec()
+        assert g00 is axes.iloc[0, 0].get_subplotspec(
+        ).get_topmost_subplotspec()
 
         # Check gridspec kwargs
         fig, axes = make_1d_axes(paramnames_x, gridspec_kw=dict(wspace=0.1))
-        ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+        ws = axes[0].get_subplotspec(
+        ).get_gridspec().get_subplot_params().wspace
         assert ws == 0.1
 
         # Check figure kwargs
@@ -177,7 +180,8 @@ class TestPlotAnesthetic(TestPlotBase):
     @pytest.mark.parametrize('upper', [False, True])
     @pytest.mark.parametrize('lower', [False, True])
     @pytest.mark.parametrize('diagonal', [False, True])
-    def test_make_2d_axes_behaviour(self, diagonal, lower, upper, paramnames_y):
+    def test_make_2d_axes_behaviour(
+            self, diagonal, lower, upper, paramnames_y):
         np.random.seed(0)
 
         def calc_n(axes):
@@ -267,9 +271,12 @@ class TestPlotAnesthetic(TestPlotBase):
                     assert axes[y][z].get_xlim() == (c, d)
                     assert axes[z][y].get_ylim() == (c, d)
 
-    @pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
-                                            [['A', 'B', 'C', 'D'], ['A', 'B']],
-                                            [['A', 'B'], ['A', 'B', 'C', 'D']]])
+    @pytest.mark.parametrize('axesparams',
+                             [['A', 'B', 'C', 'D'],
+                              [['A', 'B', 'C', 'D'],
+                               ['A', 'B']],
+                              [['A', 'B'],
+                               ['A', 'B', 'C', 'D']]])
     @pytest.mark.parametrize('params', [{'A': 0},
                                         {'A': 0, 'C': 0, 'E': 0},
                                         {'A': 0, 'C': [0, 0.5]}])
@@ -279,21 +286,32 @@ class TestPlotAnesthetic(TestPlotBase):
         fig, axes = make_2d_axes(axesparams, upper=upper)
         axes.axlines(params, **kwargs)
 
-    @pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
-                                            [['A', 'B', 'C', 'D'], ['A', 'B']],
-                                            [['A', 'B'], ['A', 'B', 'C', 'D']]])
-    @pytest.mark.parametrize('params', [{'A': (0, 0.1)},
-                                        {'A': (0, 1), 'C': (0, 1), 'E': (0, 1)},
-                                        {'A': (0, 1), 'C': [(-0.1, 0), (0.5, 1)]}])
+    @pytest.mark.parametrize('axesparams',
+                             [['A', 'B', 'C', 'D'],
+                              [['A', 'B', 'C', 'D'],
+                               ['A', 'B']],
+                              [['A', 'B'],
+                               ['A', 'B', 'C', 'D']]])
+    @pytest.mark.parametrize('params',
+                             [{'A': (0, 0.1)},
+                              {'A': (0, 1),
+                               'C': (0, 1),
+                               'E': (0, 1)},
+                              {'A': (0, 1),
+                               'C': [(-0.1, 0),
+                                     (0.5, 1)]}])
     @pytest.mark.parametrize('upper', [True, False])
     def test_2d_axes_axspans(self, axesparams, params, upper):
         kwargs = dict(c='k', alpha=0.5)
         fig, axes = make_2d_axes(axesparams, upper=upper)
         axes.axspans(params, **kwargs)
 
-    @pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
-                                            [['A', 'B', 'C', 'D'], ['A', 'B']],
-                                            [['A', 'B'], ['A', 'B', 'C', 'D']]])
+    @pytest.mark.parametrize('axesparams',
+                             [['A', 'B', 'C', 'D'],
+                              [['A', 'B', 'C', 'D'],
+                               ['A', 'B']],
+                              [['A', 'B'],
+                               ['A', 'B', 'C', 'D']]])
     @pytest.mark.parametrize('params', [{'A': 0},
                                         {'A': 0, 'C': 0, 'E': 0},
                                         {'A': [0, 0.1], 'C': [0, 0.5]}])
@@ -353,7 +371,8 @@ class TestPlotAnesthetic(TestPlotBase):
             xmin, xmax = ax.get_xlim()
             assert xmin > 0.4
             assert xmax < 0.6
-            # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
+            # Check xlim, Uniform
+            # (i.e. data and limits span entire prior boundary)
             fig, ax = plt.subplots()
             data = np.random.uniform(size=1000)
             plot_1d(ax, data, q=0)
@@ -442,7 +461,8 @@ class TestPlotAnesthetic(TestPlotBase):
                             alpha=0.5)
         cc = ColorConverter.to_rgba(plt.cm.viridis(0.68), alpha=0.5)
         assert np.all([b.get_fc() == cc for b in bars])
-        polygon, = hist_plot_1d(ax, data, histtype='step', color='r', alpha=0.5)
+        polygon, = hist_plot_1d(
+            ax, data, histtype='step', color='r', alpha=0.5)
         assert polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5)
         polygon, = hist_plot_1d(ax, data, histtype='step', cmap=plt.cm.viridis,
                                 color='r')
@@ -498,19 +518,24 @@ class TestPlotAnesthetic(TestPlotBase):
             fig, ax = plt.subplots()
 
             # hist density = False:
-            h = hist_plot_1d(ax, x, density=False, bins=np.linspace(-5.5, 5.5, 12))
-            bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+            h = hist_plot_1d(ax, x, density=False,
+                             bins=np.linspace(-5.5, 5.5, 12))
+            bar_height = h.get_children()[len(
+                h.get_children()) // 2].get_height()
             assert bar_height == pytest.approx(1, rel=0.1)
 
             # kde density = False:
             k = plot_1d(ax, x, density=False)[0]
-            f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
+            f = interp1d(k.get_xdata(), k.get_ydata(),
+                         'cubic', assume_sorted=True)
             kde_height = f(0)
             assert kde_height == pytest.approx(1, rel=0.1)
 
             # hist density = True:
-            h = hist_plot_1d(ax, x, density=True, bins=np.linspace(-5.5, 5.5, 12))
-            bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+            h = hist_plot_1d(ax, x, density=True,
+                             bins=np.linspace(-5.5, 5.5, 12))
+            bar_height = h.get_children()[len(
+                h.get_children()) // 2].get_height()
             assert bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s),
                                                rel=0.1)
 
