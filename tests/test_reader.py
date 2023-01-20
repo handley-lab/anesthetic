@@ -54,9 +54,9 @@ class TestPlotReader(TestPlotBase):
 
         params = [0, 1, 2, 3, 4, 'logL', 'chain']
         assert all(mcmc.drop_labels().columns == params)
-        labels = ['', '', '', '', '', r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
+        labels = ['', '', '', '', '',
+                  r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
         assert_array_equal(mcmc.get_labels(), labels)
-
 
     @pytest.mark.xfail('getdist' not in sys.modules,
                        raises=NameError,
@@ -94,7 +94,6 @@ class TestPlotReader(TestPlotBase):
         )
         assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
 
-
     def test_read_montepython(self):
         np.random.seed(3)
         root = './tests/example_data/mp/2019-01-24_200000_'
@@ -106,9 +105,9 @@ class TestPlotReader(TestPlotBase):
         params = ['x0', 'x1', 'x2', 'x3', 'n_s', 'tau_reio', 'A_cib_217',
                   'xi_sz_cib', 'A_sz', 'ps_A_100_100', 'ps_A_143_143',
                   'ps_A_143_217', 'ps_A_217_217', 'ksz_norm', 'gal545_A_100',
-                  'gal545_A_143', 'gal545_A_143_217', 'gal545_A_217', 'calib_100T',
-                  'calib_217T', 'A_planck', 'z_reio', 'Omega_Lambda', 'YHe', 'H0',
-                  'A_s', 'logL', 'chain']
+                  'gal545_A_143', 'gal545_A_143_217', 'gal545_A_217',
+                  'calib_100T', 'calib_217T', 'A_planck', 'z_reio',
+                  'Omega_Lambda', 'YHe', 'H0', 'A_s', 'logL', 'chain']
         assert_array_equal(mcmc.drop_labels().columns, params)
         labels = [r'$10^{-2}\omega_{b }$',
                   r'$\omega_{cdm }$',
@@ -144,7 +143,6 @@ class TestPlotReader(TestPlotBase):
         mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
         mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
-
     def test_read_multinest(self):
         np.random.seed(3)
         ns = read_multinest('./tests/example_data/mn')
@@ -173,7 +171,6 @@ class TestPlotReader(TestPlotBase):
         ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
         ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
-
     def test_read_polychord(self):
         np.random.seed(3)
         ns = read_polychord('./tests/example_data/pc')
@@ -181,7 +178,8 @@ class TestPlotReader(TestPlotBase):
         for key1 in ns.columns:
             assert_array_equal(ns.get_weights(), ns[key1].get_weights())
             for key2 in ns.columns:
-                assert_array_equal(ns[key1].get_weights(), ns[key2].get_weights())
+                assert_array_equal(ns[key1].get_weights(),
+                                   ns[key2].get_weights())
         params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth', 'nlive']
         assert_array_equal(ns.drop_labels().columns, params)
         labels = ['$x_0$',
@@ -212,7 +210,6 @@ class TestPlotReader(TestPlotBase):
         assert_array_equal(ns_nolive[cols], ns[cols][:ns_nolive.shape[0]])
         assert_array_equal(ns_zero_live[cols], ns[cols])
         assert_array_equal(ns_single_live[cols], ns[cols])
-
 
     @pytest.mark.xfail('getdist' not in sys.modules,
                        raises=NameError,
