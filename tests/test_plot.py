@@ -9,6 +9,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d, quantile_plot_interval,
                              basic_cmap, AxesSeries, AxesDataFrame)
+from tests.common import close_figures_on_teardown
 from numpy.testing import assert_array_equal
 
 from matplotlib.axes._subplots import SubplotBase
@@ -21,7 +22,7 @@ from scipy.special import erf
 from scipy.interpolate import interp1d
 
 
-def test_AxesObjects():
+def test_AxesObjects(close_figures_on_teardown):
     paramnames = ['a', 'b', 'c']
 
     # AxesSeries
@@ -54,7 +55,7 @@ def test_AxesObjects():
     assert ymax2 == ymax1 + 0.5 * (ymax1 - ymin1)
 
 
-def test_make_1d_axes():
+def test_make_1d_axes(close_figures_on_teardown):
     paramnames = ['A', 'B', 'C', 'D', 'E']
     labels = {'A': 'tA', 'B': 'tB', 'C': 'tC', 'D': 'tD', 'E': 'tE'}
 
@@ -114,7 +115,7 @@ def test_make_1d_axes():
         make_1d_axes(paramnames, spam='ham')
 
 
-def test_make_2d_axes_inputs_outputs():
+def test_make_2d_axes_inputs_outputs(close_figures_on_teardown):
     paramnames_x = ['A', 'B', 'C', 'D']
     paramnames_y = ['B', 'A', 'D', 'E']
 
@@ -178,7 +179,7 @@ def test_make_2d_axes_inputs_outputs():
 @pytest.mark.parametrize('upper', [False, True])
 @pytest.mark.parametrize('lower', [False, True])
 @pytest.mark.parametrize('diagonal', [False, True])
-def test_make_2d_axes_behaviour(diagonal, lower, upper, paramnames_y):
+def test_make_2d_axes_behaviour(close_figures_on_teardown, diagonal, lower, upper, paramnames_y):
     np.random.seed(0)
 
     def calc_n(axes):
@@ -225,7 +226,7 @@ def test_make_2d_axes_behaviour(diagonal, lower, upper, paramnames_y):
 
 @pytest.mark.parametrize('upper', [False, True])
 @pytest.mark.parametrize('ticks', ['inner', 'outer', None])
-def test_make_2d_axes_ticks(upper, ticks):
+def test_make_2d_axes_ticks(close_figures_on_teardown, upper, ticks):
     xticks = [0.1, 0.4, 0.7]
     yticks = [0.2, 0.5, 0.8]
     paramnames = ["x0", "x1", "x2", "x3"]
@@ -249,12 +250,12 @@ def test_make_2d_axes_ticks(upper, ticks):
         make_2d_axes(paramnames, upper=upper, ticks='spam')
 
 
-def test_make_2d_axes_ticks_error():
+def test_make_2d_axes_ticks_error(close_figures_on_teardown):
     with pytest.raises(ValueError):
         make_2d_axes(['a', 'b'], ticks='spam')
 
 
-def test_2d_axes_limits():
+def test_2d_axes_limits(close_figures_on_teardown):
     np.random.seed(0)
     paramnames = ['A', 'B', 'C', 'D']
     fig, axes = make_2d_axes(paramnames)
@@ -279,7 +280,7 @@ def test_2d_axes_limits():
                                     {'A': 0, 'C': 0, 'E': 0},
                                     {'A': 0, 'C': [0, 0.5]}])
 @pytest.mark.parametrize('upper', [True, False])
-def test_2d_axes_axlines(axesparams, params, upper):
+def test_2d_axes_axlines(close_figures_on_teardown, axesparams, params, upper):
     kwargs = dict(c='k', ls='--', lw=0.5)
     fig, axes = make_2d_axes(axesparams, upper=upper)
     axes.axlines(params, **kwargs)
@@ -292,7 +293,7 @@ def test_2d_axes_axlines(axesparams, params, upper):
                                     {'A': (0, 1), 'C': (0, 1), 'E': (0, 1)},
                                     {'A': (0, 1), 'C': [(-0.1, 0), (0.5, 1)]}])
 @pytest.mark.parametrize('upper', [True, False])
-def test_2d_axes_axspans(axesparams, params, upper):
+def test_2d_axes_axspans(close_figures_on_teardown, axesparams, params, upper):
     kwargs = dict(c='k', alpha=0.5)
     fig, axes = make_2d_axes(axesparams, upper=upper)
     axes.axspans(params, **kwargs)
@@ -305,14 +306,14 @@ def test_2d_axes_axspans(axesparams, params, upper):
                                     {'A': 0, 'C': 0, 'E': 0},
                                     {'A': [0, 0.1], 'C': [0, 0.5]}])
 @pytest.mark.parametrize('upper', [True, False])
-def test_2d_axes_scatter(axesparams, params, upper):
+def test_2d_axes_scatter(close_figures_on_teardown, axesparams, params, upper):
     kwargs = dict(c='k', marker='*')
     fig, axes = make_2d_axes(axesparams, upper=upper)
     axes.scatter(params, **kwargs)
 
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
-def test_kde_plot_1d(plot_1d):
+def test_kde_plot_1d(close_figures_on_teardown, plot_1d):
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(1000)
@@ -374,7 +375,7 @@ def test_kde_plot_1d(plot_1d):
             pass
 
 
-def test_fastkde_min_max():
+def test_fastkde_min_max(close_figures_on_teardown):
     np.random.seed(0)
     data_x = np.random.randn(100)
     data_y = np.random.randn(100)
@@ -417,7 +418,7 @@ def test_fastkde_min_max():
             pass
 
 
-def test_hist_plot_1d():
+def test_hist_plot_1d(close_figures_on_teardown):
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(1000)
@@ -460,7 +461,7 @@ def test_hist_plot_1d():
 
 
 @pytest.mark.parametrize('bins', ['knuth', 'freedman', 'blocks'])
-def test_astropyhist_plot_1d(bins):
+def test_astropyhist_plot_1d(close_figures_on_teardown, bins):
     try:
         fig, ax = plt.subplots()
         np.random.seed(0)
@@ -474,7 +475,7 @@ def test_astropyhist_plot_1d(bins):
             pass
 
 
-def test_hist_plot_2d():
+def test_hist_plot_2d(close_figures_on_teardown):
     fig, ax = plt.subplots()
     np.random.seed(0)
     data_x, data_y = np.random.randn(2, 1000)
@@ -504,7 +505,7 @@ def test_hist_plot_2d():
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
 @pytest.mark.parametrize('s', [1, 2])
-def test_1d_density_kwarg(plot_1d, s):
+def test_1d_density_kwarg(close_figures_on_teardown, plot_1d, s):
     try:
         np.random.seed(0)
         x = np.random.normal(scale=s, size=2000)
@@ -540,7 +541,7 @@ def test_1d_density_kwarg(plot_1d, s):
 
 @pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
                                              fastkde_contour_plot_2d])
-def test_contour_plot_2d(contour_plot_2d):
+def test_contour_plot_2d(close_figures_on_teardown, contour_plot_2d):
     try:
         fig, ax = plt.subplots()
         np.random.seed(1)
@@ -623,7 +624,7 @@ def test_contour_plot_2d(contour_plot_2d):
             pass
 
 
-def test_kde_plot_nplot():
+def test_kde_plot_nplot(close_figures_on_teardown):
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(1000)
@@ -643,7 +644,7 @@ def test_kde_plot_nplot():
                                     [0.9, 0.6],
                                     [0.9, 0.6, 0.3],
                                     [0.9, 0.7, 0.5, 0.3]])
-def test_contour_plot_2d_levels(contour_plot_2d, levels):
+def test_contour_plot_2d_levels(close_figures_on_teardown, contour_plot_2d, levels):
     try:
         np.random.seed(42)
         x = np.random.randn(1000)
@@ -669,7 +670,7 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
             pass
 
 
-def test_scatter_plot_2d():
+def test_scatter_plot_2d(close_figures_on_teardown):
     fig, ax = plt.subplots()
     np.random.seed(2)
     data_x = np.random.randn(100)
@@ -697,7 +698,7 @@ def test_scatter_plot_2d():
                                     (3, '3sigma', 0.997300203936740),
                                     (4, '4sigma', 0.999936657516334),
                                     (5, '5sigma', 0.999999426696856)])
-def test_quantile_plot_interval_str(sigmas):
+def test_quantile_plot_interval_str(close_figures_on_teardown, sigmas):
     qi1, qi2 = quantile_plot_interval(q=sigmas[0])
     qs1, qs2 = quantile_plot_interval(q=sigmas[1])
     assert qi1 == pytest.approx(0.5 - sigmas[2] / 2)
@@ -707,14 +708,14 @@ def test_quantile_plot_interval_str(sigmas):
 
 
 @pytest.mark.parametrize('floats', [0, 0.1, 0.9])
-def test_quantile_plot_interval_float(floats):
+def test_quantile_plot_interval_float(close_figures_on_teardown, floats):
     q1, q2 = quantile_plot_interval(q=floats)
     assert q1 == min(floats, 1 - floats)
     assert q2 == max(floats, 1 - floats)
 
 
 @pytest.mark.parametrize('q1, q2', [(0, 1), (0.1, 0.9), (0, 0.9), (0.1, 1)])
-def test_quantile_plot_interval_tuple(q1, q2):
+def test_quantile_plot_interval_tuple(close_figures_on_teardown, q1, q2):
     _q1, _q2 = quantile_plot_interval(q=(q1, q2))
     assert _q1 == q1
     assert _q2 == q2
