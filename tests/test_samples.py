@@ -17,7 +17,7 @@ from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
-from tests.common import close_figures_on_teardown
+from pandas.tests.plotting.common import TestPlotBase
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
@@ -89,21 +89,6 @@ def test_build_samples():
     assert ns.root is None
 
 
-def test_different_parameters(close_figures_on_teardown):
-    np.random.seed(3)
-    params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
-    params_y = ['x0', 'x1', 'x2']
-    fig, axes = make_1d_axes(params_x)
-    ns = read_chains('./tests/example_data/pc')
-    ns.plot_1d(axes)
-    fig, axes = make_2d_axes(params_y)
-    ns.plot_2d(axes)
-    fig, axes = make_2d_axes(params_x)
-    ns.plot_2d(axes)
-    fig, axes = make_2d_axes([params_x, params_y])
-    ns.plot_2d(axes)
-
-
 def test_manual_columns():
     old_params = ['x0', 'x1', 'x2', 'x3', 'x4']
     mcmc_params = ['logL', 'chain']
@@ -118,81 +103,6 @@ def test_manual_columns():
     ns = read_chains('./tests/example_data/pc', columns=new_params)
     assert_array_equal(mcmc.drop_labels().columns, new_params + mcmc_params)
     assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
-
-
-def test_plot_2d_kinds(close_figures_on_teardown):
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-    params_x = ['x0', 'x1', 'x2', 'x3']
-    params_y = ['x0', 'x1', 'x2']
-    params = [params_x, params_y]
-
-    # Check dictionaries
-    axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
-    assert (~axes.isnull()).to_numpy().sum() == 3
-
-    axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
-    assert (~axes.isnull()).to_numpy().sum() == 6
-
-    axes = ns.plot_2d(params, kind={'upper': 'kde_2d', 'diagonal': 'kde_1d'})
-    assert (~axes.isnull()).to_numpy().sum() == 9
-
-    axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
-    assert (~axes.isnull()).to_numpy().sum() == 6
-
-    axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
-    assert (~axes.isnull()).to_numpy().sum() == 6
-
-    axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
-                                    'diagonal': 'kde_1d',
-                                    'upper': 'scatter_2d'})
-    assert (~axes.isnull()).to_numpy().sum() == 12
-
-    # Check strings
-    axes = ns.plot_2d(params, kind='kde')
-    assert (~axes.isnull()).to_numpy().sum() == 6
-    axes = ns.plot_2d(params, kind='kde_1d')
-    assert (~axes.isnull()).to_numpy().sum() == 3
-    axes = ns.plot_2d(params, kind='kde_2d')
-    assert (~axes.isnull()).to_numpy().sum() == 3
-
-    # Check kinds vs kind kwarg
-    axes = ns.plot_2d(params, kinds='kde')
-    assert (~axes.isnull()).to_numpy().sum() == 6
-    axes = ns.plot_2d(params, kinds='kde_1d')
-    assert (~axes.isnull()).to_numpy().sum() == 3
-    axes = ns.plot_2d(params, kinds='kde_2d')
-    assert (~axes.isnull()).to_numpy().sum() == 3
-
-    # Check incorrect inputs
-    with pytest.raises(ValueError):
-        ns.plot_2d(params, kind={'lower': 'not a plot kind'})
-    with pytest.raises(ValueError):
-        ns.plot_2d(params, kind={'diagonal': 'not a plot kind'})
-    with pytest.raises(ValueError):
-        ns.plot_2d(params, kind={'lower': 'kde', 'spam': 'kde'})
-    with pytest.raises(ValueError):
-        ns.plot_2d(params, kind={'ham': 'kde'})
-    with pytest.raises(ValueError):
-        ns.plot_2d(params, kind=0)
-    with pytest.raises(ValueError):
-        ns.plot_2d(params, kind='eggs')
-
-
-def test_plot_2d_kinds_multiple_calls(close_figures_on_teardown):
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-    params = ['x0', 'x1', 'x2', 'x3']
-
-    axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
-                                    'lower': 'kde_2d',
-                                    'upper': 'scatter_2d'})
-    ns.plot_2d(axes, kind={'diagonal': 'hist'})
-
-    axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
-    ns.plot_2d(axes, kind={'diagonal': 'kde_1d',
-                           'lower': 'kde_2d',
-                           'upper': 'scatter_2d'})
 
 
 def test_root_and_label():
@@ -213,106 +123,238 @@ def test_root_and_label():
     assert mc.root is None
     assert mc.label is None
 
-
-def test_plot_2d_legend(close_figures_on_teardown):
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-    mc = read_chains('./tests/example_data/gd')
-    params = ['x0', 'x1', 'x2', 'x3']
-
-    # Test label kwarg for kde
-    fig, axes = make_2d_axes(params, upper=False)
-    ns.plot_2d(axes, label='l1', kind=dict(diagonal='kde_1d', lower='kde_2d'))
-    mc.plot_2d(axes, label='l2', kind=dict(diagonal='kde_1d', lower='kde_2d'))
-
-    for y, row in axes.iterrows():
-        for x, ax in row.items():
-            if ax is not None:
-                leg = ax.legend()
-                assert leg.get_texts()[0].get_text() == 'l1'
-                assert leg.get_texts()[1].get_text() == 'l2'
-                handles, labels = ax.get_legend_handles_labels()
-                assert labels == ['l1', 'l2']
-                if x == y:
-                    assert all([isinstance(h, Line2D) for h in handles])
-                else:
-                    assert all([isinstance(h, Rectangle) for h in handles])
-
-    # Test label kwarg for hist and scatter
-    fig, axes = make_2d_axes(params, lower=False)
-    ns.plot_2d(axes, label='l1', kind=dict(diagonal='hist_1d',
-                                           upper='scatter_2d'))
-    mc.plot_2d(axes, label='l2', kind=dict(diagonal='hist_1d',
-                                           upper='scatter_2d'))
-
-    for y, row in axes.iterrows():
-        for x, ax in row.items():
-            if ax is not None:
-                leg = ax.legend()
-                assert leg.get_texts()[0].get_text() == 'l1'
-                assert leg.get_texts()[1].get_text() == 'l2'
-                handles, labels = ax.get_legend_handles_labels()
-                assert labels == ['l1', 'l2']
-                if x == y:
-                    assert all([isinstance(h, Rectangle) for h in handles])
-                else:
-                    assert all([isinstance(h, Line2D)
-                                for h in handles])
-
-    # test default labelling
-    fig, axes = make_2d_axes(params, upper=False)
-    ns.plot_2d(axes)
-    mc.plot_2d(axes)
-
-    for y, row in axes.iterrows():
-        for x, ax in row.items():
-            if ax is not None:
-                handles, labels = ax.get_legend_handles_labels()
-                assert labels == ['pc', 'gd']
-
-    # Test label kwarg to constructors
-    ns = read_chains('./tests/example_data/pc', label='l1')
-    mc = read_chains('./tests/example_data/gd', label='l2')
-    params = ['x0', 'x1', 'x2', 'x3']
-
-    fig, axes = make_2d_axes(params, upper=False)
-    ns.plot_2d(axes)
-    mc.plot_2d(axes)
-
-    for y, row in axes.iterrows():
-        for x, ax in row.items():
-            if ax is not None:
-                handles, labels = ax.get_legend_handles_labels()
-                assert labels == ['l1', 'l2']
+class TestPlotSamples(TestPlotBase):
+    def test_different_parameters(self):
+        np.random.seed(3)
+        params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
+        params_y = ['x0', 'x1', 'x2']
+        fig, axes = make_1d_axes(params_x)
+        ns = read_chains('./tests/example_data/pc')
+        ns.plot_1d(axes)
+        fig, axes = make_2d_axes(params_y)
+        ns.plot_2d(axes)
+        fig, axes = make_2d_axes(params_x)
+        ns.plot_2d(axes)
+        fig, axes = make_2d_axes([params_x, params_y])
+        ns.plot_2d(axes)
 
 
-def test_plot_2d_colours(close_figures_on_teardown):
-    np.random.seed(3)
-    gd = read_chains("./tests/example_data/gd")
-    gd.drop(columns='x3', inplace=True, level=0)
-    pc = read_chains("./tests/example_data/pc")
-    pc.drop(columns='x4', inplace=True, level=0)
-    mn = read_chains("./tests/example_data/mn")
-    mn.drop(columns='x2', inplace=True, level=0)
+    def test_plot_2d_kinds(self):
+        np.random.seed(3)
+        ns = read_chains('./tests/example_data/pc')
+        params_x = ['x0', 'x1', 'x2', 'x3']
+        params_y = ['x0', 'x1', 'x2']
+        params = [params_x, params_y]
 
-    kinds = ['kde', 'hist']
-    if 'fastkde' in sys.modules:
-        kinds += ['fastkde']
+        # Check dictionaries
+        axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
+        assert (~axes.isnull()).to_numpy().sum() == 3
 
-    for kind in kinds:
-        fig = plt.figure()
-        fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
-        kind = {'diagonal': kind + '_1d',
-                'lower': kind + '_2d',
-                'upper': 'scatter_2d'}
-        gd.plot_2d(axes, kind=kind, label="gd")
-        pc.plot_2d(axes, kind=kind, label="pc")
-        mn.plot_2d(axes, kind=kind, label="mn")
-        gd_colors = []
-        pc_colors = []
-        mn_colors = []
-        for y, rows in axes.iterrows():
-            for x, ax in rows.items():
+        axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
+        assert (~axes.isnull()).to_numpy().sum() == 6
+
+        axes = ns.plot_2d(params, kind={'upper': 'kde_2d', 'diagonal': 'kde_1d'})
+        assert (~axes.isnull()).to_numpy().sum() == 9
+
+        axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
+        assert (~axes.isnull()).to_numpy().sum() == 6
+
+        axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
+        assert (~axes.isnull()).to_numpy().sum() == 6
+
+        axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
+                                        'diagonal': 'kde_1d',
+                                        'upper': 'scatter_2d'})
+        assert (~axes.isnull()).to_numpy().sum() == 12
+
+        # Check strings
+        axes = ns.plot_2d(params, kind='kde')
+        assert (~axes.isnull()).to_numpy().sum() == 6
+        axes = ns.plot_2d(params, kind='kde_1d')
+        assert (~axes.isnull()).to_numpy().sum() == 3
+        axes = ns.plot_2d(params, kind='kde_2d')
+        assert (~axes.isnull()).to_numpy().sum() == 3
+
+        # Check kinds vs kind kwarg
+        axes = ns.plot_2d(params, kinds='kde')
+        assert (~axes.isnull()).to_numpy().sum() == 6
+        axes = ns.plot_2d(params, kinds='kde_1d')
+        assert (~axes.isnull()).to_numpy().sum() == 3
+        axes = ns.plot_2d(params, kinds='kde_2d')
+        assert (~axes.isnull()).to_numpy().sum() == 3
+
+        # Check incorrect inputs
+        with pytest.raises(ValueError):
+            ns.plot_2d(params, kind={'lower': 'not a plot kind'})
+        with pytest.raises(ValueError):
+            ns.plot_2d(params, kind={'diagonal': 'not a plot kind'})
+        with pytest.raises(ValueError):
+            ns.plot_2d(params, kind={'lower': 'kde', 'spam': 'kde'})
+        with pytest.raises(ValueError):
+            ns.plot_2d(params, kind={'ham': 'kde'})
+        with pytest.raises(ValueError):
+            ns.plot_2d(params, kind=0)
+        with pytest.raises(ValueError):
+            ns.plot_2d(params, kind='eggs')
+
+
+    def test_plot_2d_kinds_multiple_calls(self):
+        np.random.seed(3)
+        ns = read_chains('./tests/example_data/pc')
+        params = ['x0', 'x1', 'x2', 'x3']
+
+        axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
+                                        'lower': 'kde_2d',
+                                        'upper': 'scatter_2d'})
+        ns.plot_2d(axes, kind={'diagonal': 'hist'})
+
+        axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
+        ns.plot_2d(axes, kind={'diagonal': 'kde_1d',
+                               'lower': 'kde_2d',
+                               'upper': 'scatter_2d'})
+
+
+    def test_plot_2d_legend(self):
+        np.random.seed(3)
+        ns = read_chains('./tests/example_data/pc')
+        mc = read_chains('./tests/example_data/gd')
+        params = ['x0', 'x1', 'x2', 'x3']
+
+        # Test label kwarg for kde
+        fig, axes = make_2d_axes(params, upper=False)
+        ns.plot_2d(axes, label='l1', kind=dict(diagonal='kde_1d', lower='kde_2d'))
+        mc.plot_2d(axes, label='l2', kind=dict(diagonal='kde_1d', lower='kde_2d'))
+
+        for y, row in axes.iterrows():
+            for x, ax in row.items():
+                if ax is not None:
+                    leg = ax.legend()
+                    assert leg.get_texts()[0].get_text() == 'l1'
+                    assert leg.get_texts()[1].get_text() == 'l2'
+                    handles, labels = ax.get_legend_handles_labels()
+                    assert labels == ['l1', 'l2']
+                    if x == y:
+                        assert all([isinstance(h, Line2D) for h in handles])
+                    else:
+                        assert all([isinstance(h, Rectangle) for h in handles])
+
+        # Test label kwarg for hist and scatter
+        fig, axes = make_2d_axes(params, lower=False)
+        ns.plot_2d(axes, label='l1', kind=dict(diagonal='hist_1d',
+                                               upper='scatter_2d'))
+        mc.plot_2d(axes, label='l2', kind=dict(diagonal='hist_1d',
+                                               upper='scatter_2d'))
+
+        for y, row in axes.iterrows():
+            for x, ax in row.items():
+                if ax is not None:
+                    leg = ax.legend()
+                    assert leg.get_texts()[0].get_text() == 'l1'
+                    assert leg.get_texts()[1].get_text() == 'l2'
+                    handles, labels = ax.get_legend_handles_labels()
+                    assert labels == ['l1', 'l2']
+                    if x == y:
+                        assert all([isinstance(h, Rectangle) for h in handles])
+                    else:
+                        assert all([isinstance(h, Line2D)
+                                    for h in handles])
+
+        # test default labelling
+        fig, axes = make_2d_axes(params, upper=False)
+        ns.plot_2d(axes)
+        mc.plot_2d(axes)
+
+        for y, row in axes.iterrows():
+            for x, ax in row.items():
+                if ax is not None:
+                    handles, labels = ax.get_legend_handles_labels()
+                    assert labels == ['pc', 'gd']
+
+        # Test label kwarg to constructors
+        ns = read_chains('./tests/example_data/pc', label='l1')
+        mc = read_chains('./tests/example_data/gd', label='l2')
+        params = ['x0', 'x1', 'x2', 'x3']
+
+        fig, axes = make_2d_axes(params, upper=False)
+        ns.plot_2d(axes)
+        mc.plot_2d(axes)
+
+        for y, row in axes.iterrows():
+            for x, ax in row.items():
+                if ax is not None:
+                    handles, labels = ax.get_legend_handles_labels()
+                    assert labels == ['l1', 'l2']
+
+
+    def test_plot_2d_colours(self):
+        np.random.seed(3)
+        gd = read_chains("./tests/example_data/gd")
+        gd.drop(columns='x3', inplace=True, level=0)
+        pc = read_chains("./tests/example_data/pc")
+        pc.drop(columns='x4', inplace=True, level=0)
+        mn = read_chains("./tests/example_data/mn")
+        mn.drop(columns='x2', inplace=True, level=0)
+
+        kinds = ['kde', 'hist']
+        if 'fastkde' in sys.modules:
+            kinds += ['fastkde']
+
+        for kind in kinds:
+            fig = plt.figure()
+            fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
+            kind = {'diagonal': kind + '_1d',
+                    'lower': kind + '_2d',
+                    'upper': 'scatter_2d'}
+            gd.plot_2d(axes, kind=kind, label="gd")
+            pc.plot_2d(axes, kind=kind, label="pc")
+            mn.plot_2d(axes, kind=kind, label="mn")
+            gd_colors = []
+            pc_colors = []
+            mn_colors = []
+            for y, rows in axes.iterrows():
+                for x, ax in rows.items():
+                    handles, labels = ax.get_legend_handles_labels()
+                    for handle, label in zip(handles, labels):
+                        if isinstance(handle, Rectangle):
+                            color = to_hex(handle.get_facecolor())
+                        else:
+                            color = handle.get_color()
+
+                        if label == 'gd':
+                            gd_colors.append(color)
+                        elif label == 'pc':
+                            pc_colors.append(color)
+                        elif label == 'mn':
+                            mn_colors.append(color)
+
+            assert len(set(gd_colors)) == 1
+            assert len(set(mn_colors)) == 1
+            assert len(set(pc_colors)) == 1
+
+
+    def test_plot_1d_colours(self):
+        np.random.seed(3)
+        gd = read_chains("./tests/example_data/gd")
+        gd.drop(columns='x3', inplace=True, level=0)
+        pc = read_chains("./tests/example_data/pc")
+        pc.drop(columns='x4', inplace=True, level=0)
+        mn = read_chains("./tests/example_data/mn")
+        mn.drop(columns='x2', inplace=True, level=0)
+
+        kinds = ['kde', 'hist']
+        if 'fastkde' in sys.modules:
+            kinds += ['fastkde']
+
+        for kind in kinds:
+            fig = plt.figure()
+            fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
+            gd.plot_1d(axes, kind=kind + '_1d', label="gd")
+            pc.plot_1d(axes, kind=kind + '_1d', label="pc")
+            mn.plot_1d(axes, kind=kind + '_1d', label="mn")
+            gd_colors = []
+            pc_colors = []
+            mn_colors = []
+            for x, ax in axes.items():
                 handles, labels = ax.get_legend_handles_labels()
                 for handle, label in zip(handles, labels):
                     if isinstance(handle, Rectangle):
@@ -327,67 +369,126 @@ def test_plot_2d_colours(close_figures_on_teardown):
                     elif label == 'mn':
                         mn_colors.append(color)
 
-        assert len(set(gd_colors)) == 1
-        assert len(set(mn_colors)) == 1
-        assert len(set(pc_colors)) == 1
+            assert len(set(gd_colors)) == 1
+            assert len(set(mn_colors)) == 1
+            assert len(set(pc_colors)) == 1
 
 
-def test_plot_1d_colours(close_figures_on_teardown):
-    np.random.seed(3)
-    gd = read_chains("./tests/example_data/gd")
-    gd.drop(columns='x3', inplace=True, level=0)
-    pc = read_chains("./tests/example_data/pc")
-    pc.drop(columns='x4', inplace=True, level=0)
-    mn = read_chains("./tests/example_data/mn")
-    mn.drop(columns='x2', inplace=True, level=0)
-
-    kinds = ['kde', 'hist']
-    if 'fastkde' in sys.modules:
-        kinds += ['fastkde']
-
-    for kind in kinds:
-        fig = plt.figure()
-        fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
-        gd.plot_1d(axes, kind=kind + '_1d', label="gd")
-        pc.plot_1d(axes, kind=kind + '_1d', label="pc")
-        mn.plot_1d(axes, kind=kind + '_1d', label="mn")
-        gd_colors = []
-        pc_colors = []
-        mn_colors = []
-        for x, ax in axes.items():
-            handles, labels = ax.get_legend_handles_labels()
-            for handle, label in zip(handles, labels):
-                if isinstance(handle, Rectangle):
-                    color = to_hex(handle.get_facecolor())
-                else:
-                    color = handle.get_color()
-
-                if label == 'gd':
-                    gd_colors.append(color)
-                elif label == 'pc':
-                    pc_colors.append(color)
-                elif label == 'mn':
-                    mn_colors.append(color)
-
-        assert len(set(gd_colors)) == 1
-        assert len(set(mn_colors)) == 1
-        assert len(set(pc_colors)) == 1
+    @pytest.mark.xfail('astropy' not in sys.modules,
+                       raises=ImportError,
+                       reason="requires astropy package")
+    def test_astropyhist(self):
+        np.random.seed(3)
+        ns = read_chains('./tests/example_data/pc')
+        ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
 
 
-@pytest.mark.xfail('astropy' not in sys.modules,
-                   raises=ImportError,
-                   reason="requires astropy package")
-def test_astropyhist(close_figures_on_teardown):
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
+    def test_hist_levels(self):
+        np.random.seed(3)
+        ns = read_chains('./tests/example_data/pc')
+        ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
+                   levels=[0.95, 0.68], bins=20)
 
 
-def test_hist_levels(close_figures_on_teardown):
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-    ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
-               levels=[0.95, 0.68], bins=20)
+    def test_weighted_merging(self):
+        # Generate some data to try it out:
+        samples_1 = read_chains('./tests/example_data/pc')
+        samples_2 = read_chains('./tests/example_data/pc_250')
+        samples_1[('xtest', '$x_t$')] = 7*samples_1['x3']
+        samples_2[('xtest', "$x_t$")] = samples_2['x3']
+        mean1 = samples_1.xtest.mean()
+        mean2 = samples_2.xtest.mean()
+
+        # Test with evidence weights
+        weight1 = np.exp(samples_1.logZ())
+        weight2 = np.exp(samples_2.logZ())
+        samples = merge_samples_weighted([samples_1, samples_2],
+                                         label='Merged label')
+        mean = samples.xtest.mean()
+        assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
+
+        assert samples.label == 'Merged label'
+
+        # Test that label is None when no label is passed
+        samples_1.label = "1"
+        samples_2.label = "2"
+        samples = merge_samples_weighted([samples_1, samples_2])
+        assert samples.label is None
+
+        # Test with explicit weights
+        weight1 = 31
+        weight2 = 13
+        samples = merge_samples_weighted(
+            [samples_1, samples_2], weights=[weight1, weight2])
+        mean = samples.xtest.mean()
+        assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
+
+        # Test plot still works (see issue #189)
+        prior_samples = []
+        for i in range(3):
+            d = {"x": np.random.uniform(size=1000),
+                 "y": np.random.uniform(size=1000)}
+            tmp = Samples(d)
+            prior_samples.append(tmp)
+        merge_prior = merge_samples_weighted(prior_samples, weights=np.ones(3))
+        merge_prior.plot_2d(["x", "y"])
+
+        # Test if correct exceptions are raised:
+        # MCMCSamples are passed without weights
+        with pytest.raises(ValueError):
+            merge_samples_weighted([MCMCSamples(samples_1)])
+        # len(weights) != len(samples)
+        with pytest.raises(ValueError):
+            merge_samples_weighted([samples_1, samples_2], weights=[1, 2, 3])
+        # A samples is passed and not a sequence
+        with pytest.raises(TypeError):
+            merge_samples_weighted(samples_1, weights=[1, 2, 3])
+
+    def test_logL_list(self):
+        np.random.seed(5)
+        default = read_chains('./tests/example_data/pc')
+        logL = default.logL.tolist()
+        logL_birth = default.logL_birth.tolist()
+        data = default.iloc[:, :5].to_numpy().tolist()
+
+        samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
+        assert_array_equal(default, samples)
+
+
+    def test_samples_dot_plot(self):
+        samples = read_chains('./tests/example_data/pc')
+        axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
+        assert len(axes.containers) == 5
+        fig, ax = plt.subplots()
+        axes = samples.x0.plot.kde(subplots=True, ax=ax)
+        assert len(axes) == 1
+        axes = samples[['x0', 'x1']].plot.kde(subplots=True)
+        assert len(axes) == 2
+
+        axes = samples.plot.kde_2d('x0', 'x1')
+        assert len(axes.collections) == 5
+        assert axes.get_xlabel() == 'x0'
+        assert axes.get_ylabel() == 'x1'
+        axes = samples.plot.hist_2d('x1', 'x0')
+        assert len(axes.collections) == 1
+        assert axes.get_xlabel() == 'x1'
+        assert axes.get_ylabel() == 'x0'
+        axes = samples.plot.scatter_2d('x2', 'x3')
+        assert len(axes.lines) == 1
+        fig, ax = plt.subplots()
+        axes = samples.x1.plot.kde_1d(ax=ax)
+        assert len(axes.lines) == 1
+        fig, ax = plt.subplots()
+        axes = samples.x2.plot.hist_1d(ax=ax)
+        assert len(axes.containers) == 1
+
+        try:
+            axes = samples.plot.fastkde_2d('x0', 'x1')
+            assert len(axes.collections) == 5
+            axes = samples.plot.fastkde_1d()
+            assert len(axes.lines) == 1
+        except ImportError:
+            pass
 
 
 def test_logX():
@@ -718,61 +819,6 @@ def test_merging():
     assert nlive == nlive_1 + nlive_2
     assert (samples_1.logZ() > samples.logZ() > samples_2.logZ()
             or samples_1.logZ() < samples.logZ() < samples_2.logZ())
-
-
-def test_weighted_merging(close_figures_on_teardown):
-    # Generate some data to try it out:
-    samples_1 = read_chains('./tests/example_data/pc')
-    samples_2 = read_chains('./tests/example_data/pc_250')
-    samples_1[('xtest', '$x_t$')] = 7*samples_1['x3']
-    samples_2[('xtest', "$x_t$")] = samples_2['x3']
-    mean1 = samples_1.xtest.mean()
-    mean2 = samples_2.xtest.mean()
-
-    # Test with evidence weights
-    weight1 = np.exp(samples_1.logZ())
-    weight2 = np.exp(samples_2.logZ())
-    samples = merge_samples_weighted([samples_1, samples_2],
-                                     label='Merged label')
-    mean = samples.xtest.mean()
-    assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
-
-    assert samples.label == 'Merged label'
-
-    # Test that label is None when no label is passed
-    samples_1.label = "1"
-    samples_2.label = "2"
-    samples = merge_samples_weighted([samples_1, samples_2])
-    assert samples.label is None
-
-    # Test with explicit weights
-    weight1 = 31
-    weight2 = 13
-    samples = merge_samples_weighted(
-        [samples_1, samples_2], weights=[weight1, weight2])
-    mean = samples.xtest.mean()
-    assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
-
-    # Test plot still works (see issue #189)
-    prior_samples = []
-    for i in range(3):
-        d = {"x": np.random.uniform(size=1000),
-             "y": np.random.uniform(size=1000)}
-        tmp = Samples(d)
-        prior_samples.append(tmp)
-    merge_prior = merge_samples_weighted(prior_samples, weights=np.ones(3))
-    merge_prior.plot_2d(["x", "y"])
-
-    # Test if correct exceptions are raised:
-    # MCMCSamples are passed without weights
-    with pytest.raises(ValueError):
-        merge_samples_weighted([MCMCSamples(samples_1)])
-    # len(weights) != len(samples)
-    with pytest.raises(ValueError):
-        merge_samples_weighted([samples_1, samples_2], weights=[1, 2, 3])
-    # A samples is passed and not a sequence
-    with pytest.raises(TypeError):
-        merge_samples_weighted(samples_1, weights=[1, 2, 3])
 
 
 def test_beta():
@@ -1118,53 +1164,6 @@ def test_plotting_with_integer_names():
     assert_array_equal(samples_1.loc[:, 0], samples_1.iloc[:, 0])
     with pytest.raises(KeyError):
         samples_1['0']
-
-
-def test_logL_list(close_figures_on_teardown):
-    np.random.seed(5)
-    default = read_chains('./tests/example_data/pc')
-    logL = default.logL.tolist()
-    logL_birth = default.logL_birth.tolist()
-    data = default.iloc[:, :5].to_numpy().tolist()
-
-    samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
-    assert_array_equal(default, samples)
-
-
-def test_samples_dot_plot(close_figures_on_teardown):
-    samples = read_chains('./tests/example_data/pc')
-    axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
-    assert len(axes.containers) == 5
-    fig, ax = plt.subplots()
-    axes = samples.x0.plot.kde(subplots=True, ax=ax)
-    assert len(axes) == 1
-    axes = samples[['x0', 'x1']].plot.kde(subplots=True)
-    assert len(axes) == 2
-
-    axes = samples.plot.kde_2d('x0', 'x1')
-    assert len(axes.collections) == 5
-    assert axes.get_xlabel() == 'x0'
-    assert axes.get_ylabel() == 'x1'
-    axes = samples.plot.hist_2d('x1', 'x0')
-    assert len(axes.collections) == 1
-    assert axes.get_xlabel() == 'x1'
-    assert axes.get_ylabel() == 'x0'
-    axes = samples.plot.scatter_2d('x2', 'x3')
-    assert len(axes.lines) == 1
-    fig, ax = plt.subplots()
-    axes = samples.x1.plot.kde_1d(ax=ax)
-    assert len(axes.lines) == 1
-    fig, ax = plt.subplots()
-    axes = samples.x2.plot.hist_1d(ax=ax)
-    assert len(axes.containers) == 1
-
-    try:
-        axes = samples.plot.fastkde_2d('x0', 'x1')
-        assert len(axes.collections) == 5
-        axes = samples.plot.fastkde_1d()
-        assert len(axes.lines) == 1
-    except ImportError:
-        pass
 
 
 def test_fixed_width():
