@@ -10,6 +10,7 @@ from pandas.plotting import scatter_matrix, bootstrap_plot
 from pandas.plotting._matplotlib.misc import (
     scatter_matrix as orig_scatter_matrix
 )
+from tests.common import close_figures_on_teardown
 
 
 @pytest.fixture
@@ -624,7 +625,7 @@ def mcmc_wdf(mcmc_df):
     return WeightedDataFrame(mcmc_df.drop_duplicates(), weights=weights.values)
 
 
-def test_WeightedDataFrame_hist(mcmc_df, mcmc_wdf):
+def test_WeightedDataFrame_hist(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     df_axes = mcmc_df.hist().flatten()
     wdf_axes = mcmc_wdf.hist().flatten()
 
@@ -656,7 +657,7 @@ def test_WeightedDataFrame_hist(mcmc_df, mcmc_wdf):
     assert df_xys == wdf_xys
 
 
-def test_WeightedSeries_hist(mcmc_df, mcmc_wdf):
+def test_WeightedSeries_hist(close_figures_on_teardown, mcmc_df, mcmc_wdf):
 
     fig, axes = plt.subplots(2)
     mcmc_df.x.hist(ax=axes[0])
@@ -691,7 +692,7 @@ def test_WeightedSeries_hist(mcmc_df, mcmc_wdf):
     assert df_xys == wdf_xys
 
 
-def test_KdePlot(mcmc_df, mcmc_wdf):
+def test_KdePlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     bw_method = 0.3
     fig, axes = plt.subplots(2)
     mcmc_df.x.plot.kde(bw_method=bw_method, ax=axes[0])
@@ -701,7 +702,7 @@ def test_KdePlot(mcmc_df, mcmc_wdf):
     assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-4)
 
 
-def test_scatter_matrix(mcmc_df, mcmc_wdf):
+def test_scatter_matrix(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     axes = scatter_matrix(mcmc_df)
     data = axes[0, 1].collections[0].get_offsets().data
     axes = orig_scatter_matrix(mcmc_df)
@@ -725,12 +726,12 @@ def test_scatter_matrix(mcmc_df, mcmc_wdf):
     assert_allclose(n, 50, atol=np.sqrt(n))
 
 
-def test_bootstrap_plot(mcmc_df, mcmc_wdf):
+def test_bootstrap_plot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     bootstrap_plot(mcmc_wdf.x)
     bootstrap_plot(mcmc_wdf.x, ncompress=500)
 
 
-def test_BoxPlot(mcmc_df, mcmc_wdf):
+def test_BoxPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     mcmc_df.plot.box()
     mcmc_wdf.plot.box()
 
@@ -778,7 +779,7 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.boxplot(fontsize=30, ax=ax)
 
 
-def test_ScatterPlot(mcmc_df, mcmc_wdf):
+def test_ScatterPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     mcmc_df.plot.scatter('x', 'y')
     ax = mcmc_wdf.plot.scatter('x', 'y')
 
@@ -791,7 +792,7 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
     assert_allclose(n, 50, atol=np.sqrt(50))
 
 
-def test_HexBinPlot(mcmc_df, mcmc_wdf):
+def test_HexBinPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     df_axes = mcmc_df.plot.hexbin('x', 'y', mincnt=1)
     wdf_axes = mcmc_wdf.plot.hexbin('x', 'y')
 
@@ -804,7 +805,7 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
     assert_allclose(df_colors, wdf_colors)
 
 
-def test_AreaPlot(mcmc_df, mcmc_wdf):
+def test_AreaPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     fig, (ax1, ax2) = plt.subplots(1, 2)
     axes_df = mcmc_df.plot.area(ax=ax1)
     axes_wdf = mcmc_wdf.plot.area(ax=ax2)
@@ -813,20 +814,20 @@ def test_AreaPlot(mcmc_df, mcmc_wdf):
     assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-3)
 
 
-def test_BarPlot(mcmc_df, mcmc_wdf):
+def test_BarPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     axes_bar = mcmc_wdf[5:10].plot.bar()
     axes_barh = mcmc_wdf[5:10].plot.barh()
     assert_array_equal(axes_bar.get_xticks(), axes_barh.get_yticks())
     assert_array_equal(axes_bar.get_yticks(), axes_barh.get_xticks())
 
 
-def test_PiePlot(mcmc_df, mcmc_wdf):
+def test_PiePlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     fig, ax = plt.subplots()
     mcmc_wdf[5:10].x.plot.pie(ax=ax)
     mcmc_wdf[5:10].plot.pie(subplots=True)
 
 
-def test_LinePlot(mcmc_df, mcmc_wdf):
+def test_LinePlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
     fig, ax = plt.subplots()
     df_axes = mcmc_df.x.plot.line(ax=ax)
     assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())

@@ -17,6 +17,7 @@ from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
+from tests.common import close_figures_on_teardown
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
@@ -88,7 +89,7 @@ def test_build_samples():
     assert ns.root is None
 
 
-def test_different_parameters():
+def test_different_parameters(close_figures_on_teardown):
     np.random.seed(3)
     params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
     params_y = ['x0', 'x1', 'x2']
@@ -119,7 +120,7 @@ def test_manual_columns():
     assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
 
 
-def test_plot_2d_kinds():
+def test_plot_2d_kinds(close_figures_on_teardown):
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
     params_x = ['x0', 'x1', 'x2', 'x3']
@@ -178,7 +179,7 @@ def test_plot_2d_kinds():
         ns.plot_2d(params, kind='eggs')
 
 
-def test_plot_2d_kinds_multiple_calls():
+def test_plot_2d_kinds_multiple_calls(close_figures_on_teardown):
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
     params = ['x0', 'x1', 'x2', 'x3']
@@ -213,7 +214,7 @@ def test_root_and_label():
     assert mc.label is None
 
 
-def test_plot_2d_legend():
+def test_plot_2d_legend(close_figures_on_teardown):
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
     mc = read_chains('./tests/example_data/gd')
@@ -285,7 +286,7 @@ def test_plot_2d_legend():
                 assert labels == ['l1', 'l2']
 
 
-def test_plot_2d_colours():
+def test_plot_2d_colours(close_figures_on_teardown):
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True, level=0)
@@ -331,7 +332,7 @@ def test_plot_2d_colours():
         assert len(set(pc_colors)) == 1
 
 
-def test_plot_1d_colours():
+def test_plot_1d_colours(close_figures_on_teardown):
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True, level=0)
@@ -376,13 +377,13 @@ def test_plot_1d_colours():
 @pytest.mark.xfail('astropy' not in sys.modules,
                    raises=ImportError,
                    reason="requires astropy package")
-def test_astropyhist():
+def test_astropyhist(close_figures_on_teardown):
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
 
 
-def test_hist_levels():
+def test_hist_levels(close_figures_on_teardown):
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
@@ -719,7 +720,7 @@ def test_merging():
             or samples_1.logZ() < samples.logZ() < samples_2.logZ())
 
 
-def test_weighted_merging():
+def test_weighted_merging(close_figures_on_teardown):
     # Generate some data to try it out:
     samples_1 = read_chains('./tests/example_data/pc')
     samples_2 = read_chains('./tests/example_data/pc_250')
@@ -1119,7 +1120,7 @@ def test_plotting_with_integer_names():
         samples_1['0']
 
 
-def test_logL_list():
+def test_logL_list(close_figures_on_teardown):
     np.random.seed(5)
     default = read_chains('./tests/example_data/pc')
     logL = default.logL.tolist()
@@ -1130,7 +1131,7 @@ def test_logL_list():
     assert_array_equal(default, samples)
 
 
-def test_samples_dot_plot():
+def test_samples_dot_plot(close_figures_on_teardown):
     samples = read_chains('./tests/example_data/pc')
     axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
     assert len(axes.containers) == 5

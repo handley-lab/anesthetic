@@ -11,13 +11,14 @@ from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
+from tests.common import close_figures_on_teardown
 try:
     import getdist
 except ImportError:
     pass
 
 
-def test_read_getdist():
+def test_read_getdist(close_figures_on_teardown):
     np.random.seed(3)
     mcmc = read_getdist('./tests/example_data/gd')
     assert isinstance(mcmc, MCMCSamples)
@@ -59,7 +60,7 @@ def test_read_getdist():
 @pytest.mark.xfail('getdist' not in sys.modules,
                    raises=NameError,
                    reason="requires getdist package")
-def test_read_cobayamcmc():
+def test_read_cobayamcmc(close_figures_on_teardown):
     np.random.seed(3)
     mcmc = read_cobaya('./tests/example_data/cb')
     assert isinstance(mcmc, MCMCSamples)
@@ -93,7 +94,7 @@ def test_read_cobayamcmc():
     assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
 
 
-def test_read_montepython():
+def test_read_montepython(close_figures_on_teardown):
     np.random.seed(3)
     root = './tests/example_data/mp/2019-01-24_200000_'
     mcmc = read_getdist(root)
@@ -143,7 +144,7 @@ def test_read_montepython():
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
-def test_read_multinest():
+def test_read_multinest(close_figures_on_teardown):
     np.random.seed(3)
     ns = read_multinest('./tests/example_data/mn')
     params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth', 'nlive']
@@ -172,7 +173,7 @@ def test_read_multinest():
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
-def test_read_polychord():
+def test_read_polychord(close_figures_on_teardown):
     np.random.seed(3)
     ns = read_polychord('./tests/example_data/pc')
     assert isinstance(ns, NestedSamples)
@@ -216,7 +217,7 @@ def test_read_polychord():
                    raises=NameError,
                    reason="requires getdist package")
 @pytest.mark.parametrize('root', ['gd', 'cb'])
-def test_discard_burn_in(root):
+def test_discard_burn_in(close_figures_on_teardown, root):
     np.random.seed(3)
     mcmc = read_chains('./tests/example_data/' + root, burn_in=0.3)
     assert isinstance(mcmc, MCMCSamples)
