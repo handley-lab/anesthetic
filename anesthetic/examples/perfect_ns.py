@@ -91,6 +91,8 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
     samples: NestedSamples
         Nested sampling run
     """
+    mean = np.array(mean, dtype=float)
+    cov = np.array(cov, dtype=float)
     invcov = np.linalg.inv(cov)
 
     def logLike(x):
@@ -101,7 +103,8 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
     if bounds is None:
         bounds = [[0, 1]]*ndims
 
-    bounds = np.array(bounds)
+    bounds = np.array(bounds, dtype=float)
+
     logLmax = logLike(mean)
 
     points = np.random.uniform(*bounds.T, (2*nlive, ndims))
@@ -109,6 +112,10 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
 
     while (1/samples.nlive.iloc[:-nlive]).sum() < samples.D_KL()*2:
         logLs = samples.logL.iloc[-nlive]
+
+        sig = np.diag(cov*2*(logLmax - logLs))**0.5
+        bounds[:, 0] = np.max([bounds[:, 0], mean - sig], axis=0)
+        bounds[:, 1] = np.min([bounds[:, 1], mean + sig], axis=0)
 
         # Cube round
         points = np.random.uniform(*bounds.T, (nlive, ndims))
@@ -119,8 +126,9 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
         # Ellipsoidal round
         points = random_ellipsoid(mean, cov*2*(logLmax - logLs), nlive)
         logL = logLike(points)
-        i = ((points > 0) & (points < 1)).all(axis=1)
+        i = ((points > bounds.T[0]) & (points < bounds.T[1])).all(axis=1)
         samps_2 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs)
+        print(len(samps_1), len(samps_2))
 
         samples = merge_nested_samples([samples, samps_1, samps_2])
 
