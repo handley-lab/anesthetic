@@ -1,5 +1,5 @@
-import warnings
 import anesthetic.examples._matplotlib_agg  # noqa: F401
+
 import sys
 import pytest
 import numpy as np
@@ -101,7 +101,6 @@ def test_different_parameters():
     ns.plot_2d(axes)
     fig, axes = make_2d_axes([params_x, params_y])
     ns.plot_2d(axes)
-    plt.close('all')
 
 
 def test_manual_columns():
@@ -128,43 +127,40 @@ def test_plot_2d_kinds():
     params = [params_x, params_y]
 
     # Check dictionaries
-    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d'})
     assert (~axes.isnull()).to_numpy().sum() == 3
 
-    fig, axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
+    axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
     assert (~axes.isnull()).to_numpy().sum() == 6
 
-    fig, axes = ns.plot_2d(params, kind={'upper': 'kde_2d',
-                                         'diagonal': 'kde_1d'})
+    axes = ns.plot_2d(params, kind={'upper': 'kde_2d', 'diagonal': 'kde_1d'})
     assert (~axes.isnull()).to_numpy().sum() == 9
 
-    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
-                                         'diagonal': 'kde_1d'})
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
     assert (~axes.isnull()).to_numpy().sum() == 6
 
-    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
-                                         'diagonal': 'kde_1d'})
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
     assert (~axes.isnull()).to_numpy().sum() == 6
 
-    fig, axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
-                                         'diagonal': 'kde_1d',
-                                         'upper': 'scatter_2d'})
+    axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
+                                    'diagonal': 'kde_1d',
+                                    'upper': 'scatter_2d'})
     assert (~axes.isnull()).to_numpy().sum() == 12
 
     # Check strings
-    fig, axes = ns.plot_2d(params, kind='kde')
+    axes = ns.plot_2d(params, kind='kde')
     assert (~axes.isnull()).to_numpy().sum() == 6
-    fig, axes = ns.plot_2d(params, kind='kde_1d')
+    axes = ns.plot_2d(params, kind='kde_1d')
     assert (~axes.isnull()).to_numpy().sum() == 3
-    fig, axes = ns.plot_2d(params, kind='kde_2d')
+    axes = ns.plot_2d(params, kind='kde_2d')
     assert (~axes.isnull()).to_numpy().sum() == 3
 
     # Check kinds vs kind kwarg
-    fig, axes = ns.plot_2d(params, kinds='kde')
+    axes = ns.plot_2d(params, kinds='kde')
     assert (~axes.isnull()).to_numpy().sum() == 6
-    fig, axes = ns.plot_2d(params, kinds='kde_1d')
+    axes = ns.plot_2d(params, kinds='kde_1d')
     assert (~axes.isnull()).to_numpy().sum() == 3
-    fig, axes = ns.plot_2d(params, kinds='kde_2d')
+    axes = ns.plot_2d(params, kinds='kde_2d')
     assert (~axes.isnull()).to_numpy().sum() == 3
 
     # Check incorrect inputs
@@ -181,24 +177,21 @@ def test_plot_2d_kinds():
     with pytest.raises(ValueError):
         ns.plot_2d(params, kind='eggs')
 
-    plt.close("all")
-
 
 def test_plot_2d_kinds_multiple_calls():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
     params = ['x0', 'x1', 'x2', 'x3']
 
-    fig, axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
-                                         'lower': 'kde_2d',
-                                         'upper': 'scatter_2d'})
+    axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
+                                    'lower': 'kde_2d',
+                                    'upper': 'scatter_2d'})
     ns.plot_2d(axes, kind={'diagonal': 'hist'})
 
-    fig, axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
+    axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
     ns.plot_2d(axes, kind={'diagonal': 'kde_1d',
                            'lower': 'kde_2d',
                            'upper': 'scatter_2d'})
-    plt.close('all')
 
 
 def test_root_and_label():
@@ -232,7 +225,7 @@ def test_plot_2d_legend():
     mc.plot_2d(axes, label='l2', kind=dict(diagonal='kde_1d', lower='kde_2d'))
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 leg = ax.legend()
                 assert leg.get_texts()[0].get_text() == 'l1'
@@ -244,8 +237,6 @@ def test_plot_2d_legend():
                 else:
                     assert all([isinstance(h, Rectangle) for h in handles])
 
-    plt.close('all')
-
     # Test label kwarg for hist and scatter
     fig, axes = make_2d_axes(params, lower=False)
     ns.plot_2d(axes, label='l1', kind=dict(diagonal='hist_1d',
@@ -254,7 +245,7 @@ def test_plot_2d_legend():
                                            upper='scatter_2d'))
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 leg = ax.legend()
                 assert leg.get_texts()[0].get_text() == 'l1'
@@ -266,7 +257,6 @@ def test_plot_2d_legend():
                 else:
                     assert all([isinstance(h, Line2D)
                                 for h in handles])
-    plt.close('all')
 
     # test default labelling
     fig, axes = make_2d_axes(params, upper=False)
@@ -274,11 +264,10 @@ def test_plot_2d_legend():
     mc.plot_2d(axes)
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
                 assert labels == ['pc', 'gd']
-    plt.close('all')
 
     # Test label kwarg to constructors
     ns = read_chains('./tests/example_data/pc', label='l1')
@@ -290,21 +279,20 @@ def test_plot_2d_legend():
     mc.plot_2d(axes)
 
     for y, row in axes.iterrows():
-        for x, ax in row.iteritems():
+        for x, ax in row.items():
             if ax is not None:
                 handles, labels = ax.get_legend_handles_labels()
                 assert labels == ['l1', 'l2']
-    plt.close('all')
 
 
 def test_plot_2d_colours():
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
-    gd.drop(columns='x3', inplace=True)
+    gd.drop(columns='x3', inplace=True, level=0)
     pc = read_chains("./tests/example_data/pc")
-    pc.drop(columns='x4', inplace=True)
+    pc.drop(columns='x4', inplace=True, level=0)
     mn = read_chains("./tests/example_data/mn")
-    mn.drop(columns='x2', inplace=True)
+    mn.drop(columns='x2', inplace=True, level=0)
 
     kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
@@ -323,7 +311,7 @@ def test_plot_2d_colours():
         pc_colors = []
         mn_colors = []
         for y, rows in axes.iterrows():
-            for x, ax in rows.iteritems():
+            for x, ax in rows.items():
                 handles, labels = ax.get_legend_handles_labels()
                 for handle, label in zip(handles, labels):
                     if isinstance(handle, Rectangle):
@@ -341,17 +329,16 @@ def test_plot_2d_colours():
         assert len(set(gd_colors)) == 1
         assert len(set(mn_colors)) == 1
         assert len(set(pc_colors)) == 1
-        plt.close("all")
 
 
 def test_plot_1d_colours():
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
-    gd.drop(columns='x3', inplace=True)
+    gd.drop(columns='x3', inplace=True, level=0)
     pc = read_chains("./tests/example_data/pc")
-    pc.drop(columns='x4', inplace=True)
+    pc.drop(columns='x4', inplace=True, level=0)
     mn = read_chains("./tests/example_data/mn")
-    mn.drop(columns='x2', inplace=True)
+    mn.drop(columns='x2', inplace=True, level=0)
 
     kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
@@ -366,7 +353,7 @@ def test_plot_1d_colours():
         gd_colors = []
         pc_colors = []
         mn_colors = []
-        for x, ax in axes.iteritems():
+        for x, ax in axes.items():
             handles, labels = ax.get_legend_handles_labels()
             for handle, label in zip(handles, labels):
                 if isinstance(handle, Rectangle):
@@ -384,7 +371,6 @@ def test_plot_1d_colours():
         assert len(set(gd_colors)) == 1
         assert len(set(mn_colors)) == 1
         assert len(set(pc_colors)) == 1
-        plt.close("all")
 
 
 @pytest.mark.xfail('astropy' not in sys.modules,
@@ -394,7 +380,6 @@ def test_astropyhist():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
-    plt.close("all")
 
 
 def test_hist_levels():
@@ -402,7 +387,6 @@ def test_hist_levels():
     ns = read_chains('./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
                levels=[0.95, 0.68], bins=20)
-    plt.close("all")
 
 
 def test_logX():
@@ -704,7 +688,7 @@ def test_stats():
 
 def test_masking():
     pc = read_chains("./tests/example_data/pc")
-    mask = pc['x0'] > 0
+    mask = pc['x0'].to_numpy() > 0
 
     kinds = ['kde', 'hist']
     if 'fastkde' in sys.modules:
@@ -777,7 +761,6 @@ def test_weighted_merging():
         prior_samples.append(tmp)
     merge_prior = merge_samples_weighted(prior_samples, weights=np.ones(3))
     merge_prior.plot_2d(["x", "y"])
-    plt.close('all')
 
     # Test if correct exceptions are raised:
     # MCMCSamples are passed without weights
@@ -827,8 +810,8 @@ def test_beta():
 def test_beta_with_logL_infinities():
     ns = read_chains("./tests/example_data/pc")
     ns.loc[:10, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
-
-    ns.recompute(inplace=True)
+    with pytest.warns(RuntimeWarning):
+        ns.recompute(inplace=True)
     assert (ns.logL == -np.inf).sum() == 0
 
 
@@ -843,7 +826,7 @@ def test_live_points():
     np.random.seed(4)
     pc = read_chains("./tests/example_data/pc")
 
-    for i, logL in pc.logL.iloc[::49].iteritems():
+    for i, logL in pc.logL.iloc[::49].items():
         live_points = pc.live_points(logL)
         assert len(live_points) == int(pc.nlive[i[0]])
 
@@ -867,11 +850,11 @@ def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
-    fig, ax = ns.plot_1d('x0', kind='hist_1d')
+    ax = ns.plot_1d('x0', kind='hist_1d')
     x1, x2 = ax['x0'].get_xlim()
     assert x1 > -1
     assert x2 < +1
-    fig, ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
+    ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
     x1, x2 = ax['x0'].get_xlim()
     assert x1 <= -1
     assert x2 >= +1
@@ -1054,7 +1037,9 @@ def test_logzero_mask_likelihood_level():
 
     ns1 = read_chains('./tests/example_data/pc')
     ns1.logL = np.where(mask, ns1.logL, -1e30)
-    ns1 = merge_nested_samples((ns1[ns1.logL > ns1.logL_birth],))
+
+    mask = ns1.logL.to_numpy() > ns1.logL_birth.to_numpy()
+    ns1 = merge_nested_samples((ns1[mask],))
     NS1 = ns1.stats(nsamples=2000)
 
     assert abs(NS1.logZ.mean() - logZ_V) < 1.5 * NS1.logZ.std()
@@ -1079,14 +1064,12 @@ def test_recompute():
 def test_NaN():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
+    with pytest.warns(RuntimeWarning, match="NaN encountered in logL."):
         pc_new = pc.copy()
         pc_new.loc[2, ('logL', r'$\ln\mathcal{L}$')] = np.nan
         pc_new.recompute(inplace=True)
-        assert "NaN encountered in logL." in str(w[0].message)
-        assert len(pc_new) == len(pc) - 1
-        assert pc_new.nlive.iloc[0] == 124
+    assert len(pc_new) == len(pc) - 1
+    assert pc_new.nlive.iloc[0] == 124
 
 
 def test_unsorted():
@@ -1111,10 +1094,10 @@ def test_plotting_with_integer_names():
     samples_1 = Samples(data=np.random.rand(1000, 3))
     samples_2 = Samples(data=np.random.rand(1000, 3))
     samples_1.compress()
-    fig, ax = samples_1.plot_2d([0, 1, 2])
+    ax = samples_1.plot_2d([0, 1, 2])
     samples_2.plot_2d(ax)
 
-    fig, ax = samples_1.plot_1d([0, 1, 2])
+    ax = samples_1.plot_1d([0, 1, 2])
     samples_2.plot_1d(ax)
 
     assert samples_1[0].shape == (1000,)
@@ -1133,50 +1116,42 @@ def test_logL_list():
 
     samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
     assert_array_equal(default, samples)
-    plt.close("all")
 
 
 def test_samples_dot_plot():
     samples = read_chains('./tests/example_data/pc')
     axes = samples[['x0', 'x1', 'x2', 'x3', 'x4']].plot.hist()
     assert len(axes.containers) == 5
-    axes = samples.x0.plot.kde(subplots=True)
+    fig, ax = plt.subplots()
+    axes = samples.x0.plot.kde(subplots=True, ax=ax)
     assert len(axes) == 1
     axes = samples[['x0', 'x1']].plot.kde(subplots=True)
     assert len(axes) == 2
-    plt.close("all")
 
     axes = samples.plot.kde_2d('x0', 'x1')
     assert len(axes.collections) == 5
     assert axes.get_xlabel() == 'x0'
     assert axes.get_ylabel() == 'x1'
-    plt.close("all")
     axes = samples.plot.hist_2d('x1', 'x0')
     assert len(axes.collections) == 1
     assert axes.get_xlabel() == 'x1'
     assert axes.get_ylabel() == 'x0'
-    plt.close("all")
     axes = samples.plot.scatter_2d('x2', 'x3')
     assert len(axes.lines) == 1
-    plt.close("all")
-    axes = samples.x1.plot.kde_1d()
+    fig, ax = plt.subplots()
+    axes = samples.x1.plot.kde_1d(ax=ax)
     assert len(axes.lines) == 1
-    plt.close("all")
-    axes = samples.x2.plot.hist_1d()
+    fig, ax = plt.subplots()
+    axes = samples.x2.plot.hist_1d(ax=ax)
     assert len(axes.containers) == 1
-    plt.close("all")
 
     try:
         axes = samples.plot.fastkde_2d('x0', 'x1')
         assert len(axes.collections) == 5
-        plt.close("all")
         axes = samples.plot.fastkde_1d()
         assert len(axes.lines) == 1
-        plt.close("all")
     except ImportError:
         pass
-
-    plt.close("all")
 
 
 def test_fixed_width():
@@ -1198,7 +1173,7 @@ def test_fixed_width():
 def test_samples_plot_labels():
     samples = read_chains('./tests/example_data/pc')
     columns = ['x0', 'x1', 'x2', 'x3', 'x4']
-    fig, axes = samples.plot_2d(columns)
+    axes = samples.plot_2d(columns)
 
     for col, ax in zip(columns, axes.loc[:, 'x0']):
         assert samples.get_label(col, 1) == ax.get_ylabel()

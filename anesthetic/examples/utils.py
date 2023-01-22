@@ -20,8 +20,13 @@ def random_ellipsoid(mean, cov, size=None):
     cov: 2d array-like
         The covariance structure of the ellipsoid. Axes have lengths equal to
         the square root of the eigenvalues of this matrix.
+
+    Returns
+    -------
+    points: array-like
+        Points drawn uniformly from the ellipsoid.
+        shape (*size, len(mean)).
     """
-    """Generate samples uniformly from the ellipsoid."""
     d = len(mean)
     L = np.linalg.cholesky(cov)
     x = np.random.multivariate_normal(np.zeros(d), np.eye(d), size=size)
@@ -37,6 +42,11 @@ def random_covariance(sigmas):
     ----------
     sigmas, 1d array like
         Lengths of the axes of the ellipsoid.
+
+    Returns
+    -------
+    Covariance matrix: 2d np.array
+        shape (len(sigmas, len(sigmas)).
     """
     d = len(sigmas)
     R = special_ortho_group.rvs(d)

@@ -53,7 +53,6 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
         r = (points**2).sum(axis=-1, keepdims=True)**0.5
 
     samples = merge_nested_samples(samples)
-    samples.logL
     logLend = samples[samples.nlive >= nlive].logL.max()
     return samples[samples.logL_birth < logLend].recompute()
 

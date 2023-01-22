@@ -52,15 +52,16 @@ def read_cobaya(root, *args, **kwargs):
     dirname, basename = os.path.split(root)
 
     files = os.listdir(os.path.dirname(root))
-    regex = basename + r'.([0-9]+)\.txt'
+    regex = re.escape(basename) + r'.([0-9]+)\.txt'
     matches = [re.match(regex, f) for f in files]
     chains_files = [(m.group(1), os.path.join(dirname, m.group(0)))
                     for m in matches if m]
     if not chains_files:
         raise FileNotFoundError(dirname + '/' + regex + " not found.")
 
-    params, labels = read_paramnames(root)
-    columns = kwargs.pop('columns', params)
+    columns, labels = read_paramnames(root)
+    columns = kwargs.pop('columns', columns)
+    labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
     samples = []
@@ -82,7 +83,7 @@ def read_cobaya(root, *args, **kwargs):
     samples.label = kwargs['label']
 
     if (samples.chain == samples.chain.iloc[0]).all():
-        samples.drop('chain', inplace=True, axis=1)
+        samples.drop(columns='chain', inplace=True, level=0)
     else:
         samples.set_label('chain', r'$n_\mathrm{chain}$')
 

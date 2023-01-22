@@ -56,12 +56,11 @@ def boxplot(data, *args, **kwds):
 
     def create_plot_group():
         fontsize = None  # pragma: no cover
-        kwds = None  # pragma: no cover
         maybe_color_bp = None  # pragma: no cover
         return_type = None  # pragma: no cover
         rot = None  # pragma: no cover
 
-        def plot_group(keys, values, ax, **kwargs):  # pragma: no cover
+        def plot_group(keys, values, ax, **kwds):  # pragma: no cover
             # GH 45465: xlabel/ylabel need to be popped out before plotting
             xlabel = kwds.pop("xlabel", None)
             ylabel = kwds.pop("ylabel", None)
