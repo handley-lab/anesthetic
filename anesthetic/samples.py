@@ -615,7 +615,7 @@ class NestedSamples(Samples):
         samples['D_KL'] = (S*w).sum()
         samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$')
 
-        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()
+        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()*2
         samples.set_label('d_G', r'$d_\mathrm{G}$')
 
         samples['logL_P'] = samples['logZ'] + samples['D_KL']
@@ -819,7 +819,7 @@ class NestedSamples(Samples):
         S = (logw*0).add(betalogL, axis=0) - logZ
         w = np.exp(logw-logZ)
         D_KL = (S*w).sum()
-        d_G = ((S-D_KL)**2*w).sum()
+        d_G = ((S-D_KL)**2*w).sum()*2
         if np.isscalar(d_G):
             return d_G
         else:

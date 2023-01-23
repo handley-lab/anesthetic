@@ -202,3 +202,57 @@ def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
     points = np.concatenate([points, live_points])
 
     return NestedSamples(points, logL=death_likes, logL_birth=birth_likes)
+
+
+def planck_gaussian(nlive=500):
+    """A Gaussian likelihood with Planck-like posterior.
+
+    This is a gaussian likelihood with the same mean, parameter covariance and
+    average loglikelihood as the Planck 2018 legacy chains
+    base/plikHM_TTTEEE_lowl_lowE_lensing
+
+    Parameters
+    ----------
+    nlive : int, optional
+        number of live points
+
+    Returns
+    -------
+    samples: NestedSamples
+        Nested sampling run
+    """
+
+    columns = ['omegabh2', 'omegach2', 'theta', 'tau', 'logA', 'ns']
+    labels = [r'$\Omega_b h^2$', r'$\Omega_c h^2$', r'$100\theta_{MC}$',
+              r'$\tau$', r'${\rm{ln}}(10^{10} A_s)$', r'$n_s$']
+
+    cov = np.array([
+        [2.12e-08, -9.03e-08, 1.76e-08, 2.96e-07, 4.97e-07, 2.38e-07],
+        [-9.03e-08, 1.39e-06, -1.26e-07, -3.41e-06, -4.15e-06, -3.28e-06],
+        [1.76e-08, -1.26e-07, 9.71e-08, 4.30e-07, 7.41e-07, 4.13e-07],
+        [2.96e-07, -3.41e-06, 4.30e-07, 5.33e-05, 9.53e-05, 1.05e-05],
+        [4.97e-07, -4.15e-06, 7.41e-07, 9.53e-05, 2.00e-04, 1.35e-05],
+        [2.38e-07, -3.28e-06, 4.13e-07, 1.05e-05, 1.35e-05, 1.73e-05]])
+
+    mean = np.array([0.02237, 0.1200, 1.04092, 0.0544, 3.044, 0.9649])
+
+    bounds = np.array([
+        [5.00e-03, 1.00e-01],
+        [1.00e-03, 9.90e-01],
+        [5.00e-01, 1.00e+01],
+        [1.00e-02, 8.00e-01],
+        [1.61e+00, 3.91e+00],
+        [8.00e-01, 1.20e+00]])
+
+    logL_mean = -1400.35
+
+    samples = correlated_gaussian(nlive, mean, cov, bounds)
+
+    data = samples.iloc[:, :len(columns)].to_numpy()
+    logL = samples['logL'].to_numpy()
+    logL_birth = samples['logL_birth'].to_numpy()
+    logL_birth += logL_mean - samples.logL.mean()
+    logL += logL_mean - samples.logL.mean()
+    samples = NestedSamples(data=data, columns=columns, labels=labels,
+                            logL=logL, logL_birth=logL_birth)
+    return samples
