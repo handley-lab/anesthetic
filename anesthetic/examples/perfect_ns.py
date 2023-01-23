@@ -205,7 +205,7 @@ def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
 
 
 def planck_gaussian(nlive=500):
-    """A Gaussian likelihood with Planck-like posterior.
+    """Gaussian likelihood with Planck-like posterior.
 
     This is a gaussian likelihood with the same mean, parameter covariance and
     average loglikelihood as the Planck 2018 legacy chains
@@ -221,7 +221,6 @@ def planck_gaussian(nlive=500):
     samples: NestedSamples
         Nested sampling run
     """
-
     columns = ['omegabh2', 'omegach2', 'theta', 'tau', 'logA', 'ns']
     labels = [r'$\Omega_b h^2$', r'$\Omega_c h^2$', r'$100\theta_{MC}$',
               r'$\tau$', r'${\rm{ln}}(10^{10} A_s)$', r'$n_s$']
