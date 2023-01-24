@@ -526,6 +526,13 @@ def make_1d_axes(params, ncol=None, labels=None,
         Pandas array of axes objects.
 
     """
+    # TODO: remove this in version >= 2.1
+    if 'tex' in fig_kw:
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "make_1d_axes(..., tex=tex)     # anesthetic 1.0\n"
+            "make_1d_axes(..., labels=tex)  # anesthetic 2.0"
+            )
     fig = fig_kw.pop('fig') if 'fig' in fig_kw else plt.figure(**fig_kw)
     axes = AxesSeries(index=np.atleast_1d(params),
                       fig=fig,
@@ -587,7 +594,15 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
         Pandas array of axes objects.
 
     """
+    # TODO: remove this in version >= 2.1
+    if 'tex' in fig_kw:
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "make_2d_axes(..., tex=tex)     # anesthetic 1.0\n"
+            "make_2d_axes(..., labels=tex)  # anesthetic 2.0"
+            )
     fig = fig_kw.pop('fig') if 'fig' in fig_kw else plt.figure(**fig_kw)
+
     if nest_level(params) == 2:
         xparams, yparams = params
     else:

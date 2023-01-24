@@ -80,7 +80,7 @@ def read_getdist(root, *args, **kwargs):
         weights, minuslogL, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
                            weights=weights.flatten(), logL=-minuslogL,
-                           labels=labels, root=root, *args, **kwargs)
+                           labels=labels, *args, **kwargs)
         mcmc['chain'] = int(i) if i else np.nan
         samples.append(mcmc)
 
