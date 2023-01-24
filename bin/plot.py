@@ -1,6 +1,6 @@
-from anesthetic import NestedSamples
+from anesthetic import read_chains
 import numpy as np
-ns = NestedSamples(root='./tests/example_data/pc')
+ns = read_chains('./tests/example_data/pc')
 fig, axes = ns.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
 
 sigma0, sigma1 = 0.1, 0.1 

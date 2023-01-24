@@ -71,7 +71,7 @@ def read_cobaya(root, *args, **kwargs):
         weights, logP, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
                            weights=weights.flatten(), logL=logP,
-                           root=root, labels=labels, *args, **kwargs)
+                           labels=labels, *args, **kwargs)
         mcmc['chain'] = int(i) if i else np.nan
         samples.append(mcmc)
 

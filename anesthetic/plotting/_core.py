@@ -1,4 +1,5 @@
 from pandas.plotting import PlotAccessor as _PlotAccessor
+from matplotlib.axes import Axes  # TODO: remove this in version >= 2.1
 
 
 def _process_docstring(doc):
@@ -54,3 +55,22 @@ class PlotAccessor(_PlotAccessor):
     def scatter_2d(self, x, y, **kwargs):
         """Scatter plot: See anesthetic.plot.scatter_plot_2d."""
         return self(kind="scatter_2d", x=x, y=y, **kwargs)
+
+    # TODO: remove this in version >= 2.1
+    def __call__(self, *args, **kwargs):
+        # noqa: disable=D102
+        if len(args) > 0 and isinstance(args[0], Axes):
+            raise ValueError(
+                "This is anesthetic 1.0 syntax. anesthetic 2.0 now follows "
+                "pandas in its use of plot.\n"
+                "samples.plot(ax, x)  # anesthetic 1.0\n"
+                "# anesthetic 2.0\n"
+                "samples.plot(x=x, ax=ax, kind='kde_1d')\n"
+                "samples.x.plot.kde_1d(ax=ax)\n"
+                "samples.plot.kde_1d(x=x, ax=ax)\n\n"
+                "samples.plot(ax, x, y)  # anesthetic 1.0\n"
+                "# anesthetic 2.0\n"
+                "samples.plot(x=x, y=y, ax=ax, kind='kde_2d')\n"
+                "samples.plot.kde_2d(x=x, y=y, ax=ax)"
+                )
+        return super().__call__(*args, **kwargs)

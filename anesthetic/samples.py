@@ -190,11 +190,32 @@ class Samples(WeightedLabelledDataFrame):
             Pandas array of axes objects
 
         """
+        # TODO: remove this in version >= 2.1
+        if 'plot_type' in kwargs:
+            raise ValueError(
+                "You are using the anesthetic 1.0 kwarg \'plot_type\' instead "
+                "of anesthetic 2.0 \'kind\'. Please update your code."
+                )
+
         if not isinstance(axes, AxesSeries):
             _, axes = make_1d_axes(axes, labels=self.get_labels_map())
 
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
+
+        # TODO: remove this in version >= 2.1
+        if kwargs['kind'] == 'kde':
+            warnings.warn(
+                "You are using \'kde\' as a plot kind. "
+                "\'kde_1d\' is the appropriate keyword for anesthetic. "
+                "Your plots may look odd if you use this argument."
+                )
+        elif kwargs['kind'] == 'hist':
+            warnings.warn(
+                "You are using \'hist\' as a plot kind. "
+                "\'hist_1d\' is the appropriate keyword for anesthetic. "
+                "Your plots may look odd if you use this argument."
+                )
 
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
@@ -268,8 +289,16 @@ class Samples(WeightedLabelledDataFrame):
             Pandas array of axes objects
 
         """
+        # TODO: remove this in version >= 2.1
+        if 'types' in kwargs:
+            raise ValueError(
+                "You are using the anesthetic 1.0 kwarg \'types\' instead of "
+                "anesthetic 2.0 \'kind' or \'kinds\' (synonyms). "
+                "Please update your code."
+                )
         kind = kwargs.pop('kind', 'default')
         kind = kwargs.pop('kinds', kind)
+
         if isinstance(kind, str) and kind in self.plot_2d_default_kinds:
             kind = self.plot_2d_default_kinds.get(kind)
         if (not isinstance(kind, dict) or
@@ -300,6 +329,21 @@ class Samples(WeightedLabelledDataFrame):
                     pos = ax.position
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
+                    # TODO: remove this in version >= 2.1
+                    if lkwargs['kind'] == 'kde':
+                        warnings.warn(
+                            "You are using \'kde\' as a plot kind. "
+                            "\'kde_1d\' and \'kde_2d\' are the appropriate "
+                            "keywords for anesthetic. Your plots may look "
+                            "odd if you use this argument."
+                            )
+                    elif lkwargs['kind'] == 'hist':
+                        warnings.warn(
+                            "You are using \'hist\' as a plot kind. "
+                            "\'hist_1d\' and \'hist_2d\' are the appropriate "
+                            "keywords for anesthetic. Your plots may look "
+                            "odd if you use this argument."
+                            )
                     if x in self and y in self and lkwargs['kind'] is not None:
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
@@ -387,6 +431,18 @@ class Samples(WeightedLabelledDataFrame):
         else:
             return samples.__finalize__(self, "importance_sample")
 
+    # TODO: remove this in version >= 2.1
+    @property
+    def tex(self):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.tex[label] = tex        # anesthetic 1.0\n"
+            "samples.set_label(label, tex)   # anesthetic 2.0\n\n"
+            "tex = samples.tex[label]        # anesthetic 1.0\n"
+            "tex = samples.get_label(label)  # anesthetic 2.0"
+            )
+
 
 class MCMCSamples(Samples):
     """Storage and plotting tools for MCMC samples.
@@ -396,9 +452,6 @@ class MCMCSamples(Samples):
 
     Parameters
     ----------
-    root: str, optional
-        root for reading chains from file. Overrides all other arguments.
-
     data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
@@ -425,11 +478,6 @@ class MCMCSamples(Samples):
 
     _metadata = Samples._metadata + ['root']
 
-    def __init__(self, *args, **kwargs):
-        root = kwargs.pop('root', None)
-        super().__init__(*args, **kwargs)
-        self.root = root
-
     @property
     def _constructor(self):
         return MCMCSamples
@@ -455,9 +503,6 @@ class NestedSamples(Samples):
 
     Parameters
     ----------
-    root: str, optional
-        root for reading chains from file. Overrides all other arguments.
-
     data: np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
@@ -491,7 +536,6 @@ class NestedSamples(Samples):
     _metadata = Samples._metadata + ['root', '_beta']
 
     def __init__(self, *args, **kwargs):
-        self.root = kwargs.pop('root', None)
         logzero = kwargs.pop('logzero', -1e30)
         self._beta = kwargs.pop('beta', 1.)
         logL_birth = kwargs.pop('logL_birth', None)
@@ -547,6 +591,17 @@ class NestedSamples(Samples):
     def prior(self, inplace=False):
         """Re-weight samples at infinite temperature to get prior samples."""
         return self.set_beta(beta=0, inplace=inplace)
+
+    # TODO: remove this in version >= 2.1
+    def ns_output(self, *args, **kwargs):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.ns_output(1000)  # anesthetic 1.0\n"
+            "samples.stats(1000)      # anesthetic 2.0\n\n"
+            "Check out the new temperature functionality: help(samples.stats),"
+            " as well as average loglikelihoods: help(samples.logL_P)"
+            )
 
     def stats(self, nsamples=None, beta=None):
         """Compute Nested Sampling statistics.
@@ -795,6 +850,17 @@ class NestedSamples(Samples):
 
     _logZ_function_shape = '\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
 
+    # TODO: remove this in version >= 2.1
+    def D(self, nsamples=None):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.D(1000)     # anesthetic 1.0\n"
+            "samples.D_KL(1000)  # anesthetic 2.0\n\n"
+            "Check out the new temperature functionality: help(samples.D_KL), "
+            "as well as average loglikelihoods: help(samples.logL_P)"
+            )
+
     def D_KL(self, nsamples=None, beta=None):
         """Kullback-Leibler divergence."""
         logw = self.logw(nsamples, beta)
@@ -810,6 +876,17 @@ class NestedSamples(Samples):
                                             index=logw.columns).squeeze()
 
     D_KL.__doc__ += _logZ_function_shape
+
+    # TODO: remove this in version >= 2.1
+    def d(self, nsamples=None):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.d(1000)     # anesthetic 1.0\n"
+            "samples.d_G(1000)  # anesthetic 2.0\n\n"
+            "Check out the new temperature functionality: help(samples.d_G), "
+            "as well as average loglikelihoods: help(samples.logL_P)"
+            )
 
     def d_G(self, nsamples=None, beta=None):
         """Bayesian model dimensionality."""

@@ -1,7 +1,7 @@
 from matplotlib.animation import FuncAnimation
-from anesthetic import NestedSamples
+from anesthetic import read_chains
 root = 'plikHM_TTTEEE_lowl_lowE_lensing_NS/NS_plikHM_TTTEEE_lowl_lowE_lensing'
-nested = NestedSamples.read(root=root)
+nested = read_chains(root)
 
 plotter = nested.gui(['omegam', 'H0', 'sigma8'])
 plotter.param_choice.buttons.set_active(1)
