@@ -21,11 +21,19 @@ def random_ellipsoid(mean, cov, size=None):
         The covariance structure of the ellipsoid. Axes have lengths equal to
         the square root of the eigenvalues of this matrix.
 
+    size: int or tuple of ints, optional
+        Given a shape of, for example, (m,n,k), m*n*k samples are generated,
+        and packed in an m-by-n-by-k arrangement. Because each sample is
+        N-dimensional, the output shape is (m,n,k,N). If no shape is specified,
+        a single (N-D) sample is returned.
+
     Returns
     -------
     points: array-like
-        Points drawn uniformly from the ellipsoid.
-        shape (*size, len(mean)).
+        The drawn samples, of shape size, if that was provided. If not, the
+        shape is (N,).
+        In other words, each entry out[i,j,...,:] is an N-dimensional value
+        drawn uniformly from the ellipsoid.
     """
     d = len(mean)
     L = np.linalg.cholesky(cov)
