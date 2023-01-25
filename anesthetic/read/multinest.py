@@ -43,5 +43,4 @@ def read_multinest(root, *args, **kwargs):
     data = samples
 
     return NestedSamples(data=data, logL=logL, logL_birth=logL_birth,
-                         root=root, columns=columns, labels=labels,
-                         *args, **kwargs)
+                         columns=columns, labels=labels, *args, **kwargs)
