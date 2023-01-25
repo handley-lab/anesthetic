@@ -29,4 +29,4 @@ def read_polychord(root, *args, **kwargs):
 
     return NestedSamples(data=data, columns=columns,
                          logL=logL, logL_birth=logL_birth,
-                         labels=labels, root=root, *args, **kwargs)
+                         labels=labels, *args, **kwargs)
