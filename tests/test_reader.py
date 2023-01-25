@@ -20,7 +20,6 @@ except ImportError:
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    yield
     tm.close()
 
 
