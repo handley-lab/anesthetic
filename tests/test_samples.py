@@ -17,10 +17,16 @@ from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
-from tests.test_plot import close_figures_on_teardown
+import pandas._testing as tm
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake
+
+
+@pytest.fixture(autouse=True)
+def close_figures_on_teardown():
+    yield
+    tm.close()
 
 
 def test_build_samples():
