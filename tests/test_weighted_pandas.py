@@ -10,7 +10,7 @@ from pandas.plotting import scatter_matrix, bootstrap_plot
 from pandas.plotting._matplotlib.misc import (
     scatter_matrix as orig_scatter_matrix
 )
-from pandas.tests.plotting.common import TestPlotBase
+from tests.common import close_figures_on_teardown
 
 
 @pytest.fixture
@@ -625,219 +625,218 @@ def mcmc_wdf(mcmc_df):
     return WeightedDataFrame(mcmc_df.drop_duplicates(), weights=weights.values)
 
 
-class TestPlotWeighted(TestPlotBase):
-    def test_WeightedDataFrame_hist(self, mcmc_df, mcmc_wdf):
-        df_axes = mcmc_df.hist().flatten()
-        wdf_axes = mcmc_wdf.hist().flatten()
+def test_WeightedDataFrame_hist(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    df_axes = mcmc_df.hist().flatten()
+    wdf_axes = mcmc_wdf.hist().flatten()
 
-        df_heights = [p.get_height() for ax in df_axes for p in ax.patches]
-        wdf_heights = [p.get_height() for ax in wdf_axes for p in ax.patches]
-        assert df_heights == wdf_heights
+    df_heights = [p.get_height() for ax in df_axes for p in ax.patches]
+    wdf_heights = [p.get_height() for ax in wdf_axes for p in ax.patches]
+    assert df_heights == wdf_heights
 
-        df_widths = [p.get_width() for ax in df_axes for p in ax.patches]
-        wdf_widths = [p.get_width() for ax in wdf_axes for p in ax.patches]
-        assert df_widths == wdf_widths
+    df_widths = [p.get_width() for ax in df_axes for p in ax.patches]
+    wdf_widths = [p.get_width() for ax in wdf_axes for p in ax.patches]
+    assert df_widths == wdf_widths
 
-        df_xys = [p.get_xy() for ax in df_axes for p in ax.patches]
-        wdf_xys = [p.get_xy() for ax in wdf_axes for p in ax.patches]
-        assert df_xys == wdf_xys
+    df_xys = [p.get_xy() for ax in df_axes for p in ax.patches]
+    wdf_xys = [p.get_xy() for ax in wdf_axes for p in ax.patches]
+    assert df_xys == wdf_xys
 
-        df_axes = mcmc_df.plot.hist(subplots=True)
-        wdf_axes = mcmc_wdf.plot.hist(subplots=True)
+    df_axes = mcmc_df.plot.hist(subplots=True)
+    wdf_axes = mcmc_wdf.plot.hist(subplots=True)
 
-        df_heights = [p.get_height() for ax in df_axes for p in ax.patches]
-        wdf_heights = [p.get_height() for ax in wdf_axes for p in ax.patches]
-        assert df_heights == wdf_heights
+    df_heights = [p.get_height() for ax in df_axes for p in ax.patches]
+    wdf_heights = [p.get_height() for ax in wdf_axes for p in ax.patches]
+    assert df_heights == wdf_heights
 
-        df_widths = [p.get_width() for ax in df_axes for p in ax.patches]
-        wdf_widths = [p.get_width() for ax in wdf_axes for p in ax.patches]
-        assert df_widths == wdf_widths
+    df_widths = [p.get_width() for ax in df_axes for p in ax.patches]
+    wdf_widths = [p.get_width() for ax in wdf_axes for p in ax.patches]
+    assert df_widths == wdf_widths
 
-        df_xys = [p.get_xy() for ax in df_axes for p in ax.patches]
-        wdf_xys = [p.get_xy() for ax in wdf_axes for p in ax.patches]
-        assert df_xys == wdf_xys
-
-
-    def test_WeightedSeries_hist(self, mcmc_df, mcmc_wdf):
-
-        fig, axes = plt.subplots(2)
-        mcmc_df.x.hist(ax=axes[0])
-        mcmc_wdf.x.hist(ax=axes[1])
-
-        df_heights = [p.get_height() for p in axes[0].patches]
-        wdf_heights = [p.get_height() for p in axes[1].patches]
-        assert df_heights == wdf_heights
-
-        df_widths = [p.get_width() for p in axes[0].patches]
-        wdf_widths = [p.get_width() for p in axes[1].patches]
-        assert df_widths == wdf_widths
-
-        df_xys = [p.get_xy() for p in axes[0].patches]
-        wdf_xys = [p.get_xy() for p in axes[1].patches]
-        assert df_xys == wdf_xys
-
-        fig, axes = plt.subplots(2)
-        mcmc_df.x.plot.hist(ax=axes[0])
-        mcmc_wdf.x.plot.hist(ax=axes[1])
-
-        df_heights = [p.get_height() for p in axes[0].patches]
-        wdf_heights = [p.get_height() for p in axes[1].patches]
-        assert df_heights == wdf_heights
-
-        df_widths = [p.get_width() for p in axes[0].patches]
-        wdf_widths = [p.get_width() for p in axes[1].patches]
-        assert df_widths == wdf_widths
-
-        df_xys = [p.get_xy() for p in axes[0].patches]
-        wdf_xys = [p.get_xy() for p in axes[1].patches]
-        assert df_xys == wdf_xys
+    df_xys = [p.get_xy() for ax in df_axes for p in ax.patches]
+    wdf_xys = [p.get_xy() for ax in wdf_axes for p in ax.patches]
+    assert df_xys == wdf_xys
 
 
-    def test_KdePlot(self, mcmc_df, mcmc_wdf):
-        bw_method = 0.3
-        fig, axes = plt.subplots(2)
-        mcmc_df.x.plot.kde(bw_method=bw_method, ax=axes[0])
-        mcmc_wdf.x.plot.kde(bw_method=bw_method, ax=axes[1])
-        df_line, wdf_line = axes[0].lines[0], axes[1].lines[0]
-        assert (df_line.get_xdata() == wdf_line.get_xdata()).all()
-        assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-4)
+def test_WeightedSeries_hist(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+
+    fig, axes = plt.subplots(2)
+    mcmc_df.x.hist(ax=axes[0])
+    mcmc_wdf.x.hist(ax=axes[1])
+
+    df_heights = [p.get_height() for p in axes[0].patches]
+    wdf_heights = [p.get_height() for p in axes[1].patches]
+    assert df_heights == wdf_heights
+
+    df_widths = [p.get_width() for p in axes[0].patches]
+    wdf_widths = [p.get_width() for p in axes[1].patches]
+    assert df_widths == wdf_widths
+
+    df_xys = [p.get_xy() for p in axes[0].patches]
+    wdf_xys = [p.get_xy() for p in axes[1].patches]
+    assert df_xys == wdf_xys
+
+    fig, axes = plt.subplots(2)
+    mcmc_df.x.plot.hist(ax=axes[0])
+    mcmc_wdf.x.plot.hist(ax=axes[1])
+
+    df_heights = [p.get_height() for p in axes[0].patches]
+    wdf_heights = [p.get_height() for p in axes[1].patches]
+    assert df_heights == wdf_heights
+
+    df_widths = [p.get_width() for p in axes[0].patches]
+    wdf_widths = [p.get_width() for p in axes[1].patches]
+    assert df_widths == wdf_widths
+
+    df_xys = [p.get_xy() for p in axes[0].patches]
+    wdf_xys = [p.get_xy() for p in axes[1].patches]
+    assert df_xys == wdf_xys
 
 
-    def test_scatter_matrix(self, mcmc_df, mcmc_wdf):
-        axes = scatter_matrix(mcmc_df)
-        data = axes[0, 1].collections[0].get_offsets().data
-        axes = orig_scatter_matrix(mcmc_df)
-        orig_data = axes[0, 1].collections[0].get_offsets().data
-
-        assert_allclose(data, orig_data)
-
-        axes = scatter_matrix(mcmc_wdf)
-        data = axes[0, 1].collections[0].get_offsets().data
-        n = len(data)
-        neff = channel_capacity(mcmc_wdf.get_weights())
-        assert_allclose(n, neff, atol=np.sqrt(n))
-
-        axes = orig_scatter_matrix(mcmc_wdf)
-        orig_data = axes[0, 1].collections[0].get_offsets().data
-        n = len(orig_data)
-        assert n == len(mcmc_wdf)
-
-        axes = scatter_matrix(mcmc_wdf, ncompress=50)
-        n = len(axes[0, 1].collections[0].get_offsets().data)
-        assert_allclose(n, 50, atol=np.sqrt(n))
+def test_KdePlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    bw_method = 0.3
+    fig, axes = plt.subplots(2)
+    mcmc_df.x.plot.kde(bw_method=bw_method, ax=axes[0])
+    mcmc_wdf.x.plot.kde(bw_method=bw_method, ax=axes[1])
+    df_line, wdf_line = axes[0].lines[0], axes[1].lines[0]
+    assert (df_line.get_xdata() == wdf_line.get_xdata()).all()
+    assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-4)
 
 
-    def test_bootstrap_plot(self, mcmc_df, mcmc_wdf):
-        bootstrap_plot(mcmc_wdf.x)
-        bootstrap_plot(mcmc_wdf.x, ncompress=500)
+def test_scatter_matrix(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    axes = scatter_matrix(mcmc_df)
+    data = axes[0, 1].collections[0].get_offsets().data
+    axes = orig_scatter_matrix(mcmc_df)
+    orig_data = axes[0, 1].collections[0].get_offsets().data
+
+    assert_allclose(data, orig_data)
+
+    axes = scatter_matrix(mcmc_wdf)
+    data = axes[0, 1].collections[0].get_offsets().data
+    n = len(data)
+    neff = channel_capacity(mcmc_wdf.get_weights())
+    assert_allclose(n, neff, atol=np.sqrt(n))
+
+    axes = orig_scatter_matrix(mcmc_wdf)
+    orig_data = axes[0, 1].collections[0].get_offsets().data
+    n = len(orig_data)
+    assert n == len(mcmc_wdf)
+
+    axes = scatter_matrix(mcmc_wdf, ncompress=50)
+    n = len(axes[0, 1].collections[0].get_offsets().data)
+    assert_allclose(n, 50, atol=np.sqrt(n))
 
 
-    def test_BoxPlot(self, mcmc_df, mcmc_wdf):
-        mcmc_df.plot.box()
-        mcmc_wdf.plot.box()
+def test_bootstrap_plot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    bootstrap_plot(mcmc_wdf.x)
+    bootstrap_plot(mcmc_wdf.x, ncompress=500)
 
+
+def test_BoxPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    mcmc_df.plot.box()
+    mcmc_wdf.plot.box()
+
+    fig, ax = plt.subplots()
+    mcmc_df.boxplot(ax=ax)
+
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(ax=ax)
+
+    fig, ax = plt.subplots()
+    mcmc_df.x.plot.box(ax=ax)
+
+    fig, ax = plt.subplots()
+    mcmc_wdf.x.plot.box(ax=ax)
+
+    mcmc_df.plot.box(subplots=True)
+    mcmc_wdf.plot.box(subplots=True)
+
+    mcmc_df['split'] = ''
+    mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
+    mcmc_df.loc[len(mcmc_df)//2:, 'split'] = 'B'
+
+    mcmc_wdf['split'] = ''
+    mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
+    mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
+
+    mcmc_df.groupby('split').boxplot()
+    mcmc_wdf.groupby('split').boxplot()
+
+    for return_type in ['dict', 'both']:
         fig, ax = plt.subplots()
-        mcmc_df.boxplot(ax=ax)
-
+        mcmc_wdf.plot.box(return_type=return_type, ax=ax)
         fig, ax = plt.subplots()
-        mcmc_wdf.boxplot(ax=ax)
+        mcmc_wdf.boxplot(return_type=return_type, ax=ax)
 
-        fig, ax = plt.subplots()
-        mcmc_df.x.plot.box(ax=ax)
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(xlabel='xlabel', ax=ax)
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(ylabel='ylabel', ax=ax)
 
-        fig, ax = plt.subplots()
-        mcmc_wdf.x.plot.box(ax=ax)
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(vert=False, ax=ax)
 
-        mcmc_df.plot.box(subplots=True)
-        mcmc_wdf.plot.box(subplots=True)
-
-        mcmc_df['split'] = ''
-        mcmc_df.loc[:len(mcmc_df)//2, 'split'] = 'A'
-        mcmc_df.loc[len(mcmc_df)//2:, 'split'] = 'B'
-
-        mcmc_wdf['split'] = ''
-        mcmc_wdf.iloc[:len(mcmc_wdf)//2, -1] = 'A'
-        mcmc_wdf.iloc[len(mcmc_wdf)//2:, -1] = 'B'
-
-        mcmc_df.groupby('split').boxplot()
-        mcmc_wdf.groupby('split').boxplot()
-
-        for return_type in ['dict', 'both']:
-            fig, ax = plt.subplots()
-            mcmc_wdf.plot.box(return_type=return_type, ax=ax)
-            fig, ax = plt.subplots()
-            mcmc_wdf.boxplot(return_type=return_type, ax=ax)
-
-        fig, ax = plt.subplots()
-        mcmc_wdf.boxplot(xlabel='xlabel', ax=ax)
-        fig, ax = plt.subplots()
-        mcmc_wdf.boxplot(ylabel='ylabel', ax=ax)
-
-        fig, ax = plt.subplots()
-        mcmc_wdf.boxplot(vert=False, ax=ax)
-
-        fig, ax = plt.subplots()
-        mcmc_wdf.boxplot(fontsize=30, ax=ax)
+    fig, ax = plt.subplots()
+    mcmc_wdf.boxplot(fontsize=30, ax=ax)
 
 
-    def test_ScatterPlot(self, mcmc_df, mcmc_wdf):
-        mcmc_df.plot.scatter('x', 'y')
-        ax = mcmc_wdf.plot.scatter('x', 'y')
+def test_ScatterPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    mcmc_df.plot.scatter('x', 'y')
+    ax = mcmc_wdf.plot.scatter('x', 'y')
 
-        n = len(ax.collections[0].get_offsets().data)
-        neff = channel_capacity(mcmc_wdf.get_weights())
-        assert_allclose(n, neff, atol=np.sqrt(n))
+    n = len(ax.collections[0].get_offsets().data)
+    neff = channel_capacity(mcmc_wdf.get_weights())
+    assert_allclose(n, neff, atol=np.sqrt(n))
 
-        ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
-        n = len(ax.collections[0].get_offsets().data)
-        assert_allclose(n, 50, atol=np.sqrt(50))
-
-
-    def test_HexBinPlot(self, mcmc_df, mcmc_wdf):
-        df_axes = mcmc_df.plot.hexbin('x', 'y', mincnt=1)
-        wdf_axes = mcmc_wdf.plot.hexbin('x', 'y')
-
-        df_data = df_axes.collections[0].get_offsets()
-        wdf_data = wdf_axes.collections[0].get_offsets()
-        assert_allclose(df_data, wdf_data)
-
-        df_colors = df_axes.collections[0].get_facecolors()
-        wdf_colors = wdf_axes.collections[0].get_facecolors()
-        assert_allclose(df_colors, wdf_colors)
+    ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
+    n = len(ax.collections[0].get_offsets().data)
+    assert_allclose(n, 50, atol=np.sqrt(50))
 
 
-    def test_AreaPlot(self, mcmc_df, mcmc_wdf):
-        fig, (ax1, ax2) = plt.subplots(1, 2)
-        axes_df = mcmc_df.plot.area(ax=ax1)
-        axes_wdf = mcmc_wdf.plot.area(ax=ax2)
+def test_HexBinPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    df_axes = mcmc_df.plot.hexbin('x', 'y', mincnt=1)
+    wdf_axes = mcmc_wdf.plot.hexbin('x', 'y')
 
-        assert_allclose(axes_df.get_xlim(), axes_wdf.get_xlim(), rtol=1e-3)
-        assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-3)
+    df_data = df_axes.collections[0].get_offsets()
+    wdf_data = wdf_axes.collections[0].get_offsets()
+    assert_allclose(df_data, wdf_data)
 
-
-    def test_BarPlot(self, mcmc_df, mcmc_wdf):
-        axes_bar = mcmc_wdf[5:10].plot.bar()
-        axes_barh = mcmc_wdf[5:10].plot.barh()
-        assert_array_equal(axes_bar.get_xticks(), axes_barh.get_yticks())
-        assert_array_equal(axes_bar.get_yticks(), axes_barh.get_xticks())
+    df_colors = df_axes.collections[0].get_facecolors()
+    wdf_colors = wdf_axes.collections[0].get_facecolors()
+    assert_allclose(df_colors, wdf_colors)
 
 
-    def test_PiePlot(self, mcmc_df, mcmc_wdf):
-        fig, ax = plt.subplots()
-        mcmc_wdf[5:10].x.plot.pie(ax=ax)
-        mcmc_wdf[5:10].plot.pie(subplots=True)
+def test_AreaPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    axes_df = mcmc_df.plot.area(ax=ax1)
+    axes_wdf = mcmc_wdf.plot.area(ax=ax2)
+
+    assert_allclose(axes_df.get_xlim(), axes_wdf.get_xlim(), rtol=1e-3)
+    assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-3)
 
 
-    def test_LinePlot(self, mcmc_df, mcmc_wdf):
-        fig, ax = plt.subplots()
-        df_axes = mcmc_df.x.plot.line(ax=ax)
-        assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())
-        fig, ax = plt.subplots()
-        wdf_axes = mcmc_wdf.x.plot.line(ax=ax)
-        assert_array_equal(mcmc_wdf.index.droplevel('weights'),
-                           wdf_axes.lines[0].get_xdata())
-        wdf_axes = mcmc_wdf.plot.line()
-        assert len(wdf_axes.lines) == len(mcmc_wdf.columns)
+def test_BarPlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    axes_bar = mcmc_wdf[5:10].plot.bar()
+    axes_barh = mcmc_wdf[5:10].plot.barh()
+    assert_array_equal(axes_bar.get_xticks(), axes_barh.get_yticks())
+    assert_array_equal(axes_bar.get_yticks(), axes_barh.get_xticks())
+
+
+def test_PiePlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    fig, ax = plt.subplots()
+    mcmc_wdf[5:10].x.plot.pie(ax=ax)
+    mcmc_wdf[5:10].plot.pie(subplots=True)
+
+
+def test_LinePlot(close_figures_on_teardown, mcmc_df, mcmc_wdf):
+    fig, ax = plt.subplots()
+    df_axes = mcmc_df.x.plot.line(ax=ax)
+    assert_array_equal(mcmc_df.index, df_axes.lines[0].get_xdata())
+    fig, ax = plt.subplots()
+    wdf_axes = mcmc_wdf.x.plot.line(ax=ax)
+    assert_array_equal(mcmc_wdf.index.droplevel('weights'),
+                       wdf_axes.lines[0].get_xdata())
+    wdf_axes = mcmc_wdf.plot.line()
+    assert len(wdf_axes.lines) == len(mcmc_wdf.columns)
 
 
 def test_multiindex(mcmc_wdf):
