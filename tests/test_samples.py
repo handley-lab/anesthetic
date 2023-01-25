@@ -187,9 +187,9 @@ def test_plot_2d_kinds_multiple_calls():
     axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
                                     'lower': 'kde_2d',
                                     'upper': 'scatter_2d'})
-    ns.plot_2d(axes, kind={'diagonal': 'hist'})
+    ns.plot_2d(axes, kind={'diagonal': 'hist_1d'})
 
-    axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
+    axes = ns.plot_2d(params, kind={'diagonal': 'hist_1d'})
     ns.plot_2d(axes, kind={'diagonal': 'kde_1d',
                            'lower': 'kde_2d',
                            'upper': 'scatter_2d'})
