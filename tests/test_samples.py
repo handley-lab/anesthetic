@@ -17,7 +17,7 @@ from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
-from tests.common import close_figures_on_teardown
+from tests.test_plot import close_figures_on_teardown
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
 from wedding_cake import WeddingCake

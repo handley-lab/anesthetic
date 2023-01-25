@@ -11,7 +11,7 @@ from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
-from tests.common import close_figures_on_teardown
+from tests.test_plot import close_figures_on_teardown
 try:
     import getdist
 except ImportError:
