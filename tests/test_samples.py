@@ -123,7 +123,6 @@ def test_root_and_label():
     assert mc.root is None
     assert mc.label is None
 
-
 class TestPlotSamples(TestPlotBase):
     def test_different_parameters(self):
         np.random.seed(3)
@@ -139,6 +138,7 @@ class TestPlotSamples(TestPlotBase):
         fig, axes = make_2d_axes([params_x, params_y])
         ns.plot_2d(axes)
 
+
     def test_plot_2d_kinds(self):
         np.random.seed(3)
         ns = read_chains('./tests/example_data/pc')
@@ -153,16 +153,13 @@ class TestPlotSamples(TestPlotBase):
         axes = ns.plot_2d(params, kind={'upper': 'scatter_2d'})
         assert (~axes.isnull()).to_numpy().sum() == 6
 
-        axes = ns.plot_2d(params, kind={'upper': 'kde_2d',
-                                        'diagonal': 'kde_1d'})
+        axes = ns.plot_2d(params, kind={'upper': 'kde_2d', 'diagonal': 'kde_1d'})
         assert (~axes.isnull()).to_numpy().sum() == 9
 
-        axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
-                                        'diagonal': 'kde_1d'})
+        axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
         assert (~axes.isnull()).to_numpy().sum() == 6
 
-        axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
-                                        'diagonal': 'kde_1d'})
+        axes = ns.plot_2d(params, kind={'lower': 'kde_2d', 'diagonal': 'kde_1d'})
         assert (~axes.isnull()).to_numpy().sum() == 6
 
         axes = ns.plot_2d(params, kind={'lower': 'kde_2d',
@@ -200,6 +197,7 @@ class TestPlotSamples(TestPlotBase):
         with pytest.raises(ValueError):
             ns.plot_2d(params, kind='eggs')
 
+
     def test_plot_2d_kinds_multiple_calls(self):
         np.random.seed(3)
         ns = read_chains('./tests/example_data/pc')
@@ -215,6 +213,7 @@ class TestPlotSamples(TestPlotBase):
                                'lower': 'kde_2d',
                                'upper': 'scatter_2d'})
 
+
     def test_plot_2d_legend(self):
         np.random.seed(3)
         ns = read_chains('./tests/example_data/pc')
@@ -223,10 +222,8 @@ class TestPlotSamples(TestPlotBase):
 
         # Test label kwarg for kde
         fig, axes = make_2d_axes(params, upper=False)
-        ns.plot_2d(axes, label='l1',
-                   kind=dict(diagonal='kde_1d', lower='kde_2d'))
-        mc.plot_2d(axes, label='l2',
-                   kind=dict(diagonal='kde_1d', lower='kde_2d'))
+        ns.plot_2d(axes, label='l1', kind=dict(diagonal='kde_1d', lower='kde_2d'))
+        mc.plot_2d(axes, label='l2', kind=dict(diagonal='kde_1d', lower='kde_2d'))
 
         for y, row in axes.iterrows():
             for x, ax in row.items():
@@ -288,6 +285,7 @@ class TestPlotSamples(TestPlotBase):
                     handles, labels = ax.get_legend_handles_labels()
                     assert labels == ['l1', 'l2']
 
+
     def test_plot_2d_colours(self):
         np.random.seed(3)
         gd = read_chains("./tests/example_data/gd")
@@ -333,6 +331,7 @@ class TestPlotSamples(TestPlotBase):
             assert len(set(mn_colors)) == 1
             assert len(set(pc_colors)) == 1
 
+
     def test_plot_1d_colours(self):
         np.random.seed(3)
         gd = read_chains("./tests/example_data/gd")
@@ -374,6 +373,7 @@ class TestPlotSamples(TestPlotBase):
             assert len(set(mn_colors)) == 1
             assert len(set(pc_colors)) == 1
 
+
     @pytest.mark.xfail('astropy' not in sys.modules,
                        raises=ImportError,
                        reason="requires astropy package")
@@ -382,11 +382,13 @@ class TestPlotSamples(TestPlotBase):
         ns = read_chains('./tests/example_data/pc')
         ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
 
+
     def test_hist_levels(self):
         np.random.seed(3)
         ns = read_chains('./tests/example_data/pc')
         ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
                    levels=[0.95, 0.68], bins=20)
+
 
     def test_weighted_merging(self):
         # Generate some data to try it out:
@@ -403,8 +405,7 @@ class TestPlotSamples(TestPlotBase):
         samples = merge_samples_weighted([samples_1, samples_2],
                                          label='Merged label')
         mean = samples.xtest.mean()
-        assert np.isclose(mean,
-                          (mean1*weight1+mean2*weight2)/(weight1+weight2))
+        assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
         assert samples.label == 'Merged label'
 
@@ -420,8 +421,7 @@ class TestPlotSamples(TestPlotBase):
         samples = merge_samples_weighted(
             [samples_1, samples_2], weights=[weight1, weight2])
         mean = samples.xtest.mean()
-        assert np.isclose(mean,
-                          (mean1*weight1+mean2*weight2)/(weight1+weight2))
+        assert np.isclose(mean, (mean1*weight1+mean2*weight2)/(weight1+weight2))
 
         # Test plot still works (see issue #189)
         prior_samples = []
@@ -453,6 +453,7 @@ class TestPlotSamples(TestPlotBase):
 
         samples = NestedSamples(data=data, logL=logL, logL_birth=logL_birth)
         assert_array_equal(default, samples)
+
 
     def test_samples_dot_plot(self):
         samples = read_chains('./tests/example_data/pc')

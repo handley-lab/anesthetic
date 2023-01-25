@@ -55,6 +55,7 @@ class TestPlotAnesthetic(TestPlotBase):
         assert ymin2 == ymin1 - 0.5 * (ymax1 - ymin1)
         assert ymax2 == ymax1 + 0.5 * (ymax1 - ymin1)
 
+
     def test_make_1d_axes(self):
         paramnames = ['A', 'B', 'C', 'D', 'E']
         labels = {'A': 'tA', 'B': 'tB', 'C': 'tC', 'D': 'tD', 'E': 'tE'}
@@ -114,6 +115,7 @@ class TestPlotAnesthetic(TestPlotBase):
         with pytest.raises((AttributeError, TypeError)):
             make_1d_axes(paramnames, spam='ham')
 
+
     def test_make_2d_axes_inputs_outputs(self):
         paramnames_x = ['A', 'B', 'C', 'D']
         paramnames_y = ['B', 'A', 'D', 'E']
@@ -164,6 +166,7 @@ class TestPlotAnesthetic(TestPlotBase):
         # Check unexpected kwargs
         with pytest.raises((AttributeError, TypeError)):
             make_2d_axes(paramnames_x, spam='ham')
+
 
     @pytest.mark.parametrize('paramnames_y', [['A', 'B', 'C', 'D'],
                                               ['A', 'C', 'B', 'D'],
@@ -221,6 +224,7 @@ class TestPlotAnesthetic(TestPlotBase):
         assert ns['lower'] == lower * nl
         assert ns['diagonal'] == diagonal * nd
 
+
     @pytest.mark.parametrize('upper', [False, True])
     @pytest.mark.parametrize('ticks', ['inner', 'outer', None])
     def test_make_2d_axes_ticks(self, upper, ticks):
@@ -246,9 +250,11 @@ class TestPlotAnesthetic(TestPlotBase):
         with pytest.raises(ValueError):
             make_2d_axes(paramnames, upper=upper, ticks='spam')
 
+
     def test_make_2d_axes_ticks_error(self):
         with pytest.raises(ValueError):
             make_2d_axes(['a', 'b'], ticks='spam')
+
 
     def test_2d_axes_limits(self):
         np.random.seed(0)
@@ -267,6 +273,7 @@ class TestPlotAnesthetic(TestPlotBase):
                     assert axes[y][z].get_xlim() == (c, d)
                     assert axes[z][y].get_ylim() == (c, d)
 
+
     @pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
                                             [['A', 'B', 'C', 'D'], ['A', 'B']],
                                             [['A', 'B'], ['A', 'B', 'C', 'D']]])
@@ -278,6 +285,7 @@ class TestPlotAnesthetic(TestPlotBase):
         kwargs = dict(c='k', ls='--', lw=0.5)
         fig, axes = make_2d_axes(axesparams, upper=upper)
         axes.axlines(params, **kwargs)
+
 
     @pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
                                             [['A', 'B', 'C', 'D'], ['A', 'B']],
@@ -291,6 +299,7 @@ class TestPlotAnesthetic(TestPlotBase):
         fig, axes = make_2d_axes(axesparams, upper=upper)
         axes.axspans(params, **kwargs)
 
+
     @pytest.mark.parametrize('axesparams', [['A', 'B', 'C', 'D'],
                                             [['A', 'B', 'C', 'D'], ['A', 'B']],
                                             [['A', 'B'], ['A', 'B', 'C', 'D']]])
@@ -302,6 +311,7 @@ class TestPlotAnesthetic(TestPlotBase):
         kwargs = dict(c='k', marker='*')
         fig, axes = make_2d_axes(axesparams, upper=upper)
         axes.scatter(params, **kwargs)
+
 
     @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
     def test_kde_plot_1d(self, plot_1d):
@@ -365,6 +375,7 @@ class TestPlotAnesthetic(TestPlotBase):
             if 'fastkde' not in sys.modules:
                 pass
 
+
     def test_fastkde_min_max(self):
         np.random.seed(0)
         data_x = np.random.randn(100)
@@ -407,6 +418,7 @@ class TestPlotAnesthetic(TestPlotBase):
             if 'fastkde' not in sys.modules:
                 pass
 
+
     def test_hist_plot_1d(self):
         fig, ax = plt.subplots()
         np.random.seed(0)
@@ -448,6 +460,7 @@ class TestPlotAnesthetic(TestPlotBase):
                                 color='r')
         assert polygon.get_ec() == ColorConverter.to_rgba('r')
 
+
     @pytest.mark.parametrize('bins', ['knuth', 'freedman', 'blocks'])
     def test_astropyhist_plot_1d(self, bins):
         try:
@@ -461,6 +474,7 @@ class TestPlotAnesthetic(TestPlotBase):
         except ImportError:
             if 'astropy' not in sys.modules:
                 pass
+
 
     def test_hist_plot_2d(self):
         fig, ax = plt.subplots()
@@ -489,6 +503,7 @@ class TestPlotAnesthetic(TestPlotBase):
         hist_plot_2d(ax, data_x, data_y, levels=[0.95, 0.68], cmin=50)
         hist_plot_2d(ax, data_x, data_y, levels=[0.95, 0.68], cmax=50)
 
+
     @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
     @pytest.mark.parametrize('s', [1, 2])
     def test_1d_density_kwarg(self, plot_1d, s):
@@ -511,13 +526,11 @@ class TestPlotAnesthetic(TestPlotBase):
             # hist density = True:
             h = hist_plot_1d(ax, x, density=True, bins=np.linspace(-5.5, 5.5, 12))
             bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
-            assert bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s),
-                                               rel=0.1)
+            assert bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1)
 
             # kde density = True:
             k = plot_1d(ax, x, density=True)[0]
-            f = interp1d(k.get_xdata(), k.get_ydata(),
-                         'cubic', assume_sorted=True)
+            f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
             kde_height = f(0)
             gauss_norm = 1 / np.sqrt(2 * np.pi * s**2)
             assert kde_height == pytest.approx(gauss_norm, rel=0.1)
@@ -525,6 +538,7 @@ class TestPlotAnesthetic(TestPlotBase):
         except ImportError:
             if 'fastkde' not in sys.modules:
                 pass
+
 
     @pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
                                                  fastkde_contour_plot_2d])
@@ -551,15 +565,13 @@ class TestPlotAnesthetic(TestPlotBase):
             cmap = basic_cmap('C2')
             fig, ax = plt.subplots()
             cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
-            cf2, ct2 = contour_plot_2d(ax, data_x, data_y,
-                                       fc='None', cmap=cmap)
+            cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
             # filled `contourf` and unfilled `contour` colors are the same:
             assert cf1.tcolors[0] == ct2.tcolors[0]
             assert cf1.tcolors[1] == ct2.tcolors[1]
             cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
             assert ct.colors == 'C0'
-            cf, ct = contour_plot_2d(ax, data_x, data_y,
-                                     ec='C0', cmap=plt.cm.Reds)
+            cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
             assert cf.get_cmap() == plt.cm.Reds
             assert ct.colors == 'C0'
             fig, ax = plt.subplots()
@@ -574,14 +586,12 @@ class TestPlotAnesthetic(TestPlotBase):
             cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
             assert cf is None
             assert ct.colors == 'C1'
-            cf, ct = contour_plot_2d(ax, data_x, data_y,
-                                     fc=None, cmap=plt.cm.Reds)
+            cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
             assert cf is None
             assert ct.colors is None
             assert ct.get_cmap() == plt.cm.Reds
 
-            # Check limits, Gaussian
-            # (i.e. limits reduced to relevant data range)
+            # Check limits, Gaussian (i.e. limits reduced to relevant data range)
             fig, ax = plt.subplots()
             data_x = np.random.randn(1000) * 0.01 + 0.5
             data_y = np.random.randn(1000) * 0.01 + 0.5
@@ -592,8 +602,7 @@ class TestPlotAnesthetic(TestPlotBase):
             assert xmax < 0.6
             assert ymin > 0.4
             assert ymax < 0.6
-            # Check limits, Uniform
-            # (i.e. data & limits span entire prior boundary)
+            # Check limits, Uniform (i.e. data & limits span entire prior boundary)
             fig, ax = plt.subplots()
             data_x = np.random.uniform(size=1000)
             data_y = np.random.uniform(size=1000)
@@ -615,6 +624,7 @@ class TestPlotAnesthetic(TestPlotBase):
             if 'fastkde' not in sys.modules:
                 pass
 
+
     def test_kde_plot_nplot(self):
         fig, ax = plt.subplots()
         np.random.seed(0)
@@ -627,6 +637,7 @@ class TestPlotAnesthetic(TestPlotBase):
         data_x = np.random.randn(1000)
         data_y = np.random.randn(1000)
         kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
+
 
     @pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
                                                  fastkde_contour_plot_2d])
@@ -659,6 +670,7 @@ class TestPlotAnesthetic(TestPlotBase):
             if 'fastkde' not in sys.modules:
                 pass
 
+
     def test_scatter_plot_2d(self):
         fig, ax = plt.subplots()
         np.random.seed(2)
@@ -681,6 +693,7 @@ class TestPlotAnesthetic(TestPlotBase):
         fig, ax = plt.subplots()
         scatter_plot_2d(ax, data_x, data_y, q=0)
 
+
     @pytest.mark.parametrize('sigmas', [(1, '1sigma', 0.682689492137086),
                                         (2, '2sigma', 0.954499736103642),
                                         (3, '3sigma', 0.997300203936740),
@@ -694,14 +707,15 @@ class TestPlotAnesthetic(TestPlotBase):
         assert qs1 == pytest.approx(0.5 - sigmas[2] / 2)
         assert qs2 == pytest.approx(0.5 + sigmas[2] / 2)
 
+
     @pytest.mark.parametrize('floats', [0, 0.1, 0.9])
     def test_quantile_plot_interval_float(self, floats):
         q1, q2 = quantile_plot_interval(q=floats)
         assert q1 == min(floats, 1 - floats)
         assert q2 == max(floats, 1 - floats)
 
-    @pytest.mark.parametrize('q1, q2',
-                             [(0, 1), (0.1, 0.9), (0, 0.9), (0.1, 1)])
+
+    @pytest.mark.parametrize('q1, q2', [(0, 1), (0.1, 0.9), (0, 0.9), (0.1, 1)])
     def test_quantile_plot_interval_tuple(self, q1, q2):
         _q1, _q2 = quantile_plot_interval(q=(q1, q2))
         assert _q1 == q1
