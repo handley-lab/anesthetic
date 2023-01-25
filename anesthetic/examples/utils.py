@@ -46,7 +46,7 @@ def random_covariance(sigmas):
     Returns
     -------
     Covariance matrix: 2d np.array
-        shape (len(sigmas, len(sigmas)).
+        shape (len(sigmas), len(sigmas)).
     """
     d = len(sigmas)
     R = special_ortho_group.rvs(d)
