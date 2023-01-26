@@ -1,7 +1,14 @@
 import matplotlib_agg  # noqa: F401
 from anesthetic import read_chains
+import pandas._testing as tm
 
 
+@pytest.fixture(autouse=True)
+def close_figures_on_teardown():
+    tm.close()
+
+
+@pytest.fixture
 def test_gui():
     plotter = read_chains('./tests/example_data/pc').gui()
 
