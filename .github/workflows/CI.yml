@@ -31,9 +31,7 @@ jobs:
     - name: check test fixtures
       if: env.missing != 0
       run: |
-        ls
-        echo "$(grep -L 'close_figures_on_teardown' $(grep -l 'matplotlib' tests/**/*.py))" >> $GITHUB_ENV
-        echo "missing the close_figures_on_teardown fixture."
+        echo "$missing test(s) missing the close_figures_on_teardown fixture."
         exit 1
 
   pip:
