@@ -31,7 +31,7 @@ jobs:
     - name: check test fixtures
       if: env.missing != 0
       run: |
-        echo "$missing test(s) missing the close_figures_on_teardown fixture."
+        echo "${{ env.missing }} test(s) missing the close_figures_on_teardown fixture."
         exit 1
 
   pip:
