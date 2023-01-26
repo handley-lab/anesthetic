@@ -28,6 +28,7 @@ jobs:
       run: python -m pydocstyle --convention=numpy anesthetic
     - name: count missing test fixtures
       run: echo "missing=$($(grep -L 'close_figures_on_teardown' $(grep -l 'matplotlib' tests/test*.py)) | wc -w)" >> $GITHUB_ENV
+      run: echo $missing
     - name: check test fixtures
       if: env.missing != 0
       run: |
