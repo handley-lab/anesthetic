@@ -13,11 +13,6 @@ from pandas.plotting._matplotlib.misc import (
 import pandas._testing as tm
 
 
-@pytest.fixture(autouse=True)
-def close_figures_on_teardown():
-    tm.close()
-
-
 @pytest.fixture
 def series():
     np.random.seed(0)
