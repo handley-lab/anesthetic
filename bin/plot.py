@@ -9,7 +9,7 @@ sigma2 = 0.1                  # x2 parameter
 a, b, m = 2., 4., 0.5         # x4 parameters
 
 n = 1000
-ls = 'k--'
+ls = 'k'
 
 x = np.linspace(-0.4,0.4,n)
 p = np.exp(-x**2/sigma0**2/2)/np.sqrt(2*np.pi)/sigma0
@@ -39,14 +39,20 @@ axes['x0']['x3'].plot(2*x0, x3, ls)
 axes['x0']['x3'].plot(x0, x3, ls)
 axes['x0']['x3'].plot(-x0, x3, ls)
 axes['x0']['x3'].plot(-2*x0, x3, ls)
+axes['x0']['x3'].plot(np.linspace(-2*sigma0, 2*sigma0, n), np.ones(n), ls)
+axes['x0']['x3'].plot(np.linspace(-2*sigma0, 2*sigma0, n), np.zeros(n), ls)
 
 axes['x1']['x3'].plot(2*x0, x3, ls)
 axes['x1']['x3'].plot(x0, x3, ls)
 axes['x1']['x3'].plot(-x0, x3, ls)
 axes['x1']['x3'].plot(-2*x0, x3, ls)
+axes['x1']['x3'].plot(np.linspace(-2*sigma1, 2*sigma1, n), np.ones(n), ls)
+axes['x1']['x3'].plot(np.linspace(-2*sigma1, 2*sigma1, n), np.zeros(n), ls)
 
-for p in [0.66, 0.95]:
+for p in [0, 0.66, 0.95]:
     axes['x2']['x3'].plot(-np.log(1-p)*x0, x3, ls)
+axes['x2']['x3'].plot(np.linspace(0, -np.log(1-p)*sigma0, n), np.ones(n), ls)
+axes['x2']['x3'].plot(np.linspace(0, -np.log(1-p)*sigma0, n), np.zeros(n), ls)
 
 from scipy.optimize import root
 from scipy.special import erf
@@ -57,6 +63,9 @@ for p in [0.66, 0.95]:
     y = k - x**2/2
     axes['x0']['x2'].plot(x*sigma0, y*sigma2, ls)
     axes['x1']['x2'].plot(x*sigma1, y*sigma2, ls)
+    axes['x0']['x2'].plot(x*sigma0, 0*x, ls)
+    axes['x1']['x2'].plot(x*sigma1, 0*x, ls)
+
 
 t = np.linspace(0, 2*np.pi, n)
 x0 = sigma1*eps*np.cos(t) + sigma0 * np.sin(t)
