@@ -1,4 +1,4 @@
-import matplotlib_agg  # noqa: F401
+import anesthetic.examples._matplotlib_agg  # noqa: F401
 import os
 import sys
 import pytest
