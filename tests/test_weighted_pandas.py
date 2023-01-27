@@ -10,6 +10,12 @@ from pandas.plotting import scatter_matrix, bootstrap_plot
 from pandas.plotting._matplotlib.misc import (
     scatter_matrix as orig_scatter_matrix
 )
+import pandas._testing as tm
+
+
+@pytest.fixture(autouse=True)
+def close_figures_on_teardown():
+    tm.close()
 
 
 @pytest.fixture

@@ -26,6 +26,14 @@ jobs:
       run: python -m flake8 anesthetic tests
     - name: pydocstyle documentation style checks
       run: python -m pydocstyle --convention=numpy anesthetic
+    - name: Count missing test fixtures
+      run: |
+        if [ $( grep -L 'close_figures_on_teardown' $(grep -l 'matplotlib' tests/test*.py) | wc -w ) -ne 0 ]
+        then
+        missing_tests=$( grep -L 'close_figures_on_teardown' $(grep -l 'matplotlib' tests/test*.py) )
+        echo "$missing_tests are missing the close_figures_on_teardown fixture."
+        exit 1
+        fi
 
   pip:
     runs-on: ${{ matrix.os }}

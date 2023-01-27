@@ -18,8 +18,14 @@ from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
+import pandas._testing as tm
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
+
+
+@pytest.fixture(autouse=True)
+def close_figures_on_teardown():
+    tm.close()
 
 
 def test_build_samples():
@@ -186,9 +192,9 @@ def test_plot_2d_kinds_multiple_calls():
     axes = ns.plot_2d(params, kind={'diagonal': 'kde_1d',
                                     'lower': 'kde_2d',
                                     'upper': 'scatter_2d'})
-    ns.plot_2d(axes, kind={'diagonal': 'hist'})
+    ns.plot_2d(axes, kind={'diagonal': 'hist_1d'})
 
-    axes = ns.plot_2d(params, kind={'diagonal': 'hist'})
+    axes = ns.plot_2d(params, kind={'diagonal': 'hist_1d'})
     ns.plot_2d(axes, kind={'diagonal': 'kde_1d',
                            'lower': 'kde_2d',
                            'upper': 'scatter_2d'})
