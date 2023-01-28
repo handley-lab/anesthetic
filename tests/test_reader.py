@@ -11,16 +11,10 @@ from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
-import pandas._testing as tm
 try:
     import getdist
 except ImportError:
     pass
-
-
-@pytest.fixture(autouse=True)
-def close_figures_on_teardown():
-    tm.close()
 
 
 def test_read_getdist():
