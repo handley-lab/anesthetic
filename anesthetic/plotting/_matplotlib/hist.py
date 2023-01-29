@@ -49,7 +49,7 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
         )
         return bins
 
-    def _make_plot(self):
+    def _make_plot(self):  # pragma: no cover
         if version.parse(pd.__version__) >= version.parse("2.0.0"):
             super._make_plot()
             return
