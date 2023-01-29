@@ -57,7 +57,9 @@ def test_perfect_ns_gaussian():
 
     samples = gaussian(nlive, ndims, sigma, R)
 
+    print("here0")
     assert (samples[:-nlive].nlive == nlive).all()
+    print("here")
 
     mean = samples[np.arange(ndims)].mean()
     assert_allclose(mean, 0, atol=1e-2)
