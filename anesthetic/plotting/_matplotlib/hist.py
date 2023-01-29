@@ -12,10 +12,7 @@ from pandas.io.formats.printing import pprint_thing
 from pandas.plotting._matplotlib.core import MPLPlot
 from pandas.plotting._matplotlib.groupby import (create_iter_data_given_by,
                                                  reformat_hist_y_given_by)
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal
+from typing import Literal
 from anesthetic.plotting._matplotlib.core import (
     _WeightedMPLPlot, _CompressedMPLPlot, _PlanePlot2d, _get_weights
 )
