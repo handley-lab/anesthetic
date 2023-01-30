@@ -817,6 +817,8 @@ def test_AreaPlot(mcmc_df, mcmc_wdf):
 
     assert_allclose(axes_df.get_xlim(), axes_wdf.get_xlim(), rtol=1e-3)
     assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-3)
+    assert_allclose(axes_df.get_ylim()[0], 0.0, rtol=1e-3)
+    assert_allclose(axes_wdf.get_ylim()[0], 0.0, rtol=1e-3)
 
 
 def test_BarPlot(mcmc_df, mcmc_wdf):
