@@ -680,12 +680,13 @@ class NestedSamples(Samples):
         samples['D_KL'] = (S*w).sum()
         samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$')
 
-        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()*2
-        samples.set_label('d_G', r'$d_\mathrm{G}$')
-
         samples['logL_P'] = samples['logZ'] + samples['D_KL']
         samples.set_label('logL_P',
                           r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$')
+
+        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()*2
+        samples.set_label('d_G', r'$d_\mathrm{G}$')
+
         samples.label = self.label
         return samples
 
