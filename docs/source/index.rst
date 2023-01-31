@@ -7,6 +7,7 @@
    Introduction <intro>
    Quickstart <quickstart>
    Reading and writing <reading_writing>
+   Samples and statistics <samples>
    Plotting <plotting>
    anesthetic <anesthetic>
 
