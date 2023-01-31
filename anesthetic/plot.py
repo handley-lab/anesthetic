@@ -497,7 +497,10 @@ class AxesDataFrame(DataFrame):
                 if ax is not None and ax.position in positions:
                     if x in params:
                         for v in np.atleast_1d(params[x]):
-                            ax.axvline(v, **kwargs)
+                            if ax.position == 'diagonal':
+                                ax.twin.axvline(v, **kwargs)
+                            else:
+                                ax.axvline(v, **kwargs)
                     if y in params and ax.position != 'diagonal':
                         for v in np.atleast_1d(params[y]):
                             ax.axhline(v, **kwargs)
@@ -530,7 +533,10 @@ class AxesDataFrame(DataFrame):
                 if ax is not None and ax.position in positions:
                     if x in params:
                         for vmin, vmax in np.atleast_2d(params[x]):
-                            ax.axvspan(vmin, vmax, **kwargs)
+                            if ax.position == 'diagonal':
+                                ax.twin.axvspan(vmin, vmax, **kwargs)
+                            else:
+                                ax.axvspan(vmin, vmax, **kwargs)
                     if y in params and ax.position != 'diagonal':
                         for vmin, vmax in np.atleast_2d(params[y]):
                             ax.axhspan(vmin, vmax, **kwargs)
