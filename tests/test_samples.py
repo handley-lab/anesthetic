@@ -642,12 +642,12 @@ def test_stats():
     nsamples = 10
     beta = [0., 0.5, 1.]
 
-    vals = ['logZ', 'D_KL', 'd_G', 'logL_P']
+    vals = ['logZ', 'D_KL', 'logL_P', 'd_G']
 
     labels = [r'$\ln\mathcal{Z}$',
               r'$\mathcal{D}_\mathrm{KL}$',
-              r'$d_\mathrm{G}$',
-              r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$']
+              r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$',
+              r'$d_\mathrm{G}$']
 
     stats = pc.stats()
     assert isinstance(stats, WeightedLabelledSeries)
