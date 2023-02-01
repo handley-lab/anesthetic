@@ -12,7 +12,7 @@ additional MCMC or nested sampling specific functionality.
 .. plot:: :context: close-figs
 
     from anesthetic import read_chains, make_2d_axes
-    samples = read_chains("../../tests/example_data/pc")
+    samples = read_chains("../../tests/example_data/pc_250")
 
 
 General weighted sample functionality
@@ -81,8 +81,10 @@ Gelman--Rubin statistic
 Nested sampling statistics 
 ==========================
 
-Anethestic really comes to the fore for nested sampling. We can do all of
-the above, and more with the power that nested sampling chains provide.
+Anethestic really comes to the fore for nested sampling (for details on nested
+sampling we recommend `John Skilling 2006
+<https://projecteuclid.org/euclid.ba/1340370944>`_). We can do all of the
+above, and more with the power that nested sampling chains provide.
 
 .. plot:: :context: close-figs
 
@@ -131,13 +133,26 @@ similar colour shading of both contour levels.
 Bayesian statistics
 -------------------
 
+.. role:: raw-html(raw)
+       :format: html
+
 Thanks to the power of nested sampling, we can compute Bayesian statistics from
 the nested samples, such as the following:
 
 * Bayesian (log-)evidence :meth:`anesthetic.samples.NestedSamples.logZ`
-* Kullback--Leibler divergence :meth:`anesthetic.samples.NestedSamples.D_KL`
-* Posterior average of the log-likelihood :meth:`anesthetic.samples.NestedSamples.logL_P`
+* Kullback--Leibler (KL) divergence :meth:`anesthetic.samples.NestedSamples.D_KL`
+* Posterior average of the log-likelihood
+  :meth:`anesthetic.samples.NestedSamples.logL_P`
+  :raw-html:`<br />`
+  (this connects Bayesian evidence with KL-divergence as 
+  ``logZ = logL_P - D_KL``, allowing the interpretation of the Bayesian
+  evidence as a trade-off between model fit ``logL_P`` and Occam penalty
+  ``D_KL``, see also our paper `Hergt, Handley, Hobson, and Lasenby (2021)
+  <http://arxiv.org/abs/2102.11511>`_)
 * Gaussian model dimensionality :meth:`anesthetic.samples.NestedSamples.logL_P`
+  :raw-html:`<br />`
+  (for more, see our paper `Handley and Lemos
+  <http://arxiv.org/abs/1903.06682>`_)
 * All of the above in one go, using :meth:`anesthetic.samples.NestedSamples.stats`
 
 By default (i.e. without passing any additional keywords) the mean values for
@@ -162,7 +177,7 @@ inferences:
 
 .. plot:: :context: close-figs
 
-    fig, axes = make_2d_axes(['logZ', 'D_KL', 'd_G', 'logL_P'], upper=False)
+    fig, axes = make_2d_axes(['logZ', 'D_KL', 'logL_P', 'd_G'], upper=False)
     bayesian_stats.plot_2d(axes);
     for y, row in axes.iterrows():
         for x, ax in row.items():
