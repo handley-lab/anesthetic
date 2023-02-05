@@ -931,3 +931,10 @@ def test_drop_weights(mcmc_wdf):
     assert_array_equal(noweights, mcmc_wdf)
     pandas.testing.assert_frame_equal(noweights.drop_weights(), noweights)
     assert noweights.drop_weights() is not noweights
+
+
+def test_axis_labels(mcmc_df, mcmc_wdf):
+    for df in mcmc_df, mcmc_wdf:
+        assert df.plot.area().get_xlabel() == ""
+        assert df.plot.bar().get_xlabel() == ""
+        assert df.plot.barh().get_ylabel() == ""
