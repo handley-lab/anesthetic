@@ -933,7 +933,7 @@ def test_drop_weights(mcmc_wdf):
     assert noweights.drop_weights() is not noweights
 
 
-def test_axis_labels(mcmc_df, mcmc_wdf):
+def test_blank_axis_labels(mcmc_df, mcmc_wdf):
     for df in mcmc_df, mcmc_wdf:
         assert df.plot.area().get_xlabel() == ""
         assert df.plot.bar().get_xlabel() == ""
