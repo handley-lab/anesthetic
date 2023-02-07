@@ -3,8 +3,8 @@
 Routines that may be of use to users wishing for more fine-grained control may
 wish to use.
 
-- ``make_1d_axes``
-- ``make_2d_axes``
+- :func:`anesthetic.plot.make_1d_axes`
+- :func:`anesthetic.plot.make_2d_axes`
 
 to create a set of axes and legend proxies.
 
