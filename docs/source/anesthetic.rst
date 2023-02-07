@@ -1,16 +1,20 @@
+******************
 anesthetic package
-==================
+******************
 
 Subpackages
------------
+===========
 
 .. toctree::
+    :maxdepth: 1
 
     anesthetic.gui
     anesthetic.read
 
+|
+
 Submodules
-----------
+==========
 
 anesthetic.kde module
 ---------------------
@@ -20,6 +24,8 @@ anesthetic.kde module
     :undoc-members:
     :show-inheritance:
 
+|
+
 anesthetic.plot module
 ----------------------
 
@@ -27,6 +33,8 @@ anesthetic.plot module
     :members:
     :undoc-members:
     :show-inheritance:
+
+|
 
 anesthetic.samples module
 -------------------------
@@ -37,6 +45,8 @@ anesthetic.samples module
     :exclude-members: plot
     :show-inheritance:
 
+|
+
 anesthetic.utils module
 -----------------------
 
@@ -45,6 +55,8 @@ anesthetic.utils module
     :undoc-members:
     :show-inheritance:
 
+|
+
 anesthetic.labelled\_pandas module
 ----------------------------------
 
@@ -52,6 +64,8 @@ anesthetic.labelled\_pandas module
     :members:
     :private-members: _LabelledObject
     :show-inheritance:
+
+|
 
 anesthetic.weighted\_pandas module
 ----------------------------------
