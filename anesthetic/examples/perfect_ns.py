@@ -53,8 +53,8 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
         r = (points**2).sum(axis=-1, keepdims=True)**0.5
 
     samples = merge_nested_samples(samples)
-    logLend = samples[samples.nlive >= nlive].logL.max()
-    return samples[samples.logL_birth < logLend].recompute()
+    logLend = samples.loc[samples.nlive >= nlive].logL.max()
+    return samples.loc[samples.logL_birth < logLend].recompute()
 
 
 def correlated_gaussian(nlive, mean, cov, bounds=None):
