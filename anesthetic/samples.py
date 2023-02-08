@@ -493,8 +493,8 @@ class MCMCSamples(Samples):
             elif type(burn_in)==list: specify different burn-in for each chain
 
         inplace: bool, default=False
-            Indicates whether to modify the existing array or return a copy. 
-        
+            Indicates whether to modify the existing array or return a copy.
+
         """
         chains = self.groupby(('chain', '$n_\\mathrm{chain}$'),
                               group_keys=False)
@@ -522,7 +522,7 @@ class MCMCSamples(Samples):
         and comparing the within-chain variance and the between-chain variance.
         This follows the routine as outlined in Lewis (2013), section
         IV.A., https://arxiv.org/abs/1304.4473.
-        
+
         Note that this requires more than one chain. To circumvent this, you
         could overwrite the ``'chain'`` column, splitting the samples into two
         or more sets.
