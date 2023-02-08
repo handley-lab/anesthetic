@@ -505,7 +505,7 @@ class MCMCSamples(Samples):
         if isinstance(burn_in, (int, float)) and 0 < burn_in < 1:
             nsamples = chains.count().iloc[:, 0].to_numpy()
             ndrop = np.ceil(burn_in * nsamples).astype(int)
-        elif isinstance(burn_in, (int, float)) and burn_in > 1:
+        elif isinstance(burn_in, (int, float)):
             ndrop = np.full(nchains, burn_in, dtype=int)
         elif len(burn_in) == nchains:
             ndrop = burn_in
