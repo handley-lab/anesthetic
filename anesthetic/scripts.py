@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from anesthetic import read_chains
 
 
-def gui():
+def gui():  # pragma: no cover
     """Launch the anesthetic GUI.
 
     See anesthetic.gui.plot.RunPlotter for details.
