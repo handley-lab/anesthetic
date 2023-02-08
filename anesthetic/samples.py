@@ -482,7 +482,7 @@ class MCMCSamples(Samples):
     def _constructor(self):
         return MCMCSamples
 
-    def remove_burn_in(self, burn_in, inplace=False):
+    def remove_burn_in(self, burn_in, reset_index=False, inplace=False):
         """Remove burn-in samples from each MCMC chain.
 
         Parameters
@@ -491,6 +491,9 @@ class MCMCSamples(Samples):
             if 0 < burn_in < 1: remove first ``burn_in`` fraction of samples
             elif 1 < burn_in: remove first ``burn_in`` number of samples
             elif type(burn_in)==list: specify different burn-in for each chain
+
+        reset_index: bool, default=False
+            Whether to reset the index counter to start at zero or not.
 
         inplace: bool, default=False
             Indicates whether to modify the existing array or return a copy.
@@ -512,6 +515,8 @@ class MCMCSamples(Samples):
                              "However, you provided `burn_in=%s`" % burn_in)
         data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1])).index,
                          inplace=inplace)
+        if reset_index:
+            data = data.reset_index(drop=True, inplace=inplace)
         return data
 
     def Gelman_Rubin(self, params=None):
