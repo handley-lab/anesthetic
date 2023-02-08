@@ -395,6 +395,30 @@ def test_hist_levels():
                levels=[0.95, 0.68], bins=20)
 
 
+def test_mcmc_stats():
+    mcmc = read_chains('./tests/example_data/cb')
+    chains = mcmc.groupby(('chain', '$n_\mathrm{chain}$'), group_keys=False)
+    n0 = chains.count().iloc[0, 0]  # number samples in first chain
+    mcmc_head = chains.head(200).copy()
+    mcmc_asym = mcmc.remove_burn_in(burn_in=[2, 10]).copy()
+    mcmc_tail = mcmc.remove_burn_in(burn_in=200).copy()
+    mcmc_half = mcmc.remove_burn_in(burn_in=0.5).copy()
+
+    # check indices after burn-in removal
+    assert mcmc_asym.index.get_level_values(0)[0] == 2
+    assert mcmc_asym.index.get_level_values(0)[n0] == 2 + n0 + 10
+    assert mcmc_tail.index.get_level_values(0)[0] == 200
+    assert mcmc_tail.index.get_level_values(0)[n0] == 200 + n0 + 200
+
+    # check Gelman--Rubin statistic
+    assert mcmc_head.Gelman_Rubin() > 0.1
+    assert mcmc_asym.Gelman_Rubin() > 0.1
+    assert mcmc_tail.Gelman_Rubin() < 0.01
+    assert mcmc_half.Gelman_Rubin() < 0.01
+    assert mcmc_half.Gelman_Rubin(['x0']) < 0.01
+    assert mcmc_half.Gelman_Rubin(['x1']) < 0.01
+
+
 def test_logX():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')
