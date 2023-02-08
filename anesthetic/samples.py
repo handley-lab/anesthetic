@@ -482,6 +482,96 @@ class MCMCSamples(Samples):
     def _constructor(self):
         return MCMCSamples
 
+    def remove_burn_in(self, burn_in, inplace=False):
+        """Remove burn-in samples from each MCMC chain.
+
+        Parameters
+        ----------
+        burn_in: int or float or array_like
+            if 0 < burn_in < 1: remove first ``burn_in`` fraction of samples
+            elif 1 < burn_in: remove first ``burn_in`` number of samples
+            elif type(burn_in)==list: specify different burn-in for each chain
+
+        inplace: bool, default=False
+            Indicates whether to modify the existing array or return a copy. 
+        
+        """
+        chains = self.groupby(('chain', '$n_\\mathrm{chain}$'),
+                              group_keys=False)
+        nchains = chains.ngroups
+        if isinstance(burn_in, (int, float)) and 0 < burn_in < 1:
+            nsamples = chains.count().iloc[:, 0].to_numpy()
+            ndrop = np.ceil(burn_in * nsamples).astype(int)
+        elif isinstance(burn_in, (int, float)) and burn_in > 1:
+            ndrop = np.full(nchains, burn_in, dtype=int)
+        elif len(burn_in) == nchains:
+            ndrop = burn_in
+        else:
+            raise ValueError("`burn_in` has to be a positive scalar or an "
+                             "array of length matching the number of chains. "
+                             "However, you provided `burn_in=%s`" % burn_in)
+        print(ndrop)
+        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1])).index,
+                         inplace=inplace)
+        return data
+
+    def Gelman_Rubin(self, params=None):
+        """Gelman--Rubin convergence statistic of multiple MCMC chains.
+
+        Determine the Gelman--Rubin convergence statistic ``R-1`` by computing
+        and comparing the within-chain variance and the between-chain variance.
+        This follows the routine as outlined in Lewis (2013), section
+        IV.A., https://arxiv.org/abs/1304.4473.
+        
+        Note that this requires more than one chain. To circumvent this, you
+        could overwrite the ``'chain'`` column, splitting the samples into two
+        or more sets.
+
+        Parameters
+        ----------
+        params: list(str)
+            List of column names (i.e. parameters) to be included in the
+            convergence calculation.
+            Default: all parameters (except those parameters that contain
+            'prior', 'chi2', or 'logL' in their names)
+
+        Returns
+        -------
+        Rminus1: float
+            Gelman--Rubin convergence statistic ``R-1``. The smaller, the
+            better converged. Aiming for ``Rminus1~0.01`` should normally work
+            well.
+        """
+        self.columns.set_names(['params', 'labels'], inplace=True)
+        if params is None:
+            params = [key for key in self.columns.get_level_values('params')
+                      if 'prior' not in key
+                      and 'chi2' not in key
+                      and 'logL' not in key
+                      and 'chain' not in key]
+        chains = self[params+['chain']].groupby(
+                ('chain', '$n_\\mathrm{chain}$')
+        )
+        nchains = chains.ngroups
+
+        # Within chain variance ``W``
+        # (average variance within each chain):
+        covs = chains.cov()
+        W = covs.groupby(level=['params', 'labels']).mean().to_numpy()
+        # TODO: the above line should be a weighted mean
+        # --> need to fix groupby for WeightedDataFrames!
+
+        # Between-chain variance ``B``
+        # (variance of the chain means compared to the full mean):
+        means_diff = (chains.mean() - self[params].mean()).to_numpy()
+        B = (means_diff.T @ means_diff) / (nchains - 1)
+
+        L = np.linalg.cholesky(W)
+        invL = np.linalg.inv(L)
+        D = np.linalg.eigvalsh(invL @ B @ invL.T)
+        Rminus1 = np.max(np.abs(D))
+        return Rminus1
+
 
 class NestedSamples(Samples):
     """Storage and plotting tools for Nested Sampling samples.
