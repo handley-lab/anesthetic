@@ -558,7 +558,6 @@ class MCMCSamples(Samples):
         chains = self[params+['chain']].groupby(
                 ('chain', '$n_\\mathrm{chain}$')
         )
-        nchains = chains.ngroups
 
         # Within chain variance ``W``
         # (average variance within each chain):
@@ -570,7 +569,7 @@ class MCMCSamples(Samples):
         # Between-chain variance ``B``
         # (variance of the chain means compared to the full mean):
         means_diff = (chains.mean() - self[params].mean()).to_numpy()
-        B = (means_diff.T @ means_diff) / (nchains - 1)
+        B = (means_diff.T @ means_diff) / (chains.ngroups - 1)
 
         L = np.linalg.cholesky(W)
         invL = np.linalg.inv(L)
