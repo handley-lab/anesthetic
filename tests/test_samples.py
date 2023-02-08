@@ -431,6 +431,9 @@ def test_mcmc_stats():
     assert mcmc.index.get_level_values(0)[0] == 200
     assert mcmc.index.get_level_values(0)[n0] == 200 + n0 + 200
 
+    with pytest.raises(ValueError):
+        mcmc.remove_burn_in(burn_in=[1, 2, 3])
+
 
 def test_logX():
     np.random.seed(3)

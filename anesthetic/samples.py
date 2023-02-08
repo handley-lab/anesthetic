@@ -507,12 +507,14 @@ class MCMCSamples(Samples):
             ndrop = np.ceil(burn_in * nsamples).astype(int)
         elif isinstance(burn_in, (int, float)):
             ndrop = np.full(nchains, burn_in, dtype=int)
-        elif len(burn_in) == nchains:
+        elif isinstance(burn_in, (list, tuple, np.ndarray)) \
+                and len(burn_in) == nchains:
             ndrop = burn_in
         else:
             raise ValueError("`burn_in` has to be a positive scalar or an "
-                             "array of length matching the number of chains. "
-                             "However, you provided `burn_in=%s`" % burn_in)
+                             "array of length matching the number of chains "
+                             "`nchains=%d`. However, you provided "
+                             "`burn_in=%s`" % (nchains, burn_in))
         data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1])).index,
                          inplace=inplace)
         if reset_index:
