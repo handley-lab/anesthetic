@@ -68,7 +68,7 @@ jobs:
       run: python -m pip install -r requirements_extras.txt 
 
     - name: Test with pytest
-      run: python -m pytest --cov=anesthetic tests
+      run: python -m pytest --cov=anesthetic -n auto tests
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
