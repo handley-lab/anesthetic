@@ -4,7 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "anesthetic"
-version = "2.0.0-beta.12"
+dynamic = ["version"]
+
 authors = [
     { name="Will Handley", email="williamjameshandley@gmail.com" },
     { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
@@ -46,10 +47,15 @@ classifiers = [
 
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx_rtd_theme", "numpydoc"]
+test = ["pytest", "pytest-cov", "flake8", "pydocstyle"]
 astropy = ["astropy"]
 fastkde = ["fastkde"]
 getdist = ["getdist"]
+extra = ["astropy", "fastkde", "getdist"]
 
 
 [project.scripts]
 anesthetic = "anesthetic.scripts:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "anesthetic.version.__version__"}

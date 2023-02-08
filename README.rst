@@ -1,9 +1,7 @@
 ===========================================
 anesthetic: nested sampling post-processing
 ===========================================
-:anesthetic: nested sampling post-processing
-:Author: Will Handley and Lukas Hergt
-:Version: 2.0.0-beta.12
+:Authors: Will Handley and Lukas Hergt
 :Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -36,7 +34,7 @@ anesthetic: nested sampling post-processing
 
 
 
-``anesthetic`` brings together tools for processing nested sampling chains, leveraging standard scientific python libraries.
+``anesthetic`` brings together tools for processing nested sampling chains by leveraging standard scientific python libraries.
 
 You can see example usage and plots in the `plot gallery <http://htmlpreview.github.io/?https://github.com/williamjameshandley/cosmo_example/blob/master/demos/demo.html>`_, or in the corresponding `Jupyter notebook <https://mybinder.org/v2/gh/williamjameshandley/anesthetic/master?filepath=demo.ipynb>`_.
 
@@ -76,19 +74,19 @@ Installation
 
     pip install anesthetic
 
-or via the setup.py
+or from the repository
 
 .. code:: bash
 
     git clone https://github.com/williamjameshandley/anesthetic
-    cd anesthetic
-    python setup.py install --user
+    python -m pip install .
 
 You can check that things are working by running the test suite:
 
 .. code:: bash
 
     export MPLBACKEND=Agg     # only necessary for OSX users
+    python -m pip install ".[test]"
     python -m pytest
     flake8 anesthetic tests
     pydocstyle --convention=numpy anesthetic
