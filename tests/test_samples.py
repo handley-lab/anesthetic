@@ -397,7 +397,7 @@ def test_hist_levels():
 
 def test_mcmc_stats():
     mcmc = read_chains('./tests/example_data/cb')
-    chains = mcmc.groupby(('chain', '$n_\mathrm{chain}$'), group_keys=False)
+    chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
     n0 = chains.count().iloc[0, 0]  # number samples in first chain
     mcmc_head = chains.head(200).copy()
     mcmc_asym = mcmc.remove_burn_in(burn_in=[2, 10]).copy()
