@@ -60,7 +60,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install pytest pytest-cov pytest-xdist
+        python -m pip install pytest pytest-cov
         python -m pip install -r requirements.txt
 
     - name: Install extra dependencies
@@ -68,7 +68,7 @@ jobs:
       run: python -m pip install -r requirements_extras.txt 
 
     - name: Test with pytest
-      run: python -m pytest --cov=anesthetic -n auto tests
+      run: python -m pytest --cov=anesthetic tests
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
@@ -96,7 +96,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda config --append channels conda-forge
-        conda install pytest pytest-cov pytest-xdist
+        conda install pytest pytest-cov
         conda install --file requirements.txt
 
     - name: Test with pytest
