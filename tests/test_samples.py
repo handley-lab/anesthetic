@@ -400,9 +400,9 @@ def test_mcmc_stats():
     chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
     n0 = chains.count().iloc[0, 0]  # number samples in first chain
     mcmc_head = chains.head(200).copy()
-    mcmc_asym = mcmc.remove_burn_in(burn_in=[2, 10]).copy()
-    mcmc_tail = mcmc.remove_burn_in(burn_in=200).copy()
-    mcmc_half = mcmc.remove_burn_in(burn_in=0.5).copy()
+    mcmc_asym = mcmc.remove_burn_in(burn_in=[2, 10])
+    mcmc_tail = mcmc.remove_burn_in(burn_in=200)
+    mcmc_half = mcmc.remove_burn_in(burn_in=0.5)
 
     # check indices after burn-in removal
     assert mcmc_asym.index.get_level_values(0)[0] == 2
@@ -417,6 +417,19 @@ def test_mcmc_stats():
     assert mcmc_half.Gelman_Rubin() < 0.01
     assert mcmc_half.Gelman_Rubin(['x0']) < 0.01
     assert mcmc_half.Gelman_Rubin(['x1']) < 0.01
+
+    # test reset index
+    mcmc_new = mcmc.remove_burn_in(burn_in=200, reset_index=True)
+    assert mcmc_new.index.get_level_values(0)[0] == 0
+    assert mcmc_new.index.get_level_values(0)[n0] == n0
+
+    # test inplace
+    assert mcmc.index.get_level_values(0)[0] == 0
+    assert mcmc.index.get_level_values(0)[n0] == n0
+    mcmc_new = mcmc.remove_burn_in(burn_in=200, inplace=True)
+    assert mcmc_new is None
+    assert mcmc.index.get_level_values(0)[0] == 200
+    assert mcmc.index.get_level_values(0)[n0] == 200 + n0 + 200
 
 
 def test_logX():
