@@ -510,7 +510,6 @@ class MCMCSamples(Samples):
             raise ValueError("`burn_in` has to be a positive scalar or an "
                              "array of length matching the number of chains. "
                              "However, you provided `burn_in=%s`" % burn_in)
-        print(ndrop)
         data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1])).index,
                          inplace=inplace)
         return data
