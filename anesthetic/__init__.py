@@ -16,7 +16,7 @@ import pandas
 import pandas.plotting._core
 import pandas.plotting._misc
 from anesthetic._format import _DataFrameFormatter
-from anesthetic.version import __version__
+from anesthetic._version import __version__  # noqa: F401
 
 
 def _anesthetic_override(_get_plot_backend):
