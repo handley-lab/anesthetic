@@ -1,7 +1,7 @@
-=========================================
-anesthetic: nested sampling visualisation
-=========================================
-:anesthetic: nested sampling visualisation
+===========================================
+anesthetic: nested sampling post-processing
+===========================================
+:anesthetic: nested sampling post-processing
 :Author: Will Handley and Lukas Hergt
 :Version: 2.0.0-beta.12
 :Homepage: https://github.com/williamjameshandley/anesthetic
