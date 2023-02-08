@@ -67,7 +67,7 @@ jobs:
     - name: Install extra dependencies
       if: ${{ matrix.extras }} 
       run: |
-        python -m piptools compile --extra extra -o requirements_extra.txt pyproject.toml
+        python -m piptools compile --extra extras -o requirements_extras.txt pyproject.toml
         python -m pip install -r requirements_extras.txt 
 
     - name: Test with pytest
