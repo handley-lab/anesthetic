@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from anesthetic import read_chains
 
 
-def gui():  # pragma: no cover
+def gui(*args):
     """Launch the anesthetic GUI.
 
     See anesthetic.gui.plot.RunPlotter for details.
@@ -15,7 +15,7 @@ def gui():  # pragma: no cover
                         help="File name root of nested sampling run")
     parser.add_argument('--params', '-p', nargs='*', type=str,
                         help="Parameters to display")
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     samples = read_chains(root=args.file_root)
     samples.gui(args.params)
