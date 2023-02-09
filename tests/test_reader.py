@@ -78,7 +78,7 @@ def test_read_cobayamcmc():
               'chi2__norm', 'logL', 'chain']
     assert_array_equal(mcmc.drop_labels().columns, params)
     if 'getdist' in sys.modules:
-        labels = ['$x0$', '$x1$', '', '', r'$\chi^2$',
+        labels = ['$x_0$', '$x_1$', '', '', r'$\chi^2$',
                   r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
                   r'$n_\mathrm{chain}$']
         assert_array_equal(mcmc.get_labels(), labels)
@@ -218,37 +218,10 @@ def test_read_polychord():
     assert_array_equal(ns_single_live[cols], ns[cols])
 
 
-@pytest.mark.xfail('getdist' not in sys.modules,
-                   raises=NameError,
-                   reason="requires getdist package")
 @pytest.mark.parametrize('root', ['gd', 'cb'])
 def test_discard_burn_in(root):
-    np.random.seed(3)
-    mcmc = read_chains('./tests/example_data/' + root, burn_in=0.3)
-    assert isinstance(mcmc, MCMCSamples)
-    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
-    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
-
-    # for 2 chains of length 1000
-    mcmc0 = read_chains('./tests/example_data/' + root)
-    assert isinstance(mcmc0, MCMCSamples)
-    mcmc1 = read_chains('./tests/example_data/' + root, burn_in=1000)
-    assert isinstance(mcmc1, MCMCSamples)
-    for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
-        if key in mcmc0:
-            assert key in mcmc1
-            assert_array_equal(mcmc0[key][1000:2000], mcmc1[key][:1000])
-    mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
-    mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
-
-    mcmc1 = read_chains('./tests/example_data/' + root, burn_in=-1000.1)
-    assert isinstance(mcmc1, MCMCSamples)
-    for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
-        if key in mcmc0:
-            assert key in mcmc1
-            assert_array_equal(mcmc0[key][-1000:], mcmc1[key][1000:])
-    mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
-    mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
+    with pytest.raises(KeyError):
+        read_chains('./tests/example_data/' + root, burn_in=0.3)
 
 
 def test_read_fail():

@@ -13,15 +13,6 @@ def read_chains(root, *args, **kwargs):
     root: str
         root name for reading files
 
-    burn_in: float
-        if 0 < burn_in < 1:
-            discard the first burn_in fraction of samples
-        elif 1 < burn_in:
-            only keep samples [burn_in:]
-        Only works if `root` provided and if chains are GetDist or Cobaya
-        compatible.
-        default: False
-
     *args, **kwargs:
         Passed onto NestedSamples or MCMCSamples. Check their docstrings for
         more information.
@@ -31,6 +22,15 @@ def read_chains(root, *args, **kwargs):
     NestedSamples or MCMCSamples depending on auto-detection
 
     """
+    if 'burn_in' in kwargs:
+        raise KeyError(
+            "This is anesthetic 1.0 syntax. The `burn_in` keyword is no "
+            "longer supported in `read_chains`. You need to update, e.g.\n"
+            "read_chains(root, burn_in=0.5)         # anesthetic 1.0\n"
+            "read_chains(root).remove_burn_in(0.5)  # anesthetic 2.0\n"
+            "See also https://anesthetic.readthedocs.io/en/latest/"
+            "anesthetic.html#anesthetic.samples.MCMCSamples.remove_burn_in"
+        )
     errors = []
     for read in [read_polychord, read_multinest, read_cobaya, read_getdist]:
         try:
