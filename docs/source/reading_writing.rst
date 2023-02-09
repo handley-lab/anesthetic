@@ -30,7 +30,7 @@ out the examples listed here.
   ::
       
       from anesthetic import read_chains
-      samples = read_chains("anesthetic/tests/example_data/cb", burn_in=0.1)
+      samples = read_chains("anesthetic/tests/example_data/cb").remove_burn_in(burn_in=0.1)
 
 
 .. _passing data:
@@ -81,12 +81,15 @@ reading and writing.
 Loading ``NestedSamples`` or ``MCMCSamples``
 ============================================
 
+When loading in previously saved samples, make sure to use the appropriate
+class: ``Samples``, ``MCMCSamples``, or ``NestedSamples``.
+
 * ``read_csv``:
 
   ::
   
       from pandas import read_csv
-      from anesthetic import Samples
+      from anesthetic import Samples  # or MCMCSamples, or NestedSamples
       samples = Samples(read_csv("filename.csv"))
 
 * ``read_parquet``:
@@ -94,6 +97,6 @@ Loading ``NestedSamples`` or ``MCMCSamples``
   ::
   
       from pandas import read_parquet
-      from anesthetic import Samples
+      from anesthetic import Samples  # or MCMCSamples, or NestedSamples
       samples = Samples(read_parquet("filename.parquet"))
 
