@@ -1,12 +1,11 @@
 name: Test the build and push to Test PyPI
-on: status
+on: push
 jobs:
   build-n-publish:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10']
-    if: github.event.state == 'success'
     steps:
     - uses: actions/checkout@master
     - name: Set up Python ${{ matrix.python-version }}
