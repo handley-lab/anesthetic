@@ -249,6 +249,11 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             x = masked_array(self - mean, null)
             cov = np.ma.dot(self.get_weights()*x.T, x) \
                 / self.get_weights().sum().T
+            if kwargs:
+                raise NotImplementedError("The keywords %s are not implemented"
+                                          "for the calculation of the"
+                                          "covariance with weighted samples."
+                                          % kwargs)
             return self._constructor(cov, index=self.columns,
                                      columns=self.columns)
         else:

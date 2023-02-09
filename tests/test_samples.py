@@ -2,6 +2,7 @@ import anesthetic.examples._matplotlib_agg  # noqa: F401
 
 import sys
 import pytest
+from math import floor, ceil
 import numpy as np
 from pandas import MultiIndex
 import matplotlib.pyplot as plt
@@ -406,6 +407,68 @@ def test_hist_levels():
     ns = read_chains('./tests/example_data/pc')
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'], kind={'lower': 'hist_2d'},
                levels=[0.95, 0.68], bins=20)
+
+
+def test_mcmc_stats():
+    mcmc = read_chains('./tests/example_data/cb')
+    chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
+    n0, n1 = chains.count().iloc[:, 0]  # number samples in first chain
+    mcmc_head = chains.head(200).copy()
+    mcmc_tail = mcmc.remove_burn_in(burn_in=200)
+    mcmc_half = mcmc.remove_burn_in(burn_in=0.5)
+
+    # check indices after burn-in removal
+    assert mcmc_tail.index.get_level_values(0)[0] == 200
+    assert mcmc_tail.index.get_level_values(0)[n0] == 200 + n0 + 200
+    assert mcmc_half.index.get_level_values(0)[0] == floor(n0/2)
+    assert mcmc_half.index.get_level_values(0)[ceil(n0/2)] == n0 + floor(n1/2)
+
+    # check Gelman--Rubin statistic
+    assert mcmc_head.Gelman_Rubin() > 0.1
+    assert mcmc_tail.Gelman_Rubin() < 0.01
+    assert mcmc_half.Gelman_Rubin() < 0.01
+    assert mcmc_half.Gelman_Rubin(['x0']) < 0.01
+    assert mcmc_half.Gelman_Rubin(['x1']) < 0.01
+
+    # more burn-in checks
+    mcmc_new = mcmc.remove_burn_in(burn_in=200.9)
+    assert len(mcmc_new) == n0 - 200 + n1 - 200
+    assert mcmc_new.index.get_level_values(0)[0] == 200
+    assert mcmc_new.index.get_level_values(0)[n0] == 200 + n0 + 200
+    mcmc_new = mcmc.remove_burn_in(burn_in=-0.5)
+    assert len(mcmc_new) == floor(n0/2) + floor(n1/2)
+    assert mcmc_new.index.get_level_values(0)[0] == ceil(n0/2)
+    assert mcmc_new.index.get_level_values(0)[floor(n0/2)] == n0 + floor(n1/2)
+    mcmc_new = mcmc.remove_burn_in(burn_in=-200)
+    assert len(mcmc_new) == 200 + 200
+    assert mcmc_new.index.get_level_values(0)[0] == n0 - 200
+    assert mcmc_new.index.get_level_values(0)[200] == n0 + n1 - 200
+    mcmc_new = mcmc.remove_burn_in(burn_in=[0.8, -0.75])
+    assert len(mcmc_new) == ceil(n0/5) + floor(3*n1/4)
+    assert mcmc_new.index.get_level_values(0)[0] == floor(4*n0/5)
+    assert mcmc_new.index.get_level_values(0)[ceil(n0/5)] == n0 + ceil(n1/4)
+    mcmc_new = mcmc.remove_burn_in(burn_in=[2, -100])
+    assert len(mcmc_new) == n0 - 2 + 100
+    assert mcmc_new.index.get_level_values(0)[0] == 2
+    assert mcmc_new.index.get_level_values(0)[n0-2] == n0 + n1 - 100
+
+    # test reset index
+    mcmc_new = mcmc.remove_burn_in(burn_in=200, reset_index=True)
+    assert len(mcmc_new) == n0 - 200 + n1 - 200
+    assert mcmc_new.index.get_level_values(0)[0] == 0
+    assert mcmc_new.index.get_level_values(0)[-1] == n0 - 200 + n1 - 200 - 1
+
+    # test inplace
+    assert mcmc.index.get_level_values(0)[0] == 0
+    assert mcmc.index.get_level_values(0)[n0] == n0
+    mcmc_new = mcmc.remove_burn_in(burn_in=200, inplace=True)
+    assert mcmc_new is None
+    assert len(mcmc) == n0 - 200 + n1 - 200
+    assert mcmc.index.get_level_values(0)[0] == 200
+    assert mcmc.index.get_level_values(0)[n0] == 200 + n0 + 200
+
+    with pytest.raises(ValueError):
+        mcmc.remove_burn_in(burn_in=[1, 2, 3])
 
 
 def test_logX():
