@@ -1,11 +1,12 @@
 name: Test the build and push to Test PyPI
-on: push
+on: 
+  check_suite:
+    types: [completed]
 jobs:
   build-n-publish:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.8', '3.9', '3.10']
     steps:
     - uses: actions/checkout@master
