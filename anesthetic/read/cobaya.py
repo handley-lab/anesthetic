@@ -2,7 +2,6 @@
 import os
 import re
 import numpy as np
-from anesthetic.read.utils import remove_burn_in
 from anesthetic.samples import MCMCSamples
 from pandas import concat
 
@@ -32,23 +31,11 @@ def read_paramnames(root):
 def read_cobaya(root, *args, **kwargs):
     """Read Cobaya yaml files.
 
-    Parameters
-    ----------
-    burn_in: float
-        if 0 < burn_in < 1:
-            discard the first burn_in fraction of samples
-        elif 1 < burn_in:
-            only keep samples [burn_in:]
-        Only works if `root` provided and if chains are GetDist or Cobaya
-        compatible.
-        default: False
-
     Returns
     -------
     MCMCSamples
 
     """
-    burn_in = kwargs.pop('burn_in', None)
     dirname, basename = os.path.split(root)
 
     files = os.listdir(os.path.dirname(root))
@@ -67,7 +54,6 @@ def read_cobaya(root, *args, **kwargs):
     samples = []
     for i, chains_file in chains_files:
         data = np.loadtxt(chains_file)
-        data = remove_burn_in(data, burn_in)
         weights, logP, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
                            weights=weights.flatten(), logL=logP,
@@ -82,7 +68,7 @@ def read_cobaya(root, *args, **kwargs):
     samples.root = root
     samples.label = kwargs['label']
 
-    if (samples.chain == samples.chain.iloc[0]).all():
+    if np.all(samples.chain == samples.chain.iloc[0]):
         samples.drop(columns='chain', inplace=True, level=0)
     else:
         samples.set_label('chain', r'$n_\mathrm{chain}$')

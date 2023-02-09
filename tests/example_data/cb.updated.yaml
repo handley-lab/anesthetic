@@ -6,7 +6,7 @@ likelihood:
     stop_at_error: false
     version: null
     external: 'lambda x0, x1: stats.multivariate_normal.logpdf([x0, x1], mean=[0,
-      0], cov=[[1, -0.25], [-0.25, 0.5]])'
+      0], cov=[[1, -0.9], [-0.9, 1]])'
     input_params:
     - x0
     - x1
@@ -14,12 +14,16 @@ likelihood:
 params:
   x0:
     prior:
-      min: -1
-      max: 1
+      min: -10
+      max: 10
+    proposal: 0.1
+    latex: x_0
   x1:
     prior:
-      min: -1
-      max: 1
+      min: -10
+      max: 10
+    proposal: 0.1
+    latex: x_1
 sampler:
   mcmc:
     burn_in: 0
@@ -28,14 +32,14 @@ sampler:
     covmat_params: null
     proposal_scale: 2.4
     output_every: 60s
-    learn_every: 40d
+    learn_every: 100
     learn_proposal: true
     learn_proposal_Rminus1_max: 2.0
     learn_proposal_Rminus1_max_early: 30.0
     learn_proposal_Rminus1_min: 0.0
     max_samples: .inf
     Rminus1_stop: 0.01
-    Rminus1_cl_stop: 0.2
+    Rminus1_cl_stop: 0.05
     Rminus1_cl_level: 0.95
     Rminus1_single_split: 4
     measure_speeds: true
@@ -53,6 +57,6 @@ sampler:
     oversample: null
     drag_limits: null
     fallback_covmat_scale: 4
-    version: 3.1.0
+    version: 3.2.1
 output: cb
-version: 3.1.0
+version: 3.2.1

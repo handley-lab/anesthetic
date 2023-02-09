@@ -150,6 +150,10 @@ def test_WeightedDataFrame_cov(frame):
     assert_array_equal(cov.index, frame[:5].index)
     assert_array_equal(cov.columns, frame[:5].index)
 
+    with pytest.raises(NotImplementedError):
+        # kwargs not passed when weighted
+        frame.cov(ddof=1)
+
 
 def test_WeightedDataFrame_corr(frame):
     corr = frame.corr()

@@ -3,7 +3,6 @@ import os
 import re
 import numpy as np
 from anesthetic.samples import MCMCSamples
-from anesthetic.read.utils import remove_burn_in
 from pandas import concat
 
 
@@ -41,23 +40,11 @@ def read_paramnames(root):
 def read_getdist(root, *args, **kwargs):
     """Read <root>_1.txt in getdist format.
 
-    Parameters
-    ----------
-    burn_in: float
-        if 0 < burn_in < 1:
-            discard the first burn_in fraction of samples
-        elif 1 < burn_in:
-            only keep samples [burn_in:]
-        Only works if `root` provided and if chains are GetDist or Cobaya
-        compatible.
-        default: False
-
     Returns
     -------
     MCMCSamples
 
     """
-    burn_in = kwargs.pop('burn_in', None)
     dirname, basename = os.path.split(root)
 
     files = os.listdir(os.path.dirname(root))
@@ -76,7 +63,6 @@ def read_getdist(root, *args, **kwargs):
     samples = []
     for i, chains_file in chains_files:
         data = np.loadtxt(chains_file)
-        data = remove_burn_in(data, burn_in)
         weights, minuslogL, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
                            weights=weights.flatten(), logL=-minuslogL,
@@ -91,7 +77,7 @@ def read_getdist(root, *args, **kwargs):
     samples.root = root
     samples.label = kwargs['label']
 
-    all_same_chain = (samples.chain == samples.chain.iloc[0]).all()
+    all_same_chain = np.all(samples.chain == samples.chain.iloc[0])
     if all_same_chain or samples.chain.isna().all():
         samples.drop(columns='chain', inplace=True, level=0)
     elif samples.islabelled():
