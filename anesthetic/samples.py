@@ -490,6 +490,8 @@ class MCMCSamples(Samples):
         burn_in: int or float or array_like
             if 0 < burn_in < 1: remove first ``burn_in`` fraction of samples
             elif 1 < burn_in: remove first ``burn_in`` number of samples
+            elif -1 < burn_in < 0: keep last ``burn_in`` fraction of samples
+            elif burn_in < -1: keep last ``burn_in`` number of samples
             elif type(burn_in)==list: specify different burn-in for each chain
 
         reset_index: bool, default=False
@@ -502,19 +504,20 @@ class MCMCSamples(Samples):
         chains = self.groupby(('chain', '$n_\\mathrm{chain}$'),
                               group_keys=False)
         nchains = chains.ngroups
-        if isinstance(burn_in, (int, float)) and 0 < burn_in < 1:
-            nsamples = chains.count().iloc[:, 0].to_numpy()
-            ndrop = np.ceil(burn_in * nsamples).astype(int)
-        elif isinstance(burn_in, (int, float)):
-            ndrop = np.full(nchains, burn_in, dtype=int)
+        if isinstance(burn_in, (int, float)):
+            ndrop = np.full(nchains, burn_in)
         elif isinstance(burn_in, (list, tuple, np.ndarray)) \
                 and len(burn_in) == nchains:
-            ndrop = burn_in
+            ndrop = np.array(burn_in)
         else:
-            raise ValueError("`burn_in` has to be a positive scalar or an "
-                             "array of length matching the number of chains "
+            raise ValueError("`burn_in` has to be a scalar or an array of "
+                             "length matching the number of chains "
                              "`nchains=%d`. However, you provided "
                              "`burn_in=%s`" % (nchains, burn_in))
+        if np.all(np.abs(ndrop) < 1):
+            nsamples = chains.count().iloc[:, 0].to_numpy()
+            ndrop = ndrop * nsamples
+        ndrop = ndrop.astype(int)
         data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1])).index,
                          inplace=inplace)
         if reset_index:
@@ -561,8 +564,7 @@ class MCMCSamples(Samples):
 
         # Within chain variance ``W``
         # (average variance within each chain):
-        covs = chains.cov()
-        W = covs.groupby(level=['params', 'labels']).mean().to_numpy()
+        W = chains.cov().groupby(level=['params', 'labels']).mean().to_numpy()
         # TODO: the above line should be a weighted mean
         # --> need to fix groupby for WeightedDataFrames!
 
@@ -570,6 +572,8 @@ class MCMCSamples(Samples):
         # (variance of the chain means compared to the full mean):
         means_diff = (chains.mean() - self[params].mean()).to_numpy()
         B = (means_diff.T @ means_diff) / (chains.ngroups - 1)
+        # B = chains.mean().cov().to_numpy()
+        # TODO: fix once groupby is fixed
 
         L = np.linalg.cholesky(W)
         invL = np.linalg.inv(L)
