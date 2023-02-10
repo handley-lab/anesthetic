@@ -389,8 +389,6 @@ class Samples(WeightedLabelledDataFrame):
     def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
 
-        Spam, ham and eggs.
-
         Parameters
         ----------
         logL_new: np.array
