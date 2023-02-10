@@ -951,3 +951,9 @@ def test_get_index(mcmc_wdf):
     assert mcmc_wdf.plot.barh().get_ylabel() == "foo"
     for plot in [mcmc_wdf.plot.area, mcmc_wdf.plot.bar, mcmc_wdf.plot.barh]:
         assert plot(xlabel="my xlabel").get_xlabel() == "my xlabel"
+
+    idx = mcmc_wdf.index.to_frame().to_numpy().T
+    mcmc_wdf.index = MultiIndex.from_arrays([idx[0], idx[0], idx[1]],
+                                            names=('foo', 'bar', 'weights'))
+    assert mcmc_wdf.plot.bar().get_xlabel() == "foo,bar"
+    assert mcmc_wdf.plot.barh().get_ylabel() == "foo,bar"
