@@ -31,16 +31,9 @@ class _WeightedMPLPlot(MPLPlot):
 
     def _get_index_name(self):
         if isinstance(self.data, _WeightedObject):
-            if isinstance(self.data.drop_weights().index, ABCMultiIndex):
-                name = self.data.drop_weights().index.names
-                if com.any_not_none(*name):
-                    name = ",".join([pprint_thing(x) for x in name])
-                else:
-                    name = None
-            else:
-                name = self.data.drop_weights().index.name
-                if name is not None:
-                    name = pprint_thing(name)
+            name = self.data.drop_weights().index.name
+            if name is not None:
+                name = pprint_thing(name)
 
             # GH 45145, override the default axis label if one is provided.
             index_name = self._get_custom_index_name()
