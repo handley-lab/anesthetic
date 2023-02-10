@@ -6,6 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "anesthetic"
 dynamic = ["version"]
 
+maintainers = [
+    { name="Will Handley", email="williamjameshandley@gmail.com" },
+    { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
+]
+
 authors = [
     { name="Will Handley", email="williamjameshandley@gmail.com" },
     { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
@@ -17,7 +22,7 @@ authors = [
 ]
 description = "nested sampling post-processing"
 readme = "README.rst"
-license = "LICENSE"
+license = "MIT"
 requires-python = ">=3.7"
 dependencies = [
     "scipy>=1.2.0",
