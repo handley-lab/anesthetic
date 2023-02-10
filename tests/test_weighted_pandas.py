@@ -945,5 +945,9 @@ def test_blank_axis_labels(mcmc_df, mcmc_wdf):
 
 
 def test_get_index(mcmc_wdf):
+    mcmc_wdf.index = mcmc_wdf.index.rename(('foo', 'weights'))
+    assert mcmc_wdf.plot.area().get_xlabel() == "foo"
+    assert mcmc_wdf.plot.bar().get_xlabel() == "foo"
+    assert mcmc_wdf.plot.barh().get_ylabel() == "foo"
     for plot in [mcmc_wdf.plot.area, mcmc_wdf.plot.bar, mcmc_wdf.plot.barh]:
-        assert plot(xlabel="my xlabel").get_xlabel() == 'my xlabel'
+        assert plot(xlabel="my xlabel").get_xlabel() == "my xlabel"
