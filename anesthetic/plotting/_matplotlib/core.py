@@ -1,5 +1,7 @@
 from typing import Literal
 import numpy as np
+from pandas.core.dtypes.generic import ABCMultiIndex
+import pandas.core.common as com
 from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               HexBinPlot as _HexBinPlot,
                                               LinePlot as _LinePlot,
