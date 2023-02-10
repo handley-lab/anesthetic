@@ -1,14 +1,3 @@
-default_stages: [
-    commit,
-    merge-commit,
-    push,
-    prepare-commit-msg,
-    commit-msg,
-    post-checkout,
-    post-commit,
-    post-merge,
-    post-rewrite
-]
 repos:
   - repo: local
     hooks:
