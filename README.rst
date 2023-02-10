@@ -79,6 +79,7 @@ or from the repository
 .. code:: bash
 
     git clone https://github.com/williamjameshandley/anesthetic
+    cd anesthetic
     python -m pip install .
 
 You can check that things are working by running the test suite:
