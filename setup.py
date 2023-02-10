@@ -38,7 +38,7 @@ setup(name='anesthetic',
           'automated bins calculation': ['astropy'],
           'fast kernel density estimation': ['fastkde'],
           },
-      tests_require=['pytest', 'packaging'],
+      tests_require=['pytest', 'packaging', 'pre-commit'],
       include_package_data=True,
       license='MIT',
       classifiers=[
