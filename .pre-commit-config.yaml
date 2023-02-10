@@ -9,7 +9,6 @@ default_stages: [
     post-merge,
     post-rewrite
 ]
-files: "anesthetic tests"
 repos:
 -   repo: https://github.com/pycqa/flake8
     rev: 6.0.0
