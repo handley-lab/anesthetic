@@ -76,8 +76,6 @@ reading and writing.
   Check out :py:meth:`pandas.DataFrame.to_parquet` for more information.
 
 
-
-
 Loading ``NestedSamples`` or ``MCMCSamples``
 ============================================
 
@@ -100,3 +98,15 @@ class: ``Samples``, ``MCMCSamples``, or ``NestedSamples``.
       from anesthetic import Samples  # or MCMCSamples, or NestedSamples
       samples = Samples(read_parquet("filename.parquet"))
 
+
+Converting to GetDist
+=====================
+
+There are also tools for converting to alternative formats (e.g. `GetDist
+<https://getdist.readthedocs.io/en/latest/>`_), in case you have pipelines in
+other plotters:
+
+::
+
+    from anesthetic.convert import to_getdist
+    getdist_samples = to_getdist(samples)
