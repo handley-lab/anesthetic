@@ -942,3 +942,8 @@ def test_blank_axis_labels(mcmc_df, mcmc_wdf):
         assert df.plot.area().get_xlabel() == ""
         assert df.plot.bar().get_xlabel() == ""
         assert df.plot.barh().get_ylabel() == ""
+
+
+def test_get_index(mcmc_wdf):
+    for plot in [mcmc_wdf.plot.area, mcmc_wdf.plot.bar, mcmc_wdf.plot.barh]:
+        assert plot(xlabel="my xlabel").get_xlabel() == 'my xlabel'
