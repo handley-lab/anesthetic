@@ -499,11 +499,13 @@ class MCMCSamples(Samples):
         Parameters
         ----------
         burn_in: int or float or array_like
-            if 0 < burn_in < 1: remove first ``burn_in`` fraction of samples
-            elif 1 < burn_in: remove first ``burn_in`` number of samples
-            elif -1 < burn_in < 0: keep last ``burn_in`` fraction of samples
-            elif burn_in < -1: keep last ``burn_in`` number of samples
-            elif type(burn_in)==list: specify different burn-in for each chain
+            Fraction or number of samples to remove or keep:
+
+            * ``if 0 < burn_in < 1``: remove first fraction of samples
+            * ``elif 1 < burn_in``: remove first number of samples
+            * ``elif -1 < burn_in < 0``: keep last fraction of samples
+            * ``elif burn_in < -1``: keep last number of samples
+            * ``elif type(burn_in)==list``: different burn-in for each chain
 
         reset_index: bool, default=False
             Whether to reset the index counter to start at zero or not.
