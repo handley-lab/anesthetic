@@ -147,18 +147,16 @@ class AxesDataFrame(DataFrame):
     columns: list(str)
         Parameters to be placed on the x-axes.
     fig : :class:`matplotlib.figure.Figure`
-    lower, diagonal, upper : bool, optional
+    lower, diagonal, upper : bool, default=True
         Whether to create 2D marginalised plots above or below the
         diagonal, or to create a 1D marginalised plot on the diagonal.
-        Default: True
     labels : dict(str:str), optional
         Dictionary mapping params to plot labels.
         Default: params
-    ticks : str
+    ticks : str, default='inner'
         If 'outer', plot ticks only on the very left and very bottom.
         If 'inner', plot ticks also in inner subplots.
         If None, plot no ticks at all.
-        Default: 'inner'
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
@@ -479,10 +477,9 @@ class AxesDataFrame(DataFrame):
         params : dict(array_like)
             Dictionary of parameter labels and desired values.
             Can provide more than one value per label.
-        lower, diagonal, upper : bool
+        lower, diagonal, upper : bool, default=True
             Whether to plot the lines on the lower, diagonal,
             and/or upper triangle plots.
-            Default: True
         kwargs
             Any kwarg that can be passed to
             :meth:`matplotlib.axes.Axes.axvline` or
@@ -514,10 +511,9 @@ class AxesDataFrame(DataFrame):
             Dictionary of parameter labels and desired value tuples.
             Can provide more than one value tuple per label.
             Each value tuple provides the min and max value for an axis span.
-        lower, diagonal, upper : bool
+        lower, diagonal, upper : bool, default=True
             Whether to plot the spans on the lower, diagonal,
             and/or upper triangle plots.
-            Default: True
         kwargs
             Any kwarg that can be passed to
             :meth:`matplotlib.axes.Axes.axvspan` or
@@ -550,9 +546,8 @@ class AxesDataFrame(DataFrame):
             Dictionary of parameter labels and desired values.
             Can provide more than one value per label, but length has to
             match for all parameter labels.
-        lower, upper : bool
+        lower, upper : bool, default=True
             Whether to plot the spans on the lower and/or upper triangle plots.
-            Default: True
         kwargs
             Any kwarg that can be passed to
             :meth:`matplotlib.axes.Axes.scatter`.
@@ -637,24 +632,26 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
     ----------
     params : lists of parameters
         Can be either:
-        * list(str) if the x and y axes are the same
-        * [list(str),list(str)] if the x and y axes are different
-        Strings indicate the names of the parameters
+
+        * ``list(str)`` if the x and y axes are the same
+        * ``[list(str), list(str)]`` if the x and y axes are different
+
+        Strings indicate the names of the parameters.
 
     labels : dict(str:str), optional
         Dictionary mapping params to plot labels.
         Default: params
 
-    lower, diagonal, upper : logical, optional
+    lower, diagonal, upper : logical, default=True
         Whether to create 2D marginalised plots above or below the
         diagonal, or to create a 1D marginalised plot on the diagonal.
-        Default: True
 
-    ticks : str
-        If 'outer', plot ticks only on the very left and very bottom.
-        If 'inner', plot ticks also in inner subplots.
-        If None, plot no ticks at all.
-        Default: 'inner'
+    ticks : str, default='inner'
+        Can be one of 'outer', 'inner', or None.
+
+        * ``'outer'``: plot ticks only on the very left and very bottom.
+        * ``'inner'``: plot ticks also in inner subplots.
+        * ``None``: plot no ticks at all.
 
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
@@ -719,27 +716,30 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     data: np.array
         Uniformly weighted samples to generate kernel density estimator.
 
-    xmin, xmax: float
+    xmin, xmax: float, optional
         lower/upper prior bound
-        Optional, default None
+        Default: None
 
     levels: list
         Values at which to draw iso-probability lines.
-        Optional, default [0.95, 0.68]
+        Optional,
+        Default: [0.95, 0.68]
 
     q: int or float or tuple
         Quantile to determine the data range to be plotted.
-        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
-        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
-        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
-        - tuple: quantile range, e.g. (0.16, 0.84)
-        Default 5
+
+        * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
+        * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
+        * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
+        * ``tuple``: quantile range, e.g. (0.16, 0.84)
+
+        Default: 5
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
         ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
         to define the color of the shading directly.
-        Optional, default False
+        Default: False
 
     Returns
     -------
@@ -816,34 +816,34 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     weights: np.array, optional
         Sample weights.
 
-    ncompress: int, optional
+    ncompress: int, default=False
         Degree of compression.
         If int: number of samples returned.
         If True: compresses to the channel capacity.
         If False: no compression.
-        Default False
 
-    nplot_1d: int, optional
+    nplot_1d: int, default=100
         Number of plotting points to use.
-        Default 100
 
     levels: list
         Values at which to draw iso-probability lines.
-        Optional, default [0.95, 0.68]
+        Default: [0.95, 0.68]
 
     q: int or float or tuple
         Quantile to determine the data range to be plotted.
-        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
-        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
-        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
-        - tuple: quantile range, e.g. (0.16, 0.84)
-        Default 5
+
+        * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
+        * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
+        * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
+        * ``tuple``: quantile range, e.g. (0.16, 0.84)
+
+        Default: 5
 
     facecolor: bool or string
         If set to True then the 1d plot will be shaded with the value of the
         ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
         to define the color of the shading directly.
-        Optional, default False
+        Default: False
 
     bw_method: str, scalar or callable, optional
         Forwarded to :class:`scipy.stats.gaussian_kde`.
@@ -938,11 +938,13 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     q: int or float or tuple
         Quantile to determine the data range to be plotted.
-        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
-        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
-        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
-        - tuple: quantile range, e.g. (0.16, 0.84)
-        Default 5
+
+        * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
+        * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
+        * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
+        * ``tuple``: quantile range, e.g. (0.16, 0.84)
+
+        Default: 5
 
     Returns
     -------
@@ -1018,11 +1020,11 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     levels: list
         Amount of mass within each iso-probability contour.
         Has to be ordered from outermost to innermost contour.
-        Optional, default [0.95, 0.68]
+        Default: [0.95, 0.68]
 
     xmin, xmax, ymin, ymax: float
         The lower/upper prior bounds in x/y coordinates.
-        Optional, default None
+        Default: None
 
     Returns
     -------
@@ -1119,18 +1121,16 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     levels: list, optional
         Amount of mass within each iso-probability contour.
         Has to be ordered from outermost to innermost contour.
-        Optional, default [0.95, 0.68]
+        Default: [0.95, 0.68]
 
-    ncompress: int, optional
+    ncompress: int, default=1000
         Degree of compression.
         If int: number of samples returned.
         If True: compresses to the channel capacity.
         If False: no compression.
-        Default 1000
 
-    nplot_2d: int, optional
+    nplot_2d: int, default=1000
         Number of plotting points to use.
-        Default 1000
 
     bw_method: str, scalar or callable, optional
         Forwarded to :class:`scipy.stats.gaussian_kde`.
@@ -1238,15 +1238,17 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Shade iso-probability contours containing these levels of probability
         mass. If None defaults to usual :meth:`matplotlib.axes.Axes.hist2d`
         colouring.
-        Optional, default None
+        Default: None
 
     q: int or float or tuple
         Quantile to determine the data range to be plotted.
-        - 0: full data range, i.e. q=0 --> quantile range (0, 1)
-        - int: `q`-sigma data range, e.g. q=1 --> quantile range (0.16, 0.84)
-        - float: percentile, e.g. q=0.68 --> quantile range  (0.16, 0.84)
-        - tuple: quantile range, e.g. (0.16, 0.84)
-        Default 5
+
+        * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
+        * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
+        * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
+        * ``tuple``: quantile range, e.g. (0.16, 0.84)
+
+        Default: 5
 
     Returns
     -------
@@ -1345,7 +1347,7 @@ def basic_cmap(color):
 
 
 def quantile_plot_interval(q):
-    """Interpret quantile q input to quantile plot range tuple."""
+    """Interpret quantile ``q`` input to quantile plot range tuple."""
     if isinstance(q, str):
         sigmas = {'1sigma': 0.682689492137086,
                   '2sigma': 0.954499736103642,
@@ -1365,8 +1367,8 @@ def quantile_plot_interval(q):
 def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
     """Normalize kwarg inputs.
 
-    Works the same way as cbook.normalize_kwargs, but additionally allows to
-    drop kwargs.
+    Works the same way as :func:`matplotlib.cbook.normalize_kwargs`, but
+    additionally allows to drop kwargs.
     """
     drop = [] if drop is None else drop
     alias_mapping = {} if alias_mapping is None else alias_mapping

@@ -11,16 +11,17 @@ import contextlib
 def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
     r"""Compute the log of the sum of exponentials of input elements.
 
-    This function has the same call signature as `scipy.special.logsumexp`
-    and mirrors scipy's behaviour except for `-np.inf` input. If a and b
-    are both -inf then scipy's function will output `nan` whereas here we use:
+    This function has the same call signature as
+    :func:`scipy.special.logsumexp` and mirrors scipy's behaviour except for
+    ``-np.inf`` input. If a and b are both ``-inf`` then scipy's function will
+    output ``nan`` whereas here we use:
 
     .. math::
 
         \lim_{x \to -\infty} x \exp(x) = 0
 
-    Thus, if a=-inf in `log(sum(b * exp(a))` then we can set b=0 such that
-    that term is ignored in the sum.
+    Thus, if ``a=-inf`` in ``log(sum(b * exp(a))`` then we can set ``b=0``
+    such that that term is ignored in the sum.
     """
     if b is None:
         b = np.ones_like(a)
@@ -187,7 +188,8 @@ def compute_nlive(death, birth):
 def compute_insertion_indexes(death, birth):
     """Compute the live point insertion index for each point.
 
-    For more detail, see https://arxiv.org/abs/2006.03371
+    For more detail, see `Fowlie et al. (2020)
+    <https://arxiv.org/abs/2006.03371>`_
 
     Parameters
     ----------
@@ -277,7 +279,7 @@ def scaled_triangulation(x, y, cov):
 
     Returns
     -------
-    matplotlib.tri.Triangulation
+    :class:`matplotlib.tri.Triangulation`
         Triangulation with the appropriate scaling
     """
     L = np.linalg.cholesky(cov)
@@ -310,7 +312,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     Returns
     -------
     tri:
-        matplotlib.tri.Triangulation with an appropriate scaling
+        :class:`matplotlib.tri.Triangulation` with an appropriate scaling
 
     w: array-like
         Compressed samples and weights
@@ -359,12 +361,12 @@ def sample_compression_1d(x, w=None, ncompress=True):
     w: pandas.Series, optional
         weights of samples
 
-    ncompress: int, optional
+    ncompress: int, default=True
         Degree of compression.
-        If int: number of samples returned.
-        If True: compresses to the channel capacity.
-        If False: no compression.
-        Default True
+
+        * If int: number of samples returned.
+        * If True: compresses to the channel capacity.
+        * If False: no compression.
 
     Returns
     -------
@@ -427,11 +429,12 @@ def insertion_p_value(indexes, nlive, batch=0):
     Note that this function doesn't use scipy.stats.kstest as the latter
     assumes continuous distributions.
 
-    For more detail, see https://arxiv.org/abs/2006.03371
+    For more detail, see `Fowlie et al. (2020)
+    <https://arxiv.org/abs/2006.03371>`_
 
-    For a rolling test, you should provide the optional parameter batch!=0. In
-    this case the test computes the p value on consecutive batches of size
-    nlive * batch, selects the smallest one and adjusts for multiple
+    For a rolling test, you should provide the optional parameter ``batch!=0``.
+    In this case the test computes the p-value on consecutive batches of size
+    ``nlive * batch``, selects the smallest one and adjusts for multiple
     comparisons using a Bonferroni correction.
 
     Parameters
@@ -449,13 +452,16 @@ def insertion_p_value(indexes, nlive, batch=0):
     -------
     ks_result: dict
         Kolmogorov-Smirnov test results:
-            D: Kolmogorov-Smirnov statistic
-            sample_size: sample size
-            p-value: p-value
-            # if batch != 0
-            iterations: bounds of batch with minimum p-value
-            nbatches: the number of batches in total
-            uncorrected p-value: p-value without Bonferroni correction
+
+            * ``D``: Kolmogorov-Smirnov statistic
+            * ``sample_size``: sample size
+            * ``p-value``: p-value
+
+            if ``batch != 0``:
+
+            * ``iterations``: bounds of batch with minimum p-value
+            * ``nbatches``: the number of batches in total
+            * ``uncorrected p-value``: p-value without Bonferroni correction
     """
     if batch == 0:
         bins = np.arange(-0.5, nlive + 0.5, 1.)

@@ -131,10 +131,9 @@ class Samples(WeightedLabelledDataFrame):
     label: str
         Legend label
 
-    logzero: float
+    logzero: float, default=-1e30
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-np.inf`.
-        default: -1e30
 
     """
 
@@ -168,11 +167,13 @@ class Samples(WeightedLabelledDataFrame):
         ----------
         axes: plotting axes
             Can be:
-            - list(str) or str
-            - pandas.Series(matplotlib.axes.Axes)
+
+            * list(str) or str
+            * pandas.Series(matplotlib.axes.Axes)
+
             If a pandas.Series is provided as an existing set of axes, then
-            this is used for creating the plot. Otherwise a new set of axes are
-            created using the list or lists of strings.
+            this is used for creating the plot. Otherwise, a new set of axes
+            are created using the list or lists of strings.
 
         kind: str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
@@ -456,7 +457,7 @@ class Samples(WeightedLabelledDataFrame):
 class MCMCSamples(Samples):
     """Storage and plotting tools for MCMC samples.
 
-    Any new functionality specific to MCMC (e.g. convergence criteria etc)
+    Any new functionality specific to MCMC (e.g. convergence criteria etc.)
     should be put here.
 
     Parameters
@@ -479,10 +480,10 @@ class MCMCSamples(Samples):
     label: str
         Legend label
 
-    logzero: float
+    logzero: float, default=-1e30
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-np.inf`.
-        default: -1e30
+
     """
 
     _metadata = Samples._metadata + ['root']
@@ -540,8 +541,8 @@ class MCMCSamples(Samples):
 
         Determine the Gelman--Rubin convergence statistic ``R-1`` by computing
         and comparing the within-chain variance and the between-chain variance.
-        This follows the routine as outlined in Lewis (2013), section
-        IV.A., https://arxiv.org/abs/1304.4473.
+        This follows the routine as outlined in
+        `Lewis (2013), section IV.A. <https://arxiv.org/abs/1304.4473>`_
 
         Note that this requires more than one chain. To circumvent this, you
         could overwrite the ``'chain'`` column, splitting the samples into two
@@ -561,6 +562,7 @@ class MCMCSamples(Samples):
             Gelman--Rubin convergence statistic ``R-1``. The smaller, the
             better converged. Aiming for ``Rminus1~0.01`` should normally work
             well.
+
         """
         self.columns.set_names(['params', 'labels'], inplace=True)
         if params is None:
@@ -686,9 +688,9 @@ class NestedSamples(Samples):
         beta: float
             Temperature to set
 
-        inplace: bool, optional
+        inplace: bool, default=False
             Indicates whether to modify the existing array, or return a copy
-            with the temperature changed. Default: False
+            with the temperature changed.
 
         """
         if inplace:
@@ -717,13 +719,33 @@ class NestedSamples(Samples):
         """Compute Nested Sampling statistics.
 
         Using nested sampling we can compute:
-            - logZ: the Bayesian evidence
-            - D_KL: the Kullback-Leibler divergence
-            - d_G: the Gaussian model dimensionality
-            - logL_P: the posterior averaged loglikelihood
+
+        - ``logZ``: Bayesian evidence
+
+          .. math::
+              \log Z = \int L \pi d\\theta
+
+        - ``D_KL``: Kullback-Leibler divergence
+
+          .. math::
+              D_{KL} = \int P \log(P / \pi) d\\theta
+
+        - ``logL_P``: posterior averaged log-likelihood
+
+          .. math::
+              \\langle\log L\\rangle_P = \int P \log L d\\theta
+
+        - ``d_G``: Gaussian model dimensionality
+          (or posterior variance of the log-likelihood)
+
+          .. math::
+              d_G/2 = \\langle(\log L)^2\\rangle_P - \\langle\log L\\rangle_P^2
+
+          see `Handley and Lemos (2019) <https://arxiv.org/abs/1903.06682>`_
+          for more details on model dimensionalities.
 
         (Note that all of these are available as individual functions with the
-        same signature). See https://arxiv.org/abs/1903.06682 for more detail.
+        same signature.)
 
         In addition to point estimates nested sampling provides an error bar
         or more generally samples from a (correlated) distribution over the
@@ -735,9 +757,14 @@ class NestedSamples(Samples):
         provided as a vectorised function. If nsamples is also provided a
         MultiIndex dataframe is generated.
 
-        These obey Occam's razor equation: logZ = logL_P - D_KL, which splits
-        a model's quality (logZ) into a goodness-of-fit (logL_P) and an
-        complexity penalty (D_KL) https://arxiv.org/abs/2102.11511
+        These obey Occam's razor equation:
+
+        .. math::
+            \log Z = \\langle\log L\\rangle_P - D_{KL},
+
+        which splits a model's quality ``logZ`` into a goodness-of-fit
+        ``logL_P`` and a complexity penalty ``D_KL``. See `Hergt et al. (2021)
+        <https://arxiv.org/abs/2102.11511>`_ for more detail.
 
         Parameters
         ----------
@@ -1078,13 +1105,13 @@ class NestedSamples(Samples):
         logL_new: np.array
             New log-likelihood values. Should have the same shape as `logL`.
 
-        action: str, optional
+        action: str, default='add'
             Can be any of {'add', 'replace', 'mask'}.
+
             * add: Add the new `logL_new` to the current `logL`.
             * replace: Replace the current `logL` with the new `logL_new`.
             * mask: treat `logL_new` as a boolean mask and only keep the
-            corresponding (True) samples.
-            default: 'add'
+              corresponding (True) samples.
 
         inplace: bool, optional
             Indicates whether to modify the existing array, or return a new
@@ -1111,9 +1138,10 @@ class NestedSamples(Samples):
         Parameters
         ----------
         logL_birth: array-like or int, optional
-            array-like: the birth contours.
-            int: the number of live points.
-            default: use the existing birth contours to compute nlive
+
+            * array-like: the birth contours.
+            * int: the number of live points.
+            * default: use the existing birth contours to compute nlive
 
         inplace: bool, optional
             Indicates whether to modify the existing array, or return a new

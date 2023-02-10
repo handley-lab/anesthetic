@@ -10,7 +10,7 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile,
 
 
 class _WeightedObject(object):
-    """Common methods for WeightedSeries and WeightedDataFrame."""
+    """Common methods for ``WeightedSeries`` and ``WeightedDataFrame``."""
 
     def __init__(self, *args, **kwargs):
         weights = kwargs.pop('weights', None)
@@ -122,7 +122,7 @@ class _WeightedObject(object):
 
 
 class WeightedSeries(_WeightedObject, Series):
-    """Weighted version of pandas.Series."""
+    """Weighted version of :class:`pandas.Series`."""
 
     def mean(self, skipna=True):
         """Weighted mean of the sampled distribution."""
@@ -218,7 +218,7 @@ class WeightedSeries(_WeightedObject, Series):
 
 
 class WeightedDataFrame(_WeightedObject, DataFrame):
-    """Weighted version of pandas.DataFrame."""
+    """Weighted version of :class:`pandas.DataFrame`."""
 
     def mean(self, axis=0, skipna=True, *args, **kwargs):
         """Weighted mean of the sampled distribution."""
