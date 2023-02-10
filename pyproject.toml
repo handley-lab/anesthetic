@@ -12,8 +12,6 @@ maintainers = [
 ]
 
 authors = [
-    { name="Will Handley", email="williamjameshandley@gmail.com" },
-    { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
     { name="Adam Ormondroyd", email="ano23@cam.ac.uk" },
     { name="Stefan Heimersheim", email="sh2061@ast.cam.ac.uk" },
     { name="David Yallup", email="david.yallup@gmail.com" },
