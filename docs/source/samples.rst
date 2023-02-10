@@ -24,6 +24,7 @@ weighted (see :class:`anesthetic.weighted_pandas.WeightedSeries` and
 :class:`anesthetic.weighted_pandas.WeightedDataFrame`), where the weights form
 part of a multiindex and are therefore retained when slicing. 
 
+
 Mean, standard deviation, median, quantiles, etc.
 -------------------------------------------------
 
@@ -38,6 +39,8 @@ quantiles, etc.
     x1_std = samples.x1.std()
     x2_min = samples.x2.min()
     x2_95percentile = samples.x2.quantile(q=0.95)
+
+.. plot:: :context: close-figs
 
     fig, axes = make_2d_axes(['x0', 'x1', 'x2'], upper=False)
     samples.plot_2d(axes, label=None)
@@ -69,11 +72,107 @@ parameters ``x0`` and ``x1``, we can compute the derived parameter
 MCMC statistics
 ===============
 
-Burn in
--------
+Markov Chain Monte Carlo (short MCMC) samples as the name states come from
+Markov chains, and as such come with some MCMC specific properties and
+potential issues, e.g. correlation of successive steps, a burn-in phase, or
+questions of convergence.
+
+We have an example data set (at the relative path
+``anesthetic/tests/example_data/`` with the file root ``cb``) that emphasizes
+potential MCMC issues. Note, while this was run with `Cobaya
+<https://cobaya.readthedocs.io/en/latest/>`_, we had to actually put in some
+effort to make Cobaya produce such a bad burn-in stage. With its usual
+optimisation settings it normally produces much better results.
+
+
+Chains
+------
+
+When MCMC data is read in, anesthetic automatically keeps track of multiple
+chains that were run in parallel via the ``'chain'`` parameter. You can split
+the chains into separate samples via the :meth:`pandas.DataFrame.groupby`
+method:
+
+.. plot:: :context: close-figs
+
+    from anesthetic import read_chains, make_2d_axes
+    mcmc_samples = read_chains("../../tests/example_data/cb")
+    chains = mcmc_samples.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
+    chain1 = chains.get_group(1)
+    chain2 = chains.get_group(2).reset_index(drop=True)
+
+For this example MCMC run the initial burn-in phase is very apparent, as can be
+seen in the following two plots.
+
+.. plot:: :context: close-figs
+
+    fig, ax = plt.subplots(figsize=(5, 3))
+    ax = chain1.x0.plot.line(alpha=0.7, label="Chain 1")
+    ax = chain2.x0.plot.line(alpha=0.7, label="Chain 2")
+    ax.set_ylabel(chain1.get_label('x0'))
+    ax.set_xlabel("sample")
+    ax.legend()
+
+.. plot:: :context: close-figs
+
+    fig, axes = make_2d_axes(['x0', 'x1'], figsize=(5, 5))
+    chain1.plot_2d(axes, alpha=0.7, label="Chain 1")
+    chain2.plot_2d(axes, alpha=0.7, label="Chain 2")
+    axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes)/2, len(axes)), loc='lower center', ncol=2)
+
+
+Remove burn-in
+--------------
+
+To get rid of the initial burn-in phase, you can use the
+:meth:`anesthetic.samples.MCMCSamples.remove_burn_in` method:
+
+.. plot:: :context: close-figs
+
+    mcmc_burnout = mcmc_samples.remove_burn_in(burn_in=0.1)
+
+Positive ``burn_in`` values are interpreted as the *first* samples to
+*remove*, whereas negative ``burn_in`` values are interpreted as the *last*
+samples to *keep*. You can think of it in the usual python slicing mentality:
+``samples[burn_in:]``.
+
+If ``0 < abs(burn_in) < 1`` then it is interpreted as a fraction of the total
+number of samples in the respective chain.
+
+To see how ``remove_burn_in`` has gotten rid of the burn-in samples in both
+chains, see the plot in the following section, alongside an assessment of
+convergence.
+
 
 Gelman--Rubin statistic
 -----------------------
+
+Another important issue when it comes to MCMC samples is assessing convergence.
+In anesthetic we have implemented the modified Gelman--Rubin statistic as
+described in `Antony Lewis (2013) <https://arxiv.org/abs/1304.4473>`_. For the
+underlying, more theoretical accounts of this statistic, see e.g. `Gelman and
+Rubin (1992) <https://doi.org/10.1214/ss/1177011136>`_ and `Brooks and Gelman
+(1998) <https://doi.org/10.1080/10618600.1998.10474787>`_. 
+
+Provided you have an MCMC run containing multiple chains, you can compute the
+Gelman--Rubin ``R-1`` statistic using the
+:meth:`anesthetic.samples.MCMCSamples.Gelman_Rubin` method:
+
+.. plot:: :context: close-figs
+
+    Rminus1_old = mcmc_samples.Gelman_Rubin()
+    Rminus1_new = mcmc_burnout.Gelman_Rubin()
+
+The following plot shows how ``remove_burn_in`` gets rid of burn-in samples.
+Note the stark difference in the Gelman--Rubin statistic, as listed in the
+legend, depending on whether burn-in samples were removed or not.
+
+.. plot:: :context: close-figs
+
+    fig, axes = make_2d_axes(['x0', 'x1'], figsize=(5, 5))
+    mcmc_samples.plot_2d(axes, alpha=0.7, label="Before burn-in removal, $R-1=%.3f$" % Rminus1_old)
+    mcmc_burnout.plot_2d(axes, alpha=0.7, label="After burn-in removal,  $R-1=%.3f$" % Rminus1_new)
+    axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes)/2, len(axes)), loc='lower center')
 
 
 |
@@ -82,8 +181,8 @@ Nested sampling statistics
 ==========================
 
 Anethestic really comes to the fore for nested sampling (for details on nested
-sampling we recommend `John Skilling 2006
-<https://projecteuclid.org/euclid.ba/1340370944>`_). We can do all of the
+sampling we recommend `John Skilling, 2006
+<https://doi.org/10.1214/06-BA127>`_). We can do all of the
 above, and more with the power that nested sampling chains provide.
 
 .. plot:: :context: close-figs
@@ -92,7 +191,8 @@ above, and more with the power that nested sampling chains provide.
     nested_samples = read_chains("../../tests/example_data/pc")
     nested_samples['y'] = nested_samples['x1'] * nested_samples['x0']
     nested_samples.set_label('y', '$y=x_0 \\cdot x_1$')
-    
+
+
 Prior distribution
 ------------------
 
@@ -187,4 +287,15 @@ inferences:
                                 bayesian_stats[x].mean(),
                                 bayesian_stats[x].std()), 
                              fontsize='small')
+
+
+Nested Sampling GUI
+-------------------
+
+We can also set up an interactive plot, which allows us to replay a nested
+sampling run after the fact.
+
+.. plot:: :context: close-figs
+
+    nested_samples.gui()
 
