@@ -61,19 +61,20 @@ Saving ``NestedSamples`` or ``MCMCSamples``
 ===========================================
 
 In principle you can use any of pandas options for saving your samples.
-However, since our weighted samples here make heavy use of pandas MultiIndex
-feature, we recommended using either ``CSV`` files or ``parquet`` files for
-reading and writing.
+However, since our weighted samples here make heavy use of
+:class:`pandas.MultiIndex` feature, we recommended using either ``CSV`` files
+or ``parquet`` files for reading and writing.
 
 * ``samples.to_csv("filename.csv")``: ``CSV`` files are a useful option when
   you would like to have a human readable file. Check out
-  :py:meth:`pandas.DataFrame.to_csv` for the various options of saving the data
+  :meth:`pandas.DataFrame.to_csv` for the various options of saving the data
   (e.g. choosing the delimiter etc.).
 
 * ``samples.to_parquet("filename.parquet")``: When reading and writing speed is
   an issue, we recommend using the ``parquet`` file format, which should be
-  faster than ``to_csv`` while still capable of handling the MultiIndex format.
-  Check out :py:meth:`pandas.DataFrame.to_parquet` for more information.
+  faster than ``to_csv`` while still capable of handling the
+  :class:`pandas.MultiIndex` format.  Check out
+  :meth:`pandas.DataFrame.to_parquet` for more information.
 
 
 Loading ``NestedSamples`` or ``MCMCSamples``

@@ -22,7 +22,7 @@ The important extension to the :class:`pandas.Series` and
 :class:`pandas.DataFrame` classes, is that in anesthetic the data frames are
 weighted (see :class:`anesthetic.weighted_pandas.WeightedSeries` and
 :class:`anesthetic.weighted_pandas.WeightedDataFrame`), where the weights form
-part of a MultiIndex and are therefore retained when slicing. 
+part of a :class:`pandas.MultiIndex` and are therefore retained when slicing. 
 
 
 Mean, standard deviation, median, quantiles, etc.

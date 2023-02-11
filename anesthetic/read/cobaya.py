@@ -33,7 +33,7 @@ def read_cobaya(root, *args, **kwargs):
 
     Returns
     -------
-    MCMCSamples
+    :class:`anesthetic.samples.MCMCSamples`
 
     """
     dirname, basename = os.path.split(root)

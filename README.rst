@@ -196,7 +196,7 @@ Why create another one? In general, any dedicated user of software will find tha
 What's in a name?
 ~~~~~~~~~~~~~~~~~
 
-There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://github.com/tomcharnock/NestorFlow>`__). Doing a UNIX grep:
+There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://bitbucket.org/tomcharnock/nestorflow>`__). Doing a UNIX grep:
 
 .. code:: bash
 

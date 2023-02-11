@@ -12,10 +12,10 @@ class Higson(Widget):
 
     Attributes
     ----------
-        curve: matplotlib.lines.Line2D
+        curve: :class:`matplotlib.lines.Line2D`
             points currently plotted as a curve.
 
-        point: matplotlib.lines.Line2D
+        point: :class:`matplotlib.lines.Line2D`
             large indicator point currently plotted on the curve.
 
     """
@@ -115,40 +115,40 @@ class RunPlotter(object):
 
     Parameters
     ----------
-        samples: anesthetic.samples.NestedSamples
+        samples: :class:`anesthetic.samples.NestedSamples`
             The root string for the chains files to be used, or a set of nested
             samples.
 
     Attributes
     ----------
-        samples: anesthetic.samples.NestedSamples
+        samples: :class:`anesthetic.samples.NestedSamples`
             Object for extracting nested sampling data from chains files.
 
-        fig: matplotlib.figure.Figure
+        fig: :class:`matplotlib.figure.Figure`
             Reference to the underlying figure
 
-        triangle: anesthetic.gui.widgets.TrianglePlot
+        triangle: :class:`anesthetic.gui.widgets.TrianglePlot`
             Corner plot of live or posterior samples.
 
-        temperature: anesthetic.gui.plot.Temperature
+        temperature: :class:`anesthetic.gui.plot.Temperature`
             Slider selecting the posterior temperature.
 
-        evolution: anesthetic.gui.plot.Evolution
+        evolution: :class:`anesthetic.gui.plot.Evolution`
             Slider selecting the live iteration.
 
-        higson: anesthetic.gui.plot.Higson
+        higson: :class:`anesthetic.gui.plot.Higson`
             Higson plot of posterior weights.
 
-        reset: anesthetic.gui.widgets.Button
+        reset: :class:`anesthetic.gui.widgets.Button`
             Button that resets the parameter ranges.
 
-        reload: anesthetic.gui.widgets.Button
+        reload: :class:`anesthetic.gui.widgets.Button`
             Button that reloads the files.
 
-        type: anesthetic.gui.widgets.RadioButtons
+        type: :class:`anesthetic.gui.widgets.RadioButtons`
             Radio buttons that selects whether to plot live or posteriors.
 
-        param_choice: anesthetic.gui.widgets.CheckButtons
+        param_choice: :class:`anesthetic.gui.widgets.CheckButtons`
             Checkbox that selects which parameters to plot.
 
     """
