@@ -5,12 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "anesthetic"
 dynamic = ["version"]
-
 maintainers = [
     { name="Will Handley", email="williamjameshandley@gmail.com" },
     { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
 ]
-
 authors = [
     { name="Will Handley", email="williamjameshandley@gmail.com" },
     { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
@@ -59,7 +57,6 @@ astropy = ["astropy"]
 fastkde = ["fastkde"]
 getdist = ["getdist"]
 extras = ["astropy", "fastkde", "getdist"]
-
 
 [project.scripts]
 anesthetic = "anesthetic.scripts:main"
