@@ -139,7 +139,7 @@ samples to *keep*. You can think of it in the usual python slicing mentality:
 If ``0 < abs(burn_in) < 1`` then it is interpreted as a fraction of the total
 number of samples in the respective chain.
 
-To see how ``remove_burn_in`` has gotten rid of the burn-in samples in both
+To see how ``remove_burn_in`` has removed the burn-in samples in both
 chains, see the plot in the following section, alongside an assessment of
 convergence.
 
@@ -150,7 +150,7 @@ Gelman--Rubin statistic
 Another important issue when it comes to MCMC samples is assessing convergence.
 In anesthetic we have implemented the modified Gelman--Rubin statistic as
 described in `Antony Lewis (2013) <https://arxiv.org/abs/1304.4473>`_. For the
-underlying, more theoretical accounts of this statistic, see e.g. `Gelman and
+underlying (more theoretical) accounts of this statistic, see e.g. `Gelman and
 Rubin (1992) <https://doi.org/10.1214/ss/1177011136>`_ and `Brooks and Gelman
 (1998) <https://doi.org/10.1080/10618600.1998.10474787>`_. 
 
@@ -183,7 +183,7 @@ Nested sampling statistics
 Anesthetic really comes to the fore for nested sampling (for details on nested
 sampling we recommend `John Skilling, 2006
 <https://doi.org/10.1214/06-BA127>`_). We can do all of the
-above, and more with the power that nested sampling chains provide.
+above and more with the power that nested sampling chains provide.
 
 .. plot:: :context: close-figs
 
@@ -198,8 +198,8 @@ Prior distribution
 
 While MCMC explores effectively only the posterior bulk, nested sampling
 explores the full parameter space, allowing us to calculate and plot not only
-the posterior distribution, but also the prior distribution (or the
-distribution at any temperature really), by setting the inverse temperature
+the posterior distribution, but also the prior distribution (or indeed the
+distribution at any temperature), by setting the inverse temperature
 parameter ``beta=0`` (``1/beta=kT``) in the
 :meth:`anesthetic.samples.NestedSamples.set_beta` method:
 
