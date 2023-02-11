@@ -42,7 +42,7 @@ def read_getdist(root, *args, **kwargs):
 
     Returns
     -------
-    MCMCSamples
+    :class:`anesthetic.samples.MCMCSamples`
 
     """
     dirname, basename = os.path.split(root)

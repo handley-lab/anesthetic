@@ -87,7 +87,7 @@ class AxesSeries(Series):
     @staticmethod
     def axes_series(index, fig, ncol=None, gridspec_kw=None,
                     subplot_spec=None):
-        """Set up subplots for `AxesSeries`."""
+        """Set up subplots for :class:`AxesSeries`."""
         axes = Series(np.full(np.shape(index), None), index=index)
         if fig is None:
             fig = plt.figure()
@@ -234,7 +234,7 @@ class AxesDataFrame(DataFrame):
 
     @classmethod
     def _axes_frame(cls, position, fig, gridspec_kw=None, subplot_spec=None):
-        """Set up subplots for `AxesDataFrame`."""
+        """Set up subplots for :class:`AxesDataFrame`."""
         axes = position.copy()
         axes.dropna(axis=0, how='all', inplace=True)
         axes.dropna(axis=1, how='all', inplace=True)
@@ -710,7 +710,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     Parameters
     ----------
-    ax: matplotlib.axes.Axes
+    ax: :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
     data: np.array
@@ -807,7 +807,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     Parameters
     ----------
-    ax: matplotlib.axes.Axes
+    ax: :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
     data: np.array
@@ -927,7 +927,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     Parameters
     ----------
-    ax: matplotlib.axes.Axes
+    ax: :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
     data: np.array
@@ -1010,7 +1010,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Parameters
     ----------
-    ax: matplotlib.axes.Axes
+    ax: :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
     data_x, data_y: np.array
@@ -1108,7 +1108,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Parameters
     ----------
-    ax: matplotlib.axes.Axes
+    ax: :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
     data_x, data_y: np.array
@@ -1227,7 +1227,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Parameters
     ----------
-    ax: matplotlib.axes.Axes
+    ax: :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
     data_x, data_y: np.array
@@ -1310,7 +1310,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Parameters
     ----------
-    ax: matplotlib.axes.Axes
+    ax: :class:`matplotlib.axes.Axes`
         axis object to plot on
 
     data_x, data_y: np.array

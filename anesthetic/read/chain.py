@@ -19,7 +19,8 @@ def read_chains(root, *args, **kwargs):
 
     Returns
     -------
-    NestedSamples or MCMCSamples depending on auto-detection
+    :class:`anesthetic.samples.NestedSamples` or
+    :class:`anesthetic.samples.MCMCSamples` depending on auto-detection
 
     """
     if 'burn_in' in kwargs:

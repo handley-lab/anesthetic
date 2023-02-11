@@ -1,8 +1,8 @@
 """Main classes for the anesthetic module.
 
-- ``Samples``
-- ``MCMCSamples``
-- ``NestedSamples``
+- :class:`Samples`
+- :class:`MCMCSamples`
+- :class:`NestedSamples`
 """
 import numpy as np
 import pandas
@@ -25,7 +25,7 @@ anesthetic.weighted_pandas._WeightedObject.plot =\
 
 
 class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
-    """DataFrame with weights and labels."""
+    """:class:`pandas.DataFrame` with weights and labels."""
 
     _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata
 
@@ -103,7 +103,7 @@ class WeightedLabelledSeries(WeightedSeries, LabelledSeries):
 class Samples(WeightedLabelledDataFrame):
     """Storage and plotting tools for general samples.
 
-    Extends the pandas.DataFrame by providing plotting methods and
+    Extends the :class:`pandas.DataFrame` by providing plotting methods and
     standardising sample storage.
 
     Example plotting commands include
@@ -169,11 +169,11 @@ class Samples(WeightedLabelledDataFrame):
             Can be:
 
             * list(str) or str
-            * pandas.Series(matplotlib.axes.Axes)
+            * :class:`pandas.Series`(:class:`matplotlib.axes.Axes`)
 
-            If a pandas.Series is provided as an existing set of axes, then
-            this is used for creating the plot. Otherwise, a new set of axes
-            are created using the list or lists of strings.
+            If a :class:`pandas.Series` is provided as an existing set of axes,
+            then this is used for creating the plot. Otherwise, a new set of
+            axes are created using the list or lists of strings.
 
         kind: str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
@@ -181,12 +181,12 @@ class Samples(WeightedLabelledDataFrame):
             {'hist_1d', 'kde_1d', 'fastkde_1d'}.
             Warning -- while the other pandas plotting options
             {'line', 'bar', 'barh', 'area', 'pie'} are also accessible, these
-            can be hard to interpret/expensive for Samples, MCMCSamples, or
-            NestedSamples.
+            can be hard to interpret/expensive for :class:`Samples`,
+            :class:`MCMCSamples`, or :class:`NestedSamples`.
 
         Returns
         -------
-        axes: pandas.Series of matplotlib.axes.Axes
+        axes: :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
             Pandas array of axes objects
 
         """
@@ -242,11 +242,11 @@ class Samples(WeightedLabelledDataFrame):
 
                 - list(str) if the x and y axes are the same
                 - [list(str),list(str)] if the x and y axes are different
-                - pandas.DataFrame(matplotlib.axes.Axes)
+                - :class:`pandas.DataFrame`(:class:`matplotlib.axes.Axes`)
 
-            If a pandas.DataFrame is provided as an existing set of axes, then
-            this is used for creating the plot. Otherwise, a new set of axes
-            are created using the list or lists of strings.
+            If a :class:`pandas.DataFrame` is provided as an existing set of
+            axes, then this is used for creating the plot. Otherwise, a new set
+            of axes are created using the list or lists of strings.
 
         kind/kinds: dict, optional
             What kinds of plots to produce. Dictionary takes the keys
@@ -273,7 +273,7 @@ class Samples(WeightedLabelledDataFrame):
                 - 'hexbin'
 
             There are also a set of shortcuts provided in
-            Samples.plot_2d_default_kinds:
+            :attr:`plot_2d_default_kinds`:
 
                 - 'kde_1d': 1d kde plots down the diagonal
                 - 'kde_2d': 2d kde plots in lower triangle
@@ -295,7 +295,7 @@ class Samples(WeightedLabelledDataFrame):
 
         Returns
         -------
-        axes: pandas.DataFrame of matplotlib.axes.Axes
+        axes: :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`
             Pandas array of axes objects
 
         """
@@ -409,7 +409,7 @@ class Samples(WeightedLabelledDataFrame):
 
         Returns
         -------
-        samples: Samples/MCMCSamples/NestedSamples
+        samples: :class:`Samples`/:class:`MCMCSamples`/:class:`NestedSamples`
             Importance re-weighted samples.
 
         """
@@ -598,7 +598,7 @@ class MCMCSamples(Samples):
 class NestedSamples(Samples):
     """Storage and plotting tools for Nested Sampling samples.
 
-    We extend the Samples class with the additional methods:
+    We extend the :class:`Samples` class with the additional methods:
 
     * ``self.live_points(logL)``
     * ``self.set_beta(beta)``
@@ -781,13 +781,14 @@ class NestedSamples(Samples):
         if beta is scalar and nsamples is None:
             Series, index ['logZ', 'd_G', 'DK_L', 'logL_P']
         elif beta is scalar and nsamples is int:
-            Samples, index range(nsamples),
+            :class:`Samples`, index range(nsamples),
             columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         elif beta is array-like and nsamples is None:
-            Samples, index beta,
+            :class:`Samples`, index beta,
             columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         elif beta is array-like and nsamples is int:
-            Samples, index MultiIndex the product of beta and range(nsamples)
+            :class:`Samples`, index :class:`pandas.MultiIndex` the product of
+            beta and range(nsamples)
             columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         """
         logw = self.logw(nsamples, beta)
@@ -861,9 +862,9 @@ class NestedSamples(Samples):
         Returns
         -------
         if nsamples is None:
-            WeightedSeries like self
+            :class:`WeightedSeries` like self
         elif nsamples is int
-            WeightedDataFrame like self, columns range(nsamples)
+            :class:`WeightedDataFrame` like self, columns range(nsamples)
         """
         logX = self.logX(nsamples)
         logXp = logX.shift(1, fill_value=0)
@@ -967,15 +968,16 @@ class NestedSamples(Samples):
         Returns
         -------
         if nsamples is array-like:
-            Series, index nsamples.columns
+            :class:`pandas.Series`, index nsamples.columns
         elif beta is scalar and nsamples is None:
             float
         elif beta is array-like and nsamples is None:
-            Series, index beta
+            :class:`pandas.Series`, index beta
         elif beta is scalar and nsamples is int:
-            Series, index range(nsamples)
+            :class:`pandas.Series`, index range(nsamples)
         elif beta is array-like and nsamples is int:
-            Series, MultiIndex columns the product of beta and range(nsamples)
+            :class:`pandas.Series`, :class:`pandas.MultiIndex` columns the
+            product of beta and range(nsamples)
         """
         logw = self.logw(nsamples, beta)
         logZ = logsumexp(logw, axis=0)
@@ -1120,7 +1122,7 @@ class NestedSamples(Samples):
 
         Returns
         -------
-        samples: NestedSamples
+        samples: :class:`NestedSamples`
             Importance re-weighted samples.
 
         """
@@ -1214,14 +1216,14 @@ def merge_nested_samples(runs):
 
     Parameters
     ----------
-    runs: list(NestedSamples)
+    runs: list(class:`NestedSamples`)
         List or array-like of one or more nested sampling runs.
         If only a single run is provided, this recalculates the live points and
         as such can be used for masked runs.
 
     Returns
     -------
-    samples: NestedSamples
+    samples: :class:`NestedSamples`
         Merged run.
     """
     merge = pandas.concat(runs, ignore_index=True)
@@ -1237,12 +1239,12 @@ def merge_samples_weighted(samples, weights=None, label=None):
 
     Parameters
     ----------
-    samples: list(NestedSamples) or list(MCMCSamples)
+    samples: list(:class:`NestedSamples`) or list(:class:`MCMCSamples`)
         List or array-like of one or more MCMC or nested sampling runs.
 
     weights: list(double) or None
         Weight for each run in samples (normalized internally).
-        Can be omitted if samples are NestedSamples,
+        Can be omitted if samples are :class:`NestedSamples`,
         then exp(logZ) is used as weight.
 
     label: str or None
@@ -1250,7 +1252,7 @@ def merge_samples_weighted(samples, weights=None, label=None):
 
     Returns
     -------
-    new_samples: Samples
+    new_samples: :class:`Samples`
         Merged (weighted) run.
     """
     if not (isinstance(samples, Sequence) or

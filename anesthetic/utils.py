@@ -147,7 +147,7 @@ def histogram(a, **kwargs):
     This is a cheap histogram. Necessary if one wants to update the histogram
     dynamically, and redrawing and filling is very expensive.
 
-    This has the same arguments and keywords as np.histogram, but is
+    This has the same arguments and keywords as :func:`numpy.histogram`, but is
     normalised to 1.
     """
     hist, bin_edges = np.histogram(a, **kwargs)
@@ -303,7 +303,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     cov: array-like, 2d
         Covariance matrix for scaling
 
-    w: pandas.Series, optional
+    w: :class:`pandas.Series`, optional
         weights of samples
 
     n: int, optional
@@ -358,7 +358,7 @@ def sample_compression_1d(x, w=None, ncompress=True):
     x: array-like
         x coordinate of samples for compressing
 
-    w: pandas.Series, optional
+    w: :class:`pandas.Series`, optional
         weights of samples
 
     ncompress: int, default=True
@@ -426,8 +426,8 @@ def match_contour_to_contourf(contours, vmin, vmax):
 def insertion_p_value(indexes, nlive, batch=0):
     """Compute the p-value from insertion indexes, assuming constant nlive.
 
-    Note that this function doesn't use scipy.stats.kstest as the latter
-    assumes continuous distributions.
+    Note that this function doesn't use :func:`scipy.stats.kstest` as the
+    latter assumes continuous distributions.
 
     For more detail, see `Fowlie et al. (2020)
     <https://arxiv.org/abs/2006.03371>`_

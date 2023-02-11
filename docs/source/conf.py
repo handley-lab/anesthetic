@@ -91,9 +91,11 @@ pygments_style = 'sphinx'
 
 # -- Options for autodoc -------------------------------------------------
 autodoc_default_options = {
-    'undoc-members': False,
+    'members': True,
+    'undoc-members': True,
 }
 
+autosummary_generate = True
 
 # -- Options for numpydoc -------------------------------------------------
 numpydoc_show_inherited_class_members = False
