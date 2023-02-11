@@ -9,6 +9,7 @@ README = "README.rst"
 def run(*args):
     return subprocess.run(args, stdout=subprocess.PIPE, text=True).stdout
 
+
 current_version = run("cat", vfile)
 current_version = current_version.split("=")[-1].strip().strip("'")
 current_version = version.parse(current_version)
