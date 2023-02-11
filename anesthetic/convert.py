@@ -1,4 +1,5 @@
 """Tools for converting to other outputs."""
+import numpy as np
 
 
 def to_getdist(samples):
@@ -15,15 +16,12 @@ def to_getdist(samples):
         getdist equivalent samples
     """
     import getdist
+    labels = np.char.strip(samples.get_labels().astype(str), '$')
     samples = samples.drop_labels()
-    samples = samples.to_numpy()
-    weights = samples.get_weights()
-    loglikes = -samples.logL.to_numpy()
-    names = samples.columns
-    ranges = {name: (samples[name].min(), samples[name].max())
-              for name in names}
-    return getdist.mcsamples.MCSamples(samples=samples,
-                                       weights=weights,
-                                       loglikes=loglikes,
+    ranges = samples.agg(['min', 'max']).T.apply(tuple, axis=1).to_dict()
+    return getdist.mcsamples.MCSamples(samples=samples.to_numpy(),
+                                       weights=samples.get_weights(),
+                                       loglikes=-samples.logL.to_numpy(),
+                                       names=samples.columns,
                                        ranges=ranges,
-                                       names=names)
+                                       labels=labels)
