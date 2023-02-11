@@ -136,8 +136,8 @@ Scatter plot
     samples.plot_2d(axes, kinds=dict(lower='scatter_2d'), label="Scatter")
     axes.iloc[-1, 0].legend(loc='upper right', bbox_to_anchor=(len(axes), len(axes)))
 
-More finegrained control
-------------------------
+More fine grained control
+-------------------------
 
 It is possible to have different kinds of plots in the lower/upper triangle or
 on the diagonal. To achieve this you can pass only a slice of the ``axes``

@@ -22,7 +22,7 @@ The important extension to the :class:`pandas.Series` and
 :class:`pandas.DataFrame` classes, is that in anesthetic the data frames are
 weighted (see :class:`anesthetic.weighted_pandas.WeightedSeries` and
 :class:`anesthetic.weighted_pandas.WeightedDataFrame`), where the weights form
-part of a multiindex and are therefore retained when slicing. 
+part of a MultiIndex and are therefore retained when slicing. 
 
 
 Mean, standard deviation, median, quantiles, etc.
@@ -53,7 +53,7 @@ quantiles, etc.
     axes.iloc[2, 2].legend(bbox_to_anchor=(1, 1), loc='lower right')
 
 
-Creating new from extisting columns
+Creating new from existing columns
 -----------------------------------
     
 We can define new parameters with relative ease. For example, given two
@@ -180,7 +180,7 @@ legend, depending on whether burn-in samples were removed or not.
 Nested sampling statistics 
 ==========================
 
-Anethestic really comes to the fore for nested sampling (for details on nested
+Anesthetic really comes to the fore for nested sampling (for details on nested
 sampling we recommend `John Skilling, 2006
 <https://doi.org/10.1214/06-BA127>`_). We can do all of the
 above, and more with the power that nested sampling chains provide.
