@@ -118,7 +118,7 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
     def _post_plot_logic(self, ax, data):
         super()._post_plot_logic(ax, data)
         ax.set_yticks([])
-        ax.set_ylim(0, 1.1)
+        ax.set_ylim(bottom=0)
         ax.set_xlim(self.bins[0], self.bins[-1])
 
 
@@ -148,7 +148,7 @@ class KdePlot(HistPlot, _KdePlot):
 
     def _post_plot_logic(self, ax, data):
         ax.set_yticks([])
-        ax.set_ylim(0.0, 1.1)
+        ax.set_ylim(bottom=0)
 
 
 class Kde1dPlot(KdePlot):
