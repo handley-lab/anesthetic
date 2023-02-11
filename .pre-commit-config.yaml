@@ -6,3 +6,4 @@ repos:
         entry: python -m flake8
         language: system
         types: [python]
+        files: "anesthetic/|tests/"
