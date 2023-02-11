@@ -46,6 +46,7 @@ release = get_version()
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
@@ -54,6 +55,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.napoleon',
     'sphinx.ext.imgconverter',
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
@@ -223,7 +225,8 @@ intersphinx_mapping = {
         'numpy':('https://numpy.org/doc/stable', None),
         'scipy':('https://docs.scipy.org/doc/scipy', None),
         'pandas':('https://pandas.pydata.org/pandas-docs/stable', None),
-        'matplotlib':('https://matplotlib.org/stable', None)
+        'matplotlib':('https://matplotlib.org/stable', None),
+        'getdist':('https://getdist.readthedocs.io/en/latest/', None)
         }
 
 # -- Options for todo extension ----------------------------------------------
