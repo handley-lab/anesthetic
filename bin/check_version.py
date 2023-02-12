@@ -14,7 +14,8 @@ current_version = run("cat", vfile)
 current_version = current_version.split("=")[-1].strip().strip("'")
 current_version = version.parse(current_version)
 
-previous_version = run("git", "show", "master:" + vfile)
+run("git", "fetch", "origin", "master")
+previous_version = run("git", "show", "remotes/origin/master:" + vfile)
 previous_version = previous_version.split("=")[-1].strip().strip("'")
 previous_version = version.parse(previous_version)
 
