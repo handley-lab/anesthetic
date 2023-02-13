@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anesthetic"
+dynamic = ["version"]
+maintainers = [
+    { name="Will Handley", email="williamjameshandley@gmail.com" },
+    { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
+]
+authors = [
+    { name="Will Handley", email="williamjameshandley@gmail.com" },
+    { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
+    { name="Adam Ormondroyd", email="ano23@cam.ac.uk" },
+    { name="Stefan Heimersheim", email="sh2061@ast.cam.ac.uk" },
+    { name="David Yallup", email="david.yallup@gmail.com" },
+    { name="Harry Bevins", email="htjb2@cam.ac.uk" },
+    { name="Ethan Carragher", email="ethan.carragher@adelaide.edu.au" },
+]
+description = "nested sampling post-processing"
+readme = "README.rst"
+license = {file = "LICENSE"}
+requires-python = ">=3.7"
+dependencies = [
+    "scipy>=1.2.0",
+    "numpy",
+    "pandas>=1.5.0",
+    "matplotlib>=3.3.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/williamjameshandley/anesthetic"
+"Bug Tracker" = "https://github.com/williamjameshandley/anesthetic/issues"
+"Documentation" = "https://anesthetic.readthedocs.io/en/latest/"
+"JOSS paper" = "https://joss.theoj.org/papers/10.21105/joss.01414"
+
+[project.optional-dependencies]
+docs = ["sphinx", "sphinx_rtd_theme", "numpydoc"]
+test = ["pytest", "pytest-cov", "flake8", "pydocstyle", "packaging"]
+astropy = ["astropy"]
+fastkde = ["fastkde"]
+getdist = ["getdist"]
+extras = ["astropy", "fastkde", "getdist"]
+
+[project.scripts]
+anesthetic = "anesthetic.scripts:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "anesthetic._version.__version__"}
