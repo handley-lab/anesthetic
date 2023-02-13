@@ -7,3 +7,9 @@ repos:
         language: system
         types: [python]
         files: "anesthetic/|tests/"
+      - id: pydocstyle
+        name: pydocstyle
+        entry: python -m pydocstyle --convention=numpy
+        language: system
+        types: [python]
+        files: "anesthetic/"
