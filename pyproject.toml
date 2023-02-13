@@ -52,8 +52,7 @@ classifiers = [
 
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx_rtd_theme", "numpydoc"]
-dev = ["pre-commit"]
-test = ["pytest", "pytest-cov", "flake8", "pydocstyle", "packaging"]
+test = ["pytest", "pytest-cov", "flake8", "pydocstyle", "packaging", "pre-commit"]
 astropy = ["astropy"]
 fastkde = ["fastkde"]
 getdist = ["getdist"]
