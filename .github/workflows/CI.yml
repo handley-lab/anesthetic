@@ -50,6 +50,7 @@ jobs:
         python -m pip install pip-tools
         python -m piptools compile --extra extras -o requirements_extras.txt pyproject.toml
         python -m pip install -r requirements_extras.txt
+        python -m pip install -r docs/requirements.txt
     - name: build documentation
       run: |
         cd docs
