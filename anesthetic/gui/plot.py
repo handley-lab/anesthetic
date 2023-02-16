@@ -45,8 +45,8 @@ class Higson(Widget):
                 Current location of higson point
 
         """
-        self.point.set_xdata(logX[i])
-        self.point.set_ydata(LX[i])
+        self.point.set_xdata(logX[[i]])
+        self.point.set_ydata(LX[[i]])
         self.curve.set_xdata(logX)
         self.curve.set_ydata(LX)
 
