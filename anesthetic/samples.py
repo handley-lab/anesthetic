@@ -686,7 +686,8 @@ class NestedSamples(Samples):
         Parameters
         ----------
         beta: float
-            Temperature to set
+            Temperature to set.
+            (``beta=0`` corresponds to the prior distribution.)
 
         inplace: bool, default=False
             Indicates whether to modify the existing array, or return a copy

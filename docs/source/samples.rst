@@ -198,14 +198,18 @@ Prior distribution
 
 While MCMC explores effectively only the posterior bulk, nested sampling
 explores the full parameter space, allowing us to calculate and plot not only
-the posterior distribution, but also the prior distribution (or indeed the
-distribution at any temperature), by setting the inverse temperature
-parameter ``beta=0`` (``1/beta=kT``) in the
-:meth:`anesthetic.samples.NestedSamples.set_beta` method:
+the posterior distribution, but also the prior distribution, which you can get with the :meth:`anesthetic.samples.NestedSamples.prior` method: 
 
 .. plot:: :context: close-figs
 
-    prior_samples = nested_samples.set_beta(0)
+    prior_samples = nested_samples.prior()
+
+.. note::
+    Note that the ``.prior()`` method is really just a shorthand for
+    ``.set_beta(beta=0)``, i.e. for setting the inverse temperature parameter
+    ``beta=0`` (where ``1/beta=kT``) in the
+    :meth:`anesthetic.samples.NestedSamples.set_beta` method, which allows you to
+    get the distribution at any temperature.
 
 This allows us to plot both prior and posterior distributions together. Note,
 how the prior is also computed for the derived parameter ``y``:
