@@ -28,7 +28,7 @@ Plot Example 2: Marginalised 2D posteriors
 
     from anesthetic import read_chains, make_2d_axes
     samples = read_chains("../../tests/example_data/pc_250")
-    prior = samples.set_beta(0)
+    prior = samples.prior()
     params = ['x0', 'x1', 'x2', 'x3', 'x4']
     fig, axes = make_2d_axes(params, figsize=(6, 6), facecolor='w')
     prior.plot_2d(axes, alpha=0.5, label="prior")
