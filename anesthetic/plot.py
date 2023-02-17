@@ -520,7 +520,7 @@ class AxesDataFrame(DataFrame):
             :meth:`matplotlib.axes.Axes.axhspan`.
 
         """
-        kwargs = normalize_kwargs(kwargs, dict(color=['c']))
+        kwargs = normalize_kwargs(kwargs)
         positions = ['lower' if lower else None,
                      'diagonal' if diagonal else None,
                      'upper' if upper else None]
@@ -748,11 +748,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         :meth:`matplotlib.axes.Axes.plot` command).
 
     """
-    kwargs = normalize_kwargs(
-        kwargs,
-        dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
-             facecolor=['fc'], edgecolor=['ec']))
-
+    kwargs = normalize_kwargs(kwargs)
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
@@ -855,11 +851,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         :meth:`matplotlib.axes.Axes.plot` command).
 
     """
-    kwargs = normalize_kwargs(
-        kwargs,
-        dict(linewidth=['lw'], linestyle=['ls'], color=['c'],
-             facecolor=['fc'], edgecolor=['ec']))
-
+    kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
     if weights is not None:
         data = data[weights != 0]
@@ -957,11 +949,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     **kwargs : :meth:`matplotlib.axes.Axes.hist` properties
 
     """
-    kwargs = normalize_kwargs(
-        kwargs,
-        dict(linewidth=['lw'], linestyle=['ls'],
-             color=['c'], facecolor=['fc'], edgecolor=['ec'])
-    )
+    kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
     bins = kwargs.pop('bins', 10)
     histtype = kwargs.pop('histtype', 'bar')
@@ -1256,6 +1244,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         A set of colors.
 
     """
+    kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
 
     vmin = kwargs.pop('vmin', 0)
@@ -1325,8 +1314,14 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """
     kwargs = normalize_kwargs(
         kwargs,
-        dict(color=['c'], mfc=['facecolor', 'fc'], mec=['edgecolor', 'ec']),
-        drop=['ls', 'lw'])
+        alias_mapping=dict(lw=['linewidth', 'linewidths'],
+                           ls=['linestyle', 'linestyles'],
+                           color=['c'],
+                           mfc=['fc', 'facecolor'],
+                           mec=['ec', 'edgecolor'],
+                           cmap=['colormap']),
+        drop=['ls', 'lw']
+    )
     kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
 
     markersize = kwargs.pop('markersize', 1)
@@ -1371,7 +1366,13 @@ def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
     additionally allows to drop kwargs.
     """
     drop = [] if drop is None else drop
-    alias_mapping = {} if alias_mapping is None else alias_mapping
+    if alias_mapping is None:
+        alias_mapping = dict(linewidth=['lw'],
+                             linestyle=['ls'],
+                             color=['c'],
+                             facecolor=['fc'],
+                             edgecolor=['ec'],
+                             cmap=['colormap'])
     kwargs = cbook.normalize_kwargs(kwargs, alias_mapping=alias_mapping)
     for key in set(drop) & set(kwargs.keys()):
         kwargs.pop(key)
