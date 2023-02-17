@@ -8,10 +8,15 @@ Reading and writing
 Reading chain files from PolyChord, MultiNest, CosmoMC, or Cobaya
 =================================================================
 
-If you have finished nested sampling or MCMC runs from PolyChord, MultiNest,
-CosmoMC, or Cobaya, then you should be able to read in the chain files
-directly, by passing the ``root`` to the
-:func:`anesthetic.read.chain.read_chains` function.
+`MultiNest <https://github.com/farhanferoz/MultiNest>`_
+
+If you have finished nested sampling or MCMC runs from
+`PolyChord <https://github.com/PolyChord/PolyChordLite>`_,
+`MultiNest <https://github.com/farhanferoz/MultiNest>`_,
+`CosmoMC <https://github.com/cmbant/CosmoMC>`_, or
+`Cobaya <https://github.com/CobayaSampler/cobaya>`_,
+then you should be able to read in the chain files directly, by passing the
+``root`` to the :func:`anesthetic.read.chain.read_chains` function.
 
 Feel free to use the testing data in ``anesthetic/tests/example_data`` to try
 out the examples listed here.
