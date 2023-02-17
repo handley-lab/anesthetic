@@ -11,8 +11,8 @@ from anesthetic.utils import mirror_1d, mirror_2d
 def fastkde_1d(d, xmin=None, xmax=None):
     """Perform a one-dimensional kernel density estimation.
 
-    Wrapper round :class:`fastkde.fastKDE`. Boundary corrections implemented by
-    reflecting boundary conditions.
+    Wrapper around `fastkde.fastKDE <https://github.com/LBL-EESA/fastkde>`_.
+    Boundary corrections implemented by reflecting boundary conditions.
 
     Parameters
     ----------
@@ -53,8 +53,8 @@ def fastkde_1d(d, xmin=None, xmax=None):
 def fastkde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
     """Perform a two-dimensional kernel density estimation.
 
-    Wrapper round :class:`fastkde.fastKDE`. Boundary corrections implemented by
-    reflecting boundary conditions.
+    Wrapper round `fastkde.fastKDE <https://github.com/LBL-EESA/fastkde>`_.
+    Boundary corrections implemented by reflecting boundary conditions.
 
     Parameters
     ----------
