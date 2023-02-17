@@ -12,7 +12,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
 from numpy.testing import assert_array_equal
 import pandas._testing as tm
 
-from matplotlib.axes._subplots import SubplotBase
+from matplotlib.axes import SubplotBase
 from matplotlib.contour import ContourSet
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch, Polygon
