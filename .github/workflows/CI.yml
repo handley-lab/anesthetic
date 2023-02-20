@@ -55,7 +55,7 @@ jobs:
       run: |
         cd docs
         make clean
-        make html #SPHINXOPTS="-W --keep-going -n"
+        make html SPHINXOPTS="-W --keep-going -n"
 
   pip:
     runs-on: ${{ matrix.os }}
