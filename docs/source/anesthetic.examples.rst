@@ -1,29 +1,16 @@
 anesthetic.examples package
 ===========================
 
-Submodules
-----------
-
-anesthetic.examples.perfect\_ns module
---------------------------------------
-
-.. automodule:: anesthetic.examples.perfect_ns
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-anesthetic.examples.utils module
---------------------------------
-
-.. automodule:: anesthetic.examples.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
 .. automodule:: anesthetic.examples
    :members:
    :undoc-members:
    :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   anesthetic.examples.perfect_ns
+   anesthetic.examples.utils

@@ -1,53 +1,19 @@
 anesthetic.read package
 =======================
 
-Submodules
-----------
-
-anesthetic.read.chain module
-----------------------------
-
-.. automodule:: anesthetic.read.chain
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-anesthetic.read.cobaya module
------------------------------
-
-.. automodule:: anesthetic.read.cobaya
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-anesthetic.read.getdist module
-------------------------------
-
-.. automodule:: anesthetic.read.getdist
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-anesthetic.read.multinest module
---------------------------------
-
-.. automodule:: anesthetic.read.multinest
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-anesthetic.read.polychord module
---------------------------------
-
-.. automodule:: anesthetic.read.polychord
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
 .. automodule:: anesthetic.read
    :members:
    :undoc-members:
    :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   anesthetic.read.chain
+   anesthetic.read.cobaya
+   anesthetic.read.getdist
+   anesthetic.read.multinest
+   anesthetic.read.polychord
