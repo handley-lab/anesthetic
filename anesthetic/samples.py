@@ -169,7 +169,7 @@ class Samples(WeightedLabelledDataFrame):
             Can be:
 
             * list(str) or str
-            * :class:`pandas.Series`(:class:`matplotlib.axes.Axes`)
+            * :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
 
             If a :class:`pandas.Series` is provided as an existing set of axes,
             then this is used for creating the plot. Otherwise, a new set of
@@ -239,10 +239,9 @@ class Samples(WeightedLabelledDataFrame):
         ----------
         axes: plotting axes
             Can be:
-
                 - list(str) if the x and y axes are the same
                 - [list(str),list(str)] if the x and y axes are different
-                - :class:`pandas.DataFrame`(:class:`matplotlib.axes.Axes`)
+                - :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`
 
             If a :class:`pandas.DataFrame` is provided as an existing set of
             axes, then this is used for creating the plot. Otherwise, a new set
@@ -863,9 +862,9 @@ class NestedSamples(Samples):
         Returns
         -------
         if nsamples is None:
-            :class:`WeightedSeries` like self
+            WeightedSeries like self
         elif nsamples is int
-            :class:`WeightedDataFrame` like self, columns range(nsamples)
+            WeightedDataFrame like self, columns range(nsamples)
         """
         logX = self.logX(nsamples)
         logXp = logX.shift(1, fill_value=0)
