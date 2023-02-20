@@ -27,5 +27,5 @@ if current_version != readme_version:
     sys.stderr.write("Version mismatch: {} != {}".format(vfile, README))
     sys.exit(1)
 elif current_version <= previous_version:
-    sys.stderr.write("Version must be incremented: {} <= {}".format(vfile, "master:" + vfile))
+    sys.stderr.write("Version must be incremented: {} ({}) <= {} ({})".format(vfile, current_version, "master:" + vfile, previous_version))
     sys.exit(1)
