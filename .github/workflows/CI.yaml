@@ -98,7 +98,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda config --append channels conda-forge
-        conda install pytest pytest-cov pip-tools
+        conda install pytest pytest-cov pip-tools conda-build
         conda develop .
 
     - name: Test with pytest
