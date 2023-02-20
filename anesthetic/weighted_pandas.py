@@ -6,7 +6,7 @@ from pandas import Series, DataFrame, concat, MultiIndex
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
-                              temporary_seed)
+                              temporary_seed, adjust_docstrings)
 
 
 class _WeightedObject(object):
@@ -403,3 +403,15 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     @property
     def _constructor(self):
         return WeightedDataFrame
+
+
+for cls in [WeightedDataFrame, WeightedSeries]:
+    adjust_docstrings(cls, r'\bDataFrame\b', 'WeightedDataFrame')
+    adjust_docstrings(cls, r'\bSeries\b', 'WeightedSeries')
+    adjust_docstrings(cls, 'core', 'pandas.core')
+    adjust_docstrings(cls, 'DataFrameGroupBy',
+                           'pandas.core.groupby.DataFrameGroupBy')
+    adjust_docstrings(cls, 'SeriesGroupBy',
+                           'pandas.core.groupby.SeriesGroupBy')
+    adjust_docstrings(cls, 'pandas.core.window.Rolling.quantile',
+                           'pandas.core.window.rolling.Rolling.quantile')

@@ -215,3 +215,8 @@ class LabelledDataFrame(_LabelledObject, DataFrame):
         result = super().transpose(copy=copy)
         result._labels = result._labels[::-1]
         return result
+
+    T = property(
+            transpose,
+            doc=DataFrame.transpose.__doc__
+            )

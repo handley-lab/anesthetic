@@ -6,6 +6,8 @@ from scipy.interpolate import interp1d
 from scipy.stats import kstwobign
 from matplotlib.tri import Triangulation
 import contextlib
+import inspect
+import re
 
 
 def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
@@ -508,3 +510,28 @@ def temporary_seed(seed):
         yield
     finally:
         np.random.set_state(state)
+
+
+def adjust_docstrings(cls, pattern, repl, *args, **kwargs):
+    """Adjust the docstrings of a class using regular expressions.
+
+    After the first argument, the remaining arguments are identical to re.sub.
+
+    Parameters
+    ----------
+    cls: class
+        class to adjust
+
+    pattern: str
+        regular expression pattern
+
+    repl: str
+        replacement string
+    """
+    for key, val in cls.__dict__.items():
+        doc = inspect.getdoc(val)
+        newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
+        try:
+            cls.__dict__[key].__doc__ = newdoc
+        except AttributeError:
+            pass

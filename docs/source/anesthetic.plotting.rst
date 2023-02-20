@@ -7,4 +7,4 @@ Module contents
 .. automodule:: anesthetic.plotting
    :members:
    :undoc-members:
-   :show-inheritance:
+   :imported-members:
