@@ -93,6 +93,16 @@ You can check that things are working by running the test suite:
     flake8 anesthetic tests
     pydocstyle --convention=numpy anesthetic
 
+Documentation can be compiled locally with
+
+.. code:: bash
+
+    python -m pip install ".[extras,docs]"
+    cd docs
+    make html
+
+and viewed by opening ``docs/build/html/index.html`` in a browser.
+
 
 Dependencies
 ~~~~~~~~~~~~
