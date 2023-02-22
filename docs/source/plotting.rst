@@ -15,16 +15,27 @@ You will have the data automatically if you git clone anesthetic:
 Alternatively you can :ref:`use your own chains files <reading chains>` or
 :ref:`generate new random data <passing data>`.
 
-
-Marginalised posterior plotting
-===============================
-
 Import anesthetic and load the samples:
 
 .. plot:: :context: close-figs
 
     from anesthetic import read_chains, make_1d_axes, make_2d_axes
     samples = read_chains("../../tests/example_data/pc")
+
+
+Marginalised posterior plotting
+===============================
+
+To make marginalised posterior plots we recommend a similar routine to
+matplotlib, with a first line setting up the figure and axes to draw on:
+
+    * ``fig, ax = plt.subplots(**kwargs)`` in matplotlib,
+    * ``fig, axes = make_1d_axes(params, **kwargs)`` in anesthetic,
+
+and then subsequent lines drawing on the axes:
+
+    * ``ax.plot(x, y, **kwargs)`` in matplotlib,
+    * ``samples.plot_1d(axes, **kwargs)`` in anesthetic.
 
 
 We have plotting tools for 1D plots ...

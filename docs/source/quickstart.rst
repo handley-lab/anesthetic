@@ -4,6 +4,12 @@ Quickstart
 
 Here are some quickstart examples making use of the example data that comes with anesthetic and can be found in anesthetic's `test` folder.
 
+.. seealso::
+
+    * anesthetic / :doc:`reading_writing`
+    * anesthetic / :doc:`Samples and statistics <samples>`
+    * anesthetic / :ref:`plotting:Plotting`
+
 
 Plotting marginalised posteriors
 ================================
@@ -35,9 +41,26 @@ Plot Example 2: Marginalised 2D posteriors
     samples.plot_2d(axes, alpha=0.9, label="posterior")
     axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes)/2, len(axes)), loc='lower center', ncols=2)
 
+.. seealso::
 
-Nested Sampling statistics
+    :meth:`anesthetic.plot.make_1d_axes`,
+    :meth:`anesthetic.plot.make_2d_axes`,
+    :meth:`anesthetic.samples.Samples.plot_1d`,
+    :meth:`anesthetic.samples.Samples.plot_2d`
+
+
+Nested sampling statistics
 ==========================
+
+Providing Bayesian statistics from nested sampling data is where anesthetic
+shines. With :meth:`anesthetic.samples.NestedSamples.stats` you can compute the
+Bayesian evidence :math:`\ln\mathcal{Z}`, the Kullback--Leibler divergence
+:math:`\mathcal{D}_\mathrm{KL}`, and the posterior average of the
+log-likelihood :math:`\langle\ln\mathcal{L}\rangle_\mathcal{P}`, which together
+allow you to jointly assess model quality, Occam penalty, and fit,
+respectively. The Gaussian model dimensionality :math:`d_\mathrm{G}` (which is
+directly related to the posterior variance of the log-likelihood) is a measure
+of the model complexity (or dimensionality).
 
 .. plot::
 
@@ -52,4 +75,8 @@ Nested Sampling statistics
     stats2.plot_2d(axes, label="model 2")
     axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes), len(axes)), loc='upper right')
 
+.. seealso::
+
+    * anesthetic / :doc:`Samples and statistics <samples>` / :ref:`samples:Bayesian statistics`
+    * :meth:`anesthetic.samples.NestedSamples.stats`
 
