@@ -7,13 +7,13 @@ from pandas.plotting._matplotlib import (  # noqa: F401
         register,
         deregister
 )
-from anesthetic._plotting._matplotlib.boxplot import (  # noqa: F401
+from anesthetic.plotting._matplotlib.boxplot import (  # noqa: F401
     BoxPlot,
     boxplot,
     boxplot_frame,
 )
 from pandas.plotting._matplotlib import boxplot_frame_groupby  # noqa: F401
-from anesthetic._plotting._matplotlib.core import (  # noqa: F401
+from anesthetic.plotting._matplotlib.core import (  # noqa: F401
     AreaPlot,
     BarhPlot,
     BarPlot,
@@ -23,7 +23,7 @@ from anesthetic._plotting._matplotlib.core import (  # noqa: F401
     ScatterPlot,
     ScatterPlot2d,
 )
-from anesthetic._plotting._matplotlib.hist import (  # noqa: F401
+from anesthetic.plotting._matplotlib.hist import (  # noqa: F401
     KdePlot,
     Kde1dPlot,
     FastKde1dPlot,
@@ -35,7 +35,7 @@ from anesthetic._plotting._matplotlib.hist import (  # noqa: F401
     hist_frame,
     hist_series,
 )
-from anesthetic._plotting._matplotlib.misc import (  # noqa: F401
+from anesthetic.plotting._matplotlib.misc import (  # noqa: F401
     bootstrap_plot,
     scatter_matrix,
 )

@@ -407,6 +407,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
 for cls in [WeightedDataFrame, WeightedSeries]:
     adjust_docstrings(cls, r'\bDataFrame\b', 'WeightedDataFrame')
+    adjust_docstrings(cls, r'\bDataFrames\b', 'WeightedDataFrames')
     adjust_docstrings(cls, r'\bSeries\b', 'WeightedSeries')
     adjust_docstrings(cls, 'core', 'pandas.core')
     adjust_docstrings(cls, 'DataFrameGroupBy',
