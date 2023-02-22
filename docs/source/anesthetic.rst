@@ -14,8 +14,8 @@ anesthetic subpackages
    anesthetic.read
 
 
-anesthetic submodules
----------------------
+anesthetic modules
+------------------
 
 anesthetic.boundary module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
