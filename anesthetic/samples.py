@@ -178,7 +178,11 @@ class Samples(WeightedLabelledDataFrame):
         kind : str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
             {'hist', 'box', 'kde', 'density'}, anesthetic also provides
-            {'hist_1d', 'kde_1d', 'fastkde_1d'}.
+
+            * 'hist_1d': :func:`anesthetic.plot.hist_plot_1d`
+            * 'kde_1d': :func:`anesthetic.plot.kde_plot_1d`
+            * 'fastkde_1d': :func:`anesthetic.plot.fastkde_plot_1d`
+
             Warning -- while the other pandas plotting options
             {'line', 'bar', 'barh', 'area', 'pie'} are also accessible, these
             can be hard to interpret/expensive for :class:`Samples`,
@@ -252,24 +256,23 @@ class Samples(WeightedLabelledDataFrame):
             'diagonal' for the 1D plots and 'lower' and 'upper' for the 2D
             plots. The options for 'diagonal' are:
 
-                - 'kde_1d'
-                - 'hist_1d'
-                - 'fastkde_1d'
-                - 'kde'
-                - 'hist'
-                - 'box'
-                - 'kde'
-                - 'density'
+                - 'kde_1d': :func:`anesthetic.plot.kde_plot_1d`
+                - 'hist_1d': :func:`anesthetic.plot.hist_plot_1d`
+                - 'fastkde_1d': :func:`anesthetic.plot.fastkde_plot_1d`
+                - 'kde': :meth:`pandas.Series.plot.kde`
+                - 'hist': :meth:`pandas.Series.plot.hist`
+                - 'box': :meth:`pandas.Series.plot.box`
+                - 'density': :meth:`pandas.Series.plot.density`
 
             The options for 'lower' and 'upper' are:
 
-                - 'kde_2d'
-                - 'hist_2d'
-                - 'scatter_2d'
-                - 'fastkde_2d'
-                - 'kde'
-                - 'scatter'
-                - 'hexbin'
+                - 'kde_2d': :func:`anesthetic.plot.kde_contour_plot_2d`
+                - 'hist_2d': :func:`anesthetic.plot.hist_plot_2d`
+                - 'scatter_2d': :func:`anesthetic.plot.scatter_plot_2d`
+                - 'fastkde_2d': :func:`anesthetic.plot.fastkde_contour_plot_2d`
+                - 'kde': :meth:`pandas.DataFrame.plot.kde`
+                - 'scatter': :meth:`pandas.DataFrame.plot.scatter`
+                - 'hexbin': :meth:`pandas.DataFrame.plot.hexbin`
 
             There are also a set of shortcuts provided in
             :attr:`plot_2d_default_kinds`:
@@ -725,7 +728,7 @@ class NestedSamples(Samples):
           .. math::
               \log Z = \int L \pi d\theta
 
-        - ``D_KL``: Kullback-Leibler divergence
+        - ``D_KL``: Kullback--Leibler divergence
 
           .. math::
               D_{KL} = \int P \log(P / \pi) d\theta
@@ -1001,7 +1004,7 @@ class NestedSamples(Samples):
             )
 
     def D_KL(self, nsamples=None, beta=None):
-        """Kullback-Leibler divergence."""
+        """Kullback--Leibler divergence."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
