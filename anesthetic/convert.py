@@ -7,12 +7,12 @@ def to_getdist(samples):
 
     Parameters
     ----------
-    samples: :class:`anesthetic.samples.Samples`
+    samples : :class:`anesthetic.samples.Samples`
         anesthetic samples to be converted
 
     Returns
     -------
-    getdist_samples: :class:`getdist.mcsamples.MCSamples`
+    getdist_samples : :class:`getdist.mcsamples.MCSamples`
         getdist equivalent samples
     """
     import getdist

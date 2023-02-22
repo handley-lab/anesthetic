@@ -22,7 +22,7 @@ def read_chains(root, *args, **kwargs):
 
     Parameters
     ----------
-    root: str
+    root : str
         root name for reading files
 
     *args, **kwargs:

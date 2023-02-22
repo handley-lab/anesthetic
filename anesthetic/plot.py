@@ -42,7 +42,7 @@ class AxesSeries(Series):
 
     Parameters
     ----------
-    index: list(str)
+    index : list(str)
         Parameters to be placed on the y-axes.
     fig : :class:`matplotlib.figure.Figure`
     ncol : int
@@ -54,9 +54,8 @@ class AxesSeries(Series):
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
-    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, optional
+    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, default=None
         GridSpec instance to plot array as part of a subfigure.
-        Default: None
 
     Methods
     -------
@@ -142,9 +141,9 @@ class AxesDataFrame(DataFrame):
 
     Parameters
     ----------
-    index: list(str)
+    index : list(str)
         Parameters to be placed on the y-axes.
-    columns: list(str)
+    columns : list(str)
         Parameters to be placed on the x-axes.
     fig : :class:`matplotlib.figure.Figure`
     lower, diagonal, upper : bool, default=True
@@ -160,9 +159,8 @@ class AxesDataFrame(DataFrame):
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
-    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, optional
+    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, default=None
         GridSpec instance to plot array as part of a subfigure.
-        Default: None
 
     Methods
     -------
@@ -374,12 +372,12 @@ class AxesDataFrame(DataFrame):
 
         Parameters
         ----------
-            labels : dict
-                Dictionary of the axes labels.
-            kwargs
-                Any kwarg that can be passed to
-                :meth:`matplotlib.axes.Axes.set_xlabel` or
-                :meth:`matplotlib.axes.Axes.set_ylabel`.
+        labels : dict
+            Dictionary of the axes labels.
+        kwargs
+            Any kwarg that can be passed to
+            :meth:`matplotlib.axes.Axes.set_xlabel` or
+            :meth:`matplotlib.axes.Axes.set_ylabel`.
 
         """
         self._set_labels(axes=self, labels=labels, **kwargs)
@@ -587,9 +585,8 @@ def make_1d_axes(params, ncol=None, labels=None,
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
 
-    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, optional
+    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, default=None
         GridSpec instance to plot array as part of a subfigure.
-        Default: None
 
     **fig_kw
         All additional keyword arguments are passed to the
@@ -601,7 +598,7 @@ def make_1d_axes(params, ncol=None, labels=None,
     fig : :class:`matplotlib.figure.Figure`
         New or original (if supplied) figure object.
 
-    axes: :class:`anesthetic.plot.AxesSeries`
+    axes : :class:`anesthetic.plot.AxesSeries`
         Pandas array of axes objects.
 
     """
@@ -657,9 +654,8 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
 
-    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, optional
+    subplot_spec : :class:`matplotlib.gridspec.GridSpec`, default=None
         GridSpec instance to plot array as part of a subfigure.
-        Default: None
 
     **fig_kw
         All additional keyword arguments are passed to the
@@ -710,22 +706,21 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     Parameters
     ----------
-    ax: :class:`matplotlib.axes.Axes`
+    ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data: np.array
+    data : np.array
         Uniformly weighted samples to generate kernel density estimator.
 
-    xmin, xmax: float, optional
+    xmin, xmax : float, default=None
         lower/upper prior bound
-        Default: None
 
-    levels: list
+    levels : list
         Values at which to draw iso-probability lines.
         Optional,
         Default: [0.95, 0.68]
 
-    q: int or float or tuple
+    q : int or float or tuple, default=5
         Quantile to determine the data range to be plotted.
 
         * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
@@ -733,17 +728,14 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: quantile range, e.g. (0.16, 0.84)
 
-        Default: 5
-
-    facecolor: bool or string
+    facecolor : bool or string, default=False
         If set to True then the 1d plot will be shaded with the value of the
         ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
         to define the color of the shading directly.
-        Default: False
 
     Returns
     -------
-    lines: :class:`matplotlib.lines.Line2D`
+    lines : :class:`matplotlib.lines.Line2D`
         A list of line objects representing the plotted data (same as
         :meth:`matplotlib.axes.Axes.plot` command).
 
@@ -803,29 +795,29 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     Parameters
     ----------
-    ax: :class:`matplotlib.axes.Axes`
+    ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data: np.array
+    data : np.array
         Samples to generate kernel density estimator.
 
-    weights: np.array, optional
+    weights : np.array, optional
         Sample weights.
 
-    ncompress: int, default=False
+    ncompress : int, default=False
         Degree of compression.
         If int: number of samples returned.
         If True: compresses to the channel capacity.
         If False: no compression.
 
-    nplot_1d: int, default=100
+    nplot_1d : int, default=100
         Number of plotting points to use.
 
-    levels: list
+    levels : list
         Values at which to draw iso-probability lines.
         Default: [0.95, 0.68]
 
-    q: int or float or tuple
+    q : int or float or tuple, default=5
         Quantile to determine the data range to be plotted.
 
         * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
@@ -833,20 +825,17 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: quantile range, e.g. (0.16, 0.84)
 
-        Default: 5
-
-    facecolor: bool or string
+    facecolor : bool or string, default=False
         If set to True then the 1d plot will be shaded with the value of the
         ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
         to define the color of the shading directly.
-        Default: False
 
-    bw_method: str, scalar or callable, optional
+    bw_method : str, scalar or callable, optional
         Forwarded to :class:`scipy.stats.gaussian_kde`.
 
     Returns
     -------
-    lines: :class:`matplotlib.lines.Line2D`
+    lines : :class:`matplotlib.lines.Line2D`
         A list of line objects representing the plotted data (same as
         :meth:`matplotlib.axes.Axes.plot` command).
 
@@ -919,24 +908,22 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     Parameters
     ----------
-    ax: :class:`matplotlib.axes.Axes`
+    ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data: np.array
+    data : np.array
         Samples to generate histogram from
 
-    weights: np.array, optional
+    weights : np.array, optional
         Sample weights.
 
-    q: int or float or tuple
+    q : int or float or tuple, default=5
         Quantile to determine the data range to be plotted.
 
         * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: quantile range, e.g. (0.16, 0.84)
-
-        Default: 5
 
     Returns
     -------
@@ -998,25 +985,24 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Parameters
     ----------
-    ax: :class:`matplotlib.axes.Axes`
+    ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data_x, data_y: np.array
+    data_x, data_y : np.array
         The x and y coordinates of uniformly weighted samples to generate
         kernel density estimator.
 
-    levels: list
+    levels : list
         Amount of mass within each iso-probability contour.
         Has to be ordered from outermost to innermost contour.
         Default: [0.95, 0.68]
 
-    xmin, xmax, ymin, ymax: float
+    xmin, xmax, ymin, ymax : float, default=None
         The lower/upper prior bounds in x/y coordinates.
-        Default: None
 
     Returns
     -------
-    c: :class:`matplotlib.contour.QuadContourSet`
+    c : :class:`matplotlib.contour.QuadContourSet`
         A set of contourlines or filled regions.
 
     """
@@ -1096,36 +1082,36 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Parameters
     ----------
-    ax: :class:`matplotlib.axes.Axes`
+    ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data_x, data_y: np.array
+    data_x, data_y : np.array
         The x and y coordinates of uniformly weighted samples to generate
         kernel density estimator.
 
-    weights: np.array, optional
+    weights : np.array, optional
         Sample weights.
 
-    levels: list, optional
+    levels : list, optional
         Amount of mass within each iso-probability contour.
         Has to be ordered from outermost to innermost contour.
         Default: [0.95, 0.68]
 
-    ncompress: int, default=1000
+    ncompress : int, default=1000
         Degree of compression.
         If int: number of samples returned.
         If True: compresses to the channel capacity.
         If False: no compression.
 
-    nplot_2d: int, default=1000
+    nplot_2d : int, default=1000
         Number of plotting points to use.
 
-    bw_method: str, scalar or callable, optional
+    bw_method : str, scalar or callable, optional
         Forwarded to :class:`scipy.stats.gaussian_kde`.
 
     Returns
     -------
-    c: :class:`matplotlib.contour.QuadContourSet`
+    c : :class:`matplotlib.contour.QuadContourSet`
         A set of contourlines or filled regions.
 
     """
@@ -1215,20 +1201,19 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Parameters
     ----------
-    ax: :class:`matplotlib.axes.Axes`
+    ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data_x, data_y: np.array
+    data_x, data_y : np.array
         The x and y coordinates of uniformly weighted samples to generate a
         two-dimensional histogram.
 
-    levels: list
+    levels : list, default=None
         Shade iso-probability contours containing these levels of probability
         mass. If None defaults to usual :meth:`matplotlib.axes.Axes.hist2d`
         colouring.
-        Default: None
 
-    q: int or float or tuple
+    q : int or float or tuple, default=5
         Quantile to determine the data range to be plotted.
 
         * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
@@ -1236,11 +1221,9 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: quantile range, e.g. (0.16, 0.84)
 
-        Default: 5
-
     Returns
     -------
-    c: :class:`matplotlib.collections.QuadMesh`
+    c : :class:`matplotlib.collections.QuadMesh`
         A set of colors.
 
     """
@@ -1299,15 +1282,15 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     Parameters
     ----------
-    ax: :class:`matplotlib.axes.Axes`
+    ax : :class:`matplotlib.axes.Axes`
         axis object to plot on
 
-    data_x, data_y: np.array
+    data_x, data_y : np.array
         x and y coordinates of uniformly weighted samples to plot.
 
     Returns
     -------
-    lines: :class:`matplotlib.lines.Line2D`
+    lines : :class:`matplotlib.lines.Line2D`
         A list of line objects representing the plotted data (same as
         :meth:`matplotlib.axes.Axes.plot` command).
 

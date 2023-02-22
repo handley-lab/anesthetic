@@ -12,10 +12,10 @@ class Higson(Widget):
 
     Attributes
     ----------
-        curve: :class:`matplotlib.lines.Line2D`
+        curve : :class:`matplotlib.lines.Line2D`
             points currently plotted as a curve.
 
-        point: :class:`matplotlib.lines.Line2D`
+        point : :class:`matplotlib.lines.Line2D`
             large indicator point currently plotted on the curve.
 
     """
@@ -35,13 +35,13 @@ class Higson(Widget):
 
         Parameters
         ----------
-            logX: array-like
+            logX : array-like
                 log-volume compression values to plot
 
-            LX: array-like
+            LX : array-like
                 Likelihood * volume compression
 
-            i: int
+            i : int
                 Current location of higson point
 
         """
@@ -76,10 +76,10 @@ class Evolution(Slider):
 
         Parameters
         ----------
-            logL: float
+            logL : float
                 Current loglikelihood of evolution stage
 
-            n: int
+            n : int
                 Current number of live points of evolution stage
 
         """
@@ -102,7 +102,7 @@ class Temperature(Slider):
 
         Parameters
         ----------
-            kT: float
+            kT : float
                 Current temperature of posterior points stage
 
         """
@@ -115,41 +115,41 @@ class RunPlotter(object):
 
     Parameters
     ----------
-        samples: :class:`anesthetic.samples.NestedSamples`
-            The root string for the chains files to be used, or a set of nested
-            samples.
+    samples : :class:`anesthetic.samples.NestedSamples`
+        The root string for the chains files to be used, or a set of nested
+        samples.
 
     Attributes
     ----------
-        samples: :class:`anesthetic.samples.NestedSamples`
-            Object for extracting nested sampling data from chains files.
+    samples : :class:`anesthetic.samples.NestedSamples`
+        Object for extracting nested sampling data from chains files.
 
-        fig: :class:`matplotlib.figure.Figure`
-            Reference to the underlying figure
+    fig : :class:`matplotlib.figure.Figure`
+        Reference to the underlying figure
 
-        triangle: :class:`anesthetic.gui.widgets.TrianglePlot`
-            Corner plot of live or posterior samples.
+    triangle : :class:`anesthetic.gui.widgets.TrianglePlot`
+        Corner plot of live or posterior samples.
 
-        temperature: :class:`anesthetic.gui.plot.Temperature`
-            Slider selecting the posterior temperature.
+    temperature : :class:`anesthetic.gui.plot.Temperature`
+        Slider selecting the posterior temperature.
 
-        evolution: :class:`anesthetic.gui.plot.Evolution`
-            Slider selecting the live iteration.
+    evolution : :class:`anesthetic.gui.plot.Evolution`
+        Slider selecting the live iteration.
 
-        higson: :class:`anesthetic.gui.plot.Higson`
-            Higson plot of posterior weights.
+    higson : :class:`anesthetic.gui.plot.Higson`
+        Higson plot of posterior weights.
 
-        reset: :class:`anesthetic.gui.widgets.Button`
-            Button that resets the parameter ranges.
+    reset : :class:`anesthetic.gui.widgets.Button`
+        Button that resets the parameter ranges.
 
-        reload: :class:`anesthetic.gui.widgets.Button`
-            Button that reloads the files.
+    reload : :class:`anesthetic.gui.widgets.Button`
+        Button that reloads the files.
 
-        type: :class:`anesthetic.gui.widgets.RadioButtons`
-            Radio buttons that selects whether to plot live or posteriors.
+    type : :class:`anesthetic.gui.widgets.RadioButtons`
+        Radio buttons that selects whether to plot live or posteriors.
 
-        param_choice: :class:`anesthetic.gui.widgets.CheckButtons`
-            Checkbox that selects which parameters to plot.
+    param_choice : :class:`anesthetic.gui.widgets.CheckButtons`
+        Checkbox that selects which parameters to plot.
 
     """
 
@@ -225,13 +225,13 @@ class RunPlotter(object):
 
         Parameters
         ----------
-            label: str
-                label indicating the coordinate to extract.
+        label : str
+            label indicating the coordinate to extract.
 
         Returns
         -------
-            array-like:
-                sample 'label'-coordinates.
+        array-like:
+            sample 'label'-coordinates.
 
         """
         if self.type() == 'posterior':

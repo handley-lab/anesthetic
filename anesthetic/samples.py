@@ -113,25 +113,25 @@ class Samples(WeightedLabelledDataFrame):
 
     Parameters
     ----------
-    data: np.array
+    data : np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
-    columns: list(str)
+    columns : list(str)
         reference names of parameters
 
-    weights: np.array
+    weights : np.array
         weights of samples.
 
-    logL: np.array
+    logL : np.array
         loglikelihoods of samples.
 
-    labels: dict or array-like
+    labels : dict or array-like
         mapping from columns to plotting labels
 
-    label: str
+    label : str
         Legend label
 
-    logzero: float, default=-1e30
+    logzero : float, default=-1e30
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-np.inf`.
 
@@ -165,7 +165,7 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        axes: plotting axes
+        axes : plotting axes
             Can be:
 
             * list(str) or str
@@ -175,7 +175,7 @@ class Samples(WeightedLabelledDataFrame):
             then this is used for creating the plot. Otherwise, a new set of
             axes are created using the list or lists of strings.
 
-        kind: str, default='kde_1d'
+        kind : str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
             {'hist', 'box', 'kde', 'density'}, anesthetic also provides
             {'hist_1d', 'kde_1d', 'fastkde_1d'}.
@@ -186,7 +186,7 @@ class Samples(WeightedLabelledDataFrame):
 
         Returns
         -------
-        axes: :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
+        axes : :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
             Pandas array of axes objects
 
         """
@@ -237,7 +237,7 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        axes: plotting axes
+        axes : plotting axes
             Can be:
                 - list(str) if the x and y axes are the same
                 - [list(str),list(str)] if the x and y axes are different
@@ -247,7 +247,7 @@ class Samples(WeightedLabelledDataFrame):
             axes, then this is used for creating the plot. Otherwise, a new set
             of axes are created using the list or lists of strings.
 
-        kind/kinds: dict, optional
+        kind/kinds : dict, optional
             What kinds of plots to produce. Dictionary takes the keys
             'diagonal' for the 1D plots and 'lower' and 'upper' for the 2D
             plots. The options for 'diagonal' are:
@@ -285,7 +285,7 @@ class Samples(WeightedLabelledDataFrame):
             Default:
             {'diagonal': 'kde_1d', 'lower': 'kde_2d', 'upper':'scatter_2d'}
 
-        diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
+        diagonal_kwargs, lower_kwargs, upper_kwargs : dict, optional
             kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
             useful when there is a conflict of kwargs for different kinds of
             plots.  Note that any kwargs directly passed to plot_2d will
@@ -294,7 +294,7 @@ class Samples(WeightedLabelledDataFrame):
 
         Returns
         -------
-        axes: :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`
+        axes : :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`
             Pandas array of axes objects
 
         """
@@ -391,10 +391,10 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        logL_new: np.array
+        logL_new : np.array
             New log-likelihood values. Should have the same shape as `logL`.
 
-        action: str, default='add'
+        action : str, default='add'
             Can be any of {'add', 'replace', 'mask'}.
 
             * add: Add the new `logL_new` to the current `logL`.
@@ -402,13 +402,13 @@ class Samples(WeightedLabelledDataFrame):
             * mask: treat `logL_new` as a boolean mask and only keep the
               corresponding (True) samples.
 
-        inplace: bool, default=False
+        inplace : bool, default=False
             Indicates whether to modify the existing array, or return a new
             frame with importance sampling applied.
 
         Returns
         -------
-        samples: :class:`Samples`/:class:`MCMCSamples`/:class:`NestedSamples`
+        samples : :class:`Samples`/:class:`MCMCSamples`/:class:`NestedSamples`
             Importance re-weighted samples.
 
         """
@@ -461,25 +461,25 @@ class MCMCSamples(Samples):
 
     Parameters
     ----------
-    data: np.array
+    data : np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
-    columns: array-like
+    columns : array-like
         reference names of parameters
 
-    weights: np.array
+    weights : np.array
         weights of samples.
 
-    logL: np.array
+    logL : np.array
         loglikelihoods of samples.
 
-    labels: dict or array-like
+    labels : dict or array-like
         mapping from columns to plotting labels
 
-    label: str
+    label : str
         Legend label
 
-    logzero: float, default=-1e30
+    logzero : float, default=-1e30
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-np.inf`.
 
@@ -496,7 +496,7 @@ class MCMCSamples(Samples):
 
         Parameters
         ----------
-        burn_in: int or float or array_like
+        burn_in : int or float or array_like
             Fraction or number of samples to remove or keep:
 
             * ``if 0 < burn_in < 1``: remove first fraction of samples
@@ -505,10 +505,10 @@ class MCMCSamples(Samples):
             * ``elif burn_in < -1``: keep last number of samples
             * ``elif type(burn_in)==list``: different burn-in for each chain
 
-        reset_index: bool, default=False
+        reset_index : bool, default=False
             Whether to reset the index counter to start at zero or not.
 
-        inplace: bool, default=False
+        inplace : bool, default=False
             Indicates whether to modify the existing array or return a copy.
 
         """
@@ -549,7 +549,7 @@ class MCMCSamples(Samples):
 
         Parameters
         ----------
-        params: list(str)
+        params : list(str)
             List of column names (i.e. parameters) to be included in the
             convergence calculation.
             Default: all parameters (except those parameters that contain
@@ -557,7 +557,7 @@ class MCMCSamples(Samples):
 
         Returns
         -------
-        Rminus1: float
+        Rminus1 : float
             Gelman--Rubin convergence statistic ``R-1``. The smaller, the
             better converged. Aiming for ``Rminus1~0.01`` should normally work
             well.
@@ -614,30 +614,30 @@ class NestedSamples(Samples):
 
     Parameters
     ----------
-    data: np.array
+    data : np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
-    columns: list(str)
+    columns : list(str)
         reference names of parameters
 
-    logL: np.array
+    logL : np.array
         loglikelihoods of samples.
 
-    logL_birth: np.array or int
+    logL_birth : np.array or int
         birth loglikelihoods, or number of live points.
 
-    labels: dict
+    labels : dict
         optional mapping from column names to plot labels
 
-    label: str
+    label : str
         Legend label
         default: basename of root
 
-    beta: float
+    beta : float
         thermodynamic temperature
         default: 1.
 
-    logzero: float
+    logzero : float
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-np.inf`.
         default: -1e30
@@ -684,11 +684,11 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        beta: float
+        beta : float
             Temperature to set.
             (``beta=0`` corresponds to the prior distribution.)
 
-        inplace: bool, default=False
+        inplace : bool, default=False
             Indicates whether to modify the existing array, or return a copy
             with the temperature changed.
 
@@ -768,12 +768,12 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
 
-        beta: float, array-like, optional
+        beta : float, array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
@@ -825,7 +825,7 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
@@ -834,7 +834,7 @@ class NestedSamples(Samples):
         -------
         if nsamples is None:
             WeightedSeries like self
-        elif nsamples is int
+        elif nsamples is int:
             WeightedDataFrame like self, columns range(nsamples)
         """
         if nsamples is None:
@@ -854,7 +854,7 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
@@ -863,7 +863,7 @@ class NestedSamples(Samples):
         -------
         if nsamples is None:
             WeightedSeries like self
-        elif nsamples is int
+        elif nsamples is int:
             WeightedDataFrame like self, columns range(nsamples)
         """
         logX = self.logX(nsamples)
@@ -879,7 +879,7 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        beta, scalar or array-like, optional
+        beta : scalar or array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
@@ -908,19 +908,19 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
             - If nsamples is array, nsamples is assumed to be logw and returned
               (implementation convenience functionality)
 
-        beta: float, array-like, optional
+        beta : float, array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
         -------
-        if nsamples is array-like
+        if nsamples is array-like:
             WeightedDataFrame equal to nsamples
         elif beta is scalar and nsamples is None:
             WeightedSeries like self
@@ -956,13 +956,13 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
             - If nsamples is array, nsamples is assumed to be logw
 
-        beta: float, array-like, optional
+        beta : float, array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
@@ -1065,13 +1065,13 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        logL: float or int, optional
+        logL : float or int, optional
             Loglikelihood or iteration number to return live points.
             If not provided, return the last set of active live points.
 
         Returns
         -------
-        live_points: Samples
+        live_points : Samples
             Live points at either:
                 - contour logL (if input is float)
                 - ith iteration (if input is integer)
@@ -1104,10 +1104,10 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        logL_new: np.array
+        logL_new : np.array
             New log-likelihood values. Should have the same shape as `logL`.
 
-        action: str, default='add'
+        action : str, default='add'
             Can be any of {'add', 'replace', 'mask'}.
 
             * add: Add the new `logL_new` to the current `logL`.
@@ -1115,14 +1115,14 @@ class NestedSamples(Samples):
             * mask: treat `logL_new` as a boolean mask and only keep the
               corresponding (True) samples.
 
-        inplace: bool, optional
+        inplace : bool, optional
             Indicates whether to modify the existing array, or return a new
             frame with importance sampling applied.
             default: False
 
         Returns
         -------
-        samples: :class:`NestedSamples`
+        samples : :class:`NestedSamples`
             Importance re-weighted samples.
 
         """
@@ -1139,16 +1139,16 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        logL_birth: array-like or int, optional
+        logL_birth : array-like or int, optional
 
             * array-like: the birth contours.
             * int: the number of live points.
             * default: use the existing birth contours to compute nlive
 
-        inplace: bool, optional
+        inplace : bool, default=False
             Indicates whether to modify the existing array, or return a new
             frame with contours resorted and nlive recomputed
-            default: False
+
         """
         if inplace:
             samples = self
@@ -1216,14 +1216,14 @@ def merge_nested_samples(runs):
 
     Parameters
     ----------
-    runs: list(class:`NestedSamples`)
+    runs : list(class:`NestedSamples`)
         List or array-like of one or more nested sampling runs.
         If only a single run is provided, this recalculates the live points and
         as such can be used for masked runs.
 
     Returns
     -------
-    samples: :class:`NestedSamples`
+    samples : :class:`NestedSamples`
         Merged run.
     """
     merge = pandas.concat(runs, ignore_index=True)
@@ -1239,20 +1239,20 @@ def merge_samples_weighted(samples, weights=None, label=None):
 
     Parameters
     ----------
-    samples: list(:class:`NestedSamples`) or list(:class:`MCMCSamples`)
+    samples : list(:class:`NestedSamples`) or list(:class:`MCMCSamples`)
         List or array-like of one or more MCMC or nested sampling runs.
 
-    weights: list(double) or None
+    weights : list(double) or None
         Weight for each run in samples (normalized internally).
         Can be omitted if samples are :class:`NestedSamples`,
         then exp(logZ) is used as weight.
 
-    label: str or None
-        Label for the new samples. Default: None
+    label : str or None, default=None
+        Label for the new samples.
 
     Returns
     -------
-    new_samples: :class:`Samples`
+    new_samples : :class:`Samples`
         Merged (weighted) run.
     """
     if not (isinstance(samples, Sequence) or

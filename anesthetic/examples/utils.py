@@ -14,14 +14,14 @@ def random_ellipsoid(mean, cov, size=None):
 
     Parameters
     ----------
-    mean: 1d array-like
+    mean : 1d array-like
         The center of mass of the ellipsoid
 
-    cov: 2d array-like
+    cov : 2d array-like
         The covariance structure of the ellipsoid. Axes have lengths equal to
         the square root of the eigenvalues of this matrix.
 
-    size: int or tuple of ints, optional
+    size : int or tuple of ints, optional
         Given a shape of, for example, (m,n,k), m*n*k samples are generated,
         and packed in an m-by-n-by-k arrangement. Because each sample is
         N-dimensional, the output shape is (m,n,k,N). If no shape is specified,
@@ -29,7 +29,7 @@ def random_ellipsoid(mean, cov, size=None):
 
     Returns
     -------
-    points: array-like
+    points : array-like
         The drawn samples, of shape size, if that was provided. If not, the
         shape is (N,).
         In other words, each entry ``out[i,j,...,:]`` is an N-dimensional value
@@ -48,12 +48,12 @@ def random_covariance(sigmas):
 
     Parameters
     ----------
-    sigmas, 1d array like
+    sigmas : 1d array like
         Lengths of the axes of the ellipsoid.
 
     Returns
     -------
-    Covariance matrix: 2d np.array
+    Covariance matrix : 2d np.array
         shape (len(sigmas), len(sigmas)).
     """
     d = len(sigmas)

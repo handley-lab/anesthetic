@@ -40,18 +40,16 @@ class _WeightedObject(object):
 
         Parameters
         ----------
-        weights: 1d array-like
+        weights : 1d array-like
             The sample weights to put in an index.
 
-        axis: int (0,1), optional
+        axis : int (0,1), default=0
             Whether to put weights in an index or column.
-            Default 0.
 
-        inplace: bool, optional
+        inplace : bool, default=False
             Whether to operate inplace, or return a new array.
-            Default False.
 
-        level: int
+        level : int
             Which level in the index to insert before.
             Defaults to inserting at back
 
@@ -183,7 +181,7 @@ class WeightedSeries(_WeightedObject, Series):
 
         Parameters
         ----------
-        ncompress: int, optional
+        ncompress : int, optional
             effective number of samples after compression. If not supplied
             (or True), then reduce to the channel capacity (theoretical optimum
             compression). If <=0, then compress so that all weights are unity.
@@ -369,7 +367,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
         Parameters
         ----------
-        ncompress: int, optional
+        ncompress : int, optional
             effective number of samples after compression. If not supplied
             (or True), then reduce to the channel capacity (theoretical optimum
             compression). If <=0, then compress so that all weights are unity.

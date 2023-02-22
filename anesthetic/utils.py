@@ -174,7 +174,7 @@ def compute_nlive(death, birth):
 
     Returns
     -------
-    nlive: np.array
+    nlive : np.array
         number of live points at each contour
     """
     b = pandas.DataFrame(np.array(birth), columns=['logL'])
@@ -200,7 +200,7 @@ def compute_insertion_indexes(death, birth):
 
     Returns
     -------
-    indexes: np.array
+    indexes : np.array
         live point index at which each live point was inserted
     """
     indexes = np.zeros_like(birth, dtype=int)
@@ -273,10 +273,10 @@ def scaled_triangulation(x, y, cov):
 
     Parameters
     ----------
-    x, y: array-like
+    x, y : array-like
         x and y coordinates of samples
 
-    cov: array-like, 2d
+    cov : array-like, 2d
         Covariance matrix for scaling
 
     Returns
@@ -299,24 +299,24 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
 
     Parameters
     ----------
-    x, y: array-like
+    x, y : array-like
         x and y coordinates of samples for compressing
 
-    cov: array-like, 2d
+    cov : array-like, 2d
         Covariance matrix for scaling
 
-    w: :class:`pandas.Series`, optional
+    w : :class:`pandas.Series`, optional
         weights of samples
 
-    n: int, optional
-        number of samples returned. Default 1000
+    n : int, default=1000
+        number of samples returned.
 
     Returns
     -------
-    tri:
+    tri :
         :class:`matplotlib.tri.Triangulation` with an appropriate scaling
 
-    w: array-like
+    w : array-like
         Compressed samples and weights
     """
     # Pre-process samples to not be affected by non-standard indexing
@@ -357,13 +357,13 @@ def sample_compression_1d(x, w=None, ncompress=True):
 
     Parameters
     ----------
-    x: array-like
+    x : array-like
         x coordinate of samples for compressing
 
-    w: :class:`pandas.Series`, optional
+    w : :class:`pandas.Series`, optional
         weights of samples
 
-    ncompress: int, default=True
+    ncompress : int, default=True
         Degree of compression.
 
         * If int: number of samples returned.
@@ -372,7 +372,7 @@ def sample_compression_1d(x, w=None, ncompress=True):
 
     Returns
     -------
-    x, w, array-like
+    x, w: array-like
         Compressed samples and weights
     """
     if ncompress is False:
@@ -441,18 +441,18 @@ def insertion_p_value(indexes, nlive, batch=0):
 
     Parameters
     ----------
-    indexes: array-like
+    indexes : array-like
         list of insertion indexes, sorted by death contour
 
-    nlive: int
+    nlive : int
         number of live points
 
-    batch: float
+    batch : float
         batch size in units of nlive for a rolling p-value
 
     Returns
     -------
-    ks_result: dict
+    ks_result : dict
         Kolmogorov-Smirnov test results:
 
             * ``D``: Kolmogorov-Smirnov statistic
@@ -519,13 +519,13 @@ def adjust_docstrings(cls, pattern, repl, *args, **kwargs):
 
     Parameters
     ----------
-    cls: class
+    cls : class
         class to adjust
 
-    pattern: str
+    pattern : str
         regular expression pattern
 
-    repl: str
+    repl : str
         replacement string
     """
     for key, val in cls.__dict__.items():

@@ -14,24 +14,24 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
 
     Parameters
     ----------
-    nlive: int
+    nlive : int
         number of live points
 
-    ndims: int
+    ndims : int
         dimensionality of gaussian
 
-    sigma: float
+    sigma : float
         width of gaussian likelihood
 
-    R: float
+    R : float
         radius of gaussian prior
 
-    logLmin: float
+    logLmin : float
         loglikelihood at which to terminate
 
     Returns
     -------
-    samples: :class:`anesthetic.samples.NestedSamples`
+    samples : :class:`anesthetic.samples.NestedSamples`
         Nested sampling run
     """
 
@@ -72,22 +72,22 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
 
     Parameters
     ----------
-    nlive: int
+    nlive : int
         minimum number of live points across the run
 
-    mean: 1d array-like, shape (ndims,)
+    mean : 1d array-like, shape (ndims,)
         mean of gaussian in parameters. Length of array defines dimensionality
         of run.
 
-    cov: 2d array-like, shape (ndims,ndims)
+    cov : 2d array-like, shape (ndims, ndims)
         covariance of gaussian in parameters
 
-    bounds: 2d array-like, shape (ndims, 2)
+    bounds : 2d array-like, shape (ndims, 2)
         bounds of a gaussian, default ``[[0, 1]]*ndims``
 
     Returns
     -------
-    samples: :class:`anesthetic.samples.NestedSamples`
+    samples : :class:`anesthetic.samples.NestedSamples`
         Nested sampling run
     """
     mean = np.array(mean, dtype=float)
@@ -148,16 +148,16 @@ def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
 
     Parameters
     ----------
-    nlive: int
+    nlive : int
         number of live points
 
-    ndims: int
+    ndims : int
         dimensionality of the likelihood
 
-    sigma: float
+    sigma : float
         width of gaussian profile
 
-    alpha: float
+    alpha : float
         volume compression between plateau regions
     """
 
@@ -220,7 +220,7 @@ def planck_gaussian(nlive=500):
 
     Returns
     -------
-    samples: :class:`anesthetic.samples.NestedSamples`
+    samples : :class:`anesthetic.samples.NestedSamples`
         Nested sampling run
     """
     columns = ['omegabh2', 'omegach2', 'theta', 'tau', 'logA', 'ns']
