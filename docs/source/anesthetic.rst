@@ -1,34 +1,102 @@
 anesthetic package
 ==================
 
-.. automodule:: anesthetic
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Subpackages
------------
+anesthetic subpackages
+----------------------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
 
    anesthetic.examples
    anesthetic.gui
    anesthetic.plotting
    anesthetic.read
 
-Submodules
-----------
 
-.. toctree::
-   :maxdepth: 4
+anesthetic submodules
+---------------------
 
-   anesthetic.boundary
-   anesthetic.convert
-   anesthetic.kde
-   anesthetic.labelled_pandas
-   anesthetic.plot
-   anesthetic.samples
-   anesthetic.scripts
-   anesthetic.utils
-   anesthetic.weighted_pandas
+anesthetic.boundary module
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.boundary
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.convert module
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.convert
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.kde module
+~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.kde
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.labelled\_pandas module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.labelled_pandas
+   :members:
+   :private-members: _LabelledObject
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.plot module
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.samples module
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.samples
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.scripts module
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.scripts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.utils module
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.weighted\_pandas module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.weighted_pandas
+   :members:
+   :private-members: _WeightedObject
+   :undoc-members:
+   :show-inheritance:
+
+

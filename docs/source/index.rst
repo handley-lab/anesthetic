@@ -9,7 +9,7 @@
    Reading and writing <reading_writing>
    Samples and statistics <samples>
    Plotting <plotting>
-   anesthetic <anesthetic>
+   anesthetic <modules>
 
 .. include:: ../../README.rst
 

@@ -1,16 +1,23 @@
 anesthetic.gui package
 ======================
 
-.. automodule:: anesthetic.gui
+
+
+anesthetic.gui.plot module
+--------------------------
+
+.. automodule:: anesthetic.gui.plot
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
 
-.. toctree::
-   :maxdepth: 4
+anesthetic.gui.widgets module
+-----------------------------
 
-   anesthetic.gui.plot
-   anesthetic.gui.widgets
+.. automodule:: anesthetic.gui.widgets
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
