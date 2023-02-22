@@ -21,3 +21,9 @@ anesthetic.examples.utils module
    :show-inheritance:
 
 
+
+
+.. automodule:: anesthetic.examples
+   :members:
+   :undoc-members:
+   :show-inheritance:

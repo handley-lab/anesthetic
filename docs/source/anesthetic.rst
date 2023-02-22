@@ -49,7 +49,6 @@ anesthetic.labelled\_pandas module
 
 .. automodule:: anesthetic.labelled_pandas
    :members:
-   :private-members: _LabelledObject
    :undoc-members:
    :show-inheritance:
 
@@ -95,8 +94,13 @@ anesthetic.weighted\_pandas module
 
 .. automodule:: anesthetic.weighted_pandas
    :members:
-   :private-members: _WeightedObject
    :undoc-members:
    :show-inheritance:
 
 
+
+
+.. automodule:: anesthetic
+   :members:
+   :undoc-members:
+   :show-inheritance:

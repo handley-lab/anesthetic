@@ -48,3 +48,9 @@ anesthetic.read.polychord module
    :show-inheritance:
 
 
+
+
+.. automodule:: anesthetic.read
+   :members:
+   :undoc-members:
+   :show-inheritance:

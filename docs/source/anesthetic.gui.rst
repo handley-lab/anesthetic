@@ -21,3 +21,9 @@ anesthetic.gui.widgets module
    :show-inheritance:
 
 
+
+
+.. automodule:: anesthetic.gui
+   :members:
+   :undoc-members:
+   :show-inheritance:
