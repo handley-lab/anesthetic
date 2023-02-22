@@ -7,10 +7,10 @@ from scipy.special import gamma, gammaln
 def random_ellipsoid(mean, cov, size=None):
     """Draw a point uniformly in an ellipsoid.
 
-    This is defined so that the volume of the ellipsoid is sqrt(det(cov))*V_n.
-    where V_n is the volume of the unit n ball, and so that its axes have
-    length equal to the square root of the eigenvalues of the covariance
-    matrix.
+    This is defined so that the volume of the ellipsoid is
+    ``sqrt(det(cov))*V_n``. where ``V_n`` is the volume of the unit n ball,
+    and so that its axes have length equal to the square root of the
+    eigenvalues of the covariance matrix.
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ def random_ellipsoid(mean, cov, size=None):
     points: array-like
         The drawn samples, of shape size, if that was provided. If not, the
         shape is (N,).
-        In other words, each entry out[i,j,...,:] is an N-dimensional value
+        In other words, each entry ``out[i,j,...,:]`` is an N-dimensional value
         drawn uniformly from the ellipsoid.
     """
     d = len(mean)

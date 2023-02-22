@@ -83,7 +83,7 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
         covariance of gaussian in parameters
 
     bounds: 2d array-like, shape (ndims, 2)
-        bounds of a gaussian, default [[0, 1]]*ndims
+        bounds of a gaussian, default ``[[0, 1]]*ndims``
 
     Returns
     -------
@@ -142,7 +142,9 @@ def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
     factor of alpha. The value of the likelihood in these plateau regions has a
     gaussian profile with width sigma.
 
-    logL = - alpha^(2 floor(D*log_alpha(2|x-0.5|_infinity))/D) / (8 sigma^2)
+    ::
+
+        logL = - alpha^(2*floor(D*log_alpha(2|x-0.5|_infinity))/D) / (8sigma^2)
 
     Parameters
     ----------
@@ -209,7 +211,7 @@ def planck_gaussian(nlive=500):
 
     This is a gaussian likelihood with the same mean, parameter covariance and
     average loglikelihood as the Planck 2018 legacy chains
-    base/plikHM_TTTEEE_lowl_lowE_lensing
+    ``base/plikHM_TTTEEE_lowl_lowE_lensing``
 
     Parameters
     ----------
