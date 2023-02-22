@@ -93,16 +93,6 @@ You can check that things are working by running the test suite:
     flake8 anesthetic tests
     pydocstyle --convention=numpy anesthetic
 
-Documentation can be compiled locally with
-
-.. code:: bash
-
-    python -m pip install ".[extras,docs]"
-    cd docs
-    make html
-
-and viewed by opening ``docs/build/html/index.html`` in a browser.
-
 
 Dependencies
 ~~~~~~~~~~~~
@@ -132,9 +122,15 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
 
 .. code:: bash
 
-   cd docs
-   make html
+    python -m pip install ".[extras,docs]"
+    cd docs
+    make html
 
+and viewed by opening ``docs/build/html/index.html`` in a browser. To regenerate the automatic RST files run:
+
+.. code:: bash
+
+    sphinx-apidoc -f -t docs/templates/ -o docs/source/ anesthetic/
 
 Citation
 --------
