@@ -31,6 +31,9 @@ def read_paramnames(root):
 def read_cobaya(root, *args, **kwargs):
     """Read Cobaya yaml files.
 
+    Note that in order to optimally read chains from Cobaya you need to have
+    `GetDist <https://getdist.readthedocs.io/en/latest/>`__ installed.
+
     Returns
     -------
     :class:`anesthetic.samples.MCMCSamples`

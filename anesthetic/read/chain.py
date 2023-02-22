@@ -8,6 +8,18 @@ from anesthetic.read.multinest import read_multinest
 def read_chains(root, *args, **kwargs):
     """Auto-detect chain type and read from file.
 
+    anesthetic supports chains from:
+
+        * `PolyChord <https://github.com/PolyChord/PolyChordLite>`_,
+        * `MultiNest <https://github.com/farhanferoz/MultiNest>`_,
+        * `CosmoMC <https://github.com/cmbant/CosmoMC>`_,
+        * `Cobaya <https://github.com/CobayaSampler/cobaya>`_,
+        * or anything `GetDist <https://github.com/cmbant/getdist>`_
+          compatible.
+
+    Note that in order to optimally read chains from Cobaya you need to have
+    `GetDist <https://getdist.readthedocs.io/en/latest/>`__ installed.
+
     Parameters
     ----------
     root: str
