@@ -31,7 +31,7 @@ Plot Example 2: Marginalised 2D posteriors
     prior = samples.prior()
     params = ['x0', 'x1', 'x2', 'x3', 'x4']
     fig, axes = make_2d_axes(params, figsize=(6, 6), facecolor='w')
-    prior.plot_2d(axes, alpha=0.5, label="prior")
+    prior.plot_2d(axes, alpha=0.9, label="prior")
     samples.plot_2d(axes, alpha=0.9, label="posterior")
     axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes)/2, len(axes)), loc='lower center', ncols=2)
 
