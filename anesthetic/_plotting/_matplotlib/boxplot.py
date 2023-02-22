@@ -1,6 +1,6 @@
 import pandas.plotting._matplotlib.boxplot
 from pandas.plotting._matplotlib.boxplot import BoxPlot as _BoxPlot
-from anesthetic.plotting._matplotlib.core import _WeightedMPLPlot, _get_weights
+from anesthetic._plotting._matplotlib.core import _WeightedMPLPlot, _get_weights
 from anesthetic.utils import quantile
 from pandas.core.dtypes.missing import remove_na_arraylike
 import numpy as np
@@ -78,7 +78,7 @@ def boxplot(data, *args, **kwds):
             else:
                 whis = kwds.pop("whis", 1.5)
                 kwds['showfliers'] = False
-                from anesthetic.plotting._matplotlib.boxplot import _bxpstat
+                from anesthetic._plotting._matplotlib.boxplot import _bxpstat
                 bp = ax.bxp([_bxpstat(v, weights, whis) for v in values],
                             **kwds)
 

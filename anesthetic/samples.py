@@ -19,7 +19,7 @@ from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
 import anesthetic.weighted_pandas
-from anesthetic.plotting import PlotAccessor
+from anesthetic._plotting import PlotAccessor
 anesthetic.weighted_pandas._WeightedObject.plot =\
     CachedAccessor("plot", PlotAccessor)
 

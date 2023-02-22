@@ -8,7 +8,7 @@ from pandas.core.dtypes.missing import (
     remove_na_arraylike,
 )
 from pandas.plotting._matplotlib.core import MPLPlot, PlanePlot
-from anesthetic.plotting._matplotlib.core import (
+from anesthetic._plotting._matplotlib.core import (
     _WeightedMPLPlot, _CompressedMPLPlot, _get_weights
 )
 from anesthetic.plot import (
