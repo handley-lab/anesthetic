@@ -1,8 +1,8 @@
 """Main classes for the anesthetic module.
 
-    - :class:`anesthetic.samples.Samples`
-    - :class:`anesthetic.samples.MCMCSamples`
-    - :class:`anesthetic.samples.NestedSamples`
+- :class:`anesthetic.samples.Samples`
+- :class:`anesthetic.samples.MCMCSamples`
+- :class:`anesthetic.samples.NestedSamples`
 """
 import numpy as np
 import pandas
