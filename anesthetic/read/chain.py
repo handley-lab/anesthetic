@@ -26,8 +26,8 @@ def read_chains(root, *args, **kwargs):
         root name for reading files
 
     *args, **kwargs:
-        Passed onto NestedSamples or MCMCSamples. Check their docstrings for
-        more information.
+        Passed onto ``NestedSamples`` or ``MCMCSamples``. Check their
+        docstrings for more information.
 
     Returns
     -------

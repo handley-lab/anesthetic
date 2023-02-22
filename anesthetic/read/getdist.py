@@ -1,4 +1,4 @@
-"""Read MCMCSamples from getdist chains."""
+"""Read MCMCSamples from GetDist chains."""
 import os
 import re
 import numpy as np
@@ -7,7 +7,7 @@ from pandas import concat
 
 
 def read_paramnames(root):
-    r"""Read <root>.paramnames in getdist format.
+    r"""Read ``<root>.paramnames`` in GetDist format.
 
     This file should contain one or two columns. The first column indicates
     a reference name for the sample, used as labels in the pandas array.
@@ -15,11 +15,13 @@ def read_paramnames(root):
     possibly in tex, with the understanding that it will be surrounded by
     dollar signs, for example
 
-    <root.paramnames>
+    ``<root>.paramnames``:
+    ::
 
-    a1     a_1
-    a2     a_2
-    omega  \omega
+        a1     a_1
+        a2     a_2
+        omega  \omega
+
     """
     try:
         paramnames_file = root + '.paramnames'
@@ -38,7 +40,7 @@ def read_paramnames(root):
 
 
 def read_getdist(root, *args, **kwargs):
-    """Read <root>_1.txt in getdist format.
+    """Read <root>_1.txt in GetDist format.
 
     Returns
     -------
