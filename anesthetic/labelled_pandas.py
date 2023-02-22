@@ -65,7 +65,10 @@ class _AtIndexer(_AtIndexer_):
 
 
 class _LabelledObject(object):
-    """Common methods for `LabelledSeries` and `LabelledDataFrame`."""
+    """Common methods for `LabelledSeries` and `LabelledDataFrame`.
+
+    :meta public:
+    """
 
     def __init__(self, *args, **kwargs):
         if not hasattr(self, '_labels'):

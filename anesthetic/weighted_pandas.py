@@ -10,7 +10,10 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile,
 
 
 class _WeightedObject(object):
-    """Common methods for `WeightedSeries` and `WeightedDataFrame`."""
+    """Common methods for `WeightedSeries` and `WeightedDataFrame`.
+
+    :meta public:
+    """
 
     def __init__(self, *args, **kwargs):
         weights = kwargs.pop('weights', None)
