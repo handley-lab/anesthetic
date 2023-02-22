@@ -1216,7 +1216,7 @@ def merge_nested_samples(runs):
 
     Parameters
     ----------
-    runs : list(class:`NestedSamples`)
+    runs : list(:class:`NestedSamples`)
         List or array-like of one or more nested sampling runs.
         If only a single run is provided, this recalculates the live points and
         as such can be used for masked runs.
