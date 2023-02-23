@@ -1,6 +1,10 @@
 anesthetic package
 ==================
 
+.. automodule:: anesthetic
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 anesthetic subpackages
 ----------------------
@@ -98,9 +102,3 @@ anesthetic.weighted\_pandas module
    :show-inheritance:
 
 
-
-
-.. automodule:: anesthetic
-   :members:
-   :undoc-members:
-   :show-inheritance:

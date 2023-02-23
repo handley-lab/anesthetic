@@ -130,7 +130,7 @@ and view the documentation by opening ``docs/build/html/index.html`` in a browse
 
 .. code:: bash
 
-    sphinx-apidoc -f -t docs/templates/ -o docs/source/ anesthetic/
+    sphinx-apidoc -fM -t docs/templates/ -o docs/source/ anesthetic/
 
 Citation
 --------

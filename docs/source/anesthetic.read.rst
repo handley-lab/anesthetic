@@ -1,6 +1,10 @@
 anesthetic.read package
 =======================
 
+.. automodule:: anesthetic.read
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 
 anesthetic.read.chain module
@@ -48,9 +52,3 @@ anesthetic.read.polychord module
    :show-inheritance:
 
 
-
-
-.. automodule:: anesthetic.read
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -27,7 +27,7 @@
 {{ automodule(pkgname, automodule_options) }}
 {% endif %}
 
-{% if subpackages %}
+{%- if subpackages %}
 {{ [pkgname, "subpackages"] | join(" ") | e | heading(2) }}
 {{ toctree(subpackages, 1) }}
 {% if submodules %}

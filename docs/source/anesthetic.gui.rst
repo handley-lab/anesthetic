@@ -1,6 +1,10 @@
 anesthetic.gui package
 ======================
 
+.. automodule:: anesthetic.gui
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 
 anesthetic.gui.plot module
@@ -21,9 +25,3 @@ anesthetic.gui.widgets module
    :show-inheritance:
 
 
-
-
-.. automodule:: anesthetic.gui
-   :members:
-   :undoc-members:
-   :show-inheritance:
