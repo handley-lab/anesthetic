@@ -65,7 +65,10 @@ class _AtIndexer(_AtIndexer_):
 
 
 class _LabelledObject(object):
-    """Common methods for LabelledSeries and LabelledDataFrame."""
+    """Common methods for `LabelledSeries` and `LabelledDataFrame`.
+
+    :meta public:
+    """
 
     def __init__(self, *args, **kwargs):
         if not hasattr(self, '_labels'):
@@ -174,7 +177,6 @@ class _LabelledObject(object):
 
     def reset_index(self, level=None, drop=False, inplace=False,
                     *args, **kwargs):
-        """Reset the index, retaining labels."""
         labels = self.get_labels()
         answer = super().reset_index(level=level, drop=drop,
                                      inplace=False, *args, **kwargs)
@@ -186,7 +188,7 @@ class _LabelledObject(object):
 
 
 class LabelledSeries(_LabelledObject, Series):
-    """Labelled version of pandas.Series."""
+    """Labelled version of :class:`pandas.Series`."""
 
     _metadata = Series._metadata + ['_labels']
 
@@ -200,7 +202,7 @@ class LabelledSeries(_LabelledObject, Series):
 
 
 class LabelledDataFrame(_LabelledObject, DataFrame):
-    """Labelled version of pandas.DataFrame."""
+    """Labelled version of :class:`pandas.DataFrame`."""
 
     _metadata = DataFrame._metadata + ['_labels']
 
@@ -212,8 +214,12 @@ class LabelledDataFrame(_LabelledObject, DataFrame):
     def _constructor_sliced(self):
         return LabelledSeries
 
-    def transpose(self, copy=False):
-        """Transpose."""
+    def transpose(self, copy=False):  # noqa: D102
         result = super().transpose(copy=copy)
         result._labels = result._labels[::-1]
         return result
+
+    T = property(
+            transpose,
+            doc=DataFrame.transpose.__doc__
+            )

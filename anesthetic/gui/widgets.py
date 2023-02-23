@@ -22,25 +22,25 @@ class Widget(object):
 
     Parameters
     ----------
-        fig: matplotlib.figure.Figure
+        fig: :class:`matplotlib.figure.Figure`
             Figure for drawing widget on.
 
         gridspec: matplotlib.gridspec.GridSpec
             Specification for where to draw in the figure.
             Technically could be any argument that can be passed to
-            matplotlib.figure.Figure.add_subplot.
+            :meth:`matplotlib.figure.Figure.add_subplot`.
 
     Attributes
     ----------
-        fig: (matplotlib.figure.Figure
+        fig: :class:`matplotlib.figure.Figure`
             Figure for drawing widget on.
 
         gridspec: matplotlib.gridspec.GridSpec
             Specification for where to draw in the figure.
             Technically could be any argument that can be passed to
-            matplotlib.figure.Figure.add_subplot.
+            :meth:`matplotlib.figure.Figure.add_subplot`.
 
-        ax: matplotlib.axes.Axes
+        ax: :class:`matplotlib.axes.Axes`
             Axes of widget.
 
     """
@@ -84,7 +84,7 @@ class Button(Widget):
 
     Attributes
     ----------
-        button: matplotlib.widgets.Button
+        button: :class:`matplotlib.widgets.Button`
             matplotlib Button.
 
     """
@@ -107,7 +107,7 @@ class CheckButtons(LabelsWidget):
 
     Attributes
     ----------
-        buttons: matplotlib.widgets.CheckButtons
+        buttons: :class:`matplotlib.widgets.CheckButtons`
             matplotlib CheckButtons.
 
     """
@@ -132,7 +132,7 @@ class RadioButtons(LabelsWidget):
 
     Attributes
     ----------
-        buttons: matplotlib.widgets.RadioButtons
+        buttons: :class:`matplotlib.widgets.RadioButtons`
             matplotlib RadioButtons.
 
     """
@@ -166,7 +166,7 @@ class Slider(Widget):
 
     Attributes
     ----------
-        slider: matplotlib.widgets.Slider
+        slider: :class:`matplotlib.widgets.Slider`
             matplotlib Slider.
 
     """
@@ -217,7 +217,7 @@ class TrianglePlot(Widget):
 
     Attributes
     ----------
-        ax: pandas.DataFrame(matplotlib.axes.Axes)
+        ax: :class:`pandas.DataFrame`(:class:`matplotlib.axes.Axes`)
             Mapping from pairs of parameters to axes for plotting.
     """
 

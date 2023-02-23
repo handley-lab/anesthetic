@@ -122,9 +122,15 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
 
 .. code:: bash
 
-   cd docs
-   make html
+    python -m pip install ".[extras,docs]"
+    cd docs
+    make html
 
+and view the documentation by opening ``docs/build/html/index.html`` in a browser. To regenerate the automatic RST files run:
+
+.. code:: bash
+
+    sphinx-apidoc -fM -t docs/templates/ -o docs/source/ anesthetic/
 
 Citation
 --------
@@ -196,7 +202,7 @@ Why create another one? In general, any dedicated user of software will find tha
 What's in a name?
 ~~~~~~~~~~~~~~~~~
 
-There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://github.com/tomcharnock/NestorFlow>`__). Doing a UNIX grep:
+There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://bitbucket.org/tomcharnock/nestorflow>`__). Doing a UNIX grep:
 
 .. code:: bash
 

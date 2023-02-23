@@ -7,7 +7,7 @@ from anesthetic import read_chains
 def gui(*args):
     """Launch the anesthetic GUI.
 
-    See anesthetic.gui.plot.RunPlotter for details.
+    See :class:`anesthetic.gui.plot.RunPlotter` for details.
     """
     description = "Nested sampling visualisation"
     parser = argparse.ArgumentParser(description=description)

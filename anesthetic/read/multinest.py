@@ -6,7 +6,7 @@ from anesthetic.samples import NestedSamples
 
 
 def read_multinest(root, *args, **kwargs):
-    """Read <root>ev.dat and <root>phys_live.points in multinest format."""
+    """Read <root>ev.dat and <root>phys_live.points in MultiNest format."""
     try:
         data = np.loadtxt(root + 'dead-birth.txt')
         samples, logL, logL_birth, _ = np.split(data, [-4, -3, -2], axis=1)
