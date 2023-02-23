@@ -251,6 +251,36 @@ method from there, directing it to the correct position with the ``loc`` and
     axes.iloc[ 0, -1].legend(loc='lower right',  bbox_to_anchor=(1, 1))
     axes.iloc[-1,  0].legend(loc='lower center', bbox_to_anchor=(len(axes)/2, len(axes)))
 
+Ticks
+-----
+
+You can pass the keyword ``ticks`` to :func:anesthetic.plot.make_2d_axes: to
+adjust the tick settings of the 2D axes. There are three options:
+
+* ``ticks='inner'``
+* ``ticks='outer'``
+* ``ticks=None``
+
+.. plot:: :context: close-figs
+
+    fig, axes = make_2d_axes(['x0', 'x1'], figsize=(3, 3), ticks='inner')
+    samples.plot_2d(axes)
+    fig.suptitle("ticks='inner'", fontproperties=dict(family='monospace'))
+
+    fig, axes = make_2d_axes(['x0', 'x1'], figsize=(3, 3), ticks='outer')
+    samples.plot_2d(axes)
+    fig.suptitle("ticks='outer'", fontproperties=dict(family='monospace'))
+
+    fig, axes = make_2d_axes(['x0', 'x1'], figsize=(3, 3), ticks=None)
+    samples.plot_2d(axes)
+    fig.suptitle("ticks=None", fontproperties=dict(family='monospace'))
+
+Further tick customisation can be done by calling the methods
+:meth:`anesthetic.plot.AxesSeries.tick_params` or
+:meth:`anesthetic.plot.AxesDataFrame.tick_params` on the ``axes`` instance,
+which will broadcast the corresponding :meth:`matplotlib.axes.Axes.tick_params`
+method across all sub-axes.
+
 Unfilled contours
 -----------------
 
