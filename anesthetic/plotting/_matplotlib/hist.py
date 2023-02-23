@@ -77,11 +77,16 @@ class Kde1dPlot(_WeightedMPLPlot):
         return "kde_1d"
 
     def _make_plot(self):
+        if self.colormap is not None:
+            self.kwds['cmap'] = self.colormap
         return kde_plot_1d(
             self.axes[0],
             self.data.values[:, 0],
             label=self.label,
             **self.kwds)
+
+    def _validate_color_args(self):
+        pass
 
 
 class FastKde1dPlot(_CompressedMPLPlot):
@@ -91,11 +96,16 @@ class FastKde1dPlot(_CompressedMPLPlot):
         return "fastkde_1d"
 
     def _make_plot(self):
+        if self.colormap is not None:
+            self.kwds['cmap'] = self.colormap
         return fastkde_plot_1d(
             self.axes[0],
             self.data.values[:, 0],
             label=self.label,
             **self.kwds)
+
+    def _validate_color_args(self):
+        pass
 
 
 class Hist1dPlot(_WeightedMPLPlot):
@@ -105,11 +115,16 @@ class Hist1dPlot(_WeightedMPLPlot):
         return "hist_1d"
 
     def _make_plot(self):
+        if self.colormap is not None:
+            self.kwds['cmap'] = self.colormap
         return hist_plot_1d(
             self.axes[0],
             self.data.values[:, 0],
             label=self.label,
             **self.kwds)
+
+    def _validate_color_args(self):
+        pass
 
 
 class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
@@ -119,12 +134,17 @@ class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
         return "kde_2d"
 
     def _make_plot(self):
+        if self.colormap is not None:
+            self.kwds['cmap'] = self.colormap
         return kde_contour_plot_2d(
             self.axes[0],
             self.data[self.x].values,
             self.data[self.y].values,
             label=self.label,
             **self.kwds)
+
+    def _validate_color_args(self):
+        pass
 
 
 class FastKde2dPlot(_CompressedMPLPlot, PlanePlot):
@@ -134,12 +154,17 @@ class FastKde2dPlot(_CompressedMPLPlot, PlanePlot):
         return "fastkde_2d"
 
     def _make_plot(self):
+        if self.colormap is not None:
+            self.kwds['cmap'] = self.colormap
         return fastkde_contour_plot_2d(
             self.axes[0],
             self.data[self.x].values,
             self.data[self.y].values,
             label=self.label,
             **self.kwds)
+
+    def _validate_color_args(self):
+        pass
 
 
 class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
@@ -149,6 +174,8 @@ class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
         return "hist_2d"
 
     def _make_plot(self):
+        if self.colormap is not None:
+            self.kwds['cmap'] = self.colormap
         return hist_plot_2d(
             self.axes[0],
             self.data[self.x].values,
@@ -156,6 +183,9 @@ class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
             label=self.label,
             **self.kwds,
         )
+
+    def _validate_color_args(self):
+        pass
 
 
 def hist_frame(data, *args, **kwds):

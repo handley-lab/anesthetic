@@ -1,29 +1,27 @@
 """Tools for converting to other outputs."""
+import numpy as np
 
 
-def to_getdist(nested_samples):
+def to_getdist(samples):
     """Convert from anesthetic to getdist samples.
 
     Parameters
     ----------
-    nested_samples: MCMCSamples or NestedSamples
+    samples : :class:`anesthetic.samples.Samples`
         anesthetic samples to be converted
 
     Returns
     -------
-    getdist_samples: getdist.mcsamples.MCSamples
+    getdist_samples : :class:`getdist.mcsamples.MCSamples`
         getdist equivalent samples
     """
     import getdist
-    nested_samples = nested_samples.drop_labels()
-    samples = nested_samples.to_numpy()
-    weights = nested_samples.get_weights()
-    loglikes = -nested_samples.logL.to_numpy()
-    names = nested_samples.columns
-    ranges = {name: (nested_samples[name].min(), nested_samples[name].max())
-              for name in names}
-    return getdist.mcsamples.MCSamples(samples=samples,
-                                       weights=weights,
-                                       loglikes=loglikes,
+    labels = np.char.strip(samples.get_labels().astype(str), '$')
+    samples = samples.drop_labels()
+    ranges = samples.agg(['min', 'max']).T.apply(tuple, axis=1).to_dict()
+    return getdist.mcsamples.MCSamples(samples=samples.to_numpy(),
+                                       weights=samples.get_weights(),
+                                       loglikes=-samples.logL.to_numpy(),
+                                       names=samples.columns,
                                        ranges=ranges,
-                                       names=names)
+                                       labels=labels)

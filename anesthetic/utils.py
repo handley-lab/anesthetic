@@ -6,21 +6,24 @@ from scipy.interpolate import interp1d
 from scipy.stats import kstwobign
 from matplotlib.tri import Triangulation
 import contextlib
+import inspect
+import re
 
 
 def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
     r"""Compute the log of the sum of exponentials of input elements.
 
-    This function has the same call signature as `scipy.special.logsumexp`
-    and mirrors scipy's behaviour except for `-np.inf` input. If a and b
-    are both -inf then scipy's function will output `nan` whereas here we use:
+    This function has the same call signature as
+    :func:`scipy.special.logsumexp` and mirrors scipy's behaviour except for
+    ``-np.inf`` input. If a and b are both ``-inf`` then scipy's function will
+    output ``nan`` whereas here we use:
 
     .. math::
 
         \lim_{x \to -\infty} x \exp(x) = 0
 
-    Thus, if a=-inf in `log(sum(b * exp(a))` then we can set b=0 such that
-    that term is ignored in the sum.
+    Thus, if ``a=-inf`` in ``log(sum(b * exp(a))`` then we can set ``b=0``
+    such that that term is ignored in the sum.
     """
     if b is None:
         b = np.ones_like(a)
@@ -146,7 +149,7 @@ def histogram(a, **kwargs):
     This is a cheap histogram. Necessary if one wants to update the histogram
     dynamically, and redrawing and filling is very expensive.
 
-    This has the same arguments and keywords as np.histogram, but is
+    This has the same arguments and keywords as :func:`numpy.histogram`, but is
     normalised to 1.
     """
     hist, bin_edges = np.histogram(a, **kwargs)
@@ -171,7 +174,7 @@ def compute_nlive(death, birth):
 
     Returns
     -------
-    nlive: np.array
+    nlive : np.array
         number of live points at each contour
     """
     b = pandas.DataFrame(np.array(birth), columns=['logL'])
@@ -187,7 +190,8 @@ def compute_nlive(death, birth):
 def compute_insertion_indexes(death, birth):
     """Compute the live point insertion index for each point.
 
-    For more detail, see https://arxiv.org/abs/2006.03371
+    For more detail, see `Fowlie et al. (2020)
+    <https://arxiv.org/abs/2006.03371>`_
 
     Parameters
     ----------
@@ -196,7 +200,7 @@ def compute_insertion_indexes(death, birth):
 
     Returns
     -------
-    indexes: np.array
+    indexes : np.array
         live point index at which each live point was inserted
     """
     indexes = np.zeros_like(birth, dtype=int)
@@ -269,15 +273,15 @@ def scaled_triangulation(x, y, cov):
 
     Parameters
     ----------
-    x, y: array-like
+    x, y : array-like
         x and y coordinates of samples
 
-    cov: array-like, 2d
+    cov : array-like, 2d
         Covariance matrix for scaling
 
     Returns
     -------
-    matplotlib.tri.Triangulation
+    :class:`matplotlib.tri.Triangulation`
         Triangulation with the appropriate scaling
     """
     L = np.linalg.cholesky(cov)
@@ -295,24 +299,24 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
 
     Parameters
     ----------
-    x, y: array-like
+    x, y : array-like
         x and y coordinates of samples for compressing
 
-    cov: array-like, 2d
+    cov : array-like, 2d
         Covariance matrix for scaling
 
-    w: pandas.Series, optional
+    w : :class:`pandas.Series`, optional
         weights of samples
 
-    n: int, optional
-        number of samples returned. Default 1000
+    n : int, default=1000
+        number of samples returned.
 
     Returns
     -------
-    tri:
-        matplotlib.tri.Triangulation with an appropriate scaling
+    tri :
+        :class:`matplotlib.tri.Triangulation` with an appropriate scaling
 
-    w: array-like
+    w : array-like
         Compressed samples and weights
     """
     # Pre-process samples to not be affected by non-standard indexing
@@ -353,22 +357,22 @@ def sample_compression_1d(x, w=None, ncompress=True):
 
     Parameters
     ----------
-    x: array-like
+    x : array-like
         x coordinate of samples for compressing
 
-    w: pandas.Series, optional
+    w : :class:`pandas.Series`, optional
         weights of samples
 
-    ncompress: int, optional
+    ncompress : int, default=True
         Degree of compression.
-        If int: number of samples returned.
-        If True: compresses to the channel capacity.
-        If False: no compression.
-        Default True
+
+        * If int: number of samples returned.
+        * If True: compresses to the channel capacity.
+        * If False: no compression.
 
     Returns
     -------
-    x, w, array-like
+    x, w: array-like
         Compressed samples and weights
     """
     if ncompress is False:
@@ -424,38 +428,42 @@ def match_contour_to_contourf(contours, vmin, vmax):
 def insertion_p_value(indexes, nlive, batch=0):
     """Compute the p-value from insertion indexes, assuming constant nlive.
 
-    Note that this function doesn't use scipy.stats.kstest as the latter
-    assumes continuous distributions.
+    Note that this function doesn't use :func:`scipy.stats.kstest` as the
+    latter assumes continuous distributions.
 
-    For more detail, see https://arxiv.org/abs/2006.03371
+    For more detail, see `Fowlie et al. (2020)
+    <https://arxiv.org/abs/2006.03371>`_
 
-    For a rolling test, you should provide the optional parameter batch!=0. In
-    this case the test computes the p value on consecutive batches of size
-    nlive * batch, selects the smallest one and adjusts for multiple
+    For a rolling test, you should provide the optional parameter ``batch!=0``.
+    In this case the test computes the p-value on consecutive batches of size
+    ``nlive * batch``, selects the smallest one and adjusts for multiple
     comparisons using a Bonferroni correction.
 
     Parameters
     ----------
-    indexes: array-like
+    indexes : array-like
         list of insertion indexes, sorted by death contour
 
-    nlive: int
+    nlive : int
         number of live points
 
-    batch: float
+    batch : float
         batch size in units of nlive for a rolling p-value
 
     Returns
     -------
-    ks_result: dict
+    ks_result : dict
         Kolmogorov-Smirnov test results:
-            D: Kolmogorov-Smirnov statistic
-            sample_size: sample size
-            p-value: p-value
-            # if batch != 0
-            iterations: bounds of batch with minimum p-value
-            nbatches: the number of batches in total
-            uncorrected p-value: p-value without Bonferroni correction
+
+            * ``D``: Kolmogorov-Smirnov statistic
+            * ``sample_size``: sample size
+            * ``p-value``: p-value
+
+            if ``batch != 0``:
+
+            * ``iterations``: bounds of batch with minimum p-value
+            * ``nbatches``: the number of batches in total
+            * ``uncorrected p-value``: p-value without Bonferroni correction
     """
     if batch == 0:
         bins = np.arange(-0.5, nlive + 0.5, 1.)
@@ -502,3 +510,28 @@ def temporary_seed(seed):
         yield
     finally:
         np.random.set_state(state)
+
+
+def adjust_docstrings(cls, pattern, repl, *args, **kwargs):
+    """Adjust the docstrings of a class using regular expressions.
+
+    After the first argument, the remaining arguments are identical to re.sub.
+
+    Parameters
+    ----------
+    cls : class
+        class to adjust
+
+    pattern : str
+        regular expression pattern
+
+    repl : str
+        replacement string
+    """
+    for key, val in cls.__dict__.items():
+        doc = inspect.getdoc(val)
+        newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
+        try:
+            cls.__dict__[key].__doc__ = newdoc
+        except AttributeError:
+            pass

@@ -66,12 +66,17 @@ class ScatterPlot2d(_CompressedMPLPlot, PlanePlot):
         return "scatter_2d"
 
     def _make_plot(self):
+        if self.colormap is not None:
+            self.kwds['cmap'] = self.colormap
         return scatter_plot_2d(
             self.axes[0],
             self.data[self.x].values,
             self.data[self.y].values,
             label=self.label,
             **self.kwds)
+
+    def _validate_color_args(self):
+        pass
 
 
 class HexBinPlot(_HexBinPlot):

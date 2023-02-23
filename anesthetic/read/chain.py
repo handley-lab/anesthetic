@@ -8,18 +8,31 @@ from anesthetic.read.multinest import read_multinest
 def read_chains(root, *args, **kwargs):
     """Auto-detect chain type and read from file.
 
+    anesthetic supports chains from:
+
+        * `PolyChord <https://github.com/PolyChord/PolyChordLite>`_,
+        * `MultiNest <https://github.com/farhanferoz/MultiNest>`_,
+        * `CosmoMC <https://github.com/cmbant/CosmoMC>`_,
+        * `Cobaya <https://github.com/CobayaSampler/cobaya>`_,
+        * or anything `GetDist <https://github.com/cmbant/getdist>`_
+          compatible.
+
+    Note that in order to optimally read chains from Cobaya you need to have
+    `GetDist <https://getdist.readthedocs.io/en/latest/>`__ installed.
+
     Parameters
     ----------
-    root: str
+    root : str
         root name for reading files
 
     *args, **kwargs:
-        Passed onto NestedSamples or MCMCSamples. Check their docstrings for
-        more information.
+        Passed onto ``NestedSamples`` or ``MCMCSamples``. Check their
+        docstrings for more information.
 
     Returns
     -------
-    NestedSamples or MCMCSamples depending on auto-detection
+    :class:`anesthetic.samples.NestedSamples` or
+    :class:`anesthetic.samples.MCMCSamples` depending on auto-detection
 
     """
     if 'burn_in' in kwargs:

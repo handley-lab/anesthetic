@@ -338,6 +338,24 @@ def test_plot_2d_colours():
         assert len(set(pc_colors)) == 1
 
 
+@pytest.mark.parametrize('kwargs', [dict(color='r', alpha=0.5, ls=':', lw=1),
+                                    dict(c='r', linestyle=':', linewidth=1),
+                                    dict(ec='r', fc='b'),
+                                    dict(edgecolor='r', facecolor='b'),
+                                    dict(cmap=plt.cm.RdBu),
+                                    dict(colormap=plt.cm.RdBu)])
+@pytest.mark.parametrize(
+    'kind', ['kde', 'hist', 'default',
+             dict(diagonal='fastkde_1d', lower='fastkde_2d')]
+)
+def test_plot_2d_kwargs(kind, kwargs):
+    if isinstance(kind, str) or 'fastkde' in sys.modules:
+        np.random.seed(42)
+        pc = read_chains("./tests/example_data/pc")
+        fig, axes = make_2d_axes(['x0', 'x1'])
+        pc.plot_2d(axes, kind=kind, **kwargs)
+
+
 def test_plot_1d_colours():
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
@@ -692,12 +710,12 @@ def test_stats():
     nsamples = 10
     beta = [0., 0.5, 1.]
 
-    vals = ['logZ', 'D_KL', 'd_G', 'logL_P']
+    vals = ['logZ', 'D_KL', 'logL_P', 'd_G']
 
     labels = [r'$\ln\mathcal{Z}$',
               r'$\mathcal{D}_\mathrm{KL}$',
-              r'$d_\mathrm{G}$',
-              r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$']
+              r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$',
+              r'$d_\mathrm{G}$']
 
     stats = pc.stats()
     assert isinstance(stats, WeightedLabelledSeries)
