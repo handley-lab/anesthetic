@@ -395,6 +395,7 @@ class AxesDataFrame(DataFrame):
             if len(ax_) and direction == 'inner':
                 for i, a in enumerate(ax_):
                     if i == 0:  # first column
+                        tl = a.yaxis.majorTicks[0].tick1line.get_markersize()
                         if a.position == 'diagonal' and len(ax_) == 1:
                             a.tick_params('y', left=False, labelleft=False,
                                           **kwargs)
@@ -402,8 +403,10 @@ class AxesDataFrame(DataFrame):
                             a.tick_params('y', left=True, labelleft=True,
                                           **kwargs)
                     elif a.position == 'diagonal':  # not first column
-                        tl = a.yaxis.majorTicks[0].tick1line.get_markersize()
-                        a.tick_params('y', direction='out', length=tl / 2,
+                        a.tick_params('y', direction='out', length=tl/2,
+                                      left=True, labelleft=False, **kwargs)
+                    elif ax_[i-1].position == 'diagonal':  # next to diagonal
+                        a.tick_params('y', direction='in', length=tl/2,
                                       left=True, labelleft=False, **kwargs)
                     else:  # not diagonal and not first column
                         a.tick_params('y', direction='inout',
