@@ -126,7 +126,7 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
     cd docs
     make html
 
-and viewed by opening ``docs/build/html/index.html`` in a browser. To regenerate the automatic RST files run:
+and view the documentation by opening ``docs/build/html/index.html`` in a browser. To regenerate the automatic RST files run:
 
 .. code:: bash
 
