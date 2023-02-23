@@ -6,7 +6,7 @@ from anesthetic.samples import NestedSamples
 
 
 def read_polychord(root, *args, **kwargs):
-    """Read ``<root>_dead-birth.txt`` in polychord format."""
+    """Read ``<root>_dead-birth.txt`` in PolyChord format."""
     birth_file = root + '_dead-birth.txt'
     birth_file
     data = np.loadtxt(birth_file)
