@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 import matplotlib.pyplot as plt
+from matplotlib.colors import to_rgba
 from pandas.plotting import scatter_matrix, bootstrap_plot
 from pandas.plotting._matplotlib.misc import (
     scatter_matrix as orig_scatter_matrix
@@ -961,3 +962,10 @@ def test_get_index(mcmc_wdf):
                                             names=(None, None, 'weights'))
     assert mcmc_wdf.plot.bar().get_xlabel() == ""
     assert mcmc_wdf.plot.barh().get_ylabel() == ""
+
+
+def test_style(mcmc_wdf):
+    style_dict = dict(x='c', y='y', z='m', w='k')
+    ax = mcmc_wdf.plot.kde(style=style_dict)
+    assert all([line.get_color() == to_rgba(c)
+                for line, c in zip(ax.get_lines(), ['c', 'y', 'm', 'k'])])
