@@ -21,7 +21,7 @@ authors = [
 description = "nested sampling post-processing"
 readme = "README.rst"
 license = {file = "LICENSE"}
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
     "scipy>=1.2.0",
     "numpy",
