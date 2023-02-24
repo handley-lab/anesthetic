@@ -99,6 +99,7 @@ class _PlanePlot2d(PlanePlot):
 
         style, kwds = self._apply_style_colors(colors, kwds, 0, label)
         if style is not None:
+            print("finally triggered style")
             kwds["style"] = style
 
         self._plot(ax, x, y, **kwds)
