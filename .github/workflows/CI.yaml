@@ -159,7 +159,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install tomli
-          python -m pip install $(./bin/dependencies.py)
+          python -m pip install $(./bin/min_dependencies.py)
           python -m pip install -e ".[test]"
 
       - name: Test with pytest
