@@ -85,7 +85,6 @@ class _PlanePlot2d(PlanePlot):
         if self.colormap is not None:
             self.kwds['cmap'] = self.colormap
         colors = self._get_colors()
-        print(self.data)
         data = (
             create_iter_data_given_by(self.data, self.kind)  # safe for now
             if self.by is not None
