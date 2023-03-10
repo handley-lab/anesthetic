@@ -15,37 +15,43 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile,
 
 
 class WeightedGroupBy(GroupBy):
-    def mean(self, numeric_only=False):
+    """Weighted version of :class:`pandas.core.groupby.GroupBy`."""
+
+    def mean(self, numeric_only=False):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).mean(
             numeric_only=numeric_only))
         return result.__finalize__(self.obj, method="groupby")
 
-    def std(self, numeric_only=False):
+    def std(self, numeric_only=False):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).std(
             numeric_only=numeric_only))
         return result.__finalize__(self.obj, method="groupby")
 
-    def kurtosis(self, numeric_only=False):
+    def kurtosis(self, numeric_only=False):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).kurtosis(
             numeric_only=numeric_only))
         return result.__finalize__(self.obj, method="groupby")
 
-    def median(self, numeric_only=False):
+    def median(self, numeric_only=False):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).median(
             numeric_only=numeric_only))
         return result.__finalize__(self.obj, method="groupby")
 
-    def var(self, numeric_only=False):
+    def var(self, numeric_only=False):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).var(
             numeric_only=numeric_only))
         return result.__finalize__(self.obj, method="groupby")
 
 
 class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
+    """Weighted version of :class:`pandas.core.groupby.SeriesGroupBy`."""
+
     pass
 
 
 class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
+    """Weighted version of :class:`pandas.core.groupby.DataFrameGroupBy`."""
+
     pass
 
 
@@ -254,7 +260,7 @@ class WeightedSeries(_WeightedObject, Series):
         group_keys=True,
         observed=False,
         dropna=True,
-    ) -> SeriesGroupBy:
+        ):  # noqa: D102
         if level is None and by is None:
             raise TypeError("You have to supply one of 'by' and 'level'")
         if not as_index:
@@ -484,7 +490,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         group_keys: bool = True,
         observed: bool = False,
         dropna: bool = True,
-    ) -> DataFrameGroupBy:  # pragma: no cover
+        ):  # pragma: no cover  # noqa: D102
         if axis is not lib.no_default:
             axis = self._get_axis_number(axis)
             if axis == 1:
