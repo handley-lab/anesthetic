@@ -1334,31 +1334,19 @@ def test_old_gui():
         make_1d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})
 
 
-def test_groupby():
-    params = ['a', 'b']
-    data = np.random.rand(4, 2)
-    weights = np.random.randint(1, 10, 4)
-    samples = Samples(data, weights=weights, columns=params)
-    samples['group'] = np.ones(4, dtype=int)
-    samples.loc[2:, 'group'] = 2
-
-    group1_means = np.average(samples.loc[:1, params], axis=0)
-    group1_wmeans = np.average(samples.loc[:1, params], axis=0,
-                               weights=samples.get_weights()[:2])
-    group2_means = np.average(samples.loc[2:, params], axis=0)
-    group2_wmeans = np.average(samples.loc[2:, params], axis=0,
-                               weights=samples.get_weights()[2:])
-    group_means = np.vstack([group1_means,  group2_means])
-    group_wmeans = np.vstack([group1_wmeans, group2_wmeans])
-    # group_weights = [samples.get_weights()[:2].sum(),
-    #                  samples.get_weights()[2:].sum()]
-    mean = np.average(group_means, axis=0)
-    # wmean = np.average(group_wmeans, axis=0, weights=group_weights)
-
-    groups = samples.groupby('group')
-    print(groups.mean())
-    assert not np.any(samples.groupby('group').mean() == group_means)
-    assert np.all(samples.groupby('group').mean() == group_wmeans)
-
-    assert not np.any(samples.groupby('group').mean().mean() == mean)
-    # assert np.all(samples.groupby('group').mean().mean() == wmean)
+def test_groupby_stats():
+    mcmc = read_chains('./tests/example_data/cb')
+    chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
+    assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].mean()
+                             .to_numpy()[:-1],
+           chains.mean().iloc[0, :].to_numpy()))
+    assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].std()
+                             .to_numpy()[:-1],
+           chains.std().iloc[0, :].to_numpy()))
+    assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].kurtosis()
+                             .dropna().to_numpy(),
+           chains.kurtosis().iloc[0, :].dropna().to_numpy()))
+    # assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].median().to_numpy()[:-1],
+                               # chains.median().iloc[0, :].to_numpy()))
+    assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].var().to_numpy()[:-1],
+           chains.var().iloc[0, :].to_numpy()))
