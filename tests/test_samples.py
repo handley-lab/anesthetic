@@ -1361,3 +1361,4 @@ def test_groupby():
     assert np.all(samples.groupby('group').mean() == group_wmeans)
 
     assert not np.any(samples.groupby('group').mean().mean() == mean)
+    # assert np.all(samples.groupby('group').mean().mean() == wmean)
