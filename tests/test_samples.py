@@ -1350,10 +1350,10 @@ def test_groupby():
                                weights=samples.get_weights()[2:])
     group_means = np.vstack([group1_means,  group2_means])
     group_wmeans = np.vstack([group1_wmeans, group2_wmeans])
-    group_weights = [samples.get_weights()[:2].sum(),
-                     samples.get_weights()[2:].sum()]
+    # group_weights = [samples.get_weights()[:2].sum(),
+    #                  samples.get_weights()[2:].sum()]
     mean = np.average(group_means, axis=0)
-    wmean = np.average(group_wmeans, axis=0, weights=group_weights)
+    # wmean = np.average(group_wmeans, axis=0, weights=group_weights)
 
     groups = samples.groupby('group')
     print(groups.mean())
