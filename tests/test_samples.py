@@ -343,7 +343,9 @@ def test_plot_2d_colours():
                                     dict(ec='r', fc='b'),
                                     dict(edgecolor='r', facecolor='b'),
                                     dict(cmap=plt.cm.RdBu),
-                                    dict(colormap=plt.cm.RdBu)])
+                                    dict(colormap=plt.cm.RdBu),
+                                    dict(cmap="viridis"),
+                                    dict(colormap="viridis")])
 @pytest.mark.parametrize(
     'kind', ['kde', 'hist', 'default',
              dict(diagonal='fastkde_1d', lower='fastkde_2d')]
