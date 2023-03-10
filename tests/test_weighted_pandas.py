@@ -969,3 +969,10 @@ def test_style(mcmc_wdf):
     ax = mcmc_wdf.plot.kde(style=style_dict)
     assert all([line.get_color() == to_rgba(c)
                 for line, c in zip(ax.get_lines(), ['c', 'y', 'm', 'k'])])
+
+    with pytest.raises(TypeError):
+        ax = mcmc_wdf.plot.hist_2d('x', 'y', style='c')
+    with pytest.raises(TypeError):
+        ax = mcmc_wdf.plot.kde_2d('x', 'y', style='c')
+    with pytest.raises(TypeError):
+        ax = mcmc_wdf.plot.scatter_2d('x', 'y', style='c')
