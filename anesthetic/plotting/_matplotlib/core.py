@@ -100,6 +100,9 @@ class _PlanePlot2d(PlanePlot):
         kwds["label"] = label
 
         style, kwds = self._apply_style_colors(colors, kwds, 0, label)
+        if style is not None:
+            raise TypeError("'style' keyword argument is not "
+                            f"supported by {self._kind}")
         self._plot(ax, x, y, **kwds)
 
 
