@@ -1,5 +1,6 @@
 from typing import Literal
 import numpy as np
+import matplotlib as mpl
 from pandas.core.dtypes.generic import ABCMultiIndex
 import pandas.core.common as com
 from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
@@ -83,7 +84,7 @@ class _PlanePlot2d(PlanePlot):
 
     def _make_plot(self):
         if self.colormap is not None:
-            self.kwds['cmap'] = self.colormap
+            self.kwds['cmap'] = mpl.colormaps.get_cmap(self.colormap)
         colors = self._get_colors()
         data = (
             create_iter_data_given_by(self.data, self.kind)  # safe for now
