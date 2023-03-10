@@ -255,8 +255,6 @@ class WeightedSeries(_WeightedObject, Series):
         observed=False,
         dropna=True,
     ) -> SeriesGroupBy:
-        from pandas.core.groupby.generic import SeriesGroupBy
-
         if level is None and by is None:
             raise TypeError("You have to supply one of 'by' and 'level'")
         if not as_index:
