@@ -1,12 +1,57 @@
 """Pandas DataFrame and Series with weighted samples."""
 
+import warnings
 from inspect import signature
 import numpy as np
 from pandas import Series, DataFrame, concat, MultiIndex
+from pandas.core.groupby import GroupBy, SeriesGroupBy, DataFrameGroupBy
+from pandas._libs import lib
+from pandas._libs.lib import no_default
+from pandas.util._exceptions import find_stack_level
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
                               temporary_seed, adjust_docstrings)
+
+
+class WeightedGroupBy(GroupBy):
+    def mean(self, numeric_only=False):
+        result = self.agg(lambda df: self.obj._constructor(df).mean(
+            numeric_only=numeric_only))
+        return result.__finalize__(self.obj, method="groupby")
+
+    def std(self, numeric_only=False):
+        result = self.agg(lambda df: self.obj._constructor(df).std(
+            numeric_only=numeric_only))
+        return result.__finalize__(self.obj, method="groupby")
+
+    def kurtosis(self, numeric_only=False):
+        result = self.agg(lambda df: self.obj._constructor(df).kurtosis(
+            numeric_only=numeric_only))
+        return result.__finalize__(self.obj, method="groupby")
+
+    def median(self, numeric_only=False):
+        result = self.agg(lambda df: self.obj._constructor(df).median(
+            numeric_only=numeric_only))
+        return result.__finalize__(self.obj, method="groupby")
+
+    def var(self, numeric_only=False):
+        result = self.agg(lambda df: self.obj._constructor(df).var(
+            numeric_only=numeric_only))
+        return result.__finalize__(self.obj, method="groupby")
+
+
+class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
+    def cov(self, other, skipna=True):
+        result = self.agg(lambda df: self.obj._constructor(df).cov(
+            other, skipna))
+        return result.__finalize__(self.obj, method="groupby")
+
+
+class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
+    def cov(self, skipna=True):
+        result = self.agg(lambda df: self.obj._constructor(df).cov(skipna))
+        return result.__finalize__(self.obj, method="groupby")
 
 
 class _WeightedObject(object):
@@ -203,6 +248,37 @@ class WeightedSeries(_WeightedObject, Series):
     @property
     def _constructor_expanddim(self):
         return WeightedDataFrame
+
+    def groupby(
+        self,
+        by=None,
+        axis=0,
+        level=None,
+        as_index=True,
+        sort=True,
+        group_keys=True,
+        observed=False,
+        dropna=True,
+    ) -> SeriesGroupBy:
+        from pandas.core.groupby.generic import SeriesGroupBy
+
+        if level is None and by is None:
+            raise TypeError("You have to supply one of 'by' and 'level'")
+        if not as_index:
+            raise TypeError("as_index=False only valid with DataFrame")
+        axis = self._get_axis_number(axis)
+
+        return WeightedSeriesGroupBy(
+            obj=self,
+            keys=by,
+            axis=axis,
+            level=level,
+            as_index=as_index,
+            sort=sort,
+            group_keys=group_keys,
+            observed=observed,
+            dropna=dropna,
+        )
 
 
 class WeightedDataFrame(_WeightedObject, DataFrame):
@@ -404,6 +480,51 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     @property
     def _constructor(self):
         return WeightedDataFrame
+
+    def groupby(
+        self,
+        by=None,
+        axis=no_default,
+        level=None,
+        as_index: bool = True,
+        sort: bool = True,
+        group_keys: bool = True,
+        observed: bool = False,
+        dropna: bool = True,
+    ) -> DataFrameGroupBy:  # pragma: no cover
+        if axis is not lib.no_default:
+            axis = self._get_axis_number(axis)
+            if axis == 1:
+                warnings.warn(
+                    "DataFrame.groupby with axis=1 is deprecated. Do "
+                    "`frame.T.groupby(...)` without axis instead.",
+                    FutureWarning,
+                    stacklevel=find_stack_level(),
+                )
+            else:
+                warnings.warn(
+                    "The 'axis' keyword in DataFrame.groupby is deprecated "
+                    "and will be removed in a future version.",
+                    FutureWarning,
+                    stacklevel=find_stack_level(),
+                )
+        else:
+            axis = 0
+
+        if level is None and by is None:
+            raise TypeError("You have to supply one of 'by' and 'level'")
+
+        return WeightedDataFrameGroupBy(
+            obj=self,
+            keys=by,
+            axis=axis,
+            level=level,
+            as_index=as_index,
+            sort=sort,
+            group_keys=group_keys,
+            observed=observed,
+            dropna=dropna,
+        )
 
 
 for cls in [WeightedDataFrame, WeightedSeries]:
