@@ -46,12 +46,13 @@ class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
         result = self.agg(lambda df: self.obj._constructor(df).cov(
             other, skipna))
         return result.__finalize__(self.obj, method="groupby")
+    def cov(self, other, skipna=True):
+        return self._op_via_apply("cov", other=other, skipna=skipna)
 
 
 class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
     def cov(self, skipna=True):
-        result = self.agg(lambda df: self.obj._constructor(df).cov(skipna))
-        return result.__finalize__(self.obj, method="groupby")
+        return self._op_via_apply("cov", skipna=skipna)
 
 
 class _WeightedObject(object):
