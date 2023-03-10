@@ -42,13 +42,11 @@ class WeightedGroupBy(GroupBy):
 
 
 class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
-    def cov(self, other, skipna=True):
-        return self._op_via_apply("cov", other=other, skipna=skipna)
+    pass
 
 
 class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
-    def cov(self, skipna=True):
-        return self._op_via_apply("cov", skipna=skipna)
+    pass
 
 
 class _WeightedObject(object):
