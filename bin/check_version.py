@@ -81,7 +81,7 @@ if current_version != readme_version:
     sys.stderr.write("Version mismatch: {} != {}".format(vfile, README))
     sys.exit(1)
 
-elif unit_incremented(current_version, previous_version):
+elif not unit_incremented(current_version, previous_version):
     sys.stderr.write(("Version must be incremented by one:\n"
                       "HEAD:   {},\n"
                       "master: {}.\n"

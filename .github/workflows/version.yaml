@@ -1,4 +1,4 @@
-name: CI
+name: Check version
 
 on:
   pull_request:
