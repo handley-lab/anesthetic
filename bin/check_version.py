@@ -26,7 +26,6 @@ readme_version = readme_version.split(":")[-1].strip()
 readme_version = version.parse(readme_version)
 
 HEAD = run("git", "rev-parse", "HEAD")
-master = run("git", "rev-parse", "remotes/origin/master")
 
 version.parse('2.0.0c0').pre
 
@@ -82,8 +81,7 @@ if current_version != readme_version:
     sys.stderr.write("Version mismatch: {} != {}".format(vfile, README))
     sys.exit(1)
 
-elif HEAD != master and not unit_incremented(current_version,
-                                             previous_version):
+elif unit_incremented(current_version, previous_version):
     sys.stderr.write(("Version must be incremented by one:\n"
                       "HEAD:   {},\n"
                       "master: {}.\n"
