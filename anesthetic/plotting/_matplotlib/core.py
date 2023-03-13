@@ -10,7 +10,8 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               BarhPlot as _BarhPlot,
                                               AreaPlot as _AreaPlot,
                                               PiePlot as _PiePlot,
-                                              MPLPlot, PlanePlot)
+                                              MPLPlot as _MPLPlot,
+                                              PlanePlot)
 from pandas.plotting._matplotlib.groupby import create_iter_data_given_by
 from pandas.io.formats.printing import pprint_thing
 from anesthetic.weighted_pandas import _WeightedObject
@@ -20,6 +21,14 @@ from anesthetic.plot import scatter_plot_2d
 def _get_weights(kwargs, data):
     if isinstance(data, _WeightedObject):
         kwargs['weights'] = data.get_weights()
+
+
+class MPLPlot(_MPLPlot):
+    def _get_colors(self, num_colors=None, color_kwds='color'):
+        if (self.colormap is not None and self.kwds.get(color_kwds) is None
+           and (num_colors is None or num_colors == 1)):
+            return [plt.get_cmap(self.colormap)(0.68)]
+        return super()._get_colors(num_colors, color_kwds)
 
 
 class _WeightedMPLPlot(MPLPlot):

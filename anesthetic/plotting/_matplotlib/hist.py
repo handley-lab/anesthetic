@@ -1,5 +1,4 @@
 from packaging import version
-from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 from pandas.plotting._matplotlib.hist import (HistPlot as _HistPlot,
@@ -49,12 +48,6 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             weights=weights
         )
         return bins
-
-    def _get_colors(self, num_colors=None, color_kwds='color'):
-        if (self.colormap is not None and self.kwds.get(color_kwds) is None
-           and (num_colors is None or num_colors == 1)):
-            return [plt.get_cmap(self.colormap)(0.68)]
-        return super()._get_colors(num_colors, color_kwds)
 
     def _make_plot(self):  # pragma: no cover
         # TODO: remove when these changes have been added to pandas
