@@ -1,11 +1,11 @@
-name: Check version
+name: PR checks
 
 on:
   pull_request:
     branches: [master]
 
 jobs:
-  lint:
+  version is unit incremented:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
