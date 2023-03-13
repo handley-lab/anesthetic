@@ -751,7 +751,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
-                                 if cmap is None else cmap(0.68)))
+                                 if cmap is None
+                                 else plt.get_cmap(cmap)(0.68)))
     facecolor = kwargs.pop('facecolor', False)
     if 'edgecolor' in kwargs:
         edgecolor = kwargs.pop('edgecolor')
@@ -857,7 +858,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
-                                 if cmap is None else cmap(0.68)))
+                                 if cmap is None
+                                 else plt.get_cmap(cmap)(0.68)))
     facecolor = kwargs.pop('facecolor', False)
     if 'edgecolor' in kwargs:
         edgecolor = kwargs.pop('edgecolor')
@@ -947,7 +949,8 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
-                                 if cmap is None else cmap(0.68)))
+                                 if cmap is None
+                                 else plt.get_cmap(cmap)(0.68)))
 
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
