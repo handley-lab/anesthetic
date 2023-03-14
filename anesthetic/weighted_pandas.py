@@ -32,7 +32,7 @@ class WeightedGroupBy(GroupBy):
             numeric_only=numeric_only))
         return result.__finalize__(self.obj, method="groupby")
 
-    def median(self, numeric_only=False):  # noqa: D102
+    def median(self, numeric_only=None):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).median(
             numeric_only=numeric_only))
         return result.__finalize__(self.obj, method="groupby")
