@@ -260,7 +260,7 @@ class WeightedSeries(_WeightedObject, Series):
         group_keys=True,
         observed=False,
         dropna=True,
-    ):  # noqa: D102
+    ):  # pragma: no cover  # noqa: D102
         if level is None and by is None:
             raise TypeError("You have to supply one of 'by' and 'level'")
         if not as_index:
