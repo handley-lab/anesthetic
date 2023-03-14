@@ -14,7 +14,7 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile,
                               temporary_seed, adjust_docstrings)
 
 
-class WeightedGroupBy(GroupBy):
+class _WeightedGroupBy(GroupBy):
     """Weighted version of :class:`pandas.core.groupby.GroupBy`."""
 
     def mean(self, numeric_only=False):  # noqa: D102
@@ -43,13 +43,13 @@ class WeightedGroupBy(GroupBy):
         return result.__finalize__(self.obj, method="groupby")
 
 
-class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
+class _WeightedSeriesGroupBy(_WeightedGroupBy, SeriesGroupBy):
     """Weighted version of :class:`pandas.core.groupby.SeriesGroupBy`."""
 
     pass
 
 
-class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
+class _WeightedDataFrameGroupBy(_WeightedGroupBy, DataFrameGroupBy):
     """Weighted version of :class:`pandas.core.groupby.DataFrameGroupBy`."""
 
     pass
@@ -267,7 +267,7 @@ class WeightedSeries(_WeightedObject, Series):
             raise TypeError("as_index=False only valid with DataFrame")
         axis = self._get_axis_number(axis)
 
-        return WeightedSeriesGroupBy(
+        return _WeightedSeriesGroupBy(
             obj=self,
             keys=by,
             axis=axis,
@@ -513,7 +513,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         if level is None and by is None:
             raise TypeError("You have to supply one of 'by' and 'level'")
 
-        return WeightedDataFrameGroupBy(
+        return _WeightedDataFrameGroupBy(
             obj=self,
             keys=by,
             axis=axis,
