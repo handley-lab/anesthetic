@@ -42,13 +42,19 @@ class WeightedGroupBy(GroupBy):
 
 
 class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
-    """Weighted version of ``pandas.core.groupby.SeriesGroupBy``."""
+    """Weighted version of ``pandas.core.groupby.SeriesGroupBy``.
+
+    :meta private:
+    """
 
     pass
 
 
 class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
-    """Weighted version of ``pandas.core.groupby.DataFrameGroupBy``."""
+    """Weighted version of ``pandas.core.groupby.DataFrameGroupBy``.
+
+    :meta private:
+    """
 
     pass
 
