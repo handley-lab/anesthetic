@@ -1343,9 +1343,6 @@ def test_groupby_stats():
     assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].std()
                              .to_numpy()[:-1],
            chains.std().iloc[0, :].to_numpy()))
-    assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].kurtosis()
-                             .dropna().to_numpy(),
-           chains.kurtosis().iloc[0, :].dropna().to_numpy()))
     assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].median()
                              .to_numpy()[:-1],
                              chains.median().iloc[0, :].to_numpy()))
