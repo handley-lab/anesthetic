@@ -4,7 +4,7 @@ import warnings
 from inspect import signature
 import numpy as np
 from pandas import Series, DataFrame, concat, MultiIndex
-from pandas.core.groupby import GroupBy, SeriesGroupBy, DataFrameGroupBy
+from pandas.core.groupby import GroupBy, SeriesGroupBy, DataFrameGroupBy, ops
 from pandas._libs import lib
 from pandas._libs.lib import no_default
 from pandas.util._exceptions import find_stack_level
@@ -16,6 +16,9 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile,
 
 class WeightedGroupBy(GroupBy):
     """Weighted version of ``pandas.core.groupby.GroupBy``."""
+
+    grouper: ops.BaseGrouper
+    """:meta private:"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
