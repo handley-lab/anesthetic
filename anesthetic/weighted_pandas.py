@@ -15,7 +15,10 @@ from anesthetic.utils import (compress_weights, channel_capacity, quantile,
 
 
 class WeightedGroupBy(GroupBy):
-    """Weighted version of :class:`pandas.core.groupby.GroupBy`."""
+    """Weighted version of ``pandas.core.groupby.GroupBy``."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def mean(self, numeric_only=False):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).mean(
@@ -24,11 +27,6 @@ class WeightedGroupBy(GroupBy):
 
     def std(self, numeric_only=False):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).std(
-            numeric_only=numeric_only))
-        return result.__finalize__(self.obj, method="groupby")
-
-    def kurtosis(self, numeric_only=False):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).kurtosis(
             numeric_only=numeric_only))
         return result.__finalize__(self.obj, method="groupby")
 
@@ -44,13 +42,13 @@ class WeightedGroupBy(GroupBy):
 
 
 class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
-    """Weighted version of :class:`pandas.core.groupby.SeriesGroupBy`."""
+    """Weighted version of ``pandas.core.groupby.SeriesGroupBy``."""
 
     pass
 
 
 class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
-    """Weighted version of :class:`pandas.core.groupby.DataFrameGroupBy`."""
+    """Weighted version of ``pandas.core.groupby.DataFrameGroupBy``."""
 
     pass
 
@@ -526,14 +524,18 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         )
 
 
-for cls in [WeightedDataFrame, WeightedSeries]:
+for cls in [WeightedDataFrame, WeightedSeries, WeightedGroupBy]:
     adjust_docstrings(cls, r'\bDataFrame\b', 'WeightedDataFrame')
     adjust_docstrings(cls, r'\bDataFrames\b', 'WeightedDataFrames')
     adjust_docstrings(cls, r'\bSeries\b', 'WeightedSeries')
     adjust_docstrings(cls, 'core', 'pandas.core')
-    adjust_docstrings(cls, 'DataFrameGroupBy',
-                           'pandas.core.groupby.DataFrameGroupBy')
-    adjust_docstrings(cls, 'SeriesGroupBy',
-                           'pandas.core.groupby.SeriesGroupBy')
     adjust_docstrings(cls, 'pandas.core.window.Rolling.quantile',
                            'pandas.core.window.rolling.Rolling.quantile')
+    adjust_docstrings(cls, r'\bDataFrameGroupBy\b', 'WeightedDataFrameGroupBy')
+    adjust_docstrings(cls, r'\bSeriesGroupBy\b', 'WeightedSeriesGroupBy')
+    adjust_docstrings(cls, 'WeightedDataFrameGroupBy.sample',
+                           'pandas.core.groupby.DataFrameGroupBy.sample')
+    adjust_docstrings(cls, 'WeightedSeriesGroupBy.sample',
+                           'pandas.core.groupby.SeriesGroupBy.sample')
+adjust_docstrings(WeightedDataFrame, 'resample', 'pandas.DataFrame.resample')
+adjust_docstrings(WeightedSeries,    'resample', 'pandas.Series.resample')
