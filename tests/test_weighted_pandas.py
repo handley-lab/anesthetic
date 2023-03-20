@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 import matplotlib.pyplot as plt
+from matplotlib.colors import to_rgba
 from pandas.plotting import scatter_matrix, bootstrap_plot
 from pandas.plotting._matplotlib.misc import (
     scatter_matrix as orig_scatter_matrix
@@ -813,6 +814,8 @@ def test_HexBinPlot(mcmc_df, mcmc_wdf):
     wdf_colors = wdf_axes.collections[0].get_facecolors()
     assert_allclose(df_colors, wdf_colors)
 
+    plt.close("all")
+
 
 def test_AreaPlot(mcmc_df, mcmc_wdf):
     fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -933,3 +936,43 @@ def test_drop_weights(mcmc_wdf):
     assert_array_equal(noweights, mcmc_wdf)
     pandas.testing.assert_frame_equal(noweights.drop_weights(), noweights)
     assert noweights.drop_weights() is not noweights
+
+
+def test_blank_axis_labels(mcmc_df, mcmc_wdf):
+    for df in mcmc_df, mcmc_wdf:
+        assert df.plot.area().get_xlabel() == ""
+        assert df.plot.bar().get_xlabel() == ""
+        assert df.plot.barh().get_ylabel() == ""
+
+
+def test_get_index(mcmc_wdf):
+    mcmc_wdf.index = mcmc_wdf.index.rename(('foo', 'weights'))
+    assert mcmc_wdf.plot.area().get_xlabel() == "foo"
+    assert mcmc_wdf.plot.bar().get_xlabel() == "foo"
+    assert mcmc_wdf.plot.barh().get_ylabel() == "foo"
+    for plot in [mcmc_wdf.plot.area, mcmc_wdf.plot.bar, mcmc_wdf.plot.barh]:
+        assert plot(xlabel="my xlabel").get_xlabel() == "my xlabel"
+
+    idx = mcmc_wdf.index.to_frame().to_numpy().T
+    mcmc_wdf.index = MultiIndex.from_arrays([idx[0], idx[0], idx[1]],
+                                            names=('foo', 'bar', 'weights'))
+    assert mcmc_wdf.plot.bar().get_xlabel() == "foo,bar"
+    assert mcmc_wdf.plot.barh().get_ylabel() == "foo,bar"
+    mcmc_wdf.index = MultiIndex.from_arrays([idx[0], idx[0], idx[1]],
+                                            names=(None, None, 'weights'))
+    assert mcmc_wdf.plot.bar().get_xlabel() == ""
+    assert mcmc_wdf.plot.barh().get_ylabel() == ""
+
+
+def test_style(mcmc_wdf):
+    style_dict = dict(x='c', y='y', z='m', w='k')
+    ax = mcmc_wdf.plot.kde(style=style_dict)
+    assert all([line.get_color() == to_rgba(c)
+                for line, c in zip(ax.get_lines(), ['c', 'y', 'm', 'k'])])
+
+    with pytest.raises(TypeError):
+        ax = mcmc_wdf.plot.hist_2d('x', 'y', style='c')
+    with pytest.raises(TypeError):
+        ax = mcmc_wdf.plot.kde_2d('x', 'y', style='c')
+    with pytest.raises(TypeError):
+        ax = mcmc_wdf.plot.scatter_2d('x', 'y', style='c')

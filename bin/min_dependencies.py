@@ -6,5 +6,6 @@ with open("pyproject.toml", 'rb') as f:
 
 deps = pyproject["project"]["dependencies"]
 deps = [dep.replace(">=", "==") for dep in deps]
+deps = [dep.replace("~=", "==") for dep in deps]
 
 print(' '.join(deps))
