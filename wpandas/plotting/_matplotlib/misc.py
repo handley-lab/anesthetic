@@ -1,5 +1,5 @@
 import pandas.plotting._matplotlib.misc as misc
-from anesthetic.plotting._matplotlib.core import _compress_weights
+from wpandas.plotting._matplotlib.core import _compress_weights
 
 
 def scatter_matrix(frame, *args, **kwargs):

@@ -13,15 +13,14 @@ from collections.abc import Sequence
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
-from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
-from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
+from wpandas import WeightedDataFrame, WeightedSeries
+from lpandas import LabelledDataFrame, LabelledSeries
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
-import anesthetic.weighted_pandas
+import wpandas
 from anesthetic.plotting import PlotAccessor
-anesthetic.weighted_pandas._WeightedObject.plot =\
-    CachedAccessor("plot", PlotAccessor)
+wpandas.core._WeightedObject.plot = CachedAccessor("plot", PlotAccessor)
 
 
 class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):

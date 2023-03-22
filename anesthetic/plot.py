@@ -30,10 +30,11 @@ from matplotlib.ticker import MaxNLocator, AutoMinorLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.transforms import Affine2D
 from anesthetic.utils import nest_level
-from anesthetic.utils import (sample_compression_1d, quantile,
+from anesthetic.utils import (sample_compression_1d,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               match_contour_to_contourf)
+from wpandas.utils import quantile
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 

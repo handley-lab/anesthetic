@@ -223,3 +223,4 @@ class LabelledDataFrame(_LabelledObject, DataFrame):
             transpose,
             doc=DataFrame.transpose.__doc__
             )
+

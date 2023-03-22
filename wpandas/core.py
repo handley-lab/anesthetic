@@ -5,8 +5,8 @@ import numpy as np
 from pandas import Series, DataFrame, concat, MultiIndex
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
-from anesthetic.utils import (compress_weights, channel_capacity, quantile,
-                              temporary_seed, adjust_docstrings)
+from wpandas.utils import (compress_weights, channel_capacity, quantile,
+                           temporary_seed, adjust_docstrings)
 
 
 class _WeightedObject(object):

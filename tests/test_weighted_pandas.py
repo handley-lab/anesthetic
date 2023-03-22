@@ -1,4 +1,4 @@
-from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from wpandas import WeightedDataFrame, WeightedSeries
 from pandas import DataFrame, MultiIndex
 import pandas.testing
 from anesthetic.utils import channel_capacity

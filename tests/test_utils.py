@@ -9,7 +9,8 @@ from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               iso_probability_contours_from_samples,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
-                              insertion_p_value, compress_weights)
+                              insertion_p_value)
+from wpandas.utils import compress_weights
 
 
 def test_compress_weights():

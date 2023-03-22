@@ -8,7 +8,7 @@ from pandas import MultiIndex
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from anesthetic.weighted_pandas import WeightedSeries, WeightedDataFrame
+from wpandas import WeightedSeries, WeightedDataFrame
 from anesthetic import (
     Samples, MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes,
     read_chains
