@@ -25,23 +25,30 @@ class WeightedGroupBy(GroupBy):
 
     def mean(self, *args, **kwargs):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).mean(
-            *args, **kwargs))
+            *args, **kwargs)).set_weights(self.get_weights())
         return result.__finalize__(self.obj, method="groupby")
 
     def std(self, *args, **kwargs):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).std(
-            *args, **kwargs))
+            *args, **kwargs)).set_weights(self.get_weights())
         return result.__finalize__(self.obj, method="groupby")
 
     def median(self, *args, **kwargs):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).median(
-            *args, **kwargs))
+            *args, **kwargs)).set_weights(self.get_weights())
         return result.__finalize__(self.obj, method="groupby")
 
     def var(self, *args, **kwargs):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).var(
-            *args, **kwargs))
+            *args, **kwargs)).set_weights(self.get_weights())
         return result.__finalize__(self.obj, method="groupby")
+
+    def sample(self, *args, **kwargs):  # noqa: D102
+        return super().sample(weights=self.obj.get_weights(), *args, **kwargs)
+
+    def get_weights(self):
+        """Return the weights of the grouped samples."""
+        return self.agg(lambda df: df.get_weights().sum())
 
 
 class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
@@ -59,7 +66,45 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
     :meta private:
     """
 
-    pass
+    def get_weights(self):
+        """Return the weights of the grouped samples."""
+        return super().get_weights().min(axis=1-self.axis)
+
+    def _gotitem(self, key, ndim: int, subset=None):
+        if ndim == 2:
+            if subset is None:
+                subset = self.obj
+            return WeightedDataFrameGroupBy(
+                subset,
+                self.grouper,
+                axis=self.axis,
+                level=self.level,
+                grouper=self.grouper,
+                exclusions=self.exclusions,
+                selection=key,
+                as_index=self.as_index,
+                sort=self.sort,
+                group_keys=self.group_keys,
+                observed=self.observed,
+                dropna=self.dropna,
+            )
+        elif ndim == 1:
+            if subset is None:
+                subset = self.obj[key]
+            return WeightedSeriesGroupBy(
+                subset,
+                level=self.level,
+                grouper=self.grouper,
+                exclusions=self.exclusions,
+                selection=key,
+                as_index=self.as_index,
+                sort=self.sort,
+                group_keys=self.group_keys,
+                observed=self.observed,
+                dropna=self.dropna,
+            )
+
+        raise AssertionError("invalid ndim for _gotitem")
 
 
 class _WeightedObject(object):

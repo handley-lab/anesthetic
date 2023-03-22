@@ -1343,16 +1343,29 @@ def test_old_gui():
 
 def test_groupby_stats():
     mcmc = read_chains('./tests/example_data/cb')
-    chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
-    assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].mean()
-                             .to_numpy()[:-1],
-           chains.mean().iloc[0, :].to_numpy()))
-    assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].std()
-                             .to_numpy()[:-1],
-           chains.std().iloc[0, :].to_numpy()))
-    assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].median()
-                             .to_numpy()[:-1],
-                             chains.median().iloc[0, :].to_numpy()))
-    assert np.all(np.isclose(mcmc.loc[mcmc['chain'] == 1].var()
-                             .to_numpy()[:-1],
-           chains.var().iloc[0, :].to_numpy()))
+    chains = mcmc.groupby('chain')
+    for chain in [1, 2]:
+        i = mcmc.chain == chain
+        assert_allclose(mcmc.loc[i].mean().drop('chain'),
+                        chains.mean().loc[chain, :])
+        assert_allclose(mcmc.loc[i].std().drop('chain'),
+                        chains.std().loc[chain, :])
+        assert_allclose(mcmc.loc[i].median().drop('chain'),
+                        chains.median().loc[chain, :])
+        assert_allclose(mcmc.loc[i].var().drop('chain'),
+                        chains.var().loc[chain, :])
+
+    assert_allclose(mcmc.mean().drop('chain'), chains.mean().mean())
+
+    for col in mcmc.columns:
+        if 'chain' not in col:
+            for chain in [1, 2]:
+                i = mcmc.chain == chain
+                assert_allclose(mcmc.loc[i, col].mean(),
+                                chains[[col]].mean().loc[chain, :])
+                assert_allclose(mcmc.loc[i, col].std(),
+                                chains[[col]].std().loc[chain, :])
+                assert_allclose(mcmc.loc[i, col].median(),
+                                chains[[col]].median().loc[chain, :])
+                assert_allclose(mcmc.loc[i, col].var(),
+                                chains[[col]].var().loc[chain, :])
