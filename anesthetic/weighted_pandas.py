@@ -70,7 +70,7 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
         """Return the weights of the grouped samples."""
         return super().get_weights().min(axis=1-self.axis)
 
-    def _gotitem(self, key, ndim: int, subset=None):
+    def _gotitem(self, key, ndim: int, subset=None): # pragma: no cover
         if ndim == 2:
             if subset is None:
                 subset = self.obj

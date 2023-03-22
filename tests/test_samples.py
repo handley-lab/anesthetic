@@ -1369,3 +1369,8 @@ def test_groupby_stats():
                                 chains[[col]].median().loc[chain, :])
                 assert_allclose(mcmc.loc[i, col].var(),
                                 chains[[col]].var().loc[chain, :])
+
+    sample = chains.sample(5)
+    assert len(sample) == 10
+    assert sample.value_counts('chain')[1] == 5
+    assert sample.value_counts('chain')[2] == 5
