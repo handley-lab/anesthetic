@@ -9,4 +9,4 @@ def close_figures_on_teardown():
 
 
 def test_gui():
-    gui('./tests/example_data/pc', '--params', 'x0', 'x1', 'x2')
+    gui(['./tests/example_data/pc', '--params', 'x0', 'x1', 'x2'])
