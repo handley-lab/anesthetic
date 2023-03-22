@@ -1359,6 +1359,19 @@ def test_groupby_stats():
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.var().loc[chain, :])
 
+        assert_allclose(chains.get_group(chain).mean()
+                        .drop(('chain', '$n_\\mathrm{chain}$')),
+                        chains.mean().loc[chain, :])
+        assert_allclose(chains.get_group(chain).std()
+                        .drop(('chain', '$n_\\mathrm{chain}$')),
+                        chains.std().loc[chain, :])
+        assert_allclose(chains.get_group(chain).median()
+                        .drop(('chain', '$n_\\mathrm{chain}$')),
+                        chains.median().loc[chain, :])
+        assert_allclose(chains.get_group(chain).var()
+                        .drop(('chain', '$n_\\mathrm{chain}$')),
+                        chains.var().loc[chain, :])
+
     assert_allclose(mcmc.mean().drop(('chain', '$n_\\mathrm{chain}$')),
                     chains.mean().mean())
 
