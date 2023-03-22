@@ -59,7 +59,7 @@ getdist = ["getdist"]
 extras = ["astropy", "fastkde", "getdist"]
 
 [project.scripts]
-anesthetic = "anesthetic.scripts:main"
+anesthetic = "anesthetic.scripts:gui"
 
 [tool.setuptools.dynamic]
 version = {attr = "anesthetic._version.__version__"}
