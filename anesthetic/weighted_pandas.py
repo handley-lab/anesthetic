@@ -23,24 +23,24 @@ class WeightedGroupBy(GroupBy):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def mean(self, numeric_only=False):  # noqa: D102
+    def mean(self, *args, **kwargs):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).mean(
-            numeric_only=numeric_only))
+            *args, **kwargs))
         return result.__finalize__(self.obj, method="groupby")
 
-    def std(self, numeric_only=False):  # noqa: D102
+    def std(self, *args, **kwargs):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).std(
-            numeric_only=numeric_only))
+            *args, **kwargs))
         return result.__finalize__(self.obj, method="groupby")
 
-    def median(self, numeric_only=None):  # noqa: D102
+    def median(self, *args, **kwargs):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).median(
-            numeric_only=numeric_only))
+            *args, **kwargs))
         return result.__finalize__(self.obj, method="groupby")
 
-    def var(self, numeric_only=False):  # noqa: D102
+    def var(self, *args, **kwargs):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).var(
-            numeric_only=numeric_only))
+            *args, **kwargs))
         return result.__finalize__(self.obj, method="groupby")
 
 
