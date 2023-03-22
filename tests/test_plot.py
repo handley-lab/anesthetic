@@ -429,13 +429,13 @@ def test_hist_plot_1d():
     data = np.random.randn(1000)
 
     # Check heights for histtype 'bar'
-    bars = hist_plot_1d(ax, data, histtype='bar')
+    bars = hist_plot_1d(ax, data, histtype='bar')[2]
     assert np.all([isinstance(b, Patch) for b in bars])
     assert max([b.get_height() for b in bars]) == 1.
     assert np.all(np.array([b.get_height() for b in bars]) <= 1.)
 
     # Check heights for histtype 'step'
-    polygon, = hist_plot_1d(ax, data, histtype='step')
+    polygon, = hist_plot_1d(ax, data, histtype='step')[2]
     assert isinstance(polygon, Polygon)
     trans = polygon.get_transform() - ax.transData
     assert np.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
@@ -443,7 +443,7 @@ def test_hist_plot_1d():
     assert np.all(trans.transform(polygon.xy)[:, -1] <= 1.)
 
     # Check heights for histtype 'stepfilled'
-    polygon, = hist_plot_1d(ax, data, histtype='stepfilled')
+    polygon, = hist_plot_1d(ax, data, histtype='stepfilled')[2]
     assert isinstance(polygon, Polygon)
     trans = polygon.get_transform() - ax.transData
     assert np.isclose(trans.transform(polygon.xy)[:, -1].max(), 1.,
@@ -451,17 +451,17 @@ def test_hist_plot_1d():
     assert np.all(trans.transform(polygon.xy)[:, -1] <= 1.)
 
     # Check arguments are passed onward to underlying function
-    bars = hist_plot_1d(ax, data, histtype='bar', color='r', alpha=0.5)
+    bars = hist_plot_1d(ax, data, histtype='bar', color='r', alpha=0.5)[2]
     cc = ColorConverter.to_rgba('r', alpha=0.5)
     assert np.all([b.get_fc() == cc for b in bars])
     bars = hist_plot_1d(ax, data, histtype='bar', cmap=plt.cm.viridis,
-                        alpha=0.5)
+                        alpha=0.5)[2]
     cc = ColorConverter.to_rgba(plt.cm.viridis(0.68), alpha=0.5)
     assert np.all([b.get_fc() == cc for b in bars])
-    polygon, = hist_plot_1d(ax, data, histtype='step', color='r', alpha=0.5)
+    polygon, = hist_plot_1d(ax, data, histtype='step', color='r', alpha=0.5)[2]
     assert polygon.get_ec() == ColorConverter.to_rgba('r', alpha=0.5)
     polygon, = hist_plot_1d(ax, data, histtype='step', cmap=plt.cm.viridis,
-                            color='r')
+                            color='r')[2]
     assert polygon.get_ec() == ColorConverter.to_rgba('r')
 
 
@@ -471,7 +471,7 @@ def test_astropyhist_plot_1d(bins):
         fig, ax = plt.subplots()
         np.random.seed(0)
         data = np.random.randn(100)
-        bars = hist_plot_1d(ax, data, histtype='bar', bins=bins)
+        bars = hist_plot_1d(ax, data, histtype='bar', bins=bins)[2]
         assert np.all([isinstance(b, Patch) for b in bars])
         assert max([b.get_height() for b in bars]) == 1.
         assert np.all(np.array([b.get_height() for b in bars]) <= 1.)
@@ -517,7 +517,8 @@ def test_1d_density_kwarg(plot_1d, s):
         fig, ax = plt.subplots()
 
         # hist density = False:
-        h = hist_plot_1d(ax, x, density=False, bins=np.linspace(-5.5, 5.5, 12))
+        h = hist_plot_1d(ax, x, density=False,
+                         bins=np.linspace(-5.5, 5.5, 12))[2]
         bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
         assert bar_height == pytest.approx(1, rel=0.1)
 
@@ -528,7 +529,8 @@ def test_1d_density_kwarg(plot_1d, s):
         assert kde_height == pytest.approx(1, rel=0.1)
 
         # hist density = True:
-        h = hist_plot_1d(ax, x, density=True, bins=np.linspace(-5.5, 5.5, 12))
+        h = hist_plot_1d(ax, x, density=True,
+                         bins=np.linspace(-5.5, 5.5, 12))[2]
         bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
         assert bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1)
 
