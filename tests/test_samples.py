@@ -1343,19 +1343,19 @@ def test_old_gui():
 
 def test_groupby_stats():
     mcmc = read_chains('./tests/example_data/cb')
-    chains = mcmc.groupby('chain')
+    chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
     for chain in [1, 2]:
         i = mcmc.chain == chain
-        assert_allclose(mcmc.loc[i].mean().drop('chain'),
+        assert_allclose(mcmc.loc[i].mean().drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.mean().loc[chain, :])
-        assert_allclose(mcmc.loc[i].std().drop('chain'),
+        assert_allclose(mcmc.loc[i].std().drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.std().loc[chain, :])
-        assert_allclose(mcmc.loc[i].median().drop('chain'),
+        assert_allclose(mcmc.loc[i].median().drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.median().loc[chain, :])
-        assert_allclose(mcmc.loc[i].var().drop('chain'),
+        assert_allclose(mcmc.loc[i].var().drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.var().loc[chain, :])
 
-    assert_allclose(mcmc.mean().drop('chain'), chains.mean().mean())
+    assert_allclose(mcmc.mean().drop(('chain', '$n_\\mathrm{chain}$')), chains.mean().mean())
 
     for col in mcmc.columns:
         if 'chain' not in col:
