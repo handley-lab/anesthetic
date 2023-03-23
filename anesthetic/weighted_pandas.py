@@ -43,6 +43,26 @@ class WeightedGroupBy(GroupBy):
             *args, **kwargs)).set_weights(self.get_weights())
         return result.__finalize__(self.obj, method="groupby")
 
+    def kurt(self, *args, **kwargs):  # noqa: D102
+        result = self.agg(lambda df: self.obj._constructor(df).kurt(
+            *args, **kwargs)).set_weights(self.get_weights())
+        return result.__finalize__(self.obj, method="groupby")
+
+    def kurtosis(self, *args, **kwargs):  # noqa: D102
+        result = self.agg(lambda df: self.obj._constructor(df).kurtosis(
+            *args, **kwargs)).set_weights(self.get_weights())
+        return result.__finalize__(self.obj, method="groupby")
+
+    def skew(self, *args, **kwargs):  # noqa: D102
+        result = self.agg(lambda df: self.obj._constructor(df).skew(
+            *args, **kwargs)).set_weights(self.get_weights())
+        return result.__finalize__(self.obj, method="groupby")
+
+    def sem(self, *args, **kwargs):  # noqa: D102
+        result = self.agg(lambda df: self.obj._constructor(df).sem(
+            *args, **kwargs)).set_weights(self.get_weights())
+        return result.__finalize__(self.obj, method="groupby")
+
     def sample(self, *args, **kwargs):  # noqa: D102
         return super().sample(weights=self.obj.get_weights(), *args, **kwargs)
 
