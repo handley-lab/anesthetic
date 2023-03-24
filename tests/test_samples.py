@@ -1427,6 +1427,8 @@ def test_groupby_stats():
                                 chains[[col]].mad().loc[chain, :])
                 assert_allclose(mcmc.loc[i, col].sem(),
                                 chains[[col]].sem().loc[chain, :])
+            sample = chains[[col]].sample(5)
+            assert len(sample) == 10
 
     sample = chains.sample(5)
     assert len(sample) == 10
