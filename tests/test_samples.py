@@ -1427,10 +1427,14 @@ def test_groupby_stats():
                                 chains[[col]].mad().loc[chain, :])
                 assert_allclose(mcmc.loc[i, col].sem(),
                                 chains[[col]].sem().loc[chain, :])
-            sample = chains[[col]].sample(5)
-            assert len(sample) == 10
 
     sample = chains.sample(5)
     assert len(sample) == 10
     assert sample.value_counts('chain')[1] == 5
     assert sample.value_counts('chain')[2] == 5
+
+    chains = mcmc.chain.groupby(mcmc.chain)
+    sample = chains.sample(5)
+    assert len(sample) == 10
+    assert sample.value_counts()[1] == 5
+    assert sample.value_counts()[2] == 5
