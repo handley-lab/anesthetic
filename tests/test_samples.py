@@ -1345,32 +1345,32 @@ def test_groupby_stats():
     mcmc = read_chains('./tests/example_data/cb')
     chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'))
     for chain in [1, 2]:
-        i = mcmc.chain == chain
-        assert_allclose(mcmc.loc[i].mean()
+        mask = mcmc.chain == chain
+        assert_allclose(mcmc.loc[mask].mean()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.mean().loc[chain, :])
-        assert_allclose(mcmc.loc[i].std()
+        assert_allclose(mcmc.loc[mask].std()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.std().loc[chain, :])
-        assert_allclose(mcmc.loc[i].median()
+        assert_allclose(mcmc.loc[mask].median()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.median().loc[chain, :])
-        assert_allclose(mcmc.loc[i].var()
+        assert_allclose(mcmc.loc[mask].var()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.var().loc[chain, :])
-        assert_allclose(mcmc.loc[i].kurt()
+        assert_allclose(mcmc.loc[mask].kurt()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.kurt().loc[chain, :])
-        assert_allclose(mcmc.loc[i].kurtosis()
+        assert_allclose(mcmc.loc[mask].kurtosis()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.kurtosis().loc[chain, :])
-        assert_allclose(mcmc.loc[i].skew()
+        assert_allclose(mcmc.loc[mask].skew()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.skew().loc[chain, :])
-        assert_allclose(mcmc.loc[i].mad()
+        assert_allclose(mcmc.loc[mask].mad()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.mad().loc[chain, :])
-        assert_allclose(mcmc.loc[i].sem()
+        assert_allclose(mcmc.loc[mask].sem()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.sem().loc[chain, :])
 
@@ -1424,32 +1424,32 @@ def test_groupby_stats():
     for col in mcmc.columns:
         if 'chain' not in col:
             for chain in [1, 2]:
-                i = mcmc.chain == chain
-                assert_allclose(mcmc.loc[i, col].mean(),
+                mask = mcmc.chain == chain
+                assert_allclose(mcmc.loc[mask, col].mean(),
                                 chains[[col]].mean().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].std(),
+                assert_allclose(mcmc.loc[mask, col].std(),
                                 chains[[col]].std().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].median(),
+                assert_allclose(mcmc.loc[mask, col].median(),
                                 chains[[col]].median().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].var(),
+                assert_allclose(mcmc.loc[mask, col].var(),
                                 chains[[col]].var().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].kurt(),
+                assert_allclose(mcmc.loc[mask, col].kurt(),
                                 chains[[col]].kurt().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].kurtosis(),
+                assert_allclose(mcmc.loc[mask, col].kurtosis(),
                                 chains[[col]].kurtosis().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].skew(),
+                assert_allclose(mcmc.loc[mask, col].skew(),
                                 chains[[col]].skew().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].mad(),
+                assert_allclose(mcmc.loc[mask, col].mad(),
                                 chains[[col]].mad().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].sem(),
+                assert_allclose(mcmc.loc[mask, col].sem(),
                                 chains[[col]].sem().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].cov(mcmc.loc[i, col]),
+                assert_allclose(mcmc.loc[mask, col].cov(mcmc.loc[mask, col]),
                                 chains[[col]].cov().loc[chain, :])
-                assert_allclose(mcmc.loc[i, col].corr(mcmc.loc[i, col]),
-                                chains[[col]].corr(mcmc.loc[i, col])
+                assert_allclose(mcmc.loc[mask, col].corr(mcmc.loc[mask, col]),
+                                chains[[col]].corr(mcmc.loc[mask, col])
                                 .loc[chain, :])
                 q = np.random.rand()
-                assert_allclose(mcmc.loc[i, col].quantile(q),
+                assert_allclose(mcmc.loc[mask, col].quantile(q),
                                 chains[[col]].quantile(q).loc[chain, :])
 
     sample = chains.sample(5)
