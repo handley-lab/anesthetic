@@ -1409,6 +1409,10 @@ def test_groupby_stats():
                         .drop(('chain', '$n_\\mathrm{chain}$'))
                         .drop(('chain', '$n_\\mathrm{chain}$'), axis=1),
                         chains.cov().loc[chain, :])
+        assert_allclose(chains.get_group(chain).corrwith(mcmc)
+                        .drop(('chain', '$n_\\mathrm{chain}$')),
+                        chains.corrwith(mcmc).loc[chain, :]
+                        .drop(('chain', '$n_\\mathrm{chain}$')))
         q = np.random.rand()
         assert_allclose(chains.get_group(chain).quantile(q)
                         .drop(('chain', '$n_\\mathrm{chain}$')),
