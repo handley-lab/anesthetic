@@ -1352,11 +1352,11 @@ def test_groupby_stats():
     assert chains.kurt().isweighted() is True
     assert chains.kurtosis().isweighted() is True
     assert chains.skew().isweighted() is True
-    # assert chains.mad().isweighted() is True
+    assert chains.mad().isweighted() is True
     assert chains.sem().isweighted() is True
-    # assert chains.corr().isweighted() is True
-    # assert chains.cov().isweighted() is True
-    # assert chains.corrwith(mcmc).isweighted() is True
+    assert chains.corr().isweighted() is True
+    assert chains.cov().isweighted() is True
+    assert chains.corrwith(mcmc).isweighted() is True
 
     for chain in [1, 2]:
         mask = mcmc.chain == chain
