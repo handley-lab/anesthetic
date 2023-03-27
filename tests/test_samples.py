@@ -1439,14 +1439,14 @@ def test_groupby_stats():
                                 chains[[col]].mad().loc[chain, :])
                 assert_allclose(mcmc.loc[i, col].sem(),
                                 chains[[col]].sem().loc[chain, :])
-                q = np.random.rand()
-                assert_allclose(mcmc.loc[i, col].quantile(q),
-                                chains[[col]].quantile(q).loc[chain, :])
                 assert_allclose(mcmc.loc[i, col].cov(mcmc.loc[i, col]),
                                 chains[[col]].cov().loc[chain, :])
                 assert_allclose(mcmc.loc[i, col].corr(mcmc.loc[i, col]),
                                 chains[[col]].corr(mcmc.loc[i, col])
                                 .loc[chain, :])
+                q = np.random.rand()
+                assert_allclose(mcmc.loc[i, col].quantile(q),
+                                chains[[col]].quantile(q).loc[chain, :])
 
     sample = chains.sample(5)
     assert len(sample) == 10
