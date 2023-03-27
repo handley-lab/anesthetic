@@ -1344,6 +1344,20 @@ def test_old_gui():
 def test_groupby_stats():
     mcmc = read_chains('./tests/example_data/cb')
     chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'))
+
+    assert chains.mean().isweighted() is True
+    assert chains.std().isweighted() is True
+    assert chains.median().isweighted() is True
+    assert chains.var().isweighted() is True
+    assert chains.kurt().isweighted() is True
+    assert chains.kurtosis().isweighted() is True
+    assert chains.skew().isweighted() is True
+    # assert chains.mad().isweighted() is True
+    assert chains.sem().isweighted() is True
+    # assert chains.corr().isweighted() is True
+    # assert chains.cov().isweighted() is True
+    # assert chains.corrwith(mcmc).isweighted() is True
+
     for chain in [1, 2]:
         mask = mcmc.chain == chain
         assert_allclose(mcmc.loc[mask].mean()
