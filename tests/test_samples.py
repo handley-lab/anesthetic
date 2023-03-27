@@ -1358,6 +1358,16 @@ def test_groupby_stats():
     assert chains.cov().isweighted() is True
     assert chains.corrwith(mcmc).isweighted() is True
 
+    w1 = mcmc.loc[mcmc.chain == 1].get_weights().sum()
+    w2 = mcmc.loc[mcmc.chain == 2].get_weights().sum()
+    assert np.all(chains.mean().get_weights() == [w1, w2])
+    assert np.all(chains.std().get_weights() == [w1, w2])
+    assert np.all(chains.median().get_weights() == [w1, w2])
+    assert np.all(chains.var().get_weights() == [w1, w2])
+    assert np.all(chains.kurt().get_weights() == [w1, w2])
+    assert np.all(chains.kurtosis().get_weights() == [w1, w2])
+    assert np.all(chains.skew().get_weights() == [w1, w2])
+
     for chain in [1, 2]:
         mask = mcmc.chain == chain
         assert_allclose(mcmc.loc[mask].mean()
