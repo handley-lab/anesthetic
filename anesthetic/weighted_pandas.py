@@ -63,6 +63,11 @@ class WeightedGroupBy(GroupBy):
             *args, **kwargs)).set_weights(self.get_weights())
         return result.__finalize__(self.obj, method="groupby")
 
+    def quantile(self, *args, **kwargs):  # noqa: D102
+        result = self.agg(lambda df: self.obj._constructor(df).quantile(
+            *args, **kwargs)).set_weights(self.get_weights())
+        return result.__finalize__(self.obj, method="groupby")
+
     def get_weights(self):
         """Return the weights of the grouped samples."""
         return self.agg(lambda df: df.get_weights().sum())

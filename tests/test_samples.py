@@ -1401,6 +1401,10 @@ def test_groupby_stats():
         assert_allclose(chains.get_group(chain).sem()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.sem().loc[chain, :])
+        q = np.random.rand()
+        assert_allclose(chains.get_group(chain).quantile(q)
+                        .drop(('chain', '$n_\\mathrm{chain}$')),
+                        chains.quantile(q).loc[chain, :])
 
     assert_allclose(mcmc.mean().drop(('chain', '$n_\\mathrm{chain}$')),
                     chains.mean().mean())
@@ -1427,6 +1431,9 @@ def test_groupby_stats():
                                 chains[[col]].mad().loc[chain, :])
                 assert_allclose(mcmc.loc[i, col].sem(),
                                 chains[[col]].sem().loc[chain, :])
+                q = np.random.rand()
+                assert_allclose(mcmc.loc[i, col].quantile(q),
+                                chains[[col]].quantile(q).loc[chain, :])
 
     sample = chains.sample(5)
     assert len(sample) == 10
