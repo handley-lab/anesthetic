@@ -1343,7 +1343,7 @@ def test_old_gui():
 
 def test_groupby_stats():
     mcmc = read_chains('./tests/example_data/cb')
-    chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
+    chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'))
     for chain in [1, 2]:
         i = mcmc.chain == chain
         assert_allclose(mcmc.loc[i].mean()
@@ -1401,6 +1401,10 @@ def test_groupby_stats():
         assert_allclose(chains.get_group(chain).sem()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.sem().loc[chain, :])
+        assert_allclose(chains.get_group(chain).corr()
+                        .drop(('chain', '$n_\\mathrm{chain}$'))
+                        .drop(('chain', '$n_\\mathrm{chain}$'), axis=1),
+                        chains.corr().loc[chain, :])
         q = np.random.rand()
         assert_allclose(chains.get_group(chain).quantile(q)
                         .drop(('chain', '$n_\\mathrm{chain}$')),
@@ -1434,6 +1438,9 @@ def test_groupby_stats():
                 q = np.random.rand()
                 assert_allclose(mcmc.loc[i, col].quantile(q),
                                 chains[[col]].quantile(q).loc[chain, :])
+                assert_allclose(mcmc.loc[i, col].corr(mcmc.loc[i, col]),
+                                chains[[col]].corr(mcmc.loc[i, col])
+                                .loc[chain, :])
 
     sample = chains.sample(5)
     assert len(sample) == 10
