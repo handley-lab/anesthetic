@@ -63,8 +63,10 @@ class WeightedGroupBy(GroupBy):
             *args, **kwargs)).set_weights(self.get_weights())
         return result.__finalize__(self.obj, method="groupby")
 
-    def sample(self, *args, **kwargs):  # noqa: D102
-        return super().sample(weights=self.obj.get_weights(), *args, **kwargs)
+    def quantile(self, *args, **kwargs):  # noqa: D102
+        result = self.agg(lambda df: self.obj._constructor(df).quantile(
+            *args, **kwargs)).set_weights(self.get_weights())
+        return result.__finalize__(self.obj, method="groupby")
 
     def get_weights(self):
         """Return the weights of the grouped samples."""
@@ -72,19 +74,14 @@ class WeightedGroupBy(GroupBy):
 
 
 class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
-    """Weighted version of ``pandas.core.groupby.SeriesGroupBy``.
+    """Weighted version of ``pandas.core.groupby.SeriesGroupBy``."""
 
-    :meta private:
-    """
-
-    pass
+    def sample(self, *args, **kwargs):  # noqa: D102
+        return super().sample(weights=self.obj.get_weights(), *args, **kwargs)
 
 
 class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
-    """Weighted version of ``pandas.core.groupby.DataFrameGroupBy``.
-
-    :meta private:
-    """
+    """Weighted version of ``pandas.core.groupby.DataFrameGroupBy``."""
 
     def get_weights(self):
         """Return the weights of the grouped samples."""
@@ -125,6 +122,9 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
             )
 
         raise AssertionError("invalid ndim for _gotitem")
+
+    def sample(self, *args, **kwargs):  # noqa: D102
+        return super().sample(weights=self.obj.get_weights(), *args, **kwargs)
 
 
 class _WeightedObject(object):
@@ -598,7 +598,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         )
 
 
-for cls in [WeightedDataFrame, WeightedSeries, WeightedGroupBy]:
+for cls in [WeightedDataFrame, WeightedSeries, WeightedGroupBy,
+            WeightedDataFrameGroupBy, WeightedSeriesGroupBy]:
     adjust_docstrings(cls, r'\bDataFrame\b', 'WeightedDataFrame')
     adjust_docstrings(cls, r'\bDataFrames\b', 'WeightedDataFrames')
     adjust_docstrings(cls, r'\bSeries\b', 'WeightedSeries')
@@ -607,9 +608,5 @@ for cls in [WeightedDataFrame, WeightedSeries, WeightedGroupBy]:
                            'pandas.core.window.rolling.Rolling.quantile')
     adjust_docstrings(cls, r'\bDataFrameGroupBy\b', 'WeightedDataFrameGroupBy')
     adjust_docstrings(cls, r'\bSeriesGroupBy\b', 'WeightedSeriesGroupBy')
-    adjust_docstrings(cls, 'WeightedDataFrameGroupBy.sample',
-                           'pandas.core.groupby.DataFrameGroupBy.sample')
-    adjust_docstrings(cls, 'WeightedSeriesGroupBy.sample',
-                           'pandas.core.groupby.SeriesGroupBy.sample')
 adjust_docstrings(WeightedDataFrame, 'resample', 'pandas.DataFrame.resample')
 adjust_docstrings(WeightedSeries,    'resample', 'pandas.Series.resample')
