@@ -1343,7 +1343,7 @@ def test_old_gui():
 
 def test_groupby_stats():
     mcmc = read_chains('./tests/example_data/cb')
-    chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
+    chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'))
     for chain in [1, 2]:
         i = mcmc.chain == chain
         assert_allclose(mcmc.loc[i].mean()
@@ -1373,34 +1373,25 @@ def test_groupby_stats():
         assert_allclose(mcmc.loc[i].sem()
                         .drop(('chain', '$n_\\mathrm{chain}$')),
                         chains.sem().loc[chain, :])
+        assert_allclose(mcmc.loc[i].drop(
+                        columns=('chain', '$n_\\mathrm{chain}$')).cov(),
+                        chains.cov().loc[chain, :])
+        assert_allclose(mcmc.loc[i].drop(
+                        columns=('chain', '$n_\\mathrm{chain}$')).corr(),
+                        chains.corr().loc[chain, :])
 
-        assert_allclose(chains.get_group(chain).mean()
-                        .drop(('chain', '$n_\\mathrm{chain}$')),
-                        chains.mean().loc[chain, :])
-        assert_allclose(chains.get_group(chain).std()
-                        .drop(('chain', '$n_\\mathrm{chain}$')),
-                        chains.std().loc[chain, :])
-        assert_allclose(chains.get_group(chain).median()
-                        .drop(('chain', '$n_\\mathrm{chain}$')),
-                        chains.median().loc[chain, :])
-        assert_allclose(chains.get_group(chain).var()
-                        .drop(('chain', '$n_\\mathrm{chain}$')),
-                        chains.var().loc[chain, :])
-        assert_allclose(chains.get_group(chain).kurt()
-                        .drop(('chain', '$n_\\mathrm{chain}$')),
-                        chains.kurt().loc[chain, :])
-        assert_allclose(chains.get_group(chain).kurtosis()
-                        .drop(('chain', '$n_\\mathrm{chain}$')),
-                        chains.kurtosis().loc[chain, :])
-        assert_allclose(chains.get_group(chain).skew()
-                        .drop(('chain', '$n_\\mathrm{chain}$')),
-                        chains.skew().loc[chain, :])
-        assert_allclose(chains.get_group(chain).mad()
-                        .drop(('chain', '$n_\\mathrm{chain}$')),
-                        chains.mad().loc[chain, :])
-        assert_allclose(chains.get_group(chain).sem()
-                        .drop(('chain', '$n_\\mathrm{chain}$')),
-                        chains.sem().loc[chain, :])
+        group = chains.get_group(chain)
+        assert_allclose(mcmc.loc[i].mean(), group.mean())
+        assert_allclose(mcmc.loc[i].std(), group.std())
+        assert_allclose(mcmc.loc[i].median(), group.median())
+        assert_allclose(mcmc.loc[i].var(), group.var())
+        assert_allclose(mcmc.loc[i].kurt(), group.kurt())
+        assert_allclose(mcmc.loc[i].kurtosis(), group.kurtosis())
+        assert_allclose(mcmc.loc[i].skew(), group.skew())
+        assert_allclose(mcmc.loc[i].mad(), group.mad())
+        assert_allclose(mcmc.loc[i].sem(), group.sem())
+        assert_allclose(mcmc.loc[i].cov(), group.cov())
+        assert_allclose(mcmc.loc[i].corr(), group.corr())
 
     assert_allclose(mcmc.mean().drop(('chain', '$n_\\mathrm{chain}$')),
                     chains.mean().mean())
@@ -1427,6 +1418,18 @@ def test_groupby_stats():
                                 chains[[col]].mad().loc[chain, :])
                 assert_allclose(mcmc.loc[i, col].sem(),
                                 chains[[col]].sem().loc[chain, :])
+
+                group = chains[[col]].get_group(chain)
+                assert_allclose(mcmc.loc[i, col].mean(), group.mean())
+                assert_allclose(mcmc.loc[i, col].std(), group.std())
+                assert_allclose(mcmc.loc[i, col].median(), group.median())
+                assert_allclose(mcmc.loc[i, col].var(), group.var())
+                assert_allclose(mcmc.loc[i, col].kurt(), group.kurt())
+                assert_allclose(mcmc.loc[i, col].kurtosis(), group.kurtosis())
+                assert_allclose(mcmc.loc[i, col].skew(), group.skew())
+                assert_allclose(mcmc.loc[i, col].mad(), group.mad())
+                assert_allclose(mcmc.loc[i, col].sem(), group.sem())
+
 
     sample = chains.sample(5)
     assert len(sample) == 10
