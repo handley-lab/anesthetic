@@ -21,48 +21,34 @@ class WeightedGroupBy(GroupBy):
     grouper: ops.BaseGrouper
     """:meta private:"""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def _add_weights(self, name, *args, **kwargs):
+        result = self.agg(lambda df: getattr(self.obj._constructor(df), name)
+                          (*args, **kwargs)).set_weights(self.get_weights())
+        return result.__finalize__(self.obj, method="groupby")
 
     def mean(self, *args, **kwargs):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).mean(
-            *args, **kwargs)).set_weights(self.get_weights())
-        return result.__finalize__(self.obj, method="groupby")
+        return self._add_weights("mean", *args, **kwargs)
 
     def std(self, *args, **kwargs):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).std(
-            *args, **kwargs)).set_weights(self.get_weights())
-        return result.__finalize__(self.obj, method="groupby")
+        return self._add_weights("std", *args, **kwargs)
 
     def median(self, *args, **kwargs):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).median(
-            *args, **kwargs)).set_weights(self.get_weights())
-        return result.__finalize__(self.obj, method="groupby")
+        return self._add_weights("median", *args, **kwargs)
 
     def var(self, *args, **kwargs):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).var(
-            *args, **kwargs)).set_weights(self.get_weights())
-        return result.__finalize__(self.obj, method="groupby")
+        return self._add_weights("var", *args, **kwargs)
 
     def kurt(self, *args, **kwargs):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).kurt(
-            *args, **kwargs)).set_weights(self.get_weights())
-        return result.__finalize__(self.obj, method="groupby")
+        return self._add_weights("kurt", *args, **kwargs)
 
     def kurtosis(self, *args, **kwargs):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).kurtosis(
-            *args, **kwargs)).set_weights(self.get_weights())
-        return result.__finalize__(self.obj, method="groupby")
+        return self._add_weights("kurtosis", *args, **kwargs)
 
     def sem(self, *args, **kwargs):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).sem(
-            *args, **kwargs)).set_weights(self.get_weights())
-        return result.__finalize__(self.obj, method="groupby")
+        return self._add_weights("sem", *args, **kwargs)
 
     def quantile(self, *args, **kwargs):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).quantile(
-            *args, **kwargs)).set_weights(self.get_weights())
-        return result.__finalize__(self.obj, method="groupby")
+        return self._add_weights("quantile", *args, **kwargs)
 
     def get_weights(self):
         """Return the weights of the grouped samples."""
