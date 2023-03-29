@@ -1356,6 +1356,7 @@ def test_groupby_stats():
     assert chains.sem().isweighted() is True
     assert chains.corr().isweighted() is True
     assert chains.cov().isweighted() is True
+    assert chains.hist().isweighted() is True
     assert chains.corrwith(mcmc).isweighted() is True
 
     w1 = mcmc.loc[mcmc.chain == 1].get_weights().sum()
@@ -1392,6 +1393,8 @@ def test_groupby_stats():
                         chains.cov().loc[chain])
         assert_allclose(mcmc.loc[mask, params].corr(),
                         chains.corr().loc[chain])
+        assert_allclose([1, 1], chains.corrwith(mcmc.loc[mask, params]
+                                                ).loc[chain])
 
         group = chains.get_group(chain).drop(
                 columns=('chain', '$n_\\mathrm{chain}$'))

@@ -230,6 +230,8 @@ class WeightedSeries(_WeightedObject, Series):
     """Weighted version of :class:`pandas.Series`."""
 
     def mean(self, skipna=True):  # noqa: D102
+        if self.get_weights().sum() == 0:
+            return np.nan
         null = self.isnull() & skipna
         return np.average(masked_array(self, null), weights=self.get_weights())
 
@@ -243,6 +245,8 @@ class WeightedSeries(_WeightedObject, Series):
         return self.quantile(*args, **kwargs)
 
     def var(self, skipna=True):  # noqa: D102
+        if self.get_weights().sum() == 0:
+            return np.nan
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         if np.isnan(mean):
@@ -278,6 +282,8 @@ class WeightedSeries(_WeightedObject, Series):
         return self.cov(other, *args, **kwargs)/norm
 
     def kurt(self, skipna=True):  # noqa: D102
+        if self.get_weights().sum() == 0:
+            return np.nan
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         std = self.std(skipna=skipna)
@@ -287,6 +293,8 @@ class WeightedSeries(_WeightedObject, Series):
                           weights=self.get_weights())
 
     def skew(self, skipna=True):  # noqa: D102
+        if self.get_weights().sum() == 0:
+            return np.nan
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         std = self.std(skipna=skipna)
@@ -296,6 +304,8 @@ class WeightedSeries(_WeightedObject, Series):
                           weights=self.get_weights())
 
     def mad(self, skipna=True):  # noqa: D102
+        if self.get_weights().sum() == 0:
+            return np.nan
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         if np.isnan(mean):
@@ -369,6 +379,9 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def mean(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
+            if self.get_weights(axis).sum() == 0:
+                return self._constructor_sliced(np.nan,
+                                                index=self._get_axis(1-axis))
             null = self.isnull() & skipna
             mean = np.average(masked_array(self, null),
                               weights=self.get_weights(axis), axis=axis)
@@ -387,6 +400,9 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def var(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
+            if self.get_weights(axis).sum() == 0:
+                return self._constructor_sliced(np.nan,
+                                                index=self._get_axis(1-axis))
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             var = np.average(masked_array((self-mean)**2, null),
@@ -423,14 +439,19 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def corrwith(self, other, axis=0, drop=False, method="pearson",
                  *args, **kwargs):  # noqa: D102
-        if self.isweighted(axis):
+        axis = self._get_axis_number(axis)
+        if not self.isweighted(axis):
+            return super().corrwith(other, drop=drop, axis=axis, method=method,
+                                    *args, **kwargs)
+        else:
             if isinstance(other, Series):
                 answer = self.apply(lambda x: other.corr(x, method=method),
                                     axis=axis)
                 return self._constructor_sliced(answer)
 
             left, right = self.align(other, join="inner", copy=False)
-            weights = self.get_weights(axis)
+            weights = self.index.to_frame()['weights']
+            weights, _ = weights.align(other, join="inner", copy=False)
 
             if axis == 1:
                 left = left.T
@@ -444,7 +465,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             ldem = left - left.mean()
             rdem = right - right.mean()
 
-            num = (ldem * rdem * weights[:, None]).sum()
+            num = (ldem * rdem * weights.to_numpy()[:, None]).sum()
             dom = weights.sum() * left.std() * right.std()
 
             correl = num / dom
@@ -460,12 +481,12 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                                                     index=idx_diff)])
 
             return self._constructor_sliced(correl)
-        else:
-            return super().corrwith(other, drop=drop, axis=axis, method=method,
-                                    *args, **kwargs)
 
     def kurt(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
+            if self.get_weights(axis).sum() == 0:
+                return self._constructor_sliced(np.nan,
+                                                index=self._get_axis(1-axis))
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             std = self.std(axis=axis, skipna=skipna)
@@ -477,6 +498,9 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def skew(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
+            if self.get_weights(axis).sum() == 0:
+                return self._constructor_sliced(np.nan,
+                                                index=self._get_axis(1-axis))
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             std = self.std(axis=axis, skipna=skipna)
@@ -488,6 +512,9 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def mad(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
+            if self.get_weights(axis).sum() == 0:
+                return self._constructor_sliced(np.nan,
+                                                index=self._get_axis(1-axis))
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             mad = np.average(masked_array(abs(self-mean), null),
