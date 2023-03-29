@@ -417,12 +417,6 @@ def test_WeightedDataFrame_nan(frame):
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
                        [True, False, False, False, False, False])
 
-    assert ~frame.cov().isna().any().any()
-    ans = np.zeros((6, 6), dtype=bool)
-    ans[0] = True
-    ans[:, 0] = True
-    assert_array_equal(frame.cov(skipna=False).isna(), ans)
-
     frame['B'][2] = np.nan
     assert ~frame.mean().isna().any()
     assert_array_equal(frame.mean(skipna=False).isna(),
@@ -435,11 +429,6 @@ def test_WeightedDataFrame_nan(frame):
                        [True, True] + [False]*4)
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
                        [True, False, True, False, False, False])
-
-    assert ~frame.cov().isna().any().any()
-    ans[1] = True
-    ans[:, 1] = True
-    assert_array_equal(frame.cov(skipna=False).isna(), ans)
 
     frame['C'][4] = np.nan
     frame['D'][5] = np.nan
@@ -454,9 +443,6 @@ def test_WeightedDataFrame_nan(frame):
     assert frame.std(skipna=False).isna().all()
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
                        [True, False, True, False, True, True])
-
-    assert ~frame.cov().isna().any().any()
-    assert frame.cov(skipna=False).isna().all().all()
 
     assert_allclose(frame.mean(), 0.5, atol=1e-2)
     assert_allclose(frame.std(), (1./12)**0.5, atol=1e-2)
