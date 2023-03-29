@@ -53,11 +53,6 @@ class WeightedGroupBy(GroupBy):
             *args, **kwargs)).set_weights(self.get_weights())
         return result.__finalize__(self.obj, method="groupby")
 
-    def skew(self, *args, **kwargs):  # noqa: D102
-        result = self.agg(lambda df: self.obj._constructor(df).skew(
-            *args, **kwargs)).set_weights(self.get_weights())
-        return result.__finalize__(self.obj, method="groupby")
-
     def sem(self, *args, **kwargs):  # noqa: D102
         result = self.agg(lambda df: self.obj._constructor(df).sem(
             *args, **kwargs)).set_weights(self.get_weights())
@@ -72,15 +67,27 @@ class WeightedGroupBy(GroupBy):
         """Return the weights of the grouped samples."""
         return self.agg(lambda df: df.get_weights().sum())
 
+    def _make_wrapper(self, name):
+        _wrapper = super()._make_wrapper(name)
+
+        def wrapper(*args, **kwargs):
+            result = _wrapper(*args, **kwargs)
+            try:
+                index = result.index.get_level_values(self.keys)
+                weights = self.get_weights()[index]
+            except KeyError:
+                weights = self.get_weights()
+            return result.set_weights(weights, level=1)
+
+        wrapper.__name__ = name
+        return wrapper
+
 
 class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
     """Weighted version of ``pandas.core.groupby.SeriesGroupBy``."""
 
     def sample(self, *args, **kwargs):  # noqa: D102
         return super().sample(weights=self.obj.get_weights(), *args, **kwargs)
-
-    def cov(self, *args, **kwargs):  # noqa: D102 
-        return super().cov(*args, **kwargs).set_weights(self.get_weights())
 
 
 class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
@@ -105,7 +112,9 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 as_index=self.as_index,
                 sort=self.sort,
                 group_keys=self.group_keys,
+                squeeze=self.squeeze,
                 observed=self.observed,
+                mutated=self.mutated,
                 dropna=self.dropna,
             )
         elif ndim == 1:
@@ -115,11 +124,10 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 subset,
                 level=self.level,
                 grouper=self.grouper,
-                exclusions=self.exclusions,
                 selection=key,
-                as_index=self.as_index,
                 sort=self.sort,
                 group_keys=self.group_keys,
+                squeeze=self.squeeze,
                 observed=self.observed,
                 dropna=self.dropna,
             )
@@ -128,19 +136,6 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
 
     def sample(self, *args, **kwargs):  # noqa: D102
         return super().sample(weights=self.obj.get_weights(), *args, **kwargs)
-
-    def cov(self, *args, **kwargs):  # noqa: D102 
-        ans = super().cov(*args, **kwargs)
-        index = ans.index.get_level_values(self.keys)
-        weights = self.get_weights()[index]
-        return ans.set_weights(weights, level=1)
-
-    def corr(self, *args, **kwargs):  # noqa: D102 
-        ans = super().corr(*args, **kwargs)
-        index = ans.index.get_level_values(self.keys)
-        weights = self.get_weights()[index]
-        return ans.set_weights(weights, level=1)
-
 
 
 class _WeightedObject(object):

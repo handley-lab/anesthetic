@@ -1356,7 +1356,7 @@ def test_groupby_stats():
     assert chains.sem().isweighted() is True
     assert chains.corr().isweighted() is True
     assert chains.cov().isweighted() is True
-    #assert chains.corrwith(mcmc).isweighted() is True
+    assert chains.corrwith(mcmc).isweighted() is True
 
     w1 = mcmc.loc[mcmc.chain == 1].get_weights().sum()
     w2 = mcmc.loc[mcmc.chain == 2].get_weights().sum()
@@ -1427,12 +1427,12 @@ def test_groupby_stats():
                                 chains[col].kurtosis().loc[chain])
                 assert_allclose(mcmc.loc[mask, col].skew(),
                                 chains[col].skew().loc[chain])
-                #assert_allclose(mcmc.loc[mask, col].mad(),
-                #                chains[col].mad().loc[chain])
+                assert_allclose(mcmc.loc[mask, col].mad(),
+                                chains[col].mad().loc[chain])
                 assert_allclose(mcmc.loc[mask, col].sem(),
                                 chains[col].sem().loc[chain])
                 #assert_allclose(mcmc.loc[mask, col].cov(mcmc.loc[mask, col]),
-                #                chains[col].cov().loc[chain, :])
+                #                chains[col].cov(mcmc.loc[mask, col]))
                 #assert_allclose(mcmc.loc[mask, col].corr(mcmc.loc[mask, col]),
                 #                chains[col].corr(mcmc.loc[mask, col])
                 #                .loc[chain, :])
