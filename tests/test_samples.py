@@ -1431,11 +1431,12 @@ def test_groupby_stats():
                                 chains[col].mad().loc[chain])
                 assert_allclose(mcmc.loc[mask, col].sem(),
                                 chains[col].sem().loc[chain])
-                #assert_allclose(mcmc.loc[mask, col].cov(mcmc.loc[mask, col]),
-                #                chains[col].cov(mcmc.loc[mask, col]))
-                #assert_allclose(mcmc.loc[mask, col].corr(mcmc.loc[mask, col]),
-                #                chains[col].corr(mcmc.loc[mask, col])
-                #                .loc[chain, :])
+                assert_allclose(mcmc.loc[mask, col].cov(mcmc.loc[mask, col]),
+                                chains[col].cov(mcmc.loc[mask, col])
+                                .loc[chain])
+                assert_allclose(mcmc.loc[mask, col].corr(mcmc.loc[mask, col]),
+                                chains[col].corr(mcmc.loc[mask, col])
+                                .loc[chain])
                 q = np.random.rand()
                 assert_allclose(mcmc.loc[mask, col].quantile(q),
                                 chains[col].quantile(q).loc[chain])
@@ -1451,6 +1452,11 @@ def test_groupby_stats():
                 assert_allclose(mcmc.loc[mask, col].skew(), group.skew())
                 assert_allclose(mcmc.loc[mask, col].mad(), group.mad())
                 assert_allclose(mcmc.loc[mask, col].sem(), group.sem())
+
+                assert_allclose(mcmc.loc[mask, col].cov(mcmc.loc[mask, col]),
+                                group.cov(mcmc.loc[mask, col]))
+                assert_allclose(mcmc.loc[mask, col].corr(mcmc.loc[mask, col]),
+                                group.corr(mcmc.loc[mask, col]))
 
     sample = chains.sample(5)
     assert len(sample) == 10
