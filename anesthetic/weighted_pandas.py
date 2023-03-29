@@ -411,10 +411,10 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         else:
             return super().var(axis=axis, skipna=skipna, *args, **kwargs)
 
-    def cov(self, skipna=True, *args, **kwargs):  # noqa: D102
+    def cov(self, *args, **kwargs):  # noqa: D102
         if self.isweighted():
-            null = self.isnull() & skipna
-            mean = self.mean(skipna=skipna)
+            null = self.isnull()
+            mean = self.mean(skipna=True)
             x = masked_array(self - mean, null)
             cov = np.ma.dot(self.get_weights()*x.T, x) \
                 / self.get_weights().sum().T
@@ -450,12 +450,13 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                 return self._constructor_sliced(answer)
 
             left, right = self.align(other, join="inner", copy=False)
-            weights = self.index.to_frame()['weights']
-            weights, _ = weights.align(other, join="inner", copy=False)
 
             if axis == 1:
                 left = left.T
                 right = right.T
+
+            weights = left.index.to_frame()['weights']
+            weights, _ = weights.align(right, join="inner", copy=False)
 
             # mask missing values
             left = left + right * 0

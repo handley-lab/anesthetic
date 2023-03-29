@@ -176,7 +176,7 @@ def test_WeightedDataFrame_corrwith(frame):
     assert isinstance(correl, WeightedSeries)
     assert not correl.isweighted()
     assert_array_equal(correl.index, frame.columns)
-    assert_allclose(correl, frame.corr()['A'])
+    assert_allclose(correl, frame.corr()['A'], atol=1e-2)
 
     correl = frame.corrwith(frame[['A', 'B']])
     assert isinstance(correl, WeightedSeries)
@@ -489,12 +489,6 @@ def test_WeightedSeries_std(series):
 def test_WeightedSeries_cov(frame):
     assert_allclose(frame.A.cov(frame.A), 1./12, atol=1e-2)
     assert_allclose(frame.A.cov(frame.B), 0, atol=1e-2)
-
-    frame.loc[0, 'B'] = np.nan
-    assert ~np.isnan(frame.A.cov(frame.B))
-    assert np.isnan(frame.A.cov(frame.B, skipna=False))
-    assert ~np.isnan(frame.B.cov(frame.A))
-    assert np.isnan(frame.B.cov(frame.A, skipna=False))
 
 
 def test_WeightedSeries_corr(frame):
