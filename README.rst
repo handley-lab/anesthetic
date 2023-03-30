@@ -130,7 +130,11 @@ and view the documentation by opening ``docs/build/html/index.html`` in a browse
 
 .. code:: bash
 
+    sphinx-apidoc -fM -t docs/templates/ -o docs/source/ wpandas/
+    sphinx-apidoc -fM -t docs/templates/ -o docs/source/ lpandas/
     sphinx-apidoc -fM -t docs/templates/ -o docs/source/ anesthetic/
+
+and modify/revert ``docs/source/modules.rst`` accordingly with any new modules.
 
 Citation
 --------
