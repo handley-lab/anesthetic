@@ -242,6 +242,8 @@ class WeightedSeries(_WeightedObject, Series):
         return self.kurt(*args, **kwargs)
 
     def median(self, *args, **kwargs):  # noqa: D102
+        if self.get_weights().sum() == 0:
+            return np.nan
         return self.quantile(*args, **kwargs)
 
     def var(self, skipna=True):  # noqa: D102
@@ -317,6 +319,8 @@ class WeightedSeries(_WeightedObject, Series):
         return np.sqrt(self.var(skipna=skipna)/self.neff())
 
     def quantile(self, q=0.5, interpolation='linear'):  # noqa: D102
+        if self.get_weights().sum() == 0:
+            return np.nan
         return quantile(self.to_numpy(), q, self.get_weights(), interpolation)
 
     def compress(self, ncompress=True):

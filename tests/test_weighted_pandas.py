@@ -453,6 +453,18 @@ def test_WeightedDataFrame_nan(frame):
     assert isinstance(frame.mean(axis=1), WeightedSeries)
     assert frame.mean(axis=1).isweighted()
 
+    assert frame[:0].mean().isna().all()
+    assert frame[:0].std().isna().all()
+    assert frame[:0].median().isna().all()
+    assert frame[:0].var().isna().all()
+    assert frame[:0].cov().isna().all().all()
+    assert frame[:0].corr().isna().all().all()
+    assert frame[:0].kurt().isna().all()
+    assert frame[:0].skew().isna().all()
+    assert frame[:0].mad().isna().all()
+    assert frame[:0].sem().isna().all()
+    assert frame[:0].quantile().isna().all()
+
 
 def test_WeightedSeries_mean(series):
     series[0] = np.nan
@@ -587,6 +599,18 @@ def test_WeightedSeries_nan(series):
     assert_allclose(series.mean(), 0.5, atol=1e-2)
     assert_allclose(series.var(), 1./12, atol=1e-2)
     assert_allclose(series.std(), (1./12)**0.5, atol=1e-2)
+
+    assert np.isnan(series[:0].mean())
+    assert np.isnan(series[:0].std())
+    assert np.isnan(series[:0].median())
+    assert np.isnan(series[:0].var())
+    assert np.isnan(series[:0].cov(series))
+    assert np.isnan(series[:0].corr(series))
+    assert np.isnan(series[:0].kurt())
+    assert np.isnan(series[:0].skew())
+    assert np.isnan(series[:0].mad())
+    assert np.isnan(series[:0].sem())
+    assert np.isnan(series[:0].quantile())
 
 
 @pytest.fixture
