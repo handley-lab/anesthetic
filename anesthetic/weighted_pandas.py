@@ -256,14 +256,11 @@ class WeightedSeries(_WeightedObject, Series):
         return np.average(masked_array((self-mean)**2, null),
                           weights=self.get_weights())
 
-    def cov(self, other, min_periods=None, *args, **kwargs):  # noqa: D102
+    def cov(self, other, *args, **kwargs):  # noqa: D102
 
         this, other = self.align(other, join="inner", copy=False)
         if len(this) == 0:
             return np.nan
-
-        if min_periods is None:
-            min_periods = 1
 
         weights = self.index.to_frame()['weights']
         weights, _ = weights.align(other, join="inner", copy=False)
@@ -273,9 +270,6 @@ class WeightedSeries(_WeightedObject, Series):
             this = this[valid]
             other = other[valid]
             weights = weights[valid]
-
-        if len(this) < min_periods:
-            return np.nan
 
         return np.cov(this, other, aweights=weights)[0, 1]
 

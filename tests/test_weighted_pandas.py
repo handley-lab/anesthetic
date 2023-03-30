@@ -488,6 +488,10 @@ def test_WeightedSeries_cov(frame):
     assert_allclose(frame.A.cov(frame.A), 1./12, atol=1e-2)
     assert_allclose(frame.A.cov(frame.B), 0, atol=1e-2)
 
+    frame['A'][0] = np.nan
+    assert_allclose(frame.A.cov(frame.A), 1./12, atol=1e-2)
+    assert_allclose(frame.A.cov(frame.B), 0, atol=1e-2)
+
 
 def test_WeightedSeries_corr(frame):
     assert_allclose(frame.A.corr(frame.A), 1., atol=1e-2)
