@@ -1471,3 +1471,24 @@ def test_groupby_stats():
     assert len(sample) == 10
     assert sample.value_counts()[1] == 5
     assert sample.value_counts()[2] == 5
+
+
+def test_groupby_plots():
+    mcmc = read_chains('./tests/example_data/cb')
+    params = ['x0', 'x1']
+    chains = mcmc[params + ['chain']].groupby(('chain', '$n_\\mathrm{chain}$'))
+    for param in params:
+        gb_plot = chains.hist(param)
+        for chain in [1, 2]:
+            mcmc_axes = mcmc.loc[mcmc.chain == chain].hist(param).flatten()
+            gb_axes = gb_plot[chain].values[0].flatten()
+
+            mcmc_widths = [p.get_width() for ax in mcmc_axes
+                           for p in ax.patches]
+            gb_widths = [p.get_width() for ax in gb_axes for p in ax.patches]
+            assert mcmc_widths == gb_widths
+
+            mcmc_heights = [p.get_height() for ax in mcmc_axes
+                            for p in ax.patches]
+            gb_heights = [p.get_height() for ax in gb_axes for p in ax.patches]
+            assert mcmc_heights == gb_heights
