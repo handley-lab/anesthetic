@@ -1486,9 +1486,21 @@ def test_groupby_plots():
             mcmc_widths = [p.get_width() for ax in mcmc_axes
                            for p in ax.patches]
             gb_widths = [p.get_width() for ax in gb_axes for p in ax.patches]
-            assert mcmc_widths == gb_widths
+            assert_allclose(mcmc_widths, gb_widths)
 
             mcmc_heights = [p.get_height() for ax in mcmc_axes
                             for p in ax.patches]
             gb_heights = [p.get_height() for ax in gb_axes for p in ax.patches]
-            assert mcmc_heights == gb_heights
+            assert_allclose(mcmc_heights, gb_heights)
+    plt.close()
+
+    for param in params:
+        _, gb_ax = plt.subplots()
+        gb_plots = chains[param].plot.hist(ax=gb_ax)
+        _, mcmc_ax = plt.subplots()
+        for chain, gb_ax in zip([1, 2], gb_plots):
+            mcmc_ax = mcmc.loc[mcmc.chain == chain][param].plot.hist(
+                    ax=mcmc_ax)
+        mcmc_widths = [p.get_width() for p in mcmc_ax.patches]
+        gb_widths = [p.get_width() for p in gb_ax.patches]
+        assert_allclose(mcmc_widths, gb_widths)
