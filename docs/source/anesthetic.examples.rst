@@ -1,12 +1,6 @@
 anesthetic.examples package
 ===========================
 
-.. automodule:: anesthetic.examples
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
 anesthetic.examples.perfect\_ns module
 --------------------------------------
 
@@ -25,3 +19,9 @@ anesthetic.examples.utils module
    :show-inheritance:
 
 
+
+
+.. automodule:: anesthetic.examples
+   :members:
+   :undoc-members:
+   :show-inheritance:

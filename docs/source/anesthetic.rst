@@ -1,11 +1,5 @@
 anesthetic package
 ==================
-
-.. automodule:: anesthetic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 anesthetic subpackages
 ----------------------
 
@@ -48,15 +42,6 @@ anesthetic.kde module
    :show-inheritance:
 
 
-anesthetic.labelled\_pandas module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: anesthetic.labelled_pandas
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
 anesthetic.plot module
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -93,12 +78,9 @@ anesthetic.utils module
    :show-inheritance:
 
 
-anesthetic.weighted\_pandas module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: anesthetic.weighted_pandas
+
+.. automodule:: anesthetic
    :members:
    :undoc-members:
    :show-inheritance:
-
-

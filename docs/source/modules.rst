@@ -5,3 +5,5 @@ anesthetic
    :maxdepth: 5
 
    anesthetic
+   wpandas
+   lpandas
