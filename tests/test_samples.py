@@ -1492,7 +1492,7 @@ def test_groupby_plots():
                             for p in ax.patches]
             gb_heights = [p.get_height() for ax in gb_axes for p in ax.patches]
             assert_allclose(mcmc_heights, gb_heights)
-    plt.close()
+            plt.close()
 
     for param in params:
         _, gb_ax = plt.subplots()
@@ -1504,3 +1504,15 @@ def test_groupby_plots():
         mcmc_widths = [p.get_width() for p in mcmc_ax.patches]
         gb_widths = [p.get_width() for p in gb_ax.patches]
         assert_allclose(mcmc_widths, gb_widths)
+    plt.close()
+
+    for param in params:
+        _, gb_ax = plt.subplots()
+        gb_plots = chains[param].plot.kde(ax=gb_ax)
+        _, mcmc_ax = plt.subplots()
+        for chain, gb_ax in zip([1, 2], gb_plots):
+            mcmc_ax = mcmc.loc[mcmc.chain == chain][param].plot.kde(
+                    ax=mcmc_ax)
+        [assert_allclose(m.get_data(), g.get_data())
+         for m, g in zip(mcmc_ax.get_lines(), gb_ax.get_lines())]
+    plt.close()
