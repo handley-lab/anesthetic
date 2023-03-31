@@ -1553,6 +1553,16 @@ def test_groupby_plots():
         assert_allclose(mcmc_colors, gb_colors)
     plt.close('all')
 
+    for chain, gb_ax in zip([1, 2], chains.plot.kde_2d(*params)):
+        mcmc_ax = mcmc.loc[mcmc.chain == chain].plot.kde_2d(*params)
+        mcmc_verts = [p.get_verts() for p in mcmc_ax.patches]
+        gb_verts = [p.get_verts() for p in gb_ax.patches]
+        assert_allclose(mcmc_verts, gb_verts)
+        mcmc_colors = [p.get_facecolor() for p in mcmc_ax.patches]
+        gb_colors = [p.get_facecolor() for p in gb_ax.patches]
+        assert_allclose(mcmc_colors, gb_colors)
+    plt.close('all')
+
     if 'fastkde' in sys.modules:
         for param in params:
             _, gb_ax = plt.subplots()
