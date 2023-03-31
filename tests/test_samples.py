@@ -1539,3 +1539,15 @@ def test_groupby_plots():
         [assert_allclose(m.get_data(), g.get_data())
          for m, g in zip(mcmc_ax.get_lines(), gb_ax.get_lines())]
     plt.close()
+
+    if 'fastkde' in sys.modules:
+        for param in params:
+            _, gb_ax = plt.subplots()
+            gb_plots = chains[param].plot.fastkde_1d(ax=gb_ax)
+            _, mcmc_ax = plt.subplots()
+            for chain, gb_ax in zip([1, 2], gb_plots):
+                mcmc_ax = mcmc.loc[mcmc.chain == chain][param].plot.fastkde_1d(
+                        ax=mcmc_ax)
+            [assert_allclose(m.get_data(), g.get_data())
+             for m, g in zip(mcmc_ax.get_lines(), gb_ax.get_lines())]
+        plt.close()
