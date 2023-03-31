@@ -1540,6 +1540,19 @@ def test_groupby_plots():
          for m, g in zip(mcmc_ax.get_lines(), gb_ax.get_lines())]
     plt.close()
 
+    for chain, gb_ax in zip([1, 2], chains.plot.hist_2d(*params)):
+        mcmc_ax = mcmc.loc[mcmc.chain == chain].plot.hist_2d(*params)
+        mcmc_widths = [p.get_width() for p in mcmc_ax.patches]
+        gb_widths = [p.get_width() for p in gb_ax.patches]
+        assert_allclose(mcmc_widths, gb_widths)
+        mcmc_heights = [p.get_height() for p in mcmc_ax.patches]
+        gb_heights = [p.get_height() for p in gb_ax.patches]
+        assert_allclose(mcmc_heights, gb_heights)
+        mcmc_colors = [p.get_facecolor() for p in mcmc_ax.patches]
+        gb_colors = [p.get_facecolor() for p in gb_ax.patches]
+        assert_allclose(mcmc_colors, gb_colors)
+    plt.close()
+
     if 'fastkde' in sys.modules:
         for param in params:
             _, gb_ax = plt.subplots()
