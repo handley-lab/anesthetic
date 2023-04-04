@@ -25,15 +25,15 @@ def read_paramnames(root):
     """
     try:
         paramnames_file = root + '.paramnames'
-        with open(paramnames_file, 'r') as f:
+        with open(paramnames_file, 'r', encoding='utf-8-sig') as f:
             paramnames = []
             labels = {}
             for line in f:
-                line = line.strip().split()
+                line = line.strip().split(maxsplit=1)
                 paramname = line[0].replace('*', '')
                 paramnames.append(paramname)
                 if len(line) > 1:
-                    labels[paramname] = '$' + ' '.join(line[1:]) + '$'
+                    labels[paramname] = '$' + line[1] + '$'
             return paramnames, labels
     except IOError:
         return None, {}
