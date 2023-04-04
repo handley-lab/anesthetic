@@ -21,6 +21,9 @@ class WeightedGroupBy(GroupBy):
     grouper: ops.BaseGrouper
     """:meta private:"""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def _add_weights(self, name, *args, **kwargs):
         result = self.agg(lambda df: getattr(self.obj._constructor(df), name)
                           (*args, **kwargs)).set_weights(self.get_weights())
