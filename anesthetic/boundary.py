@@ -9,22 +9,22 @@ def cut_and_normalise_gaussian(x, p, bw, xmin=None, xmax=None):
 
     Parameters
     ----------
-    x: np.array
+    x : array-like
         locations for normalisation correction
 
-    p: np.array
+    p : array-like
         probability densities for normalisation correction
 
-    bw: float
+    bw : float
         bandwidth of KDE
 
-    xmin, xmax: float
+    xmin, xmax : float
         lower/upper prior bound
         optional, default None
 
     Returns
     -------
-    p: np.array
+    p : np.array
         corrected probabilities
 
     """

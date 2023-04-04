@@ -11,23 +11,23 @@ from anesthetic.utils import mirror_1d, mirror_2d
 def fastkde_1d(d, xmin=None, xmax=None):
     """Perform a one-dimensional kernel density estimation.
 
-    Wrapper round fastkde.fastKDE. Boundary corrections implemented by
-    reflecting boundary conditions.
+    Wrapper around `fastkde.fastKDE <https://github.com/LBL-EESA/fastkde>`_.
+    Boundary corrections implemented by reflecting boundary conditions.
 
     Parameters
     ----------
-    d: np.array
+    d : np.array
         Data to perform kde on
 
-    xmin, xmax: float
+    xmin, xmax : float
         lower/upper prior bounds
         optional, default None
 
     Returns
     -------
-    x: np.array
+    x : np.array
         x-coordinates of kernel density estimates
-    p: np.array
+    p : np.array
         kernel density estimates
 
     """
@@ -53,23 +53,23 @@ def fastkde_1d(d, xmin=None, xmax=None):
 def fastkde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
     """Perform a two-dimensional kernel density estimation.
 
-    Wrapper round fastkde.fastKDE. Boundary corrections implemented by
-    reflecting boundary conditions.
+    Wrapper round `fastkde.fastKDE <https://github.com/LBL-EESA/fastkde>`_.
+    Boundary corrections implemented by reflecting boundary conditions.
 
     Parameters
     ----------
-    d_x, d_y: np.array
+    d_x, d_y : np.array
         x/y coordinates of data to perform kde on
 
-    xmin, xmax, ymin, ymax: float
+    xmin, xmax, ymin, ymax : float
         lower/upper prior bounds in x/y coordinates
         optional, default None
 
     Returns
     -------
-    x,y: np.array
+    x, y : np.array
         x/y-coordinates of kernel density estimates. One-dimensional array
-    p: np.array
+    p : np.array
         kernel density estimates. Two-dimensional array
 
     """

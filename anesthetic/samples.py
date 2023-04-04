@@ -1,14 +1,14 @@
 """Main classes for the anesthetic module.
 
-- ``Samples``
-- ``MCMCSamples``
-- ``NestedSamples``
+- :class:`anesthetic.samples.Samples`
+- :class:`anesthetic.samples.MCMCSamples`
+- :class:`anesthetic.samples.NestedSamples`
 """
 import numpy as np
 import pandas
 import copy
 import warnings
-from pandas import MultiIndex, DataFrame, Series
+from pandas import MultiIndex, Series
 from collections.abc import Sequence
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
@@ -16,7 +16,8 @@ from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
 from pandas.core.accessor import CachedAccessor
-from anesthetic.plot import make_1d_axes, make_2d_axes
+from anesthetic.plot import (make_1d_axes, make_2d_axes,
+                             AxesSeries, AxesDataFrame)
 import anesthetic.weighted_pandas
 from anesthetic.plotting import PlotAccessor
 anesthetic.weighted_pandas._WeightedObject.plot =\
@@ -24,7 +25,7 @@ anesthetic.weighted_pandas._WeightedObject.plot =\
 
 
 class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
-    """DataFrame with weights and labels."""
+    """:class:`pandas.DataFrame` with weights and labels."""
 
     _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata
 
@@ -102,7 +103,7 @@ class WeightedLabelledSeries(WeightedSeries, LabelledSeries):
 class Samples(WeightedLabelledDataFrame):
     """Storage and plotting tools for general samples.
 
-    Extends the pandas.DataFrame by providing plotting methods and
+    Extends the :class:`pandas.DataFrame` by providing plotting methods and
     standardising sample storage.
 
     Example plotting commands include
@@ -112,28 +113,27 @@ class Samples(WeightedLabelledDataFrame):
 
     Parameters
     ----------
-    data: np.array
+    data : np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
-    columns: list(str)
+    columns : list(str)
         reference names of parameters
 
-    weights: np.array
+    weights : np.array
         weights of samples.
 
-    logL: np.array
+    logL : np.array
         loglikelihoods of samples.
 
-    labels: dict or array-like
+    labels : dict or array-like
         mapping from columns to plotting labels
 
-    label: str
+    label : str
         Legend label
 
-    logzero: float
+    logzero : float, default=-1e30
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-np.inf`.
-        default: -1e30
 
     """
 
@@ -165,42 +165,63 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        axes: plotting axes
+        axes : plotting axes
             Can be:
-                - list(str) or str
-                - pandas.Series(matplotlib.axes.Axes)
-            If a pandas.Series is provided as an existing set of axes, then
-            this is used for creating the plot. Otherwise a new set of axes are
-            created using the list or lists of strings.
 
-        kind: str, optional
+            * list(str) or str
+            * :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
+
+            If a :class:`pandas.Series` is provided as an existing set of axes,
+            then this is used for creating the plot. Otherwise, a new set of
+            axes are created using the list or lists of strings.
+
+        kind : str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
             {'hist', 'box', 'kde', 'density'}, anesthetic also provides
-            {'hist_1d', 'kde_1d', 'fastkde_1d'}.
+
+            * 'hist_1d': :func:`anesthetic.plot.hist_plot_1d`
+            * 'kde_1d': :func:`anesthetic.plot.kde_plot_1d`
+            * 'fastkde_1d': :func:`anesthetic.plot.fastkde_plot_1d`
+
             Warning -- while the other pandas plotting options
             {'line', 'bar', 'barh', 'area', 'pie'} are also accessible, these
-            can be hard to interpret/expensive for Samples, MCMCSamples, or
-            NestedSamples.
-            Default kde_1d
+            can be hard to interpret/expensive for :class:`Samples`,
+            :class:`MCMCSamples`, or :class:`NestedSamples`.
 
         Returns
         -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
-        axes: pandas.Series of matplotlib.axes.Axes
+        axes : :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
             Pandas array of axes objects
 
         """
-        if not isinstance(axes, Series):
-            fig, axes = make_1d_axes(axes, labels=self.get_labels_map())
-        else:
-            fig = axes.bfill().to_numpy().flatten()[0].figure
+        # TODO: remove this in version >= 2.1
+        if 'plot_type' in kwargs:
+            raise ValueError(
+                "You are using the anesthetic 1.0 kwarg \'plot_type\' instead "
+                "of anesthetic 2.0 \'kind\'. Please update your code."
+                )
+
+        if not isinstance(axes, AxesSeries):
+            _, axes = make_1d_axes(axes, labels=self.get_labels_map())
 
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
 
-        for x, ax in axes.iteritems():
+        # TODO: remove this in version >= 2.1
+        if kwargs['kind'] == 'kde':
+            warnings.warn(
+                "You are using \'kde\' as a plot kind. "
+                "\'kde_1d\' is the appropriate keyword for anesthetic. "
+                "Your plots may look odd if you use this argument."
+                )
+        elif kwargs['kind'] == 'hist':
+            warnings.warn(
+                "You are using \'hist\' as a plot kind. "
+                "\'hist_1d\' is the appropriate keyword for anesthetic. "
+                "Your plots may look odd if you use this argument."
+                )
+
+        for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
                 self[x].plot(ax=ax, xlabel=xlabel,
@@ -209,7 +230,7 @@ class Samples(WeightedLabelledDataFrame):
             else:
                 ax.plot([], [])
 
-        return fig, axes
+        return axes
 
     def plot_2d(self, axes, *args, **kwargs):
         """Create an array of 2D plots.
@@ -220,46 +241,54 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        axes: plotting axes
+        axes : plotting axes
             Can be:
                 - list(str) if the x and y axes are the same
                 - [list(str),list(str)] if the x and y axes are different
-                - pandas.DataFrame(matplotlib.axes.Axes)
-            If a pandas.DataFrame is provided as an existing set of axes, then
-            this is used for creating the plot. Otherwise, a new set of axes
-            are created using the list or lists of strings.
+                - :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`
 
-        kind/kinds: dict, optional
+            If a :class:`pandas.DataFrame` is provided as an existing set of
+            axes, then this is used for creating the plot. Otherwise, a new set
+            of axes are created using the list or lists of strings.
+
+        kind/kinds : dict, optional
             What kinds of plots to produce. Dictionary takes the keys
             'diagonal' for the 1D plots and 'lower' and 'upper' for the 2D
             plots. The options for 'diagonal' are:
-                - 'kde_1d'
-                - 'hist_1d'
-                - 'fastkde_1d'
-                - 'kde'
-                - 'hist'
-                - 'box'
-                - 'kde'
-                - 'density'
+
+                - 'kde_1d': :func:`anesthetic.plot.kde_plot_1d`
+                - 'hist_1d': :func:`anesthetic.plot.hist_plot_1d`
+                - 'fastkde_1d': :func:`anesthetic.plot.fastkde_plot_1d`
+                - 'kde': :meth:`pandas.Series.plot.kde`
+                - 'hist': :meth:`pandas.Series.plot.hist`
+                - 'box': :meth:`pandas.Series.plot.box`
+                - 'density': :meth:`pandas.Series.plot.density`
+
             The options for 'lower' and 'upper' are:
-                - 'kde_2d'
-                - 'hist_2d'
-                - 'scatter_2d'
-                - 'fastkde_2d'
-                - 'kde'
-                - 'scatter'
-                - 'hexbin'
+
+                - 'kde_2d': :func:`anesthetic.plot.kde_contour_plot_2d`
+                - 'hist_2d': :func:`anesthetic.plot.hist_plot_2d`
+                - 'scatter_2d': :func:`anesthetic.plot.scatter_plot_2d`
+                - 'fastkde_2d': :func:`anesthetic.plot.fastkde_contour_plot_2d`
+                - 'kde': :meth:`pandas.DataFrame.plot.kde`
+                - 'scatter': :meth:`pandas.DataFrame.plot.scatter`
+                - 'hexbin': :meth:`pandas.DataFrame.plot.hexbin`
+
             There are also a set of shortcuts provided in
-            Samples.plot_2d_default_kinds:
+            :attr:`plot_2d_default_kinds`:
+
                 - 'kde_1d': 1d kde plots down the diagonal
                 - 'kde_2d': 2d kde plots in lower triangle
                 - 'kde': 1d & 2d kde plots in lower & diagonal
-            Feel free to add your own to this list!
-            Default: {'diagonal': 'kde_1d',
-                      'lower': 'kde_2d',
-                      'upper':'scatter_2d'}
+                - 'hist_1d': 1d histograms down the diagonal
+                - 'hist_2d': 2d histograms in lower triangle
+                - 'hist': 1d & 2d histograms in lower & diagonal
 
-        diagonal_kwargs, lower_kwargs, upper_kwargs: dict, optional
+            Feel free to add your own to this list!
+            Default:
+            {'diagonal': 'kde_1d', 'lower': 'kde_2d', 'upper':'scatter_2d'}
+
+        diagonal_kwargs, lower_kwargs, upper_kwargs : dict, optional
             kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
             useful when there is a conflict of kwargs for different kinds of
             plots.  Note that any kwargs directly passed to plot_2d will
@@ -268,15 +297,20 @@ class Samples(WeightedLabelledDataFrame):
 
         Returns
         -------
-        fig: matplotlib.figure.Figure
-            New or original (if supplied) figure object
-
-        axes: pandas.DataFrame of matplotlib.axes.Axes
+        axes : :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`
             Pandas array of axes objects
 
         """
+        # TODO: remove this in version >= 2.1
+        if 'types' in kwargs:
+            raise ValueError(
+                "You are using the anesthetic 1.0 kwarg \'types\' instead of "
+                "anesthetic 2.0 \'kind' or \'kinds\' (synonyms). "
+                "Please update your code."
+                )
         kind = kwargs.pop('kind', 'default')
         kind = kwargs.pop('kinds', kind)
+
         if isinstance(kind, str) and kind in self.plot_2d_default_kinds:
             kind = self.plot_2d_default_kinds.get(kind)
         if (not isinstance(kind, dict) or
@@ -295,20 +329,33 @@ class Samples(WeightedLabelledDataFrame):
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
-        if not isinstance(axes, DataFrame):
-            fig, axes = make_2d_axes(axes, labels=self.get_labels(),
-                                     upper=('upper' in kind),
-                                     lower=('lower' in kind),
-                                     diagonal=('diagonal' in kind))
-        else:
-            fig = axes.bfill().to_numpy().flatten()[0].figure
+        if not isinstance(axes, AxesDataFrame):
+            _, axes = make_2d_axes(axes, labels=self.get_labels(),
+                                   upper=('upper' in kind),
+                                   lower=('lower' in kind),
+                                   diagonal=('diagonal' in kind))
 
         for y, row in axes.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     pos = ax.position
                     lkwargs = local_kwargs.get(pos, {})
                     lkwargs['kind'] = kind.get(pos, None)
+                    # TODO: remove this in version >= 2.1
+                    if lkwargs['kind'] == 'kde':
+                        warnings.warn(
+                            "You are using \'kde\' as a plot kind. "
+                            "\'kde_1d\' and \'kde_2d\' are the appropriate "
+                            "keywords for anesthetic. Your plots may look "
+                            "odd if you use this argument."
+                            )
+                    elif lkwargs['kind'] == 'hist':
+                        warnings.warn(
+                            "You are using \'hist\' as a plot kind. "
+                            "\'hist_1d\' and \'hist_2d\' are the appropriate "
+                            "keywords for anesthetic. Your plots may look "
+                            "odd if you use this argument."
+                            )
                     if x in self and y in self and lkwargs['kind'] is not None:
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
@@ -328,7 +375,7 @@ class Samples(WeightedLabelledDataFrame):
                         else:
                             ax.plot([], [])
 
-        return fig, axes
+        return axes
 
     plot_2d_default_kinds = {
         'default': {'diagonal': 'kde_1d',
@@ -347,26 +394,26 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        logL_new: np.array
+        logL_new : np.array
             New log-likelihood values. Should have the same shape as `logL`.
 
-        action: str, optional
+        action : str, default='add'
             Can be any of {'add', 'replace', 'mask'}.
-                * add: Add the new `logL_new` to the current `logL`.
-                * replace: Replace the current `logL` with the new `logL_new`.
-                * mask: treat `logL_new` as a boolean mask and only keep the
-                        corresponding (True) samples.
-            default: 'add'
 
-        inplace: bool, optional
+            * add: Add the new `logL_new` to the current `logL`.
+            * replace: Replace the current `logL` with the new `logL_new`.
+            * mask: treat `logL_new` as a boolean mask and only keep the
+              corresponding (True) samples.
+
+        inplace : bool, default=False
             Indicates whether to modify the existing array, or return a new
             frame with importance sampling applied.
-            default: False
 
         Returns
         -------
-        samples: Samples/MCMCSamples/NestedSamples
+        samples : :class:`Samples`/:class:`MCMCSamples`/:class:`NestedSamples`
             Importance re-weighted samples.
+
         """
         if inplace:
             samples = self
@@ -396,58 +443,164 @@ class Samples(WeightedLabelledDataFrame):
         else:
             return samples.__finalize__(self, "importance_sample")
 
+    # TODO: remove this in version >= 2.1
+    @property
+    def tex(self):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.tex[label] = tex        # anesthetic 1.0\n"
+            "samples.set_label(label, tex)   # anesthetic 2.0\n\n"
+            "tex = samples.tex[label]        # anesthetic 1.0\n"
+            "tex = samples.get_label(label)  # anesthetic 2.0"
+            )
+
 
 class MCMCSamples(Samples):
     """Storage and plotting tools for MCMC samples.
 
-    Any new functionality specific to MCMC (e.g. convergence criteria etc)
+    Any new functionality specific to MCMC (e.g. convergence criteria etc.)
     should be put here.
 
     Parameters
     ----------
-    root: str, optional
-        root for reading chains from file. Overrides all other arguments.
-
-    data: np.array
+    data : np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
-    columns: array-like
+    columns : array-like
         reference names of parameters
 
-    weights: np.array
+    weights : np.array
         weights of samples.
 
-    logL: np.array
+    logL : np.array
         loglikelihoods of samples.
 
-    labels: dict or array-like
+    labels : dict or array-like
         mapping from columns to plotting labels
 
-    label: str
+    label : str
         Legend label
 
-    logzero: float
+    logzero : float, default=-1e30
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-np.inf`.
-        default: -1e30
+
     """
 
     _metadata = Samples._metadata + ['root']
-
-    def __init__(self, *args, **kwargs):
-        root = kwargs.pop('root', None)
-        super().__init__(*args, **kwargs)
-        self.root = root
 
     @property
     def _constructor(self):
         return MCMCSamples
 
+    def remove_burn_in(self, burn_in, reset_index=False, inplace=False):
+        """Remove burn-in samples from each MCMC chain.
+
+        Parameters
+        ----------
+        burn_in : int or float or array_like
+            Fraction or number of samples to remove or keep:
+
+            * ``if 0 < burn_in < 1``: remove first fraction of samples
+            * ``elif 1 < burn_in``: remove first number of samples
+            * ``elif -1 < burn_in < 0``: keep last fraction of samples
+            * ``elif burn_in < -1``: keep last number of samples
+            * ``elif type(burn_in)==list``: different burn-in for each chain
+
+        reset_index : bool, default=False
+            Whether to reset the index counter to start at zero or not.
+
+        inplace : bool, default=False
+            Indicates whether to modify the existing array or return a copy.
+
+        """
+        chains = self.groupby(('chain', '$n_\\mathrm{chain}$'),
+                              group_keys=False)
+        nchains = chains.ngroups
+        if isinstance(burn_in, (int, float)):
+            ndrop = np.full(nchains, burn_in)
+        elif isinstance(burn_in, (list, tuple, np.ndarray)) \
+                and len(burn_in) == nchains:
+            ndrop = np.array(burn_in)
+        else:
+            raise ValueError("`burn_in` has to be a scalar or an array of "
+                             "length matching the number of chains "
+                             "`nchains=%d`. However, you provided "
+                             "`burn_in=%s`" % (nchains, burn_in))
+        if np.all(np.abs(ndrop) < 1):
+            nsamples = chains.count().iloc[:, 0].to_numpy()
+            ndrop = ndrop * nsamples
+        ndrop = ndrop.astype(int)
+        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1])).index,
+                         inplace=inplace)
+        if reset_index:
+            data = data.reset_index(drop=True, inplace=inplace)
+        return data
+
+    def Gelman_Rubin(self, params=None):
+        """Gelman--Rubin convergence statistic of multiple MCMC chains.
+
+        Determine the Gelman--Rubin convergence statistic ``R-1`` by computing
+        and comparing the within-chain variance and the between-chain variance.
+        This follows the routine as outlined in
+        `Lewis (2013), section IV.A. <https://arxiv.org/abs/1304.4473>`_
+
+        Note that this requires more than one chain. To circumvent this, you
+        could overwrite the ``'chain'`` column, splitting the samples into two
+        or more sets.
+
+        Parameters
+        ----------
+        params : list(str)
+            List of column names (i.e. parameters) to be included in the
+            convergence calculation.
+            Default: all parameters (except those parameters that contain
+            'prior', 'chi2', or 'logL' in their names)
+
+        Returns
+        -------
+        Rminus1 : float
+            Gelman--Rubin convergence statistic ``R-1``. The smaller, the
+            better converged. Aiming for ``Rminus1~0.01`` should normally work
+            well.
+
+        """
+        self.columns.set_names(['params', 'labels'], inplace=True)
+        if params is None:
+            params = [key for key in self.columns.get_level_values('params')
+                      if 'prior' not in key
+                      and 'chi2' not in key
+                      and 'logL' not in key
+                      and 'chain' not in key]
+        chains = self[params+['chain']].groupby(
+                ('chain', '$n_\\mathrm{chain}$')
+        )
+
+        # Within chain variance ``W``
+        # (average variance within each chain):
+        W = chains.cov().groupby(level=['params', 'labels']).mean().to_numpy()
+        # TODO: the above line should be a weighted mean
+        # --> need to fix groupby for WeightedDataFrames!
+
+        # Between-chain variance ``B``
+        # (variance of the chain means compared to the full mean):
+        means_diff = (chains.mean() - self[params].mean()).to_numpy()
+        B = (means_diff.T @ means_diff) / (chains.ngroups - 1)
+        # B = chains.mean().cov().to_numpy()
+        # TODO: fix once groupby is fixed
+
+        L = np.linalg.cholesky(W)
+        invL = np.linalg.inv(L)
+        D = np.linalg.eigvalsh(invL @ B @ invL.T)
+        Rminus1 = np.max(np.abs(D))
+        return Rminus1
+
 
 class NestedSamples(Samples):
     """Storage and plotting tools for Nested Sampling samples.
 
-    We extend the Samples class with the additional methods:
+    We extend the :class:`Samples` class with the additional methods:
 
     * ``self.live_points(logL)``
     * ``self.set_beta(beta)``
@@ -464,33 +617,30 @@ class NestedSamples(Samples):
 
     Parameters
     ----------
-    root: str, optional
-        root for reading chains from file. Overrides all other arguments.
-
-    data: np.array
+    data : np.array
         Coordinates of samples. shape = (nsamples, ndims).
 
-    columns: list(str)
+    columns : list(str)
         reference names of parameters
 
-    logL: np.array
+    logL : np.array
         loglikelihoods of samples.
 
-    logL_birth: np.array or int
+    logL_birth : np.array or int
         birth loglikelihoods, or number of live points.
 
-    labels: dict
+    labels : dict
         optional mapping from column names to plot labels
 
-    label: str
+    label : str
         Legend label
         default: basename of root
 
-    beta: float
+    beta : float
         thermodynamic temperature
         default: 1.
 
-    logzero: float
+    logzero : float
         The threshold for `log(0)` values assigned to rejected sample points.
         Anything equal or below this value is set to `-np.inf`.
         default: -1e30
@@ -500,7 +650,6 @@ class NestedSamples(Samples):
     _metadata = Samples._metadata + ['root', '_beta']
 
     def __init__(self, *args, **kwargs):
-        self.root = kwargs.pop('root', None)
         logzero = kwargs.pop('logzero', -1e30)
         self._beta = kwargs.pop('beta', 1.)
         logL_birth = kwargs.pop('logL_birth', None)
@@ -538,12 +687,13 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        beta: float
-            Temperature to set
+        beta : float
+            Temperature to set.
+            (``beta=0`` corresponds to the prior distribution.)
 
-        inplace: bool, optional
+        inplace : bool, default=False
             Indicates whether to modify the existing array, or return a copy
-            with the temperature changed. Default: False
+            with the temperature changed.
 
         """
         if inplace:
@@ -557,17 +707,48 @@ class NestedSamples(Samples):
         """Re-weight samples at infinite temperature to get prior samples."""
         return self.set_beta(beta=0, inplace=inplace)
 
+    # TODO: remove this in version >= 2.1
+    def ns_output(self, *args, **kwargs):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.ns_output(1000)  # anesthetic 1.0\n"
+            "samples.stats(1000)      # anesthetic 2.0\n\n"
+            "Check out the new temperature functionality: help(samples.stats),"
+            " as well as average loglikelihoods: help(samples.logL_P)"
+            )
+
     def stats(self, nsamples=None, beta=None):
-        """Compute Nested Sampling statistics.
+        r"""Compute Nested Sampling statistics.
 
         Using nested sampling we can compute:
-            - logZ: the Bayesian evidence
-            - D_KL: the Kullback-Leibler divergence
-            - d_G: the Gaussian model dimensionality
-            - logL_P: the posterior averaged loglikelihood
+
+        - ``logZ``: Bayesian evidence
+
+          .. math::
+              \log Z = \int L \pi d\theta
+
+        - ``D_KL``: Kullback--Leibler divergence
+
+          .. math::
+              D_{KL} = \int P \log(P / \pi) d\theta
+
+        - ``logL_P``: posterior averaged log-likelihood
+
+          .. math::
+              \langle\log L\rangle_P = \int P \log L d\theta
+
+        - ``d_G``: Gaussian model dimensionality
+          (or posterior variance of the log-likelihood)
+
+          .. math::
+              d_G/2 = \langle(\log L)^2\rangle_P - \langle\log L\rangle_P^2
+
+          see `Handley and Lemos (2019) <https://arxiv.org/abs/1903.06682>`_
+          for more details on model dimensionalities.
 
         (Note that all of these are available as individual functions with the
-        same signature). See https://arxiv.org/abs/1903.06682 for more detail.
+        same signature.)
 
         In addition to point estimates nested sampling provides an error bar
         or more generally samples from a (correlated) distribution over the
@@ -579,18 +760,23 @@ class NestedSamples(Samples):
         provided as a vectorised function. If nsamples is also provided a
         MultiIndex dataframe is generated.
 
-        These obey Occam's razor equation: logZ = logL_P - D_KL, which splits
-        a model's quality (logZ) into a goodness-of-fit (logL_P) and an
-        complexity penalty (D_KL) https://arxiv.org/abs/2102.11511
+        These obey Occam's razor equation:
+
+        .. math::
+            \log Z = \langle\log L\rangle_P - D_{KL},
+
+        which splits a model's quality ``logZ`` into a goodness-of-fit
+        ``logL_P`` and a complexity penalty ``D_KL``. See `Hergt et al. (2021)
+        <https://arxiv.org/abs/2102.11511>`_ for more detail.
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
 
-        beta: float, array-like, optional
+        beta : float, array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
@@ -598,13 +784,14 @@ class NestedSamples(Samples):
         if beta is scalar and nsamples is None:
             Series, index ['logZ', 'd_G', 'DK_L', 'logL_P']
         elif beta is scalar and nsamples is int:
-            Samples, index range(nsamples),
+            :class:`Samples`, index range(nsamples),
             columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         elif beta is array-like and nsamples is None:
-            Samples, index beta,
+            :class:`Samples`, index beta,
             columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         elif beta is array-like and nsamples is int:
-            Samples, index MultiIndex the product of beta and range(nsamples)
+            :class:`Samples`, index :class:`pandas.MultiIndex` the product of
+            beta and range(nsamples)
             columns ['logZ', 'd_G', 'DK_L', 'logL_P']
         """
         logw = self.logw(nsamples, beta)
@@ -612,8 +799,7 @@ class NestedSamples(Samples):
             samples = self._constructor_sliced(index=self.columns[:0],
                                                dtype=float)
         else:
-            samples = WeightedLabelledDataFrame(index=logw.columns,
-                                                columns=self.columns[:0])
+            samples = Samples(index=logw.columns, columns=self.columns[:0])
         samples['logZ'] = self.logZ(logw)
         samples.set_label('logZ', r'$\ln\mathcal{Z}$')
         w = np.exp(logw-samples['logZ'])
@@ -624,12 +810,13 @@ class NestedSamples(Samples):
         samples['D_KL'] = (S*w).sum()
         samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$')
 
-        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()
-        samples.set_label('d_G', r'$d_\mathrm{G}$')
-
         samples['logL_P'] = samples['logZ'] + samples['D_KL']
         samples.set_label('logL_P',
                           r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$')
+
+        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()*2
+        samples.set_label('d_G', r'$d_\mathrm{G}$')
+
         samples.label = self.label
         return samples
 
@@ -641,7 +828,7 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
@@ -650,7 +837,7 @@ class NestedSamples(Samples):
         -------
         if nsamples is None:
             WeightedSeries like self
-        elif nsamples is int
+        elif nsamples is int:
             WeightedDataFrame like self, columns range(nsamples)
         """
         if nsamples is None:
@@ -670,7 +857,7 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
@@ -679,7 +866,7 @@ class NestedSamples(Samples):
         -------
         if nsamples is None:
             WeightedSeries like self
-        elif nsamples is int
+        elif nsamples is int:
             WeightedDataFrame like self, columns range(nsamples)
         """
         logX = self.logX(nsamples)
@@ -695,7 +882,7 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        beta, scalar or array-like, optional
+        beta : scalar or array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
@@ -724,19 +911,19 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
             - If nsamples is array, nsamples is assumed to be logw and returned
               (implementation convenience functionality)
 
-        beta: float, array-like, optional
+        beta : float, array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
         -------
-        if nsamples is array-like
+        if nsamples is array-like:
             WeightedDataFrame equal to nsamples
         elif beta is scalar and nsamples is None:
             WeightedSeries like self
@@ -772,27 +959,28 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        nsamples: int, optional
+        nsamples : int, optional
             - If nsamples is not supplied, calculate mean value
             - If nsamples is integer, draw nsamples from the distribution of
               values inferred by nested sampling
             - If nsamples is array, nsamples is assumed to be logw
 
-        beta: float, array-like, optional
+        beta : float, array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
         Returns
         -------
         if nsamples is array-like:
-            Series, index nsamples.columns
+            :class:`pandas.Series`, index nsamples.columns
         elif beta is scalar and nsamples is None:
             float
         elif beta is array-like and nsamples is None:
-            Series, index beta
+            :class:`pandas.Series`, index beta
         elif beta is scalar and nsamples is int:
-            Series, index range(nsamples)
+            :class:`pandas.Series`, index range(nsamples)
         elif beta is array-like and nsamples is int:
-            Series, MultiIndex columns the product of beta and range(nsamples)
+            :class:`pandas.Series`, :class:`pandas.MultiIndex` columns the
+            product of beta and range(nsamples)
         """
         logw = self.logw(nsamples, beta)
         logZ = logsumexp(logw, axis=0)
@@ -804,8 +992,19 @@ class NestedSamples(Samples):
 
     _logZ_function_shape = '\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
 
+    # TODO: remove this in version >= 2.1
+    def D(self, nsamples=None):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.D(1000)     # anesthetic 1.0\n"
+            "samples.D_KL(1000)  # anesthetic 2.0\n\n"
+            "Check out the new temperature functionality: help(samples.D_KL), "
+            "as well as average loglikelihoods: help(samples.logL_P)"
+            )
+
     def D_KL(self, nsamples=None, beta=None):
-        """Kullback-Leibler divergence."""
+        """Kullback--Leibler divergence."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
@@ -820,6 +1019,17 @@ class NestedSamples(Samples):
 
     D_KL.__doc__ += _logZ_function_shape
 
+    # TODO: remove this in version >= 2.1
+    def d(self, nsamples=None):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You need to update, e.g.\n"
+            "samples.d(1000)     # anesthetic 1.0\n"
+            "samples.d_G(1000)  # anesthetic 2.0\n\n"
+            "Check out the new temperature functionality: help(samples.d_G), "
+            "as well as average loglikelihoods: help(samples.logL_P)"
+            )
+
     def d_G(self, nsamples=None, beta=None):
         """Bayesian model dimensionality."""
         logw = self.logw(nsamples, beta)
@@ -828,7 +1038,7 @@ class NestedSamples(Samples):
         S = (logw*0).add(betalogL, axis=0) - logZ
         w = np.exp(logw-logZ)
         D_KL = (S*w).sum()
-        d_G = ((S-D_KL)**2*w).sum()
+        d_G = ((S-D_KL)**2*w).sum()*2
         if np.isscalar(d_G):
             return d_G
         else:
@@ -858,13 +1068,13 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        logL: float or int, optional
+        logL : float or int, optional
             Loglikelihood or iteration number to return live points.
             If not provided, return the last set of active live points.
 
         Returns
         -------
-        live_points: Samples
+        live_points : Samples
             Live points at either:
                 - contour logL (if input is float)
                 - ith iteration (if input is integer)
@@ -877,7 +1087,7 @@ class NestedSamples(Samples):
                 logL = float(self.logL[logL])
             except KeyError:
                 pass
-        i = (self.logL >= logL) & (self.logL_birth < logL)
+        i = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
 
     def posterior_points(self, beta=1):
@@ -897,29 +1107,31 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        logL_new: np.array
+        logL_new : np.array
             New log-likelihood values. Should have the same shape as `logL`.
 
-        action: str, optional
+        action : str, default='add'
             Can be any of {'add', 'replace', 'mask'}.
-                * add: Add the new `logL_new` to the current `logL`.
-                * replace: Replace the current `logL` with the new `logL_new`.
-                * mask: treat `logL_new` as a boolean mask and only keep the
-                        corresponding (True) samples.
-            default: 'add'
 
-        inplace: bool, optional
+            * add: Add the new `logL_new` to the current `logL`.
+            * replace: Replace the current `logL` with the new `logL_new`.
+            * mask: treat `logL_new` as a boolean mask and only keep the
+              corresponding (True) samples.
+
+        inplace : bool, optional
             Indicates whether to modify the existing array, or return a new
             frame with importance sampling applied.
             default: False
 
         Returns
         -------
-        samples: NestedSamples
+        samples : :class:`NestedSamples`
             Importance re-weighted samples.
+
         """
         samples = super().importance_sample(logL_new, action=action)
-        samples = samples[samples.logL > samples.logL_birth].recompute()
+        mask = (samples.logL > samples.logL_birth).to_numpy()
+        samples = samples[mask].recompute()
         if inplace:
             self._update_inplace(samples)
         else:
@@ -930,15 +1142,16 @@ class NestedSamples(Samples):
 
         Parameters
         ----------
-        logL_birth: array-like or int, optional
-            array-like: the birth contours.
-            int: the number of live points.
-            default: use the existing birth contours to compute nlive
+        logL_birth : array-like or int, optional
 
-        inplace: bool, optional
+            * array-like: the birth contours.
+            * int: the number of live points.
+            * default: use the existing birth contours to compute nlive
+
+        inplace : bool, default=False
             Indicates whether to modify the existing array, or return a new
             frame with contours resorted and nlive recomputed
-            default: False
+
         """
         if inplace:
             samples = self
@@ -964,7 +1177,7 @@ class NestedSamples(Samples):
                 raise RuntimeError("Cannot recompute run without "
                                    "birth contours logL_birth.")
 
-            invalid = samples.logL <= samples.logL_birth
+            invalid = (samples.logL <= samples.logL_birth).to_numpy()
             n_bad = invalid.sum()
             n_equal = (samples.logL == samples.logL_birth).sum()
             if n_bad:
@@ -993,7 +1206,7 @@ class NestedSamples(Samples):
                           " should investigate why your likelihood is throwing"
                           " NaNs. Dropping these samples at prior level",
                           RuntimeWarning)
-            samples = samples[samples.logL.notna()].recompute()
+            samples = samples[samples.logL.notna().to_numpy()].recompute()
 
         if inplace:
             self._update_inplace(samples)
@@ -1006,14 +1219,14 @@ def merge_nested_samples(runs):
 
     Parameters
     ----------
-    runs: list(NestedSamples)
+    runs : list(:class:`NestedSamples`)
         List or array-like of one or more nested sampling runs.
         If only a single run is provided, this recalculates the live points and
         as such can be used for masked runs.
 
     Returns
     -------
-    samples: NestedSamples
+    samples : :class:`NestedSamples`
         Merged run.
     """
     merge = pandas.concat(runs, ignore_index=True)
@@ -1029,20 +1242,20 @@ def merge_samples_weighted(samples, weights=None, label=None):
 
     Parameters
     ----------
-    samples: list(NestedSamples) or list(MCMCSamples)
+    samples : list(:class:`NestedSamples`) or list(:class:`MCMCSamples`)
         List or array-like of one or more MCMC or nested sampling runs.
 
-    weights: list(double) or None
+    weights : list(double) or None
         Weight for each run in samples (normalized internally).
-        Can be omitted if samples are NestedSamples,
+        Can be omitted if samples are :class:`NestedSamples`,
         then exp(logZ) is used as weight.
 
-    label: str or None
-        Label for the new samples. Default: None
+    label : str or None, default=None
+        Label for the new samples.
 
     Returns
     -------
-    new_samples: Samples
+    new_samples : :class:`Samples`
         Merged (weighted) run.
     """
     if not (isinstance(samples, Sequence) or

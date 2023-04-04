@@ -1,20 +1,26 @@
-import matplotlib_agg  # noqa: F401
+import anesthetic.examples._matplotlib_agg  # noqa: F401
 import os
 import sys
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-import matplotlib.pyplot as plt
+from pandas.testing import assert_frame_equal
 from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains
 from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
+import pandas._testing as tm
 try:
     import getdist
 except ImportError:
     pass
+
+
+@pytest.fixture(autouse=True)
+def close_figures_on_teardown():
+    tm.close()
 
 
 def test_read_getdist():
@@ -43,7 +49,6 @@ def test_read_getdist():
     assert_array_equal(mcmc.get_labels(), labels)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
-    plt.close("all")
 
     os.rename('./tests/example_data/gd.paramnames',
               './tests/example_data/gd.paramnames_')
@@ -73,14 +78,13 @@ def test_read_cobayamcmc():
               'chi2__norm', 'logL', 'chain']
     assert_array_equal(mcmc.drop_labels().columns, params)
     if 'getdist' in sys.modules:
-        labels = ['$x0$', '$x1$', '', '', r'$\chi^2$',
+        labels = ['$x_0$', '$x_1$', '', '', r'$\chi^2$',
                   r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
                   r'$n_\mathrm{chain}$']
         assert_array_equal(mcmc.get_labels(), labels)
 
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
-    plt.close("all")
 
     # single chain file
     mcmc = read_cobaya('./tests/example_data/cb_single_chain')
@@ -143,7 +147,6 @@ def test_read_montepython():
     assert isinstance(mcmc, MCMCSamples)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
-    plt.close("all")
 
 
 def test_read_multinest():
@@ -173,7 +176,6 @@ def test_read_multinest():
     assert isinstance(ns, NestedSamples)
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
-    plt.close("all")
 
 
 def test_read_polychord():
@@ -198,7 +200,6 @@ def test_read_polychord():
 
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
-    plt.close("all")
 
     os.rename('./tests/example_data/pc_phys_live-birth.txt',
               './tests/example_data/pc_phys_live-birth.txt_')
@@ -217,39 +218,18 @@ def test_read_polychord():
     assert_array_equal(ns_single_live[cols], ns[cols])
 
 
-@pytest.mark.xfail('getdist' not in sys.modules,
-                   raises=NameError,
-                   reason="requires getdist package")
 @pytest.mark.parametrize('root', ['gd', 'cb'])
 def test_discard_burn_in(root):
-    np.random.seed(3)
-    mcmc = read_chains('./tests/example_data/' + root, burn_in=0.3)
-    assert isinstance(mcmc, MCMCSamples)
-    mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
-    mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
-
-    # for 2 chains of length 1000
-    mcmc0 = read_chains('./tests/example_data/' + root)
-    assert isinstance(mcmc0, MCMCSamples)
-    mcmc1 = read_chains('./tests/example_data/' + root, burn_in=1000)
-    assert isinstance(mcmc1, MCMCSamples)
-    for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
-        if key in mcmc0:
-            assert key in mcmc1
-            assert_array_equal(mcmc0[key][1000:2000], mcmc1[key][:1000])
-    mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
-    mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
-
-    mcmc1 = read_chains('./tests/example_data/' + root, burn_in=-1000.1)
-    assert isinstance(mcmc1, MCMCSamples)
-    for key in ['x0', 'x1', 'x2', 'x3', 'x4']:
-        if key in mcmc0:
-            assert key in mcmc1
-            assert_array_equal(mcmc0[key][-1000:], mcmc1[key][1000:])
-    mcmc1.plot_2d(['x0', 'x1', 'x2', 'x3', 'x4'])
-    mcmc1.plot_1d(['x0', 'x1', 'x2', 'x3', 'x4'])
+    with pytest.raises(KeyError):
+        read_chains('./tests/example_data/' + root, burn_in=0.3)
 
 
 def test_read_fail():
     with pytest.raises(FileNotFoundError):
         read_chains('./tests/example_data/foo')
+
+
+def test_regex_escape():
+    mcmc_1 = read_chains('./tests/example_data/gd_single+X')
+    mcmc_2 = read_chains('./tests/example_data/gd_single')
+    assert_frame_equal(mcmc_1, mcmc_2)

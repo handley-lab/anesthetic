@@ -6,11 +6,14 @@ from pandas import Series, DataFrame, concat, MultiIndex
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, channel_capacity, quantile,
-                              temporary_seed)
+                              temporary_seed, adjust_docstrings)
 
 
 class _WeightedObject(object):
-    """Common methods for WeightedSeries and WeightedDataFrame."""
+    """Common methods for `WeightedSeries` and `WeightedDataFrame`.
+
+    :meta public:
+    """
 
     def __init__(self, *args, **kwargs):
         weights = kwargs.pop('weights', None)
@@ -31,25 +34,25 @@ class _WeightedObject(object):
 
     def drop_weights(self, axis=0):
         """Drop weights."""
-        return self.droplevel('weights', axis)
+        if self.isweighted(axis):
+            return self.droplevel('weights', axis)
+        return self.copy().__finalize__(self, "drop_weights")
 
     def set_weights(self, weights, axis=0, inplace=False, level=None):
         """Set sample weights along an axis.
 
         Parameters
         ----------
-        weights: 1d array-like
+        weights : 1d array-like
             The sample weights to put in an index.
 
-        axis: int (0,1), optional
+        axis : int (0,1), default=0
             Whether to put weights in an index or column.
-            Default 0.
 
-        inplace: bool, optional
+        inplace : bool, default=False
             Whether to operate inplace, or return a new array.
-            Default False.
 
-        level: int
+        level : int
             Which level in the index to insert before.
             Defaults to inserting at back
 
@@ -74,7 +77,7 @@ class _WeightedObject(object):
             names.insert(level, 'weights')
 
             index = MultiIndex.from_arrays(index, names=names)
-            result.set_axis(index, axis=axis, inplace=True)
+            result = result.set_axis(index, axis=axis, copy=False)
 
         if inplace:
             self._update_inplace(result)
@@ -99,18 +102,6 @@ class _WeightedObject(object):
         else:
             return answer.__finalize__(self, "reset_index")
 
-    def std(self, *args, **kwargs):
-        """Weighted standard deviation of the sampled distribution."""
-        return np.sqrt(self.var(*args, **kwargs))
-
-    def kurtosis(self, *args, **kwargs):
-        """Weighted kurtosis of the sampled distribution."""
-        return self.kurt(*args, **kwargs)
-
-    def median(self, *args, **kwargs):
-        """Weighted median of the sampled distribution."""
-        return self.quantile(*args, **kwargs)
-
     def neff(self, axis=0):
         """Effective number of samples."""
         if self.isweighted(axis):
@@ -120,15 +111,22 @@ class _WeightedObject(object):
 
 
 class WeightedSeries(_WeightedObject, Series):
-    """Weighted version of pandas.Series."""
+    """Weighted version of :class:`pandas.Series`."""
 
-    def mean(self, skipna=True):
-        """Weighted mean of the sampled distribution."""
+    def mean(self, skipna=True):  # noqa: D102
         null = self.isnull() & skipna
         return np.average(masked_array(self, null), weights=self.get_weights())
 
-    def var(self, skipna=True):
-        """Weighted variance of the sampled distribution."""
+    def std(self, *args, **kwargs):  # noqa: D102
+        return np.sqrt(self.var(*args, **kwargs))
+
+    def kurtosis(self, *args, **kwargs):  # noqa: D102
+        return self.kurt(*args, **kwargs)
+
+    def median(self, *args, **kwargs):  # noqa: D102
+        return self.quantile(*args, **kwargs)
+
+    def var(self, skipna=True):  # noqa: D102
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         if np.isnan(mean):
@@ -136,8 +134,7 @@ class WeightedSeries(_WeightedObject, Series):
         return np.average(masked_array((self-mean)**2, null),
                           weights=self.get_weights())
 
-    def cov(self, other, skipna=True):
-        """Weighted covariance with another Series."""
+    def cov(self, other, skipna=True):  # noqa: D102
         null = (self.isnull() | other.isnull()) & skipna
         x = self.mean(skipna=skipna)
         y = other.mean(skipna=skipna)
@@ -146,13 +143,11 @@ class WeightedSeries(_WeightedObject, Series):
         return np.average(masked_array((self-x)*(other-y), null),
                           weights=self.get_weights())
 
-    def corr(self, other, method="pearson", skipna=True):
-        """Weighted pearson correlation with another Series."""
+    def corr(self, other, method="pearson", skipna=True):  # noqa: D102
         norm = self.std(skipna=skipna)*other.std(skipna=skipna)
         return self.cov(other, skipna=skipna)/norm
 
-    def kurt(self, skipna=True):
-        """Weighted kurtosis of the sampled distribution."""
+    def kurt(self, skipna=True):  # noqa: D102
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         std = self.std(skipna=skipna)
@@ -161,8 +156,7 @@ class WeightedSeries(_WeightedObject, Series):
         return np.average(masked_array(((self-mean)/std)**4, null),
                           weights=self.get_weights())
 
-    def skew(self, skipna=True):
-        """Weighted skewness of the sampled distribution."""
+    def skew(self, skipna=True):  # noqa: D102
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         std = self.std(skipna=skipna)
@@ -171,8 +165,7 @@ class WeightedSeries(_WeightedObject, Series):
         return np.average(masked_array(((self-mean)/std)**3, null),
                           weights=self.get_weights())
 
-    def mad(self, skipna=True):
-        """Weighted mean absolute deviation of the sampled distribution."""
+    def mad(self, skipna=True):  # noqa: D102
         null = self.isnull() & skipna
         mean = self.mean(skipna=skipna)
         if np.isnan(mean):
@@ -180,14 +173,10 @@ class WeightedSeries(_WeightedObject, Series):
         return np.average(masked_array(abs(self-mean), null),
                           weights=self.get_weights())
 
-    def sem(self, skipna=True):
-        """Weighted standard error of the mean."""
+    def sem(self, skipna=True):  # noqa: D102
         return np.sqrt(self.var(skipna=skipna)/self.neff())
 
-    def quantile(self, q=0.5, numeric_only=True, interpolation='linear'):
-        """Weighted quantile of the sampled distribution."""
-        if not numeric_only:
-            raise NotImplementedError("numeric_only kwarg not implemented")
+    def quantile(self, q=0.5, interpolation='linear'):  # noqa: D102
         return quantile(self.to_numpy(), q, self.get_weights(), interpolation)
 
     def compress(self, ncompress=True):
@@ -195,7 +184,7 @@ class WeightedSeries(_WeightedObject, Series):
 
         Parameters
         ----------
-        ncompress: int, optional
+        ncompress : int, optional
             effective number of samples after compression. If not supplied
             (or True), then reduce to the channel capacity (theoretical optimum
             compression). If <=0, then compress so that all weights are unity.
@@ -204,8 +193,7 @@ class WeightedSeries(_WeightedObject, Series):
         i = compress_weights(self.get_weights(), self._rand(), ncompress)
         return self.repeat(i)
 
-    def sample(self, *args, **kwargs):
-        """Weighted sample."""
+    def sample(self, *args, **kwargs):  # noqa: D102
         return super().sample(weights=self.get_weights(), *args, **kwargs)
 
     @property
@@ -218,10 +206,9 @@ class WeightedSeries(_WeightedObject, Series):
 
 
 class WeightedDataFrame(_WeightedObject, DataFrame):
-    """Weighted version of pandas.DataFrame."""
+    """Weighted version of :class:`pandas.DataFrame`."""
 
-    def mean(self, axis=0, skipna=True, *args, **kwargs):
-        """Weighted mean of the sampled distribution."""
+    def mean(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
             null = self.isnull() & skipna
             mean = np.average(masked_array(self, null),
@@ -230,8 +217,16 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         else:
             return super().mean(axis=axis, skipna=skipna, *args, **kwargs)
 
-    def var(self, axis=0, skipna=True, *args, **kwargs):
-        """Weighted variance of the sampled distribution."""
+    def std(self, *args, **kwargs):  # noqa: D102
+        return np.sqrt(self.var(*args, **kwargs))
+
+    def kurtosis(self, *args, **kwargs):  # noqa: D102
+        return self.kurt(*args, **kwargs)
+
+    def median(self, *args, **kwargs):  # noqa: D102
+        return self.quantile(*args, **kwargs)
+
+    def var(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
@@ -241,21 +236,25 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         else:
             return super().var(axis=axis, skipna=skipna, *args, **kwargs)
 
-    def cov(self, skipna=True, *args, **kwargs):
-        """Weighted covariance of the sampled distribution."""
+    def cov(self, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted():
             null = self.isnull() & skipna
             mean = self.mean(skipna=skipna)
             x = masked_array(self - mean, null)
             cov = np.ma.dot(self.get_weights()*x.T, x) \
                 / self.get_weights().sum().T
+            if kwargs:
+                raise NotImplementedError("The keywords %s are not implemented"
+                                          "for the calculation of the"
+                                          "covariance with weighted samples."
+                                          % kwargs)
             return self._constructor(cov, index=self.columns,
                                      columns=self.columns)
         else:
             return super().cov(*args, **kwargs)
 
-    def corr(self, method="pearson", skipna=True, *args, **kwargs):
-        """Weighted pearson correlation matrix of the sampled distribution."""
+    def corr(self, method="pearson", skipna=True,
+             *args, **kwargs):  # noqa: D102
         if self.isweighted():
             cov = self.cov()
             diag = np.sqrt(np.diag(cov))
@@ -264,8 +263,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return super().corr(*args, **kwargs)
 
     def corrwith(self, other, axis=0, drop=False, method="pearson",
-                 *args, **kwargs):
-        """Pairwise weighted pearson correlation."""
+                 *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
             if isinstance(other, Series):
                 answer = self.apply(lambda x: other.corr(x, method=method),
@@ -307,8 +305,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return super().corrwith(other, drop=drop, axis=axis, method=method,
                                     *args, **kwargs)
 
-    def kurt(self, axis=0, skipna=True, *args, **kwargs):
-        """Weighted kurtosis of the sampled distribution."""
+    def kurt(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
@@ -319,8 +316,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         else:
             return super().kurt(axis=axis, skipna=skipna, *args, **kwargs)
 
-    def skew(self, axis=0, skipna=True, *args, **kwargs):
-        """Weighted skewness of the sampled distribution."""
+    def skew(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
@@ -331,8 +327,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         else:
             return super().skew(axis=axis, skipna=skipna, *args, **kwargs)
 
-    def mad(self, axis=0, skipna=True, *args, **kwargs):
-        """Weighted mean absolute deviation of the sampled distribution."""
+    def mad(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         if self.isweighted(axis):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
@@ -342,20 +337,20 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         else:
             return super().var(axis=axis, skipna=skipna, *args, **kwargs)
 
-    def sem(self, axis=0, skipna=True):
-        """Weighted standard error of the mean."""
+    def sem(self, axis=0, skipna=True):  # noqa: D102
         n = self.neff(axis)
         return np.sqrt(self.var(axis=axis, skipna=skipna)/n)
 
-    def quantile(self, q=0.5, axis=0, numeric_only=True,
-                 interpolation='linear'):
-        """Weighted quantile of the sampled distribution."""
-        if not numeric_only:
-            raise NotImplementedError("numeric_only kwarg not implemented")
+    def quantile(self, q=0.5, axis=0, numeric_only=None,
+                 interpolation='linear', method=None):  # noqa: D102
         if self.isweighted(axis):
-            data = np.array([c.quantile(q, interpolation=interpolation,
-                                        numeric_only=numeric_only)
-                             for _, c in self.iteritems()])
+            if numeric_only is not None or method is not None:
+                raise NotImplementedError(
+                    "`numeric_only` and `method` kwargs not implemented for "
+                    "`WeightedSeries` and `WeightedDataFrame`."
+                )
+            data = np.array([c.quantile(q=q, interpolation=interpolation)
+                             for _, c in self.items()])
             if np.isscalar(q):
                 return self._constructor_sliced(data,
                                                 index=self._get_axis(1-axis))
@@ -363,15 +358,19 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                 return self._constructor(data.T, index=q,
                                          columns=self._get_axis(1-axis))
         else:
+            if numeric_only is None:
+                numeric_only = True
+            if method is None:
+                method = 'single'
             return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
-                                    interpolation=interpolation)
+                                    interpolation=interpolation, method=method)
 
     def compress(self, ncompress=True, axis=0):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
         ----------
-        ncompress: int, optional
+        ncompress : int, optional
             effective number of samples after compression. If not supplied
             (or True), then reduce to the channel capacity (theoretical optimum
             compression). If <=0, then compress so that all weights are unity.
@@ -383,14 +382,13 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             data = np.repeat(self.to_numpy(), i, axis=axis)
             i = self.drop_weights(axis)._get_axis(axis).repeat(i)
             df = self._constructor(data=data)
-            df.set_axis(i, axis=axis, inplace=True)
-            df.set_axis(self._get_axis(1-axis), axis=1-axis, inplace=True)
+            df = df.set_axis(i, axis=axis, copy=False)
+            df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
             return df
         else:
             return self
 
-    def sample(self, *args, **kwargs):
-        """Weighted sample."""
+    def sample(self, *args, **kwargs):  # noqa: D102
         sig = signature(DataFrame.sample)
         axis = sig.bind(self, *args, **kwargs).arguments.get('axis', 0)
         if self.isweighted(axis):
@@ -406,3 +404,16 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     @property
     def _constructor(self):
         return WeightedDataFrame
+
+
+for cls in [WeightedDataFrame, WeightedSeries]:
+    adjust_docstrings(cls, r'\bDataFrame\b', 'WeightedDataFrame')
+    adjust_docstrings(cls, r'\bDataFrames\b', 'WeightedDataFrames')
+    adjust_docstrings(cls, r'\bSeries\b', 'WeightedSeries')
+    adjust_docstrings(cls, 'core', 'pandas.core')
+    adjust_docstrings(cls, 'DataFrameGroupBy',
+                           'pandas.core.groupby.DataFrameGroupBy')
+    adjust_docstrings(cls, 'SeriesGroupBy',
+                           'pandas.core.groupby.SeriesGroupBy')
+    adjust_docstrings(cls, 'pandas.core.window.Rolling.quantile',
+                           'pandas.core.window.rolling.Rolling.quantile')

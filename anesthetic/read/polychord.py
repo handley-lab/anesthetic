@@ -6,7 +6,7 @@ from anesthetic.samples import NestedSamples
 
 
 def read_polychord(root, *args, **kwargs):
-    """Read ``<root>_dead-birth.txt`` in polychord format."""
+    """Read ``<root>_dead-birth.txt`` in PolyChord format."""
     birth_file = root + '_dead-birth.txt'
     birth_file
     data = np.loadtxt(birth_file)
@@ -21,11 +21,12 @@ def read_polychord(root, *args, **kwargs):
     except IOError:
         pass
     data, logL, logL_birth = np.split(data, [-2, -1], axis=1)
-    params, labels = read_paramnames(root)
+    columns, labels = read_paramnames(root)
 
-    columns = kwargs.pop('columns', params)
+    columns = kwargs.pop('columns', columns)
+    labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
     return NestedSamples(data=data, columns=columns,
                          logL=logL, logL_birth=logL_birth,
-                         labels=labels, root=root, *args, **kwargs)
+                         labels=labels, *args, **kwargs)

@@ -1,10 +1,9 @@
-=========================================
-anesthetic: nested sampling visualisation
-=========================================
-:anesthetic: nested sampling visualisation
-:Author: Will Handley and Lukas Hergt
-:Version: 2.0.0-beta.12
-:Homepage: https://github.com/handley-lab/anesthetic
+===========================================
+anesthetic: nested sampling post-processing
+===========================================
+:Authors: Will Handley and Lukas Hergt
+:Version: 2.0.0-beta.25
+:Homepage: https://github.com/williamjameshandley/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
 .. image:: https://github.com/handley-lab/anesthetic/workflows/CI/badge.svg?branch=master
@@ -36,7 +35,7 @@ anesthetic: nested sampling visualisation
 
 
 
-``anesthetic`` brings together tools for processing nested sampling chains, leveraging standard scientific python libraries.
+``anesthetic`` brings together tools for processing nested sampling chains by leveraging standard scientific python libraries.
 
 You can see example usage and plots in the `plot gallery <http://htmlpreview.github.io/?https://github.com/handley-lab/cosmo_example/blob/master/demos/demo.html>`_, or in the corresponding `Jupyter notebook <https://mybinder.org/v2/gh/handley-lab/anesthetic/master?filepath=demo.ipynb>`_.
 
@@ -76,19 +75,20 @@ Installation
 
     pip install anesthetic
 
-or via the setup.py
+or from the repository
 
 .. code:: bash
 
     git clone https://github.com/handley-lab/anesthetic
     cd anesthetic
-    python setup.py install --user
+    python -m pip install .
 
 You can check that things are working by running the test suite:
 
 .. code:: bash
 
     export MPLBACKEND=Agg     # only necessary for OSX users
+    python -m pip install ".[test]"
     python -m pytest
     flake8 anesthetic tests
     pydocstyle --convention=numpy anesthetic
@@ -122,9 +122,15 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
 
 .. code:: bash
 
-   cd docs
-   make html
+    python -m pip install ".[extras,docs]"
+    cd docs
+    make html
 
+and view the documentation by opening ``docs/build/html/index.html`` in a browser. To regenerate the automatic RST files run:
+
+.. code:: bash
+
+    sphinx-apidoc -fM -t docs/templates/ -o docs/source/ anesthetic/
 
 Citation
 --------
@@ -196,7 +202,7 @@ Why create another one? In general, any dedicated user of software will find tha
 What's in a name?
 ~~~~~~~~~~~~~~~~~
 
-There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://github.com/tomcharnock/NestorFlow>`__). Doing a UNIX grep:
+There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://bitbucket.org/tomcharnock/nestorflow>`__). Doing a UNIX grep:
 
 .. code:: bash
 
