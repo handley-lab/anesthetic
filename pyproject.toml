@@ -45,8 +45,8 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/williamjameshandley/anesthetic"
-"Bug Tracker" = "https://github.com/williamjameshandley/anesthetic/issues"
+"Homepage" = "https://github.com/handley-lab/anesthetic"
+"Bug Tracker" = "https://github.com/handley-lab/anesthetic/issues"
 "Documentation" = "https://anesthetic.readthedocs.io/en/latest/"
 "JOSS paper" = "https://joss.theoj.org/papers/10.21105/joss.01414"
 
