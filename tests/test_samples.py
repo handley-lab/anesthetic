@@ -1368,6 +1368,11 @@ def test_groupby_stats():
     assert np.all(chains.kurt().get_weights() == [w1, w2])
     assert np.all(chains.kurtosis().get_weights() == [w1, w2])
     assert np.all(chains.skew().get_weights() == [w1, w2])
+    assert np.all(chains.sem().get_weights() == [w1, w2])
+    w = [w1 for _ in range(len(params))] + [w2 for _ in range(len(params))]
+    assert np.all(chains.corr().get_weights() == w)
+    assert np.all(chains.cov().get_weights() == w)
+    assert np.all(chains.corrwith(mcmc).get_weights() == [w1, w2])
 
     for chain in [1, 2]:
         mask = mcmc.chain == chain
