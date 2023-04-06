@@ -90,20 +90,25 @@ def quantile(a, q, w=None, interpolation='linear'):
     return quant
 
 
-def sample_cdf(samples, interpolation='linear'):
+def sample_cdf(samples, inverse=False, interpolation='linear'):
     """Sample the empirical cdf for a 1d array."""
     samples = np.array(samples)
     samples.sort()
     ngaps = len(samples)-1
     gaps = np.random.dirichlet(np.ones(ngaps))
     cdf = np.array([0, *np.cumsum(gaps)])
-    assert np.isclose(cdf[-1], 1, atol=1e-9, rtol=1e-9), "Error: CDF does not reach 1"+str(cdf[-1])
+    assert np.isclose(cdf[-1], 1, atol=1e-9, rtol=1e-9), "Error: CDF does not reach 1 but "+str(cdf[-1])
+    # Set the last element (tested to be approx 1)
+    # to exactly 1 to avoid interpolation errors
     cdf[-1] = 1
-    return interp1d(cdf, samples, kind=interpolation)
+    if inverse:
+        return interp1d(cdf, samples, kind=interpolation)
+    else:
+        return interp1d(samples, cdf, kind=interpolation)
 
 
 def credibility_interval(samples, weights=None, level=0.68, method="hpd",
-    u=None, n_iter=12, verbose=True):
+    u=None, n_iter=12, return_covariance=False, verbose=True):
     """Compute the credibility interval of weighted samples.
 
     Based on linear interpolation of the cumulative density function, thus
@@ -136,8 +141,9 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
 
     Returns
     -------
-    limit: tuple or float
-        Tuple [lower, upper] for hpd/et, or float for ll/ul
+    limit(s): tuple or float
+        Returns the credibility interval boundari(es) and,
+        if requested, the associated covariance (based on n_iter samples).
     """
     if level >= 1:
         raise ValueError('level must be <1, got {0:.2f}'.format(level))
@@ -153,23 +159,27 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
     else:
         weights = np.array(weights.copy())
 
-    # Convert samples to unit weight if necessary
+    # Convert samples to unit weight not the case
     if not np.all(np.logical_or(weights==0, weights==1)):
-        # compress_weights with ncompress<=0 assures weights==1
+        # compress_weights with ncompress<=0 assures weights \in 0,1
+        # Note that this must be done, we cannot handle weights != 1
+        # see this discussion for details:
+        # https://github.com/williamjameshandley/anesthetic/pull/188#issuecomment-1274980982
         weights = compress_weights(weights, ncompress=-1, u=u)
         if verbose:
             print("Compressing weights to", np.sum(weights), \
                 "unit weight samples.")
         assert np.all(np.logical_or(weights==0, weights==1)), \
-            "Error in compress_weights, weights not binary"
+            "Unexpected error in compress_weights, weights not binary"
 
     indices = np.where(weights)[0]
     x = samples[indices]
 
+    # Sample the confidence interval multiple times
+    # to get errorbars on confidence interval boundaries
     ci_samples = []
     for i in range(n_iter):
-        invCDF = sample_cdf(x)
-
+        invCDF = sample_cdf(x, inverse=True)
         if method == "hpd":
             # Find smallest interval
             def distance(Y, level=level):
@@ -188,18 +198,24 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
             raise ValueError("Method '{0:}' unknown".format(method))
     ci_samples = np.array(ci_samples)
     if np.shape(ci_samples) == (n_iter, ):
-        return np.mean(ci_samples), np.std(ci_samples)
-    elif np.shape(ci_samples) == (n_iter, 2):
-        mean_lower = np.mean(ci_samples[:,0])
-        mean_upper = np.mean(ci_samples[:,1])
-        std_lower = np.std(ci_samples[:,0])
-        std_upper = np.std(ci_samples[:,1])
         if verbose:
-            print("The {0:.0%} credibility interval is",
-                "[{1:.2g} +/- {2:.1g}, {3:.2g} +/- {4:.1g}]".format(
-                level, mean_lower, std_lower, mean_upper, std_upper))
-
-        return [mean_lower, mean_upper], [std_lower, std_upper]
+            print(f"The {level:.0%} credibility interval is",
+                "{0:.2g} +/- {1:.1g}".format(np.mean(ci_samples),
+                    np.std(ci_samples, ddof=1)))
+        if return_covariance:
+            return np.mean(ci_samples), np.cov(ci_samples)
+        else:
+            return np.mean(ci_samples)
+    elif np.shape(ci_samples) == (n_iter, 2):
+        if verbose:
+            print(f"The {level:.0%} credibility interval is",
+                "[{0:.2g} +/- {1:.1g}, {2:.2g} +/- {3:.1g}]".format(
+                    np.mean(ci_samples[:, 0]), np.std(ci_samples[:, 0], ddof=1),
+                    np.mean(ci_samples[:, 1]), np.std(ci_samples[:, 1], ddof=1)))
+        if return_covariance:
+            return np.mean(ci_samples, axis=1), np.cov(ci_samples, rowvar=False)
+        else:
+            return np.mean(ci_samples, axis=1)
     else:
         raise ValueError('ci_samples in unregonized shape')
 

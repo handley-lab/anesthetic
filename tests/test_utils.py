@@ -176,10 +176,18 @@ def test_p_values_from_sample():
     assert ks_results['p-value'] > 0.05
 
 
+
 def test_credibility_interval():
-    np.random.seed(3)
-    samples = read_chains('./tests/example_data/pc')
     np.random.seed(0)
+    from anesthetic import read_chains
+    from anesthetic.utils import credibility_interval
+    normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
+    mean, std = credibility_interval(normal_samples, level=0.68)
+    print(mean, std)
+    assert_allclose(mean[0], 1.9, atol=0.01)
+    assert_allclose(mean[1], 2.1, atol=0.01)
+
+    samples = read_chains('./tests/example_data/pc')
     mean, std = credibility_interval(samples["x0"], level=0.68,
                     weights=samples.get_weights(), method="hpd",
                     u=np.random.rand(len(samples)))
@@ -188,13 +196,13 @@ def test_credibility_interval():
     assert_allclose(std[0], 0.015, atol=0.001)
     assert_allclose(std[1], 0.015, atol=0.001)
     #assert_allclose(credibility_interval(samples["x0"], level=0.95,
-    #                weights=samples.get_weights(), method="et"),
+    #                weights=samples.weights, method="et"),
     #                [-0.2, 0.2], atol=0.02)
     #assert_allclose(credibility_interval(samples["x0"], level=0.975,
-    #                weights=samples.get_weights(), method="ul"),
+    #                weights=samples.weights, method="ul"),
     #                0.2, atol=0.02)
     #assert_allclose(credibility_interval(samples["x0"], level=0.5,
-    #                weights=samples.get_weights(), method="ll"),
+    #                weights=samples.weights, method="ll"),
     #                0, atol=0.001)
 
     with pytest.raises(ValueError):
