@@ -73,8 +73,8 @@ def compress_weights(w, u=None, ncompress=True):
     return (integer + extra).astype(int)
 
 
-def cdf(a, w=None, inverse=False, interpolation='linear'):
-    """Compute the weighted (inverse) empirical cdf for a 1d array."""
+def quantile(a, q, w=None, interpolation='linear'):
+    """Compute the weighted quantile for a one dimensional array."""
     if w is None:
         w = np.ones_like(a)
     a = np.array(list(a))  # Necessary to convert pandas arrays
@@ -83,10 +83,11 @@ def cdf(a, w=None, inverse=False, interpolation='linear'):
     c = np.cumsum(w[i[1:]]+w[i[:-1]])
     c = c / c[-1]
     c = np.concatenate(([0.], c))
-    if inverse:
-        return interp1d(c, a[i], kind=interpolation)
-    else:
-        return interp1d(a[i], c, kind=interpolation)
+    icdf = interp1d(c, a[i], kind=interpolation)
+    quant = icdf(q)
+    if isinstance(q, float):
+        quant = float(quant)
+    return quant
 
 
 def sample_cdf(samples, interpolation='linear'):
@@ -99,15 +100,6 @@ def sample_cdf(samples, interpolation='linear'):
     assert np.isclose(cdf[-1], 1, atol=1e-9, rtol=1e-9), "Error: CDF does not reach 1"+str(cdf[-1])
     cdf[-1] = 1
     return interp1d(cdf, samples, kind=interpolation)
-
-
-def quantile(a, q, w=None, interpolation='linear'):
-    """Compute the weighted quantile for a one dimensional array."""
-    icdf = cdf(a, w, inverse=True, interpolation=interpolation)
-    quant = icdf(q)
-    if isinstance(q, float):
-        quant = float(quant)
-    return quant
 
 
 def credibility_interval(samples, weights=None, level=0.68, method="hpd",
