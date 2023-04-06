@@ -22,25 +22,25 @@ class Widget(object):
 
     Parameters
     ----------
-        fig: matplotlib.figure.Figure
+        fig: :class:`matplotlib.figure.Figure`
             Figure for drawing widget on.
 
         gridspec: matplotlib.gridspec.GridSpec
             Specification for where to draw in the figure.
             Technically could be any argument that can be passed to
-            matplotlib.figure.Figure.add_subplot.
+            :meth:`matplotlib.figure.Figure.add_subplot`.
 
     Attributes
     ----------
-        fig: (matplotlib.figure.Figure
+        fig: :class:`matplotlib.figure.Figure`
             Figure for drawing widget on.
 
         gridspec: matplotlib.gridspec.GridSpec
             Specification for where to draw in the figure.
             Technically could be any argument that can be passed to
-            matplotlib.figure.Figure.add_subplot.
+            :meth:`matplotlib.figure.Figure.add_subplot`.
 
-        ax: matplotlib.axes.Axes
+        ax: :class:`matplotlib.axes.Axes`
             Axes of widget.
 
     """
@@ -84,7 +84,7 @@ class Button(Widget):
 
     Attributes
     ----------
-        button: matplotlib.widgets.Button
+        button: :class:`matplotlib.widgets.Button`
             matplotlib Button.
 
     """
@@ -107,7 +107,7 @@ class CheckButtons(LabelsWidget):
 
     Attributes
     ----------
-        buttons: matplotlib.widgets.CheckButtons
+        buttons: :class:`matplotlib.widgets.CheckButtons`
             matplotlib CheckButtons.
 
     """
@@ -132,7 +132,7 @@ class RadioButtons(LabelsWidget):
 
     Attributes
     ----------
-        buttons: matplotlib.widgets.RadioButtons
+        buttons: :class:`matplotlib.widgets.RadioButtons`
             matplotlib RadioButtons.
 
     """
@@ -166,7 +166,7 @@ class Slider(Widget):
 
     Attributes
     ----------
-        slider: matplotlib.widgets.Slider
+        slider: :class:`matplotlib.widgets.Slider`
             matplotlib Slider.
 
     """
@@ -217,7 +217,7 @@ class TrianglePlot(Widget):
 
     Attributes
     ----------
-        ax: pandas.DataFrame(matplotlib.axes.Axes)
+        ax: :class:`pandas.DataFrame`(:class:`matplotlib.axes.Axes`)
             Mapping from pairs of parameters to axes for plotting.
     """
 
@@ -226,30 +226,30 @@ class TrianglePlot(Widget):
         self.fig.delaxes(self.ax)
         _, self.ax = make_2d_axes([], fig=self.fig, subplot_spec=self.gridspec)
 
-    def draw(self, labels, tex={}):
-        """Draw a new triangular grid for list of parameters labels.
+    def draw(self, params, labels={}):
+        """Draw a new triangular grid for list of parameters.
 
         Parameters
         ----------
-            labels: list(str)
-                labels for the triangular grid.
+            params: list(str)
+                params for the triangular grid.
 
         """
         # Remove any existing axes
         for y, row in self.ax.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     if x == y:
                         self.fig.delaxes(ax.twin)
                     self.fig.delaxes(ax)
 
         # Set up the axes
-        _, self.ax = make_2d_axes(labels, upper=False, tex=tex,
+        _, self.ax = make_2d_axes(params, upper=False, labels=labels,
                                   fig=self.fig, subplot_spec=self.gridspec)
 
         # Plot no points  points.
         for y, row in self.ax.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     if x == y:
                         ax.twin.plot([None], [None], 'k-')
@@ -267,7 +267,7 @@ class TrianglePlot(Widget):
 
         """
         for y, row in self.ax.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     if x == y:
                         datx, daty = histogram(f(x), bins='auto')
@@ -280,7 +280,7 @@ class TrianglePlot(Widget):
     def reset_range(self):
         """Reset the range of each grid."""
         for y, row in self.ax.iterrows():
-            for x, ax in row.iteritems():
+            for x, ax in row.items():
                 if ax is not None:
                     if x == y:
                         ax.twin.relim()

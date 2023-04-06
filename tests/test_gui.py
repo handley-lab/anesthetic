@@ -1,11 +1,16 @@
-import matplotlib_agg  # noqa: F401
-from packaging import version
-from matplotlib import __version__ as mpl_version
-from anesthetic import NestedSamples
+import anesthetic.examples._matplotlib_agg  # noqa: F401
+from anesthetic import read_chains
+import pytest
+import pandas._testing as tm
+
+
+@pytest.fixture(autouse=True)
+def close_figures_on_teardown():
+    tm.close()
 
 
 def test_gui():
-    plotter = NestedSamples(root='./tests/example_data/pc').gui()
+    plotter = read_chains('./tests/example_data/pc').gui()
 
     # Type buttons
     plotter.type.buttons.set_active(1)
@@ -36,15 +41,22 @@ def test_gui():
     assert plotter.temperature() == 100
     plotter.type.buttons.set_active(0)
 
-    if version.parse(mpl_version) >= version.parse('3.4.0'):
-        # Reload button
-        plotter.reload.button.observers[0]()
+    # Reload button
+    plotter.reload.button.on_clicked(plotter.reload_file(None))
 
-        # Reset button
-        plotter.reset.button.observers[0]()
-    else:
-        # Reload button
-        plotter.reload.button.observers[0](None)
+    # Reset button
+    plotter.reset.button.on_clicked(plotter.reset_range(None))
 
-        # Reset button
-        plotter.reset.button.observers[0](None)
+
+def test_gui_params():
+    plotter = read_chains('./tests/example_data/pc').gui()
+    assert len(plotter.param_choice.buttons.labels) == 8
+
+    plotter = read_chains('./tests/example_data/pc').gui(params=['x0', 'x1'])
+    assert len(plotter.param_choice.buttons.labels) == 2
+
+
+def test_slider_reset_range():
+    plotter = read_chains('./tests/example_data/pc').gui()
+    plotter.evolution.reset_range(-3, 3)
+    assert plotter.evolution.ax.get_xlim() == (-3.0, 3.0)

@@ -4,14 +4,24 @@ import pytest
 from scipy import special as sp
 from numpy.testing import (assert_array_equal, assert_allclose,
                            assert_array_almost_equal)
-from anesthetic import NestedSamples
+from anesthetic import read_chains
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
-                              insertion_p_value,
-                              credibility_interval, cdf)
+                              insertion_p_value, compress_weights,
+                              credibility_interval)
+
+
+def test_compress_weights():
+    w = compress_weights(w=np.ones(10), u=None)
+    assert_array_equal(w, np.ones(10))
+    w = compress_weights(w=None, u=np.random.rand(10))
+    assert_array_equal(w, np.ones(10))
+    r = np.random.rand(10)
+    w = compress_weights(w=r, u=None, ncompress=False)
+    assert_array_equal(w, r)
 
 
 def test_nest_level():
@@ -60,6 +70,7 @@ def test_unique():
                                  iso_probability_contours_from_samples])
 def test_iso_probability_contours(ipc):
     p = np.random.randn(10)
+    ipc(p)
     with pytest.raises(ValueError):
         ipc(p, contours=[0.68, 0.95])
 
@@ -86,6 +97,11 @@ def test_sample_compression_1d():
     assert len(x) == n
     assert len(w) == n
     assert np.isclose(w.sum(), w_.sum())
+
+    x_ = np.random.rand(N)
+    w_ = np.random.randn(N)
+    x, w = sample_compression_1d(x_, w_, ncompress=True)
+    assert len(w) <= N
 
 
 def test_is_int():
@@ -149,7 +165,7 @@ def test_insertion_p_value():
 
 def test_p_values_from_sample():
     np.random.seed(3)
-    ns = NestedSamples(root='./tests/example_data/pc')
+    ns = read_chains('./tests/example_data/pc')
     ns._compute_insertion_indexes()
     nlive = len(ns.live_points())
 
@@ -177,25 +193,23 @@ def test_cdf():
 
 def test_credibility_interval():
     np.random.seed(3)
-    from anesthetic.samples import NestedSamples
-    from anesthetic.utils import credibility_interval
-    samples = NestedSamples(root='./tests/example_data/pc')
+    samples = read_chains('./tests/example_data/pc')
     np.random.seed(0)
     mean, std = credibility_interval(samples["x0"], level=0.68,
-                    weights=samples.weights, method="hpd",
+                    weights=samples.get_weights(), method="hpd",
                     u=np.random.rand(len(samples)))
     assert_allclose(mean[0], -0.1, atol=0.01)
     assert_allclose(mean[1], 0.1, atol=0.01)
     assert_allclose(std[0], 0.015, atol=0.001)
     assert_allclose(std[1], 0.015, atol=0.001)
     #assert_allclose(credibility_interval(samples["x0"], level=0.95,
-    #                weights=samples.weights, method="et"),
+    #                weights=samples.get_weights(), method="et"),
     #                [-0.2, 0.2], atol=0.02)
     #assert_allclose(credibility_interval(samples["x0"], level=0.975,
-    #                weights=samples.weights, method="ul"),
+    #                weights=samples.get_weights(), method="ul"),
     #                0.2, atol=0.02)
     #assert_allclose(credibility_interval(samples["x0"], level=0.5,
-    #                weights=samples.weights, method="ll"),
+    #                weights=samples.get_weights(), method="ll"),
     #                0, atol=0.001)
 
     with pytest.raises(ValueError):
