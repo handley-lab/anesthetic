@@ -178,25 +178,16 @@ def test_p_values_from_sample():
 
 
 
-def test_cdf():
-    np.random.seed(3)
-    data = np.random.randn(10000)
-    weights = np.random.rand(10000)
-
-    CDF = cdf(data, weights)
-    ICDF = cdf(data, weights, inverse=True)
-
-    linspace = np.linspace(0, 1, 1001)[1:-1]
-    assert_array_almost_equal(linspace, CDF(ICDF(linspace)))
-
-    sigs = [CDF(i)-CDF(-i) for i in [1, 2, 3]]
-    assert_allclose(sigs, [0.6827, 0.9545, 0.9973], atol=0.01)
-
-
 def test_credibility_interval():
     np.random.seed(0)
     from anesthetic import read_chains
     from anesthetic.utils import credibility_interval
+    normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
+    mean, std = credibility_interval(normal_samples, level=0.68)
+    print(mean, std)
+    assert_allclose(mean[0], 1.9, atol=0.01)
+    assert_allclose(mean[1], 2.1, atol=0.01)
+
     samples = read_chains('./tests/example_data/pc')
     mean, std = credibility_interval(samples["x0"], level=0.68,
                     weights=samples.get_weights(), method="hpd",

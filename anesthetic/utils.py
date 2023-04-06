@@ -72,31 +72,20 @@ def compress_weights(w, u=None, ncompress=True):
     extra = (u < fraction).astype(int)
     return (integer + extra).astype(int)
 
-def cdf(a, w=None, inverse=False, interpolation='linear'):
-    """Compute the weighted (inverse) empirical cdf for a 1d array."""
-    if w is None:
-        w = np.ones_like(a)
-    a = np.array(list(a))  # Necessary to convert pandas arrays
-    w = np.array(list(w))  # Necessary to convert pandas arrays
-    i = np.argsort(a)
-    c = np.cumsum(w[i[1:]]+w[i[:-1]])
-    c = c / c[-1]
-    c = np.concatenate(([0.], c))
-    if inverse:
-        return interp1d(c, a[i], kind=interpolation)
-    else:
-        return interp1d(a[i], c, kind=interpolation)
-
-def sample_cdf(samples, interpolation='linear'):
+def sample_cdf(samples, inverse=False, interpolation='linear'):
     """Sample the empirical cdf for a 1d array."""
     samples = np.array(samples)
     samples.sort()
     ngaps = len(samples)-1
     gaps = np.random.dirichlet(np.ones(ngaps))
     cdf = np.array([0, *np.cumsum(gaps)])
-    assert np.isclose(cdf[-1], 1, atol=1e-9, rtol=1e-9), "Error: CDF does not reach 1"+str(cdf[-1])
+    assert np.isclose(cdf[-1], 1, atol=1e-9, rtol=1e-9), "Error: CDF does not reach 1 "+str(cdf[-1])
+    # Set the last element (approx 1) to exactly 1 to avoid interpolation errors
     cdf[-1] = 1
-    return interp1d(cdf, samples, kind=interpolation)
+    if inverse:
+        return interp1d(cdf, samples, kind=interpolation)
+    else:
+        return interp1d(samples, cdf, kind=interpolation)
 
 def credibility_interval(samples, weights=None, level=0.68, method="hpd",
     u=None, n_iter=12, verbose=True):
@@ -149,23 +138,27 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
     else:
         weights = np.array(weights.copy())
 
-    # Convert samples to unit weight if necessary
+    # Convert samples to unit weight not the case
     if not np.all(np.logical_or(weights==0, weights==1)):
-        # compress_weights with nsamples<=0 assures weights==1
+        # compress_weights with ncompress<=0 assures weights \in 0,1
+        # Note that this must be done, we cannot handle weights != 1
+        # see this discussion for details:
+        # https://github.com/williamjameshandley/anesthetic/pull/188#issuecomment-1274980982
         weights = compress_weights(weights, ncompress=-1, u=u)
         if verbose:
             print("Compressing weights to", np.sum(weights), \
                 "unit weight samples.")
         assert np.all(np.logical_or(weights==0, weights==1)), \
-            "Error in compress_weights, weights not binary"
+            "Unexpected error in compress_weights, weights not binary"
 
     indices = np.where(weights)[0]
     x = samples[indices]
 
+    # Sample the confidence interval multiple times
+    # to get errorbars on confidence interval boundaries
     ci_samples = []
     for i in range(n_iter):
-        invCDF = sample_cdf(x)
-
+        invCDF = sample_cdf(x, inverse=True)
         if method == "hpd":
             # Find smallest interval
             def distance(Y, level=level):
@@ -191,10 +184,11 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
         std_lower = np.std(ci_samples[:,0])
         std_upper = np.std(ci_samples[:,1])
         if verbose:
-            print("The {0:.0%} credibility interval is",
-                "[{1:.2g} +/- {2:.1g}, {3:.2g} +/- {4:.1g}]".format(
-                level, mean_lower, std_lower, mean_upper, std_upper))
-
+            print(f"The {level:.0%} credibility interval is",
+                "[{0:.2g} +/- {1:.1g}, {2:.2g} +/- {3:.1g}]".format(mean_lower,
+                std_lower, mean_upper, std_upper))
+        # Return mean of lower and upper bound, and uncertainty on those means
+        # Todo: Return full covariance matrix instead
         return [mean_lower, mean_upper], [std_lower, std_upper]
     else:
         raise ValueError('ci_samples in unregonized shape')
