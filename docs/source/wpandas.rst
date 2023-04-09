@@ -35,4 +35,3 @@ wpandas.utils module
 .. automodule:: wpandas
    :members:
    :undoc-members:
-   :show-inheritance:
