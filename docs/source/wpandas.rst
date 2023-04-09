@@ -18,7 +18,6 @@ wpandas.core module
 .. automodule:: wpandas.core
    :members:
    :undoc-members:
-   :show-inheritance:
 
 
 wpandas.utils module
@@ -35,3 +34,4 @@ wpandas.utils module
 .. automodule:: wpandas
    :members:
    :undoc-members:
+   :show-inheritance:

@@ -20,9 +20,9 @@ General weighted sample functionality
 
 The important extension to the :class:`pandas.Series` and
 :class:`pandas.DataFrame` classes, is that in anesthetic the data frames are
-weighted (see :class:`anesthetic.wpandas.WeightedSeries` and
-:class:`anesthetic.wpandas.WeightedDataFrame`), where the weights form
-part of a :class:`pandas.MultiIndex` and are therefore retained when slicing. 
+weighted (see :class:`wpandas.core.WeightedSeries` and
+:class:`wpandas.core.WeightedDataFrame`), where the weights form part of a
+:class:`pandas.MultiIndex` and are therefore retained when slicing. 
 
 
 Mean, standard deviation, median, quantiles, etc.
