@@ -515,7 +515,7 @@ class MCMCSamples(Samples):
             Indicates whether to modify the existing array or return a copy.
 
         """
-        chains = self.groupby(('chain', '$n_\\mathrm{chain}$'),
+        chains = self.groupby(('chain', '$n_\\mathrm{chain}$'), sort=False,
                               group_keys=False)
         nchains = chains.ngroups
         if isinstance(burn_in, (int, float)):
@@ -574,25 +574,32 @@ class MCMCSamples(Samples):
                       and 'logL' not in key
                       and 'chain' not in key]
         chains = self[params+['chain']].groupby(
-                ('chain', '$n_\\mathrm{chain}$')
+                ('chain', '$n_\\mathrm{chain}$'), sort=False,
         )
+        nchains = chains.ngroups
 
         # Within chain variance ``W``
         # (average variance within each chain):
-        W = chains.cov().groupby(level=['params', 'labels']).mean().to_numpy()
-        # TODO: the above line should be a weighted mean
-        # --> need to fix groupby for WeightedDataFrames!
-
+        W = chains.cov().groupby(level=('params', 'labels'), sort=False).mean()
         # Between-chain variance ``B``
-        # (variance of the chain means compared to the full mean):
-        means_diff = (chains.mean() - self[params].mean()).to_numpy()
-        B = (means_diff.T @ means_diff) / (chains.ngroups - 1)
-        # B = chains.mean().cov().to_numpy()
-        # TODO: fix once groupby is fixed
+        # (variance of the chain means):
+        B = np.atleast_2d(np.cov(chains.mean().T, ddof=1))
+        # We don't weight `B` with the effective number of samples (sum of the
+        # weights), here, because we want to notice outliers from shorter
+        # chains.
+        # In order to be conservative, we generally want to underestimate `W`
+        # and overestimate `B`, since `W` goes in the denominator and `B` in
+        # the numerator of the Gelman--Rubin statistic `Rminus1`.
 
-        L = np.linalg.cholesky(W)
-        invL = np.linalg.inv(L)
-        D = np.linalg.eigvalsh(invL @ B @ invL.T)
+        try:
+            invL = np.linalg.inv(np.linalg.cholesky(W))
+        except np.linalg.LinAlgError as e:
+            raise np.linalg.LinAlgError(
+                "Make sure you do not have linearly dependent parameters, "
+                "e.g. having both `As` and `A=1e9*As` causes trouble.") from e
+        D = np.linalg.eigvalsh(invL @ ((nchains+1)/nchains * B) @ invL.T)
+        # The factor of `(nchains+1)/nchains` accounts for the additional
+        # uncertainty from using a finite number of chains.
         Rminus1 = np.max(np.abs(D))
         return Rminus1
 

@@ -99,6 +99,5 @@ anesthetic.weighted\_pandas module
 .. automodule:: anesthetic.weighted_pandas
    :members:
    :undoc-members:
-   :show-inheritance:
 
 
