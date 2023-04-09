@@ -2,8 +2,9 @@ import numpy as np
 from wpandas.plotting._matplotlib.hist import KdePlot, HistPlot
 from typing import Literal
 from wpandas.plotting._matplotlib.core import (
-    _WeightedMPLPlot, _CompressedMPLPlot, _PlanePlot2d
+    _WeightedMPLPlot, _CompressedMPLPlot
 )
+from anesthetic.plotting._matplotlib.core import _PlanePlot2d
 from anesthetic.plot import (
     kde_contour_plot_2d,
     hist_plot_2d,
