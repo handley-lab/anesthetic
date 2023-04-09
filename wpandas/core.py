@@ -50,6 +50,9 @@ class WeightedGroupBy(GroupBy):
     def sem(self, *args, **kwargs):  # noqa: D102
         return self._add_weights("sem", *args, **kwargs)
 
+    def skew(self, *args, **kwargs):  # noqa: D102
+        return self._add_weights("skew", *args, **kwargs)
+
     def quantile(self, *args, **kwargs):  # noqa: D102
         return self._add_weights("quantile", *args, **kwargs)
 
