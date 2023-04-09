@@ -102,7 +102,6 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 as_index=self.as_index,
                 sort=self.sort,
                 group_keys=self.group_keys,
-                squeeze=self.squeeze,
                 observed=self.observed,
                 mutated=self.mutated,
                 dropna=self.dropna,
@@ -117,7 +116,6 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 selection=key,
                 sort=self.sort,
                 group_keys=self.group_keys,
-                squeeze=self.squeeze,
                 observed=self.observed,
                 dropna=self.dropna,
             )
