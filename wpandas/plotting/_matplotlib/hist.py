@@ -51,7 +51,7 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
     def _make_plot(self):  # pragma: no cover
         # TODO: remove when these changes have been added to pandas
         if version.parse(pd.__version__) >= version.parse("2.0.0"):
-            return super._make_plot()
+            return super()._make_plot()
 
         colors = self._get_colors()
         stacking_id = self._get_stacking_id()
