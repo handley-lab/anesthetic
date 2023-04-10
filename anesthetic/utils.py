@@ -670,8 +670,9 @@ def adjust_docstrings(cls, pattern, repl, *args, **kwargs):
     """
     for key, val in cls.__dict__.items():
         doc = inspect.getdoc(val)
-        newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
-        try:
-            cls.__dict__[key].__doc__ = newdoc
-        except AttributeError:
-            pass
+        if doc is not None:
+            newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
+            try:
+                cls.__dict__[key].__doc__ = newdoc
+            except AttributeError:
+                pass
