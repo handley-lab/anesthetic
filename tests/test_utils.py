@@ -2,8 +2,7 @@ import warnings
 import numpy as np
 import pytest
 from scipy import special as sp
-from numpy.testing import (assert_array_equal, assert_allclose,
-                           assert_array_almost_equal)
+from numpy.testing import (assert_array_equal, assert_allclose)
 from anesthetic import read_chains
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               iso_probability_contours,
@@ -176,21 +175,22 @@ def test_p_values_from_sample():
     assert ks_results['p-value'] > 0.05
 
 
-
 def test_credibility_interval():
     np.random.seed(0)
     from anesthetic import read_chains
-    from anesthetic.utils import credibility_interval
     normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
-    mean, cov = credibility_interval(normal_samples, level=0.68, return_covariance=True)
+    mean, cov = credibility_interval(normal_samples, level=0.68,
+                                     return_covariance=True)
     assert_allclose(mean[0], 1.9, atol=0.01)
     assert_allclose(mean[1], 2.1, atol=0.01)
-    assert_allclose(cov, [[7e-6, 6e-6 ], [6e-6 , 8e-6]], atol=1e-1)
+    assert_allclose(cov, [[7e-6, 6e-6], [6e-6, 8e-6]], atol=1e-1)
 
     samples = read_chains('./tests/example_data/pc')
     mean2, cov2 = credibility_interval(samples["x0"], level=0.68,
-                    weights=samples.get_weights(), method="hpd",
-                    u=np.random.rand(len(samples)), return_covariance=True)
+                                       weights=samples.get_weights(),
+                                       method="hpd",
+                                       u=np.random.rand(len(samples)),
+                                       return_covariance=True)
     assert_allclose(mean2[0], -0.1, atol=0.01)
     assert_allclose(mean2[1], 0.1, atol=0.01)
     assert_allclose(cov2, [[5e-5, 5e-5], [5e-5, 1e-4]], rtol=1e-1)
