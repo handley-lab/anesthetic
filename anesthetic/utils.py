@@ -108,7 +108,7 @@ def sample_cdf(samples, inverse=False, interpolation='linear'):
 
 
 def credibility_interval(samples, weights=None, level=0.68, method="hpd",
-    u=None, n_iter=12, return_covariance=False, verbose=True):
+    u=None, n_iter=12, return_covariance=False, verbose=False):
     """Compute the credibility interval of weighted samples.
 
     Based on linear interpolation of the cumulative density function, thus
@@ -213,9 +213,9 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
                     np.mean(ci_samples[:, 0]), np.std(ci_samples[:, 0], ddof=1),
                     np.mean(ci_samples[:, 1]), np.std(ci_samples[:, 1], ddof=1)))
         if return_covariance:
-            return np.mean(ci_samples, axis=1), np.cov(ci_samples, rowvar=False)
+            return np.mean(ci_samples, axis=0), np.cov(ci_samples, rowvar=False)
         else:
-            return np.mean(ci_samples, axis=1)
+            return np.mean(ci_samples, axis=0)
     else:
         raise ValueError('ci_samples in unregonized shape')
 
