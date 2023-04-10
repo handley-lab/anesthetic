@@ -182,29 +182,18 @@ def test_credibility_interval():
     from anesthetic import read_chains
     from anesthetic.utils import credibility_interval
     normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
-    mean, std = credibility_interval(normal_samples, level=0.68)
-    print(mean, std)
+    mean, cov = credibility_interval(normal_samples, level=0.68, return_covariance=True)
     assert_allclose(mean[0], 1.9, atol=0.01)
     assert_allclose(mean[1], 2.1, atol=0.01)
+    assert_allclose(cov, [[7e-6, 6e-6 ], [6e-6 , 8e-6]], atol=1e-1)
 
     samples = read_chains('./tests/example_data/pc')
-    mean, std = credibility_interval(samples["x0"], level=0.68,
+    mean2, cov2 = credibility_interval(samples["x0"], level=0.68,
                     weights=samples.get_weights(), method="hpd",
-                    u=np.random.rand(len(samples)))
-    assert_allclose(mean[0], -0.1, atol=0.01)
-    assert_allclose(mean[1], 0.1, atol=0.01)
-    assert_allclose(std[0], 0.015, atol=0.001)
-    assert_allclose(std[1], 0.015, atol=0.001)
-    #assert_allclose(credibility_interval(samples["x0"], level=0.95,
-    #                weights=samples.weights, method="et"),
-    #                [-0.2, 0.2], atol=0.02)
-    #assert_allclose(credibility_interval(samples["x0"], level=0.975,
-    #                weights=samples.weights, method="ul"),
-    #                0.2, atol=0.02)
-    #assert_allclose(credibility_interval(samples["x0"], level=0.5,
-    #                weights=samples.weights, method="ll"),
-    #                0, atol=0.001)
-
+                    u=np.random.rand(len(samples)), return_covariance=True)
+    assert_allclose(mean2[0], -0.1, atol=0.01)
+    assert_allclose(mean2[1], 0.1, atol=0.01)
+    assert_allclose(cov2, [[5e-5, 5e-5], [5e-5, 1e-4]], rtol=1e-1)
     with pytest.raises(ValueError):
         credibility_interval(samples.x0, level=1.1)
 
