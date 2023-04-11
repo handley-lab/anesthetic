@@ -2,7 +2,7 @@
 import os
 import re
 import numpy as np
-from anesthetic.samples import MCMCSamples
+from anesthetic.core import MCMCSamples
 from pandas import concat
 
 
@@ -36,7 +36,7 @@ def read_cobaya(root, *args, **kwargs):
 
     Returns
     -------
-    :class:`anesthetic.samples.MCMCSamples`
+    :class:`anesthetic.core.MCMCSamples`
 
     """
     dirname, basename = os.path.split(root)

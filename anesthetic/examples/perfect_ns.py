@@ -2,7 +2,7 @@
 import numpy as np
 from anesthetic.examples.utils import random_ellipsoid
 from anesthetic import NestedSamples
-from anesthetic.samples import merge_nested_samples
+from anesthetic.core import merge_nested_samples
 
 
 def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
@@ -31,7 +31,7 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
 
     Returns
     -------
-    samples : :class:`anesthetic.samples.NestedSamples`
+    samples : :class:`anesthetic.core.NestedSamples`
         Nested sampling run
     """
 
@@ -87,7 +87,7 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
 
     Returns
     -------
-    samples : :class:`anesthetic.samples.NestedSamples`
+    samples : :class:`anesthetic.core.NestedSamples`
         Nested sampling run
     """
     mean = np.array(mean, dtype=float)
@@ -220,7 +220,7 @@ def planck_gaussian(nlive=500):
 
     Returns
     -------
-    samples : :class:`anesthetic.samples.NestedSamples`
+    samples : :class:`anesthetic.core.NestedSamples`
         Nested sampling run
     """
     columns = ['omegabh2', 'omegach2', 'theta', 'tau', 'logA', 'ns']

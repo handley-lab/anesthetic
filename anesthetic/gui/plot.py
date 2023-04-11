@@ -115,13 +115,13 @@ class RunPlotter(object):
 
     Parameters
     ----------
-    samples : :class:`anesthetic.samples.NestedSamples`
+    samples : :class:`anesthetic.core.NestedSamples`
         The root string for the chains files to be used, or a set of nested
         samples.
 
     Attributes
     ----------
-    samples : :class:`anesthetic.samples.NestedSamples`
+    samples : :class:`anesthetic.core.NestedSamples`
         Object for extracting nested sampling data from chains files.
 
     fig : :class:`matplotlib.figure.Figure`

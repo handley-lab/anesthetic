@@ -45,15 +45,15 @@ Plot Example 2: Marginalised 2D posteriors
 
     :meth:`anesthetic.plot.make_1d_axes`,
     :meth:`anesthetic.plot.make_2d_axes`,
-    :meth:`anesthetic.samples.Samples.plot_1d`,
-    :meth:`anesthetic.samples.Samples.plot_2d`
+    :meth:`anesthetic.core.Samples.plot_1d`,
+    :meth:`anesthetic.core.Samples.plot_2d`
 
 
 Nested sampling statistics
 ==========================
 
 Providing Bayesian statistics from nested sampling data is where anesthetic
-shines. With :meth:`anesthetic.samples.NestedSamples.stats` you can compute the
+shines. With :meth:`anesthetic.core.NestedSamples.stats` you can compute the
 Bayesian evidence :math:`\ln\mathcal{Z}`, the Kullback--Leibler divergence
 :math:`\mathcal{D}_\mathrm{KL}`, and the posterior average of the
 log-likelihood :math:`\langle\ln\mathcal{L}\rangle_\mathcal{P}`, which together
@@ -78,5 +78,5 @@ of the model complexity (or dimensionality).
 .. seealso::
 
     * anesthetic / :doc:`Samples and statistics <samples>` / :ref:`samples:Bayesian statistics`
-    * :meth:`anesthetic.samples.NestedSamples.stats`
+    * :meth:`anesthetic.core.NestedSamples.stats`
 

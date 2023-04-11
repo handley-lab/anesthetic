@@ -7,7 +7,7 @@ def to_getdist(samples):
 
     Parameters
     ----------
-    samples : :class:`anesthetic.samples.Samples`
+    samples : :class:`anesthetic.core.Samples`
         anesthetic samples to be converted
 
     Returns

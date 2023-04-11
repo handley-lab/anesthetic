@@ -22,7 +22,7 @@ Feel free to use the testing data in ``anesthetic/tests/example_data`` to try
 out the examples listed here.
 
 * PolyChord samples, which will be an instance of the
-  :class:`anesthetic.samples.NestedSamples` class:
+  :class:`anesthetic.core.NestedSamples` class:
 
   ::
       
@@ -30,7 +30,7 @@ out the examples listed here.
       samples = read_chains("anesthetic/tests/example_data/pc")
 
 * Cobaya samples, which will be an instance of the
-  :class:`anesthetic.samples.MCMCSamples` class:
+  :class:`anesthetic.core.MCMCSamples` class:
 
   ::
       
@@ -44,15 +44,15 @@ Passing data as arguments
 =========================
 
 You can also pass your own (weighted) data directly to the main sample classes
-:class:`anesthetic.samples.Samples`, :class:`anesthetic.samples.MCMCSamples`,
-or :class:`anesthetic.samples.NestedSamples`, e.g. here with randomly generated
+:class:`anesthetic.core.Samples`, :class:`anesthetic.core.MCMCSamples`,
+or :class:`anesthetic.core.NestedSamples`, e.g. here with randomly generated
 data:
 
 ::
 
     import numpy as np
     from scipy.stats import multivariate_normal as mvn
-    from anesthetic.samples import Samples
+    from anesthetic.core import Samples
 
     num_samples = 1000                    # number of samples
     num_dim = 2                           # number of parameters/dimensions
