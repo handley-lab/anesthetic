@@ -122,7 +122,7 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
 
 .. code:: bash
 
-    python -m pip install ".[extras,docs]"
+    python -m pip install ".[all,docs]"
     cd docs
     make html
 
