@@ -281,22 +281,6 @@ def test_WeightedDataFrame_skew(frame):
     assert_array_equal(skew.index, frame.index)
 
 
-def test_WeightedDataFrame_mad(frame):
-    mad = frame.mad()
-    assert isinstance(mad, WeightedSeries)
-    assert not mad.isweighted()
-    assert_array_equal(mad.index, frame.columns)
-    assert_allclose(mad, 0.25, atol=1e-2)
-
-    mad = frame.mad(axis=1)
-    assert isinstance(mad, WeightedSeries)
-    assert_array_equal(mad, frame.T.mad())
-    assert isinstance(frame.T.mad(), WeightedSeries)
-    assert mad.isweighted()
-    assert frame.T.mad().isweighted()
-    assert_array_equal(mad.index, frame.index)
-
-
 def test_WeightedDataFrame_quantile(frame):
     quantile = frame.quantile()
     assert isinstance(quantile, WeightedSeries)
@@ -461,7 +445,6 @@ def test_WeightedDataFrame_nan(frame):
     assert frame[:0].corr().isna().all().all()
     assert frame[:0].kurt().isna().all()
     assert frame[:0].skew().isna().all()
-    assert frame[:0].mad().isna().all()
     assert frame[:0].sem().isna().all()
     assert frame[:0].quantile().isna().all()
 
@@ -541,16 +524,6 @@ def test_WeightedSeries_skew(series):
     assert np.isnan(series.skew(skipna=False))
 
 
-def test_WeightedSeries_mad(series):
-    mad = series.mad()
-    assert isinstance(mad, float)
-    assert_allclose(mad, 0.25, atol=1e-2)
-
-    series[0] = np.nan
-    assert ~np.isnan(series.mad())
-    assert np.isnan(series.mad(skipna=False))
-
-
 def test_WeightedSeries_quantile(series):
 
     quantile = series.quantile()
@@ -612,7 +585,6 @@ def test_WeightedSeries_nan(series):
     assert np.isnan(series[:0].corr(series))
     assert np.isnan(series[:0].kurt())
     assert np.isnan(series[:0].skew())
-    assert np.isnan(series[:0].mad())
     assert np.isnan(series[:0].sem())
     assert np.isnan(series[:0].quantile())
 

@@ -1395,8 +1395,6 @@ def test_groupby_stats():
                         chains.kurtosis().loc[chain])
         assert_allclose(mcmc.loc[mask, params].skew(),
                         chains.skew().loc[chain])
-        assert_allclose(mcmc.loc[mask, params].mad(),
-                        chains.mad().loc[chain])
         assert_allclose(mcmc.loc[mask, params].sem(),
                         chains.sem().loc[chain])
         assert_allclose(mcmc.loc[mask, params].cov(),
@@ -1415,7 +1413,6 @@ def test_groupby_stats():
         assert_allclose(mcmc.loc[mask, params].kurt(), group.kurt())
         assert_allclose(mcmc.loc[mask, params].kurtosis(), group.kurtosis())
         assert_allclose(mcmc.loc[mask, params].skew(), group.skew())
-        assert_allclose(mcmc.loc[mask, params].mad(), group.mad())
         assert_allclose(mcmc.loc[mask, params].sem(), group.sem())
         assert_allclose(mcmc.loc[mask, params].cov(), group.cov())
         assert_allclose(mcmc.loc[mask, params].corr(), group.corr())
@@ -1440,8 +1437,6 @@ def test_groupby_stats():
                                 chains[col].kurtosis().loc[chain])
                 assert_allclose(mcmc.loc[mask, col].skew(),
                                 chains[col].skew().loc[chain])
-                assert_allclose(mcmc.loc[mask, col].mad(),
-                                chains[col].mad().loc[chain])
                 assert_allclose(mcmc.loc[mask, col].sem(),
                                 chains[col].sem().loc[chain])
                 assert_allclose(mcmc.loc[mask, col].cov(mcmc.loc[mask, col]),
@@ -1463,7 +1458,6 @@ def test_groupby_stats():
                 assert_allclose(mcmc.loc[mask, col].kurtosis(),
                                 group.kurtosis())
                 assert_allclose(mcmc.loc[mask, col].skew(), group.skew())
-                assert_allclose(mcmc.loc[mask, col].mad(), group.mad())
                 assert_allclose(mcmc.loc[mask, col].sem(), group.sem())
 
                 assert_allclose(mcmc.loc[mask, col].cov(mcmc.loc[mask, col]),

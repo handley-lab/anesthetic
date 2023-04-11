@@ -56,9 +56,6 @@ class WeightedGroupBy(GroupBy):
     def quantile(self, *args, **kwargs):  # noqa: D102
         return self._add_weights("quantile", *args, **kwargs)
 
-    def mad(self, *args, **kwargs):  # noqa: D102
-        return self._add_weights("mad", *args, **kwargs)
-
     def get_weights(self):
         """Return the weights of the grouped samples."""
         return self.agg(lambda df: df.get_weights().sum())
@@ -321,16 +318,6 @@ class WeightedSeries(_WeightedObject, Series):
         return np.average(masked_array(((self-mean)/std)**3, null),
                           weights=self.get_weights())
 
-    def mad(self, skipna=True):  # noqa: D102
-        if self.get_weights().sum() == 0:
-            return np.nan
-        null = self.isnull() & skipna
-        mean = self.mean(skipna=skipna)
-        if np.isnan(mean):
-            return np.nan
-        return np.average(masked_array(abs(self-mean), null),
-                          weights=self.get_weights())
-
     def sem(self, skipna=True):  # noqa: D102
         return np.sqrt(self.var(skipna=skipna)/self.neff())
 
@@ -530,19 +517,6 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return self._constructor_sliced(skew, index=self._get_axis(1-axis))
         else:
             return super().skew(axis=axis, skipna=skipna, *args, **kwargs)
-
-    def mad(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        if self.isweighted(axis):
-            if self.get_weights(axis).sum() == 0:
-                return self._constructor_sliced(np.nan,
-                                                index=self._get_axis(1-axis))
-            null = self.isnull() & skipna
-            mean = self.mean(axis=axis, skipna=skipna)
-            mad = np.average(masked_array(abs(self-mean), null),
-                             weights=self.get_weights(axis), axis=axis)
-            return self._constructor_sliced(mad, index=self._get_axis(1-axis))
-        else:
-            return super().var(axis=axis, skipna=skipna, *args, **kwargs)
 
     def sem(self, axis=0, skipna=True):  # noqa: D102
         n = self.neff(axis)
