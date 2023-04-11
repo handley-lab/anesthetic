@@ -2,7 +2,7 @@
 import os
 import numpy as np
 from anesthetic.read.getdist import read_paramnames
-from anesthetic.samples import NestedSamples
+from anesthetic.core import NestedSamples
 
 
 def read_polychord(root, *args, **kwargs):

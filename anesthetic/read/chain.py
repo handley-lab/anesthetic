@@ -31,8 +31,8 @@ def read_chains(root, *args, **kwargs):
 
     Returns
     -------
-    :class:`anesthetic.samples.NestedSamples` or
-    :class:`anesthetic.samples.MCMCSamples` depending on auto-detection
+    :class:`anesthetic.core.NestedSamples` or
+    :class:`anesthetic.core.MCMCSamples` depending on auto-detection
 
     """
     if 'burn_in' in kwargs:
@@ -42,7 +42,7 @@ def read_chains(root, *args, **kwargs):
             "read_chains(root, burn_in=0.5)         # anesthetic 1.0\n"
             "read_chains(root).remove_burn_in(0.5)  # anesthetic 2.0\n"
             "See also https://anesthetic.readthedocs.io/en/latest/"
-            "anesthetic.html#anesthetic.samples.MCMCSamples.remove_burn_in"
+            "anesthetic.html#anesthetic.core.MCMCSamples.remove_burn_in"
         )
     errors = []
     for read in [read_polychord, read_multinest, read_cobaya, read_getdist]:

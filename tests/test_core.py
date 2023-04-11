@@ -13,9 +13,8 @@ from anesthetic import (
     Samples, MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes,
     read_chains
 )
-from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
-                                WeightedLabelledSeries,
-                                WeightedLabelledDataFrame)
+from anesthetic.core import (merge_nested_samples, merge_samples_weighted,
+                             WeightedLabelledSeries, WeightedLabelledDataFrame)
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
@@ -1594,3 +1593,8 @@ def test_groupby_plots():
             gb_colors = [p.get_facecolor() for p in gb_ax.patches]
             assert_allclose(mcmc_colors, gb_colors)
         plt.close('all')
+
+
+def test_deprecated_files():
+    with pytest.warns(FutureWarning):
+        import anesthetic.samples  # noqa: F401

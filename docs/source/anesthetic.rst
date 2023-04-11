@@ -51,10 +51,10 @@ anesthetic.plot module
    :show-inheritance:
 
 
-anesthetic.samples module
+anesthetic.core module
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: anesthetic.samples
+.. automodule:: anesthetic.core
    :members:
    :undoc-members:
    :show-inheritance:

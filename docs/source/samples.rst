@@ -2,10 +2,10 @@
 Weighted samples: the ``Samples``, ``MCMCSamples``, and ``NestedSamples`` data frames
 *************************************************************************************
 
-The :class:`anesthetic.samples.Samples` data frame at its core is a
+The :class:`anesthetic.core.Samples` data frame at its core is a
 :class:`pandas.DataFrame`, and as such comes with all the pandas functionality.
-The :class:`anesthetic.samples.MCMCSamples` and
-:class:`anesthetic.samples.NestedSamples` data frames share all the
+The :class:`anesthetic.core.MCMCSamples` and
+:class:`anesthetic.core.NestedSamples` data frames share all the
 functionality of the more general ``Samples`` class, but come with some
 additional MCMC or nested sampling specific functionality.
 
@@ -125,7 +125,7 @@ Remove burn-in
 --------------
 
 To get rid of the initial burn-in phase, you can use the
-:meth:`anesthetic.samples.MCMCSamples.remove_burn_in` method:
+:meth:`anesthetic.core.MCMCSamples.remove_burn_in` method:
 
 .. plot:: :context: close-figs
 
@@ -156,7 +156,7 @@ Rubin (1992) <https://doi.org/10.1214/ss/1177011136>`_ and `Brooks and Gelman
 
 Provided you have an MCMC run containing multiple chains, you can compute the
 Gelman--Rubin ``R-1`` statistic using the
-:meth:`anesthetic.samples.MCMCSamples.Gelman_Rubin` method:
+:meth:`anesthetic.core.MCMCSamples.Gelman_Rubin` method:
 
 .. plot:: :context: close-figs
 
@@ -198,7 +198,7 @@ Prior distribution
 
 While MCMC explores effectively only the posterior bulk, nested sampling
 explores the full parameter space, allowing us to calculate and plot not only
-the posterior distribution, but also the prior distribution, which you can get with the :meth:`anesthetic.samples.NestedSamples.prior` method: 
+the posterior distribution, but also the prior distribution, which you can get with the :meth:`anesthetic.core.NestedSamples.prior` method: 
 
 .. plot:: :context: close-figs
 
@@ -208,7 +208,7 @@ the posterior distribution, but also the prior distribution, which you can get w
     Note that the ``.prior()`` method is really just a shorthand for
     ``.set_beta(beta=0)``, i.e. for setting the inverse temperature parameter
     ``beta=0`` (where ``1/beta=kT``) in the
-    :meth:`anesthetic.samples.NestedSamples.set_beta` method, which allows you to
+    :meth:`anesthetic.core.NestedSamples.set_beta` method, which allows you to
     get the distribution at any temperature.
 
 This allows us to plot both prior and posterior distributions together. Note,
@@ -243,21 +243,21 @@ Bayesian statistics
 Thanks to the power of nested sampling, we can compute Bayesian statistics from
 the nested samples, such as the following:
 
-* Bayesian (log-)evidence :meth:`anesthetic.samples.NestedSamples.logZ`
-* Kullback--Leibler (KL) divergence :meth:`anesthetic.samples.NestedSamples.D_KL`
+* Bayesian (log-)evidence :meth:`anesthetic.core.NestedSamples.logZ`
+* Kullback--Leibler (KL) divergence :meth:`anesthetic.core.NestedSamples.D_KL`
 * Posterior average of the log-likelihood
-  :meth:`anesthetic.samples.NestedSamples.logL_P`
+  :meth:`anesthetic.core.NestedSamples.logL_P`
   :raw-html:`<br />`
   (this connects Bayesian evidence with KL-divergence as 
   ``logZ = logL_P - D_KL``, allowing the interpretation of the Bayesian
   evidence as a trade-off between model fit ``logL_P`` and Occam penalty
   ``D_KL``, see also our paper `Hergt, Handley, Hobson, and Lasenby (2021)
   <https://arxiv.org/abs/2102.11511>`_)
-* Gaussian model dimensionality :meth:`anesthetic.samples.NestedSamples.logL_P`
+* Gaussian model dimensionality :meth:`anesthetic.core.NestedSamples.logL_P`
   :raw-html:`<br />`
   (for more, see our paper `Handley and Lemos (2019)
   <https://arxiv.org/abs/1903.06682>`_)
-* All of the above in one go, using :meth:`anesthetic.samples.NestedSamples.stats`
+* All of the above in one go, using :meth:`anesthetic.core.NestedSamples.stats`
 
 By default (i.e. without passing any additional keywords) the mean values for
 these quantities are computed:
@@ -274,7 +274,7 @@ reflecting the underlying distributions of the Bayesian statistics:
     nsamples = 2000
     bayesian_stats = nested_samples.stats(nsamples)
 
-Since ``bayesian_stats`` is an instance of :class:`anesthetic.samples.Samples`,
+Since ``bayesian_stats`` is an instance of :class:`anesthetic.core.Samples`,
 the same plotting functions can be used as for the posterior plots above.
 Plotting the 2D distributions allows us to inspect the correlation between the
 inferences:
