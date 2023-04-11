@@ -88,7 +88,7 @@ You can check that things are working by running the test suite:
 .. code:: bash
 
     export MPLBACKEND=Agg     # only necessary for OSX users
-    python -m pip install ".[tests]"
+    python -m pip install ".[test]"
     python -m pytest
     flake8 anesthetic tests
     pydocstyle --convention=numpy anesthetic
