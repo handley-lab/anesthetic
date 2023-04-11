@@ -56,6 +56,9 @@ class WeightedGroupBy(GroupBy):
     def quantile(self, *args, **kwargs):  # noqa: D102
         return self._add_weights("quantile", *args, **kwargs)
 
+    def mad(self, *args, **kwargs):  # noqa: D102
+        return self._add_weights("mad", *args, **kwargs)
+
     def get_weights(self):
         """Return the weights of the grouped samples."""
         return self.agg(lambda df: df.get_weights().sum())
