@@ -2,7 +2,7 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
-:Version: 2.0.0-beta.27
+:Version: 2.0.0-beta.28
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -122,7 +122,7 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
 
 .. code:: bash
 
-    python -m pip install ".[extras,docs]"
+    python -m pip install ".[all,docs]"
     cd docs
     make html
 
