@@ -2,15 +2,15 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
-:Version: 2.0.0-beta.27
-:Homepage: https://github.com/williamjameshandley/anesthetic
+:Version: 2.0.0-beta.28
+:Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
-.. image:: https://github.com/williamjameshandley/anesthetic/workflows/CI/badge.svg?branch=master
-   :target: https://github.com/williamjameshandley/anesthetic/actions?query=workflow%3ACI+branch%3Amaster
+.. image:: https://github.com/handley-lab/anesthetic/workflows/CI/badge.svg?branch=master
+   :target: https://github.com/handley-lab/anesthetic/actions?query=workflow%3ACI+branch%3Amaster
    :alt: Build Status
-.. image:: https://codecov.io/gh/williamjameshandley/anesthetic/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/williamjameshandley/anesthetic
+.. image:: https://codecov.io/gh/handley-lab/anesthetic/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/handley-lab/anesthetic
    :alt: Test Coverage Status
 .. image:: https://readthedocs.org/projects/anesthetic/badge/?version=latest
    :target: https://anesthetic.readthedocs.io/en/latest/?badge=latest
@@ -25,10 +25,10 @@ anesthetic: nested sampling post-processing
    :target: http://joss.theoj.org/papers/8c51bffda75d122cf4a8b991e18d3e45
    :alt: Review Status
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
-   :target: https://github.com/williamjameshandley/anesthetic/blob/master/LICENSE
+   :target: https://github.com/handley-lab/anesthetic/blob/master/LICENSE
    :alt: License information
 .. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/williamjameshandley/anesthetic/1.0.0?filepath=demo.ipynb
+   :target: https://mybinder.org/v2/gh/handley-lab/anesthetic/1.0.0?filepath=demo.ipynb
    :alt: Online interactive notebook
 
 
@@ -37,7 +37,7 @@ anesthetic: nested sampling post-processing
 
 ``anesthetic`` brings together tools for processing nested sampling chains by leveraging standard scientific python libraries.
 
-You can see example usage and plots in the `plot gallery <http://htmlpreview.github.io/?https://github.com/williamjameshandley/cosmo_example/blob/master/demos/demo.html>`_, or in the corresponding `Jupyter notebook <https://mybinder.org/v2/gh/williamjameshandley/anesthetic/master?filepath=demo.ipynb>`_.
+You can see example usage and plots in the `plot gallery <http://htmlpreview.github.io/?https://github.com/handley-lab/cosmo_example/blob/master/demos/demo.html>`_, or in the corresponding `Jupyter notebook <https://mybinder.org/v2/gh/handley-lab/anesthetic/master?filepath=demo.ipynb>`_.
 
 Current functionality includes:
 
@@ -53,7 +53,7 @@ For an interactive view of a nested sampling run, you can use the ``anesthetic``
 
    $ anesthetic <ns file root>
 
-.. image:: https://github.com/williamjameshandley/anesthetic/raw/master/images/anim_1.gif
+.. image:: https://github.com/handley-lab/anesthetic/raw/master/images/anim_1.gif
 
 Features
 --------
@@ -79,7 +79,7 @@ or from the repository
 
 .. code:: bash
 
-    git clone https://github.com/williamjameshandley/anesthetic
+    git clone https://github.com/handley-lab/anesthetic
     cd anesthetic
     python -m pip install .
 
@@ -162,9 +162,9 @@ or using the BibTeX:
 
 Contributing
 ------------
-There are many ways you can contribute via the `GitHub repository <https://github.com/williamjameshandley/anesthetic>`__.
+There are many ways you can contribute via the `GitHub repository <https://github.com/handley-lab/anesthetic>`__.
 
-- You can `open an issue <https://github.com/williamjameshandley/anesthetic/issues>`__ to report bugs or to propose new features.
+- You can `open an issue <https://github.com/handley-lab/anesthetic/issues>`__ to report bugs or to propose new features.
 - Pull requests are very welcome. Note that if you are going to propose major changes, be sure to open an issue for discussion first, to make sure that your PR will be accepted before you spend effort coding it.
 
 
