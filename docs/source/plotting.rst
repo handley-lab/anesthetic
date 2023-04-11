@@ -4,13 +4,13 @@ Plotting
 
 You can download the example data used in this documentation from the
 anesthetic GitHub page: 
-| https://github.com/williamjameshandley/anesthetic/tree/master/tests/example_data
+| https://github.com/handley-lab/anesthetic/tree/master/tests/example_data
 
 You will have the data automatically if you git clone anesthetic:
 
 .. code-block:: console
 
-   git clone https://github.com/williamjameshandley/anesthetic.git
+   git clone https://github.com/handley-lab/anesthetic.git
 
 Alternatively you can :ref:`use your own chains files <reading chains>` or
 :ref:`generate new random data <passing data>`.
@@ -208,7 +208,7 @@ familiar with matplotlib. In the following we present some examples, which we
 think might be useful. Are you wishing for an example that is missing here?
 Please feel free to raise an issue on the anesthetic GitHub page:
 
-https://github.com/williamjameshandley/anesthetic/issues.
+https://github.com/handley-lab/anesthetic/issues.
 
 Colour
 ------
