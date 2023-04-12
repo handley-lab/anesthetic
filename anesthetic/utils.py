@@ -5,7 +5,7 @@ from scipy import special
 from scipy.interpolate import interp1d
 from scipy.stats import kstwobign
 from matplotlib.tri import Triangulation
-from wpandas.utils import channel_capacity
+from wpandas.core.util.weights import channel_capacity
 
 
 def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):

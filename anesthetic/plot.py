@@ -34,7 +34,7 @@ from anesthetic.utils import (sample_compression_1d,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               match_contour_to_contourf)
-from wpandas.utils import quantile
+from wpandas.core.util.weights import quantile
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
