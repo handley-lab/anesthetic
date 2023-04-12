@@ -10,7 +10,7 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               PiePlot as _PiePlot,
                                               MPLPlot)
 from pandas.io.formats.printing import pprint_thing
-from wpandas.core import _WeightedObject
+from wpandas.core.base import _WeightedObject
 
 
 def _get_weights(kwargs, data):

@@ -1,7 +1,8 @@
 import pandas
 import pandas.plotting._core
 import pandas.plotting._misc
-import wpandas.core
+import wpandas.core.series
+import wpandas.core.frame
 
 
 def _wpandas_override(_get_plot_backend):
@@ -27,5 +28,5 @@ pandas.plotting._misc._get_plot_backend = \
 # Set wpandas.plotting._matplotlib as the actual backend
 pandas.options.plotting.backend = 'wpandas.plotting._matplotlib'
 
-WeightedSeries = wpandas.core.WeightedSeries
-WeightedDataFrame = wpandas.core.WeightedDataFrame
+WeightedSeries = wpandas.core.series.WeightedSeries
+WeightedDataFrame = wpandas.core.frame.WeightedDataFrame

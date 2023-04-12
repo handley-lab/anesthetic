@@ -1,11 +1,11 @@
 import pandas.plotting._matplotlib.boxplot
 from pandas.plotting._matplotlib.boxplot import BoxPlot as _BoxPlot
 from wpandas.plotting._matplotlib.core import _WeightedMPLPlot, _get_weights
-from wpandas.utils import quantile
+from wpandas.core.util.weights import quantile
 from pandas.core.dtypes.missing import remove_na_arraylike
 import numpy as np
 from pandas.io.formats.printing import pprint_thing
-from wpandas._code_utils import replace_inner_function
+from wpandas.core.util._code_transforms import replace_inner_function
 
 
 def _bxpstat(y, weights, whis):

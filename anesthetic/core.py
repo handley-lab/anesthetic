@@ -20,7 +20,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
 import wpandas
 from anesthetic.plotting import PlotAccessor
-wpandas.core._WeightedObject.plot = CachedAccessor("plot", PlotAccessor)
+wpandas.core.base._WeightedObject.plot = CachedAccessor("plot", PlotAccessor)
 
 
 class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):

@@ -2,8 +2,6 @@
 import numpy as np
 from scipy.interpolate import interp1d
 import contextlib
-import inspect
-import re
 
 
 def channel_capacity(w):
@@ -62,39 +60,3 @@ def quantile(a, q, w=None, interpolation='linear'):
         quant = float(quant)
     return quant
 
-
-@contextlib.contextmanager
-def temporary_seed(seed):
-    """Context for temporarily setting a numpy seed."""
-    state = np.random.get_state()
-    np.random.seed(seed)
-    try:
-        yield
-    finally:
-        np.random.set_state(state)
-
-
-def adjust_docstrings(cls, pattern, repl, *args, **kwargs):
-    """Adjust the docstrings of a class using regular expressions.
-
-    After the first argument, the remaining arguments are identical to re.sub.
-
-    Parameters
-    ----------
-    cls : class
-        class to adjust
-
-    pattern : str
-        regular expression pattern
-
-    repl : str
-        replacement string
-    """
-    for key, val in cls.__dict__.items():
-        doc = inspect.getdoc(val)
-        if doc is not None:
-            newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
-            try:
-                cls.__dict__[key].__doc__ = newdoc
-            except AttributeError:
-                pass
