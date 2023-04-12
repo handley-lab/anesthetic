@@ -120,33 +120,36 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
 
     Parameters
     ----------
-    samples: array
+    samples : array
         Samples to compute the credibility interval of.
-    weights: array, optional
-        Weights corresponding to samples. Default: ones
-    level: float, optional
-        Credibility level (probability, <1). Default: 0.68
-    method: str, optional
-        Which definition of interval to use. Default: 'hpd'
-        * hpd: Calculate highest (average) posterior density (HPD) interval,
-          equivalent to iso-pdf interval (interval with same probability
-          density at each end, also known as waterline-interval).
+    weights : array, default=np.ones_like(samples)
+        Weights corresponding to samples.
+    level : float, default=0.68
+        Credibility level (probability, <1).
+    method : str, default='hpd'
+        Which definition of interval to use:
+
+        * ``'hpd'``: Calculate highest (average) posterior density (HPD)
+          interval, equivalent to iso-pdf interval (interval with same
+          probability density at each end, also known as waterline-interval).
           This only works if the distribution is unimodal.
-        * ll, ul: Lower limit, upper limit. One-sided limits for which
-          `level` fraction of the samples lie above / below the limit.
-        * et: Equal-tailed interval with the same fraction of samples
-          below and above the interval region.
-    u: array, optional
-        Random values to use for reproducable sample compression.
-        Default: np.random.rand(len(weights)) if non-unit weights used.
-    n_iter: int, optional
-        Number of CDF samples to improve mean and std estimate. Default: 12
+        * ``'ll'``/``'ul'``: Lower/upper limit. One-sided limits for which
+          ``level`` fraction of the (equally weighted) samples lie above/below
+          the limit.
+        * ``'et'``: Equal-tailed interval with the same fraction of (equally
+          weighted) samples below and above the interval region.
+
+    u : array, optional
+        Random values to use for reproducible sample compression.
+        Default: ``np.random.rand(len(weights))`` if non-unit weights used.
+    n_iter : int, default=12
+        Number of CDF samples to improve `mean` and `std` estimate.
 
     Returns
     -------
-    limit(s): tuple or float
+    limit(s) : tuple or float
         Returns the credibility interval boundari(es) and,
-        if requested, the associated covariance (based on n_iter samples).
+        if requested, the associated covariance (based on ``n_iter`` samples).
     """
     if level >= 1:
         raise ValueError('level must be <1, got {0:.2f}'.format(level))
