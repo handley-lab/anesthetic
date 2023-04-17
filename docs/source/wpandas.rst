@@ -7,7 +7,6 @@ wpandas subpackages
    :maxdepth: 1
 
    wpandas.plotting
-   wpandas.utils
 
 
 wpandas modules
