@@ -7,6 +7,7 @@ wpandas subpackages
    :maxdepth: 1
 
    wpandas.plotting
+   wpandas.utils
 
 
 wpandas modules
@@ -18,16 +19,6 @@ wpandas.core module
 .. automodule:: wpandas.core
    :members:
    :undoc-members:
-
-
-wpandas.utils module
-~~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: wpandas.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 
 
 
