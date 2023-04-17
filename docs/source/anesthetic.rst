@@ -57,7 +57,6 @@ anesthetic.core module
 .. automodule:: anesthetic.core
    :members:
    :undoc-members:
-   :show-inheritance:
 
 
 anesthetic.scripts module
