@@ -33,7 +33,7 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
 
 
 def effective_samples(w, method='channel'):
-    r"""Helper function to calculate effective number of samples.
+    r"""Calculate effective number of samples.
 
     Parameters
     ----------
