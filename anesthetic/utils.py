@@ -32,21 +32,40 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
                              return_sign=return_sign)
 
 
-def channel_capacity(w):
-    r"""Channel capacity (effective sample size).
+def effective_samples(w, method='channel'):
+    r"""Helper function to calculate effective number of samples.
 
-    .. math::
+    Parameters
+    ----------
+    method : string
+        Method can be either 'channel' for a channel capacity estimate of
+        the effective number of samples or 'kish' for a Kish estimate
+        (Kish, Leslie (1965). Survey Sampling.
+        New York: John Wiley & Sons, Inc. ISBN 0-471-10949-5).
 
-        H = \sum_i p_i \ln p_i
+        Channel capacity is determined by
 
-        p_i = \frac{w_i}{\sum_j w_j}
+        .. math::
 
-        N = e^{-H}
+            H = \sum_i p_i \ln p_i
+
+            p_i = \frac{w_i}{\sum_j w_j}
+
+            N = e^{-H}
+
+        Kish by
+
+        .. math::
+
+            N = \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
     """
     with np.errstate(divide='ignore', invalid='ignore'):
-        W = np.array(w)/sum(w)
-        H = np.nansum(np.log(W)*W)
-        return np.exp(-H)
+        if method in ['channel', 'Channel']:
+            W = np.array(w)/sum(w)
+            H = np.nansum(np.log(W)*W)
+            return np.exp(-H)
+        if method in ['kish', 'Kish']:
+            return (np.sum(w))**2/np.sum(w**2)
 
 
 def compress_weights(w, u=None, ncompress=True):
@@ -58,7 +77,7 @@ def compress_weights(w, u=None, ncompress=True):
         w = np.ones_like(u)
 
     if ncompress is True:
-        ncompress = channel_capacity(w)
+        ncompress = effective_samples(w)
     elif ncompress is False:
         return w
 
@@ -378,7 +397,7 @@ def sample_compression_1d(x, w=None, ncompress=True):
     if ncompress is False:
         return x, w
     elif ncompress is True:
-        ncompress = channel_capacity(w)
+        ncompress = effective_samples(w)
     x = np.array(x)
     if w is None:
         w = np.ones_like(x)
