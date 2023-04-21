@@ -1,7 +1,7 @@
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas import DataFrame, MultiIndex
 import pandas.testing
-from anesthetic.utils import channel_capacity
+from anesthetic.utils import effective_samples
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
@@ -731,7 +731,7 @@ def test_scatter_matrix(mcmc_df, mcmc_wdf):
     axes = scatter_matrix(mcmc_wdf)
     data = axes[0, 1].collections[0].get_offsets().data
     n = len(data)
-    neff = channel_capacity(mcmc_wdf.get_weights())
+    neff = effective_samples(mcmc_wdf.get_weights())
     assert_allclose(n, neff, atol=np.sqrt(n))
 
     axes = orig_scatter_matrix(mcmc_wdf)
@@ -802,7 +802,7 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
     ax = mcmc_wdf.plot.scatter('x', 'y')
 
     n = len(ax.collections[0].get_offsets().data)
-    neff = channel_capacity(mcmc_wdf.get_weights())
+    neff = effective_samples(mcmc_wdf.get_weights())
     assert_allclose(n, neff, atol=np.sqrt(n))
 
     ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)

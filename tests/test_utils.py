@@ -4,12 +4,14 @@ import pytest
 from scipy import special as sp
 from numpy.testing import assert_array_equal
 from anesthetic import read_chains
+from pytest import approx
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
-                              insertion_p_value, compress_weights)
+                              insertion_p_value, compress_weights,
+                              effective_samples)
 
 
 def test_compress_weights():
@@ -172,3 +174,10 @@ def test_p_values_from_sample():
 
     ks_results = insertion_p_value(ns.insertion[nlive:-nlive], nlive, batch=1)
     assert ks_results['p-value'] > 0.05
+
+@pytest.mark.parametrize('method', ['channel', 'kish'])
+def test_effective_samples(method):
+    w = np.ones(20)
+    assert effective_samples(w, method=method) == approx(20, rel=1e-6)
+    w[10:] = 1e-3
+    assert effective_samples(w, method=method) == approx(10, rel=1e-2)
