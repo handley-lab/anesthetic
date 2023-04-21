@@ -175,6 +175,7 @@ def test_p_values_from_sample():
     ks_results = insertion_p_value(ns.insertion[nlive:-nlive], nlive, batch=1)
     assert ks_results['p-value'] > 0.05
 
+
 @pytest.mark.parametrize('method', ['channel', 'kish'])
 def test_effective_samples(method):
     w = np.ones(20)
