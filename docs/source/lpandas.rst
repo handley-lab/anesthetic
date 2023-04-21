@@ -1,6 +1,12 @@
 lpandas package
 ===============
 
+.. automodule:: lpandas
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 lpandas.core module
 -------------------
 
@@ -10,9 +16,3 @@ lpandas.core module
    :show-inheritance:
 
 
-
-
-.. automodule:: lpandas
-   :members:
-   :undoc-members:
-   :show-inheritance:

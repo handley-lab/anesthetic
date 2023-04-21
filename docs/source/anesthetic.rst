@@ -1,5 +1,11 @@
 anesthetic package
 ==================
+
+.. automodule:: anesthetic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 anesthetic subpackages
 ----------------------
 
@@ -33,6 +39,15 @@ anesthetic.convert module
    :show-inheritance:
 
 
+anesthetic.core module
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.core
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 anesthetic.kde module
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -51,10 +66,10 @@ anesthetic.plot module
    :show-inheritance:
 
 
-anesthetic.core module
+anesthetic.samples module
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: anesthetic.core
+.. automodule:: anesthetic.samples
    :members:
    :undoc-members:
    :show-inheritance:
@@ -78,9 +93,3 @@ anesthetic.utils module
    :show-inheritance:
 
 
-
-
-.. automodule:: anesthetic
-   :members:
-   :undoc-members:
-   :show-inheritance:

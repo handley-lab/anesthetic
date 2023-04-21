@@ -1,5 +1,11 @@
 wpandas package
 ===============
+
+.. automodule:: wpandas
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 wpandas subpackages
 -------------------
 
@@ -9,9 +15,3 @@ wpandas subpackages
    wpandas.core
    wpandas.plotting
 
-
-
-.. automodule:: wpandas
-   :members:
-   :undoc-members:
-   :show-inheritance:
