@@ -197,23 +197,26 @@ def test_credibility_interval():
     samples = read_chains('./tests/example_data/pc')
     mean2, cov2 = credibility_interval(samples["x0"], level=0.68,
                                        weights=samples.get_weights(),
-                                       method="hpd",
+                                       method="iso-pdf",
                                        return_covariance=True)
     assert_allclose(mean2[0], -0.1, atol=0.01)
     assert_allclose(mean2[1], 0.1, atol=0.01)
     assert_allclose(cov2, [[5e-5, 5e-5], [5e-5, 1e-4]], rtol=0.5)
 
     lower_limit, cov_ll = credibility_interval(normal_samples, level=0.84,
-                                     return_covariance=True, method="ll")
+                                     return_covariance=True,
+                                     method="lower-limit")
     assert_allclose(lower_limit, 1.9, atol=0.01)
     assert_allclose(cov_ll, 3e-6, atol=2e-6)
     upper_limit, cov_ul = credibility_interval(normal_samples, level=0.84,
-                                        return_covariance=True, method="ul")
+                                        return_covariance=True,
+                                        method="upper-limit")
     assert_allclose(upper_limit, 2.1, atol=0.01)
     assert_allclose(cov_ul, 3e-6, atol=2e-6)
 
     mean_et, cov_et = credibility_interval(normal_samples, level=0.68,
-                                        return_covariance=True, method="et")
+                                        return_covariance=True,
+                                        method="equal-tailed")
     assert_allclose(mean_et[0], 1.9, atol=0.01)
     assert_allclose(mean_et[1], 2.1, atol=0.01)
     assert_allclose(cov_et, [[2e-6, 4e-7], [4e-7, 2e-6]], rtol=0.5)

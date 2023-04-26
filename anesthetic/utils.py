@@ -108,7 +108,7 @@ def sample_cdf(samples, inverse=False, interpolation='linear'):
                         fill_value=(0, 1), bounds_error=False)
 
 
-def credibility_interval(samples, weights=None, level=0.68, method="hpd",
+def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
                          return_covariance=False, nsamples=12,
                          verbose=False):
     """Compute the credibility interval of weighted samples.
@@ -126,17 +126,17 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
         Weights corresponding to samples.
     level : float, default=0.68
         Credibility level (probability, <1).
-    method : str, default='hpd'
+    method : str, default='iso-pdf'
         Which definition of interval to use:
 
-        * ``'hpd'``: Calculate highest (average) posterior density (HPD)
-          interval, equivalent to iso-pdf interval (interval with same
-          probability density at each end, also known as waterline-interval).
-          This only works if the distribution is unimodal.
-        * ``'ll'``/``'ul'``: Lower/upper limit. One-sided limits for which
-          ``level`` fraction of the (equally weighted) samples lie above/below
-          the limit.
-        * ``'et'``: Equal-tailed interval with the same fraction of (equally
+        * ``'iso-pdf'``: Calculate iso probability density interval with the
+          same probability density at each end. Also known as
+          waterline-interval or highest average posterior density interval.
+          This is only accurate if the distribution is sufficiently unimodal.
+        * ``'lower-limit'``/``'upper-limit'``: Lower/upper limit. One-sided
+          limits for which ``level`` fraction of the (equally weighted) samples
+          lie above/below the limit.
+        * ``'equal-tailed'``: Equal-tailed interval with the same fraction of (equally
           weighted) samples below and above the interval region.
 
     return_covariance: bool, default=False
@@ -151,8 +151,8 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
     limit(s) : float, array, or tuple of floats or arrays
         Returns the credibility interval boundari(es). By default
         returns the mean over ``nsamples`` samples, which is either
-        two numbers (``method='hpd'``/``'et'``) or one number
-        (``method='ll'``/``'ul'``). If ``return_covariance=True``,
+        two numbers (``method='iso-pdf'``/``'equal-tailed'``) or one number
+        (``method='lower-limit'``/``'upper-limit'``). If ``return_covariance=True``,
         returns a tuple (mean(s), covariance) where covariance
         is the covariance over the sampled limits.
     """
@@ -189,7 +189,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
     ci_samples = []
     for i in range(nsamples):
         invCDF = sample_cdf(x, inverse=True)
-        if method == "hpd":
+        if method == 'iso-pdf':
             # Find smallest interval
             def distance(Y, level=level):
                 return invCDF(Y+level)-invCDF(Y)
@@ -197,13 +197,13 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
                                   method="Bounded")
             ci_samples.append(np.array([invCDF(res.x),
                                         invCDF(res.x+level)]))
-        elif method == "ll":
+        elif method == 'lower-limit':
             # Get value from which we reach the desired level
             ci_samples.append(invCDF(1-level))
-        elif method == "ul":
+        elif method == 'upper-limit':
             # Get value to which we reach the desired level
             ci_samples.append(invCDF(level))
-        elif method == "et":
+        elif method == 'equal-tailed':
             ci_samples.append(np.array([invCDF((1-level)/2),
                                         invCDF((1+level)/2)]))
         else:
