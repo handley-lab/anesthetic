@@ -1595,6 +1595,7 @@ def test_groupby_plots():
             assert_allclose(mcmc_colors, gb_colors)
         plt.close('all')
 
+
 def test_credibility_interval():
     np.random.seed(0)
     pc = read_chains('./tests/example_data/pc')

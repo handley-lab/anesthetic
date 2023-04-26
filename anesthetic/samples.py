@@ -464,18 +464,21 @@ class Samples(WeightedLabelledDataFrame):
         method : str, default='iso-pdf'
             Which definition of interval to use:
 
-            * ``'iso-pdf'``: Calculate iso probability density interval with the
-              same probability density at each end. Also known as
+            * ``'iso-pdf'``: Calculate iso probability density interval with
+              the same probability density at each end. Also known as
               waterline-interval or highest average posterior density interval.
-              This is only accurate if the distribution is sufficiently unimodal.
+              This is only accurate if the distribution is sufficiently
+              unimodal.
             * ``'lower-limit'``/``'upper-limit'``: Lower/upper limit. One-sided
-              limits for which ``level`` fraction of the (equally weighted) samples
-              lie above/below the limit.
-            * ``'equal-tailed'``: Equal-tailed interval with the same fraction of
-              (equally weighted) samples below and above the interval region.
+              limits for which ``level`` fraction of the (equally weighted)
+              samples lie above/below the limit.
+            * ``'equal-tailed'``: Equal-tailed interval with the same fraction
+              of (equally weighted) samples below and above the interval
+              region.
 
         return_covariance: bool, default=False
-            Return the covariance of the sampled limits, in addition to the mean
+            Return the covariance of the sampled limits, in addition to the
+            mean
         nsamples : int, default=12
             Number of CDF samples to improve `mean` and `std` estimate.
         verbose: bool, default=False
