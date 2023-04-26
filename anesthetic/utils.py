@@ -232,7 +232,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
         else:
             return np.mean(ci_samples, axis=0)
     else:
-        raise ValueError('ci_samples in unregonized shape')
+        raise ValueError('ci_samples in unrecognised shape')
 
 
 def mirror_1d(d, xmin=None, xmax=None):
