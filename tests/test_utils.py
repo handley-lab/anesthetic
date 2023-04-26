@@ -194,6 +194,22 @@ def test_credibility_interval():
     assert_allclose(mean2[0], -0.1, atol=0.01)
     assert_allclose(mean2[1], 0.1, atol=0.01)
     assert_allclose(cov2, [[5e-5, 5e-5], [5e-5, 1e-4]], rtol=1e-1)
+
+    lower_limit, cov_ll = credibility_interval(normal_samples, level=0.84,
+                                     return_covariance=True, method="ll")
+    assert_allclose(lower_limit, 1.9, atol=0.01)
+    assert_allclose(cov_ll, 2.5e-6, atol=5e-7)
+    upper_limit, cov_ul = credibility_interval(normal_samples, level=0.84,
+                                        return_covariance=True, method="ul")
+    assert_allclose(upper_limit, 2.1, atol=0.01)
+    assert_allclose(cov_ul, 2e-6, atol=1e-6)
+
+    mean_et, cov_et = credibility_interval(normal_samples, level=0.68,
+                                        return_covariance=True, method="et")
+    assert_allclose(mean_et[0], 1.9, atol=0.01)
+    assert_allclose(mean_et[1], 2.1, atol=0.01)
+    assert_allclose(cov_et, [[2e-6, 2e-7], [2e-7, 2e-6]], rtol=0.5)
+
     with pytest.raises(ValueError):
         credibility_interval(samples.x0, level=1.1)
 
