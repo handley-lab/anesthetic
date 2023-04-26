@@ -1594,3 +1594,9 @@ def test_groupby_plots():
             gb_colors = [p.get_facecolor() for p in gb_ax.patches]
             assert_allclose(mcmc_colors, gb_colors)
         plt.close('all')
+
+def test_credibility_interval():
+    np.random.seed(0)
+    pc = read_chains('./tests/example_data/pc')
+    mean = pc.credibility_interval('x0', level=0.95)
+    assert_allclose(mean, [-0.2, 0.2], atol=0.02)
