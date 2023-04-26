@@ -136,8 +136,8 @@ def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
         * ``'lower-limit'``/``'upper-limit'``: Lower/upper limit. One-sided
           limits for which ``level`` fraction of the (equally weighted) samples
           lie above/below the limit.
-        * ``'equal-tailed'``: Equal-tailed interval with the same fraction of (equally
-          weighted) samples below and above the interval region.
+        * ``'equal-tailed'``: Equal-tailed interval with the same fraction of
+          (equally weighted) samples below and above the interval region.
 
     return_covariance: bool, default=False
         Return the covariance of the sampled limits, in addition to the mean
@@ -152,9 +152,9 @@ def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
         Returns the credibility interval boundari(es). By default
         returns the mean over ``nsamples`` samples, which is either
         two numbers (``method='iso-pdf'``/``'equal-tailed'``) or one number
-        (``method='lower-limit'``/``'upper-limit'``). If ``return_covariance=True``,
-        returns a tuple (mean(s), covariance) where covariance
-        is the covariance over the sampled limits.
+        (``method='lower-limit'``/``'upper-limit'``). If
+        ``return_covariance=True``, returns a tuple (mean(s), covariance)
+        where covariance is the covariance over the sampled limits.
     """
     if level >= 1:
         raise ValueError('level must be <1, got {0:.2f}'.format(level))
