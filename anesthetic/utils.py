@@ -109,7 +109,7 @@ def sample_cdf(samples, inverse=False, interpolation='linear'):
 
 
 def credibility_interval(samples, weights=None, level=0.68, method="hpd",
-                         return_covariance=False, n_iter=12,
+                         return_covariance=False, nsamples=12,
                          verbose=False):
     """Compute the credibility interval of weighted samples.
 
@@ -141,7 +141,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
 
     return_covariance: bool, default=False
         Return the covariance of the sampled limits, in addition to the mean
-    n_iter : int, default=12
+    nsamples : int, default=12
         Number of CDF samples to improve `mean` and `std` estimate.
     verbose: bool, default=False
         Print information and outputs.
@@ -150,7 +150,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
     -------
     limit(s) : float, array, or tuple of floats or arrays
         Returns the credibility interval boundari(es). By default
-        returns the mean over ``n_iter`` samples, which is either
+        returns the mean over ``nsamples`` samples, which is either
         two numbers (``method='hpd'``/``'et'``) or one number
         (``method='ll'``/``'ul'``). If ``return_covariance=True``,
         returns a tuple (mean(s), covariance) where covariance
@@ -187,7 +187,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
     # Sample the confidence interval multiple times
     # to get errorbars on confidence interval boundaries
     ci_samples = []
-    for i in range(n_iter):
+    for i in range(nsamples):
         invCDF = sample_cdf(x, inverse=True)
         if method == "hpd":
             # Find smallest interval
@@ -209,7 +209,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
         else:
             raise ValueError("Method '{0:}' unknown".format(method))
     ci_samples = np.array(ci_samples)
-    if np.shape(ci_samples) == (n_iter, ):
+    if np.shape(ci_samples) == (nsamples, ):
         if verbose:
             print(f"The {level:.0%} credibility interval is",
                   "{0:.2g} +/- {1:.1g}".format(np.mean(ci_samples),
@@ -218,7 +218,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
             return np.mean(ci_samples), np.cov(ci_samples)
         else:
             return np.mean(ci_samples)
-    elif np.shape(ci_samples) == (n_iter, 2):
+    elif np.shape(ci_samples) == (nsamples, 2):
         if verbose:
             print(f"The {level:.0%} credibility interval is",
                   "[{0:.2g} +/- {1:.1g}, {2:.2g} +/- {3:.1g}]".format(
