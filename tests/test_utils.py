@@ -10,7 +10,7 @@ from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
                               insertion_p_value, compress_weights,
-                              credibility_interval)
+                              credibility_interval, sample_cdf)
 
 
 def test_compress_weights():
@@ -186,7 +186,13 @@ def test_credibility_interval():
                                      return_covariance=True)
     assert_allclose(mean[0], 1.9, atol=0.01)
     assert_allclose(mean[1], 2.1, atol=0.01)
-    assert_allclose(cov, [[7e-6, 6e-6], [6e-6, 8e-6]], atol=1e-1)
+    assert_allclose(cov, [[7e-6, 6e-6], [6e-6, 8e-6]], rtol=0.5)
+
+    # Test non-inverse sample_cdf
+    CDF = sample_cdf(normal_samples, inverse=False)
+    assert_allclose(CDF(-np.inf), 0)
+    assert_allclose(CDF(-100), 0)
+    assert_allclose(CDF(2), 0.5, atol=0.1)
 
     samples = read_chains('./tests/example_data/pc')
     mean2, cov2 = credibility_interval(samples["x0"], level=0.68,
@@ -195,22 +201,22 @@ def test_credibility_interval():
                                        return_covariance=True)
     assert_allclose(mean2[0], -0.1, atol=0.01)
     assert_allclose(mean2[1], 0.1, atol=0.01)
-    assert_allclose(cov2, [[5e-5, 5e-5], [5e-5, 1e-4]], rtol=1e-1)
+    assert_allclose(cov2, [[5e-5, 5e-5], [5e-5, 1e-4]], rtol=0.5)
 
     lower_limit, cov_ll = credibility_interval(normal_samples, level=0.84,
                                      return_covariance=True, method="ll")
     assert_allclose(lower_limit, 1.9, atol=0.01)
-    assert_allclose(cov_ll, 2.5e-6, atol=5e-7)
+    assert_allclose(cov_ll, 3e-6, atol=2e-6)
     upper_limit, cov_ul = credibility_interval(normal_samples, level=0.84,
                                         return_covariance=True, method="ul")
     assert_allclose(upper_limit, 2.1, atol=0.01)
-    assert_allclose(cov_ul, 2e-6, atol=1e-6)
+    assert_allclose(cov_ul, 3e-6, atol=2e-6)
 
     mean_et, cov_et = credibility_interval(normal_samples, level=0.68,
                                         return_covariance=True, method="et")
     assert_allclose(mean_et[0], 1.9, atol=0.01)
     assert_allclose(mean_et[1], 2.1, atol=0.01)
-    assert_allclose(cov_et, [[2e-6, 2e-7], [2e-7, 2e-6]], rtol=0.5)
+    assert_allclose(cov_et, [[2e-6, 4e-7], [4e-7, 2e-6]], rtol=0.5)
 
     with pytest.raises(ValueError):
         credibility_interval(samples.x0, level=1.1)

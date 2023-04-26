@@ -92,8 +92,7 @@ def quantile(a, q, w=None, interpolation='linear'):
 
 def sample_cdf(samples, inverse=False, interpolation='linear'):
     """Sample the empirical cdf for a 1d array."""
-    samples = np.array(samples)
-    samples.sort()
+    samples = np.sort(samples)
     ngaps = len(samples)-1
     gaps = np.random.dirichlet(np.ones(ngaps))
     cdf = np.array([0, *np.cumsum(gaps)])
@@ -105,7 +104,8 @@ def sample_cdf(samples, inverse=False, interpolation='linear'):
     if inverse:
         return interp1d(cdf, samples, kind=interpolation)
     else:
-        return interp1d(samples, cdf, kind=interpolation)
+        return interp1d(samples, cdf, kind=interpolation,
+                        fill_value=(0, 1), bounds_error=False)
 
 
 def credibility_interval(samples, weights=None, level=0.68, method="hpd",
