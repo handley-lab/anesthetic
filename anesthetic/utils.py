@@ -175,8 +175,6 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
         if verbose:
             print("Compressing weights to", np.sum(weights),
                   "unit weight samples.")
-        assert np.all(np.logical_or(weights == 0, weights == 1)), \
-               "Unexpected error in compress_weights, weights not binary"
 
     indices = np.where(weights)[0]
     x = samples[indices]
