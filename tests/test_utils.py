@@ -192,7 +192,6 @@ def test_credibility_interval():
     mean2, cov2 = credibility_interval(samples["x0"], level=0.68,
                                        weights=samples.get_weights(),
                                        method="hpd",
-                                       u=np.random.rand(len(samples)),
                                        return_covariance=True)
     assert_allclose(mean2[0], -0.1, atol=0.01)
     assert_allclose(mean2[1], 0.1, atol=0.01)

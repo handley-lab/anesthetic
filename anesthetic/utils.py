@@ -109,7 +109,7 @@ def sample_cdf(samples, inverse=False, interpolation='linear'):
 
 
 def credibility_interval(samples, weights=None, level=0.68, method="hpd",
-                         return_covariance=False, u=None, n_iter=12,
+                         return_covariance=False, n_iter=12,
                          verbose=False):
     """Compute the credibility interval of weighted samples.
 
@@ -141,9 +141,6 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
 
     return_covariance: bool, default=False
         Return the covariance of the sampled limits, in addition to the mean
-    u : array, optional
-        Random values to use for reproducible sample compression.
-        Default: ``np.random.rand(len(weights))`` if non-unit weights used.
     n_iter : int, default=12
         Number of CDF samples to improve `mean` and `std` estimate.
     verbose: bool, default=False
@@ -179,7 +176,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="hpd",
         # Note that this must be done, we cannot handle weights != 1
         # see this discussion for details:
         # https://github.com/williamjameshandley/anesthetic/pull/188#issuecomment-1274980982
-        weights = compress_weights(weights, ncompress=-1, u=u)
+        weights = compress_weights(weights, ncompress=-1)
         if verbose:
             print("Compressing weights to", np.sum(weights),
                   "unit weight samples.")
