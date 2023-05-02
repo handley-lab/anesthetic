@@ -5,6 +5,7 @@
 - :class:`anesthetic.samples.NestedSamples`
 """
 import numpy as np
+import scipy
 import pandas
 import copy
 import warnings
@@ -592,7 +593,7 @@ class MCMCSamples(Samples):
         # the numerator of the Gelman--Rubin statistic `Rminus1`.
 
         try:
-            invL = np.linalg.inv(np.linalg.cholesky(W))
+            invL = np.linalg.inv(scipy.linalg.cholesky(W))
         except np.linalg.LinAlgError as e:
             raise np.linalg.LinAlgError(
                 "Make sure you do not have linearly dependent parameters, "
