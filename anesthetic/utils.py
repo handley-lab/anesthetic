@@ -33,20 +33,20 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
 
 
 def effective_samples(w, gamma=1, method=None):
-    r"""Calculate effective number of samples using the
-    Hugins-Roy family of effective samples 
+    r"""Calculate effective number of samples.
+
+    Using the Hugins-Roy family of effective samples
     (https://aakinshin.net/posts/huggins-roy-ess/).
 
     Parameters
     ----------
-
     gamma : int, float, default = 1
         The value of gamma used to calculate the number of effective samples
-        according to 
+        according to
 
         .. math::
 
-            n_\mathrm{eff} = \bigg(\sum_{i=0}^n w^\gamma_i \bigg)^{\frac{1}{1-\beta}}
+            n_{eff} = \bigg(\sum_{i=0}^n w^\gamma_i \bigg)^{\frac{1}{1-\beta}}
 
         A value of 1 corresponds to the channel capacity or entropy based
         calculation, 2 corresponds to a Kish estimate and gamma = 1/2
@@ -80,7 +80,7 @@ def effective_samples(w, gamma=1, method=None):
         gamma = 2
     elif method == 'channel':
         gamma = 1
-    
+
     w = w / np.sum(w)
     if gamma == 1:
         return np.exp(entropy(w))
