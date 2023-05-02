@@ -3,7 +3,7 @@ import numpy as np
 import pandas
 from scipy import special
 from scipy.interpolate import interp1d
-from scipy.stats import kstwobign, entropy
+from scipy.stats import kstwobign
 from matplotlib.tri import Triangulation
 import contextlib
 import inspect
@@ -83,7 +83,9 @@ def effective_samples(w, gamma=1, method=None):
 
     w = w / np.sum(w)
     if gamma == 1:
-        return np.exp(entropy(w))
+        with np.errstate(divide='ignore', invalid='ignore'):
+            H = np.nansum(np.log(w)*w)
+            return np.exp(-H)
     elif gamma == 2:
         return 1 / np.sum(w**2)
     elif gamma == np.inf:
