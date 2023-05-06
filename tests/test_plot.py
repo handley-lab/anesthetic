@@ -726,3 +726,9 @@ def test_quantile_plot_interval_tuple(q1, q2):
     _q1, _q2 = quantile_plot_interval(q=(q1, q2))
     assert _q1 == q1
     assert _q2 == q2
+
+
+def test_basic_cmap_reversible():
+    # Check that the basic cmap is now reversible for tuple input
+    cmap = basic_cmap((1.0, 1.0, 0.0, 1.0))
+    cmap.reversed()
