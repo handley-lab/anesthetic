@@ -437,8 +437,10 @@ def test_mcmc_stats():
     assert mcmc_half.Gelman_Rubin(['x0']) < 0.01
     assert mcmc_half.Gelman_Rubin(['x1']) < 0.01
     with pytest.raises(np.linalg.LinAlgError):
-        mcmc['y'] = mcmc.x1
-        mcmc.Gelman_Rubin(['x0', 'x1', 'y'])
+        mcmc['y1'] = mcmc.x1
+        mcmc['y2'] = mcmc.x1
+        mcmc['y3'] = mcmc.x1
+        mcmc.Gelman_Rubin(['x0', 'x1', 'y1', 'y2', 'y3'])
 
     # more burn-in checks
     mcmc_new = mcmc.remove_burn_in(burn_in=200.9)
