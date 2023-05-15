@@ -180,7 +180,6 @@ def test_p_values_from_sample():
 
 def test_credibility_interval():
     np.random.seed(0)
-    from anesthetic import read_chains
     normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
     mean, cov = credibility_interval(normal_samples, level=0.68,
                                      return_covariance=True)

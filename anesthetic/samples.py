@@ -455,10 +455,8 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        samples : array
-            Samples to compute the credibility interval of.
-        weights : array, default=np.ones_like(samples)
-            Weights corresponding to samples.
+        column : str
+            Column name to compute the credibility interval for.
         level : float, default=0.68
             Credibility level (probability, <1).
         method : str, default='iso-pdf'
@@ -497,7 +495,7 @@ class Samples(WeightedLabelledDataFrame):
         return credibility_interval(self[column], weights=self.get_weights(),
                                     level=level, method=method,
                                     return_covariance=return_covariance,
-                                    nsamples=nsamples, verbose=verbose)
+                                    nsamples=nsamples)
 
     # TODO: remove this in version >= 2.1
     @property

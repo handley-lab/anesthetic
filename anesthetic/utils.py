@@ -109,8 +109,7 @@ def sample_cdf(samples, inverse=False, interpolation='linear'):
 
 
 def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
-                         return_covariance=False, nsamples=12,
-                         verbose=False):
+                         return_covariance=False, nsamples=12):
     """Compute the credibility interval of weighted samples.
 
     Based on linear interpolation of the cumulative density function, thus
@@ -143,8 +142,6 @@ def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
         Return the covariance of the sampled limits, in addition to the mean
     nsamples : int, default=12
         Number of CDF samples to improve `mean` and `std` estimate.
-    verbose: bool, default=False
-        Print information and outputs.
 
     Returns
     -------
@@ -177,9 +174,6 @@ def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
         # see this discussion for details:
         # https://github.com/williamjameshandley/anesthetic/pull/188#issuecomment-1274980982
         weights = compress_weights(weights, ncompress=-1)
-        if verbose:
-            print("Compressing weights to", np.sum(weights),
-                  "unit weight samples.")
 
     indices = np.where(weights)[0]
     x = samples[indices]
@@ -210,29 +204,16 @@ def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
             raise ValueError("Method '{0:}' unknown".format(method))
     ci_samples = np.array(ci_samples)
     if np.shape(ci_samples) == (nsamples, ):
-        if verbose:
-            print(f"The {level:.0%} credibility interval is",
-                  "{0:.2g} +/- {1:.1g}".format(np.mean(ci_samples),
-                                               np.std(ci_samples, ddof=1)))
         if return_covariance:
             return np.mean(ci_samples), np.cov(ci_samples)
         else:
             return np.mean(ci_samples)
-    elif np.shape(ci_samples) == (nsamples, 2):
-        if verbose:
-            print(f"The {level:.0%} credibility interval is",
-                  "[{0:.2g} +/- {1:.1g}, {2:.2g} +/- {3:.1g}]".format(
-                    np.mean(ci_samples[:, 0]), np.std(ci_samples[:, 0],
-                                                      ddof=1),
-                    np.mean(ci_samples[:, 1]), np.std(ci_samples[:, 1],
-                                                      ddof=1)))
+    else:
         if return_covariance:
             return np.mean(ci_samples, axis=0), \
                    np.cov(ci_samples, rowvar=False)
         else:
             return np.mean(ci_samples, axis=0)
-    else:
-        raise ValueError('ci_samples in unrecognised shape')
 
 
 def mirror_1d(d, xmin=None, xmax=None):
