@@ -74,7 +74,6 @@ def effective_samples(w, gamma=1):
 
             N = \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
     """
-
     w = w / np.sum(w)
     if gamma == 1 or gamma == 'entropy':
         with np.errstate(divide='ignore', invalid='ignore'):
