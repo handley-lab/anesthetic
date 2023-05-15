@@ -178,6 +178,14 @@ def test_p_values_from_sample():
     assert ks_results['p-value'] > 0.05
 
 
+def test_sample_cdf():
+    normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
+    CDF = sample_cdf(normal_samples, inverse=False)
+    assert_allclose(CDF(-np.inf), 0)
+    assert_allclose(CDF(-100), 0)
+    assert_allclose(CDF(2), 0.5, atol=0.1)
+
+
 @pytest.mark.parametrize('method', ['iso-pdf', 'equal-tailed',
                                     'lower-limit', 'upper-limit'])
 @pytest.mark.parametrize('return_covariance', [True, False])

@@ -1599,5 +1599,11 @@ def test_groupby_plots():
 def test_credibility_interval():
     np.random.seed(0)
     pc = read_chains('./tests/example_data/pc')
-    mean = pc.credibility_interval('x0', level=0.95)
-    assert_allclose(mean, [-0.2, 0.2], atol=0.02)
+    mean_68, cov_68 = pc.credibility_interval('x0', level=0.68,
+                                              method="iso-pdf",
+                                              return_covariance=True)
+    assert_allclose(mean_68[0], -0.1, atol=0.01)
+    assert_allclose(mean_68[1], 0.1, atol=0.01)
+    assert_allclose(cov_68, [[5e-4, 5e-4], [5e-4, 5e-4]], atol=4e-4)
+    mean_95 = pc.credibility_interval('x0', level=0.95)
+    assert_allclose(mean_95, [-0.2, 0.2], atol=0.02)
