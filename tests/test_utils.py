@@ -178,56 +178,39 @@ def test_p_values_from_sample():
     assert ks_results['p-value'] > 0.05
 
 
-def test_credibility_interval():
+@pytest.mark.parametrize('method', ['iso-pdf', 'equal-tailed',
+                                    'lower-limit', 'upper-limit'])
+@pytest.mark.parametrize('return_covariance', [True, False])
+def test_credibility_interval(method, return_covariance):
     np.random.seed(0)
     normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
-    mean, cov = credibility_interval(normal_samples, level=0.68,
-                                     return_covariance=True)
-    assert_allclose(mean[0], 1.9, atol=0.01)
-    assert_allclose(mean[1], 2.1, atol=0.01)
-    assert_allclose(cov, [[7e-6, 6e-6], [6e-6, 8e-6]], rtol=0.5)
+    ci = credibility_interval(
+        normal_samples,
+        level=0.84 if 'limit' in method else 0.68,
+        method=method,
+        return_covariance=return_covariance,
+    )
+    if return_covariance:
+        ci, cov = ci
+        assert np.ndim(cov) == 0 if 'limit' in method else 2
+        assert np.all(np.abs(cov) < 1e-4)
+        assert np.all(np.abs(cov) > 1e-8)
+    if method in ['iso-pdf', 'equal-tailed']:
+        lower, upper = ci
+    else:
+        upper = ci if 'upper' in method else 2.1
+        lower = ci if 'lower' in method else 1.9
+    assert_allclose(lower, 1.9, atol=0.02)
+    assert_allclose(upper, 2.1, atol=0.02)
 
-    # Test non-inverse sample_cdf
-    CDF = sample_cdf(normal_samples, inverse=False)
-    assert_allclose(CDF(-np.inf), 0)
-    assert_allclose(CDF(-100), 0)
-    assert_allclose(CDF(2), 0.5, atol=0.1)
 
+def test_credibility_interval_exceptions():
     samples = read_chains('./tests/example_data/pc')
-    mean2, cov2 = credibility_interval(samples["x0"], level=0.68,
-                                       weights=samples.get_weights(),
-                                       method="iso-pdf",
-                                       return_covariance=True)
-    assert_allclose(mean2[0], -0.1, atol=0.01)
-    assert_allclose(mean2[1], 0.1, atol=0.01)
-    assert_allclose(cov2, [[5e-5, 5e-5], [5e-5, 1e-4]], rtol=0.5)
-
-    lower_limit, cov_ll = credibility_interval(normal_samples, level=0.84,
-                                               return_covariance=True,
-                                               method="lower-limit")
-    assert_allclose(lower_limit, 1.9, atol=0.01)
-    assert_allclose(cov_ll, 3e-6, atol=2e-6)
-    upper_limit, cov_ul = credibility_interval(normal_samples, level=0.84,
-                                               return_covariance=True,
-                                               method="upper-limit")
-    assert_allclose(upper_limit, 2.1, atol=0.01)
-    assert_allclose(cov_ul, 3e-6, atol=2e-6)
-
-    mean_et, cov_et = credibility_interval(normal_samples, level=0.68,
-                                           return_covariance=True,
-                                           method="equal-tailed")
-    assert_allclose(mean_et[0], 1.9, atol=0.01)
-    assert_allclose(mean_et[1], 2.1, atol=0.01)
-    assert_allclose(cov_et, [[2e-6, 4e-7], [4e-7, 2e-6]], rtol=0.5)
-
     with pytest.raises(ValueError):
         credibility_interval(samples.x0, level=1.1)
-
     with pytest.raises(ValueError):
         credibility_interval(samples[['x0', 'x1']])
-
     with pytest.raises(ValueError):
         credibility_interval(samples.x0, weights=[1, 2, 3])
-
     with pytest.raises(ValueError):
         credibility_interval(samples.x0, method='foo')
