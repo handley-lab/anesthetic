@@ -3,7 +3,7 @@ import numpy as np
 import pandas
 from scipy import special
 from scipy.interpolate import interp1d
-from scipy.stats import kstwobign
+from scipy.stats import kstwobign, entropy
 from matplotlib.tri import Triangulation
 import contextlib
 import inspect
@@ -32,7 +32,7 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
                              return_sign=return_sign)
 
 
-def effective_samples(w, gamma=1, method=None):
+def effective_samples(w, gamma=1):
     r"""Calculate effective number of samples.
 
     Using the Hugins-Roy family of effective samples
@@ -53,14 +53,12 @@ def effective_samples(w, gamma=1, method=None):
         corresponds to a conservative estimate of the effective number of
         samples. gamma has to be positive but can take any value.
 
-    method : string
-        Method can be either 'channel' for a channel capacity estimate of
-        the effective number of samples or 'kish' for a Kish estimate
-        (Kish, Leslie (1965). Survey Sampling.
-        New York: John Wiley & Sons, Inc. ISBN 0-471-10949-5). If method is set
-        it overrides the value of gamma.
+        Gamma can also take on a value of either 'entropy' for an entropy
+        estimate of the effective number of samples or 'kish' for a 
+        Kish estimate (Kish, Leslie (1965). Survey Sampling.
+        New York: John Wiley & Sons, Inc. ISBN 0-471-10949-5).
 
-        Channel capacity is determined by
+        The entropy estimate is determined by
 
         .. math::
 
@@ -76,17 +74,13 @@ def effective_samples(w, gamma=1, method=None):
 
             N = \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
     """
-    if method == 'kish':
-        gamma = 2
-    elif method == 'channel':
-        gamma = 1
 
     w = w / np.sum(w)
-    if gamma == 1:
+    if gamma == 1 or gamma == 'entropy':
         with np.errstate(divide='ignore', invalid='ignore'):
             H = np.nansum(np.log(w)*w)
             return np.exp(-H)
-    elif gamma == 2:
+    elif gamma == 2 or gamma == 'kish':
         return 1 / np.sum(w**2)
     elif gamma == np.inf:
         return 1 / np.max(w)

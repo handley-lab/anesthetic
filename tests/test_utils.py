@@ -176,9 +176,11 @@ def test_p_values_from_sample():
     assert ks_results['p-value'] > 0.05
 
 
-@pytest.mark.parametrize('method', ['channel', 'kish'])
-def test_effective_samples(method):
+@pytest.mark.parametrize('gamma', ['entropy', 'kish', 0.5, 1, 2, np.inf])
+def test_effective_samples(gamma):
     w = np.ones(20)
-    assert effective_samples(w, method=method) == approx(20, rel=1e-6)
-    w[10:] = 1e-3
-    assert effective_samples(w, method=method) == approx(10, rel=1e-2)
+    assert effective_samples(w, gamma=gamma) == approx(20, rel=1e-6)
+    w[10:] = 1e-6
+    assert effective_samples(w, gamma=gamma) == approx(10, rel=1e-2)
+    w[15:] = 0
+    assert effective_samples(w, gamma=gamma) == approx(10, rel=1e-2)
