@@ -3,7 +3,7 @@ import numpy as np
 import pandas
 from scipy import special
 from scipy.interpolate import interp1d
-from scipy.stats import kstwobign, entropy
+from scipy.stats import kstwobign
 from matplotlib.tri import Triangulation
 import contextlib
 import inspect
@@ -54,7 +54,7 @@ def effective_samples(w, gamma=1):
         samples. gamma has to be positive but can take any value.
 
         Gamma can also take on a value of either 'entropy' for an entropy
-        estimate of the effective number of samples or 'kish' for a 
+        estimate of the effective number of samples or 'kish' for a
         Kish estimate (Kish, Leslie (1965). Survey Sampling.
         New York: John Wiley & Sons, Inc. ISBN 0-471-10949-5).
 
