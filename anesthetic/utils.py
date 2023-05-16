@@ -3,7 +3,7 @@ import numpy as np
 import pandas
 from scipy import special
 from scipy.interpolate import interp1d
-from scipy.stats import kstwobign
+from scipy.stats import kstwobign, entropy
 from matplotlib.tri import Triangulation
 import contextlib
 import inspect
@@ -76,14 +76,12 @@ def effective_samples(w, gamma=1):
     """
     w = w / np.sum(w)
     if gamma == 1 or gamma == 'entropy':
-        with np.errstate(divide='ignore', invalid='ignore'):
-            H = np.nansum(np.log(w)*w)
-            return np.exp(-H)
-    elif gamma == 2 or gamma == 'kish':
-        return 1 / np.sum(w**2)
+        return np.exp(entropy(w))
     elif gamma == np.inf:
         return 1 / np.max(w)
     else:
+        if gamma == 'kish':
+            gamma = 2
         return np.sum(w**gamma)**(1/(1-gamma))
 
 
@@ -424,7 +422,7 @@ def sample_compression_1d(x, w=None, ncompress=True):
 
     # Select inner samples for triangulation
     if len(x) > ncompress:
-        x_ = np.random.choice(x, size=ncompress, replace=False)
+        x_ = np.random.choice(x, size=int(ncompress), replace=False)
     else:
         x_ = x.copy()
     x_.sort()
