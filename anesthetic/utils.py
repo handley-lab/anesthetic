@@ -85,7 +85,7 @@ def effective_samples(w, gamma=1):
         return np.sum(w**gamma)**(1/(1-gamma))
 
 
-def compress_weights(w, u=None, ncompress=True):
+def compress_weights(w, u=None, ncompress=True, gamma=1):
     """Compresses weights to their approximate channel capacity."""
     if u is None:
         u = np.random.rand(len(w))
@@ -94,7 +94,7 @@ def compress_weights(w, u=None, ncompress=True):
         w = np.ones_like(u)
 
     if ncompress is True:
-        ncompress = effective_samples(w)
+        ncompress = effective_samples(w, gamma=gamma)
     elif ncompress is False:
         return w
 
@@ -386,7 +386,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     return tri, w_
 
 
-def sample_compression_1d(x, w=None, ncompress=True):
+def sample_compression_1d(x, w=None, ncompress=True, gamma=1):
     """Histogram a 1D set of weighted samples via subsampling.
 
     This compresses the number of samples, combining weights.
@@ -414,7 +414,7 @@ def sample_compression_1d(x, w=None, ncompress=True):
     if ncompress is False:
         return x, w
     elif ncompress is True:
-        ncompress = effective_samples(w)
+        ncompress = effective_samples(w, gamma=gamma)
     x = np.array(x)
     if w is None:
         w = np.ones_like(x)
