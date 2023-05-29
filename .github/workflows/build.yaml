@@ -30,8 +30,8 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          name: `${DIST_VERSION}`
-          tag: `${DIST_VERSION}`
+          name: "${{ env.DIST_VERSION }}"
+          tag: "${{ env.DIST_VERSION }}"
           generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install pypa/build
