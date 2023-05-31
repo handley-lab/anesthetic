@@ -27,6 +27,13 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          name: "${{ env.DIST_VERSION }}"
+          tag: "${{ env.DIST_VERSION }}"
+          generateReleaseNotes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install pypa/build
         run: python -m pip install build --user
       - name: Build a binary wheel and a source tarball
