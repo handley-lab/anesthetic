@@ -60,21 +60,6 @@ class WeightedGroupBy(GroupBy):
         """Return the weights of the grouped samples."""
         return self.agg(lambda df: df.get_weights().sum())
 
-    def _make_wrapper(self, name):
-        _wrapper = super()._make_wrapper(name)
-
-        def wrapper(*args, **kwargs):
-            result = _wrapper(*args, **kwargs)
-            try:
-                index = result.index.get_level_values(self.keys)
-                weights = self.get_weights()[index]
-            except KeyError:
-                weights = self.get_weights()
-            return result.set_weights(weights, level=1)
-
-        wrapper.__name__ = name
-        return wrapper
-
     def _op_via_apply(self, name, *args, **kwargs):
         result = super()._op_via_apply(name, *args, **kwargs)
         try:
