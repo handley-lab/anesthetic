@@ -91,6 +91,9 @@ class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
     def sample(self, *args, **kwargs):  # noqa: D102
         return super().sample(weights=self.obj.get_weights(), *args, **kwargs)
 
+    def cov(self, *args, **kwargs):  # noqa: D102
+        return self._op_via_apply("cov", *args, **kwargs)
+
 
 class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
     """Weighted version of ``pandas.core.groupby.DataFrameGroupBy``."""
@@ -136,6 +139,9 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
 
     def sample(self, *args, **kwargs):  # noqa: D102
         return super().sample(weights=self.obj.get_weights(), *args, **kwargs)
+
+    def cov(self, *args, **kwargs):  # noqa: D102
+        return self._op_via_apply("cov", *args, **kwargs)
 
 
 class _WeightedObject(object):
