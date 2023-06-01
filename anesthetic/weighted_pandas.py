@@ -50,6 +50,9 @@ class WeightedGroupBy(GroupBy):
     def sem(self, *args, **kwargs):  # noqa: D102
         return self._add_weights("sem", *args, **kwargs)
 
+    def skew(self, *args, **kwargs):  # noqa: D102
+        return self._add_weights("skew", *args, **kwargs)
+
     def quantile(self, *args, **kwargs):  # noqa: D102
         return self._add_weights("quantile", *args, **kwargs)
 
@@ -71,6 +74,15 @@ class WeightedGroupBy(GroupBy):
 
         wrapper.__name__ = name
         return wrapper
+
+    def _op_via_apply(self, name, *args, **kwargs):
+        result = super()._op_via_apply(name, *args, **kwargs)
+        try:
+            index = result.index.get_level_values(self.keys)
+            weights = self.get_weights()[index]
+        except KeyError:
+            weights = self.get_weights()
+        return result.set_weights(weights, level=1)
 
 
 class WeightedSeriesGroupBy(WeightedGroupBy, SeriesGroupBy):
