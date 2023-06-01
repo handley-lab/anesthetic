@@ -1327,7 +1327,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
 def basic_cmap(color):
     """Construct basic colormap a single color."""
-    return LinearSegmentedColormap.from_list(color, ['#ffffff', color])
+    return LinearSegmentedColormap.from_list(str(color), ['#ffffff', color])
 
 
 def quantile_plot_interval(q):
