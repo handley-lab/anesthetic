@@ -25,7 +25,7 @@ from anesthetic.plot import (
 class HistPlot(_WeightedMPLPlot, _HistPlot):
     # noqa: disable=D101
     def _calculate_bins(self, data):
-        nd_values = data._convert(datetime=True)._get_numeric_data()
+        nd_values = data.infer_objects(copy=False)._get_numeric_data()
         values = np.ravel(nd_values)
         weights = self.kwds.get("weights", None)
         if weights is not None:
