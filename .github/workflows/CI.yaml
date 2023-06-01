@@ -114,6 +114,7 @@ jobs:
           conda config --append channels conda-forge
           conda install pytest pytest-cov
           conda install scipy numpy pandas matplotlib
+          conda install -c conda-forge pandas
 
       - name: Test with pytest
         shell: bash -l {0}
