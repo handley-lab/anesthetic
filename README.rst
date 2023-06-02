@@ -2,7 +2,7 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
-:Version: 2.0.0-beta.31
+:Version: 2.0.0-beta.32
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -189,17 +189,19 @@ Why create another one? In general, any dedicated user of software will find tha
 .. code:: python
 
     from anesthetic import read_chains
-    samples = read_chains(file_root)                              # Load the samples
-    samples['omegab'] = samples.omegabh2/(samples.H0/100)**2      # Define omegab
-    samples.tex['omegab'] = '$\Omega_b$'                          # Label omegab
-    samples.plot_1d('omegab')                                     # Simple 1D plot
+    samples = read_chains(file_root)               # Load the samples
+    label = 'omegab'
+    tex = '$\Omega_b$'
+    h = (samples.H0/100)
+    samples[(label, tex)] = samples.omegabh2/h**2  # Define omegab
+    samples.plot_1d('omegab')                      # Simple 1D plot
 
 3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which presents a problem if you are trying to plot priors along with your posteriors. ``anesthetic`` has a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
 
 What's in a name?
 ~~~~~~~~~~~~~~~~~
 
-There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://bitbucket.org/tomcharnock/nestorflow>`__). Doing a UNIX grep:
+There is a convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://bitbucket.org/tomcharnock/nestorflow>`__). Doing a UNIX grep:
 
 .. code:: bash
 
