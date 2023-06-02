@@ -27,9 +27,6 @@ anesthetic: nested sampling post-processing
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
    :target: https://github.com/handley-lab/anesthetic/blob/master/LICENSE
    :alt: License information
-.. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/handley-lab/anesthetic/1.0.0?filepath=demo.ipynb
-   :alt: Online interactive notebook
 
 
 
@@ -37,7 +34,7 @@ anesthetic: nested sampling post-processing
 
 ``anesthetic`` brings together tools for processing nested sampling chains by leveraging standard scientific python libraries.
 
-You can see example usage and plots in the `plot gallery <http://htmlpreview.github.io/?https://github.com/handley-lab/cosmo_example/blob/master/demos/demo.html>`_, or in the corresponding `Jupyter notebook <https://mybinder.org/v2/gh/handley-lab/anesthetic/master?filepath=demo.ipynb>`_.
+TLDR: See the `quickstart <https://anesthetic.readthedocs.io/en/latest/quickstart.html>`__.
 
 Current functionality includes:
 
