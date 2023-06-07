@@ -370,6 +370,9 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     if w is None:
         w = pandas.Series(index=x.index, data=np.ones_like(x))
 
+    if isinstance(n, str):
+        n = int(effective_samples(w, beta=n))
+
     # Select samples for triangulation
     if (w != 0).sum() < n:
         i = x.index
