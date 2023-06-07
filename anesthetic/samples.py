@@ -479,8 +479,6 @@ class Samples(WeightedLabelledDataFrame):
             mean
         nsamples : int, default=12
             Number of CDF samples to improve `mean` and `std` estimate.
-        verbose: bool, default=False
-            Print information and outputs.
 
         Returns
         -------
