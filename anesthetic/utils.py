@@ -40,7 +40,7 @@ def effective_samples(w, beta=1):
 
     Parameters
     ----------
-    beta : int, float, default = 1
+    beta : int, float, str, default = 1
         The value of beta used to calculate the number of effective samples
         according to
 
