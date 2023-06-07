@@ -87,7 +87,7 @@ def effective_samples(w, beta=1):
         return np.sum(w**beta)**(1/(1-beta))
 
 
-def compress_weights(w, u=None, ncompress=True):
+def compress_weights(w, u=None, ncompress='entropy'):
     """Compresses weights to their approximate channel capacity."""
     if u is None:
         u = np.random.rand(len(w))
@@ -95,12 +95,14 @@ def compress_weights(w, u=None, ncompress=True):
     if w is None:
         w = np.ones_like(u)
 
-    if isinstance(ncompress, str):
+    if ncompress is True or isinstance(ncompress, str):
+        if ncompress is True:
+            ncompress = 'entropy'
         ncompress = effective_samples(w, beta=ncompress)
     elif ncompress is False:
         return w
 
-    if ncompress is True or ncompress <= 0:
+    if ncompress <= 0:
         W = w/w.max()
     else:
         W = w * ncompress / w.sum()
