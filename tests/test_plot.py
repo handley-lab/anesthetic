@@ -726,3 +726,12 @@ def test_quantile_plot_interval_tuple(q1, q2):
     _q1, _q2 = quantile_plot_interval(q=(q1, q2))
     assert _q1 == q1
     assert _q2 == q2
+
+
+@pytest.mark.parametrize('color', ['C0', 'k', 'gold', '#00FFFF',
+                                   (1.0, 1.0, 0.0, 1.0)])
+def test_basic_cmap(color):
+    cmap = basic_cmap(color)
+
+    # Check that the basic cmap is reversible
+    cmap.reversed()
