@@ -32,7 +32,7 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
                              return_sign=return_sign)
 
 
-def effective_samples(w, gamma=1):
+def effective_samples(w, beta=1):
     r"""Calculate effective number of samples.
 
     Using the Hugins-Roy family of effective samples
@@ -40,20 +40,20 @@ def effective_samples(w, gamma=1):
 
     Parameters
     ----------
-    gamma : int, float, default = 1
-        The value of gamma used to calculate the number of effective samples
+    beta : int, float, default = 1
+        The value of beta used to calculate the number of effective samples
         according to
 
         .. math::
 
-            n_{eff} = \bigg(\sum_{i=0}^n w^\gamma_i \bigg)^{\frac{1}{1-\beta}}
+            n_{eff} = \bigg(\sum_{i=0}^n w^\beta_i \bigg)^{\frac{1}{1-\beta}}
 
         A value of 1 corresponds to the channel capacity or entropy based
-        calculation, 2 corresponds to a Kish estimate and gamma = 1/2
+        calculation, 2 corresponds to a Kish estimate and beta = 1/2
         corresponds to a conservative estimate of the effective number of
-        samples. gamma has to be positive but can take any value.
+        samples. beta has to be positive but can take any value.
 
-        Gamma can also take on a value of either 'entropy' for an entropy
+        Beta can also take on a value of either 'entropy' for an entropy
         estimate of the effective number of samples or 'kish' for a
         Kish estimate (Kish, Leslie (1965). Survey Sampling.
         New York: John Wiley & Sons, Inc. ISBN 0-471-10949-5).
@@ -75,17 +75,17 @@ def effective_samples(w, gamma=1):
             N = \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
     """
     w = w / np.sum(w)
-    if gamma == 1 or gamma == 'entropy':
+    if beta == 1 or beta == 'entropy':
         return np.exp(entropy(w))
-    elif gamma == np.inf:
+    elif beta == np.inf:
         return 1 / np.max(w)
     else:
-        if gamma == 'kish':
-            gamma = 2
-        return np.sum(w**gamma)**(1/(1-gamma))
+        if beta == 'kish':
+            beta = 2
+        return np.sum(w**beta)**(1/(1-beta))
 
 
-def compress_weights(w, u=None, ncompress=True, gamma=1):
+def compress_weights(w, u=None, ncompress=True, beta=1):
     """Compresses weights to their approximate channel capacity."""
     if u is None:
         u = np.random.rand(len(w))
@@ -94,7 +94,7 @@ def compress_weights(w, u=None, ncompress=True, gamma=1):
         w = np.ones_like(u)
 
     if ncompress is True:
-        ncompress = effective_samples(w, gamma=gamma)
+        ncompress = effective_samples(w, beta=beta)
     elif ncompress is False:
         return w
 
@@ -386,7 +386,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     return tri, w_
 
 
-def sample_compression_1d(x, w=None, ncompress=True, gamma=1):
+def sample_compression_1d(x, w=None, ncompress=True, beta=1):
     """Histogram a 1D set of weighted samples via subsampling.
 
     This compresses the number of samples, combining weights.
@@ -414,7 +414,7 @@ def sample_compression_1d(x, w=None, ncompress=True, gamma=1):
     if ncompress is False:
         return x, w
     elif ncompress is True:
-        ncompress = effective_samples(w, gamma=gamma)
+        ncompress = effective_samples(w, beta=beta)
     x = np.array(x)
     if w is None:
         w = np.ones_like(x)
