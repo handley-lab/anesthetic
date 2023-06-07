@@ -89,7 +89,7 @@ def effective_samples(w, beta=1):
         return np.sum(w**beta)**(1/(1-beta))
 
 
-def compress_weights(w, u=None, ncompress='entropy'):
+def compress_weights(w, u=None, ncompress=True):
     """Compresses weights to their approximate channel capacity."""
     if u is None:
         u = np.random.rand(len(w))
