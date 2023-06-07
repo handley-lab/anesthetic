@@ -326,12 +326,13 @@ class WeightedSeries(_WeightedObject, Series):
 
         Parameters
         ----------
-        ncompress : int, str, optional
-            Desired number of samples after compression.
+        ncompress : int, str, default=True
+            Degree of compression.
 
             * If ``True`` (default): reduce to the channel capacity
               (theoretical optimum compression), equivalent to
               ``ncompress='entropy'``.
+            * If ``> 0``: desired number of samples after compression.
             * If ``<= 0``: compress so that all remaining weights are unity.
             * If ``str``: determine number from the Huggins-Roy family of
               effective samples in :func:`anesthetic.utils.effective_samples`
@@ -565,12 +566,13 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
         Parameters
         ----------
-        ncompress : int, str, optional
-            Desired number of samples after compression.
+        ncompress : int, str, default=True
+            Degree of compression.
 
             * If ``True`` (default): reduce to the channel capacity
               (theoretical optimum compression), equivalent to
               ``ncompress='entropy'``.
+            * If ``> 0``: desired number of samples after compression.
             * If ``<= 0``: compress so that all remaining weights are unity.
             * If ``str``: determine number from the Huggins-Roy family of
               effective samples in :func:`anesthetic.utils.effective_samples`

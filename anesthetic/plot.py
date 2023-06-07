@@ -808,11 +808,16 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     weights : np.array, optional
         Sample weights.
 
-    ncompress : int, default=False
+    ncompress : int, str, default=False
         Degree of compression.
-        If int: number of samples returned.
-        If True: compresses to the channel capacity.
-        If False: no compression.
+
+        * If ``False``: no compression.
+        * If ``True``: compresses to the channel capacity, equivalent to
+          ``ncompress='entropy'``.
+        * If ``int``: desired number of samples after compression.
+        * If ``str``: determine number from the Huggins-Roy family of
+          effective samples in :func:`anesthetic.utils.effective_samples`
+          with ``beta=ncompress``.
 
     nplot_1d : int, default=100
         Number of plotting points to use.
@@ -1106,11 +1111,16 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Has to be ordered from outermost to innermost contour.
         Default: [0.95, 0.68]
 
-    ncompress : int, default=1000
+    ncompress : int, str, default=1000
         Degree of compression.
-        If int: number of samples returned.
-        If True: compresses to the channel capacity.
-        If False: no compression.
+
+        * If ``int``: desired number of samples after compression.
+        * If ``False``: no compression.
+        * If ``True``: compresses to the channel capacity, equivalent to
+          ``ncompress='entropy'``.
+        * If ``str``: determine number from the Huggins-Roy family of
+          effective samples in :func:`anesthetic.utils.effective_samples`
+          with ``beta=ncompress``.
 
     nplot_2d : int, default=1000
         Number of plotting points to use.
@@ -1296,6 +1306,17 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     data_x, data_y : np.array
         x and y coordinates of uniformly weighted samples to plot.
+
+    ncompress : int, str, default=True
+        Degree of compression.
+
+        * If ``True``: compresses to the channel capacity, equivalent to
+          ``ncompress='entropy'``.
+        * If ``False``: no compression.
+        * If ``int``: desired number of samples after compression.
+        * If ``str``: determine number from the Huggins-Roy family of
+          effective samples in :func:`anesthetic.utils.effective_samples`
+          with ``beta=ncompress``.
 
     Returns
     -------
