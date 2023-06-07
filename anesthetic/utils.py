@@ -390,7 +390,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     return tri, w_
 
 
-def sample_compression_1d(x, w=None, ncompress=True, beta=1):
+def sample_compression_1d(x, w=None, ncompress=True):
     """Histogram a 1D set of weighted samples via subsampling.
 
     This compresses the number of samples, combining weights.
@@ -406,9 +406,12 @@ def sample_compression_1d(x, w=None, ncompress=True, beta=1):
     ncompress : int, default=True
         Degree of compression.
 
-        * If int: number of samples returned.
-        * If True: compresses to the channel capacity.
-        * If False: no compression.
+        * If ``int``: number of samples returned.
+        * If ``True``: compresses to the channel capacity
+          (same as ``ncompress='entropy'``).
+        * If ``False``: no compression.
+        * If ``str``: determine number from the Huggins-Roy family of effective
+          samples in :func:`effective_samples` with ``beta=ncompress``.
 
     Returns
     -------
@@ -417,8 +420,10 @@ def sample_compression_1d(x, w=None, ncompress=True, beta=1):
     """
     if ncompress is False:
         return x, w
-    elif ncompress is True:
-        ncompress = effective_samples(w, beta=beta)
+    elif ncompress is True or isinstance(ncompress, str):
+        if ncompress is True:
+            ncompress = 'entropy'
+        ncompress = effective_samples(w, beta=ncompress)
     x = np.array(x)
     if w is None:
         w = np.ones_like(x)
