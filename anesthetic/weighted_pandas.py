@@ -330,14 +330,14 @@ class WeightedSeries(_WeightedObject, Series):
             effective number of samples after compression. If not supplied
             (or True), then reduce to the channel capacity (theoretical optimum
             compression). If <=0, then compress so that all weights are unity.
-        
+
         beta : int, float, default = 1
-            The value of beta used to calculate the number of 
+            The value of beta used to calculate the number of
             effective samples.
 
         """
-        i = compress_weights(self.get_weights(), self._rand(), 
-                             ncompress, gamma=gamma)
+        i = compress_weights(self.get_weights(), self._rand(),
+                             ncompress, beta=beta)
         return self.repeat(i)
 
     def sample(self, *args, **kwargs):  # noqa: D102
@@ -568,9 +568,9 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             effective number of samples after compression. If not supplied
             (or True), then reduce to the channel capacity (theoretical optimum
             compression). If <=0, then compress so that all weights are unity.
-        
+
         beta : int, float, default = 1
-            The value of beta used to calculate the number of 
+            The value of beta used to calculate the number of
             effective samples.
 
         """

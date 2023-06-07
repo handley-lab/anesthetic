@@ -836,7 +836,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     bw_method : str, scalar or callable, optional
         Forwarded to :class:`scipy.stats.gaussian_kde`.
-    
+
     beta : int, float, default = 1
         The value of beta used to calculate the number of effective samples
 
@@ -878,7 +878,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = quantile(data, q[-1], weights)
     x = np.linspace(xmin, xmax, nplot)
 
-    data_compressed, w = sample_compression_1d(data, weights, ncompress)
+    data_compressed, w = sample_compression_1d(data, weights, ncompress,
+                                               beta=beta)
     kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
 
     p = kde(x)
