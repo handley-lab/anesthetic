@@ -321,23 +321,24 @@ class WeightedSeries(_WeightedObject, Series):
             return np.nan
         return quantile(self.to_numpy(), q, self.get_weights(), interpolation)
 
-    def compress(self, ncompress=True, beta=1):
+    def compress(self, ncompress=True):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
         ----------
-        ncompress : int, optional
-            effective number of samples after compression. If not supplied
-            (or True), then reduce to the channel capacity (theoretical optimum
-            compression). If <=0, then compress so that all weights are unity.
+        ncompress : int, str, optional
+            Desired number of samples after compression.
 
-        beta : int, float, default = 1
-            The value of beta used to calculate the number of
-            effective samples.
+            * If ``True`` (default): reduce to the channel capacity
+              (theoretical optimum compression), equivalent to
+              ``ncompress='entropy'``.
+            * If ``<= 0``: compress so that all remaining weights are unity.
+            * If ``str``: determine number from the Huggins-Roy family of
+              effective samples in :func:`anesthetic.utils.effective_samples`
+              with ``beta=ncompress``.
 
         """
-        i = compress_weights(self.get_weights(), self._rand(),
-                             ncompress, beta=beta)
+        i = compress_weights(self.get_weights(), self._rand(), ncompress)
         return self.repeat(i)
 
     def sample(self, *args, **kwargs):  # noqa: D102
@@ -559,24 +560,26 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
                                     interpolation=interpolation, method=method)
 
-    def compress(self, ncompress=True, axis=0, beta=1):
+    def compress(self, ncompress=True, axis=0):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
         ----------
-        ncompress : int, optional
-            effective number of samples after compression. If not supplied
-            (or True), then reduce to the channel capacity (theoretical optimum
-            compression). If <=0, then compress so that all weights are unity.
+        ncompress : int, str, optional
+            Desired number of samples after compression.
 
-        beta : int, float, default = 1
-            The value of beta used to calculate the number of
-            effective samples.
+            * If ``True`` (default): reduce to the channel capacity
+              (theoretical optimum compression), equivalent to
+              ``ncompress='entropy'``.
+            * If ``<= 0``: compress so that all remaining weights are unity.
+            * If ``str``: determine number from the Huggins-Roy family of
+              effective samples in :func:`anesthetic.utils.effective_samples`
+              with ``beta=ncompress``.
 
         """
         if self.isweighted(axis):
             i = compress_weights(self.get_weights(axis), self._rand(axis),
-                                 ncompress, beta=beta)
+                                 ncompress)
             data = np.repeat(self.to_numpy(), i, axis=axis)
             i = self.drop_weights(axis)._get_axis(axis).repeat(i)
             df = self._constructor(data=data)
