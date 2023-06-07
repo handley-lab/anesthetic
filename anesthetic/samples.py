@@ -445,8 +445,7 @@ class Samples(WeightedLabelledDataFrame):
             return samples.__finalize__(self, "importance_sample")
 
     def credibility_interval(self, column, level=0.68, method="iso-pdf",
-                             return_covariance=False, nsamples=12,
-                             verbose=False):
+                             return_covariance=False, nsamples=12):
         """Compute the credibility interval of weighted samples.
 
         Based on linear interpolation of the cumulative density function, thus
