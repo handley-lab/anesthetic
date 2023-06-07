@@ -35,7 +35,7 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
 def effective_samples(w, beta=1):
     r"""Calculate effective number of samples.
 
-    Using the Hugins-Roy family of effective samples
+    Using the Huggins-Roy family of effective samples
     (https://aakinshin.net/posts/huggins-roy-ess/).
 
     Parameters
@@ -46,7 +46,9 @@ def effective_samples(w, beta=1):
 
         .. math::
 
-            n_{eff} = \bigg(\sum_{i=0}^n w^\beta_i \bigg)^{\frac{1}{1-\beta}}
+            n_{eff} &= \bigg(\sum_{i=0}^n w_i^\beta \bigg)^{\frac{1}{1-\beta}}
+
+            w_i &= \frac{w_i}{\sum_j w_j}
 
         A value of 1 corresponds to the channel capacity or entropy based
         calculation, 2 corresponds to a Kish estimate and beta = 1/2
@@ -62,11 +64,11 @@ def effective_samples(w, beta=1):
 
         .. math::
 
-            H = \sum_i p_i \ln p_i
+            H &= -\sum_i p_i \ln p_i
 
-            p_i = \frac{w_i}{\sum_j w_j}
+            p_i &= \frac{w_i}{\sum_j w_j}
 
-            N = e^{-H}
+            N &= e^{H}
 
         Kish by
 
