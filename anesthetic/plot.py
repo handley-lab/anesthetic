@@ -853,7 +853,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         data = data[weights != 0]
         weights = weights[weights != 0]
 
-    beta = kwargs.pop('beta', 1)
     ncompress = kwargs.pop('ncompress', False)
     nplot = kwargs.pop('nplot_1d', 100)
     bw_method = kwargs.pop('bw_method', None)
@@ -878,8 +877,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmax = quantile(data, q[-1], weights)
     x = np.linspace(xmin, xmax, nplot)
 
-    data_compressed, w = sample_compression_1d(data, weights, ncompress,
-                                               beta=beta)
+    data_compressed, w = sample_compression_1d(data, weights, ncompress)
     kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
 
     p = kde(x)
