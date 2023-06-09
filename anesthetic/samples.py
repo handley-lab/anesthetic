@@ -444,7 +444,7 @@ class Samples(WeightedLabelledDataFrame):
         else:
             return samples.__finalize__(self, "importance_sample")
 
-    def credibility_interval(self, column, level=0.68, method="iso-pdf",
+    def credibility_interval(self, level=0.68, method="iso-pdf",
                              return_covariance=False, nsamples=12):
         """Compute the credibility interval of weighted samples.
 
@@ -455,8 +455,6 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        column : str
-            Column name to compute the credibility interval for.
         level : float, default=0.68
             Credibility level (probability, <1).
         method : str, default='iso-pdf'
@@ -490,10 +488,33 @@ class Samples(WeightedLabelledDataFrame):
             ``return_covariance=True``, returns a tuple (mean(s), covariance)
             where covariance is the covariance over the sampled limits.
         """
-        return credibility_interval(self[column], weights=self.get_weights(),
+        cis = [credibility_interval(self[col], weights=self.get_weights(),
                                     level=level, method=method,
                                     return_covariance=return_covariance,
-                                    nsamples=nsamples)
+                                    nsamples=nsamples) for col in self.columns]
+        if return_covariance:
+            cis, covs = zip(*cis)
+            mulidx = pandas.MultiIndex.from_product([
+                self.columns.get_level_values(level=0),
+                ['lower', 'upper']
+            ])
+            ncol = len(self.columns)
+            covs = pandas.DataFrame(np.asarray(covs).reshape(2*ncol, 2).T,
+                                    index=['lower', 'upper'],
+                                    columns=mulidx)
+        if 'limit' in method:
+            limit = 'lower' if 'lower' in method else 'upper'
+            cis = pandas.DataFrame(data=np.atleast_2d(cis),
+                                   index=[limit],
+                                   columns=self.columns)
+        else:
+            cis = pandas.DataFrame(data=np.asarray(cis).T,
+                                   index=['lower', 'upper'],
+                                   columns=self.columns)
+        if return_covariance:
+            return cis, covs
+        else:
+            return cis
 
     # TODO: remove this in version >= 2.1
     @property
