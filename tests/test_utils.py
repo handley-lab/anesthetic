@@ -180,7 +180,7 @@ def test_p_values_from_sample():
 
 
 @pytest.mark.parametrize('beta', ['entropy', 'kish', 0.5, 1, 2, np.inf,
-                                  '0.5', '1', '1.0', str(1.00), 'inf'])
+                                  '0.5', '1', '1.', '1.0', '1.00', 'inf'])
 def test_effective_samples(beta):
     w = np.ones(20)
     assert effective_samples(w, beta=beta) == approx(20, rel=1e-6)
