@@ -10,7 +10,8 @@ def close_figures_on_teardown():
 
 
 def test_gui():
-    plotter = read_chains('./tests/example_data/pc').gui()
+    samples = read_chains('./tests/example_data/pc')
+    plotter = samples.gui()
 
     # Type buttons
     plotter.type.buttons.set_active(1)
@@ -29,16 +30,17 @@ def test_gui():
     assert len(plotter.triangle.ax) == 4
 
     # Sliders
-    plotter.evolution.slider.set_val(100)
-    assert plotter.evolution() == 100
+    plotter.evolution.slider.set_val(5)
+    assert plotter.evolution() == 627
     plotter.type.buttons.set_active(1)
 
     plotter.temperature.slider.set_val(0)
-    assert plotter.temperature() == 1
-    plotter.temperature.slider.set_val(1)
-    assert plotter.temperature() == 10
-    plotter.temperature.slider.set_val(2)
-    assert plotter.temperature() == 100
+    assert plotter.temperature() == pytest.approx(0, 0, 1e-8)
+
+    plotter.temperature.slider.set_val(samples.D_KL())
+    assert plotter.temperature() == pytest.approx(1)
+    plotter.temperature.slider.set_val(1e2)
+    assert plotter.temperature() == 1e10
     plotter.type.buttons.set_active(0)
 
     # Reload button
