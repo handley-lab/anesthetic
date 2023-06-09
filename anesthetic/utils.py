@@ -77,7 +77,7 @@ def effective_samples(w, beta=1):
             N = \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
     """
     w = w / np.sum(w)
-    if beta == 1 or beta == '1' or beta == '1.0' or beta == 'entropy':
+    if beta == 'entropy' or beta != 'kish' and str(float(beta)) == '1.0':
         return np.exp(entropy(w))
     elif beta == np.inf or beta == 'inf':
         return 1 / np.max(w)
