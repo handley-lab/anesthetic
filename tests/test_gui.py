@@ -34,13 +34,13 @@ def test_gui():
     assert plotter.evolution() == 627
     plotter.type.buttons.set_active(1)
 
-    plotter.temperature.slider.set_val(0)
-    assert plotter.temperature() == pytest.approx(0, 0, 1e-8)
+    plotter.beta.slider.set_val(0)
+    assert plotter.beta() == pytest.approx(0, 0, 1e-8)
 
-    plotter.temperature.slider.set_val(samples.D_KL())
-    assert plotter.temperature() == pytest.approx(1)
-    plotter.temperature.slider.set_val(1e2)
-    assert plotter.temperature() == 1e10
+    plotter.beta.slider.set_val(samples.D_KL())
+    assert plotter.beta() == pytest.approx(1)
+    plotter.beta.slider.set_val(1e2)
+    assert plotter.beta() == 1e10
     plotter.type.buttons.set_active(0)
 
     # Reload button
