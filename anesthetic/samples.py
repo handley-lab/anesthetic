@@ -1100,7 +1100,7 @@ class NestedSamples(Samples):
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
-        return self.set_beta(beta).compress(-1)
+        return self.set_beta(beta).compress('equal')
 
     def prior_points(self, params=None):
         """Get equally weighted prior points."""

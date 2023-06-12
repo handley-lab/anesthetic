@@ -32,7 +32,7 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
                              return_sign=return_sign)
 
 
-def effective_samples(w, beta=1):
+def neff(w, beta=1):
     r"""Calculate effective number of samples.
 
     Using the Huggins-Roy family of effective samples
@@ -60,6 +60,9 @@ def effective_samples(w, beta=1):
         Kish estimate (Kish, Leslie (1965). Survey Sampling.
         New York: John Wiley & Sons, Inc. ISBN 0-471-10949-5).
 
+        If 'inf' or 'equal' is supplied, then the number of samples is the the
+        number of samples when compressed to equal weights.
+
         The entropy estimate is determined by
 
         .. math::
@@ -77,10 +80,10 @@ def effective_samples(w, beta=1):
             N = \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
     """
     w = w / np.sum(w)
-    if beta == 'entropy' or beta != 'kish' and str(float(beta)) == '1.0':
-        return np.exp(entropy(w))
-    elif beta == np.inf or beta == 'inf':
+    if beta == np.inf or beta == 'inf' or beta == 'equal':
         return 1 / np.max(w)
+    elif beta == 'entropy' or beta != 'kish' and str(float(beta)) == '1.0':
+        return np.exp(entropy(w))
     else:
         if beta == 'kish':
             beta = 2
@@ -100,14 +103,18 @@ def compress_weights(w, u=None, ncompress=True):
     if ncompress is True or isinstance(ncompress, str):
         if ncompress is True:
             ncompress = 'entropy'
-        ncompress = effective_samples(w, beta=ncompress)
+        ncompress = neff(w, beta=ncompress)
     elif ncompress is False:
         return w
 
-    if ncompress <= 0:
-        W = w/w.max()
-    else:
-        W = w * ncompress / w.sum()
+    # TODO: remove this in version >= 2.1
+    if ncompress < 0:
+        raise ValueError(
+            "You should use ncompress='inf' or ncompress='equal'"
+            "for equally weighted samples"
+            )
+
+    W = w * ncompress / w.sum()
 
     fraction, integer = np.modf(W)
     extra = (u < fraction).astype(int)
@@ -371,7 +378,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
         w = pandas.Series(index=x.index, data=np.ones_like(x))
 
     if isinstance(n, str):
-        n = int(effective_samples(w, beta=n))
+        n = int(neff(w, beta=n))
 
     # Select samples for triangulation
     if (w != 0).sum() < n:
@@ -416,7 +423,7 @@ def sample_compression_1d(x, w=None, ncompress=True):
           (same as ``ncompress='entropy'``).
         * If ``False``: no compression.
         * If ``str``: determine number from the Huggins-Roy family of effective
-          samples in :func:`effective_samples` with ``beta=ncompress``.
+          samples in :func:`neff` with ``beta=ncompress``.
 
     Returns
     -------
@@ -428,7 +435,7 @@ def sample_compression_1d(x, w=None, ncompress=True):
     elif ncompress is True or isinstance(ncompress, str):
         if ncompress is True:
             ncompress = 'entropy'
-        ncompress = effective_samples(w, beta=ncompress)
+        ncompress = neff(w, beta=ncompress)
     x = np.array(x)
     if w is None:
         w = np.ones_like(x)

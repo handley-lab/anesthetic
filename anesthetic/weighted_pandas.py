@@ -10,7 +10,7 @@ from pandas._libs.lib import no_default
 from pandas.util._exceptions import find_stack_level
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
-from anesthetic.utils import (compress_weights, effective_samples, quantile,
+from anesthetic.utils import (compress_weights, neff as neff_, quantile,
                               temporary_seed, adjust_docstrings)
 from pandas.core.dtypes.missing import notna
 
@@ -225,7 +225,7 @@ class _WeightedObject(object):
     def neff(self, axis=0):
         """Effective number of samples."""
         if self.isweighted(axis):
-            return effective_samples(self.get_weights(axis))
+            return neff_(self.get_weights(axis))
         else:
             return self.shape[axis]
 
@@ -335,7 +335,7 @@ class WeightedSeries(_WeightedObject, Series):
             * If ``> 0``: desired number of samples after compression.
             * If ``<= 0``: compress so that all remaining weights are unity.
             * If ``str``: determine number from the Huggins-Roy family of
-              effective samples in :func:`anesthetic.utils.effective_samples`
+              effective samples in :func:`anesthetic.utils.neff`
               with ``beta=ncompress``.
 
         """
@@ -575,7 +575,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             * If ``> 0``: desired number of samples after compression.
             * If ``<= 0``: compress so that all remaining weights are unity.
             * If ``str``: determine number from the Huggins-Roy family of
-              effective samples in :func:`anesthetic.utils.effective_samples`
+              effective samples in :func:`anesthetic.utils.neff`
               with ``beta=ncompress``.
 
         """

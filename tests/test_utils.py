@@ -11,7 +11,7 @@ from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
                               insertion_p_value, compress_weights,
-                              effective_samples)
+                              neff)
 
 
 def test_compress_weights():
@@ -183,8 +183,8 @@ def test_p_values_from_sample():
                                   '0.5', '1', '1.', '1.0', '1.00', 'inf'])
 def test_effective_samples(beta):
     w = np.ones(20)
-    assert effective_samples(w, beta=beta) == approx(20, rel=1e-6)
+    assert neff(w, beta=beta) == approx(20, rel=1e-6)
     w[10:] = 1e-6
-    assert effective_samples(w, beta=beta) == approx(10, rel=1e-2)
+    assert neff(w, beta=beta) == approx(10, rel=1e-2)
     w[15:] = 0
-    assert effective_samples(w, beta=beta) == approx(10, rel=1e-2)
+    assert neff(w, beta=beta) == approx(10, rel=1e-2)

@@ -816,7 +816,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
           ``ncompress='entropy'``.
         * If ``int``: desired number of samples after compression.
         * If ``str``: determine number from the Huggins-Roy family of
-          effective samples in :func:`anesthetic.utils.effective_samples`
+          effective samples in :func:`anesthetic.utils.neff`
           with ``beta=ncompress``.
 
     nplot_1d : int, default=100
@@ -1119,7 +1119,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         * If ``True``: compresses to the channel capacity, equivalent to
           ``ncompress='entropy'``.
         * If ``str``: determine number from the Huggins-Roy family of
-          effective samples in :func:`anesthetic.utils.effective_samples`
+          effective samples in :func:`anesthetic.utils.neff`
           with ``beta=ncompress``.
 
     nplot_2d : int, default=1000
@@ -1315,7 +1315,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
         * If ``False``: no compression.
         * If ``int``: desired number of samples after compression.
         * If ``str``: determine number from the Huggins-Roy family of
-          effective samples in :func:`anesthetic.utils.effective_samples`
+          effective samples in :func:`anesthetic.utils.neff`
           with ``beta=ncompress``.
 
     Returns
