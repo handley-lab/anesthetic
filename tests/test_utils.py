@@ -98,7 +98,7 @@ def test_sample_compression_1d():
     np.random.seed(0)
     N = 10000
     x_ = np.random.rand(N)
-    w_ = np.random.lognormal(1, 0.5, N)
+    w_ = np.random.rand(1, 0.5, N)
     n = 1000
     x, w = sample_compression_1d(x_, w_, n)
     assert len(x) == n
