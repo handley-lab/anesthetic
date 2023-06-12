@@ -23,6 +23,10 @@ def test_compress_weights():
     w = compress_weights(w=r, u=None, ncompress=False)
     assert_array_equal(w, r)
 
+    # TODO Remove in 2.1
+    with pytest.raises(ValueError):
+        compress_weights(w=r, ncompress=-1)
+
 
 def test_nest_level():
     assert nest_level(0) == 0
