@@ -110,8 +110,8 @@ def compress_weights(w, u=None, ncompress=True):
     # TODO: remove this in version >= 2.1
     if ncompress < 0:
         raise ValueError(
-            "You should use ncompress='inf' or ncompress='equal'"
-            "for equally weighted samples"
+            "ncompress<0 is anesthetic 1.0 behaviour. For equally weighted "
+            "samples you should now use ncompress='inf' or ncompress='equal'."
             )
 
     W = w * ncompress / w.sum()
