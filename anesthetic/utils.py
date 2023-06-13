@@ -46,24 +46,34 @@ def neff(w, beta=1):
 
         .. math::
 
-            n_{eff} &= \bigg(\sum_{i=0}^n w_i^\beta \bigg)^{\frac{1}{1-\beta}}
+            N_{eff} &= \bigg(\sum_{i=0}^n w_i^\beta \bigg)^{\frac{1}{1-\beta}}
 
             w_i &= \frac{w_i}{\sum_j w_j}
 
-        A value of 1 corresponds to the channel capacity or entropy based
-        calculation, 2 corresponds to a Kish estimate and beta = 1/2
-        corresponds to a conservative estimate of the effective number of
-        samples. beta has to be positive but can take any value.
+        Beta can take any positive value. A beta value of 1 corresponds to the
+        channel capacity or entropy based calculation, 2 corresponds to a Kish
+        estimate, and for infinity the resulting number of samples is the
+        number of samples when compressed to equal weights. Larger beta
+        corresponds to a greater compression such that:
 
-        Beta can also take on a value of either 'entropy' for an entropy
-        estimate of the effective number of samples or 'kish' for a
-        Kish estimate (Kish, Leslie (1965). Survey Sampling.
-        New York: John Wiley & Sons, Inc. ISBN 0-471-10949-5).
+        .. math::
 
-        If 'inf' or 'equal' is supplied, then the number of samples is the the
-        number of samples when compressed to equal weights.
+            \beta_1 < \beta_2 \Rightarrow N_{eff}(\beta_1) > N_{eff}(\beta_2)
 
-        The entropy estimate is determined by
+        Alternatively, beta can take one of the following strings as input:
+
+        * If 'inf' or 'equal' is supplied (equivalent to beta=inf), then the
+          number of samples is the number of samples when compressed to equal
+          weights, and given by:
+
+        .. math::
+
+            w_i &= \frac{w_i}{\sum_j w_j}
+
+            N_{eff} &= \frac{1}{\max_i[w_i]}
+
+        * If 'entropy' is supplied (equivalent to beta=1), then the estimate
+          is determined by:
 
         .. math::
 
@@ -71,13 +81,18 @@ def neff(w, beta=1):
 
             p_i &= \frac{w_i}{\sum_j w_j}
 
-            N &= e^{H}
+            N_{eff} &= e^{H}
 
-        Kish by
+        * If 'kish' is supplied (equivalent to beta=2), then a Kish estimate
+          is computed (Kish, Leslie (1965). Survey Sampling.
+          New York: John Wiley & Sons, Inc. ISBN 0-471-10949-5):
 
         .. math::
 
-            N = \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
+            N_{eff} = \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
+
+        * str(float) input gets converted to the corresponding float value.
+
     """
     w = w / np.sum(w)
     if beta == np.inf or beta == 'inf' or beta == 'equal':
