@@ -113,7 +113,7 @@ jobs:
         run: |
           conda config --append channels conda-forge
           conda install pytest pytest-cov
-          conda install scipy numpy pandas matplotlib
+          conda install scipy numpy matplotlib
           conda install 'pandas>=2.0.0'
 
       - name: Test with pytest
