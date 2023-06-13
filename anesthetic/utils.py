@@ -50,11 +50,8 @@ def neff(w, beta=1):
 
             w_i &= \frac{w_i}{\sum_j w_j}
 
-        Beta can take any positive value. A beta value of 1 corresponds to the
-        channel capacity or entropy based calculation, 2 corresponds to a Kish
-        estimate, and for infinity the resulting number of samples is the
-        number of samples when compressed to equal weights. Larger beta
-        corresponds to a greater compression such that:
+        Beta can take any positive value. Larger beta corresponds to a greater
+        compression such that:
 
         .. math::
 
@@ -63,8 +60,8 @@ def neff(w, beta=1):
         Alternatively, beta can take one of the following strings as input:
 
         * If 'inf' or 'equal' is supplied (equivalent to beta=inf), then the
-          number of samples is the number of samples when compressed to equal
-          weights, and given by:
+          resulting number of samples is the number of samples when compressed
+          to equal weights, and given by:
 
         .. math::
 
@@ -73,7 +70,8 @@ def neff(w, beta=1):
             N_{eff} &= \frac{1}{\max_i[w_i]}
 
         * If 'entropy' is supplied (equivalent to beta=1), then the estimate
-          is determined by:
+          is determined via the entropy based calculation, also referred to as
+          the channel capacity:
 
         .. math::
 
