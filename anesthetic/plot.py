@@ -1111,7 +1111,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Has to be ordered from outermost to innermost contour.
         Default: [0.95, 0.68]
 
-    ncompress : int, str, default=1000
+    ncompress : int, str, default='equal'
         Degree of compression.
 
         * If ``int``: desired number of samples after compression.
@@ -1146,7 +1146,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         data_y = data_y[weights != 0]
         weights = weights[weights != 0]
 
-    ncompress = kwargs.pop('ncompress', 1000)
+    ncompress = kwargs.pop('ncompress', 'equal')
     nplot = kwargs.pop('nplot_2d', 1000)
     bw_method = kwargs.pop('bw_method', None)
     label = kwargs.pop('label', None)
@@ -1307,13 +1307,13 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     data_x, data_y : np.array
         x and y coordinates of uniformly weighted samples to plot.
 
-    ncompress : int, str, default=True
+    ncompress : int, str, default='equal'
         Degree of compression.
 
+        * If ``int``: desired number of samples after compression.
+        * If ``False``: no compression.
         * If ``True``: compresses to the channel capacity, equivalent to
           ``ncompress='entropy'``.
-        * If ``False``: no compression.
-        * If ``int``: desired number of samples after compression.
         * If ``str``: determine number from the Huggins-Roy family of
           effective samples in :func:`anesthetic.utils.neff`
           with ``beta=ncompress``.
