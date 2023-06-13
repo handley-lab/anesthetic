@@ -731,7 +731,7 @@ def test_scatter_matrix(mcmc_df, mcmc_wdf):
     axes = scatter_matrix(mcmc_wdf)
     data = axes[0, 1].collections[0].get_offsets().data
     n = len(data)
-    n_ = neff(mcmc_wdf.get_weights())
+    n_ = neff(mcmc_wdf.get_weights(), beta='equal')
     assert_allclose(n, n_, atol=np.sqrt(n))
 
     axes = orig_scatter_matrix(mcmc_wdf)
@@ -802,7 +802,7 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
     ax = mcmc_wdf.plot.scatter('x', 'y')
 
     n = len(ax.collections[0].get_offsets().data)
-    n_ = neff(mcmc_wdf.get_weights())
+    n_ = neff(mcmc_wdf.get_weights(), beta='equal')
     assert_allclose(n, n_, atol=np.sqrt(n))
 
     ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
