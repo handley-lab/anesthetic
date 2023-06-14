@@ -643,6 +643,23 @@ def mcmc_wdf(mcmc_df):
     return WeightedDataFrame(mcmc_df.drop_duplicates(), weights=weights.values)
 
 
+@pytest.fixture
+def df_small():
+    np.random.seed(42)
+    ncol = 3
+    ndat = 10
+    dat = np.random.normal(loc=5, scale=1, size=(ndat, ncol))
+    return DataFrame(dat, columns=["x", "y", "z"])
+
+
+@pytest.fixture
+def wdf_small(df_small):
+    np.random.seed(42)
+    w = np.random.rand(df_small.shape[0])
+    return WeightedDataFrame(df_small.to_numpy(), weights=w,
+                             columns=df_small.columns)
+
+
 def test_WeightedDataFrame_hist(mcmc_df, mcmc_wdf):
     df_axes = mcmc_df.hist().flatten()
     wdf_axes = mcmc_wdf.hist().flatten()
@@ -741,7 +758,7 @@ def test_scatter_matrix(mcmc_df, mcmc_wdf):
 
     axes = scatter_matrix(mcmc_wdf, ncompress=50)
     n = len(axes[0, 1].collections[0].get_offsets().data)
-    assert_allclose(n, 50, atol=np.sqrt(n))
+    assert_allclose(n, 50, atol=np.sqrt(50))
 
 
 def test_bootstrap_plot(mcmc_df, mcmc_wdf):
@@ -946,30 +963,30 @@ def test_drop_weights(mcmc_wdf):
     assert noweights.drop_weights() is not noweights
 
 
-def test_blank_axis_labels(mcmc_df, mcmc_wdf):
-    for df in mcmc_df, mcmc_wdf:
+def test_blank_axis_labels(df_small, wdf_small):
+    for df in df_small, wdf_small:
         assert df.plot.area().get_xlabel() == ""
         assert df.plot.bar().get_xlabel() == ""
         assert df.plot.barh().get_ylabel() == ""
 
 
-def test_get_index(mcmc_wdf):
-    mcmc_wdf.index = mcmc_wdf.index.rename(('foo', 'weights'))
-    assert mcmc_wdf.plot.area().get_xlabel() == "foo"
-    assert mcmc_wdf.plot.bar().get_xlabel() == "foo"
-    assert mcmc_wdf.plot.barh().get_ylabel() == "foo"
-    for plot in [mcmc_wdf.plot.area, mcmc_wdf.plot.bar, mcmc_wdf.plot.barh]:
+def test_get_index(wdf_small):
+    wdf_small.index = wdf_small.index.rename(('foo', 'weights'))
+    assert wdf_small.plot.area().get_xlabel() == "foo"
+    assert wdf_small.plot.bar().get_xlabel() == "foo"
+    assert wdf_small.plot.barh().get_ylabel() == "foo"
+    for plot in [wdf_small.plot.area, wdf_small.plot.bar, wdf_small.plot.barh]:
         assert plot(xlabel="my xlabel").get_xlabel() == "my xlabel"
 
-    idx = mcmc_wdf.index.to_frame().to_numpy().T
-    mcmc_wdf.index = MultiIndex.from_arrays([idx[0], idx[0], idx[1]],
-                                            names=('foo', 'bar', 'weights'))
-    assert mcmc_wdf.plot.bar().get_xlabel() == "foo,bar"
-    assert mcmc_wdf.plot.barh().get_ylabel() == "foo,bar"
-    mcmc_wdf.index = MultiIndex.from_arrays([idx[0], idx[0], idx[1]],
-                                            names=(None, None, 'weights'))
-    assert mcmc_wdf.plot.bar().get_xlabel() == ""
-    assert mcmc_wdf.plot.barh().get_ylabel() == ""
+    idx = wdf_small.index.to_frame().to_numpy().T
+    wdf_small.index = MultiIndex.from_arrays([idx[0], idx[0], idx[1]],
+                                             names=('foo', 'bar', 'weights'))
+    assert wdf_small.plot.bar().get_xlabel() == "foo,bar"
+    assert wdf_small.plot.barh().get_ylabel() == "foo,bar"
+    wdf_small.index = MultiIndex.from_arrays([idx[0], idx[0], idx[1]],
+                                             names=(None, None, 'weights'))
+    assert wdf_small.plot.bar().get_xlabel() == ""
+    assert wdf_small.plot.barh().get_ylabel() == ""
 
 
 def test_style(mcmc_wdf):
