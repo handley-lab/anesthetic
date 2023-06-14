@@ -234,7 +234,7 @@ def test_credibility_interval_exceptions():
     with pytest.raises(ValueError):
         credibility_interval(samples.x0, method='foo')
 
-        
+
 @pytest.mark.parametrize('beta', ['entropy', 'kish', 0.5, 1, 2, np.inf,
                                   '0.5', '1', '1.', '1.0', '1.00', 'inf'])
 def test_effective_samples(beta):
