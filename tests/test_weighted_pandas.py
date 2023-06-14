@@ -1,7 +1,7 @@
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from pandas import DataFrame, MultiIndex
 import pandas.testing
-from anesthetic.utils import channel_capacity
+from anesthetic.utils import neff
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
@@ -393,11 +393,11 @@ def test_WeightedDataFrame_compress(frame):
     assert_allclose(frame.neff(), len(frame.compress()), rtol=1e-2)
     for i in np.logspace(3, 5, 10):
         assert_allclose(i, len(frame.compress(i)), rtol=1e-1)
-    unit_weights = frame.compress(0)
+    unit_weights = frame.compress('equal')
     assert len(np.unique(unit_weights.index)) == len(unit_weights)
     assert_array_equal(frame.compress(), frame.compress())
     assert_array_equal(frame.compress(i), frame.compress(i))
-    assert_array_equal(frame.compress(-1), frame.compress(-1))
+    assert_array_equal(frame.compress('equal'), frame.compress('equal'))
 
     assert_array_equal(frame.T.compress().T, frame)
     assert_array_equal(frame.T.compress(axis=1).T, frame.compress())
@@ -585,7 +585,7 @@ def test_WeightedSeries_compress(series):
     assert_allclose(series.neff(), len(series.compress()), rtol=1e-2)
     for i in np.logspace(3, 5, 10):
         assert_allclose(i, len(series.compress(i)), rtol=1e-1)
-    unit_weights = series.compress(0)
+    unit_weights = series.compress('equal')
     assert len(np.unique(unit_weights.index)) == len(unit_weights)
 
 
@@ -731,8 +731,8 @@ def test_scatter_matrix(mcmc_df, mcmc_wdf):
     axes = scatter_matrix(mcmc_wdf)
     data = axes[0, 1].collections[0].get_offsets().data
     n = len(data)
-    neff = channel_capacity(mcmc_wdf.get_weights())
-    assert_allclose(n, neff, atol=np.sqrt(n))
+    n_ = neff(mcmc_wdf.get_weights(), beta='equal')
+    assert_allclose(n, n_, atol=np.sqrt(n))
 
     axes = orig_scatter_matrix(mcmc_wdf)
     orig_data = axes[0, 1].collections[0].get_offsets().data
@@ -802,8 +802,8 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
     ax = mcmc_wdf.plot.scatter('x', 'y')
 
     n = len(ax.collections[0].get_offsets().data)
-    neff = channel_capacity(mcmc_wdf.get_weights())
-    assert_allclose(n, neff, atol=np.sqrt(n))
+    n_ = neff(mcmc_wdf.get_weights(), beta='equal')
+    assert_allclose(n, n_, atol=np.sqrt(n))
 
     ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
     n = len(ax.collections[0].get_offsets().data)

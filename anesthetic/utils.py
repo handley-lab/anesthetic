@@ -3,7 +3,7 @@ import numpy as np
 import pandas
 from scipy import special
 from scipy.interpolate import interp1d
-from scipy.stats import kstwobign
+from scipy.stats import kstwobign, entropy
 from matplotlib.tri import Triangulation
 import contextlib
 import inspect
@@ -32,21 +32,77 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
                              return_sign=return_sign)
 
 
-def channel_capacity(w):
-    r"""Channel capacity (effective sample size).
+def neff(w, beta=1):
+    r"""Calculate effective number of samples.
 
-    .. math::
+    Using the Huggins-Roy family of effective samples
+    (https://aakinshin.net/posts/huggins-roy-ess/).
 
-        H = \sum_i p_i \ln p_i
+    Parameters
+    ----------
+    beta : int, float, str, default = 1
+        The value of beta used to calculate the number of effective samples
+        according to
 
-        p_i = \frac{w_i}{\sum_j w_j}
+        .. math::
 
-        N = e^{-H}
+            N_{eff} &= \bigg(\sum_{i=0}^n w_i^\beta \bigg)^{\frac{1}{1-\beta}}
+
+            w_i &= \frac{w_i}{\sum_j w_j}
+
+        Beta can take any positive value. Larger beta corresponds to a greater
+        compression such that:
+
+        .. math::
+
+            \beta_1 < \beta_2 \Rightarrow N_{eff}(\beta_1) > N_{eff}(\beta_2)
+
+        Alternatively, beta can take one of the following strings as input:
+
+        * If 'inf' or 'equal' is supplied (equivalent to beta=inf), then the
+          resulting number of samples is the number of samples when compressed
+          to equal weights, and given by:
+
+        .. math::
+
+            w_i &= \frac{w_i}{\sum_j w_j}
+
+            N_{eff} &= \frac{1}{\max_i[w_i]}
+
+        * If 'entropy' is supplied (equivalent to beta=1), then the estimate
+          is determined via the entropy based calculation, also referred to as
+          the channel capacity:
+
+        .. math::
+
+            H &= -\sum_i p_i \ln p_i
+
+            p_i &= \frac{w_i}{\sum_j w_j}
+
+            N_{eff} &= e^{H}
+
+        * If 'kish' is supplied (equivalent to beta=2), then a Kish estimate
+          is computed (Kish, Leslie (1965). Survey Sampling.
+          New York: John Wiley & Sons, Inc. ISBN 0-471-10949-5):
+
+        .. math::
+
+            N_{eff} = \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
+
+        * str(float) input gets converted to the corresponding float value.
+
     """
-    with np.errstate(divide='ignore', invalid='ignore'):
-        W = np.array(w)/sum(w)
-        H = np.nansum(np.log(W)*W)
-        return np.exp(-H)
+    w = w / np.sum(w)
+    if beta == np.inf or beta == 'inf' or beta == 'equal':
+        return 1 / np.max(w)
+    elif beta == 'entropy' or beta != 'kish' and str(float(beta)) == '1.0':
+        return np.exp(entropy(w))
+    else:
+        if beta == 'kish':
+            beta = 2
+        elif isinstance(beta, str):
+            beta = float(beta)
+        return np.sum(w**beta)**(1/(1-beta))
 
 
 def compress_weights(w, u=None, ncompress=True):
@@ -57,15 +113,21 @@ def compress_weights(w, u=None, ncompress=True):
     if w is None:
         w = np.ones_like(u)
 
-    if ncompress is True:
-        ncompress = channel_capacity(w)
+    if ncompress is True or isinstance(ncompress, str):
+        if ncompress is True:
+            ncompress = 'entropy'
+        ncompress = neff(w, beta=ncompress)
     elif ncompress is False:
         return w
 
-    if ncompress <= 0:
-        W = w/w.max()
-    else:
-        W = w * ncompress / w.sum()
+    # TODO: remove this in version >= 2.1
+    if ncompress < 0:
+        raise ValueError(
+            "ncompress<0 is anesthetic 1.0 behaviour. For equally weighted "
+            "samples you should now use ncompress='inf' or ncompress='equal'."
+            )
+
+    W = w * ncompress / w.sum()
 
     fraction, integer = np.modf(W)
     extra = (u < fraction).astype(int)
@@ -328,6 +390,9 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     if w is None:
         w = pandas.Series(index=x.index, data=np.ones_like(x))
 
+    if isinstance(n, str):
+        n = int(neff(w, beta=n))
+
     # Select samples for triangulation
     if (w != 0).sum() < n:
         i = x.index
@@ -366,9 +431,12 @@ def sample_compression_1d(x, w=None, ncompress=True):
     ncompress : int, default=True
         Degree of compression.
 
-        * If int: number of samples returned.
-        * If True: compresses to the channel capacity.
-        * If False: no compression.
+        * If ``int``: number of samples returned.
+        * If ``True``: compresses to the channel capacity
+          (same as ``ncompress='entropy'``).
+        * If ``False``: no compression.
+        * If ``str``: determine number from the Huggins-Roy family of effective
+          samples in :func:`neff` with ``beta=ncompress``.
 
     Returns
     -------
@@ -377,8 +445,10 @@ def sample_compression_1d(x, w=None, ncompress=True):
     """
     if ncompress is False:
         return x, w
-    elif ncompress is True:
-        ncompress = channel_capacity(w)
+    elif ncompress is True or isinstance(ncompress, str):
+        if ncompress is True:
+            ncompress = 'entropy'
+        ncompress = neff(w, beta=ncompress)
     x = np.array(x)
     if w is None:
         w = np.ones_like(x)
@@ -386,7 +456,7 @@ def sample_compression_1d(x, w=None, ncompress=True):
 
     # Select inner samples for triangulation
     if len(x) > ncompress:
-        x_ = np.random.choice(x, size=ncompress, replace=False)
+        x_ = np.random.choice(x, size=int(ncompress), replace=False)
     else:
         x_ = x.copy()
     x_.sort()
