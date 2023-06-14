@@ -127,8 +127,6 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
         logL = logLike(points)
         i = ((points > bounds.T[0]) & (points < bounds.T[1])).all(axis=1)
         samps_2 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs)
-        print(len(samps_1), len(samps_2))
-
         samples = merge_nested_samples([samples, samps_1, samps_2])
 
     return samples

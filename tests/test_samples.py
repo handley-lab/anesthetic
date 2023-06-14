@@ -292,7 +292,11 @@ def test_plot_2d_legend():
                 assert labels == ['l1', 'l2']
 
 
-def test_plot_2d_colours():
+@pytest.mark.parametrize('kind',
+                         ['kde', 'hist', 'fastkde']
+                         if 'fastkde' in sys.modules else
+                         ['kde', 'hist'])
+def test_plot_2d_colours(kind):
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
     gd.drop(columns='x3', inplace=True, level=0)
@@ -301,41 +305,36 @@ def test_plot_2d_colours():
     mn = read_chains("./tests/example_data/mn")
     mn.drop(columns='x2', inplace=True, level=0)
 
-    kinds = ['kde', 'hist']
-    if 'fastkde' in sys.modules:
-        kinds += ['fastkde']
+    fig = plt.figure()
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
+    kinds = {'diagonal': kind + '_1d',
+             'lower': kind + '_2d',
+             'upper': 'scatter_2d'}
+    gd.plot_2d(axes, kind=kinds, label="gd")
+    pc.plot_2d(axes, kind=kinds, label="pc")
+    mn.plot_2d(axes, kind=kinds, label="mn")
+    gd_colors = []
+    pc_colors = []
+    mn_colors = []
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            handles, labels = ax.get_legend_handles_labels()
+            for handle, label in zip(handles, labels):
+                if isinstance(handle, Rectangle):
+                    color = to_hex(handle.get_facecolor())
+                else:
+                    color = handle.get_color()
 
-    for kind in kinds:
-        fig = plt.figure()
-        fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3', 'x4'], fig=fig)
-        kind = {'diagonal': kind + '_1d',
-                'lower': kind + '_2d',
-                'upper': 'scatter_2d'}
-        gd.plot_2d(axes, kind=kind, label="gd")
-        pc.plot_2d(axes, kind=kind, label="pc")
-        mn.plot_2d(axes, kind=kind, label="mn")
-        gd_colors = []
-        pc_colors = []
-        mn_colors = []
-        for y, rows in axes.iterrows():
-            for x, ax in rows.items():
-                handles, labels = ax.get_legend_handles_labels()
-                for handle, label in zip(handles, labels):
-                    if isinstance(handle, Rectangle):
-                        color = to_hex(handle.get_facecolor())
-                    else:
-                        color = handle.get_color()
+                if label == 'gd':
+                    gd_colors.append(color)
+                elif label == 'pc':
+                    pc_colors.append(color)
+                elif label == 'mn':
+                    mn_colors.append(color)
 
-                    if label == 'gd':
-                        gd_colors.append(color)
-                    elif label == 'pc':
-                        pc_colors.append(color)
-                    elif label == 'mn':
-                        mn_colors.append(color)
-
-        assert len(set(gd_colors)) == 1
-        assert len(set(mn_colors)) == 1
-        assert len(set(pc_colors)) == 1
+    assert len(set(gd_colors)) == 1
+    assert len(set(mn_colors)) == 1
+    assert len(set(pc_colors)) == 1
 
 
 @pytest.mark.parametrize('kwargs', [dict(color='r', alpha=0.5, ls=':', lw=1),
