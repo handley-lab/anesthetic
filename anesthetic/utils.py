@@ -231,11 +231,11 @@ def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
 
     # Convert samples to unit weight not the case
     if not np.all(np.logical_or(weights == 0, weights == 1)):
-        # compress_weights with ncompress<=0 assures weights \in 0,1
+        # compress_weights with ncompress='equal' assures weights \in 0,1
         # Note that this must be done, we cannot handle weights != 1
         # see this discussion for details:
         # https://github.com/williamjameshandley/anesthetic/pull/188#issuecomment-1274980982
-        weights = compress_weights(weights, ncompress=-1)
+        weights = compress_weights(weights, ncompress='equal')
 
     indices = np.where(weights)[0]
     x = samples[indices]
