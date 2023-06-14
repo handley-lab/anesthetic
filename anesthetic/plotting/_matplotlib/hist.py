@@ -32,7 +32,6 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             try:
                 weights = np.broadcast_to(weights[:, None], nd_values.shape)
             except ValueError:
-                print(nd_values.shape, weights.shape)
                 pass
             weights = np.ravel(weights)
             weights = weights[~isna(values)]

@@ -13,10 +13,14 @@ authors = [
     { name="Will Handley", email="williamjameshandley@gmail.com" },
     { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
     { name="Adam Ormondroyd", email="ano23@cam.ac.uk" },
-    { name="Stefan Heimersheim", email="sh2061@ast.cam.ac.uk" },
-    { name="David Yallup", email="david.yallup@gmail.com" },
     { name="Harry Bevins", email="htjb2@cam.ac.uk" },
     { name="Ethan Carragher", email="ethan.carragher@adelaide.edu.au" },
+    { name="Andrew Fowlie", email="andrew.j.fowlie@googlemail.com" },
+    { name="Thomas Gessey-Jones", email="tg400@cam.ac.uk"},
+    { name="Stefan Heimersheim", email="sh2061@ast.cam.ac.uk" },
+    { name="Toby Lovick", email="tcl44@cam.ac.uk"},
+    { name="Liangliang Su", email="liangliangsu@njnu.edu.cn"},
+    { name="David Yallup", email="david.yallup@gmail.com" },
 ]
 description = "nested sampling post-processing"
 readme = "README.rst"
