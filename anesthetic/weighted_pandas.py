@@ -10,7 +10,7 @@ from pandas._libs.lib import no_default
 from pandas.util._exceptions import find_stack_level
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
-from anesthetic.utils import (compress_weights, channel_capacity, quantile,
+from anesthetic.utils import (compress_weights, neff as neff_, quantile,
                               temporary_seed, adjust_docstrings)
 from pandas.core.dtypes.missing import notna
 
@@ -225,7 +225,7 @@ class _WeightedObject(object):
     def neff(self, axis=0):
         """Effective number of samples."""
         if self.isweighted(axis):
-            return channel_capacity(self.get_weights(axis))
+            return neff_(self.get_weights(axis))
         else:
             return self.shape[axis]
 
@@ -326,10 +326,17 @@ class WeightedSeries(_WeightedObject, Series):
 
         Parameters
         ----------
-        ncompress : int, optional
-            effective number of samples after compression. If not supplied
-            (or True), then reduce to the channel capacity (theoretical optimum
-            compression). If <=0, then compress so that all weights are unity.
+        ncompress : int, str, default=True
+            Degree of compression.
+
+            * If ``True`` (default): reduce to the channel capacity
+              (theoretical optimum compression), equivalent to
+              ``ncompress='entropy'``.
+            * If ``> 0``: desired number of samples after compression.
+            * If ``<= 0``: compress so that all remaining weights are unity.
+            * If ``str``: determine number from the Huggins-Roy family of
+              effective samples in :func:`anesthetic.utils.neff`
+              with ``beta=ncompress``.
 
         """
         i = compress_weights(self.get_weights(), self._rand(), ncompress)
@@ -559,10 +566,17 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
         Parameters
         ----------
-        ncompress : int, optional
-            effective number of samples after compression. If not supplied
-            (or True), then reduce to the channel capacity (theoretical optimum
-            compression). If <=0, then compress so that all weights are unity.
+        ncompress : int, str, default=True
+            Degree of compression.
+
+            * If ``True`` (default): reduce to the channel capacity
+              (theoretical optimum compression), equivalent to
+              ``ncompress='entropy'``.
+            * If ``> 0``: desired number of samples after compression.
+            * If ``<= 0``: compress so that all remaining weights are unity.
+            * If ``str``: determine number from the Huggins-Roy family of
+              effective samples in :func:`anesthetic.utils.neff`
+              with ``beta=ncompress``.
 
         """
         if self.isweighted(axis):
