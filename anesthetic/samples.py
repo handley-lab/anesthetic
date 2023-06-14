@@ -645,7 +645,7 @@ class NestedSamples(Samples):
         default: basename of root
 
     beta : float
-        thermodynamic temperature
+        thermodynamic inverse temperature
         default: 1.
 
     logzero : float
@@ -696,12 +696,12 @@ class NestedSamples(Samples):
         Parameters
         ----------
         beta : float
-            Temperature to set.
+            Inverse temperature to set.
             (``beta=0`` corresponds to the prior distribution.)
 
         inplace : bool, default=False
             Indicates whether to modify the existing array, or return a copy
-            with the temperature changed.
+            with the inverse temperature changed.
 
         """
         if inplace:
@@ -1100,7 +1100,7 @@ class NestedSamples(Samples):
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
-        return self.set_beta(beta).compress(-1)
+        return self.set_beta(beta).compress('equal')
 
     def prior_points(self, params=None):
         """Get equally weighted prior points."""

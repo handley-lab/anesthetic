@@ -61,7 +61,7 @@ class _WeightedMPLPlot(MPLPlot):
 
 def _compress_weights(kwargs, data):
     if isinstance(data, _WeightedObject):
-        return data.compress(kwargs.pop('ncompress', True))
+        return data.compress(kwargs.pop('ncompress', 'equal'))
     else:
         return data
 
