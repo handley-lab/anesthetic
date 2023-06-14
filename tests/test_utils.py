@@ -22,8 +22,7 @@ def test_compress_weights():
     r = np.random.rand(10)
     w = compress_weights(w=r, u=None, ncompress=False)
     assert_array_equal(w, r)
-    r = np.random.rand(10)
-    w = compress_weights(w=r, u=None, ncompress=-1)
+    w = compress_weights(w=r, u=None, ncompress='equal')
     assert np.all(np.logical_or(w == 0, w == 1))
 
     # TODO Remove in 2.1
