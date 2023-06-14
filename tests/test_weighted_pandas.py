@@ -656,7 +656,8 @@ def df_small():
 def wdf_small(df_small):
     np.random.seed(42)
     w = np.random.rand(df_small.shape[0])
-    return WeightedDataFrame(df_small.to_numpy(), weights=w)
+    return WeightedDataFrame(df_small.to_numpy(), weights=w,
+                             columns=df_small.columns)
 
 
 def test_WeightedDataFrame_hist(mcmc_df, mcmc_wdf):
