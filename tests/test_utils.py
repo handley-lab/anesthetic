@@ -4,13 +4,14 @@ import pytest
 from scipy import special as sp
 from numpy.testing import (assert_array_equal, assert_allclose)
 from anesthetic import read_chains
+from pytest import approx
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
                               insertion_p_value, compress_weights,
-                              credibility_interval, sample_cdf)
+                              credibility_interval, sample_cdf, neff)
 
 
 def test_compress_weights():
@@ -24,6 +25,10 @@ def test_compress_weights():
     r = np.random.rand(10)
     w = compress_weights(w=r, u=None, ncompress=-1)
     assert np.all(np.logical_or(w == 0, w == 1))
+
+    # TODO Remove in 2.1
+    with pytest.raises(ValueError):
+        compress_weights(w=r, ncompress=-1)
 
 
 def test_nest_level():
@@ -87,6 +92,12 @@ def test_triangular_sample_compression_2d():
     tri, W = triangular_sample_compression_2d(x, y, cov, w)
     assert len(W) == 1000
     assert np.isclose(sum(W), sum(w), rtol=1e-1)
+    tri, W = triangular_sample_compression_2d(x, y, cov, w, n='inf')
+    assert n/10 < len(W) < n
+    assert np.isclose(sum(W), sum(w), rtol=1e-1)
+    tri, W = triangular_sample_compression_2d(x, y, cov, w, n=10000)
+    assert n == len(W)
+    assert sum(W) == pytest.approx(sum(w))
 
 
 def test_sample_compression_1d():
@@ -101,7 +112,7 @@ def test_sample_compression_1d():
     assert np.isclose(w.sum(), w_.sum())
 
     x_ = np.random.rand(N)
-    w_ = np.random.randn(N)
+    w_ = np.random.lognormal(1, 0.5, N)
     x, w = sample_compression_1d(x_, w_, ncompress=True)
     assert len(w) <= N
 
@@ -222,3 +233,14 @@ def test_credibility_interval_exceptions():
         credibility_interval(samples.x0, weights=[1, 2, 3])
     with pytest.raises(ValueError):
         credibility_interval(samples.x0, method='foo')
+
+        
+@pytest.mark.parametrize('beta', ['entropy', 'kish', 0.5, 1, 2, np.inf,
+                                  '0.5', '1', '1.', '1.0', '1.00', 'inf'])
+def test_effective_samples(beta):
+    w = np.ones(20)
+    assert neff(w, beta=beta) == approx(20, rel=1e-6)
+    w[10:] = 1e-6
+    assert neff(w, beta=beta) == approx(10, rel=1e-2)
+    w[15:] = 0
+    assert neff(w, beta=beta) == approx(10, rel=1e-2)
