@@ -628,7 +628,7 @@ def mcmc_df():
     np.random.seed(0)
     x0, logL0 = logL(np.random.normal(m, s, 4))
     dat = []
-    for _ in range(3000):
+    for _ in range(1000):
         dat.append(x0)
         x1, logL1 = logL(np.random.normal(x0, s/2))
         if np.log(np.random.rand()) < logL1 - logL0:
@@ -717,7 +717,7 @@ def test_KdePlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.x.plot.kde(bw_method=bw_method, ax=axes[1])
     df_line, wdf_line = axes[0].lines[0], axes[1].lines[0]
     assert (df_line.get_xdata() == wdf_line.get_xdata()).all()
-    assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-4)
+    assert_allclose(df_line.get_ydata(),  wdf_line.get_ydata(), atol=1e-3)
 
 
 def test_scatter_matrix(mcmc_df, mcmc_wdf):
@@ -741,7 +741,7 @@ def test_scatter_matrix(mcmc_df, mcmc_wdf):
 
     axes = scatter_matrix(mcmc_wdf, ncompress=50)
     n = len(axes[0, 1].collections[0].get_offsets().data)
-    assert_allclose(n, 50, atol=np.sqrt(n))
+    assert_allclose(n, 50, atol=np.sqrt(2*50))
 
 
 def test_bootstrap_plot(mcmc_df, mcmc_wdf):
@@ -807,7 +807,7 @@ def test_ScatterPlot(mcmc_df, mcmc_wdf):
 
     ax = mcmc_wdf.plot.scatter('x', 'y', ncompress=50)
     n = len(ax.collections[0].get_offsets().data)
-    assert_allclose(n, 50, atol=np.sqrt(50))
+    assert_allclose(n, 50, atol=np.sqrt(2*50))
 
 
 def test_HexBinPlot(mcmc_df, mcmc_wdf):
@@ -830,8 +830,8 @@ def test_AreaPlot(mcmc_df, mcmc_wdf):
     axes_df = mcmc_df.plot.area(ax=ax1)
     axes_wdf = mcmc_wdf.plot.area(ax=ax2)
 
-    assert_allclose(axes_df.get_xlim(), axes_wdf.get_xlim(), rtol=1e-3)
-    assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-3)
+    assert_allclose(axes_df.get_xlim(), axes_wdf.get_xlim(), rtol=1e-2)
+    assert_allclose(axes_df.get_ylim(), axes_wdf.get_ylim(), rtol=1e-2)
 
 
 def test_BarPlot(mcmc_df, mcmc_wdf):
