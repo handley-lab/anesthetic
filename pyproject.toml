@@ -16,7 +16,11 @@ authors = [
     { name="Stefan Heimersheim", email="sh2061@ast.cam.ac.uk" },
     { name="David Yallup", email="david.yallup@gmail.com" },
     { name="Harry Bevins", email="htjb2@cam.ac.uk" },
+    { name="Thomas Gessey-Jones", email="tg400@cam.ac.uk"},
+    { name="Toby Lovick", email="tcl44@cam.ac.uk"},
     { name="Ethan Carragher", email="ethan.carragher@adelaide.edu.au" },
+    { name="Andrew Fowlie", email="andrew.j.fowlie@googlemail.com" },
+    { name="Liangliang Su", email="liangliangsu@njnu.edu.cn"},
 ]
 description = "nested sampling post-processing"
 readme = "README.rst"
