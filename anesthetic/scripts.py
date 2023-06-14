@@ -18,5 +18,5 @@ def gui(args=None):
     args = parser.parse_args(args)
 
     samples = read_chains(root=args.file_root)
-    samples.gui(args.params)
+    _ = samples.gui(args.params)
     plt.show()
