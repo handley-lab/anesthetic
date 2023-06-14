@@ -92,6 +92,9 @@ def test_triangular_sample_compression_2d():
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n='inf')
     assert n/10 < len(W) < n
     assert np.isclose(sum(W), sum(w), rtol=1e-1)
+    tri, W = triangular_sample_compression_2d(x, y, cov, w, n=10000)
+    assert n == len(W)
+    assert sum(W) == pytest.approx(sum(w))
 
 
 def test_sample_compression_1d():
