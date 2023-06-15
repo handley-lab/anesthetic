@@ -1592,11 +1592,21 @@ def test_groupby_plots():
 def test_credibility_interval():
     np.random.seed(0)
     pc = read_chains('./tests/example_data/pc')
-    mean_68, cov_68 = pc.credibility_interval('x0', level=0.68,
+    params = ['x0', 'x1']
+    ci, cov = pc[params].credibility_interval(level=0.68,
                                               method="iso-pdf",
                                               return_covariance=True)
-    assert_allclose(mean_68[0], -0.1, atol=0.01)
-    assert_allclose(mean_68[1], 0.1, atol=0.01)
-    assert_allclose(cov_68, [[5e-4, 5e-4], [5e-4, 5e-4]], atol=4e-4)
-    mean_95 = pc.credibility_interval('x0', level=0.95)
-    assert_allclose(mean_95, [-0.2, 0.2], atol=0.02)
+    assert_allclose(ci.loc['lower'], -0.1, rtol=0.01, atol=0.01)
+    assert_allclose(ci.loc['upper'], +0.1, rtol=0.01, atol=0.01)
+    assert np.all(np.abs(cov) < 1e-3)
+    assert ci.shape == (2, len(params))
+    assert cov.shape == (2, 2 * len(params))
+    ci, cov = pc[params].credibility_interval(level=0.95+0.025,
+                                              method='lower-limit',
+                                              return_covariance=True)
+    assert_allclose(ci, -0.2, rtol=0.01, atol=0.01)
+    assert np.all(np.abs(cov) < 1e-3)
+    assert cov.shape == (1, len(params))
+    ci = pc[params].credibility_interval(level=0.95+0.025,
+                                         method='upper-limit')
+    assert_allclose(ci, +0.2, rtol=0.01, atol=0.02)
