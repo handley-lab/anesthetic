@@ -488,6 +488,12 @@ class Samples(WeightedLabelledDataFrame):
             ``return_covariance=True``, returns a tuple (mean(s), covariance)
             where covariance is the covariance over the sampled limits.
         """
+        if 'lower' in method:
+            limits = ['lower']
+        elif 'upper' in method:
+            limits = ['upper']
+        else:
+            limits = ['lower', 'upper']
         cis = [credibility_interval(self[col], weights=self.get_weights(),
                                     level=level, method=method,
                                     return_covariance=return_covariance,
@@ -496,21 +502,14 @@ class Samples(WeightedLabelledDataFrame):
             cis, covs = zip(*cis)
             mulidx = pandas.MultiIndex.from_product([
                 self.columns.get_level_values(level=0),
-                ['lower', 'upper']
+                limits
             ])
             ncol = len(self.columns)
-            covs = pandas.DataFrame(np.asarray(covs).reshape(2*ncol, 2).T,
-                                    index=['lower', 'upper'],
-                                    columns=mulidx)
-        if 'limit' in method:
-            limit = 'lower' if 'lower' in method else 'upper'
-            cis = pandas.DataFrame(data=np.atleast_2d(cis),
-                                   index=[limit],
-                                   columns=self.columns)
-        else:
-            cis = pandas.DataFrame(data=np.asarray(cis).T,
-                                   index=['lower', 'upper'],
-                                   columns=self.columns)
+            nlim = len(limits)
+            covs = np.asarray(covs).reshape(nlim*ncol, nlim).T
+            covs = pandas.DataFrame(covs, index=limits, columns=mulidx)
+        cis = np.atleast_2d(cis) if 'limit' in method else np.asarray(cis).T
+        cis = pandas.DataFrame(data=cis, index=limits, columns=self.columns)
         if return_covariance:
             return cis, covs
         else:
