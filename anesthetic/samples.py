@@ -141,6 +141,18 @@ class Samples(WeightedLabelledDataFrame):
     _metadata = WeightedLabelledDataFrame._metadata + ['label']
 
     def __init__(self, *args, **kwargs):
+        # TODO: remove this in version >= 2.1
+        if 'root' in kwargs:
+            root = kwargs.pop('root')
+            name = self.__class__.__name__
+            raise ValueError(
+                "As of anesthetic 2.0, root is no longer a keyword argument.\n"
+                "To update your code, replace \n\n"
+                ">>> from anesthetic import %s\n"
+                ">>> %s(root=%s)\n\nwith\n\n"
+                ">>> from anesthetic import read_chains\n"
+                ">>> read_chains(%s)" % (name, name, root, root)
+                )
         logzero = kwargs.pop('logzero', -1e30)
         logL = kwargs.pop('logL', None)
         if logL is not None:

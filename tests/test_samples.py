@@ -1587,3 +1587,8 @@ def test_groupby_plots():
             gb_colors = [p.get_facecolor() for p in gb_ax.patches]
             assert_allclose(mcmc_colors, gb_colors)
         plt.close('all')
+
+
+def test_fail_read():
+    with pytest.raises(ValueError):
+        NestedSamples(root='some_file_path')
