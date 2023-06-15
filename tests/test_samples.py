@@ -1297,11 +1297,14 @@ def test_constructors():
 
 
 def test_old_gui():
-    with pytest.raises(TypeError):
+    # with pytest.raises(TypeError): TODO reinstate for >=2.1
+    with pytest.raises(ValueError):
         Samples(root='./tests/example_data/gd')
-    with pytest.raises(TypeError):
+    # with pytest.raises(TypeError): TODO reinstate for >=2.1
+    with pytest.raises(ValueError):
         MCMCSamples(root='./tests/example_data/gd')
-    with pytest.raises(TypeError):
+    # with pytest.raises(TypeError): TODO reinstate for >=2.1
+    with pytest.raises(ValueError):
         NestedSamples(root='./tests/example_data/pc')
 
     samples = read_chains('./tests/example_data/pc')
@@ -1587,8 +1590,3 @@ def test_groupby_plots():
             gb_colors = [p.get_facecolor() for p in gb_ax.patches]
             assert_allclose(mcmc_colors, gb_colors)
         plt.close('all')
-
-
-def test_fail_read():
-    with pytest.raises(ValueError):
-        NestedSamples(root='some_file_path')
