@@ -1297,11 +1297,14 @@ def test_constructors():
 
 
 def test_old_gui():
-    with pytest.raises(TypeError):
+    # with pytest.raises(TypeError): TODO reinstate for >=2.1
+    with pytest.raises(ValueError):
         Samples(root='./tests/example_data/gd')
-    with pytest.raises(TypeError):
+    # with pytest.raises(TypeError): TODO reinstate for >=2.1
+    with pytest.raises(ValueError):
         MCMCSamples(root='./tests/example_data/gd')
-    with pytest.raises(TypeError):
+    # with pytest.raises(TypeError): TODO reinstate for >=2.1
+    with pytest.raises(ValueError):
         NestedSamples(root='./tests/example_data/pc')
 
     samples = read_chains('./tests/example_data/pc')
