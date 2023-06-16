@@ -163,29 +163,3 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
-
-  aur-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tomli
-      - name: Generate PKGBUILD
-        run: python ./bin/gen_PKGBUILD.py > ./PKGBUILD
-      - name: Publish AUR package
-        uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
-        with:
-          pkgname: python-anesthetic
-          pkgbuild: ./PKGBUILD
-          updpkgsums: True
-          commit_username: ${{ secrets.AUR_USERNAME }}
-          commit_email: ${{ secrets.AUR_EMAIL }}
-          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          commit_message: Update AUR package
-          ssh_keyscan_types: rsa,dsa,ecdsa,ed25519
