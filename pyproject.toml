@@ -22,6 +22,10 @@ authors = [
     { name="Liangliang Su", email="liangliangsu@njnu.edu.cn"},
     { name="David Yallup", email="david.yallup@gmail.com" },
 ]
+contributors = [
+    { name="Pablo Lemos", email="plemos91@gmail.com" },
+    { name="Aleksandr Petrosyan", email="a-p-petrosyan@yandex.ru" },
+]
 description = "nested sampling post-processing"
 readme = "README.rst"
 license = {file = "LICENSE"}
