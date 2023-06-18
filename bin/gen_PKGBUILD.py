@@ -7,7 +7,7 @@ description = pyproject["project"]["description"]
 version = open('anesthetic/_version.py','r').readlines()[0].split("=")[1].strip().strip("'")
 url = pyproject["project"]["urls"]["Homepage"]
 pyproject["project"]["dependencies"]
-rel=2
+rel=1
 
 
 PKGBUILD = """# Maintainer: Will Handley <wh260@cam.ac.uk> (aur.archlinux.org/account/wjhandley)
