@@ -49,6 +49,7 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
   aur-release:
+	needs: pypi-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
