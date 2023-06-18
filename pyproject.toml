@@ -18,13 +18,11 @@ authors = [
     { name="Andrew Fowlie", email="andrew.j.fowlie@googlemail.com" },
     { name="Thomas Gessey-Jones", email="tg400@cam.ac.uk"},
     { name="Stefan Heimersheim", email="sh2061@ast.cam.ac.uk" },
+    { name="Pablo Lemos", email="plemos91@gmail.com" },
     { name="Toby Lovick", email="tcl44@cam.ac.uk"},
+    { name="Aleksandr Petrosyan", email="a-p-petrosyan@yandex.ru" },
     { name="Liangliang Su", email="liangliangsu@njnu.edu.cn"},
     { name="David Yallup", email="david.yallup@gmail.com" },
-]
-contributors = [
-    { name="Pablo Lemos", email="plemos91@gmail.com" },
-    { name="Aleksandr Petrosyan", email="a-p-petrosyan@yandex.ru" },
 ]
 description = "nested sampling post-processing"
 readme = "README.rst"
