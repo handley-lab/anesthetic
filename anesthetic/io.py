@@ -44,10 +44,7 @@ class HDFStore(_HDFStore):  # noqa: D101
         return value
 
 
-def to_hdf(path_or_buf, key, value,
-           mode: str = "a",
-           complevel: int | None = None,
-           complib: str | None = None,
+def to_hdf(path_or_buf, key, value, mode="a", complevel= None, complib= None,
            *args, **kwargs):  # noqa: D103
 
     store = HDFStore(path_or_buf, mode=mode, complevel=complevel,
