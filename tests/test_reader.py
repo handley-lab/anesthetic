@@ -242,20 +242,22 @@ def test_regex_escape():
                    reason="requires tables package")
 def test_hdf5(root):
     samples = read_chains('./tests/example_data/' + root)
+    filename = 'test_hdf5.h5'
+    key = "samples"
 
-    with HDFStore('/tmp/test_hdf5.h5') as store:
-        store["samples"] = samples
+    with HDFStore(filename) as store:
+        store[key] = samples
 
-    with HDFStore('/tmp/test_hdf5.h5') as store:
-        assert_frame_equal(samples, store["samples"])
-        assert type(store["samples"]) == type(samples)
+    with HDFStore(filename) as store:
+        assert_frame_equal(samples, store[key])
+        assert type(store[key]) == type(samples)
 
-    samples.to_hdf('/tmp/test_hdf5.h5', 'samples')
+    samples.to_hdf(filename, key)
 
-    with HDFStore('/tmp/test_hdf5.h5') as store:
-        assert_frame_equal(samples, store["samples"])
-        assert type(store["samples"]) == type(samples)
+    with HDFStore(filename) as store:
+        assert_frame_equal(samples, store[key])
+        assert type(store[key]) == type(samples)
 
-    samples_1 = read_hdf('/tmp/test_hdf5.h5', 'samples')
-    assert_frame_equal(samples_1, samples)
-    assert type(samples_1) == type(samples)
+    samples_ = read_hdf(filename, key)
+    assert_frame_equal(samples_, samples)
+    assert type(samples_) == type(samples)
