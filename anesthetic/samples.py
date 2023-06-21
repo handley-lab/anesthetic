@@ -19,6 +19,7 @@ from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
+from anesthetic.utils import adjust_docstrings
 import anesthetic.weighted_pandas
 from anesthetic.plotting import PlotAccessor
 anesthetic.weighted_pandas._WeightedObject.plot =\
@@ -1320,3 +1321,10 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples.label = label
 
     return new_samples
+
+
+adjust_docstrings(Samples.to_hdf, r'(pd|pandas)\.DataFrame', 'DataFrame')
+adjust_docstrings(Samples.to_hdf, 'DataFrame', 'pandas.DataFrame')
+adjust_docstrings(Samples.to_hdf, r'(pd|pandas)\.read_hdf', 'read_hdf')
+adjust_docstrings(Samples.to_hdf, 'read_hdf', 'pandas.read_hdf')
+adjust_docstrings(Samples.to_hdf, ':func:`open`', '`open`')

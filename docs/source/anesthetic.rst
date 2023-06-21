@@ -39,6 +39,14 @@ anesthetic.convert module
    :show-inheritance:
 
 
+anesthetic.io module
+~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.io
+   :members:
+   :undoc-members:
+
+
 anesthetic.kde module
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -79,6 +87,15 @@ anesthetic.scripts module
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: anesthetic.scripts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.testing module
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.testing
    :members:
    :undoc-members:
    :show-inheritance:

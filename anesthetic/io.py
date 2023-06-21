@@ -1,8 +1,9 @@
 """Anesthetic overwrites for pandas hdf functionality."""
-from pandas.io.pytables import (HDFStore as _HDFStore,
-                                to_hdf as _to_hdf, read_hdf as _read_hdf)
+from pandas import HDFStore as _HDFStore
+from pandas.io.pytables import to_hdf as _to_hdf, read_hdf as _read_hdf
 from anesthetic import __version__
 from anesthetic.samples import NestedSamples, MCMCSamples, Samples
+from anesthetic.utils import adjust_docstrings
 
 
 class HDFStore(_HDFStore):  # noqa: D101
@@ -58,5 +59,8 @@ def read_hdf(path_or_buf, *args, **kwargs):  # noqa: D103
     return _read_hdf(store, *args, **kwargs)
 
 
-to_hdf.__doc__ = _to_hdf.__doc__
-read_hdf.__doc__ = _read_hdf.__doc__
+adjust_docstrings(to_hdf, r'(pd|pandas)\.DataFrame', 'DataFrame')
+adjust_docstrings(to_hdf, 'DataFrame', 'pandas.DataFrame')
+adjust_docstrings(to_hdf, r'(pd|pandas)\.read_hdf', 'read_hdf')
+adjust_docstrings(read_hdf, 'read_hdf', 'pandas.read_hdf')
+adjust_docstrings(read_hdf, ':func:`open`', '`open`')
