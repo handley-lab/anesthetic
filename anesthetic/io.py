@@ -59,8 +59,9 @@ def read_hdf(path_or_buf, *args, **kwargs):  # noqa: D103
     return _read_hdf(store, *args, **kwargs)
 
 
-adjust_docstrings(to_hdf, r'(pd|pandas)\.DataFrame', 'DataFrame')
-adjust_docstrings(to_hdf, 'DataFrame', 'pandas.DataFrame')
-adjust_docstrings(to_hdf, r'(pd|pandas)\.read_hdf', 'read_hdf')
+to_hdf.__doc__ = _to_hdf.__doc__
+read_hdf.__doc__ = _read_hdf.__doc__
 adjust_docstrings(read_hdf, 'read_hdf', 'pandas.read_hdf')
+adjust_docstrings(read_hdf, 'DataFrame', 'pandas.DataFrame')
 adjust_docstrings(read_hdf, ':func:`open`', '`open`')
+adjust_docstrings(read_hdf, ':class:`pandas.HDFStore`', '`pandas.HDFStore`')
