@@ -468,6 +468,10 @@ class Samples(WeightedLabelledDataFrame):
             "tex = samples.get_label(label)  # anesthetic 2.0"
             )
 
+    def to_hdf(self, path_or_buf, key, *args, **kwargs):  # noqa: D102
+        import anesthetic.io
+        anesthetic.io.to_hdf(path_or_buf, key, self, *args, **kwargs)
+
 
 class MCMCSamples(Samples):
     """Storage and plotting tools for MCMC samples.

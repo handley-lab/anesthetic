@@ -4,7 +4,7 @@ import sys
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from pandas.testing import assert_frame_equal
+from anesthetic.testing import assert_frame_equal
 from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains
 from anesthetic.read.polychord import read_polychord
@@ -12,6 +12,7 @@ from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 import pandas._testing as tm
+from anesthetic.io import HDFStore, read_hdf
 try:
     import getdist
 except ImportError:
@@ -232,4 +233,29 @@ def test_read_fail():
 def test_regex_escape():
     mcmc_1 = read_chains('./tests/example_data/gd_single+X')
     mcmc_2 = read_chains('./tests/example_data/gd_single')
-    assert_frame_equal(mcmc_1, mcmc_2)
+    assert_frame_equal(mcmc_1, mcmc_2, check_metadata=False)
+
+
+@pytest.mark.parametrize('root', ['pc', 'gd'])
+@pytest.mark.xfail('tables' not in sys.modules,
+                   raises=ImportError,
+                   reason="requires tables package")
+def test_hdf5(root):
+    samples = read_chains('./tests/example_data/' + root)
+
+    with HDFStore('/tmp/test_hdf5.h5') as store:
+        store["samples"] = samples
+
+    with HDFStore('/tmp/test_hdf5.h5') as store:
+        assert_frame_equal(samples, store["samples"])
+        assert type(store["samples"]) == type(samples)
+
+    samples.to_hdf('/tmp/test_hdf5.h5', 'samples')
+
+    with HDFStore('/tmp/test_hdf5.h5') as store:
+        assert_frame_equal(samples, store["samples"])
+        assert type(store["samples"]) == type(samples)
+
+    samples_1 = read_hdf('/tmp/test_hdf5.h5', 'samples')
+    assert_frame_equal(samples_1, samples)
+    assert type(samples_1) == type(samples)
