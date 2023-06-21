@@ -63,7 +63,7 @@ astropy = ["astropy"]
 fastkde = ["fastkde"]
 getdist = ["getdist"]
 hdf5 = ["tables"]
-all = ["astropy", "fastkde", "getdist", "hdf5"]
+all = ["astropy", "fastkde", "getdist", "tables"]
 
 [project.scripts]
 anesthetic = "anesthetic.scripts:gui"
