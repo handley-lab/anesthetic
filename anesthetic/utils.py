@@ -611,7 +611,4 @@ def adjust_docstrings(obj, pattern, repl, *args, **kwargs):
         doc = inspect.getdoc(obj)
         if doc is not None:
             newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
-            try:
-                obj.__doc__ = newdoc
-            except AttributeError:
-                pass
+            obj.__doc__ = newdoc
