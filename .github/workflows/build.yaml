@@ -49,6 +49,7 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
   aur-release:
+    needs: pypi-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -62,6 +63,17 @@ jobs:
           python -m pip install tomli
       - name: Generate PKGBUILD
         run: python ./bin/gen_PKGBUILD.py > ./PKGBUILD
+      - name: Get version number
+        run: |
+          VERSION="$(cat ./PKGBUILD | grep pkgver= | awk -F= '{print $2}')"
+          echo "DIST_VERSION=${VERSION}" >> $GITHUB_ENV
+      - name: Wait for PyPi
+        uses: nev7n/wait_for_response@v1
+        with:
+          url: "https://files.pythonhosted.org/packages/source/a/anesthetic/anesthetic-${{ env.DIST_VERSION }}.tar.gz"
+          responseCode: 200
+          timeout: 600000
+          interval: 10000
       - name: Publish AUR package
         uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
         with:
