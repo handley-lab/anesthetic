@@ -1223,13 +1223,15 @@ def test_samples_dot_plot():
 
     axes = samples.plot.kde_2d('x0', 'x1')
     assert len(axes.collections) == 5
-    assert axes.get_xlabel() == 'x0'
-    assert axes.get_ylabel() == 'x1'
+    assert axes.get_xlabel() == '$x_0$'
+    assert axes.get_ylabel() == '$x_1$'
     axes = samples.plot.hist_2d('x1', 'x0')
     assert len(axes.collections) == 1
-    assert axes.get_xlabel() == 'x1'
-    assert axes.get_ylabel() == 'x0'
+    assert axes.get_xlabel() == '$x_1$'
+    assert axes.get_ylabel() == '$x_0$'
     axes = samples.plot.scatter_2d('x2', 'x3')
+    assert axes.get_xlabel() == '$x_2$'
+    assert axes.get_ylabel() == '$x_3$'
     assert len(axes.lines) == 1
     fig, ax = plt.subplots()
     axes = samples.x1.plot.kde_1d(ax=ax)
@@ -1240,6 +1242,8 @@ def test_samples_dot_plot():
 
     try:
         axes = samples.plot.fastkde_2d('x0', 'x1')
+        assert axes.get_xlabel() == '$x_0$'
+        assert axes.get_ylabel() == '$x_1$'
         assert len(axes.collections) == 5
         plt.close("all")
         axes = samples.x0.plot.fastkde_1d()

@@ -91,8 +91,10 @@ class _PlanePlot2d(PlanePlot):
             if self.by is not None
             else self.data
         )
-        x = data[self.x].values
-        y = data[self.y].values
+        x = data[self.x]
+        y = data[self.y]
+        self.x = x.name  # transfer the tex label
+        self.y = y.name  # transfer the tex label
         ax = self._get_ax(0)  # another one of these hard-coded 0s
 
         kwds = self.kwds.copy()
