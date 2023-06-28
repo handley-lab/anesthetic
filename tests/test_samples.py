@@ -506,6 +506,30 @@ def test_logX():
     assert (abs(logX.mean(axis=1) - pc.logX()) < logX.std(axis=1) * 3).all()
 
 
+def test_logdX():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+
+    logdX = pc.logdX()
+    assert isinstance(logdX, WeightedSeries)
+    assert_array_equal(logdX.index, pc.index)
+
+    nsamples = 10
+
+    logdX = pc.logdX(nsamples=nsamples)
+    assert isinstance(logdX, WeightedDataFrame)
+    assert_array_equal(logdX.index, pc.index)
+    assert_array_equal(logdX.columns, np.arange(nsamples))
+    assert logdX.columns.name == 'samples'
+
+    assert not (logdX > 0).to_numpy().any()
+
+    n = 1000
+    logdX = pc.logdX(n)
+
+    assert (abs(logdX.mean(axis=1) - pc.logdX()) < logdX.std(axis=1) * 3).all()
+
+
 def test_logbetaL():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')
@@ -1349,6 +1373,7 @@ def test_old_gui():
 
     with pytest.raises(NotImplementedError):
         samples.dlogX(1000)
+
 
 def test_groupby_stats():
     mcmc = read_chains('./tests/example_data/cb')
