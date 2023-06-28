@@ -60,16 +60,16 @@ class Higson(Widget):
 class Evolution(Slider):
     """Slider controlling the evolution stage of the live points."""
 
-    def __init__(self, fig, gridspec, action, valmax):
-        super().__init__(fig, gridspec, action, '', 0, valmax, 0, 'horizontal')
+    def __init__(self, logX, fig, gridspec, action):
+        self._logX = logX
+        super().__init__(fig, gridspec, action, '',
+                         -logX[0], -logX[-1], -logX[0], 'horizontal')
         self.slider.valtext.set_horizontalalignment('right')
         self.slider.valtext.set_position((0.98, 0.5))
 
     def __call__(self):
         """Return the current iteration as an integer."""
-        mx = self.slider.valmax-1
-        val = int(super().__call__())
-        return min(val, mx)
+        return np.argmin(super().__call__() > -self._logX)
 
     def set_text(self, logL, n):
         """Set the text at end of slider.
@@ -87,26 +87,30 @@ class Evolution(Slider):
         return super().set_text(text)
 
 
-class Temperature(Slider):
-    """Logarithmic slider controlling temperature of the posterior points."""
+class Beta(Slider):
+    """Slider controlling inverse temperature of the posterior points."""
 
-    def __init__(self, fig, gridspec, action):
-        super().__init__(fig, gridspec, action, r'$kT$', -1, 5, 0, 'vertical')
+    def __init__(self, beta, D_KL, fig, gridspec, action):
+        self._beta = beta
+        self._D_KL = D_KL
+        D_KL0 = np.interp(1, beta, D_KL)
+        super().__init__(fig, gridspec, action, r'$\beta$',
+                         D_KL[0], D_KL[-1], D_KL0, 'vertical')
 
     def __call__(self):
-        """Return the current temperature."""
-        return 10**super().__call__()
+        """Return the current inverse temperature."""
+        return np.interp(super().__call__(), self._D_KL, self._beta)
 
-    def set_text(self, kT):
+    def set_text(self, beta):
         """Set the text at end of slider.
 
         Parameters
         ----------
-            kT : float
-                Current temperature of posterior points stage
+            beta : float
+                Current inverse temperature of posterior points stage
 
         """
-        text = r'%.2g' % kT
+        text = r'%.2g' % beta
         return super().set_text(text)
 
 
@@ -130,8 +134,8 @@ class RunPlotter(object):
     triangle : :class:`anesthetic.gui.widgets.TrianglePlot`
         Corner plot of live or posterior samples.
 
-    temperature : :class:`anesthetic.gui.plot.Temperature`
-        Slider selecting the posterior temperature.
+    beta : :class:`anesthetic.gui.plot.Beta`
+        Slider selecting the posterior inverse temperature.
 
     evolution : :class:`anesthetic.gui.plot.Evolution`
         Slider selecting the live iteration.
@@ -198,9 +202,11 @@ class RunPlotter(object):
         gs11 = sGS(3, 1, height_ratios=[1, 1, 2], subplot_spec=gs1[1])
 
         self.triangle = TrianglePlot(self.fig, gs0[0])
-        self.temperature = Temperature(self.fig, gs0[1], self.update)
-        self.evolution = Evolution(self.fig, gs10[0],
-                                   self.update, len(self.samples))
+        beta = np.logspace(-10, 10, 101)
+        D_KL = self.samples.D_KL(beta=beta).to_numpy()
+        self.beta = Beta(beta, D_KL, self.fig, gs0[1], self.update)
+        logX = self.samples.logX().to_numpy()
+        self.evolution = Evolution(logX, self.fig, gs10[0], self.update)
         self.higson = Higson(self.fig, gs10[1])
         self.reset = Button(self.fig, gs11[0],
                             self.reset_range, 'Reset Range')
@@ -235,8 +241,8 @@ class RunPlotter(object):
 
         """
         if self.type() == 'posterior':
-            kT = self.temperature()
-            return self.samples.posterior_points(1/kT)[label]
+            beta = self.beta()
+            return self.samples.posterior_points(beta)[label]
         else:
             i = self.evolution()
             logL = self.samples.logL.iloc[i]
@@ -245,8 +251,8 @@ class RunPlotter(object):
     def update(self, _):
         """Update all the plots upon slider changes."""
         logX = np.log(self.samples.nlive / (self.samples.nlive+1)).cumsum()
-        kT = self.temperature()
-        LX = self.samples.logL/kT + logX
+        beta = self.beta()
+        LX = self.samples.logL*beta + logX
         LX = np.exp(LX-LX.max())
         i = self.evolution()
         logL = self.samples.logL.iloc[i]
@@ -255,7 +261,7 @@ class RunPlotter(object):
         self.triangle.update(self.points)
 
         self.evolution.set_text(logL, n)
-        self.temperature.set_text(kT)
+        self.beta.set_text(beta)
 
         self.higson.update(logX, LX, i)
         self.fig.canvas.draw()

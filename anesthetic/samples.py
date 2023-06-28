@@ -141,6 +141,18 @@ class Samples(WeightedLabelledDataFrame):
     _metadata = WeightedLabelledDataFrame._metadata + ['label']
 
     def __init__(self, *args, **kwargs):
+        # TODO: remove this in version >= 2.1
+        if 'root' in kwargs:
+            root = kwargs.pop('root')
+            name = self.__class__.__name__
+            raise ValueError(
+                "As of anesthetic 2.0, root is no longer a keyword argument.\n"
+                "To update your code, replace \n\n"
+                ">>> from anesthetic import %s\n"
+                ">>> %s(root=%s)\n\nwith\n\n"
+                ">>> from anesthetic import read_chains\n"
+                ">>> read_chains(%s)" % (name, name, root, root)
+                )
         logzero = kwargs.pop('logzero', -1e30)
         logL = kwargs.pop('logL', None)
         if logL is not None:
@@ -645,7 +657,7 @@ class NestedSamples(Samples):
         default: basename of root
 
     beta : float
-        thermodynamic temperature
+        thermodynamic inverse temperature
         default: 1.
 
     logzero : float
@@ -696,12 +708,12 @@ class NestedSamples(Samples):
         Parameters
         ----------
         beta : float
-            Temperature to set.
+            Inverse temperature to set.
             (``beta=0`` corresponds to the prior distribution.)
 
         inplace : bool, default=False
             Indicates whether to modify the existing array, or return a copy
-            with the temperature changed.
+            with the inverse temperature changed.
 
         """
         if inplace:
@@ -1100,7 +1112,7 @@ class NestedSamples(Samples):
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
-        return self.set_beta(beta).compress(-1)
+        return self.set_beta(beta).compress('equal')
 
     def prior_points(self, params=None):
         """Get equally weighted prior points."""
