@@ -415,6 +415,18 @@ def test_hist_levels():
                levels=[0.95, 0.68], bins=20)
 
 
+def test_plot_2d_no_axes():
+    np.random.seed(3)
+    ns = read_chains('./tests/example_data/pc')
+    ns[['x0', 'x1', 'x2']].plot_2d()
+
+
+def test_plot_1d_no_axes():
+    np.random.seed(3)
+    ns = read_chains('./tests/example_data/pc')
+    ns[['x0', 'x1', 'x2']].plot_1d()
+
+
 def test_mcmc_stats():
     mcmc = read_chains('./tests/example_data/cb')
     chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)

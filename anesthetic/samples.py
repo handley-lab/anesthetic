@@ -173,12 +173,12 @@ class Samples(WeightedLabelledDataFrame):
 
     plot = CachedAccessor("plot", PlotAccessor)
 
-    def plot_1d(self, axes, *args, **kwargs):
+    def plot_1d(self, *args, **kwargs):
         """Create an array of 1D plots.
 
         Parameters
         ----------
-        axes : plotting axes
+        axes : plotting axes, optional
             Can be:
 
             * list(str) or str
@@ -187,6 +187,12 @@ class Samples(WeightedLabelledDataFrame):
             If a :class:`pandas.Series` is provided as an existing set of axes,
             then this is used for creating the plot. Otherwise, a new set of
             axes are created using the list or lists of strings.
+
+            If not provided, then all parameters are plotted. This is intended
+            for plotting a sliced array (e.g. `samples[['x0','x1]].plot_1d()`.
+            It is not advisible to plot an entire frame, as it is
+            computationally expensive, and liable to run into linear algebra
+            errors for degenerate derived parameters.
 
         kind : str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
@@ -213,6 +219,8 @@ class Samples(WeightedLabelledDataFrame):
                 "You are using the anesthetic 1.0 kwarg \'plot_type\' instead "
                 "of anesthetic 2.0 \'kind\'. Please update your code."
                 )
+
+        axes = kwargs.pop('axes', self.drop_labels().columns)
 
         if not isinstance(axes, AxesSeries):
             _, axes = make_1d_axes(axes, labels=self.get_labels_map())
@@ -245,7 +253,7 @@ class Samples(WeightedLabelledDataFrame):
 
         return axes
 
-    def plot_2d(self, axes, *args, **kwargs):
+    def plot_2d(self, *args, **kwargs):
         """Create an array of 2D plots.
 
         To avoid interfering with y-axis sharing, one-dimensional plots are
@@ -254,7 +262,7 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        axes : plotting axes
+        axes : plotting axes, optional
             Can be:
                 - list(str) if the x and y axes are the same
                 - [list(str),list(str)] if the x and y axes are different
@@ -263,6 +271,12 @@ class Samples(WeightedLabelledDataFrame):
             If a :class:`pandas.DataFrame` is provided as an existing set of
             axes, then this is used for creating the plot. Otherwise, a new set
             of axes are created using the list or lists of strings.
+
+            If not provided, then all parameters are plotted. This is intended
+            for plotting a sliced array (e.g. `samples[['x0','x1]].plot_2d()`.
+            It is not advisible to plot an entire frame, as it is
+            computationally expensive, and liable to run into linear algebra
+            errors for degenerate derived parameters.
 
         kind/kinds : dict, optional
             What kinds of plots to produce. Dictionary takes the keys
@@ -341,6 +355,8 @@ class Samples(WeightedLabelledDataFrame):
 
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
+
+        axes = kwargs.pop('axes', self.drop_labels().columns)
 
         if not isinstance(axes, AxesDataFrame):
             _, axes = make_2d_axes(axes, labels=self.get_labels(),
