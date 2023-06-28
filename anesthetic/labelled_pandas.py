@@ -62,19 +62,29 @@ def ac(funcs, *args):
 class _LocIndexer(_LocIndexer_):
     def __getitem__(self, key):
         return ac([(_LocIndexer_("loc", 
-                                 super(_LabelledObject,
-                                       self.obj.drop_labels(i))
-                                 ).__getitem__, self.obj.get_labels_map(i))
-                   for i in self.obj._all_axes()], key)
+                                 super(_LabelledObject, self.obj.drop_labels(i))
+                                 ).__getitem__,
+                    self.obj.get_labels_map(i))
+                   for i in self.obj._all_axes()] + [
+                       ((_LocIndexer_("loc", 
+                                 super(_LabelledObject, self.obj))
+                                 ).__getitem__, 
+                        None)
+                       ], key)
 
 
 class _AtIndexer(_AtIndexer_):
     def __getitem__(self, key):
         return ac([(_AtIndexer_("at",
-                                 super(_LabelledObject,
-                                       self.obj.drop_labels(i))
-                                ).__getitem__, self.obj.get_labels_map(i))
-                   for i in self.obj._all_axes()], key)                        
+                                 super(_LabelledObject, self.obj.drop_labels(i))
+                                ).__getitem__,
+                    self.obj.get_labels_map(i))
+                   for i in self.obj._all_axes()] + [
+                       ((_AtIndexer_("loc", 
+                                 super(_LabelledObject, self.obj))
+                                 ).__getitem__, 
+                        None)
+                       ], key)                        
 
 
 class _LabelledObject(object):
@@ -106,12 +116,15 @@ class _LabelledObject(object):
 
     def get_labels_map(self, axis=0):
         """Retrieve mapping from paramnames to labels from an axis."""
-        labs = self.islabelled(axis)
-        index = self._get_axis(axis)
-        if labs:
-            return index.to_frame().droplevel(labs)[labs]
-        else:
-            return Series('', index=index)
+        try:
+            labs = self.islabelled(axis)
+            index = self._get_axis(axis)
+            if labs:
+                return index.to_frame().droplevel(labs)[labs]
+            else:
+                return Series('', index=index)
+        except TypeError:
+            return None
 
     def get_label(self, param, axis=0):
         """Retrieve mapping from paramnames to labels from an axis."""
@@ -128,7 +141,7 @@ class _LabelledObject(object):
         axes = np.atleast_1d(axis)
         result = self.copy()
         for axis in axes:
-            if axis is not None and self.islabelled(axis):
+            if self.islabelled(axis):
                 result = result.droplevel(self.islabelled(axis), axis)
         return result.__finalize__(self, "drop_labels")
 
@@ -136,7 +149,7 @@ class _LabelledObject(object):
         if isinstance(self, LabelledSeries):
             return [0]
         else:
-            return [0, 1, [0, 1], None]
+            return [0, 1, [0, 1]]
 
     @property
     def loc(self):
@@ -148,12 +161,14 @@ class _LabelledObject(object):
 
     def xs(self, key, axis=0, level=None, drop_level=True):
         return ac([(super(_LabelledObject, self.drop_labels(i)).xs, 
-                    self.get_labels_map(i)) for i in self._all_axes()],
+                    self.get_labels_map(i))
+                   for i in self._all_axes()] + [(super().xs, None)],
                   key, axis, level, drop_level)
 
     def __getitem__(self, key):
         return ac([(super(_LabelledObject, self.drop_labels(i)).__getitem__,
-                    self.get_labels_map(i)) for i in self._all_axes()], key)
+                    self.get_labels_map(i))
+                   for i in self._all_axes()] + [(super().__getitem__,None)], key)
 
     def set_labels(self, labels, axis=0, inplace=False, level=None):
         """Set labels along an axis."""
