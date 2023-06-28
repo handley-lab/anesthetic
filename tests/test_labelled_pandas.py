@@ -126,9 +126,9 @@ def lframe_index():
 
     assert_frame_equal_not_index(lframe, frame)
 
-    assert_series_equal(lframe.loc['A'], frame.loc['A'])
+    assert_series_equal_not_name(lframe.loc['A'], frame.loc['A'])
     assert lframe.at['A', 0] == frame.at['A', 0]
-    assert_series_equal(lframe.xs('A'), frame.xs('A'))
+    assert_series_equal_not_name(lframe.xs('A'), frame.xs('A'))
 
     assert_array_equal(lframe.loc[('A', '$A$')], frame.loc['A'])
     assert lframe.at[('A', '$A$'), 0] == frame.at['A', 0]
@@ -172,18 +172,20 @@ def test_LabelledDataFrame_index_MultiIndex():
     assert_frame_equal_not_index(lframe, frame)
 
     assert_frame_equal_not_index(lframe.loc['vowel'], frame.loc['vowel'])
-    assert_series_equal(lframe.loc['vowel', 'A'], frame.loc['vowel', 'A'])
+    assert_series_equal_not_name(lframe.loc['vowel', 'A'], 
+                                 frame.loc['vowel', 'A'])
     assert_series_equal_not_name(lframe.loc['vowel', 'A', '$A$'],
                                  frame.loc['vowel', 'A'])
 
     assert_frame_equal_not_index(lframe.xs('vowel'), frame.xs('vowel'))
-    assert_series_equal(lframe.xs(('vowel', 'A')), frame.xs(('vowel', 'A')))
+    assert_series_equal_not_name(lframe.xs(('vowel', 'A')),
+                                 frame.xs(('vowel', 'A')))
     assert_series_equal_not_name(lframe.xs(('vowel', 'A', '$A$')),
                                  frame.xs(('vowel', 'A')))
 
     assert_series_equal(lframe.loc[('vowel', 'A'), 0],
                         frame.loc[('vowel', 'A'), 0])
-    assert_series_equal(lframe.loc[('vowel', 'A', '$A$'), 0],
+    assert_series_equal(lframe.loc[('vowel', 'A', '$A$'), 0], #!!
                         frame.loc[('vowel', 'A'), 0])
     assert lframe.at[('vowel', 'A'), 0] == frame.at[('vowel', 'A'), 0]
     assert lframe.at[('vowel', 'A', '$A$'), 0] == frame.at[('vowel', 'A'), 0]
@@ -193,13 +195,13 @@ def test_LabelledDataFrame_index_MultiIndex():
     assert_series_equal_not_name(lframe.T['vowel', 'A', '$A$'],
                                  lframe.loc['vowel', 'A'])
     assert_frame_equal(lframe.T.vowel, lframe.loc['vowel'].T)
-    assert_series_equal_not_name(lframe.T.vowel.A, lframe.loc['vowel', 'A'])
+    assert_series_equal(lframe.T.vowel.A, lframe.loc['vowel', 'A'])
     assert_frame_equal(lframe.T.loc[:, 'vowel'], lframe.loc['vowel'].T)
     assert_series_equal(lframe.T.loc[:, ('vowel', 'A')],
                         lframe.loc[('vowel', 'A')])
     assert_series_equal_not_name(lframe.T.loc[:, ('vowel', 'A', '$A$')],
                                  lframe.loc[('vowel', 'A')])
-    assert_series_equal(lframe.T.loc[0, 'vowel'], lframe.loc['vowel', 0])
+    assert_series_equal(lframe.T.loc[0, 'vowel'], lframe.loc['vowel', 0]) #!!
     assert lframe.T.loc[0, ('vowel', 'A')] == lframe.loc[('vowel', 'A'), 0]
     assert (lframe.T.loc[0, ('vowel', 'A', '$A$')]
             == lframe.loc[('vowel', 'A'), 0])
@@ -228,13 +230,13 @@ def test_LabelledDataFrame_column():
 
     assert_frame_equal_not_index(lframe, frame)
 
-    assert_series_equal(lframe.A, frame.A)
-    assert_series_equal(lframe['A'], frame['A'])
+    assert_series_equal_not_name(lframe.A, frame.A)
+    assert_series_equal_not_name(lframe['A'], frame['A'])
     assert_series_equal_not_name(lframe['A', '$A$'], frame['A'])
 
-    assert_series_equal(lframe.loc[:, 'A'], frame.loc[:, 'A'])
+    assert_series_equal_not_name(lframe.loc[:, 'A'], frame.loc[:, 'A'])
     assert lframe.at[0, 'A'] == frame.at[0, 'A']
-    assert_series_equal(lframe.xs('A', axis=1), frame.xs('A', axis=1))
+    assert_series_equal_not_name(lframe.xs('A', axis=1), frame.xs('A', axis=1))
 
     assert_array_equal(lframe.loc[:, ('A', '$A$')], frame.loc[:, 'A'])
     assert lframe.at[0, ('A', '$A$')] == frame.at[0, 'A']
@@ -274,17 +276,17 @@ def test_LabelledDataFrame_column_MultiIndex():
     assert_frame_equal_not_index(lframe, frame)
 
     assert_frame_equal_not_index(lframe.vowel, frame.vowel)
-    assert_series_equal(lframe.vowel.A, frame.vowel.A)
+    assert_series_equal_not_name(lframe.vowel.A, frame.vowel.A)
 
     assert_frame_equal_not_index(lframe['vowel'], frame['vowel'])
-    assert_series_equal(lframe['vowel', 'A'], frame['vowel', 'A'])
+    assert_series_equal_not_name(lframe['vowel', 'A'], frame['vowel', 'A'])
     assert_series_equal_not_name(lframe['vowel', 'A', '$A$'],
                                  frame['vowel', 'A'])
 
     assert_frame_equal_not_index(lframe.xs('vowel', axis=1),
                                  frame.xs('vowel', axis=1))
-    assert_series_equal(lframe.xs(('vowel', 'A'), axis=1),
-                        frame.xs(('vowel', 'A'), axis=1))
+    assert_series_equal_not_name(lframe.xs(('vowel', 'A'), axis=1),
+                                 frame.xs(('vowel', 'A'), axis=1))
     assert_series_equal_not_name(lframe.xs(('vowel', 'A', '$A$'), axis=1),
                                  frame.xs(('vowel', 'A'), axis=1))
 
