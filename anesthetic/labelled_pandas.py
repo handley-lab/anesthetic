@@ -4,6 +4,7 @@ from pandas.core.indexing import (_LocIndexer as _LocIndexer_,
                                   _AtIndexer as _AtIndexer_)
 import numpy as np
 from functools import cmp_to_key
+from pandas.errors import IndexingError
 
 
 def ac(funcs, *args):
@@ -19,7 +20,7 @@ def ac(funcs, *args):
     for f, l in funcs:
         try:
             results.append((f(*args), l))
-        except Exception as e:
+        except (KeyError, ValueError, TypeError, IndexingError) as e:
             errors.append(e)
 
     def cmp(X, Y):
@@ -53,7 +54,7 @@ def ac(funcs, *args):
             if hasattr(s, "name"):
                 try:
                     s.name = l[s.name]
-                except (ValueError, TypeError, KeyError):
+                except (TypeError, KeyError):
                     pass
             return s
     raise errors[-1]
@@ -115,7 +116,7 @@ class _LabelledObject(object):
                 return index.to_frame().droplevel(labs)[labs]
             else:
                 return Series('', index=index)
-        except (ValueError, TypeError, KeyError):
+        except (ValueError, TypeError):
             return None
 
     def get_label(self, param, axis=0):
