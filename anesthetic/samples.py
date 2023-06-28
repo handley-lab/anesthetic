@@ -173,7 +173,7 @@ class Samples(WeightedLabelledDataFrame):
 
     plot = CachedAccessor("plot", PlotAccessor)
 
-    def plot_1d(self, *args, **kwargs):
+    def plot_1d(self, axes=None, *args, **kwargs):
         """Create an array of 1D plots.
 
         Parameters
@@ -220,7 +220,8 @@ class Samples(WeightedLabelledDataFrame):
                 "of anesthetic 2.0 \'kind\'. Please update your code."
                 )
 
-        axes = kwargs.pop('axes', self.drop_labels().columns)
+        if axes is None:
+            axes = self.drop_labels().columns
 
         if not isinstance(axes, AxesSeries):
             _, axes = make_1d_axes(axes, labels=self.get_labels_map())
@@ -253,7 +254,7 @@ class Samples(WeightedLabelledDataFrame):
 
         return axes
 
-    def plot_2d(self, *args, **kwargs):
+    def plot_2d(self, axes=None, *args, **kwargs):
         """Create an array of 2D plots.
 
         To avoid interfering with y-axis sharing, one-dimensional plots are
@@ -356,7 +357,8 @@ class Samples(WeightedLabelledDataFrame):
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
-        axes = kwargs.pop('axes', self.drop_labels().columns)
+        if axes is None:
+            axes = self.drop_labels().columns
 
         if not isinstance(axes, AxesDataFrame):
             _, axes = make_2d_axes(axes, labels=self.get_labels(),
