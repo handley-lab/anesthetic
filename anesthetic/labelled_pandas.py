@@ -53,7 +53,7 @@ def ac(funcs, *args):
             if hasattr(s, "name"):
                 try:
                     s.name = l[s.name]
-                except KeyError:
+                except Exception:
                     pass
             return s
     raise errors[-1]
@@ -61,14 +61,15 @@ def ac(funcs, *args):
 
 class _LocIndexer(_LocIndexer_):
     def __getitem__(self, key):
-        return ac([(_LocIndexer_("loc", 
-                                 super(_LabelledObject, self.obj.drop_labels(i))
+        return ac([(_LocIndexer_("loc",
+                                 super(_LabelledObject,
+                                       self.obj.drop_labels(i))
                                  ).__getitem__,
                     self.obj.get_labels_map(i))
                    for i in self.obj._all_axes()] + [
-                       ((_LocIndexer_("loc", 
-                                 super(_LabelledObject, self.obj))
-                                 ).__getitem__, 
+                       ((_LocIndexer_("loc",
+                                      super(_LabelledObject, self.obj))
+                         ).__getitem__,
                         None)
                        ], key)
 
@@ -76,15 +77,16 @@ class _LocIndexer(_LocIndexer_):
 class _AtIndexer(_AtIndexer_):
     def __getitem__(self, key):
         return ac([(_AtIndexer_("at",
-                                 super(_LabelledObject, self.obj.drop_labels(i))
+                                super(_LabelledObject,
+                                      self.obj.drop_labels(i))
                                 ).__getitem__,
                     self.obj.get_labels_map(i))
                    for i in self.obj._all_axes()] + [
-                       ((_AtIndexer_("loc", 
-                                 super(_LabelledObject, self.obj))
-                                 ).__getitem__, 
+                       ((_AtIndexer_("loc",
+                                     super(_LabelledObject, self.obj))
+                         ).__getitem__,
                         None)
-                       ], key)                        
+                       ], key)
 
 
 class _LabelledObject(object):
@@ -160,7 +162,7 @@ class _LabelledObject(object):
         return _AtIndexer("at", self)
 
     def xs(self, key, axis=0, level=None, drop_level=True):
-        return ac([(super(_LabelledObject, self.drop_labels(i)).xs, 
+        return ac([(super(_LabelledObject, self.drop_labels(i)).xs,
                     self.get_labels_map(i))
                    for i in self._all_axes()] + [(super().xs, None)],
                   key, axis, level, drop_level)
@@ -168,7 +170,8 @@ class _LabelledObject(object):
     def __getitem__(self, key):
         return ac([(super(_LabelledObject, self.drop_labels(i)).__getitem__,
                     self.get_labels_map(i))
-                   for i in self._all_axes()] + [(super().__getitem__,None)], key)
+                   for i in self._all_axes()] + [(super().__getitem__, None)],
+                  key)
 
     def set_labels(self, labels, axis=0, inplace=False, level=None):
         """Set labels along an axis."""
