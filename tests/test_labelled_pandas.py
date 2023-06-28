@@ -174,7 +174,7 @@ def test_LabelledDataFrame_index_MultiIndex():
     assert_frame_equal_not_index(lframe, frame)
 
     assert_frame_equal_not_index(lframe.loc['vowel'], frame.loc['vowel'])
-    assert_series_equal_not_name(lframe.loc['vowel', 'A'], 
+    assert_series_equal_not_name(lframe.loc['vowel', 'A'],
                                  frame.loc['vowel', 'A'])
     assert lframe.loc['vowel', 'A'].name == '$A$'
     assert_series_equal_not_name(lframe.loc['vowel', 'A', '$A$'],
