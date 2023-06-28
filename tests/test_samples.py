@@ -1347,6 +1347,8 @@ def test_old_gui():
     with pytest.raises(NotImplementedError):
         make_1d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})
 
+    with pytest.raises(NotImplementedError):
+        samples.dlogX(1000)
 
 def test_groupby_stats():
     mcmc = read_chains('./tests/example_data/cb')

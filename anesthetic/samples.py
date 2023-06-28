@@ -872,6 +872,13 @@ class NestedSamples(Samples):
         logX.name = 'logX'
         return logX
 
+    # TODO: remove this in version >= 2.1
+    def dlogX(self, nsamples=None):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You should instead use logdX."
+            )
+
     def logdX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
 
