@@ -53,7 +53,7 @@ def ac(funcs, *args):
             if hasattr(s, "name"):
                 try:
                     s.name = l[s.name]
-                except Exception:
+                except (ValueError, TypeError, KeyError):
                     pass
             return s
     raise errors[-1]
@@ -115,7 +115,7 @@ class _LabelledObject(object):
                 return index.to_frame().droplevel(labs)[labs]
             else:
                 return Series('', index=index)
-        except Exception:
+        except (ValueError, TypeError, KeyError):
             return None
 
     def get_label(self, param, axis=0):
