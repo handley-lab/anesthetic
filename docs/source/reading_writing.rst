@@ -96,7 +96,7 @@ appropriate class: ``Samples``, ``MCMCSamples``, or ``NestedSamples``.
       samples = Samples(read_csv("filename.csv"))
 
 When loading in previously saved samples from hdf5, make sure to import the
-``anesthetic.io.read_hdf`` function, and not the ``pandas.read_hdf`` version. If
+``anesthetic.read_hdf`` function, and not the ``pandas.read_hdf`` version. If
 you forget to do this, the samples will be read in as a ``DataFrame``, with a
 consequent loss of functionality
 
@@ -105,7 +105,7 @@ consequent loss of functionality
 
   ::
   
-      from anesthetic.io import read_hdf
+      from anesthetic import read_hdf
       samples = read_hdf("filename.h5", "samples")
 
 
