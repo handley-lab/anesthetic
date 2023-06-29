@@ -64,4 +64,4 @@ read_hdf.__doc__ = _read_hdf.__doc__
 adjust_docstrings(read_hdf, 'read_hdf', 'anesthetic.read_hdf')
 adjust_docstrings(read_hdf, 'DataFrame', 'pandas.DataFrame')
 adjust_docstrings(read_hdf, ':func:`open`', '`open`')
-adjust_docstrings(read_hdf, ':class:`pandas.HDFStore`', '`pandas.HDFStore`')
+adjust_docstrings(read_hdf, '`pandas.HDFStore`', '`pandas.HDFStore`')
