@@ -75,18 +75,17 @@ or ``parquet`` files for reading and writing.
   :meth:`pandas.DataFrame.to_csv` for the various options of saving the data
   (e.g. choosing the delimiter etc.).
 
-* ``samples.to_parquet("filename.parquet")``: When reading and writing speed is
-  an issue, we recommend using the ``parquet`` file format, which should be
+* ``samples.to_hdf("filename.h5", "samples")``: When reading and writing speed
+  is an issue, we recommend using the ``hdf5`` file format, which should be
   faster than ``to_csv`` while still capable of handling the
-  :class:`pandas.MultiIndex` format.  Check out
-  :meth:`pandas.DataFrame.to_parquet` for more information.
+  :class:`pandas.MultiIndex` format.
 
 
 Loading ``NestedSamples`` or ``MCMCSamples``
 ============================================
 
-When loading in previously saved samples, make sure to use the appropriate
-class: ``Samples``, ``MCMCSamples``, or ``NestedSamples``.
+When loading in previously saved samples from csv, make sure to use the
+appropriate class: ``Samples``, ``MCMCSamples``, or ``NestedSamples``.
 
 * ``read_csv``:
 
@@ -96,13 +95,18 @@ class: ``Samples``, ``MCMCSamples``, or ``NestedSamples``.
       from anesthetic import Samples  # or MCMCSamples, or NestedSamples
       samples = Samples(read_csv("filename.csv"))
 
-* ``read_parquet``:
+When loading in previously saved samples from hdf5, make sure to import the
+``anesthetic.read_hdf`` function, and not the ``pandas.read_hdf`` version. If
+you forget to do this, the samples will be read in as a ``DataFrame``, with a
+consequent loss of functionality
+
+
+* ``read_hdf``:
 
   ::
   
-      from pandas import read_parquet
-      from anesthetic import Samples  # or MCMCSamples, or NestedSamples
-      samples = Samples(read_parquet("filename.parquet"))
+      from anesthetic import read_hdf
+      samples = read_hdf("filename.h5", "samples")
 
 
 Converting to GetDist
