@@ -426,7 +426,7 @@ def test_set_label(lseries):
     assert lseries.index.nlevels == 2
 
     lseries['Z'] = 1.0
-    assert lseries.get_label('Z') == ''
+    assert lseries.get_label('Z') == 'Z'
 
 
 def test_multiaxis_slice(test_multiaxis):

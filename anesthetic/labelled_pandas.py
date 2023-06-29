@@ -114,7 +114,10 @@ class _LabelledObject(object):
             labs = self.islabelled(axis)
             index = self._get_axis(axis)
             if labs:
-                return index.to_frame().droplevel(labs)[labs]
+                labels_map = index.to_frame().droplevel(labs)[labs]
+                replacement = labels_map.loc[labels_map == ''].index
+                labels_map.loc[labels_map == ''] = replacement
+                return labels_map
             else:
                 return index.to_series()
         except (ValueError, TypeError):
