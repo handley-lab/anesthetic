@@ -4,6 +4,7 @@ from pandas.core.indexing import (_LocIndexer as _LocIndexer_,
                                   _AtIndexer as _AtIndexer_)
 import numpy as np
 from functools import cmp_to_key
+from pandas.errors import IndexingError
 
 
 def ac(funcs, *args):
@@ -16,13 +17,15 @@ def ac(funcs, *args):
     """
     results = []
     errors = []
-    for f in funcs:
+    for f, l in funcs:
         try:
-            results.append(f(*args))
-        except Exception as e:
+            results.append((f(*args), l))
+        except (KeyError, ValueError, TypeError, IndexingError) as e:
             errors.append(e)
 
-    def cmp(x, y):
+    def cmp(X, Y):
+        x, _ = X
+        y, _ = Y
         if x.ndim > y.ndim:
             return 1
         elif x.ndim < y.ndim:
@@ -46,22 +49,36 @@ def ac(funcs, *args):
 
     results.sort(key=cmp_to_key(cmp))
 
-    for s in results:
+    for s, l in results:
         if s is not None:
+            if hasattr(s, "name"):
+                try:
+                    if l[s.name]:
+                        s.name = l[s.name]
+                except (TypeError, KeyError):
+                    pass
             return s
     raise errors[-1]
 
 
 class _LocIndexer(_LocIndexer_):
     def __getitem__(self, key):
-        return ac([_LocIndexer_("loc", self.obj.drop_labels(i)).__getitem__
-                   for i in self.obj._all_axes()] + [super().__getitem__], key)
+        return ac([(_LocIndexer_("loc",
+                                 super(_LabelledObject,
+                                       self.obj.drop_labels(i))
+                                 ).__getitem__,
+                    self.obj.get_labels_map(i))
+                   for i in self.obj._all_axes()], key)
 
 
 class _AtIndexer(_AtIndexer_):
     def __getitem__(self, key):
-        return ac([_AtIndexer_("at", self.obj.drop_labels(i)).__getitem__
-                   for i in self.obj._all_axes()] + [super().__getitem__], key)
+        return ac([(_AtIndexer_("at",
+                                super(_LabelledObject,
+                                      self.obj.drop_labels(i))
+                                ).__getitem__,
+                    self.obj.get_labels_map(i))
+                   for i in self.obj._all_axes()], key)
 
 
 class _LabelledObject(object):
@@ -91,14 +108,21 @@ class _LabelledObject(object):
         else:
             return None
 
-    def get_labels_map(self, axis=0):
+    def get_labels_map(self, axis=0, fill=True):
         """Retrieve mapping from paramnames to labels from an axis."""
-        labs = self.islabelled(axis)
-        index = self._get_axis(axis)
-        if labs:
-            return index.to_frame().droplevel(labs)[labs]
-        else:
-            return Series('', index=index)
+        try:
+            labs = self.islabelled(axis)
+            index = self._get_axis(axis)
+            if labs:
+                labels_map = index.to_frame().droplevel(labs)[labs]
+                if fill:
+                    replacement = labels_map.loc[labels_map == ''].index
+                    labels_map.loc[labels_map == ''] = replacement
+                return labels_map
+            else:
+                return index.to_series()
+        except (ValueError, TypeError):
+            return None
 
     def get_label(self, param, axis=0):
         """Retrieve mapping from paramnames to labels from an axis."""
@@ -106,7 +130,7 @@ class _LabelledObject(object):
 
     def set_label(self, param, value, axis=0, inplace=False):
         """Set a specific label to a specific value on an axis."""
-        labels = self.get_labels_map(axis)
+        labels = self.get_labels_map(axis, fill=False)
         labels[param] = value
         return self.set_labels(labels, axis=axis, inplace=inplace)
 
@@ -115,15 +139,15 @@ class _LabelledObject(object):
         axes = np.atleast_1d(axis)
         result = self.copy()
         for axis in axes:
-            if self.islabelled(axis):
+            if axis is not None and self.islabelled(axis):
                 result = result.droplevel(self.islabelled(axis), axis)
-        return result.__finalize__(self, "drop_weights")
+        return result.__finalize__(self, "drop_labels")
 
     def _all_axes(self):
         if isinstance(self, LabelledSeries):
-            return [0]
+            return [0, None]
         else:
-            return [0, 1, [0, 1]]
+            return [0, 1, [0, 1], None]
 
     @property
     def loc(self):
@@ -134,13 +158,13 @@ class _LabelledObject(object):
         return _AtIndexer("at", self)
 
     def xs(self, key, axis=0, level=None, drop_level=True):
-        return ac([super(_LabelledObject, self.drop_labels(i)).xs
-                   for i in self._all_axes()] + [super().xs],
+        return ac([(super(_LabelledObject, self.drop_labels(i)).xs,
+                    self.get_labels_map(i)) for i in self._all_axes()],
                   key, axis, level, drop_level)
 
     def __getitem__(self, key):
-        return ac([super(_LabelledObject, self.drop_labels(i)).__getitem__
-                   for i in self._all_axes()] + [super().__getitem__], key)
+        return ac([(super(_LabelledObject, self.drop_labels(i)).__getitem__,
+                    self.get_labels_map(i)) for i in self._all_axes()], key)
 
     def set_labels(self, labels, axis=0, inplace=False, level=None):
         """Set labels along an axis."""
