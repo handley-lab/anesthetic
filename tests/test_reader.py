@@ -58,8 +58,8 @@ def test_read_getdist():
 
     params = [0, 1, 2, 3, 4, 'logL', 'chain']
     assert all(mcmc.drop_labels().columns == params)
-    labels = [0, 1, 2, 3, 4, r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
-    assert mcmc.get_labels().tolist() == labels
+    labels = ['', '', '', '', '', r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
+    assert_array_equal(mcmc.get_labels(), labels)
 
 
 @pytest.mark.xfail('getdist' not in sys.modules,
@@ -78,10 +78,10 @@ def test_read_cobayamcmc():
               'chi2__norm', 'logL', 'chain']
     assert_array_equal(mcmc.drop_labels().columns, params)
     if 'getdist' in sys.modules:
-        labels = ['$x_0$', '$x_1$', 'minuslogprior', 'minuslogprior__0',
-                  r'$\chi^2$', r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
+        labels = ['$x_0$', '$x_1$', '', '', r'$\chi^2$',
+                  r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
                   r'$n_\mathrm{chain}$']
-        assert mcmc.get_labels().tolist() == labels
+        assert_array_equal(mcmc.get_labels(), labels)
 
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
