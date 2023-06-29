@@ -116,7 +116,7 @@ class _LabelledObject(object):
             if labs:
                 return index.to_frame().droplevel(labs)[labs]
             else:
-                return Series('', index=index)
+                return index.to_series()
         except (ValueError, TypeError):
             return None
 

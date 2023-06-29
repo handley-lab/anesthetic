@@ -405,8 +405,9 @@ def test_set_label(lseries):
 
     nolabels_map = lseries.drop_labels().get_labels_map()
     assert isinstance(nolabels_map, Series)
-    assert_array_equal(nolabels_map, '')
     assert_array_equal(nolabels_map.index, lseries.drop_labels().index)
+    assert nolabels_map['A'] == 'A'
+    assert nolabels_map['B'] == 'B'
 
     assert lseries.get_label('A') == '$A$'
     assert lseries.set_label('A', '$a$').get_label('A') == '$a$'
@@ -416,12 +417,12 @@ def test_set_label(lseries):
     assert lseries.get_label('A') == '$a$'
 
     lseries = lseries.drop_labels()
-    assert lseries.get_label('A') == ''
+    assert lseries.get_label('A') == 'A'
     assert lseries.index.nlevels == 1
 
     lseries.set_label('A', '$A$', inplace=True)
     assert lseries.get_label('A') == '$A$'
-    assert lseries.get_label('B') == ''
+    assert lseries.get_label('B') == 'B'
     assert lseries.index.nlevels == 2
 
     lseries['Z'] = 1.0
