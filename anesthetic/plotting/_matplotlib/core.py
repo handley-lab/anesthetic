@@ -93,10 +93,8 @@ class _PlanePlot2d(PlanePlot):
         )
         x = data[self.x]
         y = data[self.y]
-        if x.name:  # transfer the tex labels
-            self.x = x.name
-        if y.name:
-            self.y = y.name
+        self.x = x.name  # transfer the tex label
+        self.y = y.name  # transfer the tex label
         ax = self._get_ax(0)  # another one of these hard-coded 0s
 
         kwds = self.kwds.copy()
