@@ -53,7 +53,8 @@ def ac(funcs, *args):
         if s is not None:
             if hasattr(s, "name"):
                 try:
-                    s.name = l[s.name]
+                    if l[s.name]:
+                        s.name = l[s.name]
                 except (TypeError, KeyError):
                     pass
             return s
