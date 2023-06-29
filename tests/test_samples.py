@@ -506,6 +506,30 @@ def test_logX():
     assert (abs(logX.mean(axis=1) - pc.logX()) < logX.std(axis=1) * 3).all()
 
 
+def test_logdX():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+
+    logdX = pc.logdX()
+    assert isinstance(logdX, WeightedSeries)
+    assert_array_equal(logdX.index, pc.index)
+
+    nsamples = 10
+
+    logdX = pc.logdX(nsamples=nsamples)
+    assert isinstance(logdX, WeightedDataFrame)
+    assert_array_equal(logdX.index, pc.index)
+    assert_array_equal(logdX.columns, np.arange(nsamples))
+    assert logdX.columns.name == 'samples'
+
+    assert not (logdX > 0).to_numpy().any()
+
+    n = 1000
+    logdX = pc.logdX(n)
+
+    assert (abs(logdX.mean(axis=1) - pc.logdX()) < logdX.std(axis=1) * 3).all()
+
+
 def test_logbetaL():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')
@@ -1297,11 +1321,14 @@ def test_constructors():
 
 
 def test_old_gui():
-    with pytest.raises(TypeError):
+    # with pytest.raises(TypeError): TODO reinstate for >=2.1
+    with pytest.raises(ValueError):
         Samples(root='./tests/example_data/gd')
-    with pytest.raises(TypeError):
+    # with pytest.raises(TypeError): TODO reinstate for >=2.1
+    with pytest.raises(ValueError):
         MCMCSamples(root='./tests/example_data/gd')
-    with pytest.raises(TypeError):
+    # with pytest.raises(TypeError): TODO reinstate for >=2.1
+    with pytest.raises(ValueError):
         NestedSamples(root='./tests/example_data/pc')
 
     samples = read_chains('./tests/example_data/pc')
@@ -1343,6 +1370,9 @@ def test_old_gui():
         make_2d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})
     with pytest.raises(NotImplementedError):
         make_1d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})
+
+    with pytest.raises(NotImplementedError):
+        samples.dlogX(1000)
 
 
 def test_groupby_stats():

@@ -141,6 +141,18 @@ class Samples(WeightedLabelledDataFrame):
     _metadata = WeightedLabelledDataFrame._metadata + ['label']
 
     def __init__(self, *args, **kwargs):
+        # TODO: remove this in version >= 2.1
+        if 'root' in kwargs:
+            root = kwargs.pop('root')
+            name = self.__class__.__name__
+            raise ValueError(
+                "As of anesthetic 2.0, root is no longer a keyword argument.\n"
+                "To update your code, replace \n\n"
+                ">>> from anesthetic import %s\n"
+                ">>> %s(root=%s)\n\nwith\n\n"
+                ">>> from anesthetic import read_chains\n"
+                ">>> read_chains(%s)" % (name, name, root, root)
+                )
         logzero = kwargs.pop('logzero', -1e30)
         logL = kwargs.pop('logL', None)
         if logL is not None:
@@ -931,7 +943,14 @@ class NestedSamples(Samples):
         logX.name = 'logX'
         return logX
 
+    # TODO: remove this in version >= 2.1
     def dlogX(self, nsamples=None):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You should instead use logdX."
+            )
+
+    def logdX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
 
         Parameters
@@ -951,10 +970,10 @@ class NestedSamples(Samples):
         logX = self.logX(nsamples)
         logXp = logX.shift(1, fill_value=0)
         logXm = logX.shift(-1, fill_value=-np.inf)
-        dlogX = np.log(1 - np.exp(logXm-logXp)) + logXp - np.log(2)
-        dlogX.name = 'dlogX'
+        logdX = np.log(1 - np.exp(logXm-logXp)) + logXp - np.log(2)
+        logdX.name = 'logdX'
 
-        return dlogX
+        return logdX
 
     def _betalogL(self, beta=None):
         """Log(L**beta) convenience function.
@@ -1017,20 +1036,20 @@ class NestedSamples(Samples):
         if np.ndim(nsamples) > 0:
             return nsamples
 
-        dlogX = self.dlogX(nsamples)
+        logdX = self.logdX(nsamples)
         betalogL = self._betalogL(beta)
 
-        if dlogX.ndim == 1 and betalogL.ndim == 1:
-            logw = dlogX + betalogL
-        elif dlogX.ndim > 1 and betalogL.ndim == 1:
-            logw = dlogX.add(betalogL, axis=0)
-        elif dlogX.ndim == 1 and betalogL.ndim > 1:
-            logw = betalogL.add(dlogX, axis=0)
+        if logdX.ndim == 1 and betalogL.ndim == 1:
+            logw = logdX + betalogL
+        elif logdX.ndim > 1 and betalogL.ndim == 1:
+            logw = logdX.add(betalogL, axis=0)
+        elif logdX.ndim == 1 and betalogL.ndim > 1:
+            logw = betalogL.add(logdX, axis=0)
         else:
-            cols = MultiIndex.from_product([betalogL.columns, dlogX.columns])
-            dlogX = dlogX.reindex(columns=cols, level='samples')
+            cols = MultiIndex.from_product([betalogL.columns, logdX.columns])
+            logdX = logdX.reindex(columns=cols, level='samples')
             betalogL = betalogL.reindex(columns=cols, level='beta')
-            logw = betalogL+dlogX
+            logw = betalogL+logdX
         return logw
 
     def logZ(self, nsamples=None, beta=None):
