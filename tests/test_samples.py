@@ -1324,6 +1324,22 @@ def test_samples_dot_plot():
         pass
 
 
+@pytest.mark.parametrize('kind',
+                         ['kde', 'hist', 'kde_1d', 'hist_1d', 'fastkde_1d']
+                         if 'fastkde' in sys.modules else
+                         ['kde', 'hist', 'kde_1d', 'hist_1d'])
+def test_samples_dot_plot_legend(kind):
+    samples = read_chains('./tests/example_data/pc')
+    fig, ax = plt.subplots()
+    getattr(samples.x0.plot, kind)(ax=ax)
+    getattr(samples.x1.plot, kind)(ax=ax)
+    getattr(samples.x2.plot, kind)(ax=ax)
+    ax.legend()
+    assert ax.get_legend().get_texts()[0].get_text() == '$x_0$'
+    assert ax.get_legend().get_texts()[1].get_text() == '$x_1$'
+    assert ax.get_legend().get_texts()[2].get_text() == '$x_2$'
+
+
 def test_fixed_width():
     samples = read_chains('./tests/example_data/pc')
     labels = samples.get_labels()
