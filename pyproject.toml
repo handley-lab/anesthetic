@@ -62,7 +62,8 @@ test = ["pytest", "pytest-cov", "flake8", "pydocstyle", "packaging", "pre-commit
 astropy = ["astropy"]
 fastkde = ["fastkde"]
 getdist = ["getdist"]
-all = ["astropy", "fastkde", "getdist"]
+hdf5 = ["tables"]
+all = ["astropy", "fastkde", "getdist", "tables"]
 
 [project.scripts]
 anesthetic = "anesthetic.scripts:gui"
