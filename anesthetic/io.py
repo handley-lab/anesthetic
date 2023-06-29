@@ -1,12 +1,11 @@
 """Anesthetic overwrites for pandas hdf functionality."""
 from pandas import HDFStore as _HDFStore
 from pandas.io.pytables import to_hdf as _to_hdf, read_hdf as _read_hdf
-from anesthetic import __version__
-from anesthetic.samples import NestedSamples, MCMCSamples, Samples
 from anesthetic.utils import adjust_docstrings
 
 
 class HDFStore(_HDFStore):  # noqa: D101
+    from anesthetic.samples import NestedSamples, MCMCSamples, Samples
     anesthetic_types = {x.__name__: x
                         for x in [NestedSamples, MCMCSamples, Samples]}
 
@@ -23,6 +22,7 @@ class HDFStore(_HDFStore):  # noqa: D101
         return value
 
     def put(self, key, value, *args, **kwargs):  # noqa: D102
+        from anesthetic import __version__
         super().put(key, value, *args, **kwargs)
         storer = self.get_storer(key)
         storer.attrs._metadata = {
