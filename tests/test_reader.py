@@ -17,6 +17,11 @@ try:
     import getdist
 except ImportError:
     pass
+try:
+    from tables import Array  # noqa: F401
+    pytables_imported = True
+except ImportError:
+    pytables_imported = False
 
 
 @pytest.fixture(autouse=True)
@@ -237,9 +242,8 @@ def test_regex_escape():
 
 
 @pytest.mark.parametrize('root', ['pc', 'gd'])
-@pytest.mark.xfail('tables' not in sys.modules,
-                   raises=ImportError,
-                   reason="requires tables package")
+@pytest.mark.skipif(pytables_imported is False,
+                    reason="requires tables package")
 def test_hdf5(root):
     samples = read_chains('./tests/example_data/' + root)
     filename = 'test_hdf5.h5'
