@@ -418,13 +418,28 @@ def test_hist_levels():
 def test_plot_2d_no_axes():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
-    ns[['x0', 'x1', 'x2']].plot_2d()
+    axes = ns[['x0', 'x1', 'x2']].plot_2d()
+    assert axes.iloc[-1, 0].get_xlabel() == '$x_0$'
+    assert axes.iloc[-1, 1].get_xlabel() == '$x_1$'
+    assert axes.iloc[-1, 2].get_xlabel() == '$x_2$'
+
+    axes = ns[['x0', 'x1', 'x2']].drop_labels().plot_2d()
+    assert axes.iloc[-1, 0].get_xlabel() == 'x0'
+    assert axes.iloc[-1, 1].get_xlabel() == 'x1'
+    assert axes.iloc[-1, 2].get_xlabel() == 'x2'
 
 
 def test_plot_1d_no_axes():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
-    ns[['x0', 'x1', 'x2']].plot_1d()
+    axes = ns[['x0', 'x1', 'x2']].plot_1d()
+    assert axes.iloc[0].get_xlabel() == '$x_0$'
+    assert axes.iloc[1].get_xlabel() == '$x_1$'
+    assert axes.iloc[2].get_xlabel() == '$x_2$'
+    axes = ns[['x0', 'x1', 'x2']].drop_labels().plot_1d()
+    assert axes.iloc[0].get_xlabel() == 'x0'
+    assert axes.iloc[1].get_xlabel() == 'x1'
+    assert axes.iloc[2].get_xlabel() == 'x2'
 
 
 def test_mcmc_stats():
@@ -1276,10 +1291,27 @@ def test_samples_dot_plot():
     axes = samples.x2.plot.hist_1d(ax=ax)
     assert len(axes.containers) == 1
 
+    axes = samples.drop_labels().plot.kde_2d('x0', 'x1')
+    assert len(axes.collections) == 5
+    assert axes.get_xlabel() == 'x0'
+    assert axes.get_ylabel() == 'x1'
+    axes = samples.drop_labels().plot.hist_2d('x1', 'x0')
+    assert len(axes.collections) == 1
+    assert axes.get_xlabel() == 'x1'
+    assert axes.get_ylabel() == 'x0'
+    axes = samples.drop_labels().plot.scatter_2d('x2', 'x3')
+    assert axes.get_xlabel() == 'x2'
+    assert axes.get_ylabel() == 'x3'
+
     try:
         axes = samples.plot.fastkde_2d('x0', 'x1')
         assert axes.get_xlabel() == '$x_0$'
         assert axes.get_ylabel() == '$x_1$'
+        assert len(axes.collections) == 5
+        plt.close("all")
+        axes = samples.drop_labels().plot.fastkde_2d('x0', 'x1')
+        assert axes.get_xlabel() == 'x0'
+        assert axes.get_ylabel() == 'x1'
         assert len(axes.collections) == 5
         plt.close("all")
         axes = samples.x0.plot.fastkde_1d()
