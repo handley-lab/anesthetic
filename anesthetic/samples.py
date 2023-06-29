@@ -190,9 +190,6 @@ class Samples(WeightedLabelledDataFrame):
 
             If not provided, then all parameters are plotted. This is intended
             for plotting a sliced array (e.g. `samples[['x0','x1]].plot_1d()`.
-            It is not advisible to plot an entire frame, as it is
-            computationally expensive, and liable to run into linear algebra
-            errors for degenerate derived parameters.
 
         kind : str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
