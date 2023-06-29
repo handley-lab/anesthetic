@@ -69,7 +69,7 @@ def test_read_getdist():
 
 
 @pytest.mark.xfail('getdist' not in sys.modules,
-                   raises=ImportError,
+                   raises=NameError,
                    reason="requires getdist package")
 def test_read_cobayamcmc():
     np.random.seed(3)
