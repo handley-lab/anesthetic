@@ -34,6 +34,15 @@ anesthetic.read.getdist module
    :show-inheritance:
 
 
+anesthetic.read.hdf module
+--------------------------
+
+.. automodule:: anesthetic.read.hdf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 anesthetic.read.multinest module
 --------------------------------
 
