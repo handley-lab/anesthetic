@@ -12,7 +12,7 @@ from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 import pandas._testing as tm
-from anesthetic.io import HDFStore, read_hdf
+from anesthetic.read.hdf import HDFStore, read_hdf
 try:
     import getdist
 except ImportError:

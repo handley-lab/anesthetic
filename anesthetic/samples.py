@@ -470,8 +470,9 @@ class Samples(WeightedLabelledDataFrame):
             )
 
     def to_hdf(self, path_or_buf, key, *args, **kwargs):  # noqa: D102
-        import anesthetic.io
-        anesthetic.io.to_hdf(path_or_buf, key, self, *args, **kwargs)
+        import anesthetic.read.hdf
+        return anesthetic.read.hdf.to_hdf(path_or_buf, key, self,
+                                          *args, **kwargs)
 
 
 class MCMCSamples(Samples):
