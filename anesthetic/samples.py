@@ -48,9 +48,9 @@ class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
         """Retrieve labels from an axis."""
         return super().get_labels(axis=axis)
 
-    def get_labels_map(self, axis=1):
+    def get_labels_map(self, axis=1, fill=True):
         """Retrieve mapping from paramnames to labels from an axis."""
-        return super().get_labels_map(axis=axis)
+        return super().get_labels_map(axis=axis, fill=fill)
 
     def get_label(self, param, axis=1):
         """Retrieve mapping from paramnames to labels from an axis."""

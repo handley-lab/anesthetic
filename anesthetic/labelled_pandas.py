@@ -108,15 +108,16 @@ class _LabelledObject(object):
         else:
             return None
 
-    def get_labels_map(self, axis=0):
+    def get_labels_map(self, axis=0, fill=True):
         """Retrieve mapping from paramnames to labels from an axis."""
         try:
             labs = self.islabelled(axis)
             index = self._get_axis(axis)
             if labs:
                 labels_map = index.to_frame().droplevel(labs)[labs]
-                replacement = labels_map.loc[labels_map == ''].index
-                labels_map.loc[labels_map == ''] = replacement
+                if fill:
+                    replacement = labels_map.loc[labels_map == ''].index
+                    labels_map.loc[labels_map == ''] = replacement
                 return labels_map
             else:
                 return index.to_series()
@@ -129,7 +130,7 @@ class _LabelledObject(object):
 
     def set_label(self, param, value, axis=0, inplace=False):
         """Set a specific label to a specific value on an axis."""
-        labels = self.get_labels_map(axis)
+        labels = self.get_labels_map(axis, fill=False)
         labels[param] = value
         return self.set_labels(labels, axis=axis, inplace=inplace)
 
