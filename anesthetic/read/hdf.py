@@ -2,10 +2,10 @@
 from pandas import HDFStore as _HDFStore
 from pandas.io.pytables import to_hdf as _to_hdf, read_hdf as _read_hdf
 from anesthetic.utils import adjust_docstrings
+from anesthetic.samples import NestedSamples, MCMCSamples, Samples
 
 
 class HDFStore(_HDFStore):  # noqa: D101
-    from anesthetic.samples import NestedSamples, MCMCSamples, Samples
     anesthetic_types = {x.__name__: x
                         for x in [NestedSamples, MCMCSamples, Samples]}
 
