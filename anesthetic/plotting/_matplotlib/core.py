@@ -105,7 +105,7 @@ class _PlanePlot2d(PlanePlot):
         if style is not None:
             raise TypeError("'style' keyword argument is not "
                             f"supported by {self._kind}")
-        self._plot(ax, x, y, **kwds)
+        self._plot(ax, x.values, y.values, **kwds)
 
     def _args_adjust(self):
         pass
