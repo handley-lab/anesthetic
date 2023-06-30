@@ -246,7 +246,7 @@ def test_regex_escape():
                     reason="requires tables package")
 def test_hdf5(root):
     samples = read_chains('./tests/example_data/' + root)
-    filename = 'test_hdf5.h5'
+    filename = 'test_hdf5' + root + '.h5'
     key = "samples"
 
     with HDFStore(filename) as store:
