@@ -265,3 +265,4 @@ def test_hdf5(root):
     samples_ = read_hdf(filename, key)
     assert_frame_equal(samples_, samples)
     assert type(samples_) == type(samples)
+    os.remove(filename)
