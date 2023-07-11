@@ -19,7 +19,6 @@ def close_figures_on_teardown():
 def test_gui(root):
     if 'un' in root and 'h5py' not in sys.modules:
         pytest.skip("`h5py` not in sys.modules, but needed for ultranest.")
-    print("Fooooooooooooooooooooooooooooo")
     samples = read_chains(root)
     plotter = samples.gui()
 
