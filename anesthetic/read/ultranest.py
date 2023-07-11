@@ -1,12 +1,13 @@
 """Read NestedSamples from ultranest results."""
 import os
 from anesthetic.samples import NestedSamples
-import h5py
 import json
 
 
 def read_ultranest(root, *args, **kwargs):
     """Read <root>ev.dat and <root>phys_live.points in MultiNest format."""
+    import h5py
+
     with open(os.path.join(root, 'info', 'results.json')) as infofile:
         labels = json.load(infofile)['paramnames']
     num_params = len(labels)
