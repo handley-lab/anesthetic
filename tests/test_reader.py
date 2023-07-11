@@ -15,6 +15,10 @@ from anesthetic.read.ultranest import read_ultranest
 import pandas._testing as tm
 from anesthetic.read.hdf import HDFStore, read_hdf
 try:
+    import h5py  # noqa: F401
+except ImportError:
+    pass
+try:
     import getdist
 except ImportError:
     pass
@@ -185,6 +189,9 @@ def test_read_multinest():
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
+@pytest.mark.xfail('h5py' not in sys.modules,
+                   raises=NameError,
+                   reason="ultranest reading requires `h5py` package")
 def test_read_ultranest():
     np.random.seed(3)
     ns = read_ultranest('./tests/example_data/un')
