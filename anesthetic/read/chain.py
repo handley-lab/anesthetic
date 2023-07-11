@@ -46,7 +46,11 @@ def read_chains(root, *args, **kwargs):
             "anesthetic.html#anesthetic.samples.MCMCSamples.remove_burn_in"
         )
     errors = []
-    for read in [read_polychord, read_multinest, read_cobaya, read_ultranest, read_getdist]:
+    readers = [
+        read_polychord, read_multinest, read_cobaya,
+        read_ultranest, read_getdist
+    ]
+    for read in readers:
         try:
             samples = read(root, *args, **kwargs)
             samples.root = root

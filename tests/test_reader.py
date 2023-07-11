@@ -11,6 +11,7 @@ from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
+from anesthetic.read.ultranest import read_ultranest
 import pandas._testing as tm
 from anesthetic.read.hdf import HDFStore, read_hdf
 try:
@@ -179,6 +180,25 @@ def test_read_multinest():
     assert_array_equal(ns.drop_labels().columns, params)
     labels.remove(r'$\ln\mathcal{L}_\mathrm{birth}$')
     assert_array_equal(ns.get_labels(), labels)
+    assert isinstance(ns, NestedSamples)
+    ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
+
+
+def test_read_ultranest():
+    np.random.seed(3)
+    ns = read_ultranest('./tests/example_data/un')
+    params = ['a', 'b', 'c', 'd', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = ['a',
+              'b',
+              'c',
+              'd',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+    assert_array_equal(ns.get_labels(), labels)
+
     assert isinstance(ns, NestedSamples)
     ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
