@@ -200,8 +200,8 @@ def test_read_ultranest():
     assert_array_equal(ns.get_labels(), labels)
 
     assert isinstance(ns, NestedSamples)
-    ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
-    ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
+    ns.plot_2d(['a', 'b', 'c', 'd'])
+    ns.plot_1d(['a', 'b', 'c', 'd'])
 
 
 def test_read_polychord():
