@@ -355,7 +355,8 @@ class AxesDataFrame(DataFrame):
         all_params = list(axes.columns) + list(axes.index)
         if labels is None:
             labels = {}
-        labels = {p: labels[p] if p in labels else p for p in all_params}
+        labels = {p: labels[p] if isinstance(labels, dict) and p in labels
+                  else p for p in all_params}
 
         for y, axes_row in axes.iterrows():
             if axes_row.size:
