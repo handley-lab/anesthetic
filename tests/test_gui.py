@@ -59,11 +59,11 @@ def test_gui(root):
                                   "./tests/example_data/un"])
 def test_gui_params(root):
     samples = read_chains(root)
+    params = samples.columns.get_level_values(0).to_list()
     plotter = samples.gui()
-    assert len(plotter.param_choice.buttons.labels) == 8
+    assert len(plotter.param_choice.buttons.labels) == len(params)
 
-    params = samples.columns.get_level_values(0)[:2]
-    plotter = samples.gui(params=params)
+    plotter = samples.gui(params=params[:2])
     assert len(plotter.param_choice.buttons.labels) == 2
 
 
