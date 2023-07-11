@@ -1,8 +1,8 @@
 """Read NestedSamples from ultranest results."""
 import os
+import json
 from anesthetic.samples import NestedSamples
 try:
-    import json
     import h5py
 except ImportError:
     pass
