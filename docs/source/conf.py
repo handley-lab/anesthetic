@@ -57,6 +57,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.imgconverter',
+    'sphinx_copybutton',
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
 ]
@@ -101,6 +102,12 @@ nitpick_ignore = [('py:obj', 'pandas.core.groupby.SeriesGroupBy.sample')] # not 
 
 # -- Options for autosectionlabel------------------------------------------
 autosectionlabel_prefix_document = True
+
+
+# -- Options for sphinx-copybutton ----------------------------------------
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
+
 
 # -- Options for numpydoc -------------------------------------------------
 numpydoc_show_inherited_class_members = False
