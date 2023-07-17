@@ -247,6 +247,7 @@ class Samples(WeightedLabelledDataFrame):
                 self[x].plot(ax=ax, xlabel=xlabel,
                              *args, **kwargs)
                 ax.set_xlabel(xlabel)
+                ax.set_ylabel("")
             else:
                 ax.plot([], [])
 
