@@ -1360,12 +1360,24 @@ def test_samples_plot_labels():
     samples = read_chains('./tests/example_data/pc')
     columns = ['x0', 'x1', 'x2', 'x3', 'x4']
     axes = samples.plot_2d(columns)
-
     for col, ax in zip(columns, axes.loc[:, 'x0']):
         assert samples.get_label(col, 1) == ax.get_ylabel()
-
     for col, ax in zip(columns, axes.loc['x4', :]):
         assert samples.get_label(col, 1) == ax.get_xlabel()
+
+    samples = samples.drop_labels()
+    axes = samples.plot_2d(columns)
+    for col, ax in zip(columns, axes.loc[:, 'x0']):
+        assert samples.get_label(col) == ax.get_ylabel()
+    for col, ax in zip(columns, axes.loc['x4', :]):
+        assert samples.get_label(col) == ax.get_xlabel()
+
+    samples.set_label('x0', 'x0')
+    axes = samples.plot_2d(columns)
+    for col, ax in zip(columns, axes.loc[:, 'x0']):
+        assert samples.get_label(col) == ax.get_ylabel()
+    for col, ax in zip(columns, axes.loc['x4', :]):
+        assert samples.get_label(col) == ax.get_xlabel()
 
 
 def test_constructors():
