@@ -60,9 +60,10 @@ def mcmc_sim(ndims=5):
 
 np.random.seed(0)
 data, logL, weights = mcmc_sim()
-mcmc = MCMCSamples(data=data, columns=columns, logL=logL, weights=weights, tex=tex)
+mcmc = MCMCSamples(data=data, logL=logL, weights=weights,
+                   columns=columns, labels=tex)
 mcmc['minuslogL'] = -mcmc.logL
-mcmc['weight'] = mcmc.weights
+mcmc['weight'] = mcmc.get_weights()
 
 
 # MCMC multiple files
@@ -106,8 +107,10 @@ def ns_sim(ndims=5, nlive=125):
 np.random.seed(0)
 data, logL, logL_birth, live, live_logL, live_logL_birth = ns_sim()
 
-ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
-live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
+ns = NestedSamples(data=data, logL=logL, logL_birth=logL_birth,
+                   columns=columns, labels=tex)
+live_ns = NestedSamples(data=live, logL=live_logL, logL_birth=live_logL_birth,
+                        columns=columns, labels=tex)
 
 # Dead file for polychord
 root = './tests/example_data/pc'
@@ -121,10 +124,10 @@ ns['cluster'] = 1
 live_ns['cluster']=1
 root = './tests/example_data/mn'
 roots.append(root)
-ns['dlogX'] = ns.dlogX()
-ns[columns + ['logL', 'logL_birth', 'dlogX', 'cluster']].to_csv(root + 'dead-birth.txt', sep=' ', index=False, header=False)
+ns['logdX'] = ns.logdX()
+ns[columns + ['logL', 'logL_birth', 'logdX', 'cluster']].to_csv(root + 'dead-birth.txt', sep=' ', index=False, header=False)
 live_ns[columns + ['logL', 'logL_birth', 'cluster']].to_csv(root + 'phys_live-birth.txt', sep=' ', index=False, header=False)
-ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
+ns[columns + ['logL', 'logdX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
 live_ns[columns + ['logL', 'cluster']].to_csv(root + 'phys_live.points', sep=' ', index=False, header=False)
 
 
@@ -132,7 +135,7 @@ live_ns[columns + ['logL', 'cluster']].to_csv(root + 'phys_live.points', sep=' '
 root = './tests/example_data/mn_old'
 roots.append(root)
 
-ns[columns + ['logL', 'dlogX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
+ns[columns + ['logL', 'logdX', 'cluster']].to_csv(root + 'ev.dat', sep=' ', index=False, header=False)
 ns[columns + ['logL', 'cluster']].to_csv(root + 'phys_live.points', sep=' ', index=False, header=False)
 
 # Run with single line live points file
@@ -142,8 +145,10 @@ i = np.argsort(live_logL)
 data, live = np.split(np.concatenate([data, live[i]]), [-1])
 logL, live_logL = np.split(np.concatenate([logL, live_logL[i]]), [-1])
 logL_birth, live_logL_birth = np.split(np.concatenate([logL_birth, live_logL_birth[i]]), [-1])
-ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
-live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
+ns = NestedSamples(data=data, logL=logL, logL_birth=logL_birth,
+                   columns=columns, labels=tex)
+live_ns = NestedSamples(data=live, logL=live_logL, logL_birth=live_logL_birth,
+                        columns=columns, labels=tex)
 
 ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
 live_ns[columns + ['logL', 'logL_birth']].to_csv(root + '_phys_live-birth.txt', sep=' ', index=False, header=False)
@@ -154,8 +159,10 @@ roots.append(root)
 data, live = np.split(np.concatenate([data, live]), [len(data)+1])
 logL, live_logL = np.split(np.concatenate([logL, live_logL]), [len(data)+1])
 logL_birth, live_logL_birth = np.split(np.concatenate([logL_birth, live_logL_birth]), [len(data)+1])
-ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
-live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
+ns = NestedSamples(data=data, logL=logL, logL_birth=logL_birth,
+                   columns=columns, labels=tex)
+live_ns = NestedSamples(data=live, logL=live_logL, logL_birth=live_logL_birth,
+                        columns=columns, labels=tex)
 
 ns[columns + ['logL', 'logL_birth']].to_csv(root + '_dead-birth.txt', sep=' ', index=False, header=False)
 live_ns[columns + ['logL', 'logL_birth']].to_csv(root + '_phys_live-birth.txt', sep=' ', index=False, header=False)
@@ -164,8 +171,10 @@ live_ns[columns + ['logL', 'logL_birth']].to_csv(root + '_phys_live-birth.txt', 
 
 # Second run with different live points
 data, logL, logL_birth, live, live_logL, live_logL_birth = ns_sim(nlive=250)
-ns = NestedSamples(data=data, columns=columns, logL=logL, logL_birth=logL_birth, tex=tex)
-live_ns = NestedSamples(data=live, columns=columns, logL=live_logL, logL_birth=live_logL_birth, tex=tex)
+ns = NestedSamples(data=data, logL=logL, logL_birth=logL_birth,
+                   columns=columns, labels=tex)
+live_ns = NestedSamples(data=live, logL=live_logL, logL_birth=live_logL_birth,
+                        columns=columns, labels=tex)
 
 # Dead file for polychord
 root = './tests/example_data/pc_250'
