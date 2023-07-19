@@ -1,4 +1,4 @@
-"""Read NestedSamples from multinest chains."""
+"""Read NestedSamples from MultiNest chains."""
 import os
 import numpy as np
 from anesthetic.read.getdist import read_paramnames
@@ -6,7 +6,17 @@ from anesthetic.samples import NestedSamples
 
 
 def read_multinest(root, *args, **kwargs):
-    """Read <root>ev.dat and <root>phys_live.points in MultiNest format."""
+    """Read MultiNest chain files.
+
+    Parameters
+    ----------
+    root : str
+        root name for reading files in MultiNest format, i.e. the files
+        ``<root>ev.dat`` and ``<root>phys_live.points`` in the old format, and
+        ``<root>dead-birth.txt`` and ``<root>phys_live-birth.txt`` in the new
+        format.
+
+    """
     try:
         data = np.loadtxt(root + 'dead-birth.txt')
         samples, logL, logL_birth, _ = np.split(data, [-4, -3, -2], axis=1)

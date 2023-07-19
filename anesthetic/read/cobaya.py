@@ -1,4 +1,4 @@
-"""Read MCMCSamples from cobaya chains."""
+"""Read MCMCSamples from Cobaya chains."""
 import os
 import re
 import numpy as np
@@ -13,8 +13,8 @@ def read_paramnames(root):
     columns as there are parameters (sampled and derived) plus an
     additional two corresponding to the weights (first column) and the
     log-posterior (second column). The first line should start with a # and
-    should list the parameter names corresponding to the columns. This
-    will be used as label in the pandas array.
+    should list the parameter names corresponding to the columns. These
+    will be used as handles in the pandas array.
     """
     with open(root + ".1.txt") as f:
         header = f.readline()[1:]
@@ -33,6 +33,12 @@ def read_cobaya(root, *args, **kwargs):
 
     Note that in order to optimally read chains from Cobaya you need to have
     `GetDist <https://getdist.readthedocs.io/en/latest/>`__ installed.
+
+    Parameters
+    ----------
+    root : str
+        root name for reading files in Cobaya format, i.e. the files
+        ``<root>.*.txt`` and ``<root>.updated.yaml``.
 
     Returns
     -------
