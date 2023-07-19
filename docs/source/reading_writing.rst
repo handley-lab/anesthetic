@@ -5,16 +5,17 @@ Reading and writing
 
 .. _reading chains:
 
-Reading chain files from PolyChord, MultiNest, CosmoMC, or Cobaya
-=================================================================
+Reading chain files from PolyChord, MultiNest, UltraNest, CosmoMC, or Cobaya
+============================================================================
 
-`MultiNest <https://github.com/farhanferoz/MultiNest>`_
+If you have finished nested sampling or MCMC runs from one of:
 
-If you have finished nested sampling or MCMC runs from
-`PolyChord <https://github.com/PolyChord/PolyChordLite>`_,
-`MultiNest <https://github.com/farhanferoz/MultiNest>`_,
-`CosmoMC <https://github.com/cmbant/CosmoMC>`_, or
-`Cobaya <https://github.com/CobayaSampler/cobaya>`_,
+* `PolyChord <https://polychord.io>`_: https://github.com/PolyChord/PolyChordLite
+* MultiNest: https://github.com/farhanferoz/MultiNest
+* `UltraNest <https://johannesbuchner.github.io/UltraNest/index.html>`_: https://github.com/JohannesBuchner/UltraNest
+* `CosmoMC <https://cosmologist.info/cosmomc/readme.html>`_: https://github.com/cmbant/CosmoMC
+* `Cobaya <https://cobaya.readthedocs.io>`_: https://github.com/CobayaSampler/cobaya
+
 then you should be able to read in the chain files directly, by passing the
 ``root`` to the :func:`anesthetic.read.chain.read_chains` function.
 
@@ -28,6 +29,14 @@ out the examples listed here.
       
       from anesthetic import read_chains
       samples = read_chains("anesthetic/tests/example_data/pc")
+
+* UltraNest samples, which will be an instance of the
+  :class:`anesthetic.samples.NestedSamples` class:
+
+  ::
+      
+      from anesthetic import read_chains
+      samples = read_chains("anesthetic/tests/example_data/un")
 
 * Cobaya samples, which will be an instance of the
   :class:`anesthetic.samples.MCMCSamples` class:

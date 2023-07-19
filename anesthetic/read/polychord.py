@@ -1,4 +1,4 @@
-"""Read NestedSamples from polychord chains."""
+"""Read NestedSamples from PolyChord chains."""
 import os
 import numpy as np
 from anesthetic.read.getdist import read_paramnames
@@ -6,7 +6,15 @@ from anesthetic.samples import NestedSamples
 
 
 def read_polychord(root, *args, **kwargs):
-    """Read ``<root>_dead-birth.txt`` in PolyChord format."""
+    """Read PolyChord chain files.
+
+    Parameters
+    ----------
+    root : str
+        root name for reading files in PolyChord format, i.e. the files
+        ``<root>_dead-birth.txt`` and ``<root>_phys_live-birth.txt``.
+
+    """
     birth_file = root + '_dead-birth.txt'
     birth_file
     data = np.loadtxt(birth_file)

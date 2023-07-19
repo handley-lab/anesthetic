@@ -11,8 +11,13 @@ from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
+from anesthetic.read.ultranest import read_ultranest
 import pandas._testing as tm
 from anesthetic.read.hdf import HDFStore, read_hdf
+try:
+    import h5py  # noqa: F401
+except ImportError:
+    pass
 try:
     import getdist
 except ImportError:
@@ -184,6 +189,28 @@ def test_read_multinest():
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
+@pytest.mark.xfail('h5py' not in sys.modules,
+                   raises=NameError,
+                   reason="ultranest reading requires `h5py` package")
+def test_read_ultranest():
+    np.random.seed(3)
+    ns = read_ultranest('./tests/example_data/un')
+    params = ['a', 'b', 'c', 'd', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = ['a',
+              'b',
+              'c',
+              'd',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+    assert_array_equal(ns.get_labels(), labels)
+
+    assert isinstance(ns, NestedSamples)
+    ns.plot_2d(['a', 'b', 'c', 'd'])
+    ns.plot_1d(['a', 'b', 'c', 'd'])
+
+
 def test_read_polychord():
     np.random.seed(3)
     ns = read_polychord('./tests/example_data/pc')
@@ -244,9 +271,9 @@ def test_regex_escape():
 @pytest.mark.parametrize('root', ['pc', 'gd'])
 @pytest.mark.skipif(pytables_imported is False,
                     reason="requires tables package")
-def test_hdf5(root):
+def test_hdf5(tmp_path, root):
     samples = read_chains('./tests/example_data/' + root)
-    filename = 'test_hdf5.h5'
+    filename = tmp_path / ('test_hdf5' + root + '.h5')
     key = "samples"
 
     with HDFStore(filename) as store:
