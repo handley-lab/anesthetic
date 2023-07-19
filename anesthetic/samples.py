@@ -360,7 +360,7 @@ class Samples(WeightedLabelledDataFrame):
             axes = self.drop_labels().columns
 
         if not isinstance(axes, AxesDataFrame):
-            _, axes = make_2d_axes(axes, labels=self.get_labels(),
+            _, axes = make_2d_axes(axes, labels=self.get_labels_map(),
                                    upper=('upper' in kind),
                                    lower=('lower' in kind),
                                    diagonal=('diagonal' in kind))

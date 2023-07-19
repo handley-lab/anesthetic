@@ -3,6 +3,7 @@ from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
+from anesthetic.read.ultranest import read_ultranest
 
 
 def read_chains(root, *args, **kwargs):
@@ -12,6 +13,7 @@ def read_chains(root, *args, **kwargs):
 
         * `PolyChord <https://github.com/PolyChord/PolyChordLite>`_,
         * `MultiNest <https://github.com/farhanferoz/MultiNest>`_,
+        * `UltraNest <https://github.com/JohannesBuchner/UltraNest>`_,
         * `CosmoMC <https://github.com/cmbant/CosmoMC>`_,
         * `Cobaya <https://github.com/CobayaSampler/cobaya>`_,
         * or anything `GetDist <https://github.com/cmbant/getdist>`_
@@ -45,7 +47,11 @@ def read_chains(root, *args, **kwargs):
             "anesthetic.html#anesthetic.samples.MCMCSamples.remove_burn_in"
         )
     errors = []
-    for read in [read_polychord, read_multinest, read_cobaya, read_getdist]:
+    readers = [
+        read_polychord, read_multinest, read_cobaya,
+        read_ultranest, read_getdist
+    ]
+    for read in readers:
         try:
             samples = read(root, *args, **kwargs)
             samples.root = root
