@@ -14,6 +14,7 @@ authors = [
     { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
     { name="Adam Ormondroyd", email="ano23@cam.ac.uk" },
     { name="Harry Bevins", email="htjb2@cam.ac.uk" },
+    { name="Johannes Buchner", email="jbuchner@mpe.mpg.de" },
     { name="Ethan Carragher", email="ethan.carragher@adelaide.edu.au" },
     { name="Andrew Fowlie", email="andrew.j.fowlie@googlemail.com" },
     { name="Thomas Gessey-Jones", email="tg400@cam.ac.uk"},
@@ -59,10 +60,12 @@ classifiers = [
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx_rtd_theme", "numpydoc"]
 test = ["pytest", "pytest-cov", "flake8", "pydocstyle", "packaging", "pre-commit"]
+ultranest = ["h5py"]
 astropy = ["astropy"]
 fastkde = ["fastkde"]
 getdist = ["getdist"]
-all = ["astropy", "fastkde", "getdist"]
+hdf5 = ["tables"]
+all = ["h5py", "astropy", "fastkde", "getdist", "tables"]
 
 [project.scripts]
 anesthetic = "anesthetic.scripts:gui"

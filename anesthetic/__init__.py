@@ -2,6 +2,7 @@
 import anesthetic.samples
 import anesthetic.plot
 import anesthetic.read.chain
+import anesthetic.read.hdf
 
 import pandas
 import pandas.plotting._core
@@ -47,4 +48,5 @@ NestedSamples = anesthetic.samples.NestedSamples
 make_2d_axes = anesthetic.plot.make_2d_axes
 make_1d_axes = anesthetic.plot.make_1d_axes
 
+read_hdf = anesthetic.read.hdf.read_hdf
 read_chains = anesthetic.read.chain.read_chains

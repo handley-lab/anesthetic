@@ -709,7 +709,7 @@ def temporary_seed(seed):
         np.random.set_state(state)
 
 
-def adjust_docstrings(cls, pattern, repl, *args, **kwargs):
+def adjust_docstrings(obj, pattern, repl, *args, **kwargs):
     """Adjust the docstrings of a class using regular expressions.
 
     After the first argument, the remaining arguments are identical to re.sub.
@@ -725,11 +725,17 @@ def adjust_docstrings(cls, pattern, repl, *args, **kwargs):
     repl : str
         replacement string
     """
-    for key, val in cls.__dict__.items():
-        doc = inspect.getdoc(val)
+    if inspect.isclass(obj):
+        for key, val in obj.__dict__.items():
+            doc = inspect.getdoc(val)
+            if doc is not None:
+                newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
+                try:
+                    obj.__dict__[key].__doc__ = newdoc
+                except AttributeError:
+                    pass
+    else:
+        doc = inspect.getdoc(obj)
         if doc is not None:
             newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
-            try:
-                cls.__dict__[key].__doc__ = newdoc
-            except AttributeError:
-                pass
+            obj.__doc__ = newdoc

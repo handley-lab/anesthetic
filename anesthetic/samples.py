@@ -19,6 +19,7 @@ from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
+from anesthetic.utils import adjust_docstrings
 import anesthetic.weighted_pandas
 from anesthetic.plotting import PlotAccessor
 anesthetic.weighted_pandas._WeightedObject.plot =\
@@ -48,9 +49,9 @@ class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
         """Retrieve labels from an axis."""
         return super().get_labels(axis=axis)
 
-    def get_labels_map(self, axis=1):
+    def get_labels_map(self, axis=1, fill=True):
         """Retrieve mapping from paramnames to labels from an axis."""
-        return super().get_labels_map(axis=axis)
+        return super().get_labels_map(axis=axis, fill=fill)
 
     def get_label(self, param, axis=1):
         """Retrieve mapping from paramnames to labels from an axis."""
@@ -173,12 +174,12 @@ class Samples(WeightedLabelledDataFrame):
 
     plot = CachedAccessor("plot", PlotAccessor)
 
-    def plot_1d(self, axes, *args, **kwargs):
+    def plot_1d(self, axes=None, *args, **kwargs):
         """Create an array of 1D plots.
 
         Parameters
         ----------
-        axes : plotting axes
+        axes : plotting axes, optional
             Can be:
 
             * list(str) or str
@@ -187,6 +188,9 @@ class Samples(WeightedLabelledDataFrame):
             If a :class:`pandas.Series` is provided as an existing set of axes,
             then this is used for creating the plot. Otherwise, a new set of
             axes are created using the list or lists of strings.
+
+            If not provided, then all parameters are plotted. This is intended
+            for plotting a sliced array (e.g. `samples[['x0','x1]].plot_1d()`.
 
         kind : str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
@@ -213,6 +217,9 @@ class Samples(WeightedLabelledDataFrame):
                 "You are using the anesthetic 1.0 kwarg \'plot_type\' instead "
                 "of anesthetic 2.0 \'kind\'. Please update your code."
                 )
+
+        if axes is None:
+            axes = self.drop_labels().columns
 
         if not isinstance(axes, AxesSeries):
             _, axes = make_1d_axes(axes, labels=self.get_labels_map())
@@ -245,7 +252,7 @@ class Samples(WeightedLabelledDataFrame):
 
         return axes
 
-    def plot_2d(self, axes, *args, **kwargs):
+    def plot_2d(self, axes=None, *args, **kwargs):
         """Create an array of 2D plots.
 
         To avoid interfering with y-axis sharing, one-dimensional plots are
@@ -254,7 +261,7 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        axes : plotting axes
+        axes : plotting axes, optional
             Can be:
                 - list(str) if the x and y axes are the same
                 - [list(str),list(str)] if the x and y axes are different
@@ -263,6 +270,12 @@ class Samples(WeightedLabelledDataFrame):
             If a :class:`pandas.DataFrame` is provided as an existing set of
             axes, then this is used for creating the plot. Otherwise, a new set
             of axes are created using the list or lists of strings.
+
+            If not provided, then all parameters are plotted. This is intended
+            for plotting a sliced array (e.g. `samples[['x0','x1]].plot_2d()`.
+            It is not advisible to plot an entire frame, as it is
+            computationally expensive, and liable to run into linear algebra
+            errors for degenerate derived parameters.
 
         kind/kinds : dict, optional
             What kinds of plots to produce. Dictionary takes the keys
@@ -342,8 +355,11 @@ class Samples(WeightedLabelledDataFrame):
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
+        if axes is None:
+            axes = self.drop_labels().columns
+
         if not isinstance(axes, AxesDataFrame):
-            _, axes = make_2d_axes(axes, labels=self.get_labels(),
+            _, axes = make_2d_axes(axes, labels=self.get_labels_map(),
                                    upper=('upper' in kind),
                                    lower=('lower' in kind),
                                    diagonal=('diagonal' in kind))
@@ -538,6 +554,11 @@ class Samples(WeightedLabelledDataFrame):
             "tex = samples.tex[label]        # anesthetic 1.0\n"
             "tex = samples.get_label(label)  # anesthetic 2.0"
             )
+
+    def to_hdf(self, path_or_buf, key, *args, **kwargs):  # noqa: D102
+        import anesthetic.read.hdf
+        return anesthetic.read.hdf.to_hdf(path_or_buf, key, self,
+                                          *args, **kwargs)
 
 
 class MCMCSamples(Samples):
@@ -1394,3 +1415,10 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples.label = label
 
     return new_samples
+
+
+adjust_docstrings(Samples.to_hdf, r'(pd|pandas)\.DataFrame', 'DataFrame')
+adjust_docstrings(Samples.to_hdf, 'DataFrame', 'pandas.DataFrame')
+adjust_docstrings(Samples.to_hdf, r'(pd|pandas)\.read_hdf', 'read_hdf')
+adjust_docstrings(Samples.to_hdf, 'read_hdf', 'pandas.read_hdf')
+adjust_docstrings(Samples.to_hdf, ':func:`open`', '`open`')
