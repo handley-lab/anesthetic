@@ -244,9 +244,9 @@ def test_regex_escape():
 @pytest.mark.parametrize('root', ['pc', 'gd'])
 @pytest.mark.skipif(pytables_imported is False,
                     reason="requires tables package")
-def test_hdf5(root):
+def test_hdf5(tmp_path, root):
     samples = read_chains('./tests/example_data/' + root)
-    filename = 'test_hdf5' + root + '.h5'
+    filename = tmp_path / ('test_hdf5' + root + '.h5')
     key = "samples"
 
     with HDFStore(filename) as store:
@@ -265,4 +265,3 @@ def test_hdf5(root):
     samples_ = read_hdf(filename, key)
     assert_frame_equal(samples_, samples)
     assert type(samples_) == type(samples)
-    os.remove(filename)
