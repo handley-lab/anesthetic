@@ -1380,6 +1380,23 @@ def test_samples_plot_labels():
         assert samples.get_label(col) == ax.get_xlabel()
 
 
+@pytest.mark.parametrize('kind', ['kde', 'hist', 'fastkde']
+                         if 'fastkde' in sys.modules else
+                         ['kde', 'hist'])
+def test_samples_empty_1d_ylabels(kind):
+    samples = read_chains('./tests/example_data/pc')
+    columns = ['x0', 'x1', 'x2', 'x3', 'x4']
+
+    axes = samples.plot_1d(columns, kind=kind+'_1d')
+    for col in columns:
+        assert axes[col].get_ylabel() == ''
+
+    axes = samples.plot_2d(columns, kind=kind)
+    for col in columns:
+        assert axes[col][col].get_ylabel() == samples.get_labels_map()[col]
+        assert axes[col][col].twin.get_ylabel() == ''
+
+
 def test_constructors():
     samples = read_chains('./tests/example_data/pc')
 
