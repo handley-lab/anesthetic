@@ -697,6 +697,7 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
                          ticks=ticks,
                          gridspec_kw=gridspec_kw,
                          subplot_spec=subplot_spec)
+    fig.align_labels()
     return fig, axes
 
 
