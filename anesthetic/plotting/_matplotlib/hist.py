@@ -53,10 +53,7 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
         return super()._get_colors(num_colors, color_kwds)
 
     def _post_plot_logic(self, ax, data):
-        if self.orientation == "horizontal":
-            ax.set_ylabel(self.ylabel)
-        else:
-            ax.set_xlabel(self.xlabel)
+        ax.set_xlabel(self.xlabel)
         ax.set_yticks([])
         ax.set_ylim(bottom=0)
 
