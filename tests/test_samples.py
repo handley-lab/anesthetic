@@ -1710,3 +1710,23 @@ def test_groupby_plots():
             gb_colors = [p.get_facecolor() for p in gb_ax.patches]
             assert_allclose(mcmc_colors, gb_colors)
         plt.close('all')
+
+
+def test_hist_1d_no_Frequency():
+    np.random.seed(42)
+    pc = read_chains("./tests/example_data/pc")
+    axes = pc.plot_2d(['x0', 'x1', 'x2'], kind={'diagonal': 'hist_1d'})
+    for i in range(len(axes)):
+        assert axes.iloc[i, i].twin.get_ylabel() != 'Frequency'
+
+    axes = pc.plot_1d(['x0', 'x1', 'x2'], kind='hist_1d')
+    for ax in axes:
+        assert ax.get_ylabel() != 'Frequency'
+
+    fig, ax = plt.subplots()
+    ax = pc['x0'].plot(kind='hist_1d', ax=ax)
+    assert ax.get_ylabel() != 'Frequency'
+
+    fig, ax = plt.subplots()
+    ax = pc.x0.plot.hist_1d(ax=ax)
+    assert ax.get_ylabel() != 'Frequency'
