@@ -140,7 +140,7 @@ class Hist1dPlot(HistPlot):
         return "hist_1d"
 
     def _calculate_bins(self, data):
-        if range not in self.kwds:
+        if "range" not in self.kwds:
             q = self.kwds.get('q', 5)
             q = quantile_plot_interval(q=q)
             weights = self.kwds.get("weights", None)

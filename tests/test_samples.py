@@ -1277,6 +1277,10 @@ def test_samples_dot_plot():
     axes = samples.x2.plot.hist_1d(ax=ax)
     assert len(axes.containers) == 1
 
+    fig, ax = plt.subplots()
+    axes = samples.x2.plot.hist_1d(ax=ax, range=[0, 0.2])
+    assert axes.get_xlim()[1] < 0.3
+
     axes = samples.drop_labels().plot.kde_2d('x0', 'x1')
     assert len(axes.collections) == 5
     assert axes.get_xlabel() == 'x0'

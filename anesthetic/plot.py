@@ -965,17 +965,18 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     q = quantile_plot_interval(q=q)
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
+    range = kwargs.pop('range', (xmin, xmax))
 
     if type(bins) == str and bins in ['knuth', 'freedman', 'blocks']:
         try:
             h, edges, bars = hist(data, ax=ax, bins=bins,
-                                  range=(xmin, xmax), histtype=histtype,
+                                  range=range, histtype=histtype,
                                   color=color, *args, **kwargs)
         except NameError:
             raise ImportError("You need to install astropy to use astropyhist")
     else:
         h, edges, bars = ax.hist(data, weights=weights, bins=bins,
-                                 range=(xmin, xmax), histtype=histtype,
+                                 range=range, histtype=histtype,
                                  color=color, *args, **kwargs)
 
     if histtype == 'bar' and not density:
