@@ -60,6 +60,7 @@ looking somewhat like this:
 
 .. note::
     If you are using a jupyter notebook, you should use 
-   ``%matplotlib interactive`` magic command (or equivalent) to use the
-   interactive GUI.
+    ``%matplotlib interactive`` magic command (or equivalent) to use the
+    interactive GUI.
+
 
