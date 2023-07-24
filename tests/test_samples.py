@@ -996,12 +996,12 @@ def test_hist_range_1d():
     ns = read_chains('./tests/example_data/pc')
     ax = ns.plot_1d('x0', kind='hist_1d')
     x1, x2 = ax['x0'].get_xlim()
-    assert x1 > -1
-    assert x2 < +1
-    ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
+    assert x1 > -0.5
+    assert x2 < 0.5
+    ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-2, 2, 100))
     x1, x2 = ax['x0'].get_xlim()
-    assert x1 <= -1
-    assert x2 >= +1
+    assert x1 <= -2
+    assert x2 >= +2
 
 
 def test_contour_plot_2d_nan():
