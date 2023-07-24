@@ -247,7 +247,6 @@ class Samples(WeightedLabelledDataFrame):
                 self[x].plot(ax=ax, xlabel=xlabel,
                              *args, **kwargs)
                 ax.set_xlabel(xlabel)
-                ax.set_ylabel("")
             else:
                 ax.plot([], [])
 
@@ -390,7 +389,7 @@ class Samples(WeightedLabelledDataFrame):
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
                         if x == y:
-                            self[x].plot(ax=ax.twin, xlabel=xlabel, ylabel="",
+                            self[x].plot(ax=ax.twin, xlabel=xlabel,
                                          *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
