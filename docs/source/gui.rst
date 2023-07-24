@@ -58,3 +58,8 @@ looking somewhat like this:
     contain the parameter samples, their corresponding log-likelihood values, and
     the log-likelihood values of their birth contours, respectively.
 
+.. note::
+    If you are using a jupyter notebook, you should use 
+   ``%matplotlib interactive`` magic command (or equivalent) to use the
+   interactive GUI.
+
