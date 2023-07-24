@@ -990,20 +990,6 @@ def test_live_points():
     assert not live_points.isweighted()
 
 
-def test_hist_range_1d():
-    """Test to provide a solution to #89"""
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-    ax = ns.plot_1d('x0', kind='hist_1d')
-    x1, x2 = ax['x0'].get_xlim()
-    assert x1 > -0.5
-    assert x2 < 0.5
-    ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-2, 2, 100))
-    x1, x2 = ax['x0'].get_xlim()
-    assert x1 <= -2
-    assert x2 >= +2
-
-
 def test_contour_plot_2d_nan():
     """Contour plots with nans arising from issue #96"""
     np.random.seed(3)
@@ -1730,3 +1716,63 @@ def test_hist_1d_no_Frequency():
     fig, ax = plt.subplots()
     ax = pc.x0.plot.hist_1d(ax=ax)
     assert ax.get_ylabel() != 'Frequency'
+
+
+@pytest.mark.parametrize('kind', ['kde', 'hist'])
+def test_axes_limits_1d(kind):
+    np.random.seed(42)
+    pc = read_chains("./tests/example_data/pc")
+
+    axes = pc.plot_1d('x0', kind=f'{kind}_1d')
+    xmin, xmax = axes['x0'].get_xlim()
+    assert -0.9 < xmin < 0
+    assert 0 < xmax < 0.9
+
+    pc.x0 += 3
+    pc.plot_1d(axes, kind=f'{kind}_1d')
+    xmin, xmax = axes['x0'].get_xlim()
+    assert -0.9 < xmin < 0
+    assert 3 < xmax < 3.9
+
+    pc.x0 -= 6
+    pc.plot_1d(axes, kind=f'{kind}_1d')
+    xmin, xmax = axes['x0'].get_xlim()
+    assert -3.9 < xmin < -3
+    assert 3 < xmax < 3.9
+
+
+@pytest.mark.parametrize('kind, kwargs',
+                         [('kde', {}),
+                          ('hist', {'levels': [0.95, 0.68]}),
+                          ])
+def test_axes_limits_2d(kind, kwargs):
+    np.random.seed(42)
+    pc = read_chains("./tests/example_data/pc")
+
+    axes = pc.plot_2d(['x0', 'x1'], kind=f'{kind}_2d', **kwargs)
+    xmin, xmax = axes['x0']['x1'].get_xlim()
+    ymin, ymax = axes['x0']['x1'].get_ylim()
+    assert -0.9 < xmin < 0
+    assert 0 < xmax < 0.9
+    assert -0.9 < ymin < 0
+    assert 0 < ymax < 0.9
+
+    pc.x0 += 3
+    pc.x1 -= 3
+    pc.plot_2d(axes, kind=f'{kind}_2d', **kwargs)
+    xmin, xmax = axes['x0']['x1'].get_xlim()
+    ymin, ymax = axes['x0']['x1'].get_ylim()
+    assert -0.9 < xmin < 0
+    assert 3 < xmax < 3.9
+    assert -3.9 < ymin < -3
+    assert 0 < ymax < 0.9
+
+    pc.x0 -= 6
+    pc.x1 += 6
+    pc.plot_2d(axes, kind=f'{kind}_2d', **kwargs)
+    xmin, xmax = axes['x0']['x1'].get_xlim()
+    ymin, ymax = axes['x0']['x1'].get_ylim()
+    assert -3.9 < xmin < -3
+    assert 3 < xmax < 3.9
+    assert -3.9 < ymin < -3
+    assert 3 < ymax < 3.9

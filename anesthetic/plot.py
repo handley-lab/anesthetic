@@ -1284,7 +1284,8 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
             pdf[pdf < cmin] = np.ma.masked
         if cmax is not None:
             pdf[pdf > cmax] = np.ma.masked
-        image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=vmin,
+        snap = kwargs.pop('snap', True)
+        image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=vmin, snap=snap,
                               *args, **kwargs)
 
     ax.add_patch(plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),

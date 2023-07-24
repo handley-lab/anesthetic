@@ -59,7 +59,6 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             ax.set_xlabel(self.xlabel)
         ax.set_yticks([])
         ax.set_ylim(bottom=0)
-        ax.set_xlim(self.bins[0], self.bins[-1])
 
 
 class KdePlot(HistPlot, _KdePlot):
