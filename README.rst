@@ -1,17 +1,16 @@
-=========================================
-anesthetic: nested sampling visualisation
-=========================================
-:anesthetic: nested sampling visualisation
-:Author: Will Handley and Lukas Hergt
-:Version: 2.0.0-beta.12
-:Homepage: https://github.com/williamjameshandley/anesthetic
+===========================================
+anesthetic: nested sampling post-processing
+===========================================
+:Authors: Will Handley and Lukas Hergt
+:Version: 2.1.0
+:Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
-.. image:: https://github.com/williamjameshandley/anesthetic/workflows/CI/badge.svg?branch=master
-   :target: https://github.com/williamjameshandley/anesthetic/actions?query=workflow%3ACI+branch%3Amaster
+.. image:: https://github.com/handley-lab/anesthetic/workflows/CI/badge.svg?branch=master
+   :target: https://github.com/handley-lab/anesthetic/actions?query=workflow%3ACI+branch%3Amaster
    :alt: Build Status
-.. image:: https://codecov.io/gh/williamjameshandley/anesthetic/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/williamjameshandley/anesthetic
+.. image:: https://codecov.io/gh/handley-lab/anesthetic/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/handley-lab/anesthetic
    :alt: Test Coverage Status
 .. image:: https://readthedocs.org/projects/anesthetic/badge/?version=latest
    :target: https://anesthetic.readthedocs.io/en/latest/?badge=latest
@@ -26,19 +25,16 @@ anesthetic: nested sampling visualisation
    :target: http://joss.theoj.org/papers/8c51bffda75d122cf4a8b991e18d3e45
    :alt: Review Status
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
-   :target: https://github.com/williamjameshandley/anesthetic/blob/master/LICENSE
+   :target: https://github.com/handley-lab/anesthetic/blob/master/LICENSE
    :alt: License information
-.. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/williamjameshandley/anesthetic/1.0.0?filepath=demo.ipynb
-   :alt: Online interactive notebook
 
 
 
 
 
-``anesthetic`` brings together tools for processing nested sampling chains, leveraging standard scientific python libraries.
+``anesthetic`` brings together tools for processing nested sampling chains by leveraging standard scientific python libraries.
 
-You can see example usage and plots in the `plot gallery <http://htmlpreview.github.io/?https://github.com/williamjameshandley/cosmo_example/blob/master/demos/demo.html>`_, or in the corresponding `Jupyter notebook <https://mybinder.org/v2/gh/williamjameshandley/anesthetic/master?filepath=demo.ipynb>`_.
+TLDR: See the `quickstart <https://anesthetic.readthedocs.io/en/latest/quickstart.html>`__.
 
 Current functionality includes:
 
@@ -54,7 +50,7 @@ For an interactive view of a nested sampling run, you can use the ``anesthetic``
 
    $ anesthetic <ns file root>
 
-.. image:: https://github.com/williamjameshandley/anesthetic/raw/master/images/anim_1.gif
+.. image:: https://github.com/handley-lab/anesthetic/raw/master/images/anim_1.gif
 
 Features
 --------
@@ -76,19 +72,20 @@ Installation
 
     pip install anesthetic
 
-or via the setup.py
+or from the repository
 
 .. code:: bash
 
-    git clone https://github.com/williamjameshandley/anesthetic
+    git clone https://github.com/handley-lab/anesthetic
     cd anesthetic
-    python setup.py install --user
+    python -m pip install .
 
 You can check that things are working by running the test suite:
 
 .. code:: bash
 
     export MPLBACKEND=Agg     # only necessary for OSX users
+    python -m pip install ".[test]"
     python -m pytest
     flake8 anesthetic tests
     pydocstyle --convention=numpy anesthetic
@@ -122,9 +119,15 @@ Full Documentation is hosted at `ReadTheDocs <http://anesthetic.readthedocs.io/>
 
 .. code:: bash
 
-   cd docs
-   make html
+    python -m pip install ".[all,docs]"
+    cd docs
+    make html
 
+and view the documentation by opening ``docs/build/html/index.html`` in a browser. To regenerate the automatic RST files run:
+
+.. code:: bash
+
+    sphinx-apidoc -fM -t docs/templates/ -o docs/source/ anesthetic/
 
 Citation
 --------
@@ -156,9 +159,9 @@ or using the BibTeX:
 
 Contributing
 ------------
-There are many ways you can contribute via the `GitHub repository <https://github.com/williamjameshandley/anesthetic>`__.
+There are many ways you can contribute via the `GitHub repository <https://github.com/handley-lab/anesthetic>`__.
 
-- You can `open an issue <https://github.com/williamjameshandley/anesthetic/issues>`__ to report bugs or to propose new features.
+- You can `open an issue <https://github.com/handley-lab/anesthetic/issues>`__ to report bugs or to propose new features.
 - Pull requests are very welcome. Note that if you are going to propose major changes, be sure to open an issue for discussion first, to make sure that your PR will be accepted before you spend effort coding it.
 
 
@@ -185,18 +188,20 @@ Why create another one? In general, any dedicated user of software will find tha
 
 .. code:: python
 
-    from anesthetic import MCMCSamples
-    samples = MCMCSamples(root=file_root)                         # Load the samples
-    samples['omegab'] = samples.omegabh2/(samples.H0/100)**2      # Define omegab
-    samples.tex['omegab'] = '$\Omega_b$'                          # Label omegab
-    samples.plot_1d('omegab')                                     # Simple 1D plot
+    from anesthetic import read_chains
+    samples = read_chains(file_root)               # Load the samples
+    label = 'omegab'
+    tex = '$\Omega_b$'
+    h = (samples.H0/100)
+    samples[(label, tex)] = samples.omegabh2/h**2  # Define omegab
+    samples.plot_1d('omegab')                      # Simple 1D plot
 
 3. Many KDE plotting tools have conventions that don't play well with uniformly distributed parameters, which presents a problem if you are trying to plot priors along with your posteriors. ``anesthetic`` has a sensible mechanism, by defining the contours by the amount of iso-probability mass they contain, but colouring the fill in relation to the probability density of the contour.
 
 What's in a name?
 ~~~~~~~~~~~~~~~~~
 
-There is an emerging convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://github.com/tomcharnock/NestorFlow>`__). Doing a UNIX grep:
+There is a convention for naming nested sampling packages with words that have nest in them (`nestle and dynesty <https://dynesty.readthedocs.io/en/latest/>`__, `nestorflow <https://bitbucket.org/tomcharnock/nestorflow>`__). Doing a UNIX grep:
 
 .. code:: bash
 

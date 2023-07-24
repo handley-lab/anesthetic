@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anesthetic"
+dynamic = ["version"]
+maintainers = [
+    { name="Will Handley", email="williamjameshandley@gmail.com" },
+    { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
+]
+authors = [
+    { name="Will Handley", email="williamjameshandley@gmail.com" },
+    { name="Lukas Hergt", email="lthergt@phas.ubc.ca" },
+    { name="Adam Ormondroyd", email="ano23@cam.ac.uk" },
+    { name="Harry Bevins", email="htjb2@cam.ac.uk" },
+    { name="Johannes Buchner", email="jbuchner@mpe.mpg.de" },
+    { name="Ethan Carragher", email="ethan.carragher@adelaide.edu.au" },
+    { name="Andrew Fowlie", email="andrew.j.fowlie@googlemail.com" },
+    { name="Thomas Gessey-Jones", email="tg400@cam.ac.uk"},
+    { name="Stefan Heimersheim", email="sh2061@ast.cam.ac.uk" },
+    { name="Pablo Lemos", email="plemos91@gmail.com" },
+    { name="Toby Lovick", email="tcl44@cam.ac.uk"},
+    { name="Aleksandr Petrosyan", email="a-p-petrosyan@yandex.ru" },
+    { name="Liangliang Su", email="liangliangsu@njnu.edu.cn"},
+    { name="David Yallup", email="david.yallup@gmail.com" },
+]
+description = "nested sampling post-processing"
+readme = "README.rst"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+dependencies = [
+    "scipy",
+    "numpy",
+    "pandas>=2.0.0",
+    "matplotlib>=3.6.1",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/handley-lab/anesthetic"
+"Bug Tracker" = "https://github.com/handley-lab/anesthetic/issues"
+"Documentation" = "https://anesthetic.readthedocs.io/en/latest/"
+"JOSS paper" = "https://joss.theoj.org/papers/10.21105/joss.01414"
+
+[project.optional-dependencies]
+docs = ["sphinx", "sphinx_rtd_theme", "numpydoc"]
+test = ["pytest", "pytest-cov", "flake8", "pydocstyle", "packaging", "pre-commit"]
+ultranest = ["h5py"]
+astropy = ["astropy"]
+fastkde = ["fastkde"]
+getdist = ["getdist"]
+hdf5 = ["tables"]
+all = ["h5py", "astropy", "fastkde", "getdist", "tables"]
+
+[project.scripts]
+anesthetic = "anesthetic.scripts:gui"
+
+[tool.setuptools.dynamic]
+version = {attr = "anesthetic._version.__version__"}

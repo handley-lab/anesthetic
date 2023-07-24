@@ -1,18 +1,16 @@
+from matplotlib import pyplot as plt
+import numpy as np
 from pandas.plotting._matplotlib.hist import (HistPlot as _HistPlot,
                                               KdePlot as _KdePlot)
 import pandas.plotting._matplotlib.hist
-import numpy as np
 from pandas.core.dtypes.missing import (
     isna,
     remove_na_arraylike,
 )
-from pandas.plotting._matplotlib.core import MPLPlot, PlanePlot
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal
+from pandas.plotting._matplotlib.core import MPLPlot
+from typing import Literal
 from anesthetic.plotting._matplotlib.core import (
-    _WeightedMPLPlot, _CompressedMPLPlot, _get_weights
+    _WeightedMPLPlot, _CompressedMPLPlot, _PlanePlot2d, _get_weights
 )
 from anesthetic.plot import (
     kde_contour_plot_2d,
@@ -20,21 +18,20 @@ from anesthetic.plot import (
     fastkde_contour_plot_2d,
     kde_plot_1d,
     fastkde_plot_1d,
-    hist_plot_1d
+    hist_plot_1d,
 )
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):
     # noqa: disable=D101
     def _calculate_bins(self, data):
-        nd_values = data._convert(datetime=True)._get_numeric_data()
+        nd_values = data.infer_objects(copy=False)._get_numeric_data()
         values = np.ravel(nd_values)
         weights = self.kwds.get("weights", None)
         if weights is not None:
             try:
                 weights = np.broadcast_to(weights[:, None], nd_values.shape)
             except ValueError:
-                print(nd_values.shape, weights.shape)
                 pass
             weights = np.ravel(weights)
             weights = weights[~isna(values)]
@@ -46,6 +43,18 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             weights=weights
         )
         return bins
+
+    def _get_colors(self, num_colors=None, color_kwds='color'):
+        if (self.colormap is not None and self.kwds.get(color_kwds) is None
+           and (num_colors is None or num_colors == 1)):
+            return [plt.get_cmap(self.colormap)(0.68)]
+        return super()._get_colors(num_colors, color_kwds)
+
+    def _post_plot_logic(self, ax, data):
+        super()._post_plot_logic(ax, data)
+        ax.set_yticks([])
+        ax.set_ylim(bottom=0)
+        ax.set_xlim(self.bins[0], self.bins[-1])
 
 
 class KdePlot(HistPlot, _KdePlot):
@@ -72,93 +81,122 @@ class KdePlot(HistPlot, _KdePlot):
         lines = MPLPlot._plot(ax, ind, y, style=style, **kwds)
         return lines
 
+    def _post_plot_logic(self, ax, data):
+        ax.set_yticks([])
+        ax.set_ylim(bottom=0)
 
-class Kde1dPlot(_WeightedMPLPlot):
+
+class Kde1dPlot(KdePlot):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["kde_1d"]:
         return "kde_1d"
 
-    def _make_plot(self):
-        return kde_plot_1d(
-            self.axes[0],
-            self.data.values[:, 0],
-            label=self.label,
-            **self.kwds)
+    # noqa: disable=D101
+    @classmethod
+    def _plot(
+        cls,
+        ax,
+        y,
+        style=None,
+        ind=None,
+        column_num=None,
+        stacking_id=None,
+        **kwds,
+    ):
+        args = (style,) if style is not None else tuple()
+        return kde_plot_1d(ax, y, *args, **kwds)
 
 
-class FastKde1dPlot(_CompressedMPLPlot):
+class FastKde1dPlot(_CompressedMPLPlot, Kde1dPlot):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["fastkde_1d"]:
         return "fastkde_1d"
 
-    def _make_plot(self):
-        return fastkde_plot_1d(
-            self.axes[0],
-            self.data.values[:, 0],
-            label=self.label,
-            **self.kwds)
+    @classmethod
+    def _plot(
+        cls,
+        ax,
+        y,
+        style=None,
+        ind=None,
+        column_num=None,
+        stacking_id=None,
+        **kwds,
+    ):
+        args = (style,) if style is not None else tuple()
+        # weights and bw_method are not valid for fastkde
+        kwds.pop('weights', None)
+        kwds.pop('bw_method', None)
+        return fastkde_plot_1d(ax, y, *args, **kwds)
 
 
-class Hist1dPlot(_WeightedMPLPlot):
+class Hist1dPlot(HistPlot):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["hist_1d"]:
         return "hist_1d"
 
-    def _make_plot(self):
-        return hist_plot_1d(
-            self.axes[0],
-            self.data.values[:, 0],
-            label=self.label,
-            **self.kwds)
+    @classmethod
+    def _plot(
+        cls,
+        ax,
+        y,
+        style=None,
+        bottom=0,
+        column_num=None,
+        stacking_id=None,
+        *,
+        bins,
+        **kwds,
+    ):
+        if column_num == 0:
+            cls._initialize_stacker(ax, stacking_id, len(bins) - 1)
+
+        if not isinstance(bins, str):
+            base = np.zeros(len(bins) - 1)
+            bottom = bottom + cls._get_stacked_values(ax, stacking_id,
+                                                      base, kwds["label"])
+
+        # ignore style
+        n, bins, patches = hist_plot_1d(ax, y, bins=bins,
+                                        bottom=bottom, **kwds)
+        cls._update_stacker(ax, stacking_id, n)
+        return patches
 
 
-class Kde2dPlot(_WeightedMPLPlot, PlanePlot):
+class Kde2dPlot(_WeightedMPLPlot, _PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["kde_2d"]:
         return "kde_2d"
 
-    def _make_plot(self):
-        return kde_contour_plot_2d(
-            self.axes[0],
-            self.data[self.x].values,
-            self.data[self.y].values,
-            label=self.label,
-            **self.kwds)
+    @classmethod
+    def _plot(cls, ax, x, y, **kwds):
+        return kde_contour_plot_2d(ax, x, y, **kwds)
 
 
-class FastKde2dPlot(_CompressedMPLPlot, PlanePlot):
+class FastKde2dPlot(_CompressedMPLPlot, _PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["fastkde_2d"]:
         return "fastkde_2d"
 
-    def _make_plot(self):
-        return fastkde_contour_plot_2d(
-            self.axes[0],
-            self.data[self.x].values,
-            self.data[self.y].values,
-            label=self.label,
-            **self.kwds)
+    @classmethod
+    def _plot(cls, ax, x, y, **kwds):
+        return fastkde_contour_plot_2d(ax, x, y, **kwds)
 
 
-class Hist2dPlot(_WeightedMPLPlot, PlanePlot):
+class Hist2dPlot(_WeightedMPLPlot, _PlanePlot2d):
     # noqa: disable=D101
     @property
     def _kind(self) -> Literal["hist_2d"]:
         return "hist_2d"
 
-    def _make_plot(self):
-        return hist_plot_2d(
-            self.axes[0],
-            self.data[self.x].values,
-            self.data[self.y].values,
-            label=self.label,
-            **self.kwds,
-        )
+    @classmethod
+    def _plot(cls, ax, x, y, **kwds):
+        return hist_plot_2d(ax, x, y, **kwds)
 
 
 def hist_frame(data, *args, **kwds):

@@ -1,0 +1,57 @@
+{%- macro automodule(modname, options) %}
+.. automodule:: {{ modname }}
+{%- for option in options %}
+   :{{ option }}:
+{%- endfor %}
+{%- endmacro %}
+
+{%- macro toctree(docnames, maxdepth=4) %}
+.. toctree::
+   :maxdepth: {{ maxdepth }}
+{% for docname in docnames %}
+   {{ docname }}
+{%- endfor %}
+{% endmacro %}
+
+{%- if is_namespace %}
+{{- [pkgname, "namespace"] | join(" ") | e | heading(1) }}
+{%- else %}
+{{- [pkgname, "package"] | join(" ") | e | heading(1) }}
+{%- endif %}
+
+{%- if is_namespace %}
+.. py:module:: {{ pkgname }}
+{% endif %}
+
+{%- if modulefirst and not is_namespace %}
+{{ automodule(pkgname, automodule_options) }}
+{% endif %}
+
+{%- if subpackages %}
+{{ [pkgname, "subpackages"] | join(" ") | e | heading(2) }}
+{{ toctree(subpackages, 1) }}
+{% if submodules %}
+{{ [pkgname, "modules"] | join(" ") | e | heading(2) }}
+{%- endif %}
+{%- endif %}
+
+{%- if submodules %}
+{%- if separatemodules %}
+{{ toctree(submodules) }}
+{%- else %}
+{%- for submodule in submodules %}
+{% if show_headings %}
+{%- if subpackages %}
+{{ [submodule, "module"] | join(" ") | e | heading(3) }}
+{%- else %}
+{{ [submodule, "module"] | join(" ") | e | heading(2) }}
+{%- endif %}
+{%- endif %}
+{{ automodule(submodule, automodule_options) }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+{%- if not modulefirst and not is_namespace %}
+{{ automodule(pkgname, automodule_options) }}
+{% endif %}
