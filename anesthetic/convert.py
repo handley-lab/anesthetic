@@ -27,6 +27,7 @@ def to_getdist(samples):
                                        ranges=ranges,
                                        labels=labels)
 
+
 def from_anesthetic(dynesty_sampler, columns=None, tex=None, limits=None):
     """Convert from dynesty to anesthetic samples.
 
@@ -53,27 +54,31 @@ def from_anesthetic(dynesty_sampler, columns=None, tex=None, limits=None):
     nested_samples: NestedSamples
         anesthetic nested samples
     """
+    import dynesty.results
+    import dynesty.dynesty
+
     if isinstance(dynesty_sampler, dynesty.dynesty.NestedSampler):
         dynesty_results = dynesty_sampler.results
     elif isinstance(dynesty_sampler, dynesty.results.Results):
         dynesty_results = dynesty_sampler
     else:
-        raise ValueError, "Unknown dynesty input type"
+        raise ValueError("Unknown dynesty input type")
 
     data = dynesty_results['samples']
     weights = np.exp(dynesty_results['logwt'])
     logl = dynesty_results['logl']
-    #dynesty_results['logz']
-    #logL_birth
-    #label
-    #beta
-    #logzero
+    # dynesty_results['logz']
+    # logL_birth
+    # label
+    # beta
+    # logzero
     return NestedSamples(data=data,
                          weights=weights,
                          logL=logl,
-                         columns=coolumns,
+                         columns=columns,
                          tex=tex,
                          limits=limits)
+
 
 def from_emcee(emcee_sampler, columns=None, tex=None, limits=None):
     """Convert from emcee to anesthetic samples.
@@ -100,16 +105,17 @@ def from_emcee(emcee_sampler, columns=None, tex=None, limits=None):
     mcmc_samples: MCMCSamples
         anesthetic MCMC samples
     """
+    import emcee.ensemble
     if not isinstance(emcee_sampler, emcee.ensemble.EnsembleSampler):
-        raise ValueError, "Wrong input type, please pass\
-                            emcee.ensemble.EnsembleSampler"
+        raise ValueError("Wrong input type, please pass\
+                          emcee.ensemble.EnsembleSampler")
 
     data = emcee_sampler.flatchain
-    #weights = 1
-    #logL
-    #label
-    #logzero
-    #burn_in
+    # weights = 1
+    # logL
+    # label
+    # logzero
+    # burn_in
     return MCMCSamples(data=data,
                        columns=columns,
                        tex=tex,
