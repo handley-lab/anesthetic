@@ -132,6 +132,7 @@ class FastKde1dPlot(_CompressedMPLPlot, Kde1dPlot):
         return fastkde_plot_1d(ax, y, *args, **kwds)
 
 
+
 class Hist1dPlot(HistPlot):
     # noqa: disable=D101
     @property
@@ -164,6 +165,13 @@ class Hist1dPlot(HistPlot):
                                         bottom=bottom, **kwds)
         cls._update_stacker(ax, stacking_id, n)
         return patches
+
+    def _post_plot_logic(self, ax, data) -> None:
+        if self.orientation == "horizontal":
+            ax.set_ylabel(self.ylabel)
+        else:
+            ax.set_xlabel(self.xlabel)
+
 
 
 class Kde2dPlot(_WeightedMPLPlot, _PlanePlot2d):
