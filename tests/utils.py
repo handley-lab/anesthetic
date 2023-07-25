@@ -37,8 +37,8 @@ try:
 except ImportError:
     pass
 condition = 'getdist' not in sys.modules
-reason = "requires getdist package"
-raises = ModuleNotFoundError
+reason = "You need to install getdist to use this function"
+raises = ImportError
 getdist_mark_skip = pytest.mark.skipif(condition, reason=reason)
 getdist_mark_xfail = pytest.mark.xfail(condition, raises=raises, reason=reason)
 
