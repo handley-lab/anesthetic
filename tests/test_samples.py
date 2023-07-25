@@ -1,6 +1,5 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 
-import sys
 import pytest
 from math import floor, ceil
 import numpy as np
@@ -22,7 +21,7 @@ from pandas.testing import assert_frame_equal
 import pandas._testing as tm
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
-from utils import fastkde_skipif, astropy_mark_skip
+from utils import fastkde_skipif, astropy_mark_xfail, fastkde_mark_skip
 
 
 @pytest.fixture(autouse=True)
@@ -390,7 +389,7 @@ def test_plot_1d_colours(kind):
     assert len(set(pc_colors)) == 1
 
 
-@astropy_mark_skip
+@astropy_mark_xfail
 def test_astropyhist():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
@@ -1657,7 +1656,7 @@ def test_groupby_plots():
         assert_allclose(mcmc_colors, gb_colors)
     plt.close('all')
 
-    if 'fastkde' in sys.modules:
+    if not fastkde_mark_skip.args[0]:
         for param in params:
             _, gb_ax = plt.subplots()
             gb_plots = chains[param].plot.fastkde_1d(ax=gb_ax)

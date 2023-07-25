@@ -1,6 +1,5 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 import os
-import sys
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
@@ -14,19 +13,7 @@ from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 import pandas._testing as tm
 from anesthetic.read.hdf import HDFStore, read_hdf
-try:
-    import h5py  # noqa: F401
-except ImportError:
-    pass
-try:
-    import getdist
-except ImportError:
-    pass
-try:
-    from tables import Array  # noqa: F401
-    pytables_imported = True
-except ImportError:
-    pytables_imported = False
+from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
 
 
 @pytest.fixture(autouse=True)
@@ -73,9 +60,6 @@ def test_read_getdist():
     assert_array_equal(mcmc.get_labels(), labels)
 
 
-@pytest.mark.xfail('getdist' not in sys.modules,
-                   raises=NameError,
-                   reason="requires getdist package")
 def test_read_cobayamcmc():
     np.random.seed(3)
     mcmc = read_cobaya('./tests/example_data/cb')
@@ -88,11 +72,15 @@ def test_read_cobayamcmc():
     params = ['x0', 'x1', 'minuslogprior', 'minuslogprior__0', 'chi2',
               'chi2__norm', 'logL', 'chain']
     assert_array_equal(mcmc.drop_labels().columns, params)
-    if 'getdist' in sys.modules:
-        labels = ['$x_0$', '$x_1$', '', '', r'$\chi^2$',
-                  r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
-                  r'$n_\mathrm{chain}$']
-        assert_array_equal(mcmc.get_labels(), labels)
+
+    labels = ['$x_0$', '$x_1$', '', '', r'$\chi^2$',
+              r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
+              r'$n_\mathrm{chain}$']
+
+    if getdist_mark_skip.args[0]:
+        labels[:6] = [''] * 6
+
+    assert_array_equal(mcmc.get_labels(), labels)
 
     mcmc.plot_2d(['x0', 'x1'])
     mcmc.plot_1d(['x0', 'x1'])
@@ -104,10 +92,12 @@ def test_read_cobayamcmc():
     labels.remove(r'$n_\mathrm{chain}$')
     assert_array_equal(mcmc.get_labels(), labels)
     # compare directly with getdist
-    mcmc_gd = getdist.loadMCSamples(
-        file_root="./tests/example_data/cb_single_chain"
-    )
-    assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
+    if not getdist_mark_skip.args[0]:
+        import getdist
+        mcmc_gd = getdist.loadMCSamples(
+            file_root="./tests/example_data/cb_single_chain"
+        )
+        assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
 
 
 def test_read_montepython():
@@ -189,9 +179,7 @@ def test_read_multinest():
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
-@pytest.mark.xfail('h5py' not in sys.modules,
-                   raises=NameError,
-                   reason="ultranest reading requires `h5py` package")
+@h5py_mark_xfail
 def test_read_ultranest():
     np.random.seed(3)
     ns = read_ultranest('./tests/example_data/un')
@@ -269,8 +257,7 @@ def test_regex_escape():
 
 
 @pytest.mark.parametrize('root', ['pc', 'gd'])
-@pytest.mark.skipif(pytables_imported is False,
-                    reason="requires tables package")
+@pytables_mark_xfail
 def test_hdf5(tmp_path, root):
     samples = read_chains('./tests/example_data/' + root)
     filename = tmp_path / ('test_hdf5' + root + '.h5')

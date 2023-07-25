@@ -19,7 +19,7 @@ from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
 from scipy.special import erf
 from scipy.interpolate import interp1d
-from utils import fastkde_skipif, astropy_mark_skip, fastkde_mark_skip
+from utils import fastkde_skipif, astropy_mark_xfail, fastkde_mark_xfail
 
 
 @pytest.fixture(autouse=True)
@@ -376,7 +376,7 @@ def test_kde_plot_1d(plot_1d):
     assert xmax >= 1
 
 
-@fastkde_mark_skip
+@fastkde_mark_xfail
 def test_fastkde_min_max():
     np.random.seed(0)
     data_x = np.random.randn(100)
@@ -457,7 +457,7 @@ def test_hist_plot_1d():
     assert polygon.get_ec() == ColorConverter.to_rgba('r')
 
 
-@astropy_mark_skip
+@astropy_mark_xfail
 @pytest.mark.parametrize('bins', ['knuth', 'freedman', 'blocks'])
 def test_astropyhist_plot_1d(bins):
     fig, ax = plt.subplots()
