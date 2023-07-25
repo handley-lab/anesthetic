@@ -22,13 +22,7 @@ from pandas.testing import assert_frame_equal
 import pandas._testing as tm
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
-
-
-def fastkde_skipif(param):
-    reason = "You need to install fastkde to use fastkde"
-    condition = 'fastkde' not in sys.modules
-    marks = pytest.mark.skipif(condition, reason=reason)
-    return pytest.param(param, marks=marks)
+from utils import fastkde_skipif, astropy_mark_skip
 
 
 @pytest.fixture(autouse=True)
@@ -397,9 +391,7 @@ def test_plot_1d_colours(kind):
     assert len(set(pc_colors)) == 1
 
 
-@pytest.mark.xfail('astropy' not in sys.modules,
-                   raises=ImportError,
-                   reason="requires astropy package")
+@astropy_mark_skip
 def test_astropyhist():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
