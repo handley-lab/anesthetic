@@ -346,11 +346,10 @@ def test_plot_2d_colours(kind):
 @pytest.mark.parametrize('kind', ['kde', 'hist', 'default',
                                   fastkde_skipif('fastkde')])
 def test_plot_2d_kwargs(kind, kwargs):
-    if isinstance(kind, str):
-        np.random.seed(42)
-        pc = read_chains("./tests/example_data/pc")
-        fig, axes = make_2d_axes(['x0', 'x1'])
-        pc.plot_2d(axes, kind=kind, **kwargs)
+    np.random.seed(42)
+    pc = read_chains("./tests/example_data/pc")
+    fig, axes = make_2d_axes(['x0', 'x1'])
+    pc.plot_2d(axes, kind=kind, **kwargs)
 
 
 @pytest.mark.parametrize('kind', ['kde', 'hist', fastkde_skipif('fastkde')])
