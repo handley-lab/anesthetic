@@ -1396,61 +1396,6 @@ def test_constructors():
     assert isinstance(samples['x0'].to_frame(), WeightedLabelledDataFrame)
 
 
-def test_old_gui():
-    # with pytest.raises(TypeError): TODO reinstate for >=2.1
-    with pytest.raises(ValueError):
-        Samples(root='./tests/example_data/gd')
-    # with pytest.raises(TypeError): TODO reinstate for >=2.1
-    with pytest.raises(ValueError):
-        MCMCSamples(root='./tests/example_data/gd')
-    # with pytest.raises(TypeError): TODO reinstate for >=2.1
-    with pytest.raises(ValueError):
-        NestedSamples(root='./tests/example_data/pc')
-
-    samples = read_chains('./tests/example_data/pc')
-
-    for kind in ['kde', 'hist']:
-        with pytest.warns(UserWarning):
-            samples.plot_2d(['x0', 'x1', 'x2'], kind={'lower': kind})
-        with pytest.warns(UserWarning):
-            samples.plot_1d(['x0', 'x1', 'x2'], kind=kind)
-
-    with pytest.raises(ValueError):
-        samples.plot_2d(['x0', 'x1', 'x2'], types={'lower': 'kde'})
-
-    with pytest.raises(ValueError):
-        samples.plot_1d(['x0', 'x1', 'x2'], plot_type='kde')
-
-    with pytest.raises(NotImplementedError):
-        samples.tex['x0'] = '$x_0$'
-
-    with pytest.raises(NotImplementedError):
-        samples.D(1000)
-
-    with pytest.raises(NotImplementedError):
-        samples.d(1000)
-
-    fig, ax = plt.subplots()
-    with pytest.raises(ValueError):
-        samples.plot(ax, 'x0')
-    with pytest.raises(ValueError):
-        samples.plot(ax, 'x0', 'y0')
-
-    with pytest.raises(NotImplementedError):
-        make_2d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})
-
-    with pytest.raises(NotImplementedError):
-        samples.ns_output(1000)
-
-    with pytest.raises(NotImplementedError):
-        make_2d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})
-    with pytest.raises(NotImplementedError):
-        make_1d_axes(['x0', 'y0'], tex={'x0': '$x_0$', 'y0': '$y_0$'})
-
-    with pytest.raises(NotImplementedError):
-        samples.dlogX(1000)
-
-
 def test_groupby_stats():
     mcmc = read_chains('./tests/example_data/cb')
     params = ['x0', 'x1']
