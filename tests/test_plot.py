@@ -122,14 +122,22 @@ def test_make_1d_axes():
 
 @pytest.mark.parametrize('params', [[0, 1, 2, 3],
                                     [0, 2, 3],
-                                    [1, 2, 3]])
+                                    [1, 2, 3],
+                                    ['x0', 'x1', 'x2'],
+                                    ['1', '2', '3'],
+                                    [0, 'x1', 'x2'],
+                                    ])
 def test_make_Nd_axes_integers(params):
     fig, axes = make_1d_axes(params)
     assert isinstance(fig, Figure)
     assert isinstance(axes, AxesSeries)
+    assert list(axes.index) == params
+
     fig, axes = make_2d_axes(params)
     assert isinstance(fig, Figure)
     assert isinstance(axes, AxesDataFrame)
+    assert list(axes.index) == params
+    assert list(axes.columns) == params
 
 
 def test_make_2d_axes_inputs_outputs():

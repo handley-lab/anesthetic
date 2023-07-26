@@ -613,7 +613,9 @@ def make_1d_axes(params, ncol=None, labels=None,
             "make_1d_axes(..., labels=tex)  # anesthetic 2.0"
             )
     fig = fig_kw.pop('fig') if 'fig' in fig_kw else plt.figure(**fig_kw)
-    axes = AxesSeries(index=np.atleast_1d(params),
+    if np.array(params).ndim == 0:
+        params = [params]
+    axes = AxesSeries(index=params,
                       fig=fig,
                       ncol=ncol,
                       labels=labels,
