@@ -126,7 +126,7 @@ def test_make_1d_axes():
 def test_make_Nd_axes_integers(paramnames):
     fig, axes = make_1d_axes(paramnames)
     assert isinstance(fig, Figure)
-    assert isinstance(axes, AxesDataFrame)
+    assert isinstance(axes, AxesSeries)
     fig, axes = make_2d_axes(paramnames)
     assert isinstance(fig, Figure)
     assert isinstance(axes, AxesDataFrame)
