@@ -405,14 +405,14 @@ class AxesDataFrame(DataFrame):
                     elif a.position == 'diagonal':  # not first column
                         a.tick_params('y', direction='out', length=tl/2,
                                       left=True, labelleft=False, **kwargs)
-                    elif ax_[i-1].position == 'diagonal':  # next to diagonal
+                    elif ax_.iloc[i-1].position == 'diagonal':  # next to diag
                         a.tick_params('y', direction='in', length=tl/2,
                                       left=True, labelleft=False, **kwargs)
                     else:  # not diagonal and not first column
                         a.tick_params('y', direction='inout',
                                       left=True, labelleft=False, **kwargs)
             elif len(ax_) and direction == 'outer':  # no inner ticks
-                for a in ax_[1:]:
+                for a in ax_.iloc[1:]:
                     a.tick_params('y', left=False, labelleft=False, **kwargs)
             elif len(ax_) and direction is None:  # no ticks at all
                 for a in ax_:
@@ -437,7 +437,7 @@ class AxesDataFrame(DataFrame):
                                                    bottom=True,
                                                    labelbottom=False, **kwargs)
                 elif direction == 'outer':  # no inner ticks
-                    for a in ax_[:-1]:
+                    for a in ax_.iloc[:-1]:
                         a.tick_params('x', bottom=False, labelbottom=False,
                                       **kwargs)
                 elif direction is None:  # no ticks at all
@@ -606,7 +606,9 @@ def make_1d_axes(params, ncol=None, labels=None,
 
     """
     fig = fig_kw.pop('fig') if 'fig' in fig_kw else plt.figure(**fig_kw)
-    axes = AxesSeries(index=np.atleast_1d(params),
+    if np.array(params).ndim == 0:
+        params = [params]
+    axes = AxesSeries(index=params,
                       fig=fig,
                       ncol=ncol,
                       labels=labels,
