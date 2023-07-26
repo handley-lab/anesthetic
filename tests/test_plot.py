@@ -120,14 +120,14 @@ def test_make_1d_axes():
         make_1d_axes(paramnames, spam='ham')
 
 
-@pytest.mark.parametrize('paramnames', [[0, 1, 2, 3],
-                                        [0, 2, 3],
-                                        [1, 2, 3]])
-def test_make_Nd_axes_integers(paramnames):
-    fig, axes = make_1d_axes(paramnames)
+@pytest.mark.parametrize('params', [[0, 1, 2, 3],
+                                    [0, 2, 3],
+                                    [1, 2, 3]])
+def test_make_Nd_axes_integers(params):
+    fig, axes = make_1d_axes(params)
     assert isinstance(fig, Figure)
     assert isinstance(axes, AxesSeries)
-    fig, axes = make_2d_axes(paramnames)
+    fig, axes = make_2d_axes(params)
     assert isinstance(fig, Figure)
     assert isinstance(axes, AxesDataFrame)
 
