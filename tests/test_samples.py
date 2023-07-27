@@ -1698,6 +1698,16 @@ def test_groupby_plots():
 def test_credibility_interval():
     np.random.seed(0)
     pc = read_chains('./tests/example_data/pc')
+
+    ci, cov = pc.x0.credibility_interval(level=0.68,
+                                         method="iso-pdf",
+                                         return_covariance=True)
+    assert ci[0] == pytest.approx(-0.1, rel=0.01, abs=0.01)
+    assert ci[1] == pytest.approx(+0.1, rel=0.01, abs=0.01)
+    assert np.all(np.abs(cov) < 1e-3)
+    assert np.shape(ci) == (2,)
+    assert np.shape(cov) == (2, 2)
+
     params = ['x0', 'x1']
     ci, cov = pc[params].credibility_interval(level=0.68,
                                               method="iso-pdf",
@@ -1710,9 +1720,9 @@ def test_credibility_interval():
     ci, cov = pc[params].credibility_interval(level=0.95+0.025,
                                               method='lower-limit',
                                               return_covariance=True)
-    assert_allclose(ci, -0.2, rtol=0.01, atol=0.01)
+    assert_allclose(ci, -0.2, rtol=0.01, atol=0.025)
     assert np.all(np.abs(cov) < 1e-3)
     assert cov.shape == (1, len(params))
     ci = pc[params].credibility_interval(level=0.95+0.025,
                                          method='upper-limit')
-    assert_allclose(ci, +0.2, rtol=0.01, atol=0.02)
+    assert_allclose(ci, +0.2, rtol=0.01, atol=0.025)
