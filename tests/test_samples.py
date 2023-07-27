@@ -1354,9 +1354,7 @@ def test_samples_plot_labels():
         assert samples.get_label(col) == ax.get_xlabel()
 
 
-@pytest.mark.parametrize('kind', ['kde', 'hist', 'fastkde']
-                         if 'fastkde' in sys.modules else
-                         ['kde', 'hist'])
+@pytest.mark.parametrize('kind', ['kde', 'hist', fastkde_skipif('fastkde')])
 def test_samples_empty_1d_ylabels(kind):
     samples = read_chains('./tests/example_data/pc')
     columns = ['x0', 'x1', 'x2', 'x3', 'x4']
