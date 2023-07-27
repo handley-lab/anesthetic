@@ -12,7 +12,7 @@ import warnings
 from pandas import MultiIndex, Series
 from collections.abc import Sequence
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
-                              is_int, logsumexp, credibility_interval)
+                              is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
@@ -471,77 +471,6 @@ class Samples(WeightedLabelledDataFrame):
             self._update_inplace(samples)
         else:
             return samples.__finalize__(self, "importance_sample")
-
-    def credibility_interval(self, level=0.68, method="iso-pdf",
-                             return_covariance=False, nsamples=12):
-        """Compute the credibility interval of weighted samples.
-
-        Based on linear interpolation of the cumulative density function, thus
-        expect discretization errors on the scale of distances between samples.
-
-        https://github.com/Stefan-Heimersheim/fastCI#readme
-
-        Parameters
-        ----------
-        level : float, default=0.68
-            Credibility level (probability, <1).
-        method : str, default='iso-pdf'
-            Which definition of interval to use:
-
-            * ``'iso-pdf'``: Calculate iso probability density interval with
-              the same probability density at each end. Also known as
-              waterline-interval or highest average posterior density interval.
-              This is only accurate if the distribution is sufficiently
-              unimodal.
-            * ``'lower-limit'``/``'upper-limit'``: Lower/upper limit. One-sided
-              limits for which ``level`` fraction of the (equally weighted)
-              samples lie above/below the limit.
-            * ``'equal-tailed'``: Equal-tailed interval with the same fraction
-              of (equally weighted) samples below and above the interval
-              region.
-
-        return_covariance: bool, default=False
-            Return the covariance of the sampled limits, in addition to the
-            mean
-        nsamples : int, default=12
-            Number of CDF samples to improve `mean` and `std` estimate.
-
-        Returns
-        -------
-        limit(s) : float, array, or tuple of floats or arrays
-            Returns the credibility interval boundari(es). By default
-            returns the mean over ``nsamples`` samples, which is either
-            two numbers (``method='iso-pdf'``/``'equal-tailed'``) or one number
-            (``method='lower-limit'``/``'upper-limit'``). If
-            ``return_covariance=True``, returns a tuple (mean(s), covariance)
-            where covariance is the covariance over the sampled limits.
-        """
-        if 'lower' in method:
-            limits = ['lower']
-        elif 'upper' in method:
-            limits = ['upper']
-        else:
-            limits = ['lower', 'upper']
-        cis = [credibility_interval(self[col], weights=self.get_weights(),
-                                    level=level, method=method,
-                                    return_covariance=return_covariance,
-                                    nsamples=nsamples) for col in self.columns]
-        if return_covariance:
-            cis, covs = zip(*cis)
-            mulidx = pandas.MultiIndex.from_product([
-                self.columns.get_level_values(level=0),
-                limits
-            ])
-            ncol = len(self.columns)
-            nlim = len(limits)
-            covs = np.asarray(covs).reshape(nlim*ncol, nlim).T
-            covs = pandas.DataFrame(covs, index=limits, columns=mulidx)
-        cis = np.atleast_2d(cis) if 'limit' in method else np.asarray(cis).T
-        cis = pandas.DataFrame(data=cis, index=limits, columns=self.columns)
-        if return_covariance:
-            return cis, covs
-        else:
-            return cis
 
     # TODO: remove this in version >= 2.1
     @property

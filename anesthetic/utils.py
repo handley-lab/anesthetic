@@ -175,7 +175,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
     """Compute the credibility interval of weighted samples.
 
     Based on linear interpolation of the cumulative density function, thus
-    expect discretization errors on the scale of distances between samples.
+    expect discretisation errors on the scale of distances between samples.
 
     https://github.com/Stefan-Heimersheim/fastCI#readme
 
@@ -193,7 +193,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
         * ``'iso-pdf'``: Calculate iso probability density interval with the
           same probability density at each end. Also known as
           waterline-interval or highest average posterior density interval.
-          This is only accurate if the distribution is sufficiently unimodal.
+          This is only accurate if the distribution is sufficiently uni-modal.
         * ``'lower-limit'``/``'upper-limit'``: Lower/upper limit. One-sided
           limits for which ``level`` fraction of the (equally weighted) samples
           lie above/below the limit.
@@ -208,7 +208,7 @@ def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
     Returns
     -------
     limit(s) : float, array, or tuple of floats or arrays
-        Returns the credibility interval boundari(es). By default
+        Returns the credibility interval boundari(es). By default,
         returns the mean over ``nsamples`` samples, which is either
         two numbers (``method='iso-pdf'``/``'equal-tailed'``) or one number
         (``method='lower-limit'``/``'upper-limit'``). If
