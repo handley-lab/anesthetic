@@ -976,20 +976,6 @@ def test_live_points():
     assert not live_points.isweighted()
 
 
-def test_hist_range_1d():
-    """Test to provide a solution to #89"""
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-    ax = ns.plot_1d('x0', kind='hist_1d')
-    x1, x2 = ax['x0'].get_xlim()
-    assert x1 > -1
-    assert x2 < +1
-    ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
-    x1, x2 = ax['x0'].get_xlim()
-    assert x1 <= -1
-    assert x2 >= +1
-
-
 def test_contour_plot_2d_nan():
     """Contour plots with nans arising from issue #96"""
     np.random.seed(3)
@@ -1277,6 +1263,10 @@ def test_samples_dot_plot():
     axes = samples.x2.plot.hist_1d(ax=ax)
     assert len(axes.containers) == 1
 
+    fig, ax = plt.subplots()
+    axes = samples.x2.plot.hist_1d(ax=ax, range=[0, 0.2])
+    assert axes.get_xlim()[1] < 0.3
+
     axes = samples.drop_labels().plot.kde_2d('x0', 'x1')
     assert len(axes.collections) == 5
     assert axes.get_xlabel() == 'x0'
@@ -1362,6 +1352,23 @@ def test_samples_plot_labels():
         assert samples.get_label(col) == ax.get_ylabel()
     for col, ax in zip(columns, axes.loc['x4', :]):
         assert samples.get_label(col) == ax.get_xlabel()
+
+
+@pytest.mark.parametrize('kind', ['kde', 'hist', 'fastkde']
+                         if 'fastkde' in sys.modules else
+                         ['kde', 'hist'])
+def test_samples_empty_1d_ylabels(kind):
+    samples = read_chains('./tests/example_data/pc')
+    columns = ['x0', 'x1', 'x2', 'x3', 'x4']
+
+    axes = samples.plot_1d(columns, kind=kind+'_1d')
+    for col in columns:
+        assert axes[col].get_ylabel() == ''
+
+    axes = samples.plot_2d(columns, kind=kind)
+    for col in columns:
+        assert axes[col][col].get_ylabel() == samples.get_labels_map()[col]
+        assert axes[col][col].twin.get_ylabel() == ''
 
 
 def test_constructors():
@@ -1677,3 +1684,83 @@ def test_groupby_plots():
             gb_colors = [p.get_facecolor() for p in gb_ax.patches]
             assert_allclose(mcmc_colors, gb_colors)
         plt.close('all')
+
+
+def test_hist_1d_no_Frequency():
+    np.random.seed(42)
+    pc = read_chains("./tests/example_data/pc")
+    axes = pc.plot_2d(['x0', 'x1', 'x2'], kind={'diagonal': 'hist_1d'})
+    for i in range(len(axes)):
+        assert axes.iloc[i, i].twin.get_ylabel() != 'Frequency'
+
+    axes = pc.plot_1d(['x0', 'x1', 'x2'], kind='hist_1d')
+    for ax in axes:
+        assert ax.get_ylabel() != 'Frequency'
+
+    fig, ax = plt.subplots()
+    ax = pc['x0'].plot(kind='hist_1d', ax=ax)
+    assert ax.get_ylabel() != 'Frequency'
+
+    fig, ax = plt.subplots()
+    ax = pc.x0.plot.hist_1d(ax=ax)
+    assert ax.get_ylabel() != 'Frequency'
+
+
+@pytest.mark.parametrize('kind', ['kde', 'hist'])
+def test_axes_limits_1d(kind):
+    np.random.seed(42)
+    pc = read_chains("./tests/example_data/pc")
+
+    axes = pc.plot_1d('x0', kind=f'{kind}_1d')
+    xmin, xmax = axes['x0'].get_xlim()
+    assert -0.9 < xmin < 0
+    assert 0 < xmax < 0.9
+
+    pc.x0 += 3
+    pc.plot_1d(axes, kind=f'{kind}_1d')
+    xmin, xmax = axes['x0'].get_xlim()
+    assert -0.9 < xmin < 0
+    assert 3 < xmax < 3.9
+
+    pc.x0 -= 6
+    pc.plot_1d(axes, kind=f'{kind}_1d')
+    xmin, xmax = axes['x0'].get_xlim()
+    assert -3.9 < xmin < -3
+    assert 3 < xmax < 3.9
+
+
+@pytest.mark.parametrize('kind, kwargs',
+                         [('kde', {}),
+                          ('hist', {'levels': [0.95, 0.68]}),
+                          ])
+def test_axes_limits_2d(kind, kwargs):
+    np.random.seed(42)
+    pc = read_chains("./tests/example_data/pc")
+
+    axes = pc.plot_2d(['x0', 'x1'], kind=f'{kind}_2d', **kwargs)
+    xmin, xmax = axes['x0']['x1'].get_xlim()
+    ymin, ymax = axes['x0']['x1'].get_ylim()
+    assert -0.9 < xmin < 0
+    assert 0 < xmax < 0.9
+    assert -0.9 < ymin < 0
+    assert 0 < ymax < 0.9
+
+    pc.x0 += 3
+    pc.x1 -= 3
+    pc.plot_2d(axes, kind=f'{kind}_2d', **kwargs)
+    xmin, xmax = axes['x0']['x1'].get_xlim()
+    ymin, ymax = axes['x0']['x1'].get_ylim()
+    assert -0.9 < xmin < 0
+    assert 3 < xmax < 3.9
+    assert -3.9 < ymin < -3
+    assert 0 < ymax < 0.9
+
+    pc.x0 -= 6
+    pc.x1 += 6
+    pc.plot_2d(axes, kind=f'{kind}_2d', **kwargs)
+    xmin, xmax = axes['x0']['x1'].get_xlim()
+    ymin, ymax = axes['x0']['x1'].get_ylim()
+    assert -3.9 < xmin < -3
+    assert 3 < xmax < 3.9
+    assert -3.9 < ymin < -3
+    assert 3 < ymax < 3.9
