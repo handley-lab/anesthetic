@@ -4,7 +4,7 @@ on:
     branches:
       - master
 jobs:
-  build-n-publish:
+  git-tag-and-release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,17 +23,22 @@ jobs:
                 ref: `refs/tags/${DIST_VERSION}`,
                 sha: context.sha
             })
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
-      - name: Create Release
+      - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           name: "${{ env.DIST_VERSION }}"
           tag: "${{ env.DIST_VERSION }}"
           generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  pypi-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
       - name: Install pypa/build
         run: python -m pip install build --user
       - name: Build a binary wheel and a source tarball
@@ -42,3 +47,39 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+
+  aur-release:
+    needs: pypi-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tomli
+      - name: Generate PKGBUILD
+        run: python ./bin/gen_PKGBUILD.py > ./PKGBUILD
+      - name: Get version number
+        run: |
+          VERSION="$(cat ./PKGBUILD | grep pkgver= | awk -F= '{print $2}')"
+          echo "DIST_VERSION=${VERSION}" >> $GITHUB_ENV
+      - name: Wait for PyPi
+        uses: nev7n/wait_for_response@v1
+        with:
+          url: "https://files.pythonhosted.org/packages/source/a/anesthetic/anesthetic-${{ env.DIST_VERSION }}.tar.gz"
+          responseCode: 200
+          timeout: 600000
+          interval: 10000
+      - name: Publish AUR package
+        uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
+        with:
+          pkgname: python-anesthetic
+          pkgbuild: ./PKGBUILD
+          updpkgsums: True
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}

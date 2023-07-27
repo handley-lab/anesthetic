@@ -1,7 +1,12 @@
+import sys
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 from anesthetic import read_chains
 import pytest
 import pandas._testing as tm
+try:
+    import h5py  # noqa: F401
+except ImportError:
+    pass
 
 
 @pytest.fixture(autouse=True)
@@ -9,8 +14,13 @@ def close_figures_on_teardown():
     tm.close()
 
 
-def test_gui():
-    samples = read_chains('./tests/example_data/pc')
+@pytest.mark.parametrize('root', ["./tests/example_data/pc",
+                                  "./tests/example_data/mn",
+                                  "./tests/example_data/un"])
+def test_gui(root):
+    if 'un' in root and 'h5py' not in sys.modules:
+        pytest.skip("`h5py` not in sys.modules, but needed for ultranest.")
+    samples = read_chains(root)
     plotter = samples.gui()
 
     # Type buttons
@@ -30,8 +40,11 @@ def test_gui():
     assert len(plotter.triangle.ax) == 4
 
     # Sliders
+    old = plotter.evolution()
     plotter.evolution.slider.set_val(5)
-    assert plotter.evolution() == 627
+    assert plotter.evolution() != old
+    plotter.evolution.slider.set_val(0)
+    assert plotter.evolution() == old
     plotter.type.buttons.set_active(1)
 
     plotter.beta.slider.set_val(0)
@@ -50,15 +63,27 @@ def test_gui():
     plotter.reset.button.on_clicked(plotter.reset_range(None))
 
 
-def test_gui_params():
-    plotter = read_chains('./tests/example_data/pc').gui()
-    assert len(plotter.param_choice.buttons.labels) == 8
+@pytest.mark.parametrize('root', ["./tests/example_data/pc",
+                                  "./tests/example_data/mn",
+                                  "./tests/example_data/un"])
+def test_gui_params(root):
+    if 'un' in root and 'h5py' not in sys.modules:
+        pytest.skip("`h5py` not in sys.modules, but needed for ultranest.")
+    samples = read_chains(root)
+    params = samples.columns.get_level_values(0).to_list()
+    plotter = samples.gui()
+    assert len(plotter.param_choice.buttons.labels) == len(params)
 
-    plotter = read_chains('./tests/example_data/pc').gui(params=['x0', 'x1'])
+    plotter = samples.gui(params=params[:2])
     assert len(plotter.param_choice.buttons.labels) == 2
 
 
-def test_slider_reset_range():
-    plotter = read_chains('./tests/example_data/pc').gui()
+@pytest.mark.parametrize('root', ["./tests/example_data/pc",
+                                  "./tests/example_data/mn",
+                                  "./tests/example_data/un"])
+def test_slider_reset_range(root):
+    if 'un' in root and 'h5py' not in sys.modules:
+        pytest.skip("`h5py` not in sys.modules, but needed for ultranest.")
+    plotter = read_chains(root).gui()
     plotter.evolution.reset_range(-3, 3)
     assert plotter.evolution.ax.get_xlim() == (-3.0, 3.0)

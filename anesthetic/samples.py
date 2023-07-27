@@ -19,6 +19,7 @@ from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
+from anesthetic.utils import adjust_docstrings
 import anesthetic.weighted_pandas
 from anesthetic.plotting import PlotAccessor
 anesthetic.weighted_pandas._WeightedObject.plot =\
@@ -48,9 +49,9 @@ class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
         """Retrieve labels from an axis."""
         return super().get_labels(axis=axis)
 
-    def get_labels_map(self, axis=1):
+    def get_labels_map(self, axis=1, fill=True):
         """Retrieve mapping from paramnames to labels from an axis."""
-        return super().get_labels_map(axis=axis)
+        return super().get_labels_map(axis=axis, fill=fill)
 
     def get_label(self, param, axis=1):
         """Retrieve mapping from paramnames to labels from an axis."""
@@ -141,6 +142,18 @@ class Samples(WeightedLabelledDataFrame):
     _metadata = WeightedLabelledDataFrame._metadata + ['label']
 
     def __init__(self, *args, **kwargs):
+        # TODO: remove this in version >= 2.1
+        if 'root' in kwargs:
+            root = kwargs.pop('root')
+            name = self.__class__.__name__
+            raise ValueError(
+                "As of anesthetic 2.0, root is no longer a keyword argument.\n"
+                "To update your code, replace \n\n"
+                ">>> from anesthetic import %s\n"
+                ">>> %s(root=%s)\n\nwith\n\n"
+                ">>> from anesthetic import read_chains\n"
+                ">>> read_chains(%s)" % (name, name, root, root)
+                )
         logzero = kwargs.pop('logzero', -1e30)
         logL = kwargs.pop('logL', None)
         if logL is not None:
@@ -161,12 +174,12 @@ class Samples(WeightedLabelledDataFrame):
 
     plot = CachedAccessor("plot", PlotAccessor)
 
-    def plot_1d(self, axes, *args, **kwargs):
+    def plot_1d(self, axes=None, *args, **kwargs):
         """Create an array of 1D plots.
 
         Parameters
         ----------
-        axes : plotting axes
+        axes : plotting axes, optional
             Can be:
 
             * list(str) or str
@@ -175,6 +188,9 @@ class Samples(WeightedLabelledDataFrame):
             If a :class:`pandas.Series` is provided as an existing set of axes,
             then this is used for creating the plot. Otherwise, a new set of
             axes are created using the list or lists of strings.
+
+            If not provided, then all parameters are plotted. This is intended
+            for plotting a sliced array (e.g. `samples[['x0','x1]].plot_1d()`.
 
         kind : str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
@@ -201,6 +217,9 @@ class Samples(WeightedLabelledDataFrame):
                 "You are using the anesthetic 1.0 kwarg \'plot_type\' instead "
                 "of anesthetic 2.0 \'kind\'. Please update your code."
                 )
+
+        if axes is None:
+            axes = self.drop_labels().columns
 
         if not isinstance(axes, AxesSeries):
             _, axes = make_1d_axes(axes, labels=self.get_labels_map())
@@ -233,7 +252,7 @@ class Samples(WeightedLabelledDataFrame):
 
         return axes
 
-    def plot_2d(self, axes, *args, **kwargs):
+    def plot_2d(self, axes=None, *args, **kwargs):
         """Create an array of 2D plots.
 
         To avoid interfering with y-axis sharing, one-dimensional plots are
@@ -242,7 +261,7 @@ class Samples(WeightedLabelledDataFrame):
 
         Parameters
         ----------
-        axes : plotting axes
+        axes : plotting axes, optional
             Can be:
                 - list(str) if the x and y axes are the same
                 - [list(str),list(str)] if the x and y axes are different
@@ -251,6 +270,12 @@ class Samples(WeightedLabelledDataFrame):
             If a :class:`pandas.DataFrame` is provided as an existing set of
             axes, then this is used for creating the plot. Otherwise, a new set
             of axes are created using the list or lists of strings.
+
+            If not provided, then all parameters are plotted. This is intended
+            for plotting a sliced array (e.g. `samples[['x0','x1]].plot_2d()`.
+            It is not advisible to plot an entire frame, as it is
+            computationally expensive, and liable to run into linear algebra
+            errors for degenerate derived parameters.
 
         kind/kinds : dict, optional
             What kinds of plots to produce. Dictionary takes the keys
@@ -330,8 +355,11 @@ class Samples(WeightedLabelledDataFrame):
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
 
+        if axes is None:
+            axes = self.drop_labels().columns
+
         if not isinstance(axes, AxesDataFrame):
-            _, axes = make_2d_axes(axes, labels=self.get_labels(),
+            _, axes = make_2d_axes(axes, labels=self.get_labels_map(),
                                    upper=('upper' in kind),
                                    lower=('lower' in kind),
                                    diagonal=('diagonal' in kind))
@@ -385,6 +413,7 @@ class Samples(WeightedLabelledDataFrame):
         'kde': {'diagonal': 'kde_1d', 'lower': 'kde_2d'},
         'kde_1d': {'diagonal': 'kde_1d'},
         'kde_2d': {'lower': 'kde_2d'},
+        'fastkde': {'diagonal': 'fastkde_1d', 'lower': 'fastkde_2d'},
         'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
         'hist_1d': {'diagonal': 'hist_1d'},
         'hist_2d': {'lower': 'hist_2d'},
@@ -455,6 +484,11 @@ class Samples(WeightedLabelledDataFrame):
             "tex = samples.tex[label]        # anesthetic 1.0\n"
             "tex = samples.get_label(label)  # anesthetic 2.0"
             )
+
+    def to_hdf(self, path_or_buf, key, *args, **kwargs):  # noqa: D102
+        import anesthetic.read.hdf
+        return anesthetic.read.hdf.to_hdf(path_or_buf, key, self,
+                                          *args, **kwargs)
 
 
 class MCMCSamples(Samples):
@@ -860,7 +894,14 @@ class NestedSamples(Samples):
         logX.name = 'logX'
         return logX
 
+    # TODO: remove this in version >= 2.1
     def dlogX(self, nsamples=None):
+        # noqa: disable=D102
+        raise NotImplementedError(
+            "This is anesthetic 1.0 syntax. You should instead use logdX."
+            )
+
+    def logdX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
 
         Parameters
@@ -880,10 +921,10 @@ class NestedSamples(Samples):
         logX = self.logX(nsamples)
         logXp = logX.shift(1, fill_value=0)
         logXm = logX.shift(-1, fill_value=-np.inf)
-        dlogX = np.log(1 - np.exp(logXm-logXp)) + logXp - np.log(2)
-        dlogX.name = 'dlogX'
+        logdX = np.log(1 - np.exp(logXm-logXp)) + logXp - np.log(2)
+        logdX.name = 'logdX'
 
-        return dlogX
+        return logdX
 
     def _betalogL(self, beta=None):
         """Log(L**beta) convenience function.
@@ -946,20 +987,20 @@ class NestedSamples(Samples):
         if np.ndim(nsamples) > 0:
             return nsamples
 
-        dlogX = self.dlogX(nsamples)
+        logdX = self.logdX(nsamples)
         betalogL = self._betalogL(beta)
 
-        if dlogX.ndim == 1 and betalogL.ndim == 1:
-            logw = dlogX + betalogL
-        elif dlogX.ndim > 1 and betalogL.ndim == 1:
-            logw = dlogX.add(betalogL, axis=0)
-        elif dlogX.ndim == 1 and betalogL.ndim > 1:
-            logw = betalogL.add(dlogX, axis=0)
+        if logdX.ndim == 1 and betalogL.ndim == 1:
+            logw = logdX + betalogL
+        elif logdX.ndim > 1 and betalogL.ndim == 1:
+            logw = logdX.add(betalogL, axis=0)
+        elif logdX.ndim == 1 and betalogL.ndim > 1:
+            logw = betalogL.add(logdX, axis=0)
         else:
-            cols = MultiIndex.from_product([betalogL.columns, dlogX.columns])
-            dlogX = dlogX.reindex(columns=cols, level='samples')
+            cols = MultiIndex.from_product([betalogL.columns, logdX.columns])
+            logdX = logdX.reindex(columns=cols, level='samples')
             betalogL = betalogL.reindex(columns=cols, level='beta')
-            logw = betalogL+dlogX
+            logw = betalogL+logdX
         return logw
 
     def logZ(self, nsamples=None, beta=None):
@@ -1304,3 +1345,10 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples.label = label
 
     return new_samples
+
+
+adjust_docstrings(Samples.to_hdf, r'(pd|pandas)\.DataFrame', 'DataFrame')
+adjust_docstrings(Samples.to_hdf, 'DataFrame', 'pandas.DataFrame')
+adjust_docstrings(Samples.to_hdf, r'(pd|pandas)\.read_hdf', 'read_hdf')
+adjust_docstrings(Samples.to_hdf, 'read_hdf', 'pandas.read_hdf')
+adjust_docstrings(Samples.to_hdf, ':func:`open`', '`open`')

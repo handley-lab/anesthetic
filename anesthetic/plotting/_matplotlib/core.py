@@ -91,8 +91,12 @@ class _PlanePlot2d(PlanePlot):
             if self.by is not None
             else self.data
         )
-        x = data[self.x].values
-        y = data[self.y].values
+        x = data[self.x]
+        y = data[self.y]
+        if x.name:  # transfer the tex labels
+            self.x = x.name
+        if y.name:
+            self.y = y.name
         ax = self._get_ax(0)  # another one of these hard-coded 0s
 
         kwds = self.kwds.copy()
@@ -103,7 +107,7 @@ class _PlanePlot2d(PlanePlot):
         if style is not None:
             raise TypeError("'style' keyword argument is not "
                             f"supported by {self._kind}")
-        self._plot(ax, x, y, **kwds)
+        self._plot(ax, x.values, y.values, **kwds)
 
     def _args_adjust(self):
         pass

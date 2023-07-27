@@ -10,7 +10,7 @@ from pandas._libs.lib import no_default
 from pandas.util._exceptions import find_stack_level
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
-from anesthetic.utils import (compress_weights, neff as neff_, quantile,
+from anesthetic.utils import (compress_weights, neff, quantile,
                               temporary_seed, adjust_docstrings)
 from pandas.core.dtypes.missing import notna
 
@@ -222,10 +222,10 @@ class _WeightedObject(object):
         else:
             return answer.__finalize__(self, "reset_index")
 
-    def neff(self, axis=0):
+    def neff(self, axis=0, beta=1):
         """Effective number of samples."""
         if self.isweighted(axis):
-            return neff_(self.get_weights(axis))
+            return neff(self.get_weights(axis), beta=beta)
         else:
             return self.shape[axis]
 

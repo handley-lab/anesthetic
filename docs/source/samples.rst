@@ -253,7 +253,7 @@ the nested samples, such as the following:
   evidence as a trade-off between model fit ``logL_P`` and Occam penalty
   ``D_KL``, see also our paper `Hergt, Handley, Hobson, and Lasenby (2021)
   <https://arxiv.org/abs/2102.11511>`_)
-* Gaussian model dimensionality :meth:`anesthetic.samples.NestedSamples.logL_P`
+* Gaussian model dimensionality :meth:`anesthetic.samples.NestedSamples.d_G`
   :raw-html:`<br />`
   (for more, see our paper `Handley and Lemos (2019)
   <https://arxiv.org/abs/1903.06682>`_)

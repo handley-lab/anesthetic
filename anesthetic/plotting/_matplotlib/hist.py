@@ -19,7 +19,9 @@ from anesthetic.plot import (
     kde_plot_1d,
     fastkde_plot_1d,
     hist_plot_1d,
+    quantile_plot_interval,
 )
+from anesthetic.utils import quantile
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):
@@ -51,10 +53,9 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
         return super()._get_colors(num_colors, color_kwds)
 
     def _post_plot_logic(self, ax, data):
-        super()._post_plot_logic(ax, data)
+        ax.set_xlabel(self.xlabel)
         ax.set_yticks([])
         ax.set_ylim(bottom=0)
-        ax.set_xlim(self.bins[0], self.bins[-1])
 
 
 class KdePlot(HistPlot, _KdePlot):
@@ -137,6 +138,20 @@ class Hist1dPlot(HistPlot):
     @property
     def _kind(self) -> Literal["hist_1d"]:
         return "hist_1d"
+
+    def _calculate_bins(self, data):
+        if "range" not in self.kwds:
+            q = self.kwds.get('q', 5)
+            q = quantile_plot_interval(q=q)
+            weights = self.kwds.get("weights", None)
+            xmin = quantile(data, q[0], weights)
+            xmax = quantile(data, q[-1], weights)
+            self.kwds["range"] = (xmin, xmax)
+            result = super()._calculate_bins(data)
+            self.kwds.pop("range")
+        else:
+            result = super()._calculate_bins(data)
+        return result
 
     @classmethod
     def _plot(
