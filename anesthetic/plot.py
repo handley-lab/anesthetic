@@ -969,7 +969,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmax = quantile(data, q[-1], weights)
     range = kwargs.pop('range', (xmin, xmax))
 
-    if type(bins) is str and bins in ['knuth', 'freedman', 'blocks']:
+    if isinstance(bins, str) and bins in ['knuth', 'freedman', 'blocks']:
         try:
             h, edges, bars = hist(data, ax=ax, bins=bins,
                                   range=range, histtype=histtype,
