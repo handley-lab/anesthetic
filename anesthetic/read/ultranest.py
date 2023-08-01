@@ -19,7 +19,10 @@ def read_ultranest(root, *args, **kwargs):
     num_params = len(labels)
 
     filepath = os.path.join(root, 'results', 'points.hdf5')
-    import h5py
+    try:
+        import h5py
+    except ImportError:
+        raise ImportError('h5py is required to read UltraNest results')
     with h5py.File(filepath, 'r') as fileobj:
         points = fileobj['points']
         _, ncols = points.shape
