@@ -244,8 +244,12 @@ class Samples(WeightedLabelledDataFrame):
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
-                self[x].plot(ax=ax, xlabel=xlabel,
-                             *args, **kwargs)
+                if x == 'logL_birth':
+                    self[x].replace(-np.inf, np.nan
+                                    ).dropna().plot(ax=ax, xlabel=xlabel,
+                                                    *args, **kwargs)
+                else:
+                    self[x].plot(ax=ax, xlabel=xlabel, *args, **kwargs)
                 ax.set_xlabel(xlabel)
             else:
                 ax.plot([], [])
@@ -389,13 +393,27 @@ class Samples(WeightedLabelledDataFrame):
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
                         if x == y:
-                            self[x].plot(ax=ax.twin, xlabel=xlabel,
-                                         *args, **lkwargs)
+                            if x == 'logL_birth':
+                                self[x].replace(-np.inf, np.nan
+                                                ).dropna().plot(ax=ax.twin,
+                                                                xlabel=xlabel,
+                                                                *args,
+                                                                **lkwargs)
+                            else:
+                                self[x].plot(ax=ax.twin, xlabel=xlabel, *args,
+                                             **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
-                            self.plot(x, y, ax=ax, xlabel=xlabel,
-                                      ylabel=ylabel, *args, **lkwargs)
+                            if x == 'logL_birth' or y == 'logL_birth':
+                                self.replace(-np.inf, np.nan
+                                             ).dropna().plot(x, y, ax=ax,
+                                                             xlabel=xlabel,
+                                                             ylabel=ylabel,
+                                                             *args, **lkwargs)
+                            else:
+                                self.plot(x, y, ax=ax, xlabel=xlabel,
+                                          ylabel=ylabel, *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                     else:
