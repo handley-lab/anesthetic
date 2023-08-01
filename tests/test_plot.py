@@ -19,7 +19,7 @@ from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
 from scipy.special import erf
 from scipy.interpolate import interp1d
-from utils import fastkde_skipif, astropy_mark_xfail, fastkde_mark_xfail
+from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_xfail
 
 
 @pytest.fixture(autouse=True)
@@ -338,7 +338,7 @@ def test_2d_axes_scatter(axesparams, params, upper):
 
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d,
-                                     fastkde_skipif(fastkde_plot_1d)])
+                                     skipif_no_fastkde(fastkde_plot_1d)])
 def test_kde_plot_1d(plot_1d):
     fig, ax = plt.subplots()
     np.random.seed(0)
@@ -518,7 +518,7 @@ def test_hist_plot_2d():
 
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d,
-                                     fastkde_skipif(fastkde_plot_1d)])
+                                     skipif_no_fastkde(fastkde_plot_1d)])
 @pytest.mark.parametrize('s', [1, 2])
 def test_1d_density_kwarg(plot_1d, s):
     np.random.seed(0)
@@ -553,7 +553,7 @@ def test_1d_density_kwarg(plot_1d, s):
 
 @pytest.mark.parametrize('contour_plot_2d',
                          [kde_contour_plot_2d,
-                          fastkde_skipif(fastkde_contour_plot_2d)])
+                          skipif_no_fastkde(fastkde_contour_plot_2d)])
 def test_contour_plot_2d(contour_plot_2d):
     fig, ax = plt.subplots()
     np.random.seed(1)
@@ -648,7 +648,7 @@ def test_kde_plot_nplot():
 
 @pytest.mark.parametrize('contour_plot_2d',
                          [kde_contour_plot_2d,
-                          fastkde_skipif(fastkde_contour_plot_2d)])
+                          skipif_no_fastkde(fastkde_contour_plot_2d)])
 @pytest.mark.parametrize('levels', [[0.9],
                                     [0.9, 0.6],
                                     [0.9, 0.6, 0.3],

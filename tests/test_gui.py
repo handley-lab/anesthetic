@@ -2,7 +2,7 @@ import anesthetic.examples._matplotlib_agg  # noqa: F401
 from anesthetic import read_chains
 import pytest
 import pandas._testing as tm
-from utils import h5py_skipif
+from utils import skipif_no_h5py
 
 
 @pytest.fixture(autouse=True)
@@ -12,7 +12,7 @@ def close_figures_on_teardown():
 
 @pytest.mark.parametrize('root', ["./tests/example_data/pc",
                                   "./tests/example_data/mn",
-                                  h5py_skipif("./tests/example_data/un")])
+                                  skipif_no_h5py("./tests/example_data/un")])
 def test_gui(root):
     samples = read_chains(root)
     plotter = samples.gui()
@@ -59,7 +59,7 @@ def test_gui(root):
 
 @pytest.mark.parametrize('root', ["./tests/example_data/pc",
                                   "./tests/example_data/mn",
-                                  h5py_skipif("./tests/example_data/un")])
+                                  skipif_no_h5py("./tests/example_data/un")])
 def test_gui_params(root):
     samples = read_chains(root)
     params = samples.columns.get_level_values(0).to_list()
@@ -72,7 +72,7 @@ def test_gui_params(root):
 
 @pytest.mark.parametrize('root', ["./tests/example_data/pc",
                                   "./tests/example_data/mn",
-                                  h5py_skipif("./tests/example_data/un")])
+                                  skipif_no_h5py("./tests/example_data/un")])
 def test_slider_reset_range(root):
     plotter = read_chains(root).gui()
     plotter.evolution.reset_range(-3, 3)

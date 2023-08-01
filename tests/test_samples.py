@@ -21,7 +21,7 @@ from pandas.testing import assert_frame_equal
 import pandas._testing as tm
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
-from utils import fastkde_skipif, astropy_mark_xfail, fastkde_mark_skip
+from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_skip
 
 
 @pytest.fixture(autouse=True)
@@ -292,7 +292,7 @@ def test_plot_2d_legend():
                 assert labels == ['l1', 'l2']
 
 
-@pytest.mark.parametrize('kind', ['kde', 'hist', fastkde_skipif('fastkde')])
+@pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
 def test_plot_2d_colours(kind):
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
@@ -343,7 +343,7 @@ def test_plot_2d_colours(kind):
                                     dict(cmap="viridis"),
                                     dict(colormap="viridis")])
 @pytest.mark.parametrize('kind', ['kde', 'hist', 'default',
-                                  fastkde_skipif('fastkde')])
+                                  skipif_no_fastkde('fastkde')])
 def test_plot_2d_kwargs(kind, kwargs):
     np.random.seed(42)
     pc = read_chains("./tests/example_data/pc")
@@ -351,7 +351,7 @@ def test_plot_2d_kwargs(kind, kwargs):
     pc.plot_2d(axes, kind=kind, **kwargs)
 
 
-@pytest.mark.parametrize('kind', ['kde', 'hist', fastkde_skipif('fastkde')])
+@pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
 def test_plot_1d_colours(kind):
     np.random.seed(3)
     gd = read_chains("./tests/example_data/gd")
@@ -819,7 +819,7 @@ def test_stats():
 
 
 @pytest.mark.parametrize('kind', ['kde', 'hist', 'kde_1d', 'hist_1d',
-                                  fastkde_skipif('fastkde_1d')])
+                                  skipif_no_fastkde('fastkde_1d')])
 def test_masking_1d(kind):
     pc = read_chains("./tests/example_data/pc")
     mask = pc['x0'].to_numpy() > 0
@@ -827,7 +827,7 @@ def test_masking_1d(kind):
 
 
 @pytest.mark.parametrize('kind', ['kde', 'scatter', 'scatter_2d', 'kde_2d',
-                                  'hist_2d', fastkde_skipif('fastkde_2d')])
+                                  'hist_2d', skipif_no_fastkde('fastkde_2d')])
 def test_masking_2d(kind):
     pc = read_chains("./tests/example_data/pc")
     mask = pc['x0'].to_numpy() > 0
@@ -1301,7 +1301,7 @@ def test_samples_dot_plot():
 
 
 @pytest.mark.parametrize('kind', ['kde', 'hist', 'kde_1d', 'hist_1d',
-                                  fastkde_skipif('fastkde_1d')])
+                                  skipif_no_fastkde('fastkde_1d')])
 def test_samples_dot_plot_legend(kind):
     samples = read_chains('./tests/example_data/pc')
     fig, ax = plt.subplots()
@@ -1354,7 +1354,7 @@ def test_samples_plot_labels():
         assert samples.get_label(col) == ax.get_xlabel()
 
 
-@pytest.mark.parametrize('kind', ['kde', 'hist', fastkde_skipif('fastkde')])
+@pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
 def test_samples_empty_1d_ylabels(kind):
     samples = read_chains('./tests/example_data/pc')
     columns = ['x0', 'x1', 'x2', 'x3', 'x4']

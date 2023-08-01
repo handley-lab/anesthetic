@@ -13,7 +13,7 @@ astropy_mark_skip = pytest.mark.skipif(condition, reason=reason)
 astropy_mark_xfail = pytest.mark.xfail(condition, raises=raises, reason=reason)
 
 
-def astropy_skipif(param):
+def skipif_no_astropy(param):
     return pytest.param(param, marks=astropy_mark_skip)
 
 
@@ -21,14 +21,14 @@ try:
     import fastkde  # noqa: F401
 except ImportError:
     pass
-reason = "You need to install fastkde to use fastkde"
+reason = "requires fastkde package"
 condition = 'fastkde' not in sys.modules
 raises = ImportError
 fastkde_mark_skip = pytest.mark.skipif(condition, reason=reason)
 fastkde_mark_xfail = pytest.mark.xfail(condition, raises=raises, reason=reason)
 
 
-def fastkde_skipif(param):
+def skipif_no_fastkde(param):
     return pytest.param(param, marks=fastkde_mark_skip)
 
 
@@ -37,13 +37,13 @@ try:
 except ImportError:
     pass
 condition = 'getdist' not in sys.modules
-reason = "You need to install getdist to use this function"
+reason = "requires getdist package"
 raises = ImportError
 getdist_mark_skip = pytest.mark.skipif(condition, reason=reason)
 getdist_mark_xfail = pytest.mark.xfail(condition, raises=raises, reason=reason)
 
 
-def getdist_skipif(param):
+def skipif_no_getdist(param):
     return pytest.param(param, marks=getdist_mark_skip)
 
 
@@ -72,5 +72,5 @@ h5py_mark_skip = pytest.mark.skipif(condition, reason=reason)
 h5py_mark_xfail = pytest.mark.xfail(condition, raises=raises, reason=reason)
 
 
-def h5py_skipif(param):
+def skipif_no_h5py(param):
     return pytest.param(param, marks=h5py_mark_skip)
