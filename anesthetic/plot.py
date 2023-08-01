@@ -962,7 +962,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmax = quantile(data, q[-1], weights)
     range = kwargs.pop('range', (xmin, xmax))
 
-    if type(bins) == str and bins in ['knuth', 'freedman', 'blocks']:
+    if isinstance(bins, str) and bins in ['knuth', 'freedman', 'blocks']:
         try:
             from astropy.visualization import hist
             h, edges, bars = hist(data, ax=ax, bins=bins,

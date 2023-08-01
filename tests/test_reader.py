@@ -268,14 +268,14 @@ def test_hdf5(tmp_path, root):
 
     with HDFStore(filename) as store:
         assert_frame_equal(samples, store[key])
-        assert type(store[key]) == type(samples)
+        assert type(store[key]) is type(samples)
 
     samples.to_hdf(filename, key)
 
     with HDFStore(filename) as store:
         assert_frame_equal(samples, store[key])
-        assert type(store[key]) == type(samples)
+        assert type(store[key]) is type(samples)
 
     samples_ = read_hdf(filename, key)
     assert_frame_equal(samples_, samples)
-    assert type(samples_) == type(samples)
+    assert type(samples_) is type(samples)
