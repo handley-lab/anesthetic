@@ -1,10 +1,10 @@
 from anesthetic import read_chains
 from anesthetic.convert import to_getdist
 from numpy.testing import assert_array_equal
-from utils import getdist_mark_xfail
+from utils import getdist_mark_xskip
 
 
-@getdist_mark_xfail
+@getdist_mark_xskip
 def test_to_getdist():
     anesthetic_samples = read_chains('./tests/example_data/gd')
     getdist_samples = to_getdist(anesthetic_samples)
