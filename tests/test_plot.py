@@ -19,7 +19,7 @@ from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
 from scipy.special import erf
 from scipy.interpolate import interp1d
-from utils import skipif_no_fastkde, astropy_mark_skip, fastkde_mark_xskip
+from utils import skipif_no_fastkde, astropy_mark_skip, fastkde_mark_skip
 
 
 @pytest.fixture(autouse=True)

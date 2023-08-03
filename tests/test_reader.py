@@ -13,7 +13,7 @@ from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 import pandas._testing as tm
 from anesthetic.read.hdf import HDFStore, read_hdf
-from utils import pytables_mark_skip, h5py_mark_xskip, getdist_mark_skip
+from utils import pytables_mark_skip, h5py_mark_skip, getdist_mark_skip
 
 
 @pytest.fixture(autouse=True)
