@@ -21,7 +21,7 @@ from pandas.testing import assert_frame_equal
 import pandas._testing as tm
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
-from utils import skipif_no_fastkde, astropy_mark_xskip, fastkde_mark_skip
+from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_skip
 
 
 @pytest.fixture(autouse=True)
@@ -389,7 +389,7 @@ def test_plot_1d_colours(kind):
     assert len(set(pc_colors)) == 1
 
 
-@astropy_mark_xskip
+@astropy_mark_xfail
 def test_astropyhist():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')

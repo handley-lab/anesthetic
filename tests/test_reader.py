@@ -13,7 +13,7 @@ from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 import pandas._testing as tm
 from anesthetic.read.hdf import HDFStore, read_hdf
-from utils import pytables_mark_xskip, h5py_mark_xskip, getdist_mark_skip
+from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
 
 
 @pytest.fixture(autouse=True)
@@ -179,7 +179,7 @@ def test_read_multinest():
     ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
-@h5py_mark_xskip
+@h5py_mark_xfail
 def test_read_ultranest():
     np.random.seed(3)
     ns = read_ultranest('./tests/example_data/un')
@@ -257,7 +257,7 @@ def test_regex_escape():
 
 
 @pytest.mark.parametrize('root', ['pc', 'gd'])
-@pytables_mark_xskip
+@pytables_mark_xfail
 def test_hdf5(tmp_path, root):
     samples = read_chains('./tests/example_data/' + root)
     filename = tmp_path / ('test_hdf5' + root + '.h5')
