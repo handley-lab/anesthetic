@@ -413,8 +413,8 @@ class Samples(WeightedLabelledDataFrame):
         'kde': {'diagonal': 'kde_1d', 'lower': 'kde_2d'},
         'kde_1d': {'diagonal': 'kde_1d'},
         'kde_2d': {'lower': 'kde_2d'},
-        'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
         'fastkde': {'diagonal': 'fastkde_1d', 'lower': 'fastkde_2d'},
+        'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
         'hist_1d': {'diagonal': 'hist_1d'},
         'hist_2d': {'lower': 'hist_2d'},
     }
