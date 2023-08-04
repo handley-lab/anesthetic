@@ -1,4 +1,12 @@
 from packaging import version
+import subprocess
+
+
+def run(*args):
+    """Run a bash command and return the output in Python."""
+    return subprocess.run(args, text=True,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE).stdout
 
 
 def unit_incremented(a, b):
