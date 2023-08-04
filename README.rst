@@ -2,7 +2,7 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
-:Version: 2.1.5
+:Version: 2.1.6
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -136,15 +136,15 @@ If you use ``anesthetic`` to generate plots for a publication, please cite
 as: ::
 
    Handley, (2019). anesthetic: nested sampling visualisation. Journal of Open
-   Source Software, 4(37), 1414, https://doi.org/10.21105/joss.01414
+   Source Software, 4(37), 1414, https://doi.org/10.2.1.6/joss.01414
 
 or using the BibTeX:
 
 .. code:: bibtex
 
    @article{anesthetic,
-       doi = {10.21105/joss.01414},
-       url = {http://dx.doi.org/10.21105/joss.01414},
+       doi = {10.2.1.6/joss.01414},
+       url = {http://dx.doi.org/10.2.1.6/joss.01414},
        year  = {2019},
        month = {Jun},
        publisher = {The Open Journal},
