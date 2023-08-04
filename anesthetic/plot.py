@@ -1028,6 +1028,14 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    if ax.get_xaxis().get_scale() == 'log':
+        data_x = np.log10(data_x)
+        xmin = None if xmin is None else np.log10(xmin)
+        xmax = None if xmax is None else np.log10(xmax)
+    if ax.get_yaxis().get_scale() == 'log':
+        data_y = np.log10(data_y)
+        ymin = None if ymin is None else np.log10(ymin)
+        ymax = None if ymax is None else np.log10(ymax)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
@@ -1054,6 +1062,11 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     i = (pdf >= levels[0]*0.5).any(axis=0)
     j = (pdf >= levels[0]*0.5).any(axis=1)
 
+    if ax.get_xaxis().get_scale() == 'log':
+        x = 10**x
+    if ax.get_yaxis().get_scale() == 'log':
+        y = 10**y
+
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
         contf = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
@@ -1079,8 +1092,6 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                       vmin=vmin, vmax=vmax, linewidths=linewidths,
                       colors=edgecolor, cmap=cmap, *args, **kwargs)
 
-    ax.set_xlim(xmin, xmax, auto=True)
-    ax.set_ylim(ymin, ymax, auto=True)
     return contf, cont
 
 
