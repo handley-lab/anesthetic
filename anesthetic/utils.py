@@ -158,10 +158,8 @@ def sample_cdf(samples, inverse=False, interpolation='linear'):
     ngaps = len(samples)-1
     gaps = np.random.dirichlet(np.ones(ngaps))
     cdf = np.array([0, *np.cumsum(gaps)])
-    assert np.isclose(cdf[-1], 1, atol=1e-9, rtol=1e-9), \
-        "Error: CDF does not reach 1 but "+str(cdf[-1])
-    # Set the last element (tested to be approx 1)
-    # to exactly 1 to avoid interpolation errors
+    # The last element should be one (up to floating point errors) because
+    # dirichlet sums to one. Set exactly to avoid interpolation errors.
     cdf[-1] = 1
     if inverse:
         return interp1d(cdf, samples, kind=interpolation)
