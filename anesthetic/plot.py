@@ -1144,6 +1144,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         data_x = data_x[weights != 0]
         data_y = data_y[weights != 0]
         weights = weights[weights != 0]
+    if ax.get_xaxis().get_scale() == 'log':
+        data_x = np.log10(data_x)
+    if ax.get_yaxis().get_scale() == 'log':
+        data_y = np.log10(data_y)
 
     ncompress = kwargs.pop('ncompress', 'equal')
     nplot = kwargs.pop('nplot_2d', 1000)
@@ -1184,6 +1188,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                    xmin=data_y.min(), xmax=data_y.max())
 
     levels = iso_probability_contours(P, contours=levels)
+    if ax.get_xaxis().get_scale() == 'log':
+        X = 10**X
+    if ax.get_yaxis().get_scale() == 'log':
+        Y = 10**Y
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
