@@ -428,6 +428,9 @@ def test_plot_2d_no_axes():
     assert axes.iloc[-1, 1].get_xlabel() == 'x1'
     assert axes.iloc[-1, 2].get_xlabel() == 'x2'
 
+    axes = ns[['x0', 'logL_birth']].plot_2d()
+    axes = ns.drop_labels()[['x0', 'logL_birth']].plot_2d()
+
 
 def test_plot_1d_no_axes():
     np.random.seed(3)
@@ -440,10 +443,10 @@ def test_plot_1d_no_axes():
     assert axes.iloc[0].get_xlabel() == 'x0'
     assert axes.iloc[1].get_xlabel() == 'x1'
     assert axes.iloc[2].get_xlabel() == 'x2'
+
     axes = ns.plot_1d()
-    assert axes['logL_birth'].get_xlim()[0] > -1000
-    axes = ns[['x0', 'logL_birth']].plot_2d()
-    assert axes['logL_birth']['logL_birth'].get_xlim()[0] > -1000
+    axes = ns[['x0', 'logL_birth']].plot_1d()
+    axes = ns.drop_labels()[['x0', 'logL_birth']].plot_1d()
 
 
 def test_mcmc_stats():

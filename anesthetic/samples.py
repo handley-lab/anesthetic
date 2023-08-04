@@ -244,12 +244,10 @@ class Samples(WeightedLabelledDataFrame):
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
+                selfx = self[x]
                 if x == 'logL_birth':
-                    self[x].replace(-np.inf, np.nan
-                                    ).dropna().plot(ax=ax, xlabel=xlabel,
-                                                    *args, **kwargs)
-                else:
-                    self[x].plot(ax=ax, xlabel=xlabel, *args, **kwargs)
+                    selfx.replace(-np.inf, np.nan, inplace=True)
+                selfx.plot(ax=ax, xlabel=xlabel, *args, **kwargs)
                 ax.set_xlabel(xlabel)
             else:
                 ax.plot([], [])
@@ -393,27 +391,25 @@ class Samples(WeightedLabelledDataFrame):
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
                         if x == y:
+                            selfx = self[x]
                             if x == 'logL_birth':
-                                self[x].replace(-np.inf, np.nan
-                                                ).dropna().plot(ax=ax.twin,
-                                                                xlabel=xlabel,
-                                                                *args,
-                                                                **lkwargs)
-                            else:
-                                self[x].plot(ax=ax.twin, xlabel=xlabel, *args,
-                                             **lkwargs)
+                                selfx.replace(-np.inf, np.nan, inplace=True)
+                            selfx.plot(ax=ax.twin, xlabel=xlabel,
+                                       *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
+                            selfxy = self
                             if x == 'logL_birth' or y == 'logL_birth':
-                                self.replace(-np.inf, np.nan
-                                             ).dropna().plot(x, y, ax=ax,
-                                                             xlabel=xlabel,
-                                                             ylabel=ylabel,
-                                                             *args, **lkwargs)
-                            else:
-                                self.plot(x, y, ax=ax, xlabel=xlabel,
-                                          ylabel=ylabel, *args, **lkwargs)
+                                if self.islabelled():
+                                    label = ('logL_birth',
+                                             self.get_label('logL_birth'))
+                                else:
+                                    label = 'logL_birth'
+                                selfxy = self.replace({label: -np.inf}, np.nan)
+                                selfxy = selfxy.dropna(axis=0, subset=[label])
+                            selfxy.plot(x, y, ax=ax, xlabel=xlabel,
+                                        ylabel=ylabel, *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                     else:
