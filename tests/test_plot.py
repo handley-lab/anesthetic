@@ -498,12 +498,14 @@ def test_hist_plot_2d():
     ymin, ymax = ax.get_ylim()
     assert xmin > -5 and xmax < 5 and ymin > -5 and ymax < 5
 
+    fig, ax = plt.subplots()
     data_x, data_y = np.random.uniform(-10, 10, (2, 1000))
     hist_plot_2d(ax, data_x, data_y)
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     assert xmin > -10 and xmax < 10 and ymin > -10 and ymax < 10
 
+    fig, ax = plt.subplots()
     data_x, data_y = np.random.uniform(-10, 10, (2, 1000))
     weights = np.exp(-(data_x**2 + data_y**2)/2)
     hist_plot_2d(ax, data_x, data_y, weights=weights, bins=30)
