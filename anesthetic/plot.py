@@ -1266,6 +1266,10 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """
     kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
+    if ax.get_xaxis().get_scale() == 'log':
+        data_x = np.log10(data_x)
+    if ax.get_yaxis().get_scale() == 'log':
+        data_y = np.log10(data_y)
 
     vmin = kwargs.pop('vmin', 0)
     label = kwargs.pop('label', None)
@@ -1282,17 +1286,13 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymax = quantile(data_y, q[-1], weights)
     rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
-    if levels is None:
-        pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
-                                     cmap=cmap, range=rge, vmin=vmin,
-                                     *args, **kwargs)
-    else:
-        bins = kwargs.pop('bins', 10)
-        density = kwargs.pop('density', False)
-        cmin = kwargs.pop('cmin', None)
-        cmax = kwargs.pop('cmax', None)
-        pdf, x, y = np.histogram2d(data_x, data_y, bins, rge,
-                                   density, weights)
+    bins = kwargs.pop('bins', 10)
+    density = kwargs.pop('density', False)
+    cmin = kwargs.pop('cmin', None)
+    cmax = kwargs.pop('cmax', None)
+    pdf, x, y = np.histogram2d(data_x, data_y, bins, rge,
+                               density, weights)
+    if levels is not None:
         levels = iso_probability_contours(pdf, levels)
         pdf = np.digitize(pdf, levels, right=True)
         pdf = np.array(levels)[pdf]
@@ -1301,9 +1301,13 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
             pdf[pdf < cmin] = np.ma.masked
         if cmax is not None:
             pdf[pdf > cmax] = np.ma.masked
-        snap = kwargs.pop('snap', True)
-        image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=vmin, snap=snap,
-                              *args, **kwargs)
+    snap = kwargs.pop('snap', True)
+    if ax.get_xaxis().get_scale() == 'log':
+        x = 10**x
+    if ax.get_yaxis().get_scale() == 'log':
+        y = 10**y
+    image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=vmin, snap=snap,
+                          *args, **kwargs)
 
     ax.add_patch(plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
                                lw=2, label=label))
