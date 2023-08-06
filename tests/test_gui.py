@@ -16,7 +16,8 @@ def close_figures_on_teardown():
 
 @pytest.mark.parametrize('root', ["./tests/example_data/pc",
                                   "./tests/example_data/mn",
-                                  "./tests/example_data/un"])
+                                  "./tests/example_data/un",
+                                  "./tests/example_data/nf"])
 def test_gui(root):
     if 'un' in root and 'h5py' not in sys.modules:
         pytest.skip("`h5py` not in sys.modules, but needed for ultranest.")
@@ -65,7 +66,8 @@ def test_gui(root):
 
 @pytest.mark.parametrize('root', ["./tests/example_data/pc",
                                   "./tests/example_data/mn",
-                                  "./tests/example_data/un"])
+                                  "./tests/example_data/un",
+                                  "./tests/example_data/nf"])
 def test_gui_params(root):
     if 'un' in root and 'h5py' not in sys.modules:
         pytest.skip("`h5py` not in sys.modules, but needed for ultranest.")
@@ -80,7 +82,8 @@ def test_gui_params(root):
 
 @pytest.mark.parametrize('root', ["./tests/example_data/pc",
                                   "./tests/example_data/mn",
-                                  "./tests/example_data/un"])
+                                  "./tests/example_data/un",
+                                  "./tests/example_data/nf"])
 def test_slider_reset_range(root):
     if 'un' in root and 'h5py' not in sys.modules:
         pytest.skip("`h5py` not in sys.modules, but needed for ultranest.")
