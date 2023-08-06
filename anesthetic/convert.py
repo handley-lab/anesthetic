@@ -15,7 +15,10 @@ def to_getdist(samples):
     getdist_samples : :class:`getdist.mcsamples.MCSamples`
         getdist equivalent samples
     """
-    import getdist
+    try:
+        import getdist
+    except ModuleNotFoundError:
+        raise ImportError("You need to install getdist to use to_getdist")
     labels = np.char.strip(samples.get_labels().astype(str), '$')
     samples = samples.drop_labels()
     ranges = samples.agg(['min', 'max']).T.apply(tuple, axis=1).to_dict()

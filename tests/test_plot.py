@@ -1,7 +1,6 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 import pytest
 import numpy as np
-import sys
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
@@ -20,6 +19,7 @@ from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
 from scipy.special import erf
 from scipy.interpolate import interp1d
+from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_xfail
 
 
 @pytest.fixture(autouse=True)
@@ -337,110 +337,102 @@ def test_2d_axes_scatter(axesparams, params, upper):
     axes.scatter(params, **kwargs)
 
 
-@pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d,
+                                     skipif_no_fastkde(fastkde_plot_1d)])
 def test_kde_plot_1d(plot_1d):
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(1000)
 
-    try:
-        # Check height
-        line, = plot_1d(ax, data)
-        assert isinstance(line, Line2D)
-        assert line.get_ydata().max() <= 1
+    # Check height
+    line, = plot_1d(ax, data)
+    assert isinstance(line, Line2D)
+    assert line.get_ydata().max() <= 1
 
-        # Check arguments are passed onward to underlying function
-        line, = plot_1d(ax, data, color='r')
-        assert line.get_color() == 'r'
-        line, = plot_1d(ax, data, cmap=plt.cm.Blues)
-        assert line.get_color() == plt.cm.Blues(0.68)
+    # Check arguments are passed onward to underlying function
+    line, = plot_1d(ax, data, color='r')
+    assert line.get_color() == 'r'
+    line, = plot_1d(ax, data, cmap=plt.cm.Blues)
+    assert line.get_color() == plt.cm.Blues(0.68)
 
-        # Check q
-        plot_1d(ax, data, q='1sigma')
-        plot_1d(ax, data, q=0)
-        plot_1d(ax, data, q=1)
-        plot_1d(ax, data, q=5)
-        plot_1d(ax, data, q=10)
-        plot_1d(ax, data, q=0.1)
-        plot_1d(ax, data, q=0.9)
-        plot_1d(ax, data, q=(0.1, 0.9))
+    # Check q
+    plot_1d(ax, data, q='1sigma')
+    plot_1d(ax, data, q=0)
+    plot_1d(ax, data, q=1)
+    plot_1d(ax, data, q=5)
+    plot_1d(ax, data, q=10)
+    plot_1d(ax, data, q=0.1)
+    plot_1d(ax, data, q=0.9)
+    plot_1d(ax, data, q=(0.1, 0.9))
 
-        # Check iso-probability code
-        line, fill = plot_1d(ax, data, facecolor=True)
-        plot_1d(ax, data, facecolor=True, levels=[0.8, 0.6, 0.2])
-        line, fill = plot_1d(ax, data, fc='blue', color='k', ec='r')
-        assert np.all(fill[0].get_edgecolor()[0] == to_rgba('r'))
-        assert (to_rgba(line[0].get_color()) == to_rgba('r'))
-        line, fill = plot_1d(ax, data, fc=True, color='k', ec=None)
-        assert len(fill[0].get_edgecolor()) == 0
-        assert (to_rgba(line[0].get_color()) == to_rgba('k'))
+    # Check iso-probability code
+    line, fill = plot_1d(ax, data, facecolor=True)
+    plot_1d(ax, data, facecolor=True, levels=[0.8, 0.6, 0.2])
+    line, fill = plot_1d(ax, data, fc='blue', color='k', ec='r')
+    assert np.all(fill[0].get_edgecolor()[0] == to_rgba('r'))
+    assert (to_rgba(line[0].get_color()) == to_rgba('r'))
+    line, fill = plot_1d(ax, data, fc=True, color='k', ec=None)
+    assert len(fill[0].get_edgecolor()) == 0
+    assert (to_rgba(line[0].get_color()) == to_rgba('k'))
 
-        # Check levels
-        with pytest.raises(ValueError):
-            fig, ax = plt.subplots()
-            plot_1d(ax, data, fc=True, levels=[0.68, 0.95])
-
-        # Check xlim, Gaussian (i.e. limits reduced to relevant data range)
+    # Check levels
+    with pytest.raises(ValueError):
         fig, ax = plt.subplots()
-        data = np.random.randn(1000) * 0.01 + 0.5
-        plot_1d(ax, data)
-        xmin, xmax = ax.get_xlim()
-        assert xmin > 0.4
-        assert xmax < 0.6
-        # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
-        fig, ax = plt.subplots()
-        data = np.random.uniform(size=1000)
-        plot_1d(ax, data, q=0)
-        xmin, xmax = ax.get_xlim()
-        assert xmin <= 0
-        assert xmax >= 1
+        plot_1d(ax, data, fc=True, levels=[0.68, 0.95])
 
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
+    # Check xlim, Gaussian (i.e. limits reduced to relevant data range)
+    fig, ax = plt.subplots()
+    data = np.random.randn(1000) * 0.01 + 0.5
+    plot_1d(ax, data)
+    xmin, xmax = ax.get_xlim()
+    assert xmin > 0.4
+    assert xmax < 0.6
+    # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
+    fig, ax = plt.subplots()
+    data = np.random.uniform(size=1000)
+    plot_1d(ax, data, q=0)
+    xmin, xmax = ax.get_xlim()
+    assert xmin <= 0
+    assert xmax >= 1
 
 
+@fastkde_mark_xfail
 def test_fastkde_min_max():
     np.random.seed(0)
     data_x = np.random.randn(100)
     data_y = np.random.randn(100)
     xmin, xmax = -1, +1
     ymin, ymax = -1, +1
-    try:
-        _, ax = plt.subplots()
-        line, = fastkde_plot_1d(ax, data_x, xmin=xmin)
-        assert (line.get_xdata() >= xmin).all()
+    _, ax = plt.subplots()
+    line, = fastkde_plot_1d(ax, data_x, xmin=xmin)
+    assert (line.get_xdata() >= xmin).all()
 
-        _, ax = plt.subplots()
-        line, = fastkde_plot_1d(ax, data_x, xmax=xmax)
-        assert (line.get_xdata() <= xmax).all()
+    _, ax = plt.subplots()
+    line, = fastkde_plot_1d(ax, data_x, xmax=xmax)
+    assert (line.get_xdata() <= xmax).all()
 
-        _, ax = plt.subplots()
-        line, = fastkde_plot_1d(ax, data_x, xmin=xmin, xmax=xmax)
-        assert (line.get_xdata() >= xmin).all()
-        assert (line.get_xdata() <= xmax).all()
+    _, ax = plt.subplots()
+    line, = fastkde_plot_1d(ax, data_x, xmin=xmin, xmax=xmax)
+    assert (line.get_xdata() >= xmin).all()
+    assert (line.get_xdata() <= xmax).all()
 
-        _, ax = plt.subplots()
-        fastkde_contour_plot_2d(ax, data_x, data_y, xmin=xmin, ymin=ymin)
-        assert ax.get_xlim()[0] >= xmin
-        assert ax.get_ylim()[0] >= ymin
+    _, ax = plt.subplots()
+    fastkde_contour_plot_2d(ax, data_x, data_y, xmin=xmin, ymin=ymin)
+    assert ax.get_xlim()[0] >= xmin
+    assert ax.get_ylim()[0] >= ymin
 
-        _, ax = plt.subplots()
-        fastkde_contour_plot_2d(ax, data_x, data_y, xmax=xmax, ymax=ymax)
-        assert ax.get_xlim()[1] <= xmax
-        assert ax.get_ylim()[1] <= ymax
+    _, ax = plt.subplots()
+    fastkde_contour_plot_2d(ax, data_x, data_y, xmax=xmax, ymax=ymax)
+    assert ax.get_xlim()[1] <= xmax
+    assert ax.get_ylim()[1] <= ymax
 
-        _, ax = plt.subplots()
-        fastkde_contour_plot_2d(ax, data_x, data_y,
-                                xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
-        assert ax.get_xlim()[0] >= xmin
-        assert ax.get_xlim()[1] <= xmax
-        assert ax.get_ylim()[0] >= ymin
-        assert ax.get_ylim()[1] <= ymax
-
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
+    _, ax = plt.subplots()
+    fastkde_contour_plot_2d(ax, data_x, data_y,
+                            xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    assert ax.get_xlim()[0] >= xmin
+    assert ax.get_xlim()[1] <= xmax
+    assert ax.get_ylim()[0] >= ymin
+    assert ax.get_ylim()[1] <= ymax
 
 
 def test_hist_plot_1d():
@@ -485,19 +477,16 @@ def test_hist_plot_1d():
     assert polygon.get_ec() == ColorConverter.to_rgba('r')
 
 
+@astropy_mark_xfail
 @pytest.mark.parametrize('bins', ['knuth', 'freedman', 'blocks'])
 def test_astropyhist_plot_1d(bins):
-    try:
-        fig, ax = plt.subplots()
-        np.random.seed(0)
-        data = np.random.randn(100)
-        bars = hist_plot_1d(ax, data, histtype='bar', bins=bins)[2]
-        assert np.all([isinstance(b, Patch) for b in bars])
-        assert max([b.get_height() for b in bars]) == 1.
-        assert np.all(np.array([b.get_height() for b in bars]) <= 1.)
-    except ImportError:
-        if 'astropy' not in sys.modules:
-            pass
+    fig, ax = plt.subplots()
+    np.random.seed(0)
+    data = np.random.randn(100)
+    bars = hist_plot_1d(ax, data, histtype='bar', bins=bins)[2]
+    assert np.all([isinstance(b, Patch) for b in bars])
+    assert max([b.get_height() for b in bars]) == 1.
+    assert np.all(np.array([b.get_height() for b in bars]) <= 1.)
 
 
 def test_hist_plot_2d():
@@ -528,127 +517,119 @@ def test_hist_plot_2d():
     hist_plot_2d(ax, data_x, data_y, levels=[0.95, 0.68], cmax=50)
 
 
-@pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d,
+                                     skipif_no_fastkde(fastkde_plot_1d)])
 @pytest.mark.parametrize('s', [1, 2])
 def test_1d_density_kwarg(plot_1d, s):
-    try:
-        np.random.seed(0)
-        x = np.random.normal(scale=s, size=2000)
-        fig, ax = plt.subplots()
+    np.random.seed(0)
+    x = np.random.normal(scale=s, size=2000)
+    fig, ax = plt.subplots()
 
-        # hist density = False:
-        h = hist_plot_1d(ax, x, density=False,
-                         bins=np.linspace(-5.5, 5.5, 12))[2]
-        bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
-        assert bar_height == pytest.approx(1, rel=0.1)
+    # hist density = False:
+    h = hist_plot_1d(ax, x, density=False,
+                     bins=np.linspace(-5.5, 5.5, 12))[2]
+    bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+    assert bar_height == pytest.approx(1, rel=0.1)
 
-        # kde density = False:
-        k = plot_1d(ax, x, density=False)[0]
-        f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
-        kde_height = f(0)
-        assert kde_height == pytest.approx(1, rel=0.1)
+    # kde density = False:
+    k = plot_1d(ax, x, density=False)[0]
+    f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
+    kde_height = f(0)
+    assert kde_height == pytest.approx(1, rel=0.1)
 
-        # hist density = True:
-        h = hist_plot_1d(ax, x, density=True,
-                         bins=np.linspace(-5.5, 5.5, 12))[2]
-        bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
-        assert bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1)
+    # hist density = True:
+    h = hist_plot_1d(ax, x, density=True,
+                     bins=np.linspace(-5.5, 5.5, 12))[2]
+    bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+    assert bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1)
 
-        # kde density = True:
-        k = plot_1d(ax, x, density=True)[0]
-        f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
-        kde_height = f(0)
-        gauss_norm = 1 / np.sqrt(2 * np.pi * s**2)
-        assert kde_height == pytest.approx(gauss_norm, rel=0.1)
-
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
+    # kde density = True:
+    k = plot_1d(ax, x, density=True)[0]
+    f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
+    kde_height = f(0)
+    gauss_norm = 1 / np.sqrt(2 * np.pi * s**2)
+    assert kde_height == pytest.approx(gauss_norm, rel=0.1)
 
 
-@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
-                                             fastkde_contour_plot_2d])
+@pytest.mark.parametrize('contour_plot_2d',
+                         [kde_contour_plot_2d,
+                          skipif_no_fastkde(fastkde_contour_plot_2d)])
 def test_contour_plot_2d(contour_plot_2d):
-    try:
-        fig, ax = plt.subplots()
-        np.random.seed(1)
-        data_x = np.random.randn(1000)
-        data_y = np.random.randn(1000)
-        cf, ct = contour_plot_2d(ax, data_x, data_y)
-        assert isinstance(cf, ContourSet)
-        assert isinstance(ct, ContourSet)
+    fig, ax = plt.subplots()
+    np.random.seed(1)
+    data_x = np.random.randn(1000)
+    data_y = np.random.randn(1000)
+    cf, ct = contour_plot_2d(ax, data_x, data_y)
+    assert isinstance(cf, ContourSet)
+    assert isinstance(ct, ContourSet)
 
-        # Check levels
-        with pytest.raises(ValueError):
-            fig, ax = plt.subplots()
-            contour_plot_2d(ax, data_x, data_y, levels=[0.68, 0.95])
+    # Check levels
+    with pytest.raises(ValueError):
+        fig, ax = plt.subplots()
+        contour_plot_2d(ax, data_x, data_y, levels=[0.68, 0.95])
 
-        # Check q
-        fig, ax = plt.subplots()
-        contour_plot_2d(ax, data_x, data_y, q=0)
+    # Check q
+    fig, ax = plt.subplots()
+    contour_plot_2d(ax, data_x, data_y, q=0)
 
-        # Check unfilled
-        cmap = basic_cmap('C2')
-        fig, ax = plt.subplots()
-        cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
-        cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
-        # filled `contourf` and unfilled `contour` colors are the same:
-        assert cf1.tcolors[0] == ct2.tcolors[0]
-        assert cf1.tcolors[1] == ct2.tcolors[1]
-        cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
-        assert ct.colors == 'C0'
-        cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
-        assert cf.get_cmap() == plt.cm.Reds
-        assert ct.colors == 'C0'
-        fig, ax = plt.subplots()
-        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None)
-        assert cf is None
-        assert ct.colors is None
-        assert ct.get_cmap()(1.) == to_rgba('C0')
-        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, c='C3')
-        assert cf is None
-        assert ct.colors is None
-        assert ct.get_cmap()(1.) == to_rgba('C3')
-        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
-        assert cf is None
-        assert ct.colors == 'C1'
-        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
-        assert cf is None
-        assert ct.colors is None
-        assert ct.get_cmap() == plt.cm.Reds
+    # Check unfilled
+    cmap = basic_cmap('C2')
+    fig, ax = plt.subplots()
+    cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
+    cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
+    # filled `contourf` and unfilled `contour` colors are the same:
+    assert cf1.tcolors[0] == ct2.tcolors[0]
+    assert cf1.tcolors[1] == ct2.tcolors[1]
+    cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
+    assert ct.colors == 'C0'
+    cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
+    assert cf.get_cmap() == plt.cm.Reds
+    assert ct.colors == 'C0'
+    fig, ax = plt.subplots()
+    cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None)
+    assert cf is None
+    assert ct.colors is None
+    assert ct.get_cmap()(1.) == to_rgba('C0')
+    cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, c='C3')
+    assert cf is None
+    assert ct.colors is None
+    assert ct.get_cmap()(1.) == to_rgba('C3')
+    cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
+    assert cf is None
+    assert ct.colors == 'C1'
+    cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
+    assert cf is None
+    assert ct.colors is None
+    assert ct.get_cmap() == plt.cm.Reds
 
-        # Check limits, Gaussian (i.e. limits reduced to relevant data range)
-        fig, ax = plt.subplots()
-        data_x = np.random.randn(1000) * 0.01 + 0.5
-        data_y = np.random.randn(1000) * 0.01 + 0.5
-        contour_plot_2d(ax, data_x, data_y)
-        xmin, xmax = ax.get_xlim()
-        ymin, ymax = ax.get_ylim()
-        assert xmin > 0.4
-        assert xmax < 0.6
-        assert ymin > 0.4
-        assert ymax < 0.6
-        # Check limits, Uniform (i.e. data & limits span entire prior boundary)
-        fig, ax = plt.subplots()
-        data_x = np.random.uniform(size=1000)
-        data_y = np.random.uniform(size=1000)
-        contour_plot_2d(ax, data_x, data_y, q=0)
-        xmin, xmax = ax.get_xlim()
-        ymin, ymax = ax.get_ylim()
-        if contour_plot_2d is fastkde_contour_plot_2d:
-            assert xmin <= 0
-            assert xmax >= 1
-            assert ymin <= 0
-            assert ymax >= 1
-        elif contour_plot_2d is kde_contour_plot_2d:
-            assert xmin == pytest.approx(0, abs=0.01)
-            assert xmax == pytest.approx(1, abs=0.01)
-            assert ymin == pytest.approx(0, abs=0.01)
-            assert ymax == pytest.approx(1, abs=0.01)
-
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
+    # Check limits, Gaussian (i.e. limits reduced to relevant data range)
+    fig, ax = plt.subplots()
+    data_x = np.random.randn(1000) * 0.01 + 0.5
+    data_y = np.random.randn(1000) * 0.01 + 0.5
+    contour_plot_2d(ax, data_x, data_y)
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    assert xmin > 0.4
+    assert xmax < 0.6
+    assert ymin > 0.4
+    assert ymax < 0.6
+    # Check limits, Uniform (i.e. data & limits span entire prior boundary)
+    fig, ax = plt.subplots()
+    data_x = np.random.uniform(size=1000)
+    data_y = np.random.uniform(size=1000)
+    contour_plot_2d(ax, data_x, data_y, q=0)
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    if contour_plot_2d is fastkde_contour_plot_2d:
+        assert xmin <= 0
+        assert xmax >= 1
+        assert ymin <= 0
+        assert ymax >= 1
+    elif contour_plot_2d is kde_contour_plot_2d:
+        assert xmin == pytest.approx(0, abs=0.01)
+        assert xmax == pytest.approx(1, abs=0.01)
+        assert ymin == pytest.approx(0, abs=0.01)
+        assert ymax == pytest.approx(1, abs=0.01)
 
 
 def test_kde_plot_nplot():
@@ -665,36 +646,32 @@ def test_kde_plot_nplot():
     kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
 
 
-@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
-                                             fastkde_contour_plot_2d])
+@pytest.mark.parametrize('contour_plot_2d',
+                         [kde_contour_plot_2d,
+                          skipif_no_fastkde(fastkde_contour_plot_2d)])
 @pytest.mark.parametrize('levels', [[0.9],
                                     [0.9, 0.6],
                                     [0.9, 0.6, 0.3],
                                     [0.9, 0.7, 0.5, 0.3]])
 def test_contour_plot_2d_levels(contour_plot_2d, levels):
-    try:
-        np.random.seed(42)
-        x = np.random.randn(1000)
-        y = np.random.randn(1000)
-        cmap = plt.cm.viridis
+    np.random.seed(42)
+    x = np.random.randn(1000)
+    y = np.random.randn(1000)
+    cmap = plt.cm.viridis
 
-        fig, (ax1, ax2) = plt.subplots(2)
-        contour_plot_2d(ax1, x, y, levels=levels, cmap=cmap)
-        contour_plot_2d(ax2, x, y, levels=levels, cmap=cmap, fc=None)
+    fig, (ax1, ax2) = plt.subplots(2)
+    contour_plot_2d(ax1, x, y, levels=levels, cmap=cmap)
+    contour_plot_2d(ax2, x, y, levels=levels, cmap=cmap, fc=None)
 
-        # assert that color between filled and unfilled contours matches
-        # first level
-        color1 = ax1.collections[0].get_facecolor()  # filled face color
-        color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
-        assert_array_equal(color1, color2)
-        # last level
-        color1 = ax1.collections[len(levels)-1].get_facecolor()
-        color2 = ax2.collections[len(levels)-1].get_edgecolor()
-        assert_array_equal(color1, color2)
-
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
+    # assert that color between filled and unfilled contours matches
+    # first level
+    color1 = ax1.collections[0].get_facecolor()  # filled face color
+    color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
+    assert_array_equal(color1, color2)
+    # last level
+    color1 = ax1.collections[len(levels)-1].get_facecolor()
+    color2 = ax2.collections[len(levels)-1].get_edgecolor()
+    assert_array_equal(color1, color2)
 
 
 def test_scatter_plot_2d():
