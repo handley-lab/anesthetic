@@ -15,15 +15,23 @@ def read_nestedfit(root, *args, **kwargs):
         ``nf_output_points.txt`` and ``nf_output_diag.txt``.
 
     """
-    dead_file  =  root + 'nf_output_points.txt'
-    birth_file =  root + 'nf_output_diag.dat'
+
+    print(root)
+
+    if root[-1] != '/':
+        root = root + '/'
+
+    print(root)
+
+    dead_file = root + 'nf_output_points.txt'
+    birth_file = root + 'nf_output_diag.dat'
     data_dead = np.loadtxt(dead_file)
     data_birth = np.loadtxt(birth_file)
     weight, logL, data = np.split(data_dead, [1, 2], axis=1)
-    logL_birth = data_birth[:,0]
+    logL_birth = data_birth[:, 0]
     root_getdist = root + 'nf_output_points'
     columns, labels = read_paramnames(root_getdist)
-
+    labels = columns    # No specific labeling is implemented in nested_fit 
     columns = kwargs.pop('columns', columns)
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))

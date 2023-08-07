@@ -199,13 +199,14 @@ def test_read_ultranest():
     ns.plot_2d(['a', 'b', 'c', 'd'])
     ns.plot_1d(['a', 'b', 'c', 'd'])
 
+
 def test_read_nestedfit():
     np.random.seed(3)
-    ns = read_multinest('./tests/example_data/mn')
+    ns = read_nestedfit('./tests/example_data/nf')
     params = ['bg', 'x0', 'amp', 'sigma', 'logL', 'logL_birth', 'nlive']
     assert_array_equal(ns.drop_labels().columns, params)
     labels = ['bg',
-              '$x_0$',
+              'x0',
               'amp',
               'sigma',
               r'$\ln\mathcal{L}$',
