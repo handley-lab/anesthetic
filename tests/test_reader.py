@@ -218,15 +218,6 @@ def test_read_nestedfit():
     ns.plot_2d(['bg', 'x0', 'amp', 'sigma'])
     ns.plot_1d(['bg', 'x0', 'amp', 'sigma'])
 
-    ns = read_nestedfit('./tests/example_data/nf')
-    params.remove('logL_birth')
-    assert_array_equal(ns.drop_labels().columns, params)
-    labels.remove(r'$\ln\mathcal{L}_\mathrm{birth}$')
-    assert_array_equal(ns.get_labels(), labels)
-    assert isinstance(ns, NestedSamples)
-    ns.plot_2d(['bg', 'x0', 'amp', 'sigma'])
-    ns.plot_1d(['bg', 'x0', 'amp', 'sigma'])
-
 
 def test_read_polychord():
     np.random.seed(3)

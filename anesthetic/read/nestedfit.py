@@ -11,18 +11,12 @@ def read_nestedfit(root, *args, **kwargs):
     Parameters
     ----------
     root : str
-        root name for reading files in Nested_Fit format, i.e. the files
-        ``nf_output_points.txt`` and ``nf_output_diag.txt``.
+        root specify the directory only, no specific roots,
+        The files read files are ``nf_output_points.txt`` and ``nf_output_diag.txt``.
 
     """
-
-    print(root)
-
     if root[-1] != '/':
         root = root + '/'
-
-    print(root)
-
     dead_file = root + 'nf_output_points.txt'
     birth_file = root + 'nf_output_diag.dat'
     data_dead = np.loadtxt(dead_file)
@@ -31,7 +25,8 @@ def read_nestedfit(root, *args, **kwargs):
     logL_birth = data_birth[:, 0]
     root_getdist = root + 'nf_output_points'
     columns, labels = read_paramnames(root_getdist)
-    labels = columns    # No specific labeling is implemented in nested_fit 
+    # No specific labeling is implemented in nested_fit
+    labels = columns
     columns = kwargs.pop('columns', columns)
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
