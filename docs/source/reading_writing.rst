@@ -6,7 +6,7 @@ Reading and writing
 .. _reading chains:
 
 Reading chain files from PolyChord, MultiNest, UltraNest, NestedFit, CosmoMC, or Cobaya
-============================================================================
+=======================================================================================
 
 If you have finished nested sampling or MCMC runs from one of:
 

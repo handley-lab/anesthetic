@@ -12,7 +12,8 @@ def read_nestedfit(root, *args, **kwargs):
     ----------
     root : str
         root specify the directory only, no specific roots,
-        The files read files are ``nf_output_points.txt`` and ``nf_output_diag.txt``.
+        The files read files are ``nf_output_points.txt``
+        and ``nf_output_diag.txt``.
 
     """
     if root[-1] != '/':
