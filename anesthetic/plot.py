@@ -739,6 +739,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     """
     kwargs = normalize_kwargs(kwargs)
+    if ax.get_xaxis().get_scale() == 'log':
+        data = np.log10(data)
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
@@ -768,6 +770,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[-1], p)))
 
     area = np.trapz(x=x[i], y=p[i]) if density else 1
+    if ax.get_xaxis().get_scale() == 'log':
+        x = 10**x
     ans = ax.plot(x[i], p[i]/area, color=color, *args, **kwargs)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
