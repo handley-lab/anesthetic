@@ -853,6 +853,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     if weights is not None:
         data = data[weights != 0]
         weights = weights[weights != 0]
+    if ax.get_xaxis().get_scale() == 'log':
+        data = np.log10(data)
 
     ncompress = kwargs.pop('ncompress', False)
     nplot = kwargs.pop('nplot_1d', 100)
@@ -887,6 +889,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     pp = cut_and_normalise_gaussian(x, p, bw, xmin=data.min(), xmax=data.max())
     pp /= pp.max()
     area = np.trapz(x=x, y=pp) if density else 1
+    if ax.get_xaxis().get_scale() == 'log':
+        x = 10**x
     ans = ax.plot(x, pp/area, color=color, *args, **kwargs)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
