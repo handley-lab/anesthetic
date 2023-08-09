@@ -699,6 +699,98 @@ def test_scatter_plot_2d():
     scatter_plot_2d(ax, data_x, data_y, q=0)
 
 
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d,
+                                     hist_plot_1d])
+def test_log_scale_1d(plot_1d):
+    np.random.seed(0)
+    logdata = np.random.randn(1000)
+    data = 10**logdata
+
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    p = plot_1d(ax, data)
+    if 'kde' in plot_1d.__name__:
+        amax = abs(np.log10(p[0].get_xdata()[np.argmax(p[0].get_ydata())]))
+    else:
+        amax = abs(np.log10(p[1][np.argmax(p[0])]))
+    assert amax < 0.5
+
+
+@pytest.mark.parametrize('plot_2d', [kde_contour_plot_2d,
+                                     fastkde_contour_plot_2d,
+                                     hist_plot_2d, scatter_plot_2d])
+def test_log_scale_2d(plot_2d):
+    np.random.seed(0)
+    logx = np.random.randn(1000)
+    logy = np.random.randn(1000)
+    x = 10**logx
+    y = 10**logy
+
+    # logx
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    p = plot_2d(ax, x, logy)
+    if 'kde' in plot_2d.__name__:
+        xmax, ymax = p[0].allsegs[1][0].T
+        xmax = np.mean(np.log10(xmax))
+        ymax = np.mean(ymax)
+    elif 'hist' in plot_2d.__name__:
+        c = p.get_coordinates()
+        c = (c[:-1, :] + c[1:, :]) / 2
+        c = (c[:, :-1] + c[:, 1:]) / 2
+        c = c.reshape((-1, 2))
+        xmax = abs(np.log10(c[np.argmax(p.get_array())][0]))
+        ymax = abs(c[np.argmax(p.get_array())][1])
+    else:
+        xmax = np.mean(np.log10(p[0].get_xdata()))
+        ymax = np.mean(p[0].get_ydata())
+    assert xmax < 0.5
+    assert ymax < 0.5
+
+    # logy
+    fig, ax = plt.subplots()
+    ax.set_yscale('log')
+    p = plot_2d(ax, logx, y)
+    if 'kde' in plot_2d.__name__:
+        xmax, ymax = p[0].allsegs[1][0].T
+        xmax = np.mean(xmax)
+        ymax = np.mean(np.log10(ymax))
+    elif 'hist' in plot_2d.__name__:
+        c = p.get_coordinates()
+        c = (c[:-1, :] + c[1:, :]) / 2
+        c = (c[:, :-1] + c[:, 1:]) / 2
+        c = c.reshape((-1, 2))
+        xmax = abs(c[np.argmax(p.get_array())][0])
+        ymax = abs(np.log10(c[np.argmax(p.get_array())][1]))
+    else:
+        xmax = np.mean(p[0].get_xdata())
+        ymax = np.mean(np.log10(p[0].get_ydata()))
+    assert xmax < 0.5
+    assert ymax < 0.5
+
+    # logx and logy
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    p = plot_2d(ax, x, y)
+    if 'kde' in plot_2d.__name__:
+        xmax, ymax = p[0].allsegs[1][0].T
+        xmax = np.mean(np.log10(xmax))
+        ymax = np.mean(np.log10(ymax))
+    elif 'hist' in plot_2d.__name__:
+        c = p.get_coordinates()
+        c = (c[:-1, :] + c[1:, :]) / 2
+        c = (c[:, :-1] + c[:, 1:]) / 2
+        c = c.reshape((-1, 2))
+        xmax = abs(np.log10(c[np.argmax(p.get_array())][0]))
+        ymax = abs(np.log10(c[np.argmax(p.get_array())][1]))
+    else:
+        xmax = np.mean(np.log10(p[0].get_xdata()))
+        ymax = np.mean(np.log10(p[0].get_ydata()))
+    assert xmax < 0.5
+    assert ymax < 0.5
+
+
 @pytest.mark.parametrize('sigmas', [(1, '1sigma', 0.682689492137086),
                                     (2, '2sigma', 0.954499736103642),
                                     (3, '3sigma', 0.997300203936740),
