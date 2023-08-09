@@ -430,6 +430,47 @@ def test_plot_1d_no_axes():
     assert axes.iloc[2].get_xlabel() == 'x2'
 
 
+@pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
+def test_plot_logscale(kind):
+    ns = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x1', 'x2', 'x3', 'x4']
+
+    # 1d
+    axes = ns.plot_1d(params, kind=kind + '_1d', logx=['x2'])
+    for x, ax in axes.items():
+        if x == 'x2':
+            assert ax.get_xscale() == 'log'
+        else:
+            assert ax.get_xscale() == 'linear'
+    ax = axes.loc['x2']
+    if 'kde' in kind:
+        p = ax.get_children()
+        arg = np.argmax(p[0].get_ydata())
+        pmax = np.log10(p[0].get_xdata()[arg])
+        d = 0.1
+    else:
+        arg = np.argmax([p.get_height() for p in ax.patches])
+        pmax = np.log10(ax.patches[arg].get_x())
+        d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x()) / 2
+    assert pmax == pytest.approx(-1, abs=d)
+
+    # 2d
+    axes = ns.plot_2d(params, kind=kind, logxy=['x2'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if ax is not None:
+                if x == 'x2':
+                    assert ax.get_xscale() == 'log'
+                else:
+                    assert ax.get_xscale() == 'linear'
+                if y == 'x2':
+                    assert ax.get_yscale() == 'log'
+                else:
+                    assert ax.get_yscale() == 'linear'
+                if x == y == 'x2':
+                    assert ax.twin.get_yscale() == 'linear'
+
+
 def test_mcmc_stats():
     mcmc = read_chains('./tests/example_data/cb')
     chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
