@@ -719,7 +719,8 @@ def test_make_axes_logscale():
                 assert ax.get_yscale() == 'log'
 
 
-@pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d,
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d,
+                                     skipif_no_fastkde(fastkde_plot_1d),
                                      hist_plot_1d])
 def test_logscale_1d(plot_1d):
     np.random.seed(0)
@@ -736,9 +737,10 @@ def test_logscale_1d(plot_1d):
     assert amax < 0.5
 
 
-@pytest.mark.parametrize('plot_2d', [kde_contour_plot_2d,
-                                     fastkde_contour_plot_2d,
-                                     hist_plot_2d, scatter_plot_2d])
+@pytest.mark.parametrize('plot_2d',
+                         [kde_contour_plot_2d,
+                          skipif_no_fastkde(fastkde_contour_plot_2d),
+                          hist_plot_2d, scatter_plot_2d])
 def test_logscale_2d(plot_2d):
     np.random.seed(0)
     logx = np.random.randn(1000)
