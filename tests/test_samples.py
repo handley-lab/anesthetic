@@ -471,6 +471,27 @@ def test_plot_logscale(kind):
                     assert ax.twin.get_yscale() == 'linear'
 
 
+def test_logscale_failure_without_match():
+    ns = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x2']
+
+    # 1d
+    axes = ns.plot_1d(params)
+    with pytest.raises(ValueError):
+        ns.plot_1d(axes, logx=['x2'])
+    fig, axes = make_1d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_1d(axes, logx=['x2'])
+
+    # 2d
+    axes = ns.plot_2d(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logxy=['x2'])
+    fig, axes = make_2d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logxy=['x2'])
+
+
 def test_mcmc_stats():
     mcmc = read_chains('./tests/example_data/cb')
     chains = mcmc.groupby(('chain', '$n_\\mathrm{chain}$'), group_keys=False)
