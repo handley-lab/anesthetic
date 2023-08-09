@@ -699,9 +699,29 @@ def test_scatter_plot_2d():
     scatter_plot_2d(ax, data_x, data_y, q=0)
 
 
+def test_make_axes_logscale():
+    fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x1', 'x3'])
+    assert axes.loc['x0'].get_xscale() == 'linear'
+    assert axes.loc['x1'].get_xscale() == 'log'
+    assert axes.loc['x2'].get_xscale() == 'linear'
+    assert axes.loc['x3'].get_xscale() == 'log'
+
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'], logxy=['x1', 'x3'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if x in ['x0', 'x2']:
+                assert ax.get_xscale() == 'linear'
+            else:
+                assert ax.get_xscale() == 'log'
+            if y in ['x0', 'x2']:
+                assert ax.get_yscale() == 'linear'
+            else:
+                assert ax.get_yscale() == 'log'
+
+
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d,
                                      hist_plot_1d])
-def test_log_scale_1d(plot_1d):
+def test_logscale_1d(plot_1d):
     np.random.seed(0)
     logdata = np.random.randn(1000)
     data = 10**logdata
@@ -719,7 +739,7 @@ def test_log_scale_1d(plot_1d):
 @pytest.mark.parametrize('plot_2d', [kde_contour_plot_2d,
                                      fastkde_contour_plot_2d,
                                      hist_plot_2d, scatter_plot_2d])
-def test_log_scale_2d(plot_2d):
+def test_logscale_2d(plot_2d):
     np.random.seed(0)
     logx = np.random.randn(1000)
     logy = np.random.randn(1000)
