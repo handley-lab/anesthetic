@@ -371,10 +371,11 @@ class AxesDataFrame(DataFrame):
     def _set_scale(self):
         for y, rows in self.iterrows():
             for x, ax in rows.items():
-                if x in self._logxy:
-                    ax.set_xscale('log')
-                if y in self._logxy:
-                    ax.set_yscale('log')
+                if ax is not None:
+                    if x in self._logxy:
+                        ax.set_xscale('log')
+                    if y in self._logxy:
+                        ax.set_yscale('log')
 
     @staticmethod
     def _set_labels(axes, labels, **kwargs):
