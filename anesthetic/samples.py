@@ -221,12 +221,13 @@ class Samples(WeightedLabelledDataFrame):
         if axes is None:
             axes = self.drop_labels().columns
 
-        logx = kwargs.pop('logx', axes._logx)
         if not isinstance(axes, AxesSeries):
             _, axes = make_1d_axes(axes, labels=self.get_labels_map(),
-                                   logx=logx)
+                                   logx=kwargs.pop('logx', None))
+            logx = axes._logx
         else:
-            if axes._logx != logx:
+            logx = kwargs.pop('logx', axes._logx)
+            if logx != axes._logx:
                 raise ValueError(f"logx does not match the pre-existing axes."
                                  f"logx={logx}, axes._logx={axes._logx}")
 
@@ -364,15 +365,16 @@ class Samples(WeightedLabelledDataFrame):
         if axes is None:
             axes = self.drop_labels().columns
 
-        logxy = kwargs.pop('logxy', axes._logxy)
         if not isinstance(axes, AxesDataFrame):
             _, axes = make_2d_axes(axes, labels=self.get_labels_map(),
                                    upper=('upper' in kind),
                                    lower=('lower' in kind),
                                    diagonal=('diagonal' in kind),
-                                   logxy=logxy)
+                                   logxy=kwargs.pop('logxy', None))
+            logxy = axes._logxy
         else:
-            if axes._logxy != logxy:
+            logxy = kwargs.pop('logxy', axes._logxy)
+            if logxy != axes._logxy:
                 raise ValueError(f"logxy does not match the pre-existing axes."
                                  f"logxy={logxy}, axes._logxy={axes._logxy}")
 

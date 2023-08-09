@@ -61,7 +61,7 @@ class AxesSeries(Series):
     """
 
     _metadata = ['_logx']
-    _logx = None
+    _logx = []
 
     def __init__(self, data=None, index=None, fig=None, ncol=None, labels=None,
                  logx=None, gridspec_kw=None, subplot_spec=None,
@@ -72,8 +72,10 @@ class AxesSeries(Series):
                                     subplot_spec=subplot_spec)
             self._set_xlabels(axes=data, labels=labels)
         super().__init__(data=data, index=index, *args, **kwargs)
-        self._logx = logx
-        if self._logx is not None:
+        if logx is None:
+            self._logx = []
+        else:
+            self._logx = logx
             self._set_xscale()
 
     @property
@@ -188,7 +190,7 @@ class AxesDataFrame(DataFrame):
     """
 
     _metadata = ['_logxy']
-    _logxy = None
+    _logxy = []
 
     def __init__(self, data=None, index=None, columns=None, fig=None,
                  lower=True, diagonal=True, upper=True, labels=None,
@@ -212,8 +214,10 @@ class AxesDataFrame(DataFrame):
                          index=index,
                          columns=columns,
                          *args, **kwargs)
-        self._logxy = logxy
-        if self._logxy is not None:
+        if logxy is None:
+            self._logxy = []
+        else:
+            self._logxy = logxy
             self._set_scale()
         self.tick_params(axis='both', which='both', labelrotation=45,
                          labelsize='small')
