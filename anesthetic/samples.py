@@ -221,8 +221,14 @@ class Samples(WeightedLabelledDataFrame):
         if axes is None:
             axes = self.drop_labels().columns
 
+        logx = kwargs.pop('logx', axes._logx)
         if not isinstance(axes, AxesSeries):
-            _, axes = make_1d_axes(axes, labels=self.get_labels_map())
+            _, axes = make_1d_axes(axes, labels=self.get_labels_map(),
+                                   logx=logx)
+        else:
+            if axes._logx != logx:
+                raise ValueError(f"logx does not match the pre-existing axes."
+                                 f"logx={logx}, axes._logx={axes._logx}")
 
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
@@ -244,7 +250,7 @@ class Samples(WeightedLabelledDataFrame):
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
-                self[x].plot(ax=ax, xlabel=xlabel,
+                self[x].plot(ax=ax, xlabel=xlabel, logx=x in logx,
                              *args, **kwargs)
                 ax.set_xlabel(xlabel)
             else:
@@ -358,11 +364,17 @@ class Samples(WeightedLabelledDataFrame):
         if axes is None:
             axes = self.drop_labels().columns
 
+        logxy = kwargs.pop('logxy', axes._logxy)
         if not isinstance(axes, AxesDataFrame):
             _, axes = make_2d_axes(axes, labels=self.get_labels_map(),
                                    upper=('upper' in kind),
                                    lower=('lower' in kind),
-                                   diagonal=('diagonal' in kind))
+                                   diagonal=('diagonal' in kind),
+                                   logxy=logxy)
+        else:
+            if axes._logxy != logxy:
+                raise ValueError(f"logxy does not match the pre-existing axes."
+                                 f"logxy={logxy}, axes._logxy={axes._logxy}")
 
         for y, row in axes.iterrows():
             for x, ax in row.items():
@@ -390,11 +402,13 @@ class Samples(WeightedLabelledDataFrame):
                         ylabel = self.get_label(y)
                         if x == y:
                             self[x].plot(ax=ax.twin, xlabel=xlabel,
+                                         logx=x in logxy,
                                          *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
                             self.plot(x, y, ax=ax, xlabel=xlabel,
+                                      logx=x in logxy, logy=y in logxy,
                                       ylabel=ylabel, *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)

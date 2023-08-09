@@ -43,6 +43,8 @@ class AxesSeries(Series):
     labels : dict(str:str), optional
         Dictionary mapping params to plot labels.
         Default: params
+    logx : list(str), optional
+        List of parameters to be plotted on a log scale.
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
@@ -58,14 +60,21 @@ class AxesSeries(Series):
 
     """
 
+    _metadata = ['_logx']
+    _logx = None
+
     def __init__(self, data=None, index=None, fig=None, ncol=None, labels=None,
-                 gridspec_kw=None, subplot_spec=None, *args, **kwargs):
+                 logx=None, gridspec_kw=None, subplot_spec=None,
+                 *args, **kwargs):
         if data is None and index is not None:
             data = self.axes_series(index=index, fig=fig, ncol=ncol,
                                     gridspec_kw=gridspec_kw,
                                     subplot_spec=subplot_spec)
             self._set_xlabels(axes=data, labels=labels)
         super().__init__(data=data, index=index, *args, **kwargs)
+        self._logx = logx
+        if self._logx is not None:
+            self._set_xscale()
 
     @property
     def _constructor(self):
@@ -99,6 +108,11 @@ class AxesSeries(Series):
             axes[p] = ax = fig.add_subplot(g)
             ax.set_yticks([])
         return axes
+
+    def _set_xscale(self):
+        for p, ax in self.items():
+            if p in self._logx:
+                ax.set_xscale('log')
 
     @staticmethod
     def _set_xlabels(axes, labels, **kwargs):
@@ -148,6 +162,8 @@ class AxesDataFrame(DataFrame):
         If 'outer', plot ticks only on the very left and very bottom.
         If 'inner', plot ticks also in inner subplots.
         If None, plot no ticks at all.
+    logxy : list(str), optional
+        List of parameters to be plotted on a log scale.
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
@@ -171,10 +187,13 @@ class AxesDataFrame(DataFrame):
 
     """
 
+    _metadata = ['_logxy']
+    _logxy = None
+
     def __init__(self, data=None, index=None, columns=None, fig=None,
                  lower=True, diagonal=True, upper=True, labels=None,
-                 ticks='inner', gridspec_kw=None, subplot_spec=None,
-                 *args, **kwargs):
+                 ticks='inner', logxy=None,
+                 gridspec_kw=None, subplot_spec=None, *args, **kwargs):
         if data is None and index is not None and columns is not None:
             position = self._position_frame(index=index,
                                             columns=columns,
@@ -193,6 +212,9 @@ class AxesDataFrame(DataFrame):
                          index=index,
                          columns=columns,
                          *args, **kwargs)
+        self._logxy = logxy
+        if self._logxy is not None:
+            self._set_scale()
         self.tick_params(axis='both', which='both', labelrotation=45,
                          labelsize='small')
 
@@ -341,6 +363,14 @@ class AxesDataFrame(DataFrame):
                 return bottom, top
 
         ax.__class__ = OffDiagonalAxes
+
+    def _set_scale(self):
+        for y, rows in self.iterrows():
+            for x, ax in rows.items():
+                if x in self._logxy:
+                    ax.set_xscale('log')
+                if y in self._logxy:
+                    ax.set_yscale('log')
 
     @staticmethod
     def _set_labels(axes, labels, **kwargs):
@@ -559,7 +589,7 @@ class AxesDataFrame(DataFrame):
                         ax.scatter(params[x], params[y], zorder=z, **kwargs)
 
 
-def make_1d_axes(params, ncol=None, labels=None,
+def make_1d_axes(params, ncol=None, labels=None, logx=None,
                  gridspec_kw=None, subplot_spec=None, **fig_kw):
     """Create a set of axes for plotting 1D marginalised posteriors.
 
@@ -575,6 +605,9 @@ def make_1d_axes(params, ncol=None, labels=None,
     labels : dict(str:str), optional
         Dictionary mapping params to plot labels.
         Default: params
+
+    logx : list(str), optional
+        List of parameters to be plotted on a log scale.
 
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
@@ -611,6 +644,7 @@ def make_1d_axes(params, ncol=None, labels=None,
                       fig=fig,
                       ncol=ncol,
                       labels=labels,
+                      logx=logx,
                       gridspec_kw=gridspec_kw,
                       subplot_spec=subplot_spec)
     if gridspec_kw is None:
@@ -619,7 +653,8 @@ def make_1d_axes(params, ncol=None, labels=None,
 
 
 def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
-                 ticks='inner', gridspec_kw=None, subplot_spec=None, **fig_kw):
+                 ticks='inner', logxy=None,
+                 gridspec_kw=None, subplot_spec=None, **fig_kw):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
     Parameters
@@ -646,6 +681,9 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
         * ``'outer'``: plot ticks only on the very left and very bottom.
         * ``'inner'``: plot ticks also in inner subplots.
         * ``None``: plot no ticks at all.
+
+    logxy : list(str), optional
+        List of parameters to be plotted on a log scale.
 
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
@@ -689,6 +727,7 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
                          upper=upper,
                          labels=labels,
                          ticks=ticks,
+                         logxy=logxy,
                          gridspec_kw=gridspec_kw,
                          subplot_spec=subplot_spec)
     fig.align_labels()
