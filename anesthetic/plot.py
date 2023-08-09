@@ -999,6 +999,8 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
     bins = kwargs.pop('bins', 10)
+    if ax.get_xaxis().get_scale() == 'log' and isinstance(bins, int):
+        bins = np.logspace(np.log10(data.min()), np.log10(data.max()), bins+1)
     histtype = kwargs.pop('histtype', 'bar')
     density = kwargs.get('density', False)
 
