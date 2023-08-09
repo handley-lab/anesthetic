@@ -205,6 +205,13 @@ class Samples(WeightedLabelledDataFrame):
             can be hard to interpret/expensive for :class:`Samples`,
             :class:`MCMCSamples`, or :class:`NestedSamples`.
 
+        logx : list(str), optional
+            Which parameters/columns to plot on a log scale.
+            Needs to match if plotting on top of a pre-existing axes.
+
+        label : str, optional
+            Legend label added to each axis.
+
         Returns
         -------
         axes : :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
@@ -327,6 +334,13 @@ class Samples(WeightedLabelledDataFrame):
             plots.  Note that any kwargs directly passed to plot_2d will
             overwrite any kwarg with the same key passed to <sub>_kwargs.
             Default: {}
+
+        logxy : list(str), optional
+            Which parameters/columns to plot on a log scale.
+            Needs to match if plotting on top of a pre-existing axes.
+
+        label : str, optional
+            Legend label added to each axis.
 
         Returns
         -------
