@@ -27,6 +27,8 @@ from anesthetic.utils import quantile
 class HistPlot(_WeightedMPLPlot, _HistPlot):
     # noqa: disable=D101
     def _calculate_bins(self, data):
+        if self.logx:
+            data = np.log10(data)
         nd_values = data.infer_objects(copy=False)._get_numeric_data()
         values = np.ravel(nd_values)
         weights = self.kwds.get("weights", None)
@@ -44,6 +46,8 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             values, bins=self.bins, range=self.kwds.get("range", None),
             weights=weights
         )
+        if self.logx:
+            bins = 10**bins
         return bins
 
     def _get_colors(self, num_colors=None, color_kwds='color'):
@@ -140,6 +144,8 @@ class Hist1dPlot(HistPlot):
         return "hist_1d"
 
     def _calculate_bins(self, data):
+        if self.logx:
+            data = np.log10(data)
         if "range" not in self.kwds:
             q = self.kwds.get('q', 5)
             q = quantile_plot_interval(q=q)
@@ -147,11 +153,11 @@ class Hist1dPlot(HistPlot):
             xmin = quantile(data, q[0], weights)
             xmax = quantile(data, q[-1], weights)
             self.kwds["range"] = (xmin, xmax)
-            result = super()._calculate_bins(data)
+            bins = super()._calculate_bins(data)
             self.kwds.pop("range")
         else:
-            result = super()._calculate_bins(data)
-        return result
+            bins = super()._calculate_bins(data)
+        return bins
 
     @classmethod
     def _plot(
