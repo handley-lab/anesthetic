@@ -355,13 +355,6 @@ class Samples(WeightedLabelledDataFrame):
                              "the following string shortcuts: "
                              f"{list(self.plot_2d_default_kinds.keys())}")
 
-        local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
-                        for pos in ['upper', 'lower', 'diagonal']}
-        kwargs['label'] = kwargs.get('label', self.label)
-
-        for pos in local_kwargs:
-            local_kwargs[pos].update(kwargs)
-
         if axes is None:
             axes = self.drop_labels().columns
 
@@ -377,6 +370,13 @@ class Samples(WeightedLabelledDataFrame):
             if logxy != axes._logxy:
                 raise ValueError(f"logxy does not match the pre-existing axes."
                                  f"logxy={logxy}, axes._logxy={axes._logxy}")
+
+        local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
+                        for pos in ['upper', 'lower', 'diagonal']}
+        kwargs['label'] = kwargs.get('label', self.label)
+
+        for pos in local_kwargs:
+            local_kwargs[pos].update(kwargs)
 
         for y, row in axes.iterrows():
             for x, ax in row.items():
