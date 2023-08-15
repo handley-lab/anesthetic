@@ -11,6 +11,7 @@ from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
+from anesthetic.read.nestedfit import read_nestedfit
 import pandas._testing as tm
 from anesthetic.read.hdf import HDFStore, read_hdf
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
@@ -197,6 +198,25 @@ def test_read_ultranest():
     assert isinstance(ns, NestedSamples)
     ns.plot_2d(['a', 'b', 'c', 'd'])
     ns.plot_1d(['a', 'b', 'c', 'd'])
+
+
+def test_read_nestedfit():
+    np.random.seed(3)
+    ns = read_nestedfit('./tests/example_data/nf')
+    params = ['bg', 'x0', 'amp', 'sigma', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = ['bg',
+              'x0',
+              'amp',
+              'sigma',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+    assert_array_equal(ns.get_labels(), labels)
+
+    assert isinstance(ns, NestedSamples)
+    ns.plot_2d(['bg', 'x0', 'amp', 'sigma'])
+    ns.plot_1d(['bg', 'x0', 'amp', 'sigma'])
 
 
 def test_read_polychord():
