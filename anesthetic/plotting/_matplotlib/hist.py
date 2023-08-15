@@ -142,7 +142,7 @@ class Hist1dPlot(HistPlot):
     def __init__(
             self,
             data,
-            bins: int | np.ndarray | list[np.ndarray] = 'fd',
+            bins: str | int | np.ndarray | list[np.ndarray] = 'fd',
             bottom: int | np.ndarray = 0,
             **kwargs,
     ) -> None:
