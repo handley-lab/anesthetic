@@ -272,8 +272,7 @@ def histogram_bin_edges(samples, weights, bins='fd', range=None, beta='equal'):
     w = weights / np.sum(weights)
     N_eff = neff(w=w, beta=beta)
     if bins == 'fd':  # Freedman--Diaconis rule
-        q1 = quantile(samples, 1/4, w=w)
-        q3 = quantile(samples, 3/4, w=w)
+        q1, q3 = quantile(samples, [1/4, 3/4], w=w)
         bin_width = 2 * (q3 - q1) * N_eff**(-1/3)
     elif bins == 'scott':  # Scott's rule
         weighted_mean = np.average(samples, weights=w)
