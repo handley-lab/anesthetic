@@ -21,7 +21,7 @@ from anesthetic.plot import (
     hist_plot_1d,
     quantile_plot_interval,
 )
-from anesthetic.utils import quantile
+from anesthetic.utils import quantile, histogram_bin_edges
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):
@@ -139,19 +139,32 @@ class Hist1dPlot(HistPlot):
     def _kind(self) -> Literal["hist_1d"]:
         return "hist_1d"
 
-    def _calculate_bins(self, data):
-        if "range" not in self.kwds:
+    def __init__(
+            self,
+            data,
+            bins: int | np.ndarray | list[np.ndarray] = 'fd',
+            bottom: int | np.ndarray = 0,
+            **kwargs,
+    ) -> None:
+        super().__init__(data, bins=bins, bottom=bottom, **kwargs)
+
+    def _args_adjust(self) -> None:
+        if 'range' not in self.kwds:
             q = self.kwds.get('q', 5)
             q = quantile_plot_interval(q=q)
-            weights = self.kwds.get("weights", None)
-            xmin = quantile(data, q[0], weights)
-            xmax = quantile(data, q[-1], weights)
-            self.kwds["range"] = (xmin, xmax)
-            result = super()._calculate_bins(data)
-            self.kwds.pop("range")
-        else:
-            result = super()._calculate_bins(data)
-        return result
+            weights = self.kwds.get('weights', None)
+            xmin = quantile(self.data, q[0], weights)
+            xmax = quantile(self.data, q[-1], weights)
+            self.kwds['range'] = (xmin, xmax)
+        if isinstance(self.bins, str) and self.bins in ['fd', 'scott', 'sqrt']:
+            self.bins = histogram_bin_edges(
+                self.data,
+                weights=self.kwds.get('weights', None),
+                bins=self.bins,
+                beta=self.kwds.pop('beta', 'equal'),
+                range=self.kwds.get('range', None)
+            )
+        super()._args_adjust()
 
     @classmethod
     def _plot(
