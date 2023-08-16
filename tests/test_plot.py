@@ -19,6 +19,7 @@ from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
 from scipy.special import erf
 from scipy.interpolate import interp1d
+from scipy import stats
 from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_xfail
 
 
@@ -487,6 +488,39 @@ def test_astropyhist_plot_1d(bins):
     assert np.all([isinstance(b, Patch) for b in bars])
     assert max([b.get_height() for b in bars]) == 1.
     assert np.all(np.array([b.get_height() for b in bars]) <= 1.)
+
+
+@pytest.mark.parametrize('bins', ['fd', 'scott', 'sqrt'])
+def test_hist_plot_1d_bins(bins):
+    np.random.seed(0)
+    num = 1000
+    bound = 5
+    x = np.random.uniform(-bound, +bound, num)
+    w = stats.norm.pdf(x)
+    fig, ax = plt.subplots()
+    _, edges, _ = hist_plot_1d(ax, x, weights=w, bins=bins)
+    assert 15 <= edges.size <= 30
+    assert edges[+0] > x.min()
+    assert edges[-1] < x.max()
+
+    _, edges1, _ = hist_plot_1d(ax, x, weights=w, bins=bins, beta=1)
+    _, edges2, _ = hist_plot_1d(ax, x, weights=w, bins=bins, beta=2)
+    assert edges1.size > edges2.size > edges.size
+
+    _, edgesr, _ = hist_plot_1d(ax, x, weights=w, bins=bins, range=(-3, 3))
+    assert 10 <= edgesr.size <= edges.size
+    assert edgesr[0] == -3
+    assert edgesr[-1] == 3
+
+    _, edges, _ = hist_plot_1d(ax, x, weights=w, bins=bins, range=None)
+    assert 15 <= edges.size <= 30
+    assert edges[+0] == pytest.approx(x.min(), abs=2*bound/num)
+    assert edges[-1] == pytest.approx(x.max(), abs=2*bound/num)
+
+    _, edges, _ = hist_plot_1d(ax, x, weights=None, bins=bins)
+    assert 10 <= edges.size <= 35
+    assert edges[+0] == pytest.approx(x.min(), abs=2*bound/num)
+    assert edges[-1] == pytest.approx(x.max(), abs=2*bound/num)
 
 
 def test_hist_plot_2d():
