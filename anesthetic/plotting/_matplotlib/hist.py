@@ -1,3 +1,4 @@
+from __future__ import annotations
 from matplotlib import pyplot as plt
 import numpy as np
 from pandas.plotting._matplotlib.hist import (HistPlot as _HistPlot,
