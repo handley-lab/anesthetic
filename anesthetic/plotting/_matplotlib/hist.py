@@ -165,6 +165,9 @@ class Hist1dPlot(HistPlot):
             xmin = quantile(data, q[0], weights)
             xmax = quantile(data, q[-1], weights)
             self.kwds['range'] = (xmin, xmax)
+        elif self.logx:
+            xmin, xmax = self.kwds['range']
+            self.kwds['range'] = (np.log10(xmin), np.log10(xmax))
         if isinstance(self.bins, str) and self.bins in ['fd', 'scott', 'sqrt']:
             self.bins = histogram_bin_edges(
                 data,
@@ -173,6 +176,11 @@ class Hist1dPlot(HistPlot):
                 beta=self.kwds.pop('beta', 'equal'),
                 range=self.kwds.get('range', None)
             )
+            if self.logx:
+                self.bins = 10**self.bins
+        if self.logx:
+            xmin, xmax = self.kwds['range']
+            self.kwds['range'] = (10**xmin, 10**xmax)
         super()._args_adjust()
 
     @classmethod

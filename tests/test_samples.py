@@ -451,7 +451,7 @@ def test_plot_logscale(kind):
     else:
         arg = np.argmax([p.get_height() for p in ax.patches])
         pmax = np.log10(ax.patches[arg].get_x())
-        d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x()) / 2
+        d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x())
     assert pmax == pytest.approx(-1, abs=d)
 
     # 2d
