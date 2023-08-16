@@ -500,7 +500,7 @@ def test_hist_plot_1d_bins(bins):
     fig, ax = plt.subplots()
     _, edges, _ = hist_plot_1d(ax, x, weights=w, bins=bins)
     assert 15 <= edges.size <= 30
-    assert edges[0] > x.min()
+    assert edges[+0] > x.min()
     assert edges[-1] < x.max()
 
     _, edges1, _ = hist_plot_1d(ax, x, weights=w, bins=bins, beta=1)
@@ -511,6 +511,16 @@ def test_hist_plot_1d_bins(bins):
     assert 10 <= edgesr.size <= edges.size
     assert edgesr[0] == -3
     assert edgesr[-1] == 3
+
+    _, edges, _ = hist_plot_1d(ax, x, weights=w, bins=bins, range=None)
+    assert 15 <= edges.size <= 30
+    assert edges[+0] == pytest.approx(x.min(), abs=2*bound/num)
+    assert edges[-1] == pytest.approx(x.max(), abs=2*bound/num)
+
+    _, edges, _ = hist_plot_1d(ax, x, weights=None, bins=bins)
+    assert 10 <= edges.size <= 35
+    assert edges[+0] == pytest.approx(x.min(), abs=2*bound/num)
+    assert edges[-1] == pytest.approx(x.max(), abs=2*bound/num)
 
 
 def test_hist_plot_2d():
