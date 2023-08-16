@@ -263,10 +263,14 @@ def histogram_bin_edges(samples, weights, bins='fd', range=None, beta='equal'):
     if weights is None:
         weights = np.ones_like(samples)
     if range is None:
-        data_range = np.max(samples) - np.min(samples)
+        minimum = np.min(samples)
+        maximum = np.max(samples)
+        data_range = maximum - minimum
     else:
-        data_range = range[1] - range[0]
-        data_mask = (samples >= range[0]) & (samples <= range[1])
+        minimum = range[0]
+        maximum = range[1]
+        data_range = maximum - minimum
+        data_mask = (samples >= minimum) & (samples <= maximum)
         samples = samples[data_mask]
         weights = weights[data_mask]
     w = weights / np.sum(weights)
@@ -284,7 +288,7 @@ def histogram_bin_edges(samples, weights, bins='fd', range=None, beta='equal'):
         data_range_eff = np.max(samples_eff) - np.min(samples_eff)
         bin_width = data_range_eff / np.sqrt(N_eff)
     nbins = int(np.ceil(data_range / bin_width))
-    bin_edges = np.linspace(np.min(samples), np.max(samples), nbins+1)
+    bin_edges = np.linspace(minimum, maximum, nbins+1)
     return bin_edges
 
 
