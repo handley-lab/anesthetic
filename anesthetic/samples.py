@@ -244,9 +244,9 @@ class Samples(WeightedLabelledDataFrame):
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
-                selfx = self[x]
-                if x == 'logL_birth':
-                    selfx.replace(-np.inf, np.nan, inplace=True)
+                if ~np.isfinite(self[x]).all():
+                    warnings.warn(f"column {x} has inf values.")
+                selfx = self[x].replace([-np.inf, np.inf], np.nan)
                 selfx.plot(ax=ax, xlabel=xlabel, *args, **kwargs)
                 ax.set_xlabel(xlabel)
             else:
@@ -390,24 +390,20 @@ class Samples(WeightedLabelledDataFrame):
                     if x in self and y in self and lkwargs['kind'] is not None:
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
+                        if ~np.isfinite(self[x]).all():
+                            warnings.warn(f"column {x} has inf values.")
                         if x == y:
-                            selfx = self[x]
-                            if x == 'logL_birth':
-                                selfx.replace(-np.inf, np.nan, inplace=True)
+                            selfx = self[x].replace([-np.inf, np.inf], np.nan)
                             selfx.plot(ax=ax.twin, xlabel=xlabel,
                                        *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
-                            selfxy = self
-                            if x == 'logL_birth' or y == 'logL_birth':
-                                if self.islabelled():
-                                    label = ('logL_birth',
-                                             self.get_label('logL_birth'))
-                                else:
-                                    label = 'logL_birth'
-                                selfxy = self.replace({label: -np.inf}, np.nan)
-                                selfxy = selfxy.dropna(axis=0, subset=[label])
+                            if ~np.isfinite(self[y]).all():
+                                warnings.warn(f"column {y} has inf values.")
+                            selfxy = self[[x, y]]
+                            selfxy = self.replace([-np.inf, np.inf], np.nan)
+                            selfxy = selfxy.dropna(axis=0)
                             selfxy.plot(x, y, ax=ax, xlabel=xlabel,
                                         ylabel=ylabel, *args, **lkwargs)
                             ax.set_xlabel(xlabel)
