@@ -8,6 +8,7 @@ README = "README.rst"
 
 current_version = run("cat", vfile)
 current_version = current_version.split("=")[-1].strip().strip("'")
+escaped_version = current_version.replace(".", "\.")
 current_version = version.parse(current_version)
 
 if len(sys.argv) > 1:
@@ -32,7 +33,7 @@ elif update_type == "major":
 new_version = version.parse(f"{major}.{minor}.{micro}")
 
 for f in [vfile, README]:
-    run("sed", "-i", f"s/{current_version}/{new_version}/g", f)
+    run("sed", "-i", f"s/{escaped_version}/{new_version}/g", f)
 
 run("git", "add", vfile, README)
 run("git", "commit", "-m", f"bump version to {new_version}")
