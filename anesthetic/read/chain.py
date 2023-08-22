@@ -4,6 +4,7 @@ from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
+from anesthetic.read.nestedfit import read_nestedfit
 
 
 def read_chains(root, *args, **kwargs):
@@ -14,6 +15,7 @@ def read_chains(root, *args, **kwargs):
         * `PolyChord <https://github.com/PolyChord/PolyChordLite>`_,
         * `MultiNest <https://github.com/farhanferoz/MultiNest>`_,
         * `UltraNest <https://github.com/JohannesBuchner/UltraNest>`_,
+        * `Nested_fit <https://github.com/martinit18/Nested_Fit>`_,
         * `CosmoMC <https://github.com/cmbant/CosmoMC>`_,
         * `Cobaya <https://github.com/CobayaSampler/cobaya>`_,
         * or anything `GetDist <https://github.com/cmbant/getdist>`_
@@ -49,7 +51,7 @@ def read_chains(root, *args, **kwargs):
     errors = []
     readers = [
         read_polychord, read_multinest, read_cobaya,
-        read_ultranest, read_getdist
+        read_ultranest, read_nestedfit, read_getdist
     ]
     for read in readers:
         try:

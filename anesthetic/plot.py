@@ -25,7 +25,7 @@ from anesthetic.utils import nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
-                              match_contour_to_contourf)
+                              match_contour_to_contourf, histogram_bin_edges)
 from anesthetic.boundary import cut_and_normalise_gaussian
 
 
@@ -948,6 +948,12 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmax = quantile(data, q[-1], weights)
     range = kwargs.pop('range', (xmin, xmax))
 
+    if isinstance(bins, str) and bins in ['fd', 'scott', 'sqrt']:
+        bins = histogram_bin_edges(data,
+                                   weights=weights,
+                                   bins=bins,
+                                   beta=kwargs.pop('beta', 'equal'),
+                                   range=range)
     if isinstance(bins, str) and bins in ['knuth', 'freedman', 'blocks']:
         try:
             from astropy.visualization import hist
