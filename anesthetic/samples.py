@@ -311,6 +311,9 @@ class Samples(WeightedLabelledDataFrame):
                 - 'hist_1d': 1d histograms down the diagonal
                 - 'hist_2d': 2d histograms in lower triangle
                 - 'hist': 1d & 2d histograms in lower & diagonal
+                - 'scatter_2d': 2d scatter in lower triangle
+                - 'scatter': 1d histograms down diagonal
+                             & 2d scatter in lower triangle
 
             Feel free to add your own to this list!
             Default:
@@ -427,6 +430,8 @@ class Samples(WeightedLabelledDataFrame):
         'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
         'hist_1d': {'diagonal': 'hist_1d'},
         'hist_2d': {'lower': 'hist_2d'},
+        'scatter': {'diagonal': 'hist_1d', 'lower': 'scatter_2d'},
+        'scatter_2d': {'lower': 'scatter_2d'},
     }
 
     def importance_sample(self, logL_new, action='add', inplace=False):
