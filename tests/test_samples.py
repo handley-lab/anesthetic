@@ -471,6 +471,20 @@ def test_plot_logscale(kind):
                     assert ax.twin.get_yscale() == 'linear'
 
 
+@pytest.mark.parametrize('k', ['hist_1d', 'hist'])
+@pytest.mark.parametrize('b', ['scott', 10, np.logspace(-3, 0, 20)])
+@pytest.mark.parametrize('r', [None, (1e-5, 1)])
+def test_plot_logscale_hist_kwargs(k, b, r):
+    ns = read_chains('./tests/example_data/pc')
+    axes = ns[['x2']].plot_1d(kind=k, logx=['x2'], bins=b, range=r)
+    ax = axes.loc['x2']
+    assert ax.get_xscale() == 'log'
+    arg = np.argmax([p.get_height() for p in ax.patches])
+    pmax = np.log10(ax.patches[arg].get_x())
+    d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x())
+    assert pmax == pytest.approx(-1, abs=d)
+
+
 def test_logscale_failure_without_match():
     ns = read_chains('./tests/example_data/pc')
     params = ['x0', 'x2']
