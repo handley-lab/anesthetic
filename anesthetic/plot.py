@@ -999,9 +999,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     """
     kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
-    bins = kwargs.pop('bins', 10)
-    if ax.get_xaxis().get_scale() == 'log' and isinstance(bins, int):
-        bins = np.logspace(np.log10(data.min()), np.log10(data.max()), bins+1)
+    bins = kwargs.pop('bins', 'fd')
     histtype = kwargs.pop('histtype', 'bar')
     density = kwargs.get('density', False)
 
@@ -1012,24 +1010,34 @@ def hist_plot_1d(ax, data, *args, **kwargs):
 
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
+    if ax.get_xaxis().get_scale() == 'log':
+        data = np.log10(data)
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
-    range = kwargs.pop('range', (xmin, xmax))
-
-    if isinstance(bins, str) and bins in ['fd', 'scott', 'sqrt']:
-        bins = histogram_bin_edges(data,
-                                   weights=weights,
-                                   bins=bins,
-                                   beta=kwargs.pop('beta', 'equal'),
-                                   range=range)
+    if 'range' in kwargs and ax.get_xaxis().get_scale() == 'log':
+        range = kwargs.pop('range')
+        range = range if range is not None else (data.min(), data.max())
+        range = (np.log10(range[0]), np.log10(range[1]))
+    else:
+        range = kwargs.pop('range', (xmin, xmax))
+    if isinstance(bins, (int, str)):
+        if isinstance(bins, int):
+            bins = np.linspace(range[0], range[1], bins+1)
+        elif isinstance(bins, str) and bins in ['fd', 'scott', 'sqrt']:
+            bins = histogram_bin_edges(data,
+                                       weights=weights,
+                                       bins=bins,
+                                       beta=kwargs.pop('beta', 'equal'),
+                                       range=range)
+        if ax.get_xaxis().get_scale() == 'log':
+            bins = 10 ** bins
+    if ax.get_xaxis().get_scale() == 'log':
+        data = 10**data
+        range = (10**range[0], 10**range[1])
     if isinstance(bins, str) and bins in ['knuth', 'freedman', 'blocks']:
-        try:
-            from astropy.visualization import hist
-            h, edges, bars = hist(data, ax=ax, bins=bins,
-                                  range=range, histtype=histtype,
-                                  color=color, *args, **kwargs)
-        except ImportError:
-            raise ImportError("You need to install astropy to use astropyhist")
+        raise ValueError("The astropy strings 'knuth', 'freedman', and "
+                         "'blocks' are no longer supported. Please use the"
+                         "similar 'fd', 'scott', or 'sqrt' from now on.")
     else:
         h, edges, bars = ax.hist(data, weights=weights, bins=bins,
                                  range=range, histtype=histtype,
