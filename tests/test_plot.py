@@ -757,7 +757,7 @@ def test_make_axes_logscale():
                                      skipif_no_fastkde(fastkde_plot_1d),
                                      hist_plot_1d])
 def test_logscale_1d(plot_1d):
-    np.random.seed(0)
+    np.random.seed(42)
     logdata = np.random.randn(1000)
     data = 10**logdata
 
@@ -769,6 +769,32 @@ def test_logscale_1d(plot_1d):
     else:
         amax = abs(np.log10(p[1][np.argmax(p[0])]))
     assert amax < 0.5
+
+
+@pytest.mark.parametrize('b', ['scott', 20, np.logspace(-5, 5, 20)])
+def test_logscale_hist_kwargs(b):
+    np.random.seed(42)
+    logdata = np.random.randn(1000)
+    data = 10**logdata
+
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    h, edges, _ = hist_plot_1d(ax, data, bins=b)
+    amax = abs(np.log10(edges[np.argmax(h)]))
+    assert amax < 0.5
+    assert edges[0] < 1e-3
+    assert edges[-1] > 1e3
+    h, edges, _ = hist_plot_1d(ax, data, bins=b, range=(1e-3, 1e3))
+    amax = abs(np.log10(edges[np.argmax(h)]))
+    assert amax < 0.5
+    if isinstance(b, (int, str)):
+        # edges are trimmed according to range
+        assert edges[0] == 1e-3
+        assert edges[-1] == 1e3
+    else:
+        # edges passed directly to bins are not trimmed according to range
+        assert edges[0] == b[0]
+        assert edges[-1] == b[-1]
 
 
 @pytest.mark.parametrize('plot_2d',
