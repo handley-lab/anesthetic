@@ -264,16 +264,19 @@ and ``logy`` to :func:`anesthetic.plot.make_2d_axes` or
 
     fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x2'])
     samples.plot_1d(axes, label="'x2' on log-scale")
+    axes['x2'].legend()
 
 .. plot:: :context: close-figs
 
     fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x2'], logy=['x2'])
     samples.plot_2d(axes, label="'x2' on log-scale")
+    axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes), len(axes)), loc='lower right')
 
 .. plot:: :context: close-figs
 
     fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x2'])
     samples.plot_2d(axes, label="'x2' on log-scale for x-axis, but not for y-axis")
+    axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes), len(axes)), loc='lower right')
 
 Ticks
 -----
