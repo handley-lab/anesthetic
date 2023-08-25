@@ -256,8 +256,8 @@ Log-scale
 
 You can plot selected parameters on a log-scale by passing a list of those
 parameters under the keyword ``logx`` to :func:`anesthetic.plot.make_1d_axes`
-or :meth:`anesthetic.samples.Samples.plot_1d`, and under the keyword ``logxy``
-to :func:`anesthetic.plot.make_2d_axes` or
+or :meth:`anesthetic.samples.Samples.plot_1d`, and under the keywords ``logx``
+and ``logy`` to :func:`anesthetic.plot.make_2d_axes` or
 :meth:`anesthetic.samples.Samples.plot_2d`:
 
 .. plot:: :context: close-figs
@@ -267,8 +267,13 @@ to :func:`anesthetic.plot.make_2d_axes` or
 
 .. plot:: :context: close-figs
 
-    fig, axes = make_2d_axes(['x0', 'x1', 'x2'], logxy=['x2'])
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2'], logx=['x2'], logy=['x2'])
     samples.plot_2d(axes, label="'x2' on log-scale")
+
+.. plot:: :context: close-figs
+
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2'], logx=['x2'])
+    samples.plot_2d(axes, label="'x2' on log-scale for x-axis, but not for y-axis")
 
 Ticks
 -----
