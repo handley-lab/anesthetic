@@ -164,8 +164,9 @@ class AxesDataFrame(DataFrame):
         If 'outer', plot ticks only on the very left and very bottom.
         If 'inner', plot ticks also in inner subplots.
         If None, plot no ticks at all.
-    logxy : list(str), optional
-        List of parameters to be plotted on a log scale.
+    logx, logy : list(str), optional
+        Lists of parameters to be plotted on a log scale on the x-axis or
+        y-axis, respectively.
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
@@ -189,12 +190,13 @@ class AxesDataFrame(DataFrame):
 
     """
 
-    _metadata = ['_logxy']
-    _logxy = []
+    _metadata = ['_logx', '_logy']
+    _logx = []
+    _logy = []
 
     def __init__(self, data=None, index=None, columns=None, fig=None,
                  lower=True, diagonal=True, upper=True, labels=None,
-                 ticks='inner', logxy=None,
+                 ticks='inner', logx=None, logy=None,
                  gridspec_kw=None, subplot_spec=None, *args, **kwargs):
         if data is None and index is not None and columns is not None:
             position = self._position_frame(index=index,
@@ -214,10 +216,15 @@ class AxesDataFrame(DataFrame):
                          index=index,
                          columns=columns,
                          *args, **kwargs)
-        if logxy is None:
-            self._logxy = []
+        if logx is None:
+            self._logx = []
         else:
-            self._logxy = logxy
+            self._logx = logx
+        if logy is None:
+            self._logy = []
+        else:
+            self._logy = logy
+        if self._logx or self._logy:
             self._set_scale()
         self.tick_params(axis='both', which='both', labelrotation=45,
                          labelsize='small')
@@ -372,9 +379,9 @@ class AxesDataFrame(DataFrame):
         for y, rows in self.iterrows():
             for x, ax in rows.items():
                 if ax is not None:
-                    if x in self._logxy:
+                    if x in self._logx:
                         ax.set_xscale('log')
-                    if y in self._logxy:
+                    if y in self._logy:
                         ax.set_yscale('log')
 
     @staticmethod
@@ -658,7 +665,7 @@ def make_1d_axes(params, ncol=None, labels=None, logx=None,
 
 
 def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
-                 ticks='inner', logxy=None,
+                 ticks='inner', logx=None, logy=None,
                  gridspec_kw=None, subplot_spec=None, **fig_kw):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
@@ -687,8 +694,9 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
         * ``'inner'``: plot ticks also in inner subplots.
         * ``None``: plot no ticks at all.
 
-    logxy : list(str), optional
-        List of parameters to be plotted on a log scale.
+    logx, logy : list(str), optional
+        Lists of parameters to be plotted on a log scale on the x-axis or
+        y-axis, respectively.
 
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
@@ -732,7 +740,8 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
                          upper=upper,
                          labels=labels,
                          ticks=ticks,
-                         logxy=logxy,
+                         logx=logx,
+                         logy=logy,
                          gridspec_kw=gridspec_kw,
                          subplot_spec=subplot_spec)
     fig.align_labels()

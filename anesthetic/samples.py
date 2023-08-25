@@ -335,8 +335,9 @@ class Samples(WeightedLabelledDataFrame):
             overwrite any kwarg with the same key passed to <sub>_kwargs.
             Default: {}
 
-        logxy : list(str), optional
-            Which parameters/columns to plot on a log scale.
+        logx, logy : list(str), optional
+            Which parameters/columns to plot on a log scale for the x-axis and
+            y-axis, respectively.
             Needs to match if plotting on top of a pre-existing axes.
 
         label : str, optional
@@ -377,13 +378,17 @@ class Samples(WeightedLabelledDataFrame):
                                    upper=('upper' in kind),
                                    lower=('lower' in kind),
                                    diagonal=('diagonal' in kind),
-                                   logxy=kwargs.pop('logxy', None))
-            logxy = axes._logxy
+                                   logx=kwargs.pop('logx', None),
+                                   logy=kwargs.pop('logy', None))
+            logx = axes._logx
+            logy = axes._logy
         else:
-            logxy = kwargs.pop('logxy', axes._logxy)
-            if logxy != axes._logxy:
-                raise ValueError(f"logxy does not match the pre-existing axes."
-                                 f"logxy={logxy}, axes._logxy={axes._logxy}")
+            logx = kwargs.pop('logx', axes._logx)
+            logy = kwargs.pop('logy', axes._logy)
+            if logx != axes._logx or logy != axes._logy:
+                raise ValueError(f"logx or logy not matching existing axes:"
+                                 f"logx={logx}, axes._logx={axes._logx}"
+                                 f"logy={logy}, axes._logy={axes._logy}")
 
         local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
                         for pos in ['upper', 'lower', 'diagonal']}
@@ -418,13 +423,13 @@ class Samples(WeightedLabelledDataFrame):
                         ylabel = self.get_label(y)
                         if x == y:
                             self[x].plot(ax=ax.twin, xlabel=xlabel,
-                                         logx=x in logxy,
+                                         logx=x in logx,
                                          *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
                             self.plot(x, y, ax=ax, xlabel=xlabel,
-                                      logx=x in logxy, logy=y in logxy,
+                                      logx=x in logx, logy=y in logy,
                                       ylabel=ylabel, *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)

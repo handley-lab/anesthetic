@@ -732,13 +732,39 @@ def test_scatter_plot_2d():
 
 
 def test_make_axes_logscale():
+    # 1d
     fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x1', 'x3'])
     assert axes.loc['x0'].get_xscale() == 'linear'
     assert axes.loc['x1'].get_xscale() == 'log'
     assert axes.loc['x2'].get_xscale() == 'linear'
     assert axes.loc['x3'].get_xscale() == 'log'
 
-    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'], logxy=['x1', 'x3'])
+    # 2d, logx only
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
+                             logx=['x1', 'x3'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if x in ['x0', 'x2']:
+                assert ax.get_xscale() == 'linear'
+            else:
+                assert ax.get_xscale() == 'log'
+            assert ax.get_yscale() == 'linear'
+
+    # 2d, logy only
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
+                             logy=['x1', 'x3'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            assert ax.get_xscale() == 'linear'
+            if y in ['x0', 'x2']:
+                assert ax.get_yscale() == 'linear'
+            else:
+                assert ax.get_yscale() == 'log'
+
+    # 2d, logx and logy
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
+                             logx=['x1', 'x3'],
+                             logy=['x1', 'x3'])
     for y, rows in axes.iterrows():
         for x, ax in rows.items():
             if x in ['x0', 'x2']:

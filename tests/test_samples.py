@@ -455,8 +455,39 @@ def test_plot_logscale(kind):
         d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x())
     assert pmax == pytest.approx(-1, abs=d)
 
-    # 2d
-    axes = ns.plot_2d(params, kind=kind, logxy=['x2'])
+    # 2d, logx only
+    axes = ns.plot_2d(params, kind=kind, logx=['x2'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if ax is not None:
+                if x == 'x2':
+                    assert ax.get_xscale() == 'log'
+                else:
+                    assert ax.get_xscale() == 'linear'
+                ax.get_yscale() == 'linear'
+                if x == y:
+                    if x == 'x2':
+                        assert ax.twin.get_xscale() == 'log'
+                    else:
+                        assert ax.twin.get_xscale() == 'linear'
+                    assert ax.twin.get_yscale() == 'linear'
+
+    # 2d, logy only
+    axes = ns.plot_2d(params, kind=kind, logy=['x2'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if ax is not None:
+                ax.get_xscale() == 'linear'
+                if y == 'x2':
+                    assert ax.get_yscale() == 'log'
+                else:
+                    assert ax.get_yscale() == 'linear'
+                if x == y:
+                    assert ax.twin.get_xscale() == 'linear'
+                    assert ax.twin.get_yscale() == 'linear'
+
+    # 2d, logx and logy
+    axes = ns.plot_2d(params, kind=kind, logx=['x2'], logy=['x2'])
     for y, rows in axes.iterrows():
         for x, ax in rows.items():
             if ax is not None:
@@ -468,7 +499,11 @@ def test_plot_logscale(kind):
                     assert ax.get_yscale() == 'log'
                 else:
                     assert ax.get_yscale() == 'linear'
-                if x == y == 'x2':
+                if x == y:
+                    if x == 'x2':
+                        assert ax.twin.get_xscale() == 'log'
+                    else:
+                        assert ax.twin.get_xscale() == 'linear'
                     assert ax.twin.get_yscale() == 'linear'
 
 
@@ -501,10 +536,22 @@ def test_logscale_failure_without_match():
     # 2d
     axes = ns.plot_2d(params)
     with pytest.raises(ValueError):
-        ns.plot_2d(axes, logxy=['x2'])
+        ns.plot_2d(axes, logx=['x2'])
+    axes = ns.plot_2d(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logy=['x2'])
+    axes = ns.plot_2d(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'], logy=['x2'])
     fig, axes = make_2d_axes(params)
     with pytest.raises(ValueError):
-        ns.plot_2d(axes, logxy=['x2'])
+        ns.plot_2d(axes, logx=['x2'])
+    fig, axes = make_2d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logy=['x2'])
+    fig, axes = make_2d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'], logy=['x2'])
 
 
 def test_mcmc_stats():
