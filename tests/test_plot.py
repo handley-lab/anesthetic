@@ -484,10 +484,8 @@ def test_astropyhist_plot_1d(bins):
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(100)
-    bars = hist_plot_1d(ax, data, histtype='bar', bins=bins)[2]
-    assert np.all([isinstance(b, Patch) for b in bars])
-    assert max([b.get_height() for b in bars]) == 1.
-    assert np.all(np.array([b.get_height() for b in bars]) <= 1.)
+    with pytest.raises(ValueError):
+        hist_plot_1d(ax, data, bins=bins)
 
 
 @pytest.mark.parametrize('bins', ['fd', 'scott', 'sqrt'])

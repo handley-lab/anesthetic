@@ -393,7 +393,8 @@ def test_plot_1d_colours(kind):
 def test_astropyhist():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
-    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
+    with pytest.raises(ValueError):
+        ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
 
 
 def test_hist_levels():
