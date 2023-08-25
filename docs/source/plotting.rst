@@ -262,17 +262,17 @@ and ``logy`` to :func:`anesthetic.plot.make_2d_axes` or
 
 .. plot:: :context: close-figs
 
-    fig, axes = make_1d_axes(['x0', 'x1', 'x2'], logx=['x2'])
+    fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x2'])
     samples.plot_1d(axes, label="'x2' on log-scale")
 
 .. plot:: :context: close-figs
 
-    fig, axes = make_2d_axes(['x0', 'x1', 'x2'], logx=['x2'], logy=['x2'])
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x2'], logy=['x2'])
     samples.plot_2d(axes, label="'x2' on log-scale")
 
 .. plot:: :context: close-figs
 
-    fig, axes = make_2d_axes(['x0', 'x1', 'x2'], logx=['x2'])
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x2'])
     samples.plot_2d(axes, label="'x2' on log-scale for x-axis, but not for y-axis")
 
 Ticks
