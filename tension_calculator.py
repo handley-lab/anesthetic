@@ -1,3 +1,5 @@
+import tension
+
 class tension_calculator(dict):
      """Class for computing tension metrics
 
