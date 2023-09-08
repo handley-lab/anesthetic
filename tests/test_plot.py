@@ -9,7 +9,6 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              scatter_plot_2d, quantile_plot_interval,
                              basic_cmap, AxesSeries, AxesDataFrame)
 from numpy.testing import assert_array_equal
-import pandas._testing as tm
 
 from matplotlib.axes import SubplotBase
 from matplotlib.contour import ContourSet
@@ -25,7 +24,8 @@ from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_xfail
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    tm.close()
+    yield
+    plt.close("all")
 
 
 def test_AxesObjects():

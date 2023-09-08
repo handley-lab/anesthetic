@@ -207,7 +207,7 @@ class _WeightedObject(object):
     def _rand(self, axis=0):
         """Random number for consistent compression."""
         seed = hash_pandas_object(self._get_axis(axis)).sum() % 2**32
-        with temporary_seed(seed):
+        with temporary_seed(int(seed)):
             return np.random.rand(self.shape[axis])
 
     def reset_index(self, level=None, drop=False, inplace=False,
