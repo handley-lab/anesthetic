@@ -15,7 +15,8 @@ def _process_docstring(doc):
         "                     with fastkde package (DataFrame only)\n"
         "    - 'scatter_2d' : 2d scatter plot (DataFrame only)\n"
         )
-    return doc[:i] + e + doc[i:]
+    j = doc.find('    Examples')
+    return doc[:i] + e + doc[i:j]
 
 
 class PlotAccessor(_PlotAccessor):
