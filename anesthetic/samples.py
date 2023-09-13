@@ -16,14 +16,9 @@ from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
-from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
 from anesthetic.utils import adjust_docstrings
-import anesthetic.weighted_pandas
-from anesthetic.plotting import PlotAccessor
-anesthetic.weighted_pandas._WeightedObject.plot =\
-    CachedAccessor("plot", PlotAccessor)
 
 
 class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
@@ -171,8 +166,6 @@ class Samples(WeightedLabelledDataFrame):
     @property
     def _constructor(self):
         return Samples
-
-    plot = CachedAccessor("plot", PlotAccessor)
 
     def plot_1d(self, axes=None, *args, **kwargs):
         """Create an array of 1D plots.

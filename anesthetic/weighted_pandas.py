@@ -13,6 +13,8 @@ from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, neff, quantile,
                               temporary_seed, adjust_docstrings)
 from pandas.core.dtypes.missing import notna
+from pandas.core.accessor import CachedAccessor
+from anesthetic.plotting import PlotAccessor
 
 
 class WeightedGroupBy(GroupBy):
@@ -140,6 +142,9 @@ class _WeightedObject(object):
         super().__init__(*args, **kwargs)
         if weights is not None:
             self.set_weights(weights, inplace=True)
+
+    plot = CachedAccessor("plot", PlotAccessor)
+    """:meta private:"""
 
     def isweighted(self, axis=0):
         """Determine if weights are actually present."""
