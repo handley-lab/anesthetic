@@ -1065,8 +1065,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         contf = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
                             zorder=zorder, vmin=0, vmax=pdf.max(),
                             *args, **kwargs)
-        for c in contf.collections:
-            c.set_cmap(cmap)
+        contf.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                                    fc=cmap(0.999), ec=cmap(0.32)))
         cmap = None
@@ -1195,8 +1194,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         linewidths = kwargs.pop('linewidths', 0.5)
         contf = ax.contourf(X, Y, P, levels=levels, cmap=cmap, zorder=zorder,
                             vmin=0, vmax=P.max(), *args, **kwargs)
-        for c in contf.collections:
-            c.set_cmap(cmap)
+        contf.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                                    fc=cmap(0.999), ec=cmap(0.32)))
         cmap = None
