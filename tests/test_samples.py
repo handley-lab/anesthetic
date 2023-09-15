@@ -1474,7 +1474,7 @@ def test_groupby_stats():
     assert np.all(chains.corrwith(mcmc).get_weights() == [w1, w2])
 
     for chain in [1, 2]:
-        mask = mcmc.chain == chain
+        mask = (mcmc.chain == chain).to_numpy()
         assert_allclose(mcmc.loc[mask, params].mean(),
                         chains.mean().loc[chain])
         assert_allclose(mcmc.loc[mask, params].std(),
