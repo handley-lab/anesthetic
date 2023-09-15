@@ -612,8 +612,12 @@ def test_contour_plot_2d(contour_plot_2d):
     cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
     cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
     # filled `contourf` and unfilled `contour` colors are the same:
-    assert cf1.tcolors[0] == ct2.tcolors[0]
-    assert cf1.tcolors[1] == ct2.tcolors[1]
+    # tcolors deprecated in matplotlib 3.8
+    cf1_tcolors = [tuple(rgba) for rgba in cf1.to_rgba(cf1.cvalues, cf1.alpha)]
+    ct2_tcolors = [tuple(rgba) for rgba in ct2.to_rgba(ct2.cvalues, ct2.alpha)]
+
+    assert cf1_tcolors[0] == ct2_tcolors[0]
+    assert cf1_tcolors[1] == ct2_tcolors[1]
     cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
     assert ct.colors == 'C0'
     cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
