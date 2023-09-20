@@ -820,6 +820,8 @@ def test_stats():
 
 @pytest.mark.parametrize('kind', ['kde', 'hist', 'kde_1d', 'hist_1d',
                                   skipif_no_fastkde('fastkde_1d')])
+@pytest.mark.filterwarnings(
+    "ignore:.*You are using .* as a plot kind.*:UserWarning")
 def test_masking_1d(kind):
     pc = read_chains("./tests/example_data/pc")
     mask = pc['x0'].to_numpy() > 0
@@ -828,6 +830,8 @@ def test_masking_1d(kind):
 
 @pytest.mark.parametrize('kind', ['kde', 'scatter', 'scatter_2d', 'kde_2d',
                                   'hist_2d', skipif_no_fastkde('fastkde_2d')])
+@pytest.mark.filterwarnings(
+    "ignore:.*You are using .* as a plot kind.*:UserWarning")
 def test_masking_2d(kind):
     pc = read_chains("./tests/example_data/pc")
     mask = pc['x0'].to_numpy() > 0
