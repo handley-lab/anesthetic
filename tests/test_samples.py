@@ -1,6 +1,7 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 
 import pytest
+from contextlib import nullcontext
 from math import floor, ceil
 import numpy as np
 from pandas import MultiIndex
@@ -820,22 +821,21 @@ def test_stats():
 
 @pytest.mark.parametrize('kind', ['kde', 'hist', 'kde_1d', 'hist_1d',
                                   skipif_no_fastkde('fastkde_1d')])
-@pytest.mark.filterwarnings(
-    "ignore:.*You are using .* as a plot kind.*:UserWarning")
 def test_masking_1d(kind):
     pc = read_chains("./tests/example_data/pc")
     mask = pc['x0'].to_numpy() > 0
-    pc[mask].plot_1d(['x0', 'x1', 'x2'], kind=kind)
+    with pytest.warns(UserWarning) if kind in ['kde',
+                                               'hist'] else nullcontext():
+        pc[mask].plot_1d(['x0', 'x1', 'x2'], kind=kind)
 
 
 @pytest.mark.parametrize('kind', ['kde', 'scatter', 'scatter_2d', 'kde_2d',
                                   'hist_2d', skipif_no_fastkde('fastkde_2d')])
-@pytest.mark.filterwarnings(
-    "ignore:.*You are using .* as a plot kind.*:UserWarning")
 def test_masking_2d(kind):
     pc = read_chains("./tests/example_data/pc")
     mask = pc['x0'].to_numpy() > 0
-    pc[mask].plot_2d(['x0', 'x1', 'x2'], kind={'lower': kind})
+    with pytest.warns(UserWarning) if kind == 'kde' else nullcontext():
+        pc[mask].plot_2d(['x0', 'x1', 'x2'], kind={'lower': kind})
 
 
 def test_merging():
