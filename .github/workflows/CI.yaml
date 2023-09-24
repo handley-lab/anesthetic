@@ -178,7 +178,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tomli
           eval "python -m pip install $(./bin/latest_dependencies.py)"
-          python -m pip install -e ".[test]"
+          python -m pip install pytest
+          python -m pip install --no-deps -e .
 
       - name: Test with pytest
         run: python -m pytest --cov=anesthetic tests
