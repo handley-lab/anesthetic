@@ -182,7 +182,7 @@ jobs:
           python -m pip install --no-deps -e .
 
       - name: Test with pytest
-        run: python -m pytest --cov=anesthetic tests
+        run: python -m pytest
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
