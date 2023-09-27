@@ -108,8 +108,7 @@ def test_make_1d_axes():
 
     # Check gridspec kwargs
     fig, axes = make_1d_axes(paramnames, gridspec_kw=dict(wspace=0.1))
-    ws = (axes.iloc[0].get_subplotspec()
-          .get_gridspec().get_subplot_params().wspace)
+    ws = axes['A'].get_subplotspec().get_gridspec().get_subplot_params().wspace
     assert ws == 0.1
 
     # Check figure kwargs
@@ -181,8 +180,7 @@ def test_make_2d_axes_inputs_outputs():
 
     # Check gridspec kwargs
     fig, axes = make_1d_axes(paramnames_x, gridspec_kw=dict(wspace=0.1))
-    ws = (axes.iloc[0].get_subplotspec()
-          .get_gridspec().get_subplot_params().wspace)
+    ws = axes['A'].get_subplotspec().get_gridspec().get_subplot_params().wspace
     assert ws == 0.1
 
     # Check figure kwargs
