@@ -458,26 +458,26 @@ def test_mcmc_stats():
         mcmc.Gelman_Rubin(['x0', 'x1', 'y1', 'y2', 'y3'])
 
     # check per-parameter Gelman--Rubin statistic
-    GR_par = mcmc_head.Gelman_Rubin(return_per_parameter='par')
-    GR_cov = mcmc_head.Gelman_Rubin(return_per_parameter='cov')
+    GR_par = mcmc_head.Gelman_Rubin(return_per_param='par')
+    GR_cov = mcmc_head.Gelman_Rubin(return_per_param='cov')
     assert_array_equal(np.ravel(GR_par), np.diag(GR_cov))
     assert np.all(GR_par > 0.1)
     assert np.all(GR_cov > 0.1)
-    GR_par = mcmc_tail.Gelman_Rubin(return_per_parameter='par')
-    GR_cov = mcmc_tail.Gelman_Rubin(return_per_parameter='cov')
+    GR_par = mcmc_tail.Gelman_Rubin(return_per_param='par')
+    GR_cov = mcmc_tail.Gelman_Rubin(return_per_param='cov')
     assert_array_equal(np.ravel(GR_par), np.diag(GR_cov))
     assert np.all(GR_par < 0.01)
     assert np.all(GR_cov < 0.01)
-    GR_par = mcmc_half.Gelman_Rubin(return_per_parameter='par')
-    GR_cov = mcmc_half.Gelman_Rubin(return_per_parameter='cov')
+    GR_par = mcmc_half.Gelman_Rubin(return_per_param='par')
+    GR_cov = mcmc_half.Gelman_Rubin(return_per_param='cov')
     assert_array_equal(np.ravel(GR_par), np.diag(GR_cov))
     assert np.all(GR_par < 0.01)
     assert np.all(GR_cov < 0.01)
-    assert len(mcmc_half.Gelman_Rubin(return_per_parameter=True)) == 2
-    assert len(mcmc_half.Gelman_Rubin(return_per_parameter='all')) == 2
-    assert_array_equal(mcmc_half.Gelman_Rubin(return_per_parameter=True)[1],
+    assert len(mcmc_half.Gelman_Rubin(return_per_param=True)) == 2
+    assert len(mcmc_half.Gelman_Rubin(return_per_param='all')) == 2
+    assert_array_equal(mcmc_half.Gelman_Rubin(return_per_param=True)[1],
                        GR_par)
-    assert_array_equal(mcmc_half.Gelman_Rubin(return_per_parameter='all')[1],
+    assert_array_equal(mcmc_half.Gelman_Rubin(return_per_param='all')[1],
                        GR_cov)
 
     # more burn-in checks
