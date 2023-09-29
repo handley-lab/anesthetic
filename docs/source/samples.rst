@@ -162,11 +162,11 @@ Gelman--Rubin ``R-1`` statistic using the
 
     Rminus1_old = mcmc_samples.Gelman_Rubin()
     Rminus1_new = mcmc_burnout.Gelman_Rubin()
-    Rminus1_par = mcmc_burnout.Gelman_Rubin(return_per_param='par')
+    Rminus1_par = mcmc_burnout.Gelman_Rubin(per_param='par')
 
 You can get the convergence per parameter by passing the keyword
-``return_per_param='par'``. By passing ``return_per_param='cov'`` you
-will even get the covariant part of the convergence of pairs of parameters.
+``per_param='par'``. By passing ``per_param='cov'`` you will even get the
+covariant part of the convergence of pairs of parameters.
 
 The following plot shows how ``remove_burn_in`` gets rid of burn-in samples.
 Note the stark difference in the Gelman--Rubin statistic, as listed in the
