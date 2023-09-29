@@ -5,8 +5,6 @@ from pandas.core.indexing import (_LocIndexer as _LocIndexer_,
 import numpy as np
 from functools import cmp_to_key
 from pandas.errors import IndexingError
-from pandas.core.accessor import CachedAccessor
-from anesthetic.plotting import PlotAccessor
 
 
 def ac(funcs, *args):
@@ -96,9 +94,6 @@ class _LabelledObject(object):
         super().__init__(*args, **kwargs)
         if labels is not None:
             self.set_labels(labels, inplace=True)
-
-    plot = CachedAccessor("plot", PlotAccessor)
-    """:meta private:"""
 
     def islabelled(self, axis=0):
         """Search for existence of labels."""
