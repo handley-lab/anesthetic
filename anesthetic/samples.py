@@ -573,7 +573,7 @@ class MCMCSamples(Samples):
             data = data.reset_index(drop=True, inplace=inplace)
         return data
 
-    def Gelman_Rubin(self, params=None, return_per_param=False):
+    def Gelman_Rubin(self, params=None, per_param=False):
         """Gelman--Rubin convergence statistic of multiple MCMC chains.
 
         Determine the Gelman--Rubin convergence statistic ``R-1`` by computing
@@ -593,7 +593,7 @@ class MCMCSamples(Samples):
             Default: all parameters (except those parameters that contain
             'prior', 'chi2', or 'logL' in their names)
 
-        return_per_param : bool or str, default=False
+        per_param : bool or str, default=False
             Whether to return the per-parameter convergence statistic ``R-1``.
 
             * If ``False``: returns only the total convergence statistic.
@@ -654,18 +654,18 @@ class MCMCSamples(Samples):
         # The factor of `(nchains+1)/nchains` accounts for the additional
         # uncertainty from using a finite number of chains.
         Rminus1_tot = np.max(np.abs(D))
-        if return_per_param is False:
+        if per_param is False:
             return Rminus1_tot
         Rminus1 = (nchains + 1) / nchains * B / W.drop_weights()
         Rminus1_par = pandas.DataFrame(np.diag(Rminus1), index=B.columns,
                                        columns=['R-1'])
-        if return_per_param is True:
+        if per_param is True:
             return Rminus1_tot, Rminus1_par
-        if return_per_param == 'par':
+        if per_param == 'par':
             return Rminus1_par
         Rminus1_cov = pandas.DataFrame(Rminus1, index=B.columns,
                                        columns=W.columns)
-        if return_per_param == 'cov':
+        if per_param == 'cov':
             return Rminus1_cov
         return Rminus1_tot, Rminus1_cov
 
