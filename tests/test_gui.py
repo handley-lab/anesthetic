@@ -1,13 +1,14 @@
+import matplotlib.pyplot as plt
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 from anesthetic import read_chains
 import pytest
-import pandas._testing as tm
 from utils import skipif_no_h5py
 
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    tm.close()
+    yield
+    plt.close("all")
 
 
 @pytest.mark.parametrize('root', ["./tests/example_data/pc",
