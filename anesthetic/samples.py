@@ -237,7 +237,7 @@ class Samples(WeightedLabelledDataFrame):
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
-                if ~np.isfinite(self[x]).all():
+                if np.isinf(self[x]).any():
                     warnings.warn(f"column {x} has inf values.")
                 selfx = self[x].replace([-np.inf, np.inf], np.nan)
                 selfx.plot(ax=ax, xlabel=xlabel, *args, **kwargs)
@@ -386,7 +386,7 @@ class Samples(WeightedLabelledDataFrame):
                     if x in self and y in self and lkwargs['kind'] is not None:
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
-                        if ~np.isfinite(self[x]).all():
+                        if np.isinf(self[x]).any():
                             warnings.warn(f"column {x} has inf values.")
                         if x == y:
                             selfx = self[x].replace([-np.inf, np.inf], np.nan)
@@ -395,7 +395,7 @@ class Samples(WeightedLabelledDataFrame):
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
-                            if ~np.isfinite(self[y]).all():
+                            if np.isinf(self[x]).any():
                                 warnings.warn(f"column {y} has inf values.")
                             selfxy = self[[x, y]]
                             selfxy = self.replace([-np.inf, np.inf], np.nan)
