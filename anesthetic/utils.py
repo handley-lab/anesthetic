@@ -120,13 +120,6 @@ def compress_weights(w, u=None, ncompress=True):
     elif ncompress is False:
         return w
 
-    # TODO: remove this in version >= 2.1
-    if ncompress < 0:
-        raise ValueError(
-            "ncompress<0 is anesthetic 1.0 behaviour. For equally weighted "
-            "samples you should now use ncompress='inf' or ncompress='equal'."
-            )
-
     W = w * ncompress / w.sum()
 
     fraction, integer = np.modf(W)
