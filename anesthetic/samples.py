@@ -16,14 +16,9 @@ from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
-from pandas.core.accessor import CachedAccessor
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
 from anesthetic.utils import adjust_docstrings
-import anesthetic.weighted_pandas
-from anesthetic.plotting import PlotAccessor
-anesthetic.weighted_pandas._WeightedObject.plot =\
-    CachedAccessor("plot", PlotAccessor)
 
 
 class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
@@ -171,8 +166,6 @@ class Samples(WeightedLabelledDataFrame):
     @property
     def _constructor(self):
         return Samples
-
-    plot = CachedAccessor("plot", PlotAccessor)
 
     def plot_1d(self, axes=None, *args, **kwargs):
         """Create an array of 1D plots.
@@ -608,7 +601,7 @@ class MCMCSamples(Samples):
             data = data.reset_index(drop=True, inplace=inplace)
         return data
 
-    def Gelman_Rubin(self, params=None):
+    def Gelman_Rubin(self, params=None, per_param=False):
         """Gelman--Rubin convergence statistic of multiple MCMC chains.
 
         Determine the Gelman--Rubin convergence statistic ``R-1`` by computing
@@ -628,12 +621,29 @@ class MCMCSamples(Samples):
             Default: all parameters (except those parameters that contain
             'prior', 'chi2', or 'logL' in their names)
 
+        per_param : bool or str, default=False
+            Whether to return the per-parameter convergence statistic ``R-1``.
+
+            * If ``False``: returns only the total convergence statistic.
+            * If ``True``: returns the total convergence statistic and the
+              per-parameter convergence statistic.
+            * If ``'par'``: returns only the per-parameter convergence
+              statistic.
+            * If ``'cov'``: returns only the per-parameter covariant
+              convergence statistic.
+            * If ``'all'``: returns the total convergence statistic and the
+              per-parameter covariant convergence statistic.
+
         Returns
         -------
         Rminus1 : float
-            Gelman--Rubin convergence statistic ``R-1``. The smaller, the
+            Total Gelman--Rubin convergence statistic ``R-1``. The smaller, the
             better converged. Aiming for ``Rminus1~0.01`` should normally work
             well.
+        Rminus1_par : :class:`pandas.DataFrame`
+            Per-parameter Gelman--Rubin convergence statistic.
+        Rminus1_cov : :class:`pandas.DataFrame`
+            Per-parameter covariant Gelman--Rubin convergence statistic.
 
         """
         self.columns.set_names(['params', 'labels'], inplace=True)
@@ -653,7 +663,7 @@ class MCMCSamples(Samples):
         W = chains.cov().groupby(level=('params', 'labels'), sort=False).mean()
         # Between-chain variance ``B``
         # (variance of the chain means):
-        B = np.atleast_2d(np.cov(chains.mean().T, ddof=1))
+        B = chains.mean().drop_weights().cov()
         # We don't weight `B` with the effective number of samples (sum of the
         # weights), here, because we want to notice outliers from shorter
         # chains.
@@ -662,16 +672,30 @@ class MCMCSamples(Samples):
         # the numerator of the Gelman--Rubin statistic `Rminus1`.
 
         try:
-            invL = np.linalg.inv(scipy.linalg.cholesky(W))
+            # note: scipy's cholesky returns U, not L
+            invU = np.linalg.inv(scipy.linalg.cholesky(W))
         except np.linalg.LinAlgError as e:
             raise np.linalg.LinAlgError(
                 "Make sure you do not have linearly dependent parameters, "
                 "e.g. having both `As` and `A=1e9*As` causes trouble.") from e
-        D = np.linalg.eigvalsh(invL @ ((nchains+1)/nchains * B) @ invL.T)
+        D = np.linalg.eigvalsh(invU.T @ ((nchains+1)/nchains * B) @ invU)
         # The factor of `(nchains+1)/nchains` accounts for the additional
         # uncertainty from using a finite number of chains.
-        Rminus1 = np.max(np.abs(D))
-        return Rminus1
+        Rminus1_tot = np.max(np.abs(D))
+        if per_param is False:
+            return Rminus1_tot
+        Rminus1 = (nchains + 1) / nchains * B / W.drop_weights()
+        Rminus1_par = pandas.DataFrame(np.diag(Rminus1), index=B.columns,
+                                       columns=['R-1'])
+        if per_param is True:
+            return Rminus1_tot, Rminus1_par
+        if per_param == 'par':
+            return Rminus1_par
+        Rminus1_cov = pandas.DataFrame(Rminus1, index=B.columns,
+                                       columns=W.columns)
+        if per_param == 'cov':
+            return Rminus1_cov
+        return Rminus1_tot, Rminus1_cov
 
 
 class NestedSamples(Samples):

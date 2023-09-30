@@ -9,7 +9,6 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              scatter_plot_2d, quantile_plot_interval,
                              basic_cmap, AxesSeries, AxesDataFrame)
 from numpy.testing import assert_array_equal
-import pandas._testing as tm
 
 from matplotlib.axes import SubplotBase
 from matplotlib.contour import ContourSet
@@ -25,7 +24,8 @@ from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_xfail
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    tm.close()
+    yield
+    plt.close("all")
 
 
 def test_AxesObjects():
@@ -97,18 +97,18 @@ def test_make_1d_axes():
 
     # Check ncol argument
     fig, axes = make_1d_axes(paramnames, ncol=2)
-    nrows, ncol = axes[0].get_subplotspec().get_gridspec().get_geometry()
+    nrows, ncol = axes.iloc[0].get_subplotspec().get_gridspec().get_geometry()
     assert ncol == 2
 
     # Check gridspec argument
     grid = gs.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[3, 1])
     g00 = grid[0, 0]
     fig, axes = make_1d_axes(paramnames, subplot_spec=g00)
-    assert g00 is axes[0].get_subplotspec().get_topmost_subplotspec()
+    assert g00 is axes.iloc[0].get_subplotspec().get_topmost_subplotspec()
 
     # Check gridspec kwargs
     fig, axes = make_1d_axes(paramnames, gridspec_kw=dict(wspace=0.1))
-    ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+    ws = axes['A'].get_subplotspec().get_gridspec().get_subplot_params().wspace
     assert ws == 0.1
 
     # Check figure kwargs
@@ -180,7 +180,7 @@ def test_make_2d_axes_inputs_outputs():
 
     # Check gridspec kwargs
     fig, axes = make_1d_axes(paramnames_x, gridspec_kw=dict(wspace=0.1))
-    ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+    ws = axes['A'].get_subplotspec().get_gridspec().get_subplot_params().wspace
     assert ws == 0.1
 
     # Check figure kwargs

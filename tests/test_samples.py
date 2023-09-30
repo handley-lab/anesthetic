@@ -19,7 +19,6 @@ from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
-import pandas._testing as tm
 from matplotlib.colors import to_hex
 from scipy.stats import ks_2samp, kstest, norm
 from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_skip
@@ -27,7 +26,8 @@ from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_skip
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    tm.close()
+    yield
+    plt.close("all")
 
 
 def test_build_samples():
@@ -580,6 +580,27 @@ def test_mcmc_stats():
         mcmc['y2'] = mcmc.x1
         mcmc['y3'] = mcmc.x1
         mcmc.Gelman_Rubin(['x0', 'x1', 'y1', 'y2', 'y3'])
+
+    # check per-parameter Gelman--Rubin statistic
+    GR_par = mcmc_head.Gelman_Rubin(per_param='par')
+    GR_cov = mcmc_head.Gelman_Rubin(per_param='cov')
+    assert_array_equal(np.ravel(GR_par), np.diag(GR_cov))
+    assert np.all(GR_par > 0.1)
+    assert np.all(GR_cov > 0.1)
+    GR_par = mcmc_tail.Gelman_Rubin(per_param='par')
+    GR_cov = mcmc_tail.Gelman_Rubin(per_param='cov')
+    assert_array_equal(np.ravel(GR_par), np.diag(GR_cov))
+    assert np.all(GR_par < 0.01)
+    assert np.all(GR_cov < 0.01)
+    GR_par = mcmc_half.Gelman_Rubin(per_param='par')
+    GR_cov = mcmc_half.Gelman_Rubin(per_param='cov')
+    assert_array_equal(np.ravel(GR_par), np.diag(GR_cov))
+    assert np.all(GR_par < 0.01)
+    assert np.all(GR_cov < 0.01)
+    assert len(mcmc_half.Gelman_Rubin(per_param=True)) == 2
+    assert len(mcmc_half.Gelman_Rubin(per_param='all')) == 2
+    assert_array_equal(mcmc_half.Gelman_Rubin(per_param=True)[1], GR_par)
+    assert_array_equal(mcmc_half.Gelman_Rubin(per_param='all')[1], GR_cov)
 
     # more burn-in checks
     mcmc_new = mcmc.remove_burn_in(burn_in=200.9)
@@ -1602,7 +1623,7 @@ def test_groupby_stats():
     assert np.all(chains.corrwith(mcmc).get_weights() == [w1, w2])
 
     for chain in [1, 2]:
-        mask = mcmc.chain == chain
+        mask = (mcmc.chain == chain).to_numpy()
         assert_allclose(mcmc.loc[mask, params].mean(),
                         chains.mean().loc[chain])
         assert_allclose(mcmc.loc[mask, params].std(),
@@ -1644,7 +1665,7 @@ def test_groupby_stats():
     for col in params:
         if 'chain' not in col:
             for chain in [1, 2]:
-                mask = mcmc.chain == chain
+                mask = (mcmc.chain == chain).to_numpy()
                 assert_allclose(mcmc.loc[mask, col].mean(),
                                 chains[col].mean().loc[chain])
                 assert_allclose(mcmc.loc[mask, col].std(),
