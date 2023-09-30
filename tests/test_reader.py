@@ -3,6 +3,7 @@ import os
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+import matplotlib.pyplot as plt
 from anesthetic.testing import assert_frame_equal
 from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains
@@ -12,14 +13,14 @@ from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 from anesthetic.read.nestedfit import read_nestedfit
-import pandas._testing as tm
 from anesthetic.read.hdf import HDFStore, read_hdf
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
 
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    tm.close()
+    yield
+    plt.close("all")
 
 
 def test_read_getdist():
