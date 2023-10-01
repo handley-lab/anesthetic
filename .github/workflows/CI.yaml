@@ -195,7 +195,7 @@ jobs:
           python -m pip uninstall -y -r <(pip freeze)
           python -m pip install -e .
           current=$(pip freeze)
-          if [[ $latest != $current ]] then
+          if [ $latest != $current ] then
              exit 1
           fi
 
