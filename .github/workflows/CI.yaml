@@ -151,12 +151,14 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: Install dependencies
+      - name: Upgrade pip and install tomli
         run: |
           python -m pip install --upgrade pip
           python -m pip install tomli
-          eval "python -m pip install $(./bin/min_dependencies.py)"
-          python -m pip install -e ".[test]"
+      - name: Install minimum dependencies
+        run: eval "python -m pip install $(./bin/min_dependencies.py)"
+      - name: Install anesthetic
+        run: python -m pip install -e ".[test]"
 
       - name: Test with pytest
         run: python -m pytest --cov=anesthetic tests
@@ -173,11 +175,14 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Install dependencies
+      - name: Upgrade pip and install tomli
         run: |
           python -m pip install --upgrade pip
           python -m pip install tomli
-          eval "python -m pip install $(./bin/latest_dependencies.py)"
+      - name: Install latest dependencies
+        run: eval "python -m pip install $(./bin/latest_dependencies.py)"
+      - name: Install pytest and anesthetic
+        run: |
           python -m pip install pytest
           python -m pip install --no-deps -e .
 
