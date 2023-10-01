@@ -131,6 +131,8 @@ class HexBinPlot(_HexBinPlot):
             C = '__weights'
             data[C] = data.get_weights()
             kwargs['reduce_C_function'] = np.sum
+            if 'mincnt' not in kwargs:
+                kwargs['mincnt'] = np.finfo(np.float64).tiny
         super().__init__(data, x, y, C=C, **kwargs)
 
 
