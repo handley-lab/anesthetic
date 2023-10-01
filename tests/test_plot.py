@@ -705,7 +705,6 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
 
     # assert that color between filled and unfilled contours matches
     if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
-        pass
         color1 = ax1.collections[0].get_facecolor()  # filled face color
         color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
         # first level
