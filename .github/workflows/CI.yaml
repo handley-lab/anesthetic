@@ -218,7 +218,9 @@ jobs:
           pip install tomli
           python -m pip install -e .
           current=$(pip freeze)
-          [ "$latest" != "$current" ] && exit 1
+          if [ "$latest" != "$current" ]; then
+              exit 1
+          fi
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
