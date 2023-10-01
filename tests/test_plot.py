@@ -1,6 +1,8 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
+from packaging import version
 import pytest
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
@@ -702,16 +704,23 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
     contour_plot_2d(ax2, x, y, levels=levels, cmap=cmap, fc=None)
 
     # assert that color between filled and unfilled contours matches
-    # first level
-    color1 = (ax1.collections[0]
-                 .collections[0].get_facecolor())  # filled face color
-    color2 = (ax2.collections[0]
-                 .collections[0].get_edgecolor())  # unfilled line color
-    assert_array_equal(color1, color2)
-    # last level
-    color1 = ax1.collections[0].collections[len(levels)-1].get_facecolor()
-    color2 = ax2.collections[0].collections[len(levels)-1].get_edgecolor()
-    assert_array_equal(color1, color2)
+    if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
+        pass
+        color1 = ax1.collections[0].get_facecolor()  # filled face color
+        color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
+        # first level
+        assert_array_equal(color1[0], color2[0])
+        # last level
+        assert_array_equal(color1[len(levels)-1], color2[len(levels)-1])
+    else:
+        # first level
+        color1 = ax1.collections[0].get_facecolor()  # filled face color
+        color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
+        assert_array_equal(color1, color2)
+        # last level
+        color1 = ax1.collections[len(levels)-1].get_facecolor()
+        color2 = ax2.collections[len(levels)-1].get_edgecolor()
+        assert_array_equal(color1, color2)
 
 
 def test_scatter_plot_2d():
