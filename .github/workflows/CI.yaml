@@ -189,5 +189,16 @@ jobs:
       - name: Test with pytest
         run: python -m pytest
 
+      - name: Check anesthetic dependencies are up to date
+        run: |
+          latest=$(pip freeze)
+          python -m pip uninstall -y -r <(pip freeze)
+          python -m pip install -e .
+          current=$(pip freeze)
+          if [[ $latest != $current ]] then
+             exit 1
+          fi
+
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
