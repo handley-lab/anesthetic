@@ -201,26 +201,13 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Upgrade pip and install tomli
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tomli
-      - name: Install latest dependencies
-        run: eval "python -m pip install $(./bin/latest_dependencies.py)"
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
       - name: Install anesthetic
-        run: |
-          python -m pip install --no-deps -e .
+        run: python -m pip install -e ".[test]"
 
       - name: Check anesthetic dependencies are up to date
-        run: |
-          latest=$(pip freeze)
-          python -m pip uninstall -y -r <(pip freeze)
-          pip install tomli
-          python -m pip install -e .
-          current=$(pip freeze)
-          if [ "$latest" != "$current" ]; then
-              exit 1
-          fi
+        run: python -m pytest bin/check_up_to_date.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
