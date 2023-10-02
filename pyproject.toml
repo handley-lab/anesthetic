@@ -32,7 +32,7 @@ license = {file = "LICENSE"}
 requires-python = ">=3.8"
 dependencies = [
     "scipy",
-    "numpy",
+    "numpy<1.26.0",
     "pandas>=2.0.0,<2.2.0",
     "matplotlib>=3.6.1,<3.9.0",
 ]
