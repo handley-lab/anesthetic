@@ -12,6 +12,7 @@ deps = [dep.partition(">")[0] for dep in deps]
 deps = [dep.partition("<")[0] for dep in deps]
 deps = [dep.partition("~=")[0] for dep in deps]
 deps = [dep.partition("^=")[0] for dep in deps]
-deps = [f'"{dep}"' for dep in deps]
 
-print(' '.join(deps))
+if __name__ == "__main__":
+    deps = [f'"{dep}"' for dep in deps]
+    print(' '.join(deps))

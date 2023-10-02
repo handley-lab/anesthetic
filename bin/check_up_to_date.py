@@ -1,11 +1,14 @@
 import pytest
 import requests
 from packaging import version
-import pandas
-import matplotlib
+import importlib
+from latest_dependencies import deps
 
 
-@pytest.mark.parametrize('package', [pandas, matplotlib])
+packages = [importlib.import_module(package) for package in deps]
+
+
+@pytest.mark.parametrize('package', packages)
 def test_packages(package):
     response = requests.get(f"https://pypi.org/pypi/{package.__name__}/json")
     latest_version = response.json()['info']['version']
