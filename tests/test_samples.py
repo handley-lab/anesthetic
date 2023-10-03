@@ -513,7 +513,8 @@ def test_plot_logscale(kind):
 @pytest.mark.parametrize('r', [None, (1e-5, 1)])
 def test_plot_logscale_hist_kwargs(k, b, r):
     ns = read_chains('./tests/example_data/pc')
-    axes = ns[['x2']].plot_1d(kind=k, logx=['x2'], bins=b, range=r)
+    with pytest.warns(UserWarning) if k == 'hist' else nullcontext():
+        axes = ns[['x2']].plot_1d(kind=k, logx=['x2'], bins=b, range=r)
     ax = axes.loc['x2']
     assert ax.get_xscale() == 'log'
     arg = np.argmax([p.get_height() for p in ax.patches])
