@@ -851,7 +851,7 @@ def test_logscale_2d(plot_2d):
     ax.set_xscale('log')
     p = plot_2d(ax, x, logy)
     if 'kde' in plot_2d.__name__:
-        xmax, ymax = p[0].allsegs[1][0].T
+        xmax, ymax = p[0].get_paths()[1].vertices[0]
         xmax = np.mean(np.log10(xmax))
         ymax = np.mean(ymax)
     elif 'hist' in plot_2d.__name__:
@@ -872,7 +872,7 @@ def test_logscale_2d(plot_2d):
     ax.set_yscale('log')
     p = plot_2d(ax, logx, y)
     if 'kde' in plot_2d.__name__:
-        xmax, ymax = p[0].allsegs[1][0].T
+        xmax, ymax = p[0].get_paths()[1].vertices[0]
         xmax = np.mean(xmax)
         ymax = np.mean(np.log10(ymax))
     elif 'hist' in plot_2d.__name__:
@@ -894,7 +894,7 @@ def test_logscale_2d(plot_2d):
     ax.set_yscale('log')
     p = plot_2d(ax, x, y)
     if 'kde' in plot_2d.__name__:
-        xmax, ymax = p[0].allsegs[1][0].T
+        xmax, ymax = p[0].get_paths()[1].vertices[0]
         xmax = np.mean(np.log10(xmax))
         ymax = np.mean(np.log10(ymax))
     elif 'hist' in plot_2d.__name__:
