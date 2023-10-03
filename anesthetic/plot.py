@@ -1025,8 +1025,10 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     xmax = quantile(data, q[-1], weights)
     if 'range' in kwargs and ax.get_xaxis().get_scale() == 'log':
         range = kwargs.pop('range')
-        range = range if range is not None else (data.min(), data.max())
-        range = (np.log10(range[0]), np.log10(range[1]))
+        if range is not None:
+            range = (np.log10(range[0]), np.log10(range[1]))
+        else:
+            range = (data.min(), data.max())
     else:
         range = kwargs.pop('range', (xmin, xmax))
     if isinstance(bins, (int, str)):
