@@ -800,7 +800,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     density = kwargs.pop('density', False)
 
     cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+    color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None
                                  else plt.get_cmap(cmap)(0.68)))
     facecolor = kwargs.pop('facecolor', False)
@@ -920,7 +920,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     density = kwargs.pop('density', False)
 
     cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+    color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None
                                  else plt.get_cmap(cmap)(0.68)))
     facecolor = kwargs.pop('facecolor', False)
@@ -1013,7 +1013,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     density = kwargs.get('density', False)
 
     cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+    color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None
                                  else plt.get_cmap(cmap)(0.68)))
 
@@ -1117,7 +1117,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
 
-    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    color = kwargs.pop('color', ax._get_lines.get_next_color())
     facecolor = kwargs.pop('facecolor', True)
     edgecolor = kwargs.pop('edgecolor', None)
     cmap = kwargs.pop('cmap', None)
@@ -1149,8 +1149,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         contf = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
                             zorder=zorder, vmin=0, vmax=pdf.max(),
                             *args, **kwargs)
-        for c in contf.collections:
-            c.set_cmap(cmap)
+        contf.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                                    fc=cmap(0.999), ec=cmap(0.32)))
         cmap = None
@@ -1244,7 +1243,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
 
-    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    color = kwargs.pop('color', ax._get_lines.get_next_color())
     facecolor = kwargs.pop('facecolor', True)
     edgecolor = kwargs.pop('edgecolor', None)
     cmap = kwargs.pop('cmap', None)
@@ -1285,8 +1284,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         linewidths = kwargs.pop('linewidths', 0.5)
         contf = ax.contourf(X, Y, P, levels=levels, cmap=cmap, zorder=zorder,
                             vmin=0, vmax=P.max(), *args, **kwargs)
-        for c in contf.collections:
-            c.set_cmap(cmap)
+        contf.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                                    fc=cmap(0.999), ec=cmap(0.32)))
         cmap = None
@@ -1352,7 +1350,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     label = kwargs.pop('label', None)
     levels = kwargs.pop('levels', None)
 
-    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    color = kwargs.pop('color', ax._get_lines.get_next_color())
     cmap = kwargs.pop('cmap', basic_cmap(color))
 
     q = kwargs.pop('q', 5)
@@ -1439,7 +1437,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     markersize = kwargs.pop('markersize', 1)
     cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+    color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None else cmap(0.68)))
 
     kwargs.pop('q', None)
