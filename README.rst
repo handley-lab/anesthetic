@@ -2,7 +2,7 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
-:Version: 2.4.1
+:Version: 2.4.2
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -96,7 +96,7 @@ Dependencies
 
 Basic requirements:
 
-- Python 3.6+
+- Python 3.9+
 - `matplotlib <https://pypi.org/project/matplotlib/>`__
 - `numpy <https://pypi.org/project/numpy/>`__
 - `scipy <https://pypi.org/project/scipy/>`__
