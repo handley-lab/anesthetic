@@ -189,9 +189,6 @@ jobs:
       - name: Test with pytest
         run: python -m pytest
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-
   check-for-new-versions:
     runs-on: ubuntu-latest
     steps:
@@ -211,6 +208,3 @@ jobs:
 
       - name: Check anesthetic dependencies are up to date
         run: python -m pytest ./bin/check_up_to_date.py
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
