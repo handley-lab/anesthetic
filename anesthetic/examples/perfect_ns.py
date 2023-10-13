@@ -57,7 +57,7 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
     return samples.loc[samples.logL_birth < logLend].recompute()
 
 
-def correlated_gaussian(nlive, mean, cov, logLmax=0, bounds=None):
+def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0):
     """Perfect nested sampling run for a correlated gaussian likelihood.
 
     This produces a perfect nested sampling run with a uniform prior over the
