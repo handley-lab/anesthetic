@@ -68,27 +68,27 @@ def tension_stats(A,B,AB,nsamples):
     samples['logI']=logI
     samples['logS']=logR-logI
     samples['d_G']=statsA.d_G + statsB.d_G - statsAB.d_G
-    samples['logL_P']=statsAB.logL_P-statsA.logL_P-statsB.logL_P
+    #samples['logL_P']=statsAB.logL_P-statsA.logL_P-statsB.logL_P
     return samples
 
 samples = tension_stats(samplesA,samplesB,samplesAB,nsamples)
 print(samples)
-axes = samples.plot_2d(['logR','logI','logS','d_G','logL_P'])
+axes = samples.plot_2d(['logR','logI','logS','d_G'])
 #%%
 # Another way to make corner plots
-params = ['logR','logI','logS','d_G','logL_P']
+params = ['logR','logI','logS','d_G']
 fig, axes = make_2d_axes(params, figsize=(6, 6), facecolor='w', upper=False)
 samples.plot_2d(axes)#, label="model 1")
 # %%
 ########### Using exact solution ############
 # Calculate the exact solution of logR
-meandiff = np.array(meanA)-np.array(meanB)
+#meandiff = np.array(meanA)-np.array(meanB)
 
 def get_logR(meanA,meanB,covA,covB,V):
     #return -1/2*np.asmatrix(meanA-meanB)*linalg.inv((covA+covB))*(meanA-meanB)-1/2*np.log(abs(2*np.pi*(covA+covB)))+np.log(V)
     #return -1/2*np.asmatrix(meanA-meanB)@linalg.inv((covA+covB))@(np.asmatrix((meanA-meanB)).transpose())-1/2*np.log(linalg.det(2*np.pi*(covA+covB)))+np.log(V)
-    
-    return -1/2*meandiff@linalg.solve(covA+covB,meandiff)-1/2*np.log(linalg.det(2*np.pi*(covA+covB)))+np.log(V)
+    meandiff = np.array(meanA)-np.array(meanB)
+    return -1/2*meandiff@linalg.solve(covA+covB,meandiff)-1/2*np.linalg.slogdet(2*np.pi*(covA+covB))[1]+np.log(V)
 
 
 V=1
