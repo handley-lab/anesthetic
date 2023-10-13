@@ -51,10 +51,28 @@ anesthetic.read.multinest module
    :show-inheritance:
 
 
+anesthetic.read.nestedfit module
+--------------------------------
+
+.. automodule:: anesthetic.read.nestedfit
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 anesthetic.read.polychord module
 --------------------------------
 
 .. automodule:: anesthetic.read.polychord
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.read.ultranest module
+--------------------------------
+
+.. automodule:: anesthetic.read.ultranest
    :members:
    :undoc-members:
    :show-inheritance:
