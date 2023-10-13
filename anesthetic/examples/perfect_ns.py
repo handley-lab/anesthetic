@@ -57,12 +57,11 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
     return samples.loc[samples.logL_birth < logLend].recompute()
 
 
-def correlated_gaussian(nlive, mean, cov, bounds=None):
+def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0):
     """Perfect nested sampling run for a correlated gaussian likelihood.
 
     This produces a perfect nested sampling run with a uniform prior over the
-    unit hypercube, with a likelihood gaussian in the parameters normalised so
-    that the evidence is unity. The algorithm proceeds by simultaneously
+    unit hypercube. The algorithm proceeds by simultaneously
     rejection sampling from the prior and sampling exactly and uniformly from
     the known ellipsoidal contours.
 
@@ -95,7 +94,7 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
     invcov = np.linalg.inv(cov)
 
     def logLike(x):
-        return -0.5 * ((x-mean) @ invcov * (x-mean)).sum(axis=-1)
+        return logLmax -0.5 * ((x-mean) @ invcov * (x-mean)).sum(axis=-1)
 
     ndims = len(mean)
 
@@ -104,7 +103,7 @@ def correlated_gaussian(nlive, mean, cov, bounds=None):
 
     bounds = np.array(bounds, dtype=float)
 
-    logLmax = logLike(mean)
+    #logLmax = logLike(mean) # remove this line? Because logLmax is defined in the function's argument.
 
     points = np.random.uniform(*bounds.T, (2*nlive, ndims))
     samples = NestedSamples(points, logL=logLike(points), logL_birth=-np.inf)
