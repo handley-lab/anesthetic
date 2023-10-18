@@ -94,7 +94,7 @@ def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0):
     invcov = np.linalg.inv(cov)
 
     def logLike(x):
-        return logLmax -0.5 * ((x-mean) @ invcov * (x-mean)).sum(axis=-1)
+        return logLmax - 0.5 * ((x - mean) @ invcov * (x - mean)).sum(axis=-1)
 
     ndims = len(mean)
 
@@ -102,8 +102,6 @@ def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0):
         bounds = [[0, 1]]*ndims
 
     bounds = np.array(bounds, dtype=float)
-
-    #logLmax = logLike(mean) # remove this line? Because logLmax is defined in the function's argument.
 
     points = np.random.uniform(*bounds.T, (2*nlive, ndims))
     samples = NestedSamples(points, logL=logLike(points), logL_birth=-np.inf)
