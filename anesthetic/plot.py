@@ -798,8 +798,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     kwargs = normalize_kwargs(kwargs)
     if ax.get_xaxis().get_scale() == 'log':
         data = np.log10(data)
-    xmin = kwargs.pop('xmin', data.min())
-    xmax = kwargs.pop('xmax', data.max())
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
     density = kwargs.pop('density', False)
 
@@ -1107,10 +1107,10 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
 
-    xmin = kwargs.pop('xmin', data_x.min())
-    xmax = kwargs.pop('xmax', data_x.max())
-    ymin = kwargs.pop('ymin', data_y.min())
-    ymax = kwargs.pop('ymax', data_y.max())
+    xmin = kwargs.pop('xmin', None)
+    xmax = kwargs.pop('xmax', None)
+    ymin = kwargs.pop('ymin', None)
+    ymax = kwargs.pop('ymax', None)
     if ax.get_xaxis().get_scale() == 'log':
         data_x = np.log10(data_x)
         xmin = None if xmin is None else np.log10(xmin)
