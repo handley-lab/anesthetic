@@ -1,6 +1,8 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
+from packaging import version
 import pytest
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
@@ -612,8 +614,12 @@ def test_contour_plot_2d(contour_plot_2d):
     cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
     cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
     # filled `contourf` and unfilled `contour` colors are the same:
-    assert cf1.tcolors[0] == ct2.tcolors[0]
-    assert cf1.tcolors[1] == ct2.tcolors[1]
+    # tcolors deprecated in matplotlib 3.8
+    cf1_tcolors = [tuple(rgba) for rgba in cf1.to_rgba(cf1.cvalues, cf1.alpha)]
+    ct2_tcolors = [tuple(rgba) for rgba in ct2.to_rgba(ct2.cvalues, ct2.alpha)]
+
+    assert cf1_tcolors[0] == ct2_tcolors[0]
+    assert cf1_tcolors[1] == ct2_tcolors[1]
     cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
     assert ct.colors == 'C0'
     cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
@@ -698,14 +704,22 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
     contour_plot_2d(ax2, x, y, levels=levels, cmap=cmap, fc=None)
 
     # assert that color between filled and unfilled contours matches
-    # first level
-    color1 = ax1.collections[0].get_facecolor()  # filled face color
-    color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
-    assert_array_equal(color1, color2)
-    # last level
-    color1 = ax1.collections[len(levels)-1].get_facecolor()
-    color2 = ax2.collections[len(levels)-1].get_edgecolor()
-    assert_array_equal(color1, color2)
+    if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
+        color1 = ax1.collections[0].get_facecolor()  # filled face color
+        color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
+        # first level
+        assert_array_equal(color1[0], color2[0])
+        # last level
+        assert_array_equal(color1[len(levels)-1], color2[len(levels)-1])
+    else:
+        # first level
+        color1 = ax1.collections[0].get_facecolor()  # filled face color
+        color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
+        assert_array_equal(color1, color2)
+        # last level
+        color1 = ax1.collections[len(levels)-1].get_facecolor()
+        color2 = ax2.collections[len(levels)-1].get_edgecolor()
+        assert_array_equal(color1, color2)
 
 
 def test_scatter_plot_2d():
