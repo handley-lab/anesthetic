@@ -322,15 +322,19 @@ class AxesDataFrame(DataFrame):
         class DiagonalAxes(type(ax)):
             def set_xlim(self, left=None, right=None, emit=True, auto=False,
                          xmin=None, xmax=None):
-                super().set_ylim(bottom=left, top=right, emit=True, auto=auto,
-                                 ymin=xmin, ymax=xmax)
+                if (self.get_xaxis().get_scale() ==
+                        self.get_yaxis().get_scale()):
+                    super().set_ylim(bottom=left, top=right, emit=True,
+                                     auto=auto, ymin=xmin, ymax=xmax)
                 return super().set_xlim(left=left, right=right, emit=emit,
                                         auto=auto, xmin=xmin, xmax=xmax)
 
             def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
                          ymin=None, ymax=None):
-                super().set_xlim(left=bottom, right=top, emit=True, auto=auto,
-                                 xmin=ymin, xmax=ymax)
+                if (self.get_xaxis().get_scale() ==
+                        self.get_yaxis().get_scale()):
+                    super().set_xlim(left=bottom, right=top, emit=True,
+                                     auto=auto, xmin=ymin, xmax=ymax)
                 return super().set_ylim(bottom=bottom, top=top, emit=emit,
                                         auto=auto, ymin=ymin, ymax=ymax)
 
@@ -794,8 +798,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     kwargs = normalize_kwargs(kwargs)
     if ax.get_xaxis().get_scale() == 'log':
         data = np.log10(data)
-    xmin = kwargs.pop('xmin', None)
-    xmax = kwargs.pop('xmax', None)
+    xmin = kwargs.pop('xmin', data.min())
+    xmax = kwargs.pop('xmax', data.max())
     levels = kwargs.pop('levels', [0.95, 0.68])
     density = kwargs.pop('density', False)
 
@@ -1103,10 +1107,10 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
 
-    xmin = kwargs.pop('xmin', None)
-    xmax = kwargs.pop('xmax', None)
-    ymin = kwargs.pop('ymin', None)
-    ymax = kwargs.pop('ymax', None)
+    xmin = kwargs.pop('xmin', data_x.min())
+    xmax = kwargs.pop('xmax', data_x.max())
+    ymin = kwargs.pop('ymin', data_y.min())
+    ymax = kwargs.pop('ymax', data_y.max())
     if ax.get_xaxis().get_scale() == 'log':
         data_x = np.log10(data_x)
         xmin = None if xmin is None else np.log10(xmin)
