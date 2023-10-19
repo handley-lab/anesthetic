@@ -433,7 +433,7 @@ def test_plot_1d_no_axes():
 
 
 @pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
-def test_plot_logscale(kind):
+def test_plot_logscale_1d(kind):
     ns = read_chains('./tests/example_data/pc')
     params = ['x0', 'x1', 'x2', 'x3', 'x4']
 
@@ -455,6 +455,12 @@ def test_plot_logscale(kind):
         pmax = np.log10(ax.patches[arg].get_x())
         d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x())
     assert pmax == pytest.approx(-1, abs=d)
+
+
+@pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
+def test_plot_logscale_2d(kind):
+    ns = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x1', 'x2', 'x3', 'x4']
 
     # 2d, logx only
     axes = ns.plot_2d(params, kind=kind, logx=['x2'])
