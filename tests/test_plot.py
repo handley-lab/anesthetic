@@ -1,8 +1,6 @@
-import warnings
-
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 from packaging import version
-from warnings import catch_warnings
+from warnings import catch_warnings, filterwarnings
 import pytest
 import numpy as np
 import matplotlib
@@ -767,8 +765,8 @@ def test_make_axes_logscale():
                 assert ax.get_xscale() == 'log'
             assert ax.get_yscale() == 'linear'
             with catch_warnings():
-                warnings.filterwarnings('error', category=UserWarning,
-                                        message="Attempt to set non-positive")
+                filterwarnings('error', category=UserWarning,
+                               message="Attempt to set non-positive")
                 ax.set_ylim(-1, 1)
 
     # 2d, logy only
@@ -778,8 +776,8 @@ def test_make_axes_logscale():
         for x, ax in rows.items():
             assert ax.get_xscale() == 'linear'
             with catch_warnings():
-                warnings.filterwarnings('error', category=UserWarning,
-                                        message="Attempt to set non-positive")
+                filterwarnings('error', category=UserWarning,
+                               message="Attempt to set non-positive")
                 ax.set_xlim(-1, 1)
             if y in ['x0', 'x2']:
                 assert ax.get_yscale() == 'linear'
