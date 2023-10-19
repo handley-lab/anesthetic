@@ -1,5 +1,6 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 from packaging import version
+from warnings import catch_warnings
 import pytest
 import numpy as np
 import matplotlib
@@ -760,9 +761,15 @@ def test_make_axes_logscale():
         for x, ax in rows.items():
             if x in ['x0', 'x2']:
                 assert ax.get_xscale() == 'linear'
+                with catch_warnings(action='error', category=UserWarning):
+                    ax.set_xlim(-1, 1)
             else:
                 assert ax.get_xscale() == 'log'
+                with catch_warnings(action='error', category=UserWarning):
+                    ax.set_xlim(1e-1, 1e1)
             assert ax.get_yscale() == 'linear'
+            with catch_warnings(action='error', category=UserWarning):
+                ax.set_ylim(-1, 1)
 
     # 2d, logy only
     fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
@@ -770,10 +777,16 @@ def test_make_axes_logscale():
     for y, rows in axes.iterrows():
         for x, ax in rows.items():
             assert ax.get_xscale() == 'linear'
+            with catch_warnings(action='error', category=UserWarning):
+                ax.set_xlim(-1, 1)
             if y in ['x0', 'x2']:
                 assert ax.get_yscale() == 'linear'
+                with catch_warnings(action='error', category=UserWarning):
+                    ax.set_ylim(-1, 1)
             else:
                 assert ax.get_yscale() == 'log'
+                with catch_warnings(action='error', category=UserWarning):
+                    ax.set_ylim(1e-1, 1e1)
 
     # 2d, logx and logy
     fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
