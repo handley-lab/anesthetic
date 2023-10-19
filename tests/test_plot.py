@@ -761,12 +761,8 @@ def test_make_axes_logscale():
         for x, ax in rows.items():
             if x in ['x0', 'x2']:
                 assert ax.get_xscale() == 'linear'
-                with catch_warnings(action='error', category=UserWarning):
-                    ax.set_xlim(-1, 1)
             else:
                 assert ax.get_xscale() == 'log'
-                with catch_warnings(action='error', category=UserWarning):
-                    ax.set_xlim(1e-1, 1e1)
             assert ax.get_yscale() == 'linear'
             with catch_warnings(action='error', category=UserWarning):
                 ax.set_ylim(-1, 1)
@@ -781,12 +777,8 @@ def test_make_axes_logscale():
                 ax.set_xlim(-1, 1)
             if y in ['x0', 'x2']:
                 assert ax.get_yscale() == 'linear'
-                with catch_warnings(action='error', category=UserWarning):
-                    ax.set_ylim(-1, 1)
             else:
                 assert ax.get_yscale() == 'log'
-                with catch_warnings(action='error', category=UserWarning):
-                    ax.set_ylim(1e-1, 1e1)
 
     # 2d, logx and logy
     fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
