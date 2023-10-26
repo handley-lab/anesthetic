@@ -60,8 +60,10 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
 def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0):
     """Perfect nested sampling run for a correlated gaussian likelihood.
 
-    This produces a perfect nested sampling run with a uniform prior over the
-    unit hypercube. The algorithm proceeds by simultaneously rejection sampling from the prior and sampling exactly and uniformly from the known ellipsoidal contours.
+    This produces a perfect nested sampling run with a uniform prior over
+    the unit hypercube. The algorithm proceeds by simultaneously rejection
+    sampling from the prior and sampling exactly and uniformly from the
+    known ellipsoidal contours.
 
     This can produce perfect runs in up to around d~15 dimensions. Beyond
     this rejection sampling from a truncated gaussian in the early stage

@@ -12,7 +12,8 @@ def test_logLmax():
     logLmax = 10
     # d = number of parameters
     d = len(mean)
-    samples = correlated_gaussian(nlive, mean, cov, bounds=bounds, logLmax=logLmax)
+    samples = correlated_gaussian(nlive, mean, cov, bounds=bounds,
+                                  logLmax=logLmax)
     print(samples.logL.mean())
     print(logLmax-d/2)
     assert_allclose(samples.logL.mean(), logLmax-d/2)
