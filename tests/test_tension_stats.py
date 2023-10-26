@@ -1,3 +1,4 @@
+
 #%%
 from anesthetic.samples import Samples
 from anesthetic.examples.perfect_ns import correlated_gaussian
@@ -5,7 +6,7 @@ from anesthetic import read_chains, make_2d_axes
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
-import matplotlib.pyplot as plt
+
 #%%
 # Creating mock datasets A, B and AB
 # Creating mock dataset A
@@ -13,7 +14,8 @@ nlive = 1000
 meanA = [0.1, 0.3, 0.5]
 covA = np.array([[.01, 0.009, 0], [0.009, .01, 0], [0, 0, 0.1]])*0.01
 bounds = [[0, 1], [0,1], [0, 1]]
-samplesA = correlated_gaussian(nlive, meanA, covA, bounds) # output is Nested sampling run
+logLmaxA = 0
+samplesA = correlated_gaussian(nlive, meanA, covA, bounds, logLmaxA) # output is Nested sampling run
 #samplesA.gui()
 #plt.show()
 
@@ -22,11 +24,11 @@ samplesA = correlated_gaussian(nlive, meanA, covA, bounds) # output is Nested sa
 # Datasets being incompatible 
 meanB = [0.15, 0.25, 0.45]
 # Datasets being compatible
-#meanB = [0.1, 0.3, 0.5]
+meanB = [0.1, 0.3, 0.5]
 
 covB = np.array([[.01, -0.009, 0.01], [-0.009, .01, -0.001], [0.01, -0.001, 0.1]])*0.01
-#bounds = [[0, 1], [0,1], [0, 1]]
-samplesB = correlated_gaussian(nlive, meanB, covB, bounds)
+logLmaxB = 0
+samplesB = correlated_gaussian(nlive, meanB, covB, bounds,logLmaxB)
 # Make a plot
 axes = samplesA.plot_2d([0,1,2])
 samplesB.plot_2d(axes)
@@ -43,12 +45,18 @@ meanAB = covAB@(np.linalg.solve(covA,meanA)+np.linalg.solve(covB,meanB))
 #meanAB = np.asarray(meanAB.transpose())
 
 # Creating mock dataset AB
-
 # Matching the input for the func correlated_gaussian
 #meanAB_=meanAB.flatten().tolist()
 #covAB_=covAB.tolist()
 
-samplesAB = correlated_gaussian(nlive, meanAB, covAB,bounds)
+# Calculate logLmaxAB using eqn 18 from paper
+def find_logLmaxAB(meanA,meanB,covA,covB,logLmaxA=0, logLmaxB=0):
+    meandiff = np.array(meanA)-np.array(meanB)
+    return -1/2 * meandiff@linalg.solve(covA+covB,meandiff)+logLmaxA+logLmaxB
+
+logLmaxAB = find_logLmaxAB(meanA,meanB,covA,covB,logLmaxA, logLmaxB)
+
+samplesAB = correlated_gaussian(nlive, meanAB, covAB,bounds, logLmaxAB)
 samplesAB.plot_2d(axes)
 #%%
 # Set parameters
@@ -102,6 +110,7 @@ plt.legend()
 plt.show()
 # %%
 def get_logS(meanA,meanB,covA,covB,d):
+    meandiff = np.array(meanA)-np.array(meanB)
     return d/2 - 1/2*meandiff@linalg.solve(covA+covB,meandiff)
 d=3
 logS_exact = get_logS(meanA,meanB,covA,covB,d)
