@@ -394,7 +394,8 @@ def test_plot_1d_colours(kind):
 def test_astropyhist():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
-    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
+    with pytest.raises(ValueError):
+        ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
 
 
 def test_hist_levels():
@@ -429,6 +430,136 @@ def test_plot_1d_no_axes():
     assert axes.iloc[0].get_xlabel() == 'x0'
     assert axes.iloc[1].get_xlabel() == 'x1'
     assert axes.iloc[2].get_xlabel() == 'x2'
+
+
+@pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
+def test_plot_logscale_1d(kind):
+    ns = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x1', 'x2', 'x3', 'x4']
+
+    # 1d
+    axes = ns.plot_1d(params, kind=kind + '_1d', logx=['x2'])
+    for x, ax in axes.items():
+        if x == 'x2':
+            assert ax.get_xscale() == 'log'
+        else:
+            assert ax.get_xscale() == 'linear'
+    ax = axes.loc['x2']
+    if 'kde' in kind:
+        p = ax.get_children()
+        arg = np.argmax(p[0].get_ydata())
+        pmax = np.log10(p[0].get_xdata()[arg])
+        d = 0.1
+    else:
+        arg = np.argmax([p.get_height() for p in ax.patches])
+        pmax = np.log10(ax.patches[arg].get_x())
+        d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x())
+    assert pmax == pytest.approx(-1, abs=d)
+
+
+@pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
+def test_plot_logscale_2d(kind):
+    ns = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x1', 'x2', 'x3', 'x4']
+
+    # 2d, logx only
+    axes = ns.plot_2d(params, kind=kind, logx=['x2'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if ax is not None:
+                if x == 'x2':
+                    assert ax.get_xscale() == 'log'
+                else:
+                    assert ax.get_xscale() == 'linear'
+                ax.get_yscale() == 'linear'
+                if x == y:
+                    if x == 'x2':
+                        assert ax.twin.get_xscale() == 'log'
+                    else:
+                        assert ax.twin.get_xscale() == 'linear'
+                    assert ax.twin.get_yscale() == 'linear'
+
+    # 2d, logy only
+    axes = ns.plot_2d(params, kind=kind, logy=['x2'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if ax is not None:
+                ax.get_xscale() == 'linear'
+                if y == 'x2':
+                    assert ax.get_yscale() == 'log'
+                else:
+                    assert ax.get_yscale() == 'linear'
+                if x == y:
+                    assert ax.twin.get_xscale() == 'linear'
+                    assert ax.twin.get_yscale() == 'linear'
+
+    # 2d, logx and logy
+    axes = ns.plot_2d(params, kind=kind, logx=['x2'], logy=['x2'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if ax is not None:
+                if x == 'x2':
+                    assert ax.get_xscale() == 'log'
+                else:
+                    assert ax.get_xscale() == 'linear'
+                if y == 'x2':
+                    assert ax.get_yscale() == 'log'
+                else:
+                    assert ax.get_yscale() == 'linear'
+                if x == y:
+                    if x == 'x2':
+                        assert ax.twin.get_xscale() == 'log'
+                    else:
+                        assert ax.twin.get_xscale() == 'linear'
+                    assert ax.twin.get_yscale() == 'linear'
+
+
+@pytest.mark.parametrize('k', ['hist_1d', 'hist'])
+@pytest.mark.parametrize('b', ['scott', 10, np.logspace(-3, 0, 20)])
+@pytest.mark.parametrize('r', [None, (1e-5, 1)])
+def test_plot_logscale_hist_kwargs(k, b, r):
+    ns = read_chains('./tests/example_data/pc')
+    with pytest.warns(UserWarning) if k == 'hist' else nullcontext():
+        axes = ns[['x2']].plot_1d(kind=k, logx=['x2'], bins=b, range=r)
+    ax = axes.loc['x2']
+    assert ax.get_xscale() == 'log'
+    arg = np.argmax([p.get_height() for p in ax.patches])
+    pmax = np.log10(ax.patches[arg].get_x())
+    d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x())
+    assert pmax == pytest.approx(-1, abs=d)
+
+
+def test_logscale_failure_without_match():
+    ns = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x2']
+
+    # 1d
+    axes = ns.plot_1d(params)
+    with pytest.raises(ValueError):
+        ns.plot_1d(axes, logx=['x2'])
+    fig, axes = make_1d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_1d(axes, logx=['x2'])
+
+    # 2d
+    axes = ns.plot_2d(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'])
+    axes = ns.plot_2d(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logy=['x2'])
+    axes = ns.plot_2d(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'], logy=['x2'])
+    fig, axes = make_2d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'])
+    fig, axes = make_2d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logy=['x2'])
+    fig, axes = make_2d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'], logy=['x2'])
 
 
 def test_mcmc_stats():
