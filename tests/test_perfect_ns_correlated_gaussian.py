@@ -3,7 +3,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 
-def test_logLmax():
+def test_logLmax(print_result=False):
     nlive = 1000
     mean = [0.1, 0.3, 0.5]
     # cov = covariance matrix
@@ -14,6 +14,9 @@ def test_logLmax():
     d = len(mean)
     samples = correlated_gaussian(nlive, mean, cov, bounds=bounds,
                                   logLmax=logLmax)
-    print(samples.logL.mean())
-    print(logLmax-d/2)
-    assert_allclose(samples.logL.mean(), logLmax-d/2)
+    abs_err = samples.logL.std()/np.sqrt(samples.neff())
+    atol = abs_err*3
+    if print_result:
+        print(samples.logL.mean())
+        print(logLmax-d/2)
+    assert_allclose(samples.logL.mean(), logLmax-d/2, atol=atol)

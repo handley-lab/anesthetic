@@ -12,7 +12,6 @@ from anesthetic._version import __version__  # noqa: F401
 # TODO: remove this when conda pandas version catches up
 from packaging.version import parse
 assert parse(pandas.__version__) >= parse('2.0.0')
-print('test logLmax')
 
 
 def _anesthetic_override(_get_plot_backend):
