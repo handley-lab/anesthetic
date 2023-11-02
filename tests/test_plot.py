@@ -1,5 +1,6 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 from packaging import version
+from warnings import catch_warnings, filterwarnings
 import pytest
 import numpy as np
 import matplotlib
@@ -486,10 +487,8 @@ def test_astropyhist_plot_1d(bins):
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(100)
-    bars = hist_plot_1d(ax, data, histtype='bar', bins=bins)[2]
-    assert np.all([isinstance(b, Patch) for b in bars])
-    assert max([b.get_height() for b in bars]) == 1.
-    assert np.all(np.array([b.get_height() for b in bars]) <= 1.)
+    with pytest.raises(ValueError):
+        hist_plot_1d(ax, data, bins=bins)
 
 
 @pytest.mark.parametrize('bins', ['fd', 'scott', 'sqrt'])
@@ -534,12 +533,14 @@ def test_hist_plot_2d():
     ymin, ymax = ax.get_ylim()
     assert xmin > -5 and xmax < 5 and ymin > -5 and ymax < 5
 
+    fig, ax = plt.subplots()
     data_x, data_y = np.random.uniform(-10, 10, (2, 1000))
     hist_plot_2d(ax, data_x, data_y)
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     assert xmin > -10 and xmax < 10 and ymin > -10 and ymax < 10
 
+    fig, ax = plt.subplots()
     data_x, data_y = np.random.uniform(-10, 10, (2, 1000))
     weights = np.exp(-(data_x**2 + data_y**2)/2)
     hist_plot_2d(ax, data_x, data_y, weights=weights, bins=30)
@@ -743,6 +744,189 @@ def test_scatter_plot_2d():
     # Check that q is ignored
     fig, ax = plt.subplots()
     scatter_plot_2d(ax, data_x, data_y, q=0)
+
+
+def test_make_axes_logscale():
+    # 1d
+    fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x1', 'x3'])
+    assert axes.loc['x0'].get_xscale() == 'linear'
+    assert axes.loc['x1'].get_xscale() == 'log'
+    assert axes.loc['x2'].get_xscale() == 'linear'
+    assert axes.loc['x3'].get_xscale() == 'log'
+
+    # 2d, logx only
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
+                             logx=['x1', 'x3'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if x in ['x0', 'x2']:
+                assert ax.get_xscale() == 'linear'
+            else:
+                assert ax.get_xscale() == 'log'
+            assert ax.get_yscale() == 'linear'
+            with catch_warnings():
+                filterwarnings('error', category=UserWarning,
+                               message="Attempt to set non-positive")
+                ax.set_ylim(-1, 1)
+
+    # 2d, logy only
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
+                             logy=['x1', 'x3'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            assert ax.get_xscale() == 'linear'
+            with catch_warnings():
+                filterwarnings('error', category=UserWarning,
+                               message="Attempt to set non-positive")
+                ax.set_xlim(-1, 1)
+            if y in ['x0', 'x2']:
+                assert ax.get_yscale() == 'linear'
+            else:
+                assert ax.get_yscale() == 'log'
+
+    # 2d, logx and logy
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
+                             logx=['x1', 'x3'],
+                             logy=['x1', 'x3'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if x in ['x0', 'x2']:
+                assert ax.get_xscale() == 'linear'
+            else:
+                assert ax.get_xscale() == 'log'
+            if y in ['x0', 'x2']:
+                assert ax.get_yscale() == 'linear'
+            else:
+                assert ax.get_yscale() == 'log'
+
+
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d,
+                                     skipif_no_fastkde(fastkde_plot_1d),
+                                     hist_plot_1d])
+def test_logscale_1d(plot_1d):
+    np.random.seed(42)
+    logdata = np.random.randn(1000)
+    data = 10**logdata
+
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    p = plot_1d(ax, data)
+    if 'kde' in plot_1d.__name__:
+        amax = abs(np.log10(p[0].get_xdata()[np.argmax(p[0].get_ydata())]))
+    else:
+        amax = abs(np.log10(p[1][np.argmax(p[0])]))
+    assert amax < 0.5
+
+
+@pytest.mark.parametrize('b', ['scott', 20, np.logspace(-5, 5, 20)])
+def test_logscale_hist_kwargs(b):
+    np.random.seed(42)
+    logdata = np.random.randn(1000)
+    data = 10**logdata
+
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    h, edges, _ = hist_plot_1d(ax, data, bins=b)
+    amax = abs(np.log10(edges[np.argmax(h)]))
+    assert amax < 0.5
+    assert edges[0] < 1e-3
+    assert edges[-1] > 1e3
+    h, edges, _ = hist_plot_1d(ax, data, bins=b, range=(1e-3, 1e3))
+    amax = abs(np.log10(edges[np.argmax(h)]))
+    assert amax < 0.5
+    if isinstance(b, (int, str)):
+        # edges are trimmed according to range
+        assert edges[0] == 1e-3
+        assert edges[-1] == 1e3
+    else:
+        # edges passed directly to bins are not trimmed according to range
+        assert edges[0] == b[0]
+        assert edges[-1] == b[-1]
+
+
+@pytest.mark.parametrize('plot_2d',
+                         [kde_contour_plot_2d,
+                          skipif_no_fastkde(fastkde_contour_plot_2d),
+                          hist_plot_2d, scatter_plot_2d])
+def test_logscale_2d(plot_2d):
+    np.random.seed(0)
+    logx = np.random.randn(1000)
+    logy = np.random.randn(1000)
+    x = 10**logx
+    y = 10**logy
+
+    # logx
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    p = plot_2d(ax, x, logy)
+    if 'kde' in plot_2d.__name__:
+        if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
+            xmax, ymax = p[0].get_paths()[1].vertices[0].T
+        else:
+            xmax, ymax = p[0].allsegs[1][0].T
+        xmax = np.mean(np.log10(xmax))
+        ymax = np.mean(ymax)
+    elif 'hist' in plot_2d.__name__:
+        c = p.get_coordinates()
+        c = (c[:-1, :] + c[1:, :]) / 2
+        c = (c[:, :-1] + c[:, 1:]) / 2
+        c = c.reshape((-1, 2))
+        xmax = abs(np.log10(c[np.argmax(p.get_array())][0]))
+        ymax = abs(c[np.argmax(p.get_array())][1])
+    else:
+        xmax = np.mean(np.log10(p[0].get_xdata()))
+        ymax = np.mean(p[0].get_ydata())
+    assert xmax < 0.5
+    assert ymax < 0.5
+
+    # logy
+    fig, ax = plt.subplots()
+    ax.set_yscale('log')
+    p = plot_2d(ax, logx, y)
+    if 'kde' in plot_2d.__name__:
+        if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
+            xmax, ymax = p[0].get_paths()[1].vertices[0].T
+        else:
+            xmax, ymax = p[0].allsegs[1][0].T
+        xmax = np.mean(xmax)
+        ymax = np.mean(np.log10(ymax))
+    elif 'hist' in plot_2d.__name__:
+        c = p.get_coordinates()
+        c = (c[:-1, :] + c[1:, :]) / 2
+        c = (c[:, :-1] + c[:, 1:]) / 2
+        c = c.reshape((-1, 2))
+        xmax = abs(c[np.argmax(p.get_array())][0])
+        ymax = abs(np.log10(c[np.argmax(p.get_array())][1]))
+    else:
+        xmax = np.mean(p[0].get_xdata())
+        ymax = np.mean(np.log10(p[0].get_ydata()))
+    assert xmax < 0.5
+    assert ymax < 0.5
+
+    # logx and logy
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    p = plot_2d(ax, x, y)
+    if 'kde' in plot_2d.__name__:
+        if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
+            xmax, ymax = p[0].get_paths()[1].vertices[0].T
+        else:
+            xmax, ymax = p[0].allsegs[1][0].T
+        xmax = np.mean(np.log10(xmax))
+        ymax = np.mean(np.log10(ymax))
+    elif 'hist' in plot_2d.__name__:
+        c = p.get_coordinates()
+        c = (c[:-1, :] + c[1:, :]) / 2
+        c = (c[:, :-1] + c[:, 1:]) / 2
+        c = c.reshape((-1, 2))
+        xmax = abs(np.log10(c[np.argmax(p.get_array())][0]))
+        ymax = abs(np.log10(c[np.argmax(p.get_array())][1]))
+    else:
+        xmax = np.mean(np.log10(p[0].get_xdata()))
+        ymax = np.mean(np.log10(p[0].get_ydata()))
+    assert xmax < 0.5
+    assert ymax < 0.5
 
 
 @pytest.mark.parametrize('sigmas', [(1, '1sigma', 0.682689492137086),
