@@ -36,7 +36,8 @@ def fastkde_1d(d, xmin=None, xmax=None):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         p, x = fastKDE.pdf(d_, axis_expansion_factor=f,
-                           num_points_per_sigma=10*(2-f))
+                           num_points_per_sigma=10*(2-f),
+                           use_xarray=False)
     p *= 2-f
 
     if xmin is not None:
@@ -80,7 +81,8 @@ def fastkde_2d(d_x, d_y, xmin=None, xmax=None, ymin=None, ymax=None):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         p, (x, y) = fastKDE.pdf(d_x_, d_y_, axis_expansion_factor=f,
-                                num_points_per_sigma=10*(2-f[0])*(2-f[1]))
+                                num_points_per_sigma=10*(2-f[0])*(2-f[1]),
+                                use_xarray=False)
 
     p *= (2-f[0])
     p *= (2-f[1])
