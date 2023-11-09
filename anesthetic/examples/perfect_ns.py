@@ -5,7 +5,7 @@ from anesthetic import NestedSamples
 from anesthetic.samples import merge_nested_samples
 
 
-def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
+def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0):
     """Perfect nested sampling run for a spherical Gaussian & prior.
 
     Up to normalisation this is identical to the example in John Skilling's
@@ -36,7 +36,7 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2):
     """
 
     def logLike(x):
-        return -(x**2).sum(axis=-1)/2/sigma**2
+        return logLmax -(x**2).sum(axis=-1)/2/sigma**2
 
     def random_sphere(n):
         return random_ellipsoid(np.zeros(ndims), np.eye(ndims), n)
@@ -242,7 +242,9 @@ def planck_gaussian(nlive=500):
 
     logL_mean = -1400.35
 
-    samples = correlated_gaussian(nlive, mean, cov, bounds)
+    logLmax = 0
+    
+    samples = correlated_gaussian(nlive, mean, cov, bounds, logLmax)
 
     data = samples.iloc[:, :len(columns)].to_numpy()
     logL = samples['logL'].to_numpy()
