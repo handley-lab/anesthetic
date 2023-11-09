@@ -151,7 +151,7 @@ def test_planck():
     assert_allclose(planck.logL_P(), logL_mean, atol=3*planck.logL_P(12).std())
 
 
-def test_logLmax(print_result=False):
+def test_logLmax():
     nlive = 1000
     mean = [0.1, 0.3, 0.5]
     # cov = covariance matrix
@@ -164,7 +164,4 @@ def test_logLmax(print_result=False):
                                   logLmax=logLmax)
     abs_err = samples.logL.std()/np.sqrt(samples.neff())
     atol = abs_err*3
-    if print_result:
-        print(samples.logL.mean())
-        print(logLmax-d/2)
     assert_allclose(samples.logL.mean(), logLmax-d/2, atol=atol)
