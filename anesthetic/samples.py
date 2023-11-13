@@ -1114,6 +1114,8 @@ class NestedSamples(Samples):
     def live_points(self, logL=None):
         """Get the live points within logL.
 
+        Convention is that live points are inclusive of the contour.
+
         Parameters
         ----------
         logL : float or int, optional
@@ -1136,6 +1138,35 @@ class NestedSamples(Samples):
             except KeyError:
                 pass
         i = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
+        return Samples(self[i]).set_weights(None)
+
+    def dead_points(self, logL=None):
+        """Get the dead points at a given logL.
+
+        Convention is that dead points are exclusive of the contour.
+
+        Parameters
+        ----------
+        logL : float or int, optional
+            Loglikelihood or iteration number to return dead points.
+            If not provided, return the last set of dead points.
+
+        Returns
+        -------
+        dead_points : Samples
+            Dead points at either:
+                - contour logL (if input is float)
+                - ith iteration (if input is integer)
+                - last set of dead points if no argument provided
+        """
+        if logL is None:
+            logL = self.logL_birth.max()
+        else:
+            try:
+                logL = float(self.logL[logL])
+            except KeyError:
+                pass
+        i = ((self.logL < logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
 
     def posterior_points(self, beta=1):
