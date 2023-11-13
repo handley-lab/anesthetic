@@ -989,6 +989,7 @@ def test_live_points():
 
     assert not live_points.isweighted()
 
+
 def test_dead_points():
     np.random.seed(4)
     pc = read_chains("./tests/example_data/pc")
@@ -1007,10 +1008,19 @@ def test_dead_points():
 
     last_dead_points = pc.dead_points()
     logL = pc.logL_birth.max()
-    assert (last_dead_points.logL<logL).all()
+    assert (last_dead_points.logL < logL).all()
     assert len(last_dead_points) == len(pc) - pc.nlive.mode().to_numpy()[0]
     assert not dead_points.isweighted()
 
+
+@pytest.mark.parametrize("cut", [200, 0.0, None])
+def test_truncate(cut):
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+    truncated_run = pc.truncate(cut)
+    assert not truncated_run.index.duplicated().any()
+    if cut is None:
+        assert pc == truncated_run
 
 
 def test_hist_range_1d():

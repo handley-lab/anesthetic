@@ -1169,6 +1169,28 @@ class NestedSamples(Samples):
         i = ((self.logL < logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
 
+    def truncate(self, logL=None):
+        """Truncate the run at a given logL.
+
+        Parameters
+        ----------
+        logL : float or int, optional
+            Loglikelihood or iteration number to truncate run.
+            If not provided, truncate at the last set of dead points.
+
+        Returns
+        -------
+        truncated_run : NestedSamples
+            Run truncated at either:
+                - contour logL (if input is float)
+                - ith iteration (if input is integer)
+                - last set of dead points if no argument provided
+        """
+        dead_points = self.dead_points(logL)
+        live_points = self.live_points(logL)
+        index = np.concatenate([dead_points.index, live_points.index])
+        return self.loc[index].recompute()
+
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
         return self.set_beta(beta).compress('equal')
