@@ -198,6 +198,13 @@ class Samples(WeightedLabelledDataFrame):
             can be hard to interpret/expensive for :class:`Samples`,
             :class:`MCMCSamples`, or :class:`NestedSamples`.
 
+        logx : list(str), optional
+            Which parameters/columns to plot on a log scale.
+            Needs to match if plotting on top of a pre-existing axes.
+
+        label : str, optional
+            Legend label added to each axis.
+
         Returns
         -------
         axes : :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
@@ -215,7 +222,14 @@ class Samples(WeightedLabelledDataFrame):
             axes = self.drop_labels().columns
 
         if not isinstance(axes, AxesSeries):
-            _, axes = make_1d_axes(axes, labels=self.get_labels_map())
+            _, axes = make_1d_axes(axes, labels=self.get_labels_map(),
+                                   logx=kwargs.pop('logx', None))
+            logx = axes._logx
+        else:
+            logx = kwargs.pop('logx', axes._logx)
+            if logx != axes._logx:
+                raise ValueError(f"logx does not match the pre-existing axes."
+                                 f"logx={logx}, axes._logx={axes._logx}")
 
         kwargs['kind'] = kwargs.get('kind', 'kde_1d')
         kwargs['label'] = kwargs.get('label', self.label)
@@ -237,7 +251,7 @@ class Samples(WeightedLabelledDataFrame):
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
-                self[x].plot(ax=ax, xlabel=xlabel,
+                self[x].plot(ax=ax, xlabel=xlabel, logx=x in logx,
                              *args, **kwargs)
                 ax.set_xlabel(xlabel)
             else:
@@ -314,6 +328,14 @@ class Samples(WeightedLabelledDataFrame):
             overwrite any kwarg with the same key passed to <sub>_kwargs.
             Default: {}
 
+        logx, logy : list(str), optional
+            Which parameters/columns to plot on a log scale for the x-axis and
+            y-axis, respectively.
+            Needs to match if plotting on top of a pre-existing axes.
+
+        label : str, optional
+            Legend label added to each axis.
+
         Returns
         -------
         axes : :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`
@@ -341,13 +363,6 @@ class Samples(WeightedLabelledDataFrame):
                              "the following string shortcuts: "
                              f"{list(self.plot_2d_default_kinds.keys())}")
 
-        local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
-                        for pos in ['upper', 'lower', 'diagonal']}
-        kwargs['label'] = kwargs.get('label', self.label)
-
-        for pos in local_kwargs:
-            local_kwargs[pos].update(kwargs)
-
         if axes is None:
             axes = self.drop_labels().columns
 
@@ -355,7 +370,25 @@ class Samples(WeightedLabelledDataFrame):
             _, axes = make_2d_axes(axes, labels=self.get_labels_map(),
                                    upper=('upper' in kind),
                                    lower=('lower' in kind),
-                                   diagonal=('diagonal' in kind))
+                                   diagonal=('diagonal' in kind),
+                                   logx=kwargs.pop('logx', None),
+                                   logy=kwargs.pop('logy', None))
+            logx = axes._logx
+            logy = axes._logy
+        else:
+            logx = kwargs.pop('logx', axes._logx)
+            logy = kwargs.pop('logy', axes._logy)
+            if logx != axes._logx or logy != axes._logy:
+                raise ValueError(f"logx or logy not matching existing axes:"
+                                 f"logx={logx}, axes._logx={axes._logx}"
+                                 f"logy={logy}, axes._logy={axes._logy}")
+
+        local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
+                        for pos in ['upper', 'lower', 'diagonal']}
+        kwargs['label'] = kwargs.get('label', self.label)
+
+        for pos in local_kwargs:
+            local_kwargs[pos].update(kwargs)
 
         for y, row in axes.iterrows():
             for x, ax in row.items():
@@ -383,11 +416,13 @@ class Samples(WeightedLabelledDataFrame):
                         ylabel = self.get_label(y)
                         if x == y:
                             self[x].plot(ax=ax.twin, xlabel=xlabel,
+                                         logx=x in logx,
                                          *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
                             self.plot(x, y, ax=ax, xlabel=xlabel,
+                                      logx=x in logx, logy=y in logy,
                                       ylabel=ylabel, *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
@@ -1136,8 +1171,38 @@ class NestedSamples(Samples):
 
     logL_P.__doc__ += _logZ_function_shape
 
+    def contour(self, logL=None):
+        """Convert contour from (index or None) to a float loglikelihood.
+
+        Convention is that live points are inclusive of the contour.
+
+        Helper function for:
+            - NestedSamples.live_points,
+            - NestedSamples.dead_points,
+            - NestedSamples.truncate.
+
+        Parameters
+        ----------
+        logL : float or int, optional
+            Loglikelihood or iteration number
+            If not provided, return the contour containing the last set of
+            live points.
+
+        Returns
+        -------
+        logL : float
+            Loglikelihood of contour
+        """
+        if logL is None:
+            logL = self.loc[self.logL > self.logL_birth.max()].logL.iloc[0]
+        elif isinstance(logL, float):
+            pass
+        else:
+            logL = float(self.logL[logL])
+        return logL
+
     def live_points(self, logL=None):
-        """Get the live points within logL.
+        """Get the live points within a contour.
 
         Parameters
         ----------
@@ -1153,15 +1218,56 @@ class NestedSamples(Samples):
                 - ith iteration (if input is integer)
                 - last set of live points if no argument provided
         """
-        if logL is None:
-            logL = self.logL_birth.max()
-        else:
-            try:
-                logL = float(self.logL[logL])
-            except KeyError:
-                pass
+        logL = self.contour(logL)
         i = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
+
+    def dead_points(self, logL=None):
+        """Get the dead points at a given contour.
+
+        Convention is that dead points are exclusive of the contour.
+
+        Parameters
+        ----------
+        logL : float or int, optional
+            Loglikelihood or iteration number to return dead points.
+            If not provided, return the last set of dead points.
+
+        Returns
+        -------
+        dead_points : Samples
+            Dead points at either:
+                - contour logL (if input is float)
+                - ith iteration (if input is integer)
+                - last set of dead points if no argument provided
+        """
+        logL = self.contour(logL)
+        i = ((self.logL < logL)).to_numpy()
+        return Samples(self[i]).set_weights(None)
+
+    def truncate(self, logL=None):
+        """Truncate the run at a given contour.
+
+        Returns the union of the live_points and dead_points.
+
+        Parameters
+        ----------
+        logL : float or int, optional
+            Loglikelihood or iteration number to truncate run.
+            If not provided, truncate at the last set of dead points.
+
+        Returns
+        -------
+        truncated_run : NestedSamples
+            Run truncated at either:
+                - contour logL (if input is float)
+                - ith iteration (if input is integer)
+                - last set of dead points if no argument provided
+        """
+        dead_points = self.dead_points(logL)
+        live_points = self.live_points(logL)
+        index = np.concatenate([dead_points.index, live_points.index])
+        return self.loc[index].recompute()
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
