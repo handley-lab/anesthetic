@@ -36,7 +36,7 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0):
     """
 
     def logLike(x):
-        return logLmax -(x**2).sum(axis=-1)/2/sigma**2
+        return logLmax - (x**2).sum(axis=-1)/2/sigma**2
 
     def random_sphere(n):
         return random_ellipsoid(np.zeros(ndims), np.eye(ndims), n)
@@ -241,16 +241,6 @@ def planck_gaussian(nlive=500):
         [8.00e-01, 1.20e+00]])
 
     logL_mean = -1400.35
-
-    logLmax = 0
-    
-    samples = correlated_gaussian(nlive, mean, cov, bounds, logLmax)
-
-    data = samples.iloc[:, :len(columns)].to_numpy()
-    logL = samples['logL'].to_numpy()
-    logL_birth = samples['logL_birth'].to_numpy()
-    logL_birth += logL_mean - samples.logL.mean()
-    logL += logL_mean - samples.logL.mean()
-    samples = NestedSamples(data=data, columns=columns, labels=labels,
-                            logL=logL, logL_birth=logL_birth)
-    return samples
+    d = len(mean)
+    logLmax = logL_mean + d/2
+    return correlated_gaussian(nlive, mean, cov, bounds, logLmax)
