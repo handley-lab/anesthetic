@@ -1132,6 +1132,68 @@ def test_live_points():
     assert not live_points.isweighted()
 
 
+def test_dead_points():
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+
+    for i, logL in pc.logL.iloc[::49].items():
+        dead_points = pc.dead_points(logL)
+        assert len(dead_points) == int(len(pc[:i[0]]))
+
+        dead_points_from_int = pc.dead_points(i[0])
+        assert_array_equal(dead_points_from_int, dead_points)
+
+        dead_points_from_index = pc.dead_points(i)
+        assert_array_equal(dead_points_from_index, dead_points)
+
+    assert pc.dead_points(1).index[0] == 0
+
+    last_dead_points = pc.dead_points()
+    logL = pc.logL_birth.max()
+    assert (last_dead_points.logL <= logL).all()
+    assert len(last_dead_points) == len(pc) - pc.nlive.mode().to_numpy()[0]
+    assert not dead_points.isweighted()
+
+
+def test_contour():
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+
+    cut_float = 30.0
+    assert cut_float == pc.contour(cut_float)
+
+    cut_int = 0
+    assert pc.logL.min() == pc.contour(cut_int)
+
+    cut_none = None
+    nlive = pc.nlive.mode().to_numpy()[0]
+    assert sorted(pc.logL)[-nlive] == pc.contour(cut_none)
+
+
+@pytest.mark.parametrize("cut", [200, 0.0, None])
+def test_truncate(cut):
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+    truncated_run = pc.truncate(cut)
+    assert not truncated_run.index.duplicated().any()
+    if cut is None:
+        assert_array_equal(pc, truncated_run)
+
+
+def test_hist_range_1d():
+    """Test to provide a solution to #89"""
+    np.random.seed(3)
+    ns = read_chains('./tests/example_data/pc')
+    ax = ns.plot_1d('x0', kind='hist_1d')
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 > -1
+    assert x2 < +1
+    ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 <= -1
+    assert x2 >= +1
+
+
 def test_contour_plot_2d_nan():
     """Contour plots with nans arising from issue #96"""
     np.random.seed(3)
