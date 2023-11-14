@@ -10,9 +10,11 @@ from pandas._libs.lib import no_default
 from pandas.util._exceptions import find_stack_level
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
-from anesthetic.utils import (compress_weights, neff as neff_, quantile,
+from anesthetic.utils import (compress_weights, neff, quantile,
                               temporary_seed, adjust_docstrings)
 from pandas.core.dtypes.missing import notna
+from pandas.core.accessor import CachedAccessor
+from anesthetic.plotting import PlotAccessor
 
 
 class WeightedGroupBy(GroupBy):
@@ -141,6 +143,9 @@ class _WeightedObject(object):
         if weights is not None:
             self.set_weights(weights, inplace=True)
 
+    plot = CachedAccessor("plot", PlotAccessor)
+    """:meta private:"""
+
     def isweighted(self, axis=0):
         """Determine if weights are actually present."""
         return 'weights' in self._get_axis(axis).names
@@ -207,7 +212,7 @@ class _WeightedObject(object):
     def _rand(self, axis=0):
         """Random number for consistent compression."""
         seed = hash_pandas_object(self._get_axis(axis)).sum() % 2**32
-        with temporary_seed(seed):
+        with temporary_seed(int(seed)):
             return np.random.rand(self.shape[axis])
 
     def reset_index(self, level=None, drop=False, inplace=False,
@@ -222,10 +227,10 @@ class _WeightedObject(object):
         else:
             return answer.__finalize__(self, "reset_index")
 
-    def neff(self, axis=0):
+    def neff(self, axis=0, beta=1):
         """Effective number of samples."""
         if self.isweighted(axis):
-            return neff_(self.get_weights(axis))
+            return neff(self.get_weights(axis), beta=beta)
         else:
             return self.shape[axis]
 

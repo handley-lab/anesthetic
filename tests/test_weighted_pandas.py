@@ -11,12 +11,12 @@ from pandas.plotting import scatter_matrix, bootstrap_plot
 from pandas.plotting._matplotlib.misc import (
     scatter_matrix as orig_scatter_matrix
 )
-import pandas._testing as tm
 
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    tm.close()
+    yield
+    plt.close("all")
 
 
 @pytest.fixture
@@ -379,14 +379,18 @@ def test_WeightedDataFrame_sample(frame):
 
 
 def test_WeightedDataFrame_neff(frame):
-    neff = frame.neff()
-    assert isinstance(neff, float)
-    assert neff < len(frame)
-    assert neff > len(frame) * np.exp(-0.25)
+    N_eff = frame.neff()
+    assert isinstance(N_eff, float)
+    assert N_eff < len(frame)
+    assert N_eff > len(frame) * np.exp(-0.25)
 
-    neff = frame.neff(1)
-    assert isinstance(neff, int)
-    assert neff == len(frame.T)
+    N_eff = frame.neff(1)
+    assert isinstance(N_eff, int)
+    assert N_eff == len(frame.T)
+
+    # beta kwarg
+    for beta in [0.5, 1, 2, np.inf, '0.5', 'equal', 'entropy', 'kish']:
+        assert frame.neff(beta=beta) == neff(frame.get_weights(), beta=beta)
 
 
 def test_WeightedDataFrame_compress(frame):

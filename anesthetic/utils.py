@@ -226,6 +226,72 @@ def histogram(a, **kwargs):
     return xpath, ypath
 
 
+def histogram_bin_edges(samples, weights, bins='fd', range=None, beta='equal'):
+    """Compute a good number of bins dynamically from weighted samples.
+
+    Parameters
+    ----------
+    samples : array_like
+        Input data.
+
+    weights : array-like
+        Array of sample weights.
+
+    bins : str, default='fd'
+        String defining the rule used to automatically compute a good number
+        of bins for the weighted samples:
+
+            * 'fd'    : Freedman--Diaconis rule (modified for weighted data)
+            * 'scott' : Scott's rule (modified for weighted data)
+            * 'sqrt'  : Square root estimator (modified for weighted data)
+
+    range : (float, float), optional
+        The lower and upper range of the bins. If not provided, range is simply
+        ``(a.min(), a.max())``. Values outside the range are ignored. The first
+        element of the range must be less than or equal to the second.
+
+    beta : float, default='equal'
+        The value of beta>0 used to calculate the number of effective
+        samples via :func:`neff`.
+
+    Returns
+    -------
+    bin_edges : array of dtype float
+        The edges to pass to :func:`numpy.histogram`.
+
+    """
+    if weights is None:
+        weights = np.ones_like(samples)
+    if range is None:
+        minimum = np.min(samples)
+        maximum = np.max(samples)
+        data_range = maximum - minimum
+    else:
+        minimum = range[0]
+        maximum = range[1]
+        data_range = maximum - minimum
+        data_mask = (samples >= minimum) & (samples <= maximum)
+        samples = samples[data_mask]
+        weights = weights[data_mask]
+    w = weights / np.sum(weights)
+    N_eff = neff(w=w, beta=beta)
+    if bins == 'fd':  # Freedman--Diaconis rule
+        q1, q3 = quantile(samples, [1/4, 3/4], w=w)
+        bin_width = 2 * (q3 - q1) * N_eff**(-1/3)
+    elif bins == 'scott':  # Scott's rule
+        weighted_mean = np.average(samples, weights=w)
+        weighted_var = np.average((samples - weighted_mean)**2, weights=w)
+        weighted_std = np.sqrt(weighted_var)
+        bin_width = (24 * np.pi**0.5 / N_eff)**(1/3) * weighted_std
+    elif bins == 'sqrt':  # Square root estimator
+        samples_eff, _ = sample_compression_1d(samples, w=w, ncompress=N_eff)
+        data_range_eff = np.max(samples_eff) - np.min(samples_eff)
+        bin_width = data_range_eff / np.sqrt(N_eff)
+    nbins = int(np.ceil(data_range / bin_width))
+    bin_edges = np.linspace(minimum, maximum, nbins+1)
+    return bin_edges
+
+
 def compute_nlive(death, birth):
     """Compute number of live points from birth and death contours.
 
@@ -390,7 +456,11 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     if w is None:
         w = pandas.Series(index=x.index, data=np.ones_like(x))
 
-    if isinstance(n, str):
+    if n is False:
+        n = len(x)
+    elif n is True or isinstance(n, str):
+        if n is True:
+            n = 'entropy'
         n = int(neff(w, beta=n))
 
     # Select samples for triangulation

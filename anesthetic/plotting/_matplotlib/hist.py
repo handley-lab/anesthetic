@@ -1,3 +1,4 @@
+from __future__ import annotations
 from matplotlib import pyplot as plt
 import numpy as np
 from pandas.plotting._matplotlib.hist import (HistPlot as _HistPlot,
@@ -19,12 +20,30 @@ from anesthetic.plot import (
     kde_plot_1d,
     fastkde_plot_1d,
     hist_plot_1d,
+    quantile_plot_interval,
 )
+from anesthetic.utils import quantile, histogram_bin_edges
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):
+
+    # noqa: disable=D101
+    def _args_adjust(self) -> None:
+        if (
+                hasattr(self, 'bins') and
+                isinstance(self.bins, str) and
+                self.bins in ['fd', 'scott', 'sqrt']
+        ):
+            self.bins = self._calculate_bins(self.data)
+        super()._args_adjust()
+
     # noqa: disable=D101
     def _calculate_bins(self, data):
+        if self.logx:
+            data = np.log10(data)
+            if 'range' in self.kwds and self.kwds['range'] is not None:
+                xmin, xmax = self.kwds['range']
+                self.kwds['range'] = (np.log10(xmin), np.log10(xmax))
         nd_values = data.infer_objects(copy=False)._get_numeric_data()
         values = np.ravel(nd_values)
         weights = self.kwds.get("weights", None)
@@ -38,10 +57,25 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
 
         values = values[~isna(values)]
 
-        hist, bins = np.histogram(
-            values, bins=self.bins, range=self.kwds.get("range", None),
-            weights=weights
-        )
+        if isinstance(self.bins, str) and self.bins in ['fd', 'scott', 'sqrt']:
+            bins = histogram_bin_edges(
+                values,
+                weights=weights,
+                bins=self.bins,
+                beta=self.kwds.pop('beta', 'equal'),
+                range=self.kwds.get('range', None)
+            )
+        else:
+            bins = np.histogram_bin_edges(
+                values,
+                weights=weights,
+                bins=self.bins,
+                range=self.kwds.get('range', None)
+            )
+        if self.logx:
+            bins = 10**bins
+            if 'range' in self.kwds and self.kwds['range'] is not None:
+                self.kwds['range'] = (xmin, xmax)
         return bins
 
     def _get_colors(self, num_colors=None, color_kwds='color'):
@@ -51,10 +85,9 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
         return super()._get_colors(num_colors, color_kwds)
 
     def _post_plot_logic(self, ax, data):
-        super()._post_plot_logic(ax, data)
+        ax.set_xlabel(self.xlabel)
         ax.set_yticks([])
         ax.set_ylim(bottom=0)
-        ax.set_xlim(self.bins[0], self.bins[-1])
 
 
 class KdePlot(HistPlot, _KdePlot):
@@ -137,6 +170,29 @@ class Hist1dPlot(HistPlot):
     @property
     def _kind(self) -> Literal["hist_1d"]:
         return "hist_1d"
+
+    def __init__(
+            self,
+            data,
+            bins: str | int | np.ndarray | list[np.ndarray] = 'fd',
+            bottom: int | np.ndarray = 0,
+            **kwargs,
+    ) -> None:
+        super().__init__(data, bins=bins, bottom=bottom, **kwargs)
+
+    def _calculate_bins(self, data):
+        if 'range' not in self.kwds or self.kwds['range'] is None:
+            q = self.kwds.get('q', 5)
+            q = quantile_plot_interval(q=q)
+            weights = self.kwds.get('weights', None)
+            xmin = quantile(data, q[0], weights)
+            xmax = quantile(data, q[-1], weights)
+            self.kwds['range'] = (xmin, xmax)
+            bins = super()._calculate_bins(data)
+            self.kwds.pop('range')
+        else:
+            bins = super()._calculate_bins(data)
+        return bins
 
     @classmethod
     def _plot(

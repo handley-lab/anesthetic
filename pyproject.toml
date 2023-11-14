@@ -21,6 +21,7 @@ authors = [
     { name="Stefan Heimersheim", email="sh2061@ast.cam.ac.uk" },
     { name="Pablo Lemos", email="plemos91@gmail.com" },
     { name="Toby Lovick", email="tcl44@cam.ac.uk"},
+    { name="Deborah Odunuyi", email="debbieodunuyi@gmail.com"},
     { name="Aleksandr Petrosyan", email="a-p-petrosyan@yandex.ru" },
     { name="Liangliang Su", email="liangliangsu@njnu.edu.cn"},
     { name="David Yallup", email="david.yallup@gmail.com" },
@@ -32,8 +33,8 @@ requires-python = ">=3.8"
 dependencies = [
     "scipy",
     "numpy",
-    "pandas>=2.0.0",
-    "matplotlib>=3.6.1",
+    "pandas>=2.0.0,<2.2.0",
+    "matplotlib>=3.6.1,<3.9.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -58,7 +59,7 @@ classifiers = [
 "JOSS paper" = "https://joss.theoj.org/papers/10.21105/joss.01414"
 
 [project.optional-dependencies]
-docs = ["sphinx", "sphinx_rtd_theme", "numpydoc"]
+docs = ["sphinx>=4.2.0", "sphinx_rtd_theme>=1.2.2", "sphinx-copybutton", "numpydoc"]
 test = ["pytest", "pytest-cov", "flake8", "pydocstyle", "packaging", "pre-commit"]
 ultranest = ["h5py"]
 astropy = ["astropy"]

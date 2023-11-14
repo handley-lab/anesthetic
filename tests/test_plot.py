@@ -1,7 +1,9 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
+from packaging import version
+from warnings import catch_warnings, filterwarnings
 import pytest
 import numpy as np
-import sys
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
@@ -10,7 +12,6 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              scatter_plot_2d, quantile_plot_interval,
                              basic_cmap, AxesSeries, AxesDataFrame)
 from numpy.testing import assert_array_equal
-import pandas._testing as tm
 
 from matplotlib.axes import SubplotBase
 from matplotlib.contour import ContourSet
@@ -20,11 +21,14 @@ from matplotlib.colors import ColorConverter, to_rgba
 from matplotlib.figure import Figure
 from scipy.special import erf
 from scipy.interpolate import interp1d
+from scipy import stats
+from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_xfail
 
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    tm.close()
+    yield
+    plt.close("all")
 
 
 def test_AxesObjects():
@@ -96,18 +100,18 @@ def test_make_1d_axes():
 
     # Check ncol argument
     fig, axes = make_1d_axes(paramnames, ncol=2)
-    nrows, ncol = axes[0].get_subplotspec().get_gridspec().get_geometry()
+    nrows, ncol = axes.iloc[0].get_subplotspec().get_gridspec().get_geometry()
     assert ncol == 2
 
     # Check gridspec argument
     grid = gs.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[3, 1])
     g00 = grid[0, 0]
     fig, axes = make_1d_axes(paramnames, subplot_spec=g00)
-    assert g00 is axes[0].get_subplotspec().get_topmost_subplotspec()
+    assert g00 is axes.iloc[0].get_subplotspec().get_topmost_subplotspec()
 
     # Check gridspec kwargs
     fig, axes = make_1d_axes(paramnames, gridspec_kw=dict(wspace=0.1))
-    ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+    ws = axes['A'].get_subplotspec().get_gridspec().get_subplot_params().wspace
     assert ws == 0.1
 
     # Check figure kwargs
@@ -179,7 +183,7 @@ def test_make_2d_axes_inputs_outputs():
 
     # Check gridspec kwargs
     fig, axes = make_1d_axes(paramnames_x, gridspec_kw=dict(wspace=0.1))
-    ws = axes[0].get_subplotspec().get_gridspec().get_subplot_params().wspace
+    ws = axes['A'].get_subplotspec().get_gridspec().get_subplot_params().wspace
     assert ws == 0.1
 
     # Check figure kwargs
@@ -337,110 +341,102 @@ def test_2d_axes_scatter(axesparams, params, upper):
     axes.scatter(params, **kwargs)
 
 
-@pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d,
+                                     skipif_no_fastkde(fastkde_plot_1d)])
 def test_kde_plot_1d(plot_1d):
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(1000)
 
-    try:
-        # Check height
-        line, = plot_1d(ax, data)
-        assert isinstance(line, Line2D)
-        assert line.get_ydata().max() <= 1
+    # Check height
+    line, = plot_1d(ax, data)
+    assert isinstance(line, Line2D)
+    assert line.get_ydata().max() <= 1
 
-        # Check arguments are passed onward to underlying function
-        line, = plot_1d(ax, data, color='r')
-        assert line.get_color() == 'r'
-        line, = plot_1d(ax, data, cmap=plt.cm.Blues)
-        assert line.get_color() == plt.cm.Blues(0.68)
+    # Check arguments are passed onward to underlying function
+    line, = plot_1d(ax, data, color='r')
+    assert line.get_color() == 'r'
+    line, = plot_1d(ax, data, cmap=plt.cm.Blues)
+    assert line.get_color() == plt.cm.Blues(0.68)
 
-        # Check q
-        plot_1d(ax, data, q='1sigma')
-        plot_1d(ax, data, q=0)
-        plot_1d(ax, data, q=1)
-        plot_1d(ax, data, q=5)
-        plot_1d(ax, data, q=10)
-        plot_1d(ax, data, q=0.1)
-        plot_1d(ax, data, q=0.9)
-        plot_1d(ax, data, q=(0.1, 0.9))
+    # Check q
+    plot_1d(ax, data, q='1sigma')
+    plot_1d(ax, data, q=0)
+    plot_1d(ax, data, q=1)
+    plot_1d(ax, data, q=5)
+    plot_1d(ax, data, q=10)
+    plot_1d(ax, data, q=0.1)
+    plot_1d(ax, data, q=0.9)
+    plot_1d(ax, data, q=(0.1, 0.9))
 
-        # Check iso-probability code
-        line, fill = plot_1d(ax, data, facecolor=True)
-        plot_1d(ax, data, facecolor=True, levels=[0.8, 0.6, 0.2])
-        line, fill = plot_1d(ax, data, fc='blue', color='k', ec='r')
-        assert np.all(fill[0].get_edgecolor()[0] == to_rgba('r'))
-        assert (to_rgba(line[0].get_color()) == to_rgba('r'))
-        line, fill = plot_1d(ax, data, fc=True, color='k', ec=None)
-        assert len(fill[0].get_edgecolor()) == 0
-        assert (to_rgba(line[0].get_color()) == to_rgba('k'))
+    # Check iso-probability code
+    line, fill = plot_1d(ax, data, facecolor=True)
+    plot_1d(ax, data, facecolor=True, levels=[0.8, 0.6, 0.2])
+    line, fill = plot_1d(ax, data, fc='blue', color='k', ec='r')
+    assert np.all(fill[0].get_edgecolor()[0] == to_rgba('r'))
+    assert (to_rgba(line[0].get_color()) == to_rgba('r'))
+    line, fill = plot_1d(ax, data, fc=True, color='k', ec=None)
+    assert len(fill[0].get_edgecolor()) == 0
+    assert (to_rgba(line[0].get_color()) == to_rgba('k'))
 
-        # Check levels
-        with pytest.raises(ValueError):
-            fig, ax = plt.subplots()
-            plot_1d(ax, data, fc=True, levels=[0.68, 0.95])
-
-        # Check xlim, Gaussian (i.e. limits reduced to relevant data range)
+    # Check levels
+    with pytest.raises(ValueError):
         fig, ax = plt.subplots()
-        data = np.random.randn(1000) * 0.01 + 0.5
-        plot_1d(ax, data)
-        xmin, xmax = ax.get_xlim()
-        assert xmin > 0.4
-        assert xmax < 0.6
-        # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
-        fig, ax = plt.subplots()
-        data = np.random.uniform(size=1000)
-        plot_1d(ax, data, q=0)
-        xmin, xmax = ax.get_xlim()
-        assert xmin <= 0
-        assert xmax >= 1
+        plot_1d(ax, data, fc=True, levels=[0.68, 0.95])
 
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
+    # Check xlim, Gaussian (i.e. limits reduced to relevant data range)
+    fig, ax = plt.subplots()
+    data = np.random.randn(1000) * 0.01 + 0.5
+    plot_1d(ax, data)
+    xmin, xmax = ax.get_xlim()
+    assert xmin > 0.4
+    assert xmax < 0.6
+    # Check xlim, Uniform (i.e. data and limits span entire prior boundary)
+    fig, ax = plt.subplots()
+    data = np.random.uniform(size=1000)
+    plot_1d(ax, data, q=0)
+    xmin, xmax = ax.get_xlim()
+    assert xmin <= 0
+    assert xmax >= 1
 
 
+@fastkde_mark_xfail
 def test_fastkde_min_max():
     np.random.seed(0)
     data_x = np.random.randn(100)
     data_y = np.random.randn(100)
     xmin, xmax = -1, +1
     ymin, ymax = -1, +1
-    try:
-        _, ax = plt.subplots()
-        line, = fastkde_plot_1d(ax, data_x, xmin=xmin)
-        assert (line.get_xdata() >= xmin).all()
+    _, ax = plt.subplots()
+    line, = fastkde_plot_1d(ax, data_x, xmin=xmin)
+    assert (line.get_xdata() >= xmin).all()
 
-        _, ax = plt.subplots()
-        line, = fastkde_plot_1d(ax, data_x, xmax=xmax)
-        assert (line.get_xdata() <= xmax).all()
+    _, ax = plt.subplots()
+    line, = fastkde_plot_1d(ax, data_x, xmax=xmax)
+    assert (line.get_xdata() <= xmax).all()
 
-        _, ax = plt.subplots()
-        line, = fastkde_plot_1d(ax, data_x, xmin=xmin, xmax=xmax)
-        assert (line.get_xdata() >= xmin).all()
-        assert (line.get_xdata() <= xmax).all()
+    _, ax = plt.subplots()
+    line, = fastkde_plot_1d(ax, data_x, xmin=xmin, xmax=xmax)
+    assert (line.get_xdata() >= xmin).all()
+    assert (line.get_xdata() <= xmax).all()
 
-        _, ax = plt.subplots()
-        fastkde_contour_plot_2d(ax, data_x, data_y, xmin=xmin, ymin=ymin)
-        assert ax.get_xlim()[0] >= xmin
-        assert ax.get_ylim()[0] >= ymin
+    _, ax = plt.subplots()
+    fastkde_contour_plot_2d(ax, data_x, data_y, xmin=xmin, ymin=ymin)
+    assert ax.get_xlim()[0] >= xmin
+    assert ax.get_ylim()[0] >= ymin
 
-        _, ax = plt.subplots()
-        fastkde_contour_plot_2d(ax, data_x, data_y, xmax=xmax, ymax=ymax)
-        assert ax.get_xlim()[1] <= xmax
-        assert ax.get_ylim()[1] <= ymax
+    _, ax = plt.subplots()
+    fastkde_contour_plot_2d(ax, data_x, data_y, xmax=xmax, ymax=ymax)
+    assert ax.get_xlim()[1] <= xmax
+    assert ax.get_ylim()[1] <= ymax
 
-        _, ax = plt.subplots()
-        fastkde_contour_plot_2d(ax, data_x, data_y,
-                                xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
-        assert ax.get_xlim()[0] >= xmin
-        assert ax.get_xlim()[1] <= xmax
-        assert ax.get_ylim()[0] >= ymin
-        assert ax.get_ylim()[1] <= ymax
-
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
+    _, ax = plt.subplots()
+    fastkde_contour_plot_2d(ax, data_x, data_y,
+                            xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    assert ax.get_xlim()[0] >= xmin
+    assert ax.get_xlim()[1] <= xmax
+    assert ax.get_ylim()[0] >= ymin
+    assert ax.get_ylim()[1] <= ymax
 
 
 def test_hist_plot_1d():
@@ -485,19 +481,47 @@ def test_hist_plot_1d():
     assert polygon.get_ec() == ColorConverter.to_rgba('r')
 
 
+@astropy_mark_xfail
 @pytest.mark.parametrize('bins', ['knuth', 'freedman', 'blocks'])
 def test_astropyhist_plot_1d(bins):
-    try:
-        fig, ax = plt.subplots()
-        np.random.seed(0)
-        data = np.random.randn(100)
-        bars = hist_plot_1d(ax, data, histtype='bar', bins=bins)[2]
-        assert np.all([isinstance(b, Patch) for b in bars])
-        assert max([b.get_height() for b in bars]) == 1.
-        assert np.all(np.array([b.get_height() for b in bars]) <= 1.)
-    except ImportError:
-        if 'astropy' not in sys.modules:
-            pass
+    fig, ax = plt.subplots()
+    np.random.seed(0)
+    data = np.random.randn(100)
+    with pytest.raises(ValueError):
+        hist_plot_1d(ax, data, bins=bins)
+
+
+@pytest.mark.parametrize('bins', ['fd', 'scott', 'sqrt'])
+def test_hist_plot_1d_bins(bins):
+    np.random.seed(0)
+    num = 1000
+    bound = 5
+    x = np.random.uniform(-bound, +bound, num)
+    w = stats.norm.pdf(x)
+    fig, ax = plt.subplots()
+    _, edges, _ = hist_plot_1d(ax, x, weights=w, bins=bins)
+    assert 15 <= edges.size <= 30
+    assert edges[+0] > x.min()
+    assert edges[-1] < x.max()
+
+    _, edges1, _ = hist_plot_1d(ax, x, weights=w, bins=bins, beta=1)
+    _, edges2, _ = hist_plot_1d(ax, x, weights=w, bins=bins, beta=2)
+    assert edges1.size > edges2.size > edges.size
+
+    _, edgesr, _ = hist_plot_1d(ax, x, weights=w, bins=bins, range=(-3, 3))
+    assert 10 <= edgesr.size <= edges.size
+    assert edgesr[0] == -3
+    assert edgesr[-1] == 3
+
+    _, edges, _ = hist_plot_1d(ax, x, weights=w, bins=bins, range=None)
+    assert 15 <= edges.size <= 30
+    assert edges[+0] == pytest.approx(x.min(), abs=2*bound/num)
+    assert edges[-1] == pytest.approx(x.max(), abs=2*bound/num)
+
+    _, edges, _ = hist_plot_1d(ax, x, weights=None, bins=bins)
+    assert 10 <= edges.size <= 35
+    assert edges[+0] == pytest.approx(x.min(), abs=2*bound/num)
+    assert edges[-1] == pytest.approx(x.max(), abs=2*bound/num)
 
 
 def test_hist_plot_2d():
@@ -509,12 +533,14 @@ def test_hist_plot_2d():
     ymin, ymax = ax.get_ylim()
     assert xmin > -5 and xmax < 5 and ymin > -5 and ymax < 5
 
+    fig, ax = plt.subplots()
     data_x, data_y = np.random.uniform(-10, 10, (2, 1000))
     hist_plot_2d(ax, data_x, data_y)
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     assert xmin > -10 and xmax < 10 and ymin > -10 and ymax < 10
 
+    fig, ax = plt.subplots()
     data_x, data_y = np.random.uniform(-10, 10, (2, 1000))
     weights = np.exp(-(data_x**2 + data_y**2)/2)
     hist_plot_2d(ax, data_x, data_y, weights=weights, bins=30)
@@ -528,127 +554,123 @@ def test_hist_plot_2d():
     hist_plot_2d(ax, data_x, data_y, levels=[0.95, 0.68], cmax=50)
 
 
-@pytest.mark.parametrize('plot_1d', [kde_plot_1d, fastkde_plot_1d])
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d,
+                                     skipif_no_fastkde(fastkde_plot_1d)])
 @pytest.mark.parametrize('s', [1, 2])
 def test_1d_density_kwarg(plot_1d, s):
-    try:
-        np.random.seed(0)
-        x = np.random.normal(scale=s, size=2000)
-        fig, ax = plt.subplots()
+    np.random.seed(0)
+    x = np.random.normal(scale=s, size=2000)
+    fig, ax = plt.subplots()
 
-        # hist density = False:
-        h = hist_plot_1d(ax, x, density=False,
-                         bins=np.linspace(-5.5, 5.5, 12))[2]
-        bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
-        assert bar_height == pytest.approx(1, rel=0.1)
+    # hist density = False:
+    h = hist_plot_1d(ax, x, density=False,
+                     bins=np.linspace(-5.5, 5.5, 12))[2]
+    bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+    assert bar_height == pytest.approx(1, rel=0.1)
 
-        # kde density = False:
-        k = plot_1d(ax, x, density=False)[0]
-        f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
-        kde_height = f(0)
-        assert kde_height == pytest.approx(1, rel=0.1)
+    # kde density = False:
+    k = plot_1d(ax, x, density=False)[0]
+    f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
+    kde_height = f(0)
+    assert kde_height == pytest.approx(1, rel=0.1)
 
-        # hist density = True:
-        h = hist_plot_1d(ax, x, density=True,
-                         bins=np.linspace(-5.5, 5.5, 12))[2]
-        bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
-        assert bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1)
+    # hist density = True:
+    h = hist_plot_1d(ax, x, density=True,
+                     bins=np.linspace(-5.5, 5.5, 12))[2]
+    bar_height = h.get_children()[len(h.get_children()) // 2].get_height()
+    assert bar_height == pytest.approx(erf(0.5 / np.sqrt(2) / s), rel=0.1)
 
-        # kde density = True:
-        k = plot_1d(ax, x, density=True)[0]
-        f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
-        kde_height = f(0)
-        gauss_norm = 1 / np.sqrt(2 * np.pi * s**2)
-        assert kde_height == pytest.approx(gauss_norm, rel=0.1)
-
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
+    # kde density = True:
+    k = plot_1d(ax, x, density=True)[0]
+    f = interp1d(k.get_xdata(), k.get_ydata(), 'cubic', assume_sorted=True)
+    kde_height = f(0)
+    gauss_norm = 1 / np.sqrt(2 * np.pi * s**2)
+    assert kde_height == pytest.approx(gauss_norm, rel=0.1)
 
 
-@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
-                                             fastkde_contour_plot_2d])
+@pytest.mark.parametrize('contour_plot_2d',
+                         [kde_contour_plot_2d,
+                          skipif_no_fastkde(fastkde_contour_plot_2d)])
 def test_contour_plot_2d(contour_plot_2d):
-    try:
-        fig, ax = plt.subplots()
-        np.random.seed(1)
-        data_x = np.random.randn(1000)
-        data_y = np.random.randn(1000)
-        cf, ct = contour_plot_2d(ax, data_x, data_y)
-        assert isinstance(cf, ContourSet)
-        assert isinstance(ct, ContourSet)
+    fig, ax = plt.subplots()
+    np.random.seed(1)
+    data_x = np.random.randn(1000)
+    data_y = np.random.randn(1000)
+    cf, ct = contour_plot_2d(ax, data_x, data_y)
+    assert isinstance(cf, ContourSet)
+    assert isinstance(ct, ContourSet)
 
-        # Check levels
-        with pytest.raises(ValueError):
-            fig, ax = plt.subplots()
-            contour_plot_2d(ax, data_x, data_y, levels=[0.68, 0.95])
+    # Check levels
+    with pytest.raises(ValueError):
+        fig, ax = plt.subplots()
+        contour_plot_2d(ax, data_x, data_y, levels=[0.68, 0.95])
 
-        # Check q
-        fig, ax = plt.subplots()
-        contour_plot_2d(ax, data_x, data_y, q=0)
+    # Check q
+    fig, ax = plt.subplots()
+    contour_plot_2d(ax, data_x, data_y, q=0)
 
-        # Check unfilled
-        cmap = basic_cmap('C2')
-        fig, ax = plt.subplots()
-        cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
-        cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
-        # filled `contourf` and unfilled `contour` colors are the same:
-        assert cf1.tcolors[0] == ct2.tcolors[0]
-        assert cf1.tcolors[1] == ct2.tcolors[1]
-        cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
-        assert ct.colors == 'C0'
-        cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
-        assert cf.get_cmap() == plt.cm.Reds
-        assert ct.colors == 'C0'
-        fig, ax = plt.subplots()
-        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None)
-        assert cf is None
-        assert ct.colors is None
-        assert ct.get_cmap()(1.) == to_rgba('C0')
-        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, c='C3')
-        assert cf is None
-        assert ct.colors is None
-        assert ct.get_cmap()(1.) == to_rgba('C3')
-        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
-        assert cf is None
-        assert ct.colors == 'C1'
-        cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
-        assert cf is None
-        assert ct.colors is None
-        assert ct.get_cmap() == plt.cm.Reds
+    # Check unfilled
+    cmap = basic_cmap('C2')
+    fig, ax = plt.subplots()
+    cf1, ct1 = contour_plot_2d(ax, data_x, data_y, facecolor='C2')
+    cf2, ct2 = contour_plot_2d(ax, data_x, data_y, fc='None', cmap=cmap)
+    # filled `contourf` and unfilled `contour` colors are the same:
+    # tcolors deprecated in matplotlib 3.8
+    cf1_tcolors = [tuple(rgba) for rgba in cf1.to_rgba(cf1.cvalues, cf1.alpha)]
+    ct2_tcolors = [tuple(rgba) for rgba in ct2.to_rgba(ct2.cvalues, ct2.alpha)]
 
-        # Check limits, Gaussian (i.e. limits reduced to relevant data range)
-        fig, ax = plt.subplots()
-        data_x = np.random.randn(1000) * 0.01 + 0.5
-        data_y = np.random.randn(1000) * 0.01 + 0.5
-        contour_plot_2d(ax, data_x, data_y)
-        xmin, xmax = ax.get_xlim()
-        ymin, ymax = ax.get_ylim()
-        assert xmin > 0.4
-        assert xmax < 0.6
-        assert ymin > 0.4
-        assert ymax < 0.6
-        # Check limits, Uniform (i.e. data & limits span entire prior boundary)
-        fig, ax = plt.subplots()
-        data_x = np.random.uniform(size=1000)
-        data_y = np.random.uniform(size=1000)
-        contour_plot_2d(ax, data_x, data_y, q=0)
-        xmin, xmax = ax.get_xlim()
-        ymin, ymax = ax.get_ylim()
-        if contour_plot_2d is fastkde_contour_plot_2d:
-            assert xmin <= 0
-            assert xmax >= 1
-            assert ymin <= 0
-            assert ymax >= 1
-        elif contour_plot_2d is kde_contour_plot_2d:
-            assert xmin == pytest.approx(0, abs=0.01)
-            assert xmax == pytest.approx(1, abs=0.01)
-            assert ymin == pytest.approx(0, abs=0.01)
-            assert ymax == pytest.approx(1, abs=0.01)
+    assert cf1_tcolors[0] == ct2_tcolors[0]
+    assert cf1_tcolors[1] == ct2_tcolors[1]
+    cf, ct = contour_plot_2d(ax, data_x, data_y, edgecolor='C0')
+    assert ct.colors == 'C0'
+    cf, ct = contour_plot_2d(ax, data_x, data_y, ec='C0', cmap=plt.cm.Reds)
+    assert cf.get_cmap() == plt.cm.Reds
+    assert ct.colors == 'C0'
+    fig, ax = plt.subplots()
+    cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None)
+    assert cf is None
+    assert ct.colors is None
+    assert ct.get_cmap()(1.) == to_rgba('C0')
+    cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, c='C3')
+    assert cf is None
+    assert ct.colors is None
+    assert ct.get_cmap()(1.) == to_rgba('C3')
+    cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, ec='C1')
+    assert cf is None
+    assert ct.colors == 'C1'
+    cf, ct = contour_plot_2d(ax, data_x, data_y, fc=None, cmap=plt.cm.Reds)
+    assert cf is None
+    assert ct.colors is None
+    assert ct.get_cmap() == plt.cm.Reds
 
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
+    # Check limits, Gaussian (i.e. limits reduced to relevant data range)
+    fig, ax = plt.subplots()
+    data_x = np.random.randn(1000) * 0.01 + 0.5
+    data_y = np.random.randn(1000) * 0.01 + 0.5
+    contour_plot_2d(ax, data_x, data_y)
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    assert xmin > 0.4
+    assert xmax < 0.6
+    assert ymin > 0.4
+    assert ymax < 0.6
+    # Check limits, Uniform (i.e. data & limits span entire prior boundary)
+    fig, ax = plt.subplots()
+    data_x = np.random.uniform(size=1000)
+    data_y = np.random.uniform(size=1000)
+    contour_plot_2d(ax, data_x, data_y, q=0)
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    if contour_plot_2d is fastkde_contour_plot_2d:
+        assert xmin <= 0
+        assert xmax >= 1
+        assert ymin <= 0
+        assert ymax >= 1
+    elif contour_plot_2d is kde_contour_plot_2d:
+        assert xmin == pytest.approx(0, abs=0.01)
+        assert xmax == pytest.approx(1, abs=0.01)
+        assert ymin == pytest.approx(0, abs=0.01)
+        assert ymax == pytest.approx(1, abs=0.01)
 
 
 def test_kde_plot_nplot():
@@ -665,24 +687,32 @@ def test_kde_plot_nplot():
     kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
 
 
-@pytest.mark.parametrize('contour_plot_2d', [kde_contour_plot_2d,
-                                             fastkde_contour_plot_2d])
+@pytest.mark.parametrize('contour_plot_2d',
+                         [kde_contour_plot_2d,
+                          skipif_no_fastkde(fastkde_contour_plot_2d)])
 @pytest.mark.parametrize('levels', [[0.9],
                                     [0.9, 0.6],
                                     [0.9, 0.6, 0.3],
                                     [0.9, 0.7, 0.5, 0.3]])
 def test_contour_plot_2d_levels(contour_plot_2d, levels):
-    try:
-        np.random.seed(42)
-        x = np.random.randn(1000)
-        y = np.random.randn(1000)
-        cmap = plt.cm.viridis
+    np.random.seed(42)
+    x = np.random.randn(1000)
+    y = np.random.randn(1000)
+    cmap = plt.cm.viridis
 
-        fig, (ax1, ax2) = plt.subplots(2)
-        contour_plot_2d(ax1, x, y, levels=levels, cmap=cmap)
-        contour_plot_2d(ax2, x, y, levels=levels, cmap=cmap, fc=None)
+    fig, (ax1, ax2) = plt.subplots(2)
+    contour_plot_2d(ax1, x, y, levels=levels, cmap=cmap)
+    contour_plot_2d(ax2, x, y, levels=levels, cmap=cmap, fc=None)
 
-        # assert that color between filled and unfilled contours matches
+    # assert that color between filled and unfilled contours matches
+    if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
+        color1 = ax1.collections[0].get_facecolor()  # filled face color
+        color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
+        # first level
+        assert_array_equal(color1[0], color2[0])
+        # last level
+        assert_array_equal(color1[len(levels)-1], color2[len(levels)-1])
+    else:
         # first level
         color1 = ax1.collections[0].get_facecolor()  # filled face color
         color2 = ax2.collections[0].get_edgecolor()  # unfilled line color
@@ -691,10 +721,6 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
         color1 = ax1.collections[len(levels)-1].get_facecolor()
         color2 = ax2.collections[len(levels)-1].get_edgecolor()
         assert_array_equal(color1, color2)
-
-    except ImportError:
-        if 'fastkde' not in sys.modules:
-            pass
 
 
 def test_scatter_plot_2d():
@@ -718,6 +744,189 @@ def test_scatter_plot_2d():
     # Check that q is ignored
     fig, ax = plt.subplots()
     scatter_plot_2d(ax, data_x, data_y, q=0)
+
+
+def test_make_axes_logscale():
+    # 1d
+    fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x1', 'x3'])
+    assert axes.loc['x0'].get_xscale() == 'linear'
+    assert axes.loc['x1'].get_xscale() == 'log'
+    assert axes.loc['x2'].get_xscale() == 'linear'
+    assert axes.loc['x3'].get_xscale() == 'log'
+
+    # 2d, logx only
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
+                             logx=['x1', 'x3'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if x in ['x0', 'x2']:
+                assert ax.get_xscale() == 'linear'
+            else:
+                assert ax.get_xscale() == 'log'
+            assert ax.get_yscale() == 'linear'
+            with catch_warnings():
+                filterwarnings('error', category=UserWarning,
+                               message="Attempt to set non-positive")
+                ax.set_ylim(-1, 1)
+
+    # 2d, logy only
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
+                             logy=['x1', 'x3'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            assert ax.get_xscale() == 'linear'
+            with catch_warnings():
+                filterwarnings('error', category=UserWarning,
+                               message="Attempt to set non-positive")
+                ax.set_xlim(-1, 1)
+            if y in ['x0', 'x2']:
+                assert ax.get_yscale() == 'linear'
+            else:
+                assert ax.get_yscale() == 'log'
+
+    # 2d, logx and logy
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'],
+                             logx=['x1', 'x3'],
+                             logy=['x1', 'x3'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if x in ['x0', 'x2']:
+                assert ax.get_xscale() == 'linear'
+            else:
+                assert ax.get_xscale() == 'log'
+            if y in ['x0', 'x2']:
+                assert ax.get_yscale() == 'linear'
+            else:
+                assert ax.get_yscale() == 'log'
+
+
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d,
+                                     skipif_no_fastkde(fastkde_plot_1d),
+                                     hist_plot_1d])
+def test_logscale_1d(plot_1d):
+    np.random.seed(42)
+    logdata = np.random.randn(1000)
+    data = 10**logdata
+
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    p = plot_1d(ax, data)
+    if 'kde' in plot_1d.__name__:
+        amax = abs(np.log10(p[0].get_xdata()[np.argmax(p[0].get_ydata())]))
+    else:
+        amax = abs(np.log10(p[1][np.argmax(p[0])]))
+    assert amax < 0.5
+
+
+@pytest.mark.parametrize('b', ['scott', 20, np.logspace(-5, 5, 20)])
+def test_logscale_hist_kwargs(b):
+    np.random.seed(42)
+    logdata = np.random.randn(1000)
+    data = 10**logdata
+
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    h, edges, _ = hist_plot_1d(ax, data, bins=b)
+    amax = abs(np.log10(edges[np.argmax(h)]))
+    assert amax < 0.5
+    assert edges[0] < 1e-3
+    assert edges[-1] > 1e3
+    h, edges, _ = hist_plot_1d(ax, data, bins=b, range=(1e-3, 1e3))
+    amax = abs(np.log10(edges[np.argmax(h)]))
+    assert amax < 0.5
+    if isinstance(b, (int, str)):
+        # edges are trimmed according to range
+        assert edges[0] == 1e-3
+        assert edges[-1] == 1e3
+    else:
+        # edges passed directly to bins are not trimmed according to range
+        assert edges[0] == b[0]
+        assert edges[-1] == b[-1]
+
+
+@pytest.mark.parametrize('plot_2d',
+                         [kde_contour_plot_2d,
+                          skipif_no_fastkde(fastkde_contour_plot_2d),
+                          hist_plot_2d, scatter_plot_2d])
+def test_logscale_2d(plot_2d):
+    np.random.seed(0)
+    logx = np.random.randn(1000)
+    logy = np.random.randn(1000)
+    x = 10**logx
+    y = 10**logy
+
+    # logx
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    p = plot_2d(ax, x, logy)
+    if 'kde' in plot_2d.__name__:
+        if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
+            xmax, ymax = p[0].get_paths()[1].vertices[0].T
+        else:
+            xmax, ymax = p[0].allsegs[1][0].T
+        xmax = np.mean(np.log10(xmax))
+        ymax = np.mean(ymax)
+    elif 'hist' in plot_2d.__name__:
+        c = p.get_coordinates()
+        c = (c[:-1, :] + c[1:, :]) / 2
+        c = (c[:, :-1] + c[:, 1:]) / 2
+        c = c.reshape((-1, 2))
+        xmax = abs(np.log10(c[np.argmax(p.get_array())][0]))
+        ymax = abs(c[np.argmax(p.get_array())][1])
+    else:
+        xmax = np.mean(np.log10(p[0].get_xdata()))
+        ymax = np.mean(p[0].get_ydata())
+    assert xmax < 0.5
+    assert ymax < 0.5
+
+    # logy
+    fig, ax = plt.subplots()
+    ax.set_yscale('log')
+    p = plot_2d(ax, logx, y)
+    if 'kde' in plot_2d.__name__:
+        if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
+            xmax, ymax = p[0].get_paths()[1].vertices[0].T
+        else:
+            xmax, ymax = p[0].allsegs[1][0].T
+        xmax = np.mean(xmax)
+        ymax = np.mean(np.log10(ymax))
+    elif 'hist' in plot_2d.__name__:
+        c = p.get_coordinates()
+        c = (c[:-1, :] + c[1:, :]) / 2
+        c = (c[:, :-1] + c[:, 1:]) / 2
+        c = c.reshape((-1, 2))
+        xmax = abs(c[np.argmax(p.get_array())][0])
+        ymax = abs(np.log10(c[np.argmax(p.get_array())][1]))
+    else:
+        xmax = np.mean(p[0].get_xdata())
+        ymax = np.mean(np.log10(p[0].get_ydata()))
+    assert xmax < 0.5
+    assert ymax < 0.5
+
+    # logx and logy
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    p = plot_2d(ax, x, y)
+    if 'kde' in plot_2d.__name__:
+        if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
+            xmax, ymax = p[0].get_paths()[1].vertices[0].T
+        else:
+            xmax, ymax = p[0].allsegs[1][0].T
+        xmax = np.mean(np.log10(xmax))
+        ymax = np.mean(np.log10(ymax))
+    elif 'hist' in plot_2d.__name__:
+        c = p.get_coordinates()
+        c = (c[:-1, :] + c[1:, :]) / 2
+        c = (c[:, :-1] + c[:, 1:]) / 2
+        c = c.reshape((-1, 2))
+        xmax = abs(np.log10(c[np.argmax(p.get_array())][0]))
+        ymax = abs(np.log10(c[np.argmax(p.get_array())][1]))
+    else:
+        xmax = np.mean(np.log10(p[0].get_xdata()))
+        ymax = np.mean(np.log10(p[0].get_ydata()))
+    assert xmax < 0.5
+    assert ymax < 0.5
 
 
 @pytest.mark.parametrize('sigmas', [(1, '1sigma', 0.682689492137086),
