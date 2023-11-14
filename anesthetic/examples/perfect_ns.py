@@ -218,9 +218,6 @@ def planck_gaussian(nlive=500):
     samples : :class:`anesthetic.samples.NestedSamples`
         Nested sampling run
     """
-    columns = ['omegabh2', 'omegach2', 'theta', 'tau', 'logA', 'ns']
-    labels = [r'$\Omega_b h^2$', r'$\Omega_c h^2$', r'$100\theta_{MC}$',
-              r'$\tau$', r'${\rm{ln}}(10^{10} A_s)$', r'$n_s$']
 
     cov = np.array([
         [2.12e-08, -9.03e-08, 1.76e-08, 2.96e-07, 4.97e-07, 2.38e-07],
