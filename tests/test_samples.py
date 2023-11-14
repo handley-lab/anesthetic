@@ -1150,9 +1150,26 @@ def test_dead_points():
 
     last_dead_points = pc.dead_points()
     logL = pc.logL_birth.max()
+    nlive = pc.nlive.mode().to_numpy()[0]
+    logL = sorted(pc.logL)[-nlive]
     assert (last_dead_points.logL < logL).all()
-    assert len(last_dead_points) == len(pc) - pc.nlive.mode().to_numpy()[0]
+    assert len(last_dead_points) == len(pc) - nlive
     assert not dead_points.isweighted()
+
+
+def test_contour():
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+
+    cut_float = 30.0
+    assert cut_float == pc.contour(cut_float)
+
+    cut_int = 0
+    assert pc.logL.min() == pc.contour(cut_int)
+
+    cut_none = None
+    nlive = pc.nlive.mode().to_numpy()[0]
+    assert sorted(pc.logL)[-nlive] == pc.contour(cut_none)
 
 
 @pytest.mark.parametrize("cut", [200, 0.0, None])

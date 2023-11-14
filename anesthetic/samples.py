@@ -1172,7 +1172,7 @@ class NestedSamples(Samples):
     logL_P.__doc__ += _logZ_function_shape
 
     def contour(self, logL=None):
-        """Convert contour from either index or float.
+        """Convert contour from (index or None) to a float loglikelihood.
 
         Convention is that live points are inclusive of the contour.
 
@@ -1195,6 +1195,8 @@ class NestedSamples(Samples):
         """
         if logL is None:
             logL = self.loc[self.logL > self.logL_birth.max()].logL.iloc[0]
+        elif isinstance(logL, float):
+            pass
         else:
             try:
                 logL = float(self.logL[logL])
@@ -1248,6 +1250,8 @@ class NestedSamples(Samples):
 
     def truncate(self, logL=None):
         """Truncate the run at a given contour.
+
+        Returns the union of the live_points and dead_points.
 
         Parameters
         ----------
