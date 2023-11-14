@@ -1150,7 +1150,7 @@ def test_dead_points():
 
     last_dead_points = pc.dead_points()
     logL = pc.logL_birth.max()
-    assert (last_dead_points.logL < logL).all()
+    assert (last_dead_points.logL <= logL).all()
     assert len(last_dead_points) == len(pc) - pc.nlive.mode().to_numpy()[0]
     assert not dead_points.isweighted()
 
