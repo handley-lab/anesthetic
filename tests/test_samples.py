@@ -1162,7 +1162,7 @@ def test_truncate(cut):
     truncated_run = pc.truncate(cut)
     assert not truncated_run.index.duplicated().any()
     if cut is None:
-        assert pc == truncated_run
+        assert_array_equal(pc, truncated_run)
 
 
 def test_hist_range_1d():

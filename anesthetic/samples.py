@@ -1171,10 +1171,39 @@ class NestedSamples(Samples):
 
     logL_P.__doc__ += _logZ_function_shape
 
-    def live_points(self, logL=None):
-        """Get the live points within logL.
+    def contour(self, logL=None):
+        """Convert contour from either index or float.
 
         Convention is that live points are inclusive of the contour.
+
+        Helper function for:
+            - NestedSamples.live_points,
+            - NestedSamples.dead_points,
+            - NestedSamples.truncate.
+
+        Parameters
+        ----------
+        logL : float or int, optional
+            Loglikelihood or iteration number
+            If not provided, return the contour containing the last set of
+            live points.
+
+        Returns
+        -------
+        logL : float
+            Loglikelihood of contour
+        """
+        if logL is None:
+            logL = self.loc[self.logL > self.logL_birth.max()].logL.iloc[0]
+        else:
+            try:
+                logL = float(self.logL[logL])
+            except KeyError:
+                pass
+        return logL
+
+    def live_points(self, logL=None):
+        """Get the live points within a contour.
 
         Parameters
         ----------
@@ -1190,18 +1219,12 @@ class NestedSamples(Samples):
                 - ith iteration (if input is integer)
                 - last set of live points if no argument provided
         """
-        if logL is None:
-            logL = self.logL_birth.max()
-        else:
-            try:
-                logL = float(self.logL[logL])
-            except KeyError:
-                pass
+        logL = self.contour(logL)
         i = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
 
     def dead_points(self, logL=None):
-        """Get the dead points at a given logL.
+        """Get the dead points at a given contour.
 
         Convention is that dead points are exclusive of the contour.
 
@@ -1219,18 +1242,12 @@ class NestedSamples(Samples):
                 - ith iteration (if input is integer)
                 - last set of dead points if no argument provided
         """
-        if logL is None:
-            logL = self.logL_birth.max()
-        else:
-            try:
-                logL = float(self.logL[logL])
-            except KeyError:
-                pass
+        logL = self.contour(logL)
         i = ((self.logL < logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
 
     def truncate(self, logL=None):
-        """Truncate the run at a given logL.
+        """Truncate the run at a given contour.
 
         Parameters
         ----------
