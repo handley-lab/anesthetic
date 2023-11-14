@@ -1198,10 +1198,7 @@ class NestedSamples(Samples):
         elif isinstance(logL, float):
             pass
         else:
-            try:
-                logL = float(self.logL[logL])
-            except KeyError:
-                pass
+            logL = float(self.logL[logL])
         return logL
 
     def live_points(self, logL=None):
