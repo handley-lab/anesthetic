@@ -52,7 +52,7 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0,
     while logL.min() < logLmin:
         points = r * random_sphere(nlive)
         logL = logLike(points)
-        samples.append(NestedSamples(points, logL=logL, logL_birth=logL_birth
+        samples.append(NestedSamples(points, logL=logL, logL_birth=logL_birth,
                                      *args, **kwargs))
         logL_birth = logL.copy()
         r = (points**2).sum(axis=-1, keepdims=True)**0.5
@@ -260,5 +260,5 @@ def planck_gaussian(nlive=500):
     logL_mean = -1400.35
     d = len(mean)
     logLmax = logL_mean + d/2
-    return  correlated_gaussian(nlive, mean, cov, bounds, logLmax,
-                                columns=columns, labels=labels)
+    return correlated_gaussian(nlive, mean, cov, bounds, logLmax,
+                               columns=columns, labels=labels)
