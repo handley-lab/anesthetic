@@ -144,7 +144,8 @@ def test_planck():
     assert (planck[params] < bounds.T[1]).all().all()
     assert_allclose(planck[params].mean(), mean, atol=1e-3)
     assert_allclose(planck[params].cov(), cov, atol=1e-3)
-    assert_allclose(planck.logL.mean(), logL_mean, atol=1e-3)
+    assert_allclose(planck.logL.mean(), logL_mean,
+                    atol=3*planck.logL_P(12).std())
     assert_allclose(planck.logZ(), logZ, atol=3*planck.logZ(12).std())
     assert_allclose(planck.D_KL(), D_KL, atol=3*planck.D_KL(12).std())
     assert_allclose(planck.d_G(), len(params), atol=3*planck.d_G(12).std())

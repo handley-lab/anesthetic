@@ -5,7 +5,8 @@ from anesthetic import NestedSamples
 from anesthetic.samples import merge_nested_samples
 
 
-def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0):
+def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0,
+             *args, **kwargs):
     """Perfect nested sampling run for a spherical Gaussian & prior.
 
     Up to normalisation this is identical to the example in John Skilling's
@@ -29,6 +30,9 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0):
     logLmin : float
         loglikelihood at which to terminate
 
+    The remaining arguments are passed to the
+    :class:`anesthetic.samples.NestedSamples` constructor.
+
     Returns
     -------
     samples : :class:`anesthetic.samples.NestedSamples`
@@ -48,7 +52,8 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0):
     while logL.min() < logLmin:
         points = r * random_sphere(nlive)
         logL = logLike(points)
-        samples.append(NestedSamples(points, logL=logL, logL_birth=logL_birth))
+        samples.append(NestedSamples(points, logL=logL, logL_birth=logL_birth,
+                                     *args, **kwargs))
         logL_birth = logL.copy()
         r = (points**2).sum(axis=-1, keepdims=True)**0.5
 
@@ -57,7 +62,8 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0):
     return samples.loc[samples.logL_birth < logLend].recompute()
 
 
-def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0):
+def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0,
+                        *args, **kwargs):
     """Perfect nested sampling run for a correlated gaussian likelihood.
 
     This produces a perfect nested sampling run with a uniform prior over
@@ -84,6 +90,9 @@ def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0):
     bounds : 2d array-like, shape (ndims, 2)
         bounds of a gaussian, default ``[[0, 1]]*ndims``
 
+    The remaining arguments are passed to the
+    :class:`anesthetic.samples.NestedSamples` constructor.
+
     Returns
     -------
     samples : :class:`anesthetic.samples.NestedSamples`
@@ -104,7 +113,8 @@ def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0):
     bounds = np.array(bounds, dtype=float)
 
     points = np.random.uniform(*bounds.T, (2*nlive, ndims))
-    samples = NestedSamples(points, logL=logLike(points), logL_birth=-np.inf)
+    samples = NestedSamples(points, logL=logLike(points), logL_birth=-np.inf,
+                            *args, **kwargs)
 
     while (1/samples.nlive.iloc[:-nlive]).sum() < samples.D_KL()*2:
         logLs = samples.logL.iloc[-nlive]
@@ -117,19 +127,21 @@ def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0):
         points = np.random.uniform(*bounds.T, (nlive, ndims))
         logL = logLike(points)
         i = logL > logLs
-        samps_1 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs)
+        samps_1 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs,
+                                *args, **kwargs)
 
         # Ellipsoidal round
         points = random_ellipsoid(mean, cov*2*(logLmax - logLs), nlive)
         logL = logLike(points)
         i = ((points > bounds.T[0]) & (points < bounds.T[1])).all(axis=1)
-        samps_2 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs)
+        samps_2 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs,
+                                *args, **kwargs)
         samples = merge_nested_samples([samples, samps_1, samps_2])
 
     return samples
 
 
-def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
+def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5, *args, **kwargs):
     """Perfect nested sampling run for a wedding cake likelihood.
 
     This is a likelihood with nested hypercuboidal plateau regions of constant
@@ -154,6 +166,9 @@ def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
 
     alpha : float
         volume compression between plateau regions
+
+    The remaining arguments are passed to the
+    :class:`anesthetic.samples.NestedSamples` constructor.
     """
 
     def i(x):
@@ -189,7 +204,8 @@ def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
         live_points[j] = x_
         live_likes[j] = logL(x_)
 
-        samps = NestedSamples(points, logL=death_likes, logL_birth=birth_likes)
+        samps = NestedSamples(points, logL=death_likes, logL_birth=birth_likes,
+                              *args, **kwargs)
         weights = samps.get_weights()
         if weights[-nlive:].sum() < 0.001 * weights.sum():
             break
@@ -198,7 +214,8 @@ def wedding_cake(nlive, ndims, sigma=0.01, alpha=0.5):
     birth_likes = np.concatenate([birth_likes, live_birth_likes])
     points = np.concatenate([points, live_points])
 
-    return NestedSamples(points, logL=death_likes, logL_birth=birth_likes)
+    return NestedSamples(points, logL=death_likes, logL_birth=birth_likes,
+                         *args, **kwargs)
 
 
 def planck_gaussian(nlive=500):
@@ -218,6 +235,10 @@ def planck_gaussian(nlive=500):
     samples : :class:`anesthetic.samples.NestedSamples`
         Nested sampling run
     """
+    columns = ['omegabh2', 'omegach2', 'theta', 'tau', 'logA', 'ns']
+    labels = [r'$\Omega_b h^2$', r'$\Omega_c h^2$', r'$100\theta_{MC}$',
+              r'$\tau$', r'${\rm{ln}}(10^{10} A_s)$', r'$n_s$']
+
     cov = np.array([
         [2.12e-08, -9.03e-08, 1.76e-08, 2.96e-07, 4.97e-07, 2.38e-07],
         [-9.03e-08, 1.39e-06, -1.26e-07, -3.41e-06, -4.15e-06, -3.28e-06],
@@ -239,4 +260,5 @@ def planck_gaussian(nlive=500):
     logL_mean = -1400.35
     d = len(mean)
     logLmax = logL_mean + d/2
-    return correlated_gaussian(nlive, mean, cov, bounds, logLmax)
+    return correlated_gaussian(nlive, mean, cov, bounds, logLmax,
+                               columns=columns, labels=labels)
