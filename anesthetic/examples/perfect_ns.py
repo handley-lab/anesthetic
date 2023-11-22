@@ -30,6 +30,9 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0,
     logLmin : float
         loglikelihood at which to terminate
 
+    logLmax : float
+        maximum loglikelihood
+
     The remaining arguments are passed to the
     :class:`anesthetic.samples.NestedSamples` constructor.
 
