@@ -92,6 +92,9 @@ def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0,
 
     bounds : 2d array-like, shape (ndims, 2)
         bounds of a gaussian, default ``[[0, 1]]*ndims``
+    
+    logLmax : float
+        maximum loglikelihood
 
     The remaining arguments are passed to the
     :class:`anesthetic.samples.NestedSamples` constructor.
