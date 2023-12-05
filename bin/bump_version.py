@@ -32,7 +32,7 @@ elif update_type == "major":
 new_version = version.parse(f"{major}.{minor}.{micro}")
 
 for f in [vfile, README]:
-    run("sed", "-i", f"s/{current_version}/{new_version}/g", f)
+    run("sed", "-i", "", f"s/{current_version}/{new_version}/g", f)
 
 run("git", "add", vfile, README)
 run("git", "commit", "-m", f"bump version to {new_version}")
