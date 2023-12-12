@@ -67,7 +67,7 @@ fastkde = ["fastkde"]
 nde = ["margarine"]
 getdist = ["getdist"]
 hdf5 = ["tables"]
-all = ["h5py", "astropy", "fastkde", "getdist", "tables"]
+all = ["h5py", "astropy", "fastkde", "getdist", "tables", "margarine"]
 
 [project.scripts]
 anesthetic = "anesthetic.scripts:gui"
