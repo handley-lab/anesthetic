@@ -192,6 +192,7 @@ class Samples(WeightedLabelledDataFrame):
             * 'hist_1d': :func:`anesthetic.plot.hist_plot_1d`
             * 'kde_1d': :func:`anesthetic.plot.kde_plot_1d`
             * 'fastkde_1d': :func:`anesthetic.plot.fastkde_plot_1d`
+            * 'nde_1d': :func:`anesthetic.plot.nde_plot_1d`
 
             Warning -- while the other pandas plotting options
             {'line', 'bar', 'barh', 'area', 'pie'} are also accessible, these
@@ -292,6 +293,7 @@ class Samples(WeightedLabelledDataFrame):
                 - 'kde_1d': :func:`anesthetic.plot.kde_plot_1d`
                 - 'hist_1d': :func:`anesthetic.plot.hist_plot_1d`
                 - 'fastkde_1d': :func:`anesthetic.plot.fastkde_plot_1d`
+                - 'nde_1d': :func:`anesthetic.plot.nde_plot_1d`
                 - 'kde': :meth:`pandas.Series.plot.kde`
                 - 'hist': :meth:`pandas.Series.plot.hist`
                 - 'box': :meth:`pandas.Series.plot.box`
@@ -303,6 +305,7 @@ class Samples(WeightedLabelledDataFrame):
                 - 'hist_2d': :func:`anesthetic.plot.hist_plot_2d`
                 - 'scatter_2d': :func:`anesthetic.plot.scatter_plot_2d`
                 - 'fastkde_2d': :func:`anesthetic.plot.fastkde_contour_plot_2d`
+                - 'nde_2d': :func:`anesthetic.plot.nde_contour_plot_2d`
                 - 'kde': :meth:`pandas.DataFrame.plot.kde`
                 - 'scatter': :meth:`pandas.DataFrame.plot.scatter`
                 - 'hexbin': :meth:`pandas.DataFrame.plot.hexbin`
@@ -445,6 +448,7 @@ class Samples(WeightedLabelledDataFrame):
         'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
         'hist_1d': {'diagonal': 'hist_1d'},
         'hist_2d': {'lower': 'hist_2d'},
+        'nde': {'diagonal': 'nde_1d', 'lower': 'nde_2d'},
     }
 
     def importance_sample(self, logL_new, action='add', inplace=False):
