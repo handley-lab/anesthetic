@@ -978,9 +978,10 @@ def nde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
-    a neural density estimation computation provided by
-    :class:`margarine.maf` or :class:`margarine.clustered`. All remaining
-    keyword arguments are passed onwards.
+    a normalising flow as a neural density estimation (NDE) provided by
+    `margarine.maf.MAF` or `margarine.clustered.clusterMAF`
+    <https://github.com/htjb/margarine>.
+    All remaining keyword arguments are passed onwards.
 
     Parameters
     ----------
@@ -1485,7 +1486,8 @@ def nde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.contour`
     and :meth:`matplotlib.axes.Axes.contourf` with a normalising flow as a
-    neural density estimator (NDE) via :class:`margarine.maf`
+    neural density estimator (NDE) provided by `margarine.maf.MAF` or
+    `margarine.clustered.clusterMAF` <https://github.com/htjb/margarine>.
     All remaining keyword arguments are passed onwards to both functions.
 
     Parameters
