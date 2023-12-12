@@ -29,7 +29,7 @@ class PlotAccessor(_PlotAccessor):
         + ("hist_1d", "kde_1d", "fastkde_1d", "nde_1d")
     _series_kinds = _PlotAccessor._series_kinds + ()
     _dataframe_kinds = _PlotAccessor._dataframe_kinds \
-        + ("hist_2d", "kde_2d", "fastkde_2d", "scatter_2d")
+        + ("hist_2d", "kde_2d", "fastkde_2d", "nde_2d", "scatter_2d")
     _all_kinds = _common_kinds + _series_kinds + _dataframe_kinds
 
     def hist_1d(self, **kwargs):
