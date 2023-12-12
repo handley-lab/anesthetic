@@ -7,8 +7,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
-                             fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
-                             fastkde_contour_plot_2d, kde_contour_plot_2d,
+                             fastkde_plot_1d, nde_plot_1d, hist_plot_1d,
+                             hist_plot_2d, fastkde_contour_plot_2d,
+                             nde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d, quantile_plot_interval,
                              basic_cmap, AxesSeries, AxesDataFrame)
 from numpy.testing import assert_array_equal
@@ -22,7 +23,8 @@ from matplotlib.figure import Figure
 from scipy.special import erf
 from scipy.interpolate import interp1d
 from scipy import stats
-from utils import skipif_no_fastkde, astropy_mark_xfail, fastkde_mark_xfail
+from utils import (skipif_no_fastkde, skipif_no_margarine,
+                   astropy_mark_xfail, fastkde_mark_xfail)
 
 
 @pytest.fixture(autouse=True)
@@ -342,7 +344,8 @@ def test_2d_axes_scatter(axesparams, params, upper):
 
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d,
-                                     skipif_no_fastkde(fastkde_plot_1d)])
+                                     skipif_no_fastkde(fastkde_plot_1d),
+                                     skipif_no_margarine(nde_plot_1d)])
 def test_kde_plot_1d(plot_1d):
     fig, ax = plt.subplots()
     np.random.seed(0)
@@ -555,7 +558,8 @@ def test_hist_plot_2d():
 
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d,
-                                     skipif_no_fastkde(fastkde_plot_1d)])
+                                     skipif_no_fastkde(fastkde_plot_1d),
+                                     skipif_no_margarine(nde_plot_1d)])
 @pytest.mark.parametrize('s', [1, 2])
 def test_1d_density_kwarg(plot_1d, s):
     np.random.seed(0)
@@ -590,7 +594,8 @@ def test_1d_density_kwarg(plot_1d, s):
 
 @pytest.mark.parametrize('contour_plot_2d',
                          [kde_contour_plot_2d,
-                          skipif_no_fastkde(fastkde_contour_plot_2d)])
+                          skipif_no_fastkde(fastkde_contour_plot_2d),
+                          skipif_no_margarine(nde_contour_plot_2d)])
 def test_contour_plot_2d(contour_plot_2d):
     fig, ax = plt.subplots()
     np.random.seed(1)
@@ -689,7 +694,8 @@ def test_kde_plot_nplot():
 
 @pytest.mark.parametrize('contour_plot_2d',
                          [kde_contour_plot_2d,
-                          skipif_no_fastkde(fastkde_contour_plot_2d)])
+                          skipif_no_fastkde(fastkde_contour_plot_2d),
+                          skipif_no_margarine(nde_contour_plot_2d)])
 @pytest.mark.parametrize('levels', [[0.9],
                                     [0.9, 0.6],
                                     [0.9, 0.6, 0.3],
@@ -802,6 +808,7 @@ def test_make_axes_logscale():
 
 @pytest.mark.parametrize('plot_1d', [kde_plot_1d,
                                      skipif_no_fastkde(fastkde_plot_1d),
+                                     skipif_no_margarine(nde_plot_1d),
                                      hist_plot_1d])
 def test_logscale_1d(plot_1d):
     np.random.seed(42)
@@ -811,7 +818,7 @@ def test_logscale_1d(plot_1d):
     fig, ax = plt.subplots()
     ax.set_xscale('log')
     p = plot_1d(ax, data)
-    if 'kde' in plot_1d.__name__:
+    if 'kde' in plot_1d.__name__ or 'nde' in plot_1d.__name__:
         amax = abs(np.log10(p[0].get_xdata()[np.argmax(p[0].get_ydata())]))
     else:
         amax = abs(np.log10(p[1][np.argmax(p[0])]))
@@ -847,6 +854,7 @@ def test_logscale_hist_kwargs(b):
 @pytest.mark.parametrize('plot_2d',
                          [kde_contour_plot_2d,
                           skipif_no_fastkde(fastkde_contour_plot_2d),
+                          skipif_no_margarine(nde_contour_plot_2d),
                           hist_plot_2d, scatter_plot_2d])
 def test_logscale_2d(plot_2d):
     np.random.seed(0)
@@ -859,7 +867,7 @@ def test_logscale_2d(plot_2d):
     fig, ax = plt.subplots()
     ax.set_xscale('log')
     p = plot_2d(ax, x, logy)
-    if 'kde' in plot_2d.__name__:
+    if 'kde' in plot_2d.__name__ or 'nde' in plot_2d.__name__:
         if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
             xmax, ymax = p[0].get_paths()[1].vertices[0].T
         else:
@@ -883,7 +891,7 @@ def test_logscale_2d(plot_2d):
     fig, ax = plt.subplots()
     ax.set_yscale('log')
     p = plot_2d(ax, logx, y)
-    if 'kde' in plot_2d.__name__:
+    if 'kde' in plot_2d.__name__ or 'nde' in plot_2d.__name__:
         if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
             xmax, ymax = p[0].get_paths()[1].vertices[0].T
         else:
@@ -908,7 +916,7 @@ def test_logscale_2d(plot_2d):
     ax.set_xscale('log')
     ax.set_yscale('log')
     p = plot_2d(ax, x, y)
-    if 'kde' in plot_2d.__name__:
+    if 'kde' in plot_2d.__name__ or 'nde' in plot_2d.__name__:
         if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
             xmax, ymax = p[0].get_paths()[1].vertices[0].T
         else:
