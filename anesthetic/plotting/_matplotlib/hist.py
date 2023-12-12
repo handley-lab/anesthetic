@@ -186,6 +186,7 @@ class Nde1dPlot(KdePlot):
         **kwds,
     ):
         args = (style,) if style is not None else tuple()
+        kwds.pop('bw_method', None)
         return nde_plot_1d(ax, y, *args, **kwds)
 
 
