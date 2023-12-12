@@ -19,6 +19,7 @@ from anesthetic.plot import (
     fastkde_contour_plot_2d,
     kde_plot_1d,
     fastkde_plot_1d,
+    nde_plot_1d,
     hist_plot_1d,
     quantile_plot_interval,
 )
@@ -163,6 +164,28 @@ class FastKde1dPlot(_CompressedMPLPlot, Kde1dPlot):
         kwds.pop('weights', None)
         kwds.pop('bw_method', None)
         return fastkde_plot_1d(ax, y, *args, **kwds)
+
+
+class Nde1dPlot(KdePlot):
+    # noqa: disable=D101
+    @property
+    def _kind(self) -> Literal["nde_1d"]:
+        return "nde_1d"
+
+    # noqa: disable=D101
+    @classmethod
+    def _plot(
+        cls,
+        ax,
+        y,
+        style=None,
+        ind=None,
+        column_num=None,
+        stacking_id=None,
+        **kwds,
+    ):
+        args = (style,) if style is not None else tuple()
+        return nde_plot_1d(ax, y, *args, **kwds)
 
 
 class Hist1dPlot(HistPlot):

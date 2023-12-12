@@ -27,6 +27,7 @@ from anesthetic.plotting._matplotlib.hist import (  # noqa: F401
     KdePlot,
     Kde1dPlot,
     FastKde1dPlot,
+    Nde1dPlot,
     Kde2dPlot,
     FastKde2dPlot,
     HistPlot,
@@ -62,6 +63,7 @@ PLOT_CLASSES["hexbin"] = HexBinPlot
 PLOT_CLASSES['hist_1d'] = Hist1dPlot
 PLOT_CLASSES['kde_1d'] = Kde1dPlot
 PLOT_CLASSES['fastkde_1d'] = FastKde1dPlot
+PLOT_CLASSES['nde_1d'] = Nde1dPlot
 PLOT_CLASSES['hist_2d'] = Hist2dPlot
 PLOT_CLASSES['kde_2d'] = Kde2dPlot
 PLOT_CLASSES['fastkde_2d'] = FastKde2dPlot

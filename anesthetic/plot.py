@@ -27,8 +27,6 @@ from anesthetic.utils import (sample_compression_1d, quantile,
                               iso_probability_contours,
                               match_contour_to_contourf, histogram_bin_edges)
 from anesthetic.boundary import cut_and_normalise_gaussian
-from margarine.maf import MAF
-from margarine.clustered import clusterMAF
 
 
 class AxesSeries(Series):
@@ -975,13 +973,14 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     return ans
 
+
 def nde_plot_1d(ax, data, *args, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
-    a neural density estimation computation via
-    :class:`margarine.maf` or :class:`margarine.clustered`. All remaining keyword
-    arguments are passed onwards.
+    a neural density estimation computation provided by
+    :class:`margarine.maf` or :class:`margarine.clustered`. All remaining
+    keyword arguments are passed onwards.
 
     Parameters
     ----------
@@ -1030,17 +1029,17 @@ def nde_plot_1d(ax, data, *args, **kwargs):
 
     nde_epochs : int, default=1000
         Number of epochs to train the NDE for.
-    
+
     nde_lr : float, default=1e-4
         Learning rate for the NDE.
-    
+
     nde_hidden_layers : list, default=[50, 50]
         Number of hidden layers for the NDE and number of nodes
         in the layers.
-    
+
     nde_number_networks : int, default=6
         Number of networks to use in the NDE.
-    
+
     nde_clustering : bool, default=False
         Whether to use clustering in the NDE.
 
@@ -1061,7 +1060,6 @@ def nde_plot_1d(ax, data, *args, **kwargs):
 
     ncompress = kwargs.pop('ncompress', False)
     nplot = kwargs.pop('nplot_1d', 100)
-    bw_method = kwargs.pop('bw_method', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
     density = kwargs.pop('density', False)
 
@@ -1093,16 +1091,23 @@ def nde_plot_1d(ax, data, *args, **kwargs):
     if w is None:
         w = np.ones(data_compressed.shape[0])
 
+    try:
+        from margarine.maf import MAF
+        from margarine.clustered import clusterMAF
+
+    except ImportError:
+        raise ImportError("Please install margarine to use nde_1d")
+
     if nde_clustering:
         nde = clusterMAF(np.array([data_compressed]).T, weights=w,
-              number_networks=nde_number_networks,
-              hidden_layers=nde_hidden_layers,
-              lr=nde_lr)
+                         number_networks=nde_number_networks,
+                         hidden_layers=nde_hidden_layers,
+                         lr=nde_lr)
     else:
         nde = MAF(np.array([data_compressed]).T, weights=w,
-              number_networks=nde_number_networks,
-              hidden_layers=nde_hidden_layers,
-              lr=nde_lr)
+                  number_networks=nde_number_networks,
+                  hidden_layers=nde_hidden_layers,
+                  lr=nde_lr)
     nde.train(epochs=nde_epochs, early_stop=True)
 
     if nde_clustering:
@@ -1110,9 +1115,9 @@ def nde_plot_1d(ax, data, *args, **kwargs):
     else:
         pp = nde.log_prob(np.array([x]).T).numpy()
     pp = np.exp(pp - pp.max())
-    
+
     area = np.trapz(x=x, y=pp) if density else 1
-    
+
     if ax.get_xaxis().get_scale() == 'log':
         x = 10**x
     ans = ax.plot(x, pp/area, color=color, *args, **kwargs)
@@ -1474,12 +1479,13 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     return contf, cont
 
+
 def nde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """Plot a 2d marginalised distribution as contours.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.contour`
-    and :meth:`matplotlib.axes.Axes.contourf` with a normalising flow as an neural
-    density estimator (NDE) via :class:`margarine.maf`
+    and :meth:`matplotlib.axes.Axes.contourf` with a normalising flow as a
+    neural density estimator (NDE) via :class:`margarine.maf`
     All remaining keyword arguments are passed onwards to both functions.
 
     Parameters
@@ -1515,17 +1521,17 @@ def nde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     nde_epochs : int, default=1000
         Number of epochs to train the NDE for.
-    
+
     nde_lr : float, default=1e-4
         Learning rate for the NDE.
-    
+
     nde_hidden_layers : list, default=[50, 50]
         Number of hidden layers for the NDE and number of nodes
         in the layers.
-    
+
     nde_number_networks : int, default=6
         Number of networks to use in the NDE.
-    
+
     nde_clustering : bool, default=False
         Whether to use clustering in the NDE.
 
@@ -1553,7 +1559,6 @@ def nde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     ncompress = kwargs.pop('ncompress', 'equal')
     nplot = kwargs.pop('nplot_2d', 1000)
-    bw_method = kwargs.pop('bw_method', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
@@ -1564,7 +1569,7 @@ def nde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     cmap = kwargs.pop('cmap', None)
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
-    
+
     nde_epochs = kwargs.pop('nde_epochs', 1000)
     nde_lr = kwargs.pop('nde_lr', 1e-4)
     nde_hidden_layers = kwargs.pop('nde_hidden_layers', [50, 50])
@@ -1586,12 +1591,21 @@ def nde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                               weights, ncompress)
     data = np.array([tri.x, tri.y]).T
 
+    try:
+        from margarine.maf import MAF
+        from margarine.clustered import clusterMAF
+
+    except ImportError:
+        raise ImportError("Please install margarine to use nde_1d")
+
     if nde_clustering:
-        nde = clusterMAF(data, weights=w, lr=nde_lr, hidden_layers=nde_hidden_layers,
-              number_networks=nde_number_networks)
+        nde = clusterMAF(data, weights=w, lr=nde_lr,
+                         hidden_layers=nde_hidden_layers,
+                         number_networks=nde_number_networks)
     else:
-        nde = MAF(data, weights=w, lr=nde_lr, hidden_layers=nde_hidden_layers,
-              number_networks=nde_number_networks)
+        nde = MAF(data, weights=w, lr=nde_lr,
+                  hidden_layers=nde_hidden_layers,
+                  number_networks=nde_number_networks)
     nde.train(epochs=nde_epochs, early_stop=True)
 
     if nde_clustering:
