@@ -15,6 +15,8 @@ def _process_docstring(doc):
         "    - 'kde_2d' : 2d Kernel Density Estimation plot (DataFrame only)\n"
         "    - 'fastkde_2d' : 2d Kernel Density Estimation plot"
         "                     with fastkde package (DataFrame only)\n"
+        "    - 'nde_2d' : 2d Neural Density Estimation plot"
+        "                 with margarine package\n"
         "    - 'scatter_2d' : 2d scatter plot (DataFrame only)\n"
         )
     return doc[:i] + e + doc[i:]
@@ -53,6 +55,10 @@ class PlotAccessor(_PlotAccessor):
     def fastkde_2d(self, x, y, **kwargs):
         """KDE plot: See :func:`anesthetic.plot.fastkde_contour_plot_2d`."""
         return self(kind="fastkde_2d", x=x, y=y, **kwargs)
+
+    def nde_2d(self, x, y, **kwargs):
+        """NDE plot: See :func:`anesthetic.plot.nde_contour_plot_2d`."""
+        return self(kind="nde_2d", x=x, y=y, **kwargs)
 
     def hist_2d(self, x, y, **kwargs):
         """Histogram plot: See :func:`anesthetic.plot.hist_plot_2d`."""
