@@ -82,7 +82,7 @@ class ScatterPlot(_CompressedMPLPlot, _ScatterPlot):
 
 class _PlanePlot2d(PlanePlot):
 
-    def _make_plot(self):
+    def _make_plot(self, fig):
         if self.colormap is not None:
             self.kwds['cmap'] = plt.get_cmap(self.colormap)
         colors = self._get_colors()
