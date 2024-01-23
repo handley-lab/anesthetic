@@ -52,11 +52,11 @@ class _WeightedMPLPlot(MPLPlot):
         else:
             return super()._get_index_name()
 
-    def _get_xticks(self, convert_period: bool = False):
+    def _get_xticks(self):
         if isinstance(self.data, _WeightedObject):
             return self.data.drop_weights().index._mpl_repr()
         else:
-            return super()._get_xticks(convert_period)
+            return super()._get_xticks()
 
 
 def _compress_weights(kwargs, data):
