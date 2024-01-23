@@ -109,9 +109,6 @@ class _PlanePlot2d(PlanePlot):
                             f"supported by {self._kind}")
         self._plot(ax, x.values, y.values, **kwds)
 
-    def _args_adjust(self):
-        pass
-
 
 class ScatterPlot2d(_CompressedMPLPlot, _PlanePlot2d):
     # noqa: disable=D101
