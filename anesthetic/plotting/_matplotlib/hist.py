@@ -47,10 +47,7 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
         values = np.ravel(nd_values)
         weights = self.weights
         if weights is not None:
-            try:
-                weights = np.broadcast_to(weights[:, None], nd_values.shape)
-            except ValueError:
-                pass
+            weights = np.broadcast_to(weights[:, None], nd_values.shape)
             weights = np.ravel(weights)
             weights = weights[~isna(values)]
 
