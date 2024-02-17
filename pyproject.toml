@@ -25,6 +25,7 @@ authors = [
     { name="Aleksandr Petrosyan", email="a-p-petrosyan@yandex.ru" },
     { name="Liangliang Su", email="liangliangsu@njnu.edu.cn"},
     { name="David Yallup", email="david.yallup@gmail.com" },
+    { name="Dily Ong", email="dlo26@cam.ac.uk" }
 ]
 description = "nested sampling post-processing"
 readme = "README.rst"
