@@ -36,7 +36,7 @@ class _DataFrameFormatter(DataFrameFormatter):
             str_columns = [list(x) for x in zip(*str_columns)]
             str_columns = [_make_fixed_width(x) for x in str_columns]
         else:
-            fmt_columns = columns.format()
+            fmt_columns = [str(x) for x in columns]
             dtypes = self.frame.dtypes
             need_leadsp = dict(zip(fmt_columns, map(is_numeric_dtype, dtypes)))
             str_columns = [
