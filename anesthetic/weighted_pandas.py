@@ -20,8 +20,7 @@ from anesthetic.plotting import PlotAccessor
 class WeightedGroupBy(GroupBy):
     """Weighted version of ``pandas.core.groupby.GroupBy``."""
 
-    grouper: ops.BaseGrouper
-    """:meta private:"""
+    _grouper: ops.BaseGrouper
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,10 +94,10 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 subset = self.obj
             return WeightedDataFrameGroupBy(
                 subset,
-                self.grouper,
+                self._grouper,
                 axis=self.axis,
                 level=self.level,
-                grouper=self.grouper,
+                grouper=self._grouper,
                 exclusions=self.exclusions,
                 selection=key,
                 as_index=self.as_index,
@@ -114,7 +113,7 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
             return WeightedSeriesGroupBy(
                 subset,
                 level=self.level,
-                grouper=self.grouper,
+                grouper=self._grouper,
                 selection=key,
                 sort=self.sort,
                 group_keys=self.group_keys,
