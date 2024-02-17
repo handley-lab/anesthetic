@@ -247,12 +247,12 @@ class AxesDataFrame(DataFrame):
             for i, x in enumerate(columns):
                 if all_params.index(x) < all_params.index(y):
                     if lower:
-                        position[x][y] = -1
+                        position.loc[y, x] = -1
                 elif all_params.index(x) > all_params.index(y):
                     if upper:
-                        position[x][y] = +1
+                        position.loc[y, x] = +1
                 elif diagonal:
-                    position[x][y] = 0
+                    position.loc[x, y] = 0
         return position
 
     @classmethod
@@ -277,7 +277,7 @@ class AxesDataFrame(DataFrame):
                                          hspace=hspace, wspace=wspace,
                                          subplot_spec=subplot_spec,
                                          **gridspec_kw)
-        axes[:][:] = None
+        axes.loc[:, :] = None
         for j, y in enumerate(axes.index[::-1]):
             for i, x in enumerate(axes.columns):
                 if position[x][y] is not None:
@@ -285,7 +285,7 @@ class AxesDataFrame(DataFrame):
                     sx = sx[0] if sx else None
                     sy = list(axes.T[y].dropna())
                     sy = sy[0] if sy else None
-                    axes[x][y] = fig.add_subplot(
+                    axes.loc[y, x] = fig.add_subplot(
                         gs[axes.index.size - 1 - j, i], sharex=sx, sharey=sy
                     )
                     if position[x][y] == 0:
