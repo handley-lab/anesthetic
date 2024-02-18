@@ -58,6 +58,7 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.imgconverter',
     'sphinx_copybutton',
+    'sphinx_autodoc_typehints',
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
 ]

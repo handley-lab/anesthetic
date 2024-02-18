@@ -60,7 +60,8 @@ classifiers = [
 "JOSS paper" = "https://joss.theoj.org/papers/10.21105/joss.01414"
 
 [project.optional-dependencies]
-docs = ["sphinx>=4.2.0", "sphinx_rtd_theme>=1.2.2", "sphinx-copybutton", "numpydoc"]
+docs = ["sphinx>=4.2.0", "sphinx_rtd_theme>=1.2.2", "sphinx-copybutton",
+        "sphinx-autodoc-typehints", "numpydoc"]
 test = ["pytest", "pytest-cov", "flake8", "pydocstyle", "packaging", "pre-commit"]
 ultranest = ["h5py"]
 astropy = ["astropy"]
