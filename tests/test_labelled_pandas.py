@@ -333,7 +333,7 @@ def test_LabelledDataFrame_column_MultiIndex():
 
 
 def test_set_labels(lseries):
-    labels = lseries.get_labels()
+    labels = lseries.get_labels().copy()
     labels[1] = '$b$'
     assert_array_equal(lseries.set_labels(labels).get_labels(), labels)
     assert lseries.get_labels()[1] != labels[1]
