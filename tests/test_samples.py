@@ -1204,7 +1204,7 @@ def test_contour_plot_2d_nan():
         ns.plot_2d(['x0', 'x1'])
 
     # Check this error is removed in the case of zero weights
-    weights = ns.get_weights()
+    weights = ns.get_weights().copy()
     weights[:10] = 0
     ns.set_weights(weights, inplace=True)
     ns.plot_2d(['x0', 'x1'])
