@@ -747,7 +747,7 @@ def test_logw():
 
     logw = pc.logw(nsamples=nsamples, beta=beta)
     assert isinstance(logw, WeightedDataFrame)
-    assert logw.columns.names == ['beta', 'samples']
+    assert logw.columns.names == ('beta', 'samples')
     assert logw.columns.levshape == (len(beta), nsamples)
 
     n = 1000
@@ -780,7 +780,7 @@ def test_logZ():
 
     logZ = pc.logZ(nsamples=nsamples, beta=beta)
     assert isinstance(logZ, WeightedLabelledSeries)
-    assert logZ.index.names == ['beta', 'samples']
+    assert logZ.index.names == ('beta', 'samples')
     assert logZ.name == 'logZ'
     assert logZ.index.levshape == (len(beta), nsamples)
 
@@ -814,7 +814,7 @@ def test_D_KL():
 
     D_KL = pc.D_KL(nsamples=nsamples, beta=beta)
     assert isinstance(D_KL, WeightedLabelledSeries)
-    assert D_KL.index.names == ['beta', 'samples']
+    assert D_KL.index.names == ('beta', 'samples')
     assert D_KL.name == 'D_KL'
     assert D_KL.index.levshape == (len(beta), nsamples)
 
@@ -848,7 +848,7 @@ def test_d_G():
 
     d_G = pc.d_G(nsamples=nsamples, beta=beta)
     assert isinstance(d_G, WeightedLabelledSeries)
-    assert d_G.index.names == ['beta', 'samples']
+    assert d_G.index.names == ('beta', 'samples')
     assert d_G.name == 'd_G'
     assert d_G.index.levshape == (len(beta), nsamples)
 
@@ -882,7 +882,7 @@ def test_logL_P():
 
     logL_P = pc.logL_P(nsamples=nsamples, beta=beta)
     assert isinstance(logL_P, WeightedLabelledSeries)
-    assert logL_P.index.names == ['beta', 'samples']
+    assert logL_P.index.names == ('beta', 'samples')
     assert logL_P.name == 'logL_P'
     assert logL_P.index.levshape == (len(beta), nsamples)
 
@@ -938,7 +938,7 @@ def test_stats():
     assert isinstance(stats, WeightedLabelledDataFrame)
     assert_array_equal(stats.drop_labels().columns, vals)
     assert_array_equal(stats.get_labels(), labels)
-    assert stats.index.names == ['beta', 'samples']
+    assert stats.index.names == ('beta', 'samples')
     assert stats.index.levshape == (len(beta), nsamples)
 
     for beta in [1., 0., 0.5]:

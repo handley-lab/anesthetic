@@ -889,10 +889,10 @@ def test_multiindex(mcmc_wdf):
     weights = mcmc_wdf.get_weights()
     wdf = WeightedDataFrame(mcmc_wdf.values, weights=weights, index=index)
 
-    assert wdf.index.names == ['A', 'B', 'C', 'weights']
+    assert wdf.index.names == ('A', 'B', 'C', 'weights')
     assert_allclose(np.array([*wdf.index]).T, [i1, i2, i3, weights])
 
-    assert wdf.reset_index().index.names == [None, 'weights']
+    assert wdf.reset_index().index.names == (None, 'weights')
 
     assert not np.array_equal(wdf.reset_index().columns, wdf.columns)
     assert_array_equal(wdf.reset_index(drop=True).columns, wdf.columns)
@@ -903,9 +903,9 @@ def test_multiindex(mcmc_wdf):
     assert_array_equal(new.index, wdf.reset_index().index)
 
     wdf_ = wdf.reset_index(level='A')
-    assert wdf_.index.names == ['B', 'C', 'weights']
+    assert wdf_.index.names == ('B', 'C', 'weights')
     wdf_ = wdf.reset_index(level=['A', 'C'])
-    assert wdf_.index.names == ['B', 'weights']
+    assert wdf_.index.names == ('B', 'weights')
 
     assert_array_equal(wdf.get_weights(), weights)
     wdf_ = wdf.reorder_levels(['B', 'C', 'weights', 'A'])
@@ -914,11 +914,11 @@ def test_multiindex(mcmc_wdf):
     assert_array_equal(wdf_.set_weights(weights_).get_weights(), weights_)
 
     wdf_ = wdf.droplevel('weights').set_weights(weights, level=2)
-    assert wdf_.index.names == ['A', 'B', 'weights', 'C']
+    assert wdf_.index.names == ('A', 'B', 'weights', 'C')
     assert_array_equal(wdf_.get_weights(), weights)
 
     wdf_ = wdf.set_weights(weights, level=2)
-    assert wdf_.index.names == ['A', 'B', 'weights', 'C']
+    assert wdf_.index.names == ('A', 'B', 'weights', 'C')
     assert_array_equal(wdf_.get_weights(), weights)
 
 

@@ -450,7 +450,7 @@ def test_multiaxis_slice(test_multiaxis):
 
 def test_reset_index(lframe_index):
     ldf = lframe_index
-    assert ldf.reset_index().index.names == [None, 'labels']
+    assert ldf.reset_index().index.names == (None, 'labels')
 
     assert not np.array_equal(ldf.reset_index().columns, ldf.columns)
     assert_array_equal(ldf.reset_index(drop=True).columns, ldf.columns)
