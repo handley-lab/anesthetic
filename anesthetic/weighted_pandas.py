@@ -1,13 +1,9 @@
 """Pandas DataFrame and Series with weighted samples."""
 
-import warnings
 from inspect import signature
 import numpy as np
 from pandas import Series, DataFrame, concat, MultiIndex
 from pandas.core.groupby import GroupBy, SeriesGroupBy, DataFrameGroupBy, ops
-from pandas._libs import lib
-from pandas._libs.lib import no_default
-from pandas.util._exceptions import find_stack_level
 from pandas.util import hash_pandas_object
 from numpy.ma import masked_array
 from anesthetic.utils import (compress_weights, neff, quantile,
@@ -86,7 +82,7 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
 
     def get_weights(self):
         """Return the weights of the grouped samples."""
-        return super().get_weights().min(axis=1-self.axis)
+        return super().get_weights().min(axis=1)
 
     def _gotitem(self, key, ndim: int, subset=None):  # pragma: no cover
         if ndim == 2:
@@ -94,8 +90,7 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 subset = self.obj
             return WeightedDataFrameGroupBy(
                 subset,
-                self._grouper,
-                axis=self.axis,
+                self.keys,
                 level=self.level,
                 grouper=self._grouper,
                 exclusions=self.exclusions,
@@ -104,7 +99,6 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 sort=self.sort,
                 group_keys=self.group_keys,
                 observed=self.observed,
-                mutated=self.mutated,
                 dropna=self.dropna,
             )
         elif ndim == 1:
@@ -112,9 +106,12 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 subset = self.obj[key]
             return WeightedSeriesGroupBy(
                 subset,
+                self.keys,
                 level=self.level,
                 grouper=self._grouper,
+                exclusions=self.exclusions,
                 selection=key,
+                as_index=self.as_index,
                 sort=self.sort,
                 group_keys=self.group_keys,
                 observed=self.observed,
@@ -360,7 +357,6 @@ class WeightedSeries(_WeightedObject, Series):
     def groupby(
         self,
         by=None,
-        axis=0,
         level=None,
         as_index=True,
         sort=True,
@@ -372,12 +368,10 @@ class WeightedSeries(_WeightedObject, Series):
             raise TypeError("You have to supply one of 'by' and 'level'")
         if not as_index:
             raise TypeError("as_index=False only valid with DataFrame")
-        axis = self._get_axis_number(axis)
 
         return WeightedSeriesGroupBy(
             obj=self,
             keys=by,
-            axis=axis,
             level=level,
             as_index=as_index,
             sort=sort,
@@ -615,7 +609,6 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     def groupby(
         self,
         by=None,
-        axis=no_default,
         level=None,
         as_index: bool = True,
         sort: bool = True,
@@ -623,32 +616,12 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         observed: bool = False,
         dropna: bool = True,
     ):  # pragma: no cover  # noqa: D102
-        if axis is not lib.no_default:
-            axis = self._get_axis_number(axis)
-            if axis == 1:
-                warnings.warn(
-                    "DataFrame.groupby with axis=1 is deprecated. Do "
-                    "`frame.T.groupby(...)` without axis instead.",
-                    FutureWarning,
-                    stacklevel=find_stack_level(),
-                )
-            else:
-                warnings.warn(
-                    "The 'axis' keyword in DataFrame.groupby is deprecated "
-                    "and will be removed in a future version.",
-                    FutureWarning,
-                    stacklevel=find_stack_level(),
-                )
-        else:
-            axis = 0
-
         if level is None and by is None:
             raise TypeError("You have to supply one of 'by' and 'level'")
 
         return WeightedDataFrameGroupBy(
             obj=self,
             keys=by,
-            axis=axis,
             level=level,
             as_index=as_index,
             sort=sort,
