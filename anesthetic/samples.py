@@ -1367,8 +1367,8 @@ class NestedSamples(Samples):
             logX_dead = self[i_dead].recompute().logX(n).iloc[-1]
         else:
             # logZ if no dead points
-            logZ_dead = -1e-30
-            logX_dead = -1e-30
+            logZ_dead = -1e30
+            logX_dead = -1e30
         logZ_live = self[i_live].recompute().logZ(n).mean() + logX_dead
         return logZ_live - np.logaddexp(logZ_live, logZ_dead) < np.log(eps)
 
