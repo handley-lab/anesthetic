@@ -1249,6 +1249,9 @@ def test_truncate(cut):
 def test_terminate():
     np.random.seed(4)
     pc = read_chains("./tests/example_data/pc")
+
+    assert not pc.terminate(logL=0)
+
     assert not pc.terminate(logL=200)
     assert not pc.terminate(logL=0.0)
     assert pc.terminate(logL=None)

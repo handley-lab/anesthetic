@@ -1362,11 +1362,14 @@ class NestedSamples(Samples):
         logL = self.contour(logL)
         i_live = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
         i_dead = ((self.logL < logL)).to_numpy()
-        logZ_dead = self[i_dead].recompute().logZ(n).mean()
-        logZ_live = (
-            self[i_live].recompute().logZ(n).mean()
-            + self[i_dead].recompute().logX(n).iloc[-1]
-        )
+        if np.any(i_dead):
+            logZ_dead = self[i_dead].recompute().logZ(n).mean()
+            logX_dead = self[i_dead].recompute().logX(n).iloc[-1]
+        else:
+            # logZ if no dead points
+            logZ_dead = -1e-30
+            logX_dead = -1e-30
+        logZ_live = self[i_live].recompute().logZ(n).mean() + logX_dead
         return logZ_live - np.logaddexp(logZ_live, logZ_dead) < np.log(eps)
 
     def posterior_points(self, beta=1):
