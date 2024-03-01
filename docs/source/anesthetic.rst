@@ -102,6 +102,15 @@ anesthetic.utils module
    :show-inheritance:
 
 
+anesthetic.weighted\_labelled\_pandas module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.weighted_labelled_pandas
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 anesthetic.weighted\_pandas module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
