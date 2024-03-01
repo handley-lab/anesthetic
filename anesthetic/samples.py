@@ -23,7 +23,6 @@ from anesthetic.utils import adjust_docstrings
 
 def read_csv(filename, *args, **kwargs):
     """Read a CSV file into a :class:`Samples` object."""
-
     wldf = wl_read_csv(filename, *args, **kwargs)
     if 'nlive' in wldf.columns:
         return NestedSamples(wldf)
