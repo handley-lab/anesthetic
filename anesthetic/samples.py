@@ -14,87 +14,10 @@ from collections.abc import Sequence
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
-from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
-from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
+from anesthetic.weighted_labelled_pandas import WeightedLabelledDataFrame
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
 from anesthetic.utils import adjust_docstrings
-
-
-class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
-    """:class:`pandas.DataFrame` with weights and labels."""
-
-    _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata
-
-    def __init__(self, *args, **kwargs):
-        labels = kwargs.pop('labels', None)
-        if not hasattr(self, '_labels'):
-            self._labels = ('weights', 'labels')
-        super().__init__(*args, **kwargs)
-        if labels is not None:
-            if isinstance(labels, dict):
-                labels = [labels.get(p, '') for p in self]
-            self.set_labels(labels, inplace=True)
-
-    def islabelled(self, axis=1):
-        """Search for existence of labels."""
-        return super().islabelled(axis=axis)
-
-    def get_labels(self, axis=1):
-        """Retrieve labels from an axis."""
-        return super().get_labels(axis=axis)
-
-    def get_labels_map(self, axis=1, fill=True):
-        """Retrieve mapping from paramnames to labels from an axis."""
-        return super().get_labels_map(axis=axis, fill=fill)
-
-    def get_label(self, param, axis=1):
-        """Retrieve mapping from paramnames to labels from an axis."""
-        return super().get_label(param, axis=axis)
-
-    def set_label(self, param, value, axis=1):
-        """Set a specific label to a specific value on an axis."""
-        return super().set_label(param, value, axis=axis, inplace=True)
-
-    def drop_labels(self, axis=1):
-        """Drop the labels from an axis if present."""
-        return super().drop_labels(axis)
-
-    def set_labels(self, labels, axis=1, inplace=False, level=None):
-        """Set labels along an axis."""
-        return super().set_labels(labels, axis=axis,
-                                  inplace=inplace, level=level)
-
-    @property
-    def _constructor(self):
-        return WeightedLabelledDataFrame
-
-    @property
-    def _constructor_sliced(self):
-        return WeightedLabelledSeries
-
-
-class WeightedLabelledSeries(WeightedSeries, LabelledSeries):
-    """Series with weights and labels."""
-
-    _metadata = WeightedSeries._metadata + LabelledSeries._metadata
-
-    def __init__(self, *args, **kwargs):
-        if not hasattr(self, '_labels'):
-            self._labels = ('weights', 'labels')
-        super().__init__(*args, **kwargs)
-
-    def set_label(self, param, value, axis=0):
-        """Set a specific label to a specific value."""
-        return super().set_label(param, value, axis=axis, inplace=True)
-
-    @property
-    def _constructor(self):
-        return WeightedLabelledSeries
-
-    @property
-    def _constructor_expanddim(self):
-        return WeightedLabelledDataFrame
 
 
 class Samples(WeightedLabelledDataFrame):
