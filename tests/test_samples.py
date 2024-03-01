@@ -13,7 +13,8 @@ from anesthetic import (
     Samples, MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes,
     read_chains
 )
-from anesthetic.samples import merge_nested_samples, merge_samples_weighted
+from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
+                                read_csv)
 from anesthetic.weighted_labelled_pandas import (WeightedLabelledSeries,
                                                  WeightedLabelledDataFrame)
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
@@ -1980,3 +1981,16 @@ def test_axes_limits_2d(kind, kwargs):
     assert 3 < xmax < 3.9
     assert -3.9 < ymin < -3
     assert 3 < ymax < 3.9
+
+
+def test_read_csv():
+    np.random.seed(3)
+    pc = read_chains('./tests/example_data/pc')
+    pc.to_csv('pc.csv')
+    pc_ = read_csv('pc.csv')
+    assert_frame_equal(pc, pc_)
+
+    mcmc = read_chains('./tests/example_data/gd')
+    mcmc.to_csv('gd.csv')
+    mcmc_ = read_csv('gd.csv')
+    assert_frame_equal(mcmc, mcmc_)
