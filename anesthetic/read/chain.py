@@ -26,7 +26,7 @@ def read_chains(root, *args, **kwargs):
 
     Parameters
     ----------
-    root : str
+    root : str, pathlib.Path
         root name for reading files
 
     *args, **kwargs:
@@ -39,6 +39,7 @@ def read_chains(root, *args, **kwargs):
     :class:`anesthetic.samples.MCMCSamples` depending on auto-detection
 
     """
+    root = str(root)
     if 'burn_in' in kwargs:
         raise KeyError(
             "This is anesthetic 1.0 syntax. The `burn_in` keyword is no "

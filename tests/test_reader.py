@@ -1,5 +1,6 @@
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 import os
+from pathlib import Path
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
@@ -300,3 +301,9 @@ def test_hdf5(tmp_path, root):
     samples_ = read_hdf(filename, key)
     assert_frame_equal(samples_, samples)
     assert type(samples_) is type(samples)
+
+
+@pytest.mark.parametrize('root', ['pc', 'gd'])
+def test_path(root):
+    base_dir = Path("./tests/example_data")
+    read_chains(base_dir / root)
