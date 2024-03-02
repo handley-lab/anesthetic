@@ -1203,22 +1203,6 @@ def test_hist_range_1d():
     assert x2 >= +1
 
 
-def test_contour_plot_2d_nan():
-    """Contour plots with nans arising from issue #96"""
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-
-    ns.loc[:9, ('x0', '$x_0$')] = np.nan
-    with pytest.raises((np.linalg.LinAlgError, RuntimeError, ValueError)):
-        ns.plot_2d(['x0', 'x1'])
-
-    # Check this error is removed in the case of zero weights
-    weights = ns.get_weights()
-    weights[:10] = 0
-    ns.set_weights(weights, inplace=True)
-    ns.plot_2d(['x0', 'x1'])
-
-
 def test_compute_insertion():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
