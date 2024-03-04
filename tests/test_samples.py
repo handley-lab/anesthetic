@@ -1180,6 +1180,21 @@ def test_truncate(cut):
         assert_array_equal(pc, truncated_run)
 
 
+def test_terminate():
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+
+    assert not pc.terminate(logL=0)
+
+    assert not pc.terminate(logL=200)
+    assert not pc.terminate(logL=0.0)
+    assert pc.terminate(logL=None)
+
+    assert pc.terminate(logL=200, eps=1.0)
+    assert pc.terminate(logL=0.0, eps=1.0)
+    assert pc.terminate(logL=None, eps=1.0)
+
+
 def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)

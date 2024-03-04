@@ -1269,6 +1269,43 @@ class NestedSamples(Samples):
         index = np.concatenate([dead_points.index, live_points.index])
         return self.loc[index].recompute()
 
+    def terminate(self, eps=1e-3, logL=None, n=None):
+        """Check if a set of samples has reached a termination criterion.
+
+        Uses the termination criterion of
+        [Handley et al. 2015](https://arxiv.org/abs/1409.3409).
+        computes if the ratio of evidence in the live to dead points is less
+        than some precision.
+
+        Parameters
+        ----------
+        eps : float, optional
+            The precision of the criteria.
+            default: 1e-3
+
+        logL : float or int, optional
+            Loglikelihood or iteration number to truncate run.
+            If not provided, truncate at the last set of dead points.
+            default: None
+
+        n : int, optional
+            Number of samples to draw when computing the volume estimates
+            default: None
+
+        """
+        logL = self.contour(logL)
+        i_live = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
+        i_dead = ((self.logL < logL)).to_numpy()
+        if np.any(i_dead):
+            logZ_dead = self[i_dead].recompute().logZ(n).mean()
+            logX_dead = self[i_dead].recompute().logX(n).iloc[-1]
+        else:
+            # logZ if no dead points
+            logZ_dead = -1e30
+            logX_dead = -1e30
+        logZ_live = self[i_live].recompute().logZ(n).mean() + logX_dead
+        return logZ_live - np.logaddexp(logZ_live, logZ_dead) < np.log(eps)
+
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
         return self.set_beta(beta).compress('equal')
