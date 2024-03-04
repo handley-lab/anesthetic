@@ -1273,7 +1273,7 @@ class NestedSamples(Samples):
         """Check if a set of samples has reached a termination criterion.
 
         Uses the termination criterion of
-        [Handley et al. 2015](https://arxiv.org/abs/1409.3409).
+        [Handley et al. 2015](https://arxiv.org/abs/1506.00171).
         computes if the ratio of evidence in the live to dead points is less
         than some precision.
 
