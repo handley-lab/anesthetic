@@ -14,20 +14,10 @@ from collections.abc import Sequence
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
                               is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
-from anesthetic.weighted_labelled_pandas import (WeightedLabelledDataFrame,
-                                                 read_csv as wl_read_csv)
+from anesthetic.weighted_labelled_pandas import WeightedLabelledDataFrame
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
 from anesthetic.utils import adjust_docstrings
-
-
-def read_csv(filename, *args, **kwargs):
-    """Read a CSV file into a :class:`Samples` object."""
-    wldf = wl_read_csv(filename, *args, **kwargs)
-    if 'nlive' in wldf.columns:
-        return NestedSamples(wldf)
-    else:
-        return MCMCSamples(wldf)
 
 
 class Samples(WeightedLabelledDataFrame):
