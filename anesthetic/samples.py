@@ -4,7 +4,6 @@
 - :class:`anesthetic.samples.MCMCSamples`
 - :class:`anesthetic.samples.NestedSamples`
 """
-
 import numpy as np
 import scipy
 import pandas
@@ -12,21 +11,13 @@ import copy
 import warnings
 from pandas import MultiIndex, Series
 from collections.abc import Sequence
-from anesthetic.utils import (
-    compute_nlive,
-    compute_insertion_indexes,
-    is_int,
-    logsumexp,
-)
+from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
+                              is_int, logsumexp)
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
 from anesthetic.labelled_pandas import LabelledDataFrame, LabelledSeries
-from anesthetic.plot import (
-    make_1d_axes,
-    make_2d_axes,
-    AxesSeries,
-    AxesDataFrame,
-)
+from anesthetic.plot import (make_1d_axes, make_2d_axes,
+                             AxesSeries, AxesDataFrame)
 from anesthetic.utils import adjust_docstrings
 
 
@@ -36,13 +27,13 @@ class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
     _metadata = WeightedDataFrame._metadata + LabelledDataFrame._metadata
 
     def __init__(self, *args, **kwargs):
-        labels = kwargs.pop("labels", None)
-        if not hasattr(self, "_labels"):
-            self._labels = ("weights", "labels")
+        labels = kwargs.pop('labels', None)
+        if not hasattr(self, '_labels'):
+            self._labels = ('weights', 'labels')
         super().__init__(*args, **kwargs)
         if labels is not None:
             if isinstance(labels, dict):
-                labels = [labels.get(p, "") for p in self]
+                labels = [labels.get(p, '') for p in self]
             self.set_labels(labels, inplace=True)
 
     def islabelled(self, axis=1):
@@ -71,9 +62,8 @@ class WeightedLabelledDataFrame(WeightedDataFrame, LabelledDataFrame):
 
     def set_labels(self, labels, axis=1, inplace=False, level=None):
         """Set labels along an axis."""
-        return super().set_labels(
-            labels, axis=axis, inplace=inplace, level=level
-        )
+        return super().set_labels(labels, axis=axis,
+                                  inplace=inplace, level=level)
 
     @property
     def _constructor(self):
@@ -90,8 +80,8 @@ class WeightedLabelledSeries(WeightedSeries, LabelledSeries):
     _metadata = WeightedSeries._metadata + LabelledSeries._metadata
 
     def __init__(self, *args, **kwargs):
-        if not hasattr(self, "_labels"):
-            self._labels = ("weights", "labels")
+        if not hasattr(self, '_labels'):
+            self._labels = ('weights', 'labels')
         super().__init__(*args, **kwargs)
 
     def set_label(self, param, value, axis=0):
@@ -144,12 +134,12 @@ class Samples(WeightedLabelledDataFrame):
 
     """
 
-    _metadata = WeightedLabelledDataFrame._metadata + ["label"]
+    _metadata = WeightedLabelledDataFrame._metadata + ['label']
 
     def __init__(self, *args, **kwargs):
         # TODO: remove this in version >= 2.1
-        if "root" in kwargs:
-            root = kwargs.pop("root")
+        if 'root' in kwargs:
+            root = kwargs.pop('root')
             name = self.__class__.__name__
             raise ValueError(
                 "As of anesthetic 2.0, root is no longer a keyword argument.\n"
@@ -158,20 +148,20 @@ class Samples(WeightedLabelledDataFrame):
                 ">>> %s(root=%s)\n\nwith\n\n"
                 ">>> from anesthetic import read_chains\n"
                 ">>> read_chains(%s)" % (name, name, root, root)
-            )
-        logzero = kwargs.pop("logzero", -1e30)
-        logL = kwargs.pop("logL", None)
+                )
+        logzero = kwargs.pop('logzero', -1e30)
+        logL = kwargs.pop('logL', None)
         if logL is not None:
             logL = np.array(logL)
             logL = np.where(logL <= logzero, -np.inf, logL)
-        self.label = kwargs.pop("label", None)
+        self.label = kwargs.pop('label', None)
 
         super().__init__(*args, **kwargs)
 
         if logL is not None:
-            self["logL"] = logL
+            self['logL'] = logL
             if self.islabelled(axis=1):
-                self.set_label("logL", r"$\ln\mathcal{L}$")
+                self.set_label('logL', r'$\ln\mathcal{L}$')
 
     @property
     def _constructor(self):
@@ -222,53 +212,47 @@ class Samples(WeightedLabelledDataFrame):
 
         """
         # TODO: remove this in version >= 2.1
-        if "plot_type" in kwargs:
+        if 'plot_type' in kwargs:
             raise ValueError(
-                "You are using the anesthetic 1.0 kwarg 'plot_type' instead "
-                "of anesthetic 2.0 'kind'. Please update your code."
-            )
+                "You are using the anesthetic 1.0 kwarg \'plot_type\' instead "
+                "of anesthetic 2.0 \'kind\'. Please update your code."
+                )
 
         if axes is None:
             axes = self.drop_labels().columns
 
         if not isinstance(axes, AxesSeries):
-            _, axes = make_1d_axes(
-                axes,
-                labels=self.get_labels_map(),
-                logx=kwargs.pop("logx", None),
-            )
+            _, axes = make_1d_axes(axes, labels=self.get_labels_map(),
+                                   logx=kwargs.pop('logx', None))
             logx = axes._logx
         else:
-            logx = kwargs.pop("logx", axes._logx)
+            logx = kwargs.pop('logx', axes._logx)
             if logx != axes._logx:
-                raise ValueError(
-                    f"logx does not match the pre-existing axes."
-                    f"logx={logx}, axes._logx={axes._logx}"
-                )
+                raise ValueError(f"logx does not match the pre-existing axes."
+                                 f"logx={logx}, axes._logx={axes._logx}")
 
-        kwargs["kind"] = kwargs.get("kind", "kde_1d")
-        kwargs["label"] = kwargs.get("label", self.label)
+        kwargs['kind'] = kwargs.get('kind', 'kde_1d')
+        kwargs['label'] = kwargs.get('label', self.label)
 
         # TODO: remove this in version >= 2.1
-        if kwargs["kind"] == "kde":
+        if kwargs['kind'] == 'kde':
             warnings.warn(
-                "You are using 'kde' as a plot kind. "
-                "'kde_1d' is the appropriate keyword for anesthetic. "
+                "You are using \'kde\' as a plot kind. "
+                "\'kde_1d\' is the appropriate keyword for anesthetic. "
                 "Your plots may look odd if you use this argument."
-            )
-        elif kwargs["kind"] == "hist":
+                )
+        elif kwargs['kind'] == 'hist':
             warnings.warn(
-                "You are using 'hist' as a plot kind. "
-                "'hist_1d' is the appropriate keyword for anesthetic. "
+                "You are using \'hist\' as a plot kind. "
+                "\'hist_1d\' is the appropriate keyword for anesthetic. "
                 "Your plots may look odd if you use this argument."
-            )
+                )
 
         for x, ax in axes.items():
-            if x in self and kwargs["kind"] is not None:
+            if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
-                self[x].plot(
-                    ax=ax, xlabel=xlabel, logx=x in logx, *args, **kwargs
-                )
+                self[x].plot(ax=ax, xlabel=xlabel, logx=x in logx,
+                             *args, **kwargs)
                 ax.set_xlabel(xlabel)
             else:
                 ax.plot([], [])
@@ -359,61 +343,49 @@ class Samples(WeightedLabelledDataFrame):
 
         """
         # TODO: remove this in version >= 2.1
-        if "types" in kwargs:
+        if 'types' in kwargs:
             raise ValueError(
-                "You are using the anesthetic 1.0 kwarg 'types' instead of "
-                "anesthetic 2.0 'kind' or 'kinds' (synonyms). "
+                "You are using the anesthetic 1.0 kwarg \'types\' instead of "
+                "anesthetic 2.0 \'kind' or \'kinds\' (synonyms). "
                 "Please update your code."
-            )
-        kind = kwargs.pop("kind", "default")
-        kind = kwargs.pop("kinds", kind)
+                )
+        kind = kwargs.pop('kind', 'default')
+        kind = kwargs.pop('kinds', kind)
 
         if isinstance(kind, str) and kind in self.plot_2d_default_kinds:
             kind = self.plot_2d_default_kinds.get(kind)
-        if not isinstance(kind, dict) or not set(kind.keys()) <= {
-            "lower",
-            "upper",
-            "diagonal",
-        }:
-            raise ValueError(
-                f"{kind} is not a valid input. `kind`/`kinds` "
-                "must be a dict mapping "
-                "{'lower','diagonal','upper'} to an allowed plot "
-                "(see `help(NestedSamples.plot2d)`), or one of "
-                "the following string shortcuts: "
-                f"{list(self.plot_2d_default_kinds.keys())}"
-            )
+        if (not isinstance(kind, dict) or
+                not set(kind.keys()) <= {'lower', 'upper', 'diagonal'}):
+            raise ValueError(f"{kind} is not a valid input. `kind`/`kinds` "
+                             "must be a dict mapping "
+                             "{'lower','diagonal','upper'} to an allowed plot "
+                             "(see `help(NestedSamples.plot2d)`), or one of "
+                             "the following string shortcuts: "
+                             f"{list(self.plot_2d_default_kinds.keys())}")
 
         if axes is None:
             axes = self.drop_labels().columns
 
         if not isinstance(axes, AxesDataFrame):
-            _, axes = make_2d_axes(
-                axes,
-                labels=self.get_labels_map(),
-                upper=("upper" in kind),
-                lower=("lower" in kind),
-                diagonal=("diagonal" in kind),
-                logx=kwargs.pop("logx", None),
-                logy=kwargs.pop("logy", None),
-            )
+            _, axes = make_2d_axes(axes, labels=self.get_labels_map(),
+                                   upper=('upper' in kind),
+                                   lower=('lower' in kind),
+                                   diagonal=('diagonal' in kind),
+                                   logx=kwargs.pop('logx', None),
+                                   logy=kwargs.pop('logy', None))
             logx = axes._logx
             logy = axes._logy
         else:
-            logx = kwargs.pop("logx", axes._logx)
-            logy = kwargs.pop("logy", axes._logy)
+            logx = kwargs.pop('logx', axes._logx)
+            logy = kwargs.pop('logy', axes._logy)
             if logx != axes._logx or logy != axes._logy:
-                raise ValueError(
-                    f"logx or logy not matching existing axes:"
-                    f"logx={logx}, axes._logx={axes._logx}"
-                    f"logy={logy}, axes._logy={axes._logy}"
-                )
+                raise ValueError(f"logx or logy not matching existing axes:"
+                                 f"logx={logx}, axes._logx={axes._logx}"
+                                 f"logy={logy}, axes._logy={axes._logy}")
 
-        local_kwargs = {
-            pos: kwargs.pop("%s_kwargs" % pos, {})
-            for pos in ["upper", "lower", "diagonal"]
-        }
-        kwargs["label"] = kwargs.get("label", self.label)
+        local_kwargs = {pos: kwargs.pop('%s_kwargs' % pos, {})
+                        for pos in ['upper', 'lower', 'diagonal']}
+        kwargs['label'] = kwargs.get('label', self.label)
 
         for pos in local_kwargs:
             local_kwargs[pos].update(kwargs)
@@ -423,47 +395,35 @@ class Samples(WeightedLabelledDataFrame):
                 if ax is not None:
                     pos = ax.position
                     lkwargs = local_kwargs.get(pos, {})
-                    lkwargs["kind"] = kind.get(pos, None)
+                    lkwargs['kind'] = kind.get(pos, None)
                     # TODO: remove this in version >= 2.1
-                    if lkwargs["kind"] == "kde":
+                    if lkwargs['kind'] == 'kde':
                         warnings.warn(
-                            "You are using 'kde' as a plot kind. "
-                            "'kde_1d' and 'kde_2d' are the appropriate "
+                            "You are using \'kde\' as a plot kind. "
+                            "\'kde_1d\' and \'kde_2d\' are the appropriate "
                             "keywords for anesthetic. Your plots may look "
                             "odd if you use this argument."
-                        )
-                    elif lkwargs["kind"] == "hist":
+                            )
+                    elif lkwargs['kind'] == 'hist':
                         warnings.warn(
-                            "You are using 'hist' as a plot kind. "
-                            "'hist_1d' and 'hist_2d' are the appropriate "
+                            "You are using \'hist\' as a plot kind. "
+                            "\'hist_1d\' and \'hist_2d\' are the appropriate "
                             "keywords for anesthetic. Your plots may look "
                             "odd if you use this argument."
-                        )
-                    if x in self and y in self and lkwargs["kind"] is not None:
+                            )
+                    if x in self and y in self and lkwargs['kind'] is not None:
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
                         if x == y:
-                            self[x].plot(
-                                ax=ax.twin,
-                                xlabel=xlabel,
-                                logx=x in logx,
-                                *args,
-                                **lkwargs,
-                            )
+                            self[x].plot(ax=ax.twin, xlabel=xlabel,
+                                         logx=x in logx,
+                                         *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
-                            self.plot(
-                                x,
-                                y,
-                                ax=ax,
-                                xlabel=xlabel,
-                                logx=x in logx,
-                                logy=y in logy,
-                                ylabel=ylabel,
-                                *args,
-                                **lkwargs,
-                            )
+                            self.plot(x, y, ax=ax, xlabel=xlabel,
+                                      logx=x in logx, logy=y in logy,
+                                      ylabel=ylabel, *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                     else:
@@ -475,21 +435,19 @@ class Samples(WeightedLabelledDataFrame):
         return axes
 
     plot_2d_default_kinds = {
-        "default": {
-            "diagonal": "kde_1d",
-            "lower": "kde_2d",
-            "upper": "scatter_2d",
-        },
-        "kde": {"diagonal": "kde_1d", "lower": "kde_2d"},
-        "kde_1d": {"diagonal": "kde_1d"},
-        "kde_2d": {"lower": "kde_2d"},
-        "fastkde": {"diagonal": "fastkde_1d", "lower": "fastkde_2d"},
-        "hist": {"diagonal": "hist_1d", "lower": "hist_2d"},
-        "hist_1d": {"diagonal": "hist_1d"},
-        "hist_2d": {"lower": "hist_2d"},
+        'default': {'diagonal': 'kde_1d',
+                    'lower': 'kde_2d',
+                    'upper': 'scatter_2d'},
+        'kde': {'diagonal': 'kde_1d', 'lower': 'kde_2d'},
+        'kde_1d': {'diagonal': 'kde_1d'},
+        'kde_2d': {'lower': 'kde_2d'},
+        'fastkde': {'diagonal': 'fastkde_1d', 'lower': 'fastkde_2d'},
+        'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
+        'hist_1d': {'diagonal': 'hist_1d'},
+        'hist_2d': {'lower': 'hist_2d'},
     }
 
-    def importance_sample(self, logL_new, action="add", inplace=False):
+    def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
 
         Parameters
@@ -520,25 +478,23 @@ class Samples(WeightedLabelledDataFrame):
         else:
             samples = self.copy()
 
-        if action == "add":
+        if action == 'add':
             new_weights = samples.get_weights()
             new_weights *= np.exp(logL_new - logL_new.max())
             samples.set_weights(new_weights, inplace=True)
             samples.logL += logL_new
-        elif action == "replace":
+        elif action == 'replace':
             logL_new2 = logL_new - samples.logL
             new_weights = samples.get_weights()
             new_weights *= np.exp(logL_new2 - logL_new2.max())
             samples.set_weights(new_weights, inplace=True)
             samples.logL = logL_new
-        elif action == "mask":
+        elif action == 'mask':
             samples = samples[logL_new]
         else:
-            raise NotImplementedError(
-                "`action` needs to be one of "
-                "{'add', 'replace', 'mask'}, but '%s' "
-                "was requested." % action
-            )
+            raise NotImplementedError("`action` needs to be one of "
+                                      "{'add', 'replace', 'mask'}, but '%s' "
+                                      "was requested." % action)
 
         if inplace:
             self._update_inplace(samples)
@@ -555,14 +511,12 @@ class Samples(WeightedLabelledDataFrame):
             "samples.set_label(label, tex)   # anesthetic 2.0\n\n"
             "tex = samples.tex[label]        # anesthetic 1.0\n"
             "tex = samples.get_label(label)  # anesthetic 2.0"
-        )
+            )
 
     def to_hdf(self, path_or_buf, key, *args, **kwargs):  # noqa: D102
         import anesthetic.read.hdf
-
-        return anesthetic.read.hdf.to_hdf(
-            path_or_buf, key, self, *args, **kwargs
-        )
+        return anesthetic.read.hdf.to_hdf(path_or_buf, key, self,
+                                          *args, **kwargs)
 
 
 class MCMCSamples(Samples):
@@ -597,7 +551,7 @@ class MCMCSamples(Samples):
 
     """
 
-    _metadata = Samples._metadata + ["root"]
+    _metadata = Samples._metadata + ['root']
 
     @property
     def _constructor(self):
@@ -624,32 +578,25 @@ class MCMCSamples(Samples):
             Indicates whether to modify the existing array or return a copy.
 
         """
-        chains = self.groupby(
-            ("chain", "$n_\\mathrm{chain}$"), sort=False, group_keys=False
-        )
+        chains = self.groupby(('chain', '$n_\\mathrm{chain}$'), sort=False,
+                              group_keys=False)
         nchains = chains.ngroups
         if isinstance(burn_in, (int, float)):
             ndrop = np.full(nchains, burn_in)
-        elif (
-            isinstance(burn_in, (list, tuple, np.ndarray))
-            and len(burn_in) == nchains
-        ):
+        elif isinstance(burn_in, (list, tuple, np.ndarray)) \
+                and len(burn_in) == nchains:
             ndrop = np.array(burn_in)
         else:
-            raise ValueError(
-                "`burn_in` has to be a scalar or an array of "
-                "length matching the number of chains "
-                "`nchains=%d`. However, you provided "
-                "`burn_in=%s`" % (nchains, burn_in)
-            )
+            raise ValueError("`burn_in` has to be a scalar or an array of "
+                             "length matching the number of chains "
+                             "`nchains=%d`. However, you provided "
+                             "`burn_in=%s`" % (nchains, burn_in))
         if np.all(np.abs(ndrop) < 1):
             nsamples = chains.count().iloc[:, 0].to_numpy()
             ndrop = ndrop * nsamples
         ndrop = ndrop.astype(int)
-        data = self.drop(
-            chains.apply(lambda g: g.head(ndrop[g.name - 1])).index,
-            inplace=inplace,
-        )
+        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1])).index,
+                         inplace=inplace)
         if reset_index:
             data = data.reset_index(drop=True, inplace=inplace)
         return data
@@ -699,25 +646,21 @@ class MCMCSamples(Samples):
             Per-parameter covariant Gelman--Rubin convergence statistic.
 
         """
-        self.columns.set_names(["params", "labels"], inplace=True)
+        self.columns.set_names(['params', 'labels'], inplace=True)
         if params is None:
-            params = [
-                key
-                for key in self.columns.get_level_values("params")
-                if "prior" not in key
-                and "chi2" not in key
-                and "logL" not in key
-                and "chain" not in key
-            ]
-        chains = self[params + ["chain"]].groupby(
-            ("chain", "$n_\\mathrm{chain}$"),
-            sort=False,
+            params = [key for key in self.columns.get_level_values('params')
+                      if 'prior' not in key
+                      and 'chi2' not in key
+                      and 'logL' not in key
+                      and 'chain' not in key]
+        chains = self[params+['chain']].groupby(
+                ('chain', '$n_\\mathrm{chain}$'), sort=False,
         )
         nchains = chains.ngroups
 
         # Within chain variance ``W``
         # (average variance within each chain):
-        W = chains.cov().groupby(level=("params", "labels"), sort=False).mean()
+        W = chains.cov().groupby(level=('params', 'labels'), sort=False).mean()
         # Between-chain variance ``B``
         # (variance of the chain means):
         B = chains.mean().drop_weights().cov()
@@ -734,26 +677,23 @@ class MCMCSamples(Samples):
         except np.linalg.LinAlgError as e:
             raise np.linalg.LinAlgError(
                 "Make sure you do not have linearly dependent parameters, "
-                "e.g. having both `As` and `A=1e9*As` causes trouble."
-            ) from e
-        D = np.linalg.eigvalsh(invU.T @ ((nchains + 1) / nchains * B) @ invU)
+                "e.g. having both `As` and `A=1e9*As` causes trouble.") from e
+        D = np.linalg.eigvalsh(invU.T @ ((nchains+1)/nchains * B) @ invU)
         # The factor of `(nchains+1)/nchains` accounts for the additional
         # uncertainty from using a finite number of chains.
         Rminus1_tot = np.max(np.abs(D))
         if per_param is False:
             return Rminus1_tot
         Rminus1 = (nchains + 1) / nchains * B / W.drop_weights()
-        Rminus1_par = pandas.DataFrame(
-            np.diag(Rminus1), index=B.columns, columns=["R-1"]
-        )
+        Rminus1_par = pandas.DataFrame(np.diag(Rminus1), index=B.columns,
+                                       columns=['R-1'])
         if per_param is True:
             return Rminus1_tot, Rminus1_par
-        if per_param == "par":
+        if per_param == 'par':
             return Rminus1_par
-        Rminus1_cov = pandas.DataFrame(
-            Rminus1, index=B.columns, columns=W.columns
-        )
-        if per_param == "cov":
+        Rminus1_cov = pandas.DataFrame(Rminus1, index=B.columns,
+                                       columns=W.columns)
+        if per_param == 'cov':
             return Rminus1_cov
         return Rminus1_tot, Rminus1_cov
 
@@ -808,15 +748,16 @@ class NestedSamples(Samples):
 
     """
 
-    _metadata = Samples._metadata + ["root", "_beta"]
+    _metadata = Samples._metadata + ['root', '_beta']
 
     def __init__(self, *args, **kwargs):
-        logzero = kwargs.pop("logzero", -1e30)
-        self._beta = kwargs.pop("beta", 1.0)
-        logL_birth = kwargs.pop("logL_birth", None)
+        logzero = kwargs.pop('logzero', -1e30)
+        self._beta = kwargs.pop('beta', 1.)
+        logL_birth = kwargs.pop('logL_birth', None)
         if not isinstance(logL_birth, int) and logL_birth is not None:
             logL_birth = np.array(logL_birth)
-            logL_birth = np.where(logL_birth <= logzero, -np.inf, logL_birth)
+            logL_birth = np.where(logL_birth <= logzero, -np.inf,
+                                  logL_birth)
 
         super().__init__(logzero=logzero, *args, **kwargs)
         if logL_birth is not None:
@@ -829,7 +770,7 @@ class NestedSamples(Samples):
     def _compute_insertion_indexes(self):
         logL = self.logL.to_numpy()
         logL_birth = self.logL_birth.to_numpy()
-        self["insertion"] = compute_insertion_indexes(logL, logL_birth)
+        self['insertion'] = compute_insertion_indexes(logL, logL_birth)
 
     @property
     def beta(self):
@@ -876,7 +817,7 @@ class NestedSamples(Samples):
             "samples.stats(1000)      # anesthetic 2.0\n\n"
             "Check out the new temperature functionality: help(samples.stats),"
             " as well as average loglikelihoods: help(samples.logL_P)"
-        )
+            )
 
     def stats(self, nsamples=None, beta=None):
         r"""Compute Nested Sampling statistics.
@@ -956,28 +897,26 @@ class NestedSamples(Samples):
         """
         logw = self.logw(nsamples, beta)
         if nsamples is None and beta is None:
-            samples = self._constructor_sliced(
-                index=self.columns[:0], dtype=float
-            )
+            samples = self._constructor_sliced(index=self.columns[:0],
+                                               dtype=float)
         else:
             samples = Samples(index=logw.columns, columns=self.columns[:0])
-        samples["logZ"] = self.logZ(logw)
-        samples.set_label("logZ", r"$\ln\mathcal{Z}$")
-        w = np.exp(logw - samples["logZ"])
+        samples['logZ'] = self.logZ(logw)
+        samples.set_label('logZ', r'$\ln\mathcal{Z}$')
+        w = np.exp(logw-samples['logZ'])
 
         betalogL = self._betalogL(beta)
-        S = (logw * 0).add(betalogL, axis=0) - samples.logZ
+        S = (logw*0).add(betalogL, axis=0) - samples.logZ
 
-        samples["D_KL"] = (S * w).sum()
-        samples.set_label("D_KL", r"$\mathcal{D}_\mathrm{KL}$")
+        samples['D_KL'] = (S*w).sum()
+        samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$')
 
-        samples["logL_P"] = samples["logZ"] + samples["D_KL"]
-        samples.set_label(
-            "logL_P", r"$\langle\ln\mathcal{L}\rangle_\mathcal{P}$"
-        )
+        samples['logL_P'] = samples['logZ'] + samples['D_KL']
+        samples.set_label('logL_P',
+                          r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$')
 
-        samples["d_G"] = ((S - samples.D_KL) ** 2 * w).sum() * 2
-        samples.set_label("d_G", r"$d_\mathrm{G}$")
+        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()*2
+        samples.set_label('d_G', r'$d_\mathrm{G}$')
 
         samples.label = self.label
         return samples
@@ -1003,15 +942,15 @@ class NestedSamples(Samples):
             WeightedDataFrame like self, columns range(nsamples)
         """
         if nsamples is None:
-            t = np.log(self.nlive / (self.nlive + 1))
+            t = np.log(self.nlive/(self.nlive+1))
         else:
             r = np.log(np.random.rand(len(self), nsamples))
             w = self.get_weights()
             r = self.nlive._constructor_expanddim(r, self.index, weights=w)
             t = r.divide(self.nlive, axis=0)
-            t.columns.name = "samples"
+            t.columns.name = 'samples'
         logX = t.cumsum()
-        logX.name = "logX"
+        logX.name = 'logX'
         return logX
 
     # TODO: remove this in version >= 2.1
@@ -1019,7 +958,7 @@ class NestedSamples(Samples):
         # noqa: disable=D102
         raise NotImplementedError(
             "This is anesthetic 1.0 syntax. You should instead use logdX."
-        )
+            )
 
     def logdX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
@@ -1041,8 +980,8 @@ class NestedSamples(Samples):
         logX = self.logX(nsamples)
         logXp = logX.shift(1, fill_value=0)
         logXm = logX.shift(-1, fill_value=-np.inf)
-        logdX = np.log(1 - np.exp(logXm - logXp)) + logXp - np.log(2)
-        logdX.name = "logdX"
+        logdX = np.log(1 - np.exp(logXm-logXp)) + logXp - np.log(2)
+        logdX.name = 'logdX'
 
         return logdX
 
@@ -1066,12 +1005,11 @@ class NestedSamples(Samples):
         logL = self.logL
         if np.isscalar(beta):
             betalogL = beta * logL
-            betalogL.name = "betalogL"
+            betalogL.name = 'betalogL'
         else:
-            betalogL = logL._constructor_expanddim(
-                np.outer(self.logL, beta), self.index, columns=beta
-            )
-            betalogL.columns.name = "beta"
+            betalogL = logL._constructor_expanddim(np.outer(self.logL, beta),
+                                                   self.index, columns=beta)
+            betalogL.columns.name = 'beta'
         return betalogL
 
     def logw(self, nsamples=None, beta=None):
@@ -1119,9 +1057,9 @@ class NestedSamples(Samples):
             logw = betalogL.add(logdX, axis=0)
         else:
             cols = MultiIndex.from_product([betalogL.columns, logdX.columns])
-            logdX = logdX.reindex(columns=cols, level="samples")
-            betalogL = betalogL.reindex(columns=cols, level="beta")
-            logw = betalogL + logdX
+            logdX = logdX.reindex(columns=cols, level='samples')
+            betalogL = betalogL.reindex(columns=cols, level='beta')
+            logw = betalogL+logdX
         return logw
 
     def logZ(self, nsamples=None, beta=None):
@@ -1157,11 +1095,10 @@ class NestedSamples(Samples):
         if np.isscalar(logZ):
             return logZ
         else:
-            return logw._constructor_sliced(
-                logZ, name="logZ", index=logw.columns
-            ).squeeze()
+            return logw._constructor_sliced(logZ, name='logZ',
+                                            index=logw.columns).squeeze()
 
-    _logZ_function_shape = "\n" + "\n".join(logZ.__doc__.split("\n")[1:])
+    _logZ_function_shape = '\n' + '\n'.join(logZ.__doc__.split('\n')[1:])
 
     # TODO: remove this in version >= 2.1
     def D(self, nsamples=None):
@@ -1172,22 +1109,21 @@ class NestedSamples(Samples):
             "samples.D_KL(1000)  # anesthetic 2.0\n\n"
             "Check out the new temperature functionality: help(samples.D_KL), "
             "as well as average loglikelihoods: help(samples.logL_P)"
-        )
+            )
 
     def D_KL(self, nsamples=None, beta=None):
         """Kullback--Leibler divergence."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
-        S = (logw * 0).add(betalogL, axis=0) - logZ
-        w = np.exp(logw - logZ)
-        D_KL = (S * w).sum()
+        S = (logw*0).add(betalogL, axis=0) - logZ
+        w = np.exp(logw-logZ)
+        D_KL = (S*w).sum()
         if np.isscalar(D_KL):
             return D_KL
         else:
-            return self._constructor_sliced(
-                D_KL, name="D_KL", index=logw.columns
-            ).squeeze()
+            return self._constructor_sliced(D_KL, name='D_KL',
+                                            index=logw.columns).squeeze()
 
     D_KL.__doc__ += _logZ_function_shape
 
@@ -1200,23 +1136,22 @@ class NestedSamples(Samples):
             "samples.d_G(1000)  # anesthetic 2.0\n\n"
             "Check out the new temperature functionality: help(samples.d_G), "
             "as well as average loglikelihoods: help(samples.logL_P)"
-        )
+            )
 
     def d_G(self, nsamples=None, beta=None):
         """Bayesian model dimensionality."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
-        S = (logw * 0).add(betalogL, axis=0) - logZ
-        w = np.exp(logw - logZ)
-        D_KL = (S * w).sum()
-        d_G = ((S - D_KL) ** 2 * w).sum() * 2
+        S = (logw*0).add(betalogL, axis=0) - logZ
+        w = np.exp(logw-logZ)
+        D_KL = (S*w).sum()
+        d_G = ((S-D_KL)**2*w).sum()*2
         if np.isscalar(d_G):
             return d_G
         else:
-            return self._constructor_sliced(
-                d_G, name="d_G", index=logw.columns
-            ).squeeze()
+            return self._constructor_sliced(d_G, name='d_G',
+                                            index=logw.columns).squeeze()
 
     d_G.__doc__ += _logZ_function_shape
 
@@ -1225,15 +1160,14 @@ class NestedSamples(Samples):
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
-        betalogL = (logw * 0).add(betalogL, axis=0)
-        w = np.exp(logw - logZ)
-        logL_P = (betalogL * w).sum()
+        betalogL = (logw*0).add(betalogL, axis=0)
+        w = np.exp(logw-logZ)
+        logL_P = (betalogL*w).sum()
         if np.isscalar(logL_P):
             return logL_P
         else:
-            return self._constructor_sliced(
-                logL_P, name="logL_P", index=logw.columns
-            ).squeeze()
+            return self._constructor_sliced(logL_P, name='logL_P',
+                                            index=logw.columns).squeeze()
 
     logL_P.__doc__ += _logZ_function_shape
 
@@ -1374,7 +1308,7 @@ class NestedSamples(Samples):
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
-        return self.set_beta(beta).compress("equal")
+        return self.set_beta(beta).compress('equal')
 
     def prior_points(self, params=None):
         """Get equally weighted prior points."""
@@ -1384,7 +1318,7 @@ class NestedSamples(Samples):
         """Construct a graphical user interface for viewing samples."""
         return RunPlotter(self, params)
 
-    def importance_sample(self, logL_new, action="add", inplace=False):
+    def importance_sample(self, logL_new, action='add', inplace=False):
         """Perform importance re-weighting on the log-likelihood.
 
         Parameters
@@ -1440,60 +1374,54 @@ class NestedSamples(Samples):
         else:
             samples = self.copy()
 
-        nlive_label = r"$n_\mathrm{live}$"
+        nlive_label = r'$n_\mathrm{live}$'
         if is_int(logL_birth):
             nlive = logL_birth
-            samples.sort_values("logL", inplace=True)
+            samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
             n = np.ones(len(self), int) * nlive
             n[-nlive:] = np.arange(nlive, 0, -1)
-            samples["nlive", nlive_label] = n
+            samples['nlive', nlive_label] = n
         else:
             if logL_birth is not None:
-                label = r"$\ln\mathcal{L}_\mathrm{birth}$"
-                samples["logL_birth"] = logL_birth
+                label = r'$\ln\mathcal{L}_\mathrm{birth}$'
+                samples['logL_birth'] = logL_birth
                 if self.islabelled():
-                    samples.set_label("logL_birth", label)
+                    samples.set_label('logL_birth', label)
 
-            if "logL_birth" not in samples:
-                raise RuntimeError(
-                    "Cannot recompute run without "
-                    "birth contours logL_birth."
-                )
+            if 'logL_birth' not in samples:
+                raise RuntimeError("Cannot recompute run without "
+                                   "birth contours logL_birth.")
 
             invalid = (samples.logL <= samples.logL_birth).to_numpy()
             n_bad = invalid.sum()
             n_equal = (samples.logL == samples.logL_birth).sum()
             if n_bad:
-                warnings.warn(
-                    "%i out of %i samples have logL <= logL_birth,"
-                    "\n%i of which have logL == logL_birth."
-                    "\nThis may just indicate numerical rounding "
-                    "errors at the peak of the likelihood, but "
-                    "further investigation of the chains files is "
-                    "recommended."
-                    "\nDropping the invalid samples."
-                    % (n_bad, len(samples), n_equal),
-                    RuntimeWarning,
-                )
+                warnings.warn("%i out of %i samples have logL <= logL_birth,"
+                              "\n%i of which have logL == logL_birth."
+                              "\nThis may just indicate numerical rounding "
+                              "errors at the peak of the likelihood, but "
+                              "further investigation of the chains files is "
+                              "recommended."
+                              "\nDropping the invalid samples." %
+                              (n_bad, len(samples), n_equal),
+                              RuntimeWarning)
                 samples = samples[~invalid].reset_index(drop=True)
 
-            samples.sort_values("logL", inplace=True)
+            samples.sort_values('logL', inplace=True)
             samples.reset_index(drop=True, inplace=True)
             nlive = compute_nlive(samples.logL, samples.logL_birth)
-            samples["nlive"] = nlive
+            samples['nlive'] = nlive
             if self.islabelled():
-                samples.set_label("nlive", nlive_label)
+                samples.set_label('nlive', nlive_label)
 
         samples.beta = samples._beta
 
         if np.any(pandas.isna(samples.logL)):
-            warnings.warn(
-                "NaN encountered in logL. If this is unexpected, you"
-                " should investigate why your likelihood is throwing"
-                " NaNs. Dropping these samples at prior level",
-                RuntimeWarning,
-            )
+            warnings.warn("NaN encountered in logL. If this is unexpected, you"
+                          " should investigate why your likelihood is throwing"
+                          " NaNs. Dropping these samples at prior level",
+                          RuntimeWarning)
             samples = samples[samples.logL.notna().to_numpy()].recompute()
 
         if inplace:
@@ -1546,37 +1474,32 @@ def merge_samples_weighted(samples, weights=None, label=None):
     new_samples : :class:`Samples`
         Merged (weighted) run.
     """
-    if not (isinstance(samples, Sequence) or isinstance(samples, Series)):
-        raise TypeError(
-            "samples must be a list of samples " "(Sequence or pandas.Series)"
-        )
+    if not (isinstance(samples, Sequence) or
+            isinstance(samples, Series)):
+        raise TypeError("samples must be a list of samples "
+                        "(Sequence or pandas.Series)")
 
     mcmc_samples = copy.deepcopy([Samples(s) for s in samples])
     if weights is None:
         try:
             logZs = np.array(copy.deepcopy([s.logZ() for s in samples]))
         except AttributeError:
-            raise ValueError(
-                "If samples includes MCMCSamples "
-                "then weights must be given."
-            )
+            raise ValueError("If samples includes MCMCSamples "
+                             "then weights must be given.")
         # Subtract logsumexp to avoid numerical issues (similar to max(logZs))
         logZs -= logsumexp(logZs)
         weights = np.exp(logZs)
     else:
         if len(weights) != len(samples):
-            raise ValueError(
-                "samples and weights must have the same length,"
-                "each weight is for a whole sample. Currently",
-                len(samples),
-                len(weights),
-            )
+            raise ValueError("samples and weights must have the same length,"
+                             "each weight is for a whole sample. Currently",
+                             len(samples), len(weights))
 
     new_samples = []
     for s, w in zip(mcmc_samples, weights):
         # Normalize the given weights
         new_weights = s.get_weights() / s.get_weights().sum()
-        new_weights *= w / np.sum(weights)
+        new_weights *= w/np.sum(weights)
         s = Samples(s, weights=new_weights)
         new_samples.append(s)
 
@@ -1591,8 +1514,8 @@ def merge_samples_weighted(samples, weights=None, label=None):
     return new_samples
 
 
-adjust_docstrings(Samples.to_hdf, r"(pd|pandas)\.DataFrame", "DataFrame")
-adjust_docstrings(Samples.to_hdf, "DataFrame", "pandas.DataFrame")
-adjust_docstrings(Samples.to_hdf, r"(pd|pandas)\.read_hdf", "read_hdf")
-adjust_docstrings(Samples.to_hdf, "read_hdf", "pandas.read_hdf")
-adjust_docstrings(Samples.to_hdf, ":func:`open`", "`open`")
+adjust_docstrings(Samples.to_hdf, r'(pd|pandas)\.DataFrame', 'DataFrame')
+adjust_docstrings(Samples.to_hdf, 'DataFrame', 'pandas.DataFrame')
+adjust_docstrings(Samples.to_hdf, r'(pd|pandas)\.read_hdf', 'read_hdf')
+adjust_docstrings(Samples.to_hdf, 'read_hdf', 'pandas.read_hdf')
+adjust_docstrings(Samples.to_hdf, ':func:`open`', '`open`')
