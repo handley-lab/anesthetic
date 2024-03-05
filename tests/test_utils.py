@@ -88,12 +88,18 @@ def test_triangular_sample_compression_2d():
     cov = np.identity(2)
     tri, W = triangular_sample_compression_2d(x, y, cov, w)
     assert len(W) == 1000
-    assert np.isclose(sum(W), sum(w), rtol=1e-1)
+    assert sum(W) == pytest.approx(sum(w), rel=1e-1)
+    tri, W = triangular_sample_compression_2d(x, y, cov, w, n=False)
+    assert len(W) == n
+    assert sum(W) == pytest.approx(sum(w))
+    tri, W = triangular_sample_compression_2d(x, y, cov, w, n=True)  # entropy
+    assert n/2 < len(W) < n
+    assert sum(W) == pytest.approx(sum(w), rel=1e-3)
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n='inf')
-    assert n/10 < len(W) < n
-    assert np.isclose(sum(W), sum(w), rtol=1e-1)
+    assert len(W) == pytest.approx(n/2, rel=1e-1)
+    assert sum(W) == pytest.approx(sum(w), rel=1e-2)
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n=10000)
-    assert n == len(W)
+    assert len(W) == n
     assert sum(W) == pytest.approx(sum(w))
 
 
