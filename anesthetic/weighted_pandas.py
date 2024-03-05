@@ -15,6 +15,30 @@ from anesthetic.utils import (compress_weights, neff, quantile,
 from pandas.core.dtypes.missing import notna
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plotting import PlotAccessor
+import pandas as pd
+
+
+def read_csv(filename, *args, **kwargs):
+    """Read a CSV file into a ``WeightedDataFrame``."""
+    df = pd.read_csv(filename, index_col=[0, 1], header=[0, 1],
+                     *args, **kwargs)
+    wdf = WeightedDataFrame(df)
+    if wdf.isweighted(0) and wdf.isweighted(1):
+        wdf.set_weights(wdf.get_weights(axis=1).astype(float),
+                        axis=1, inplace=True)
+        return wdf
+    df = pd.read_csv(filename, index_col=[0, 1], *args, **kwargs)
+    wdf = WeightedDataFrame(df)
+    if wdf.isweighted(0):
+        return wdf
+    df = pd.read_csv(filename, index_col=0, header=[0, 1], *args, **kwargs)
+    wdf = WeightedDataFrame(df)
+    if wdf.isweighted(1):
+        wdf.set_weights(wdf.get_weights(axis=1).astype(float),
+                        axis=1, inplace=True)
+        return wdf
+    df = pd.read_csv(filename, index_col=0, *args, **kwargs)
+    return WeightedDataFrame(df)
 
 
 class WeightedGroupBy(GroupBy):
