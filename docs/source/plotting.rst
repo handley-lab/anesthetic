@@ -251,10 +251,37 @@ method from there, directing it to the correct position with the ``loc`` and
     axes.iloc[ 0, -1].legend(loc='lower right',  bbox_to_anchor=(1, 1))
     axes.iloc[-1,  0].legend(loc='lower center', bbox_to_anchor=(len(axes)/2, len(axes)))
 
+Log-scale
+---------
+
+You can plot selected parameters on a log-scale by passing a list of those
+parameters under the keyword ``logx`` to :func:`anesthetic.plot.make_1d_axes`
+or :meth:`anesthetic.samples.Samples.plot_1d`, and under the keywords ``logx``
+and ``logy`` to :func:`anesthetic.plot.make_2d_axes` or
+:meth:`anesthetic.samples.Samples.plot_2d`:
+
+.. plot:: :context: close-figs
+
+    fig, axes = make_1d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x2'])
+    samples.plot_1d(axes, label="'x2' on log-scale")
+    axes['x2'].legend()
+
+.. plot:: :context: close-figs
+
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x2'], logy=['x2'])
+    samples.plot_2d(axes, label="'x2' on log-scale")
+    axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes), len(axes)), loc='lower right')
+
+.. plot:: :context: close-figs
+
+    fig, axes = make_2d_axes(['x0', 'x1', 'x2', 'x3'], logx=['x2'])
+    samples.plot_2d(axes, label="'x2' on log-scale for x-axis, but not for y-axis")
+    axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes), len(axes)), loc='lower right')
+
 Ticks
 -----
 
-You can pass the keyword ``ticks`` to :func:anesthetic.plot.make_2d_axes: to
+You can pass the keyword ``ticks`` to :func:`anesthetic.plot.make_2d_axes`: to
 adjust the tick settings of the 2D axes. There are three options:
 
 * ``ticks='inner'``
