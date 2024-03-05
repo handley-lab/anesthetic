@@ -1,8 +1,5 @@
-#from anesthetic.samples import Samples
 from anesthetic.examples.perfect_ns import correlated_gaussian
-#from anesthetic import read_chains, make_2d_axes
 import numpy as np
-#import matplotlib.pyplot as plt
 from scipy import linalg
 from anesthetic.tension import tension_stats
 
