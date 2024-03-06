@@ -5,6 +5,26 @@ from pandas.core.indexing import (_LocIndexer as _LocIndexer_,
 import numpy as np
 from functools import cmp_to_key
 from pandas.errors import IndexingError
+import pandas as pd
+
+
+def read_csv(filename, *args, **kwargs):
+    """Read a CSV file into a ``LabelledDataFrame``."""
+    df = pd.read_csv(filename, index_col=[0, 1], header=[0, 1],
+                     *args, **kwargs)
+    ldf = LabelledDataFrame(df)
+    if ldf.islabelled(0) and ldf.islabelled(1):
+        return ldf
+    df = pd.read_csv(filename, index_col=[0, 1], *args, **kwargs)
+    ldf = LabelledDataFrame(df)
+    if ldf.islabelled(0):
+        return ldf
+    df = pd.read_csv(filename, index_col=0, header=[0, 1], *args, **kwargs)
+    ldf = LabelledDataFrame(df)
+    if ldf.islabelled(1):
+        return ldf
+    df = pd.read_csv(filename, index_col=0, *args, **kwargs)
+    return LabelledDataFrame(df)
 
 
 def ac(funcs, *args):
