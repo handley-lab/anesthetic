@@ -979,7 +979,7 @@ def nde_plot_1d(ax, data, *args, **kwargs):
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
     a normalising flow as a neural density estimation (NDE) provided by
-    `margarine.maf.MAF` or `margarine.clustered.clusterMAF`
+    :class:`margarine.maf.MAF` or :meth:`margarine.clustered.clusterMAF`
     <https://github.com/htjb/margarine>.
     All remaining keyword arguments are passed onwards.
 
