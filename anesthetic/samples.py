@@ -1192,42 +1192,63 @@ class NestedSamples(Samples):
         index = np.concatenate([dead_points.index, live_points.index])
         return self.loc[index].recompute()
 
-    def terminate(self, eps=1e-3, logL=None, n=None):
-        """Check if a set of samples has reached a termination criterion.
+    def critical_ratio(
+        self, nsamples=None, logL=None, beta=1.0, criteria="logZ"
+    ):
+        """Compute a critical ratio between the live and dead points.
 
-        Uses the termination criterion of
-        [Handley et al. 2015](https://arxiv.org/abs/1506.00171).
-        computes if the ratio of evidence in the live to dead points is less
-        than some precision.
+        Parameters
+        ----------
+        nsamples : int, optional
+            Number of samples to draw when computing the volume estimates
+            default: None
+        logL : float or int, optional
+            Loglikelihood or iteration number to truncate run.
+            If not provided, truncate at the last set of dead points.
+            default: None
+        beta : float, optional
+            Inverse temperature to set.
+            default: 1.0
+        criteria : str, optional
+            Criteria to compute the critical ratio. Can be one of
+            {'logZ', 'D_KL'}.
+            default: 'logZ'
+        """
+        available_criteria = {
+            "logZ": NestedSamples.logZ,
+            "D_KL": NestedSamples.D_KL,
+        }
+        if criteria not in available_criteria.keys():
+            raise KeyError(
+                f"Criteria must be one of {list(available_criteria.keys())}"
+            )
+        else:
+            criteria = available_criteria[criteria]
+        logL = self.contour(logL)
+        i_live = self.live_points(logL).index
+        i_dead = self.dead_points(logL).index
+        if len(i_dead) > 0:
+            logX_dead = self.iloc[i_dead].recompute().logX(nsamples).iloc[-1]
+        else:
+            logX_dead = 0.0
+        criteria_dead = criteria(self.set_beta(beta), nsamples)
+        criteria_live = (
+            criteria(self.iloc[i_live].set_beta(beta), nsamples) + logX_dead
+        )
+        return criteria_live - np.logaddexp(criteria_live, criteria_dead)
+
+    def is_terminated(self, eps=1e-3, **kwargs):
+        """Check if a simulated run has terminated. Computes a critical ratio.
 
         Parameters
         ----------
         eps : float, optional
             The precision of the criteria.
             default: 1e-3
-
-        logL : float or int, optional
-            Loglikelihood or iteration number to truncate run.
-            If not provided, truncate at the last set of dead points.
-            default: None
-
-        n : int, optional
-            Number of samples to draw when computing the volume estimates
-            default: None
-
+        kwargs : dict, optional (see NestedSamples.critical_ratio)
         """
-        logL = self.contour(logL)
-        i_live = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
-        i_dead = ((self.logL < logL)).to_numpy()
-        if np.any(i_dead):
-            logZ_dead = self[i_dead].recompute().logZ(n).mean()
-            logX_dead = self[i_dead].recompute().logX(n).iloc[-1]
-        else:
-            # logZ if no dead points
-            logZ_dead = -1e30
-            logX_dead = -1e30
-        logZ_live = self[i_live].recompute().logZ(n).mean() + logX_dead
-        return logZ_live - np.logaddexp(logZ_live, logZ_dead) < np.log(eps)
+        crit = self.critical_ratio(**kwargs).mean()
+        return crit < np.log(eps)
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""

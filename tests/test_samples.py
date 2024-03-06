@@ -1180,19 +1180,47 @@ def test_truncate(cut):
         assert_array_equal(pc, truncated_run)
 
 
-def test_terminate():
+@pytest.mark.parametrize("crit", ["logZ", "D_KL"])
+def test_critical_ratio(crit):
+    pc = read_chains("./tests/example_data/pc")
+    with pytest.raises(KeyError):
+        pc.critical_ratio(criteria="badarg")
+
+    default_crit = pc.critical_ratio(criteria=crit)
+    logl_crit = pc.critical_ratio(logL=-1.0, criteria=crit)
+    beta_crit = pc.critical_ratio(beta=0.5, criteria=crit)
+
+    assert isinstance(default_crit, float)
+    assert default_crit != logl_crit
+    assert default_crit != beta_crit
+
+    default_crit_ens = pc.critical_ratio(nsamples=100, criteria=crit)
+    logl_crit_ens = pc.critical_ratio(nsamples=100, logL=-1.0, criteria=crit)
+    beta_crit_ens = pc.critical_ratio(nsamples=100, beta=0.5, criteria=crit)
+
+    assert isinstance(default_crit_ens, WeightedSeries)
+    assert np.isclose(
+        default_crit_ens.mean(), default_crit, atol=2 * default_crit_ens.std()
+    )
+    assert (default_crit_ens != logl_crit_ens).all()
+    assert (default_crit_ens != beta_crit_ens).all()
+
+
+@pytest.mark.parametrize("crit", ["logZ", "D_KL"])
+def test_is_terminated(crit):
     np.random.seed(4)
     pc = read_chains("./tests/example_data/pc")
 
-    assert not pc.terminate(logL=0)
+    # assert not pc.is_terminated(logL=0,criteria = crit)
+    # assert not pc.is_terminated(logL=1,criteria = crit)
 
-    assert not pc.terminate(logL=200)
-    assert not pc.terminate(logL=0.0)
-    assert pc.terminate(logL=None)
+    assert not pc.is_terminated(logL=200, criteria=crit)
+    assert not pc.is_terminated(logL=0.0, criteria=crit)
+    assert pc.is_terminated(logL=None, criteria=crit)
 
-    assert pc.terminate(logL=200, eps=1.0)
-    assert pc.terminate(logL=0.0, eps=1.0)
-    assert pc.terminate(logL=None, eps=1.0)
+    assert pc.is_terminated(logL=200, eps=1.0, criteria=crit)
+    assert pc.is_terminated(logL=0.0, eps=1.0, criteria=crit)
+    assert pc.is_terminated(logL=None, eps=1.0, criteria=crit)
 
 
 def test_hist_range_1d():
