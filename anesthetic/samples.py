@@ -1214,9 +1214,46 @@ class NestedSamples(Samples):
             {'logZ', 'D_KL'}.
             default: 'logZ'
         """
+
+        def logZ_ratio(i_live, i_dead):
+            if len(i_dead) > 0:
+                criteria_dead = NestedSamples.logZ(
+                    self.iloc[i_dead].recompute(), nsamples, beta
+                )
+                logX_dead = (
+                    self.iloc[i_dead].recompute().logX(nsamples).iloc[-1]
+                )
+            else:
+                logX_dead = 0.0
+                criteria_dead = -np.inf
+            criteria_live = (
+                NestedSamples.logZ(self.iloc[i_live], nsamples, beta)
+                + logX_dead
+            )
+            return criteria_live - np.logaddexp(criteria_live, criteria_dead)
+
+        def D_KL_ratio(i_live, i_dead):
+            if len(i_dead) > 0:
+                criteria_dead = NestedSamples.D_KL(
+                    self.iloc[i_dead].recompute(), nsamples, beta
+                )
+                logX_dead = (
+                    self.iloc[i_dead].recompute().logX(nsamples).iloc[-1]
+                )
+            else:
+                logX_dead = 0.0
+                criteria_dead = -np.inf
+            criteria_live = (
+                NestedSamples.D_KL(
+                    self.iloc[i_live].recompute(), nsamples, beta
+                )
+                + logX_dead
+            )
+            return criteria_live - np.logaddexp(criteria_live, criteria_dead)
+
         available_criteria = {
-            "logZ": NestedSamples.logZ,
-            "D_KL": NestedSamples.D_KL,
+            "logZ": logZ_ratio,
+            "D_KL": D_KL_ratio,
         }
         if criteria not in available_criteria.keys():
             raise KeyError(
@@ -1227,15 +1264,7 @@ class NestedSamples(Samples):
         logL = self.contour(logL)
         i_live = self.live_points(logL).index
         i_dead = self.dead_points(logL).index
-        if len(i_dead) > 0:
-            logX_dead = self.iloc[i_dead].recompute().logX(nsamples).iloc[-1]
-        else:
-            logX_dead = 0.0
-        criteria_dead = criteria(self.set_beta(beta), nsamples)
-        criteria_live = (
-            criteria(self.iloc[i_live].set_beta(beta), nsamples) + logX_dead
-        )
-        return criteria_live - np.logaddexp(criteria_live, criteria_dead)
+        return criteria(i_live, i_dead)
 
     def is_terminated(self, eps=1e-3, **kwargs):
         """Check if a simulated run has terminated. Computes a critical ratio.

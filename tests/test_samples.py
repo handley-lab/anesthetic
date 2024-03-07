@@ -1211,8 +1211,8 @@ def test_is_terminated(crit):
     np.random.seed(4)
     pc = read_chains("./tests/example_data/pc")
 
-    # assert not pc.is_terminated(logL=0,criteria = crit)
-    # assert not pc.is_terminated(logL=1,criteria = crit)
+    assert not pc.is_terminated(logL=0, criteria=crit)
+    assert not pc.is_terminated(logL=1, criteria=crit)
 
     assert not pc.is_terminated(logL=200, criteria=crit)
     assert not pc.is_terminated(logL=0.0, criteria=crit)
