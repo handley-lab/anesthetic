@@ -252,7 +252,7 @@ class AxesDataFrame(DataFrame):
                     if upper:
                         position.loc[y, x] = +1
                 elif diagonal:
-                    position.loc[x, y] = 0
+                    position.loc[y, x] = 0
         return position
 
     @classmethod
