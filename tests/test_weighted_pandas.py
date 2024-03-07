@@ -1,4 +1,5 @@
-from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.weighted_pandas import (WeightedDataFrame, WeightedSeries,
+                                        read_csv)
 from pandas import DataFrame, MultiIndex
 import pandas.testing
 from anesthetic.utils import neff
@@ -1005,3 +1006,27 @@ def test_style(mcmc_wdf):
         ax = mcmc_wdf.plot.kde_2d('x', 'y', style='c')
     with pytest.raises(TypeError):
         ax = mcmc_wdf.plot.scatter_2d('x', 'y', style='c')
+
+
+def test_read_csv(mcmc_wdf):
+    filename = 'mcmc_wdf.csv'
+
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
+
+    mcmc_wdf.set_weights(np.random.rand(mcmc_wdf.shape[1]),
+                         axis=1, inplace=True)
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
+
+    mcmc_wdf = mcmc_wdf.drop_weights(axis=0)
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
+
+    mcmc_wdf = mcmc_wdf.drop_weights(axis=1)
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
