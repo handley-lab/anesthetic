@@ -980,6 +980,8 @@ def nde_plot_1d(ax, data, *args, **kwargs):
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
     a normalising flow as a neural density estimation (NDE) provided by
     :class:`margarine.maf.MAF` or :class:`margarine.clustered.clusterMAF`.
+    See also `Bevins et al. (2022) <https://arxiv.org/abs/2205.12841>`_.
+
     All remaining keyword arguments are passed onwards.
 
     Parameters
@@ -1487,6 +1489,8 @@ def nde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     and :meth:`matplotlib.axes.Axes.contourf` with a normalising flow as a
     neural density estimator (NDE) provided by :class:`margarine.maf.MAF` or
     :class:`margarine.clustered.clusterMAF`.
+    See also `Bevins et al. (2022) <https://arxiv.org/abs/2205.12841>`_.
+
     All remaining keyword arguments are passed onwards to both functions.
 
     Parameters
@@ -1597,7 +1601,7 @@ def nde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         from margarine.clustered import clusterMAF
 
     except ImportError:
-        raise ImportError("Please install margarine to use nde_1d")
+        raise ImportError("Please install margarine to use nde_2d")
 
     if nde_clustering:
         nde = clusterMAF(data, weights=w, lr=nde_lr,
