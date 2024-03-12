@@ -33,6 +33,22 @@ def skipif_no_fastkde(param):
 
 
 try:
+    import margarine  # noqa: F401
+except ImportError:
+    pass
+reason = "requires margarine package"
+condition = 'margarine' not in sys.modules
+raises = ImportError
+margarine_mark_skip = pytest.mark.skipif(condition, reason=reason)
+margarine_mark_xfail = pytest.mark.xfail(condition, raises=raises,
+                                         reason=reason)
+
+
+def skipif_no_margarine(param):
+    return pytest.param(param, marks=margarine_mark_skip)
+
+
+try:
     import getdist  # noqa: F401
 except ImportError:
     pass

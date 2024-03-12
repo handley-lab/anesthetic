@@ -17,8 +17,10 @@ from anesthetic.plot import (
     kde_contour_plot_2d,
     hist_plot_2d,
     fastkde_contour_plot_2d,
+    nde_contour_plot_2d,
     kde_plot_1d,
     fastkde_plot_1d,
+    nde_plot_1d,
     hist_plot_1d,
     quantile_plot_interval,
 )
@@ -165,6 +167,29 @@ class FastKde1dPlot(_CompressedMPLPlot, Kde1dPlot):
         return fastkde_plot_1d(ax, y, *args, **kwds)
 
 
+class Nde1dPlot(KdePlot):
+    # noqa: disable=D101
+    @property
+    def _kind(self) -> Literal["nde_1d"]:
+        return "nde_1d"
+
+    # noqa: disable=D101
+    @classmethod
+    def _plot(
+        cls,
+        ax,
+        y,
+        style=None,
+        ind=None,
+        column_num=None,
+        stacking_id=None,
+        **kwds,
+    ):
+        args = (style,) if style is not None else tuple()
+        kwds.pop('bw_method', None)
+        return nde_plot_1d(ax, y, *args, **kwds)
+
+
 class Hist1dPlot(HistPlot):
     # noqa: disable=D101
     @property
@@ -242,6 +267,17 @@ class FastKde2dPlot(_CompressedMPLPlot, _PlanePlot2d):
     @classmethod
     def _plot(cls, ax, x, y, **kwds):
         return fastkde_contour_plot_2d(ax, x, y, **kwds)
+
+
+class Nde2dPlot(_CompressedMPLPlot, _PlanePlot2d):
+    # noqa: disable=D101
+    @property
+    def _kind(self) -> Literal["nde_2d"]:
+        return "nde_2d"
+
+    @classmethod
+    def _plot(cls, ax, x, y, **kwds):
+        return nde_contour_plot_2d(ax, x, y, **kwds)
 
 
 class Hist2dPlot(_WeightedMPLPlot, _PlanePlot2d):
