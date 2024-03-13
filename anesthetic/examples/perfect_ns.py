@@ -1,8 +1,100 @@
 """Perfect nested sampling generators."""
 import numpy as np
+from scipy.stats import multivariate_normal
 from anesthetic.examples.utils import random_ellipsoid
 from anesthetic import NestedSamples
 from anesthetic.samples import merge_nested_samples
+from scipy.optimize import minimize, NonlinearConstraint
+
+
+def new_gaussian(nlive, ndims, mean, cov, logLmax, mu, Sigma,
+                 *args, **kwargs):
+    """Perfect nested sampling run for a correlated gaussian likelihood.
+
+    This produces a perfect nested sampling for a likelihood with a gaussian
+    profile with a gaussian prior.
+
+    Parameters
+    ----------
+    nlive : int
+        minimum number of live points across the run
+
+    ndims : int
+        dimensionality of the gaussian
+
+    mean : 1d array-like, shape (ndims,)
+        mean of gaussian in parameters.
+
+    cov : 2d array-like, shape (ndims, ndims)
+        covariance of gaussian in parameters
+
+    logLmax : float
+        maximum loglikelihood
+
+    mu : 1d array-like, shape (ndims,)
+        mean of gaussian prior in parameters.
+
+    Sigma : 2d array-like, shape (ndims, ndims)
+        covariance of gaussian prior in parameters
+
+    The remaining arguments are passed to the
+    :class:`anesthetic.samples.NestedSamples` constructor.
+
+    Returns
+    -------
+    samples : :class:`anesthetic.samples.NestedSamples`
+        Nested sampling run
+    """
+
+    def logLike(x):
+        dist = multivariate_normal(mean, cov)
+        return logLmax + dist.logpdf(x) - dist.logpdf(mean)
+
+    prior = multivariate_normal(mu, Sigma)
+    points = prior.rvs(2*nlive)
+
+    samples = NestedSamples(points, logL=logLike(points), logL_birth=-np.inf,
+                            *args, **kwargs)
+
+    invcov = np.linalg.inv(cov)
+    invSigma = np.linalg.inv(Sigma)
+
+    def maximise_prior(x, logLs):
+        constraints = NonlinearConstraint(logLike, logLs, np.inf,
+                                          jac=lambda x: 2 * invcov @ (x-mean))
+        sol = minimize(lambda x: -prior.logpdf(x), x,
+                       jac=lambda x: 2 * invSigma @ (x-mu),
+                       constraints=constraints)
+        return sol
+
+    while -samples.logX().iloc[-nlive] < samples.D_KL()*2:
+        logLs = samples.logL.iloc[-nlive]
+
+        # prior round
+        points = prior.rvs(nlive)
+        logL = logLike(points)
+        i = logL > logLs
+        samps_1 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs,
+                                *args, **kwargs)
+
+        # Ellipsoidal round
+        points = random_ellipsoid(mean, cov*2*(logLmax - logLs), nlive)
+        logL = logLike(points)
+        logpi = prior.logpdf(points)
+
+        sol = maximise_prior(points[np.argmax(logpi)], logLs)
+        if sol.success:
+            logpimax = -sol.fun
+        else:
+            logpimax = prior.logpdf(prior.mean)
+
+        i = logpi > logpimax + np.log(np.random.rand(nlive))
+        samps_2 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs,
+                                *args, **kwargs)
+        samples = merge_nested_samples([samples, samps_1, samps_2])
+        samples.gui()
+
+    return samples
 
 
 def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0,
@@ -43,7 +135,8 @@ def gaussian(nlive, ndims, sigma=0.1, R=1, logLmin=-1e-2, logLmax=0,
     """
 
     def logLike(x):
-        return logLmax - (x**2).sum(axis=-1)/2/sigma**2
+        dist = multivariate_normal(np.zeros(ndims), sigma**2*np.eye(ndims))
+        return logLmax + dist.logpdf(x) - dist.logpdf(dist.mean)
 
     def random_sphere(n):
         return random_ellipsoid(np.zeros(ndims), np.eye(ndims), n)
@@ -106,10 +199,10 @@ def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0,
     """
     mean = np.array(mean, dtype=float)
     cov = np.array(cov, dtype=float)
-    invcov = np.linalg.inv(cov)
 
     def logLike(x):
-        return logLmax - 0.5 * ((x - mean) @ invcov * (x - mean)).sum(axis=-1)
+        dist = multivariate_normal(mean, cov)
+        return logLmax + dist.logpdf(x) - dist.logpdf(dist.mean)
 
     ndims = len(mean)
 
