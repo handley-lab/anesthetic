@@ -7,7 +7,7 @@ from anesthetic.samples import merge_nested_samples
 from scipy.optimize import minimize, NonlinearConstraint
 
 
-def new_gaussian(nlive, ndims, mean, cov, logLmax, mu, Sigma,
+def new_gaussian(nlive, mean, cov, logLmax, mu, Sigma,
                  *args, **kwargs):
     """Perfect nested sampling run for a correlated gaussian likelihood.
 
@@ -19,22 +19,19 @@ def new_gaussian(nlive, ndims, mean, cov, logLmax, mu, Sigma,
     nlive : int
         minimum number of live points across the run
 
-    ndims : int
-        dimensionality of the gaussian
-
-    mean : 1d array-like, shape (ndims,)
+    mean : 1d array-like
         mean of gaussian in parameters.
 
-    cov : 2d array-like, shape (ndims, ndims)
+    cov : 2d array-like
         covariance of gaussian in parameters
 
     logLmax : float
         maximum loglikelihood
 
-    mu : 1d array-like, shape (ndims,)
+    mu : 1d array-like
         mean of gaussian prior in parameters.
 
-    Sigma : 2d array-like, shape (ndims, ndims)
+    Sigma : 2d array-like
         covariance of gaussian prior in parameters
 
     The remaining arguments are passed to the
@@ -60,12 +57,13 @@ def new_gaussian(nlive, ndims, mean, cov, logLmax, mu, Sigma,
     invSigma = np.linalg.inv(Sigma)
 
     def maximise_prior(x, logLs):
+        """Maximise the prior subject to the likelihood constraint."""
         constraints = NonlinearConstraint(logLike, logLs, np.inf,
                                           jac=lambda x: 2 * invcov @ (x-mean))
         sol = minimize(lambda x: -prior.logpdf(x), x,
                        jac=lambda x: 2 * invSigma @ (x-mu),
                        constraints=constraints)
-        return sol
+        return prior.logpdf(sol.x) if sol.success else prior.logpdf(prior.mean)
 
     while -samples.logX().iloc[-nlive] < samples.D_KL()*2:
         logLs = samples.logL.iloc[-nlive]
@@ -81,18 +79,12 @@ def new_gaussian(nlive, ndims, mean, cov, logLmax, mu, Sigma,
         points = random_ellipsoid(mean, cov*2*(logLmax - logLs), nlive)
         logL = logLike(points)
         logpi = prior.logpdf(points)
-
-        sol = maximise_prior(points[np.argmax(logpi)], logLs)
-        if sol.success:
-            logpimax = -sol.fun
-        else:
-            logpimax = prior.logpdf(prior.mean)
-
+        logpimax = maximise_prior(points[np.argmax(logpi)], logLs)
         i = logpi > logpimax + np.log(np.random.rand(nlive))
         samps_2 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs,
                                 *args, **kwargs)
+
         samples = merge_nested_samples([samples, samps_1, samps_2])
-        samples.gui()
 
     return samples
 
@@ -215,7 +207,7 @@ def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0,
     samples = NestedSamples(points, logL=logLike(points), logL_birth=-np.inf,
                             *args, **kwargs)
 
-    while (1/samples.nlive.iloc[:-nlive]).sum() < samples.D_KL()*2:
+    while -samples.logX().iloc[-nlive] < samples.D_KL()*2: 
         logLs = samples.logL.iloc[-nlive]
 
         sig = np.diag(cov*2*(logLmax - logLs))**0.5
@@ -235,6 +227,7 @@ def correlated_gaussian(nlive, mean, cov, bounds=None, logLmax=0,
         i = ((points > bounds.T[0]) & (points < bounds.T[1])).all(axis=1)
         samps_2 = NestedSamples(points[i], logL=logL[i], logL_birth=logLs,
                                 *args, **kwargs)
+
         samples = merge_nested_samples([samples, samps_1, samps_2])
 
     return samples
