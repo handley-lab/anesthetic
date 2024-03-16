@@ -177,15 +177,10 @@ class Hist1dPlot(HistPlot):
         super().__init__(data, bins=bins, bottom=bottom, **kwargs)
 
     def _calculate_bins(self, data, bins):
-        nd_values = data.infer_objects(copy=False)._get_numeric_data()
-        values = np.ravel(nd_values)
-        values = values[~isna(values)]
         if self._bin_range is None:
             q = self.kwds.get('q', 5)
             q = quantile_plot_interval(q=q)
-            weights = self.weights
-            xmin = quantile(values, q[0], weights)
-            xmax = quantile(values, q[-1], weights)
+            xmin, xmax = data.quantile(q).to_numpy().ravel()
             self._bin_range = (xmin, xmax)
         bins = super()._calculate_bins(data, bins)
         return bins
