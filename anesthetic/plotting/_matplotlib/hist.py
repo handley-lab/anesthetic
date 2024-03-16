@@ -22,7 +22,6 @@ from anesthetic.plot import (
     hist_plot_1d,
     quantile_plot_interval,
 )
-from anesthetic.utils import quantile, histogram_bin_edges
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):
