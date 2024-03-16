@@ -1008,8 +1008,8 @@ def test_style(mcmc_wdf):
         ax = mcmc_wdf.plot.scatter_2d('x', 'y', style='c')
 
 
-def test_read_csv(mcmc_wdf):
-    filename = 'mcmc_wdf.csv'
+def test_read_csv(tmp_path, mcmc_wdf):
+    filename = tmp_path / 'mcmc_wdf.csv'
 
     mcmc_wdf.to_csv(filename)
     mcmc_wdf_ = read_csv(filename)

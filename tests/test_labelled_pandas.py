@@ -472,8 +472,8 @@ def test_drop_labels(lframe_index):
     assert nolabels.drop_labels() is not nolabels
 
 
-def test_read_csv():
-    filename = 'mcmc_ldf.csv'
+def test_read_csv(tmp_path):
+    filename = tmp_path / 'mcmc_ldf.csv'
 
     lframe = LabelledDataFrame(np.random.rand(3, 3),
                                index=['A', 'B', 'C'],
