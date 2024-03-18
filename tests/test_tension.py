@@ -1,6 +1,6 @@
 from anesthetic.examples.perfect_ns import correlated_gaussian
 import numpy as np
-from scipy.linalg import inv, solve, slogdet
+from numpy.linalg import inv, solve, slogdet
 from anesthetic.tension import tension_stats
 
 
