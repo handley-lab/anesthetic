@@ -15,6 +15,7 @@ from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 from anesthetic.read.nestedfit import read_nestedfit
 from anesthetic.read.hdf import HDFStore, read_hdf
+from anesthetic.read.csv import read_csv
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
 
 
@@ -307,3 +308,25 @@ def test_hdf5(tmp_path, root):
 def test_path(root):
     base_dir = Path("./tests/example_data")
     read_chains(base_dir / root)
+
+
+@pytest.mark.parametrize('root', ['pc', 'gd'])
+def test_read_csv(root):
+    samples = read_chains(f'./tests/example_data/{root}')
+    samples.to_csv(f'{root}.csv')
+
+    samples_ = read_csv(f'{root}.csv')
+    samples_.root = samples.root
+    assert_frame_equal(samples, samples_)
+
+    samples_ = read_csv(f'{root}')
+    samples_.root = samples.root
+    assert_frame_equal(samples, samples_)
+
+    samples_ = read_chains(f'{root}.csv')
+    samples_.root = samples.root
+    assert_frame_equal(samples, samples_)
+
+    samples_ = read_chains(f'{root}')
+    samples_.root = samples.root
+    assert_frame_equal(samples, samples_)
