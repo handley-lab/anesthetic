@@ -311,22 +311,23 @@ def test_path(root):
 
 
 @pytest.mark.parametrize('root', ['pc', 'gd'])
-def test_read_csv(root):
+def test_read_csv(tmp_path, root):
+    filename = tmp_path / f'{root}.csv'
     samples = read_chains(f'./tests/example_data/{root}')
-    samples.to_csv(f'{root}.csv')
+    samples.to_csv(filename)
 
-    samples_ = read_csv(f'{root}.csv')
+    samples_ = read_csv(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
 
-    samples_ = read_csv(f'{root}')
+    samples_ = read_csv(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
 
-    samples_ = read_chains(f'{root}.csv')
+    samples_ = read_chains(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
 
-    samples_ = read_chains(f'{root}')
+    samples_ = read_chains(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
