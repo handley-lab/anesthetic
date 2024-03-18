@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def read_csv(filename, *args, **kwargs):
-    """Read a CSV file into a :class:`Samples` object."""
+    """Read a CSV file into a :class:`anesthetic.samples.Samples` object."""
     filename = Path(filename)
     kwargs['label'] = kwargs.get('label', filename.stem)
     wldf = wl_read_csv(filename.with_suffix('.csv'))

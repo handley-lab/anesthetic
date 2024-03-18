@@ -83,6 +83,15 @@ anesthetic.scripts module
    :show-inheritance:
 
 
+anesthetic.termination module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.termination
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 anesthetic.testing module
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

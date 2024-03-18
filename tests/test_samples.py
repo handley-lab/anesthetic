@@ -1180,6 +1180,24 @@ def test_truncate(cut):
         assert_array_equal(pc, truncated_run)
 
 
+@pytest.mark.parametrize("criterion,args,terminated",
+                         [("logZ", (1e-3,), False),
+                          ("logZ", (1e-1,), True),
+                          ("D_KL", (1e-1,), True),
+                          ("D_KL", (1e-3,), False),
+                          ("logX", (-10.0), True),
+                          ("logX", (-15.0), False),
+                          ("ndead", (1000), True),
+                          ("ndead", (2000), False),
+                          ("logL", (5.0,), True),
+                          ("logL", (6.0,), False),
+                          ])
+def test_terminated(criterion, args, terminated):
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+    assert pc.terminated(criterion, *args) is terminated
+
+
 def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)
