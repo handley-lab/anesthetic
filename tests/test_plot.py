@@ -831,6 +831,11 @@ def test_logscale_hist_kwargs(b):
     assert amax < 0.5
     assert edges[0] < 1e-3
     assert edges[-1] > 1e3
+    h, edges, _ = hist_plot_1d(ax, data, bins=b, range=None)
+    amax = abs(np.log10(edges[np.argmax(h)]))
+    assert amax < 0.5
+    assert edges[0] < 1e-3
+    assert edges[-1] > 1e3
     h, edges, _ = hist_plot_1d(ax, data, bins=b, range=(1e-3, 1e3))
     amax = abs(np.log10(edges[np.argmax(h)]))
     assert amax < 0.5

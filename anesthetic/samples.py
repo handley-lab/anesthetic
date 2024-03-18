@@ -534,7 +534,8 @@ class MCMCSamples(Samples):
             nsamples = chains.count().iloc[:, 0].to_numpy()
             ndrop = ndrop * nsamples
         ndrop = ndrop.astype(int)
-        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1])).index,
+        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1]),
+                                      include_groups=False).index,
                          inplace=inplace)
         if reset_index:
             data = data.reset_index(drop=True, inplace=inplace)

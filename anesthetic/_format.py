@@ -12,8 +12,7 @@ class _DataFrameFormatter(DataFrameFormatter):
     def _get_formatted_column_labels(self, frame):
         columns = frame.columns
         if isinstance(columns, MultiIndex):
-            fmt_columns = columns.format(sparsify=False, adjoin=False)
-            fmt_columns = list(zip(*fmt_columns))
+            fmt_columns = [tuple(str(c) for c in column) for column in columns]
             dtypes = self.frame.dtypes._values
 
             # if we have a Float level, they don't use leading space at all
@@ -37,7 +36,7 @@ class _DataFrameFormatter(DataFrameFormatter):
             str_columns = [list(x) for x in zip(*str_columns)]
             str_columns = [_make_fixed_width(x) for x in str_columns]
         else:
-            fmt_columns = columns.format()
+            fmt_columns = [str(x) for x in columns]
             dtypes = self.frame.dtypes
             need_leadsp = dict(zip(fmt_columns, map(is_numeric_dtype, dtypes)))
             str_columns = [
