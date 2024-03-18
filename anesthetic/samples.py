@@ -18,6 +18,7 @@ from anesthetic.weighted_labelled_pandas import WeightedLabelledDataFrame
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
 from anesthetic.utils import adjust_docstrings
+from anesthetic import termination
 
 
 class Samples(WeightedLabelledDataFrame):
@@ -1192,92 +1193,25 @@ class NestedSamples(Samples):
         index = np.concatenate([dead_points.index, live_points.index])
         return self.loc[index].recompute()
 
-    def critical_ratio(
-        self, nsamples=None, logL=None, beta=1.0, criteria="logZ"
-    ):
-        """Compute a critical ratio between the live and dead points.
+    def terminated(self, criterion='logZ', *args, **kwargs):
+        """Check if a simulated run has terminated.
 
         Parameters
         ----------
-        nsamples : int, optional
-            Number of samples to draw when computing the volume estimates
-            default: None
-        logL : float or int, optional
-            Loglikelihood or iteration number to truncate run.
-            If not provided, truncate at the last set of dead points.
-            default: None
-        beta : float, optional
-            Inverse temperature to set.
-            default: 1.0
-        criteria : str, optional
-            Criteria to compute the critical ratio. Can be one of
-            {'logZ', 'D_KL'}.
-            default: 'logZ'
+        criterion : str, optional
+            The termination criterion to choose.
+            This should be one of
+            {'logZ', 'D_KL', 'logX', 'ndead', 'logL'}.
+            Default is logZ.
+            See the documentation for the specific criterion in
+            ``anesthetic.termination`` for more details.
+
+        The remaining arguments are passed to the termination criterion.
         """
-
-        def logZ_ratio(i_live, i_dead):
-            if len(i_dead) > 0:
-                criteria_dead = NestedSamples.logZ(
-                    self.iloc[i_dead].recompute(), nsamples, beta
-                )
-                logX_dead = (
-                    self.iloc[i_dead].recompute().logX(nsamples).iloc[-1]
-                )
-            else:
-                logX_dead = 0.0
-                criteria_dead = -np.inf
-            criteria_live = (
-                NestedSamples.logZ(self.iloc[i_live], nsamples, beta)
-                + logX_dead
-            )
-            return criteria_live - np.logaddexp(criteria_live, criteria_dead)
-
-        def D_KL_ratio(i_live, i_dead):
-            if len(i_dead) > 0:
-                criteria_dead = NestedSamples.D_KL(
-                    self.iloc[i_dead].recompute(), nsamples, beta
-                )
-                logX_dead = (
-                    self.iloc[i_dead].recompute().logX(nsamples).iloc[-1]
-                )
-            else:
-                logX_dead = 0.0
-                criteria_dead = -np.inf
-            criteria_live = (
-                NestedSamples.D_KL(
-                    self.iloc[i_live].recompute(), nsamples, beta
-                )
-                + logX_dead
-            )
-            return criteria_live - np.logaddexp(criteria_live, criteria_dead)
-
-        available_criteria = {
-            "logZ": logZ_ratio,
-            "D_KL": D_KL_ratio,
-        }
-        if criteria not in available_criteria.keys():
-            raise KeyError(
-                f"Criteria must be one of {list(available_criteria.keys())}"
-            )
-        else:
-            criteria = available_criteria[criteria]
-        logL = self.contour(logL)
-        i_live = self.live_points(logL).index
-        i_dead = self.dead_points(logL).index
-        return criteria(i_live, i_dead)
-
-    def is_terminated(self, eps=1e-3, **kwargs):
-        """Check if a simulated run has terminated. Computes a critical ratio.
-
-        Parameters
-        ----------
-        eps : float, optional
-            The precision of the criteria.
-            default: 1e-3
-        kwargs : dict, optional (see NestedSamples.critical_ratio)
-        """
-        crit = self.critical_ratio(**kwargs).mean()
-        return crit < np.log(eps)
+        try:
+            return termination.__dict__[criterion](self, *args, **kwargs)
+        except KeyError:
+            raise KeyError("Unknown termination criterion: %s" % criterion)
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
