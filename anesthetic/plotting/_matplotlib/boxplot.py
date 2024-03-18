@@ -1,5 +1,6 @@
 import pandas.plotting._matplotlib.boxplot
-from pandas.plotting._matplotlib.boxplot import BoxPlot as _BoxPlot
+from pandas.plotting._matplotlib.boxplot import (BoxPlot as _BoxPlot,
+                                                 maybe_color_bp)
 from anesthetic.plotting._matplotlib.core import _WeightedMPLPlot, _get_weights
 from anesthetic.utils import quantile
 from pandas.core.dtypes.missing import remove_na_arraylike
@@ -56,9 +57,9 @@ def boxplot(data, *args, **kwds):
 
     def create_plot_group():
         fontsize = None  # pragma: no cover
-        maybe_color_bp = None  # pragma: no cover
         return_type = None  # pragma: no cover
         rot = None  # pragma: no cover
+        colors = None  # pragma: no cover
 
         def plot_group(keys, values, ax, **kwds):  # pragma: no cover
             # GH 45465: xlabel/ylabel need to be popped out before plotting
@@ -96,7 +97,7 @@ def boxplot(data, *args, **kwds):
                 ax.set_xticklabels(keys, rotation=rot)
             else:
                 ax.set_yticklabels(keys, rotation=rot)
-            maybe_color_bp(bp, **kwds)
+            maybe_color_bp(bp, color_tup=colors, **kwds)
 
             # Return axes in multiplot case, maybe revisit later # 985
             if return_type == "dict":

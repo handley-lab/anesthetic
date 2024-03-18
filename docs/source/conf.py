@@ -58,6 +58,7 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.imgconverter',
     'sphinx_copybutton',
+    'sphinx_autodoc_typehints',
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
 ]
@@ -97,8 +98,6 @@ autodoc_default_options = {
 }
 
 autosummary_generate = True
-
-nitpick_ignore = [('py:obj', 'pandas.core.groupby.SeriesGroupBy.sample')] # not currently included in pandas 1.5, but will in future
 
 # -- Options for autosectionlabel------------------------------------------
 autosectionlabel_prefix_document = True
