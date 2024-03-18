@@ -4,8 +4,8 @@ import numpy as np
 import pandas
 
 
-def test_read_csv():
-    filename = 'mcmc_wldf.csv'
+def test_read_csv(tmp_path):
+    filename = tmp_path / 'mcmc_wldf.csv'
 
     wlframe = WeightedLabelledDataFrame(np.random.rand(3, 3),
                                         index=[0, 1, 2],
