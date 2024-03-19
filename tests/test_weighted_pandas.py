@@ -857,10 +857,8 @@ def test_AreaPlot(mcmc_df, mcmc_wdf):
 
 
 def test_BarPlot(mcmc_df, mcmc_wdf):
-    _, ax1 = plt.subplots(figsize=(5, 5))
-    _, ax2 = plt.subplots(figsize=(5, 5))
-    axes_bar = mcmc_wdf[5:10].plot.bar(ax=ax1)
-    axes_barh = mcmc_wdf[5:10].plot.barh(ax=ax2)
+    axes_bar = mcmc_wdf.iloc[5:10].plot.bar()
+    axes_barh = mcmc_wdf.iloc[5:10].plot.barh()
     assert_array_equal(axes_bar.get_xticks(), axes_barh.get_yticks())
     assert_array_equal(axes_bar.get_yticks(), axes_barh.get_xticks())
 
