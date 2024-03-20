@@ -26,27 +26,28 @@ def test_tension_stats_compatiable_gaussian():
 
     covAB = inv(inv(covA) + inv(covB))
     meanAB = covAB@(solve(covA, meanA)+solve(covB, meanB))
-    dmeanAB = meanA-meanB
+    dmeanAB = np.array(meanA)-np.array(meanB)
     logLmaxAB = -1/2 * dmeanAB@solve(covA+covB, dmeanAB) + logLmaxA + logLmaxB
     samplesAB = correlated_gaussian(nlive, meanAB, covAB, bounds, logLmaxAB)
 
     nsamples = 1000
     beta = 1
-    samples = tension_stats(samplesA, samplesB, samplesAB, nsamples, beta)
+    samples_stats = tension_stats(samplesA, samplesB, samplesAB,
+                                  nsamples, beta)
 
-    logR_std = samples.logR.std()
-    logR_mean = samples.logR.mean()
+    logR_std = samples_stats.logR.std()
+    logR_mean = samples_stats.logR.mean()
     logR_exact = (-1/2*dmeanAB@solve(covA+covB, dmeanAB) -
                   1/2*slogdet(2*np.pi*(covA+covB))[1] + np.log(V))
     assert logR_mean - 3 * logR_std < logR_exact < logR_mean + 3 * logR_std
 
-    logS_std = samples.logS.std()
-    logS_mean = samples.logS.mean()
+    logS_std = samples_stats.logS.std()
+    logS_mean = samples_stats.logS.mean()
     logS_exact = d/2 - 1/2*dmeanAB@solve(covA+covB, dmeanAB)
     assert logS_mean - 3 * logS_std < logS_exact < logS_mean + 3 * logS_std
 
-    logI_std = samples.logI.std()
-    logI_mean = samples.logI.mean()
+    logI_std = samples_stats.logI.std()
+    logI_mean = samples_stats.logI.mean()
     logI_exact = -d/2 - 1/2 * slogdet(2*np.pi*(covA+covB))[1] + np.log(V)
     assert logI_mean - 3 * logI_std < logI_exact < logI_mean + 3 * logI_std
 
@@ -74,26 +75,27 @@ def test_tension_stats_incompatiable_gaussian():
 
     covAB = inv(inv(covA) + inv(covB))
     meanAB = covAB@(solve(covA, meanA)+solve(covB, meanB))
-    dmeanAB = meanA-meanB
+    dmeanAB = np.array(meanA)-np.array(meanB)
     logLmaxAB = -1/2 * dmeanAB@solve(covA+covB, dmeanAB) + logLmaxA + logLmaxB
     samplesAB = correlated_gaussian(nlive, meanAB, covAB, bounds, logLmaxAB)
 
     nsamples = 1000
     beta = 1
-    samples = tension_stats(samplesA, samplesB, samplesAB, nsamples, beta)
+    samples_stats = tension_stats(samplesA, samplesB, samplesAB,
+                                  nsamples, beta)
 
-    logR_std = samples.logR.std()
-    logR_mean = samples.logR.mean()
+    logR_std = samples_stats.logR.std()
+    logR_mean = samples_stats.logR.mean()
     logR_exact = (-1/2*dmeanAB@solve(covA+covB, dmeanAB) -
                   1/2*slogdet(2*np.pi*(covA+covB))[1] + np.log(V))
     assert logR_mean - 3 * logR_std < logR_exact < logR_mean + 3 * logR_std
 
-    logS_std = samples.logS.std()
-    logS_mean = samples.logS.mean()
+    logS_std = samples_stats.logS.std()
+    logS_mean = samples_stats.logS.mean()
     logS_exact = d/2 - 1/2*dmeanAB@solve(covA+covB, dmeanAB)
     assert logS_mean - 3 * logS_std < logS_exact < logS_mean + 3 * logS_std
 
-    logI_std = samples.logI.std()
-    logI_mean = samples.logI.mean()
+    logI_std = samples_stats.logI.std()
+    logI_mean = samples_stats.logI.mean()
     logI_exact = -d/2 - 1/2 * slogdet(2*np.pi*(covA+covB))[1] + np.log(V)
     assert logI_mean - 3 * logI_std < logI_exact < logI_mean + 3 * logI_std
