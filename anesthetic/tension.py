@@ -1,3 +1,4 @@
+"""Tension statistics between two datasets"""
 from anesthetic.samples import Samples
 from scipy.stats import chi2
 
@@ -61,7 +62,6 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):
         DataFrame containing the following tension statistics:
         logZ, D_KL, logL_P, d_G, p
     """
-
     statsA = A.stats(nsamples, beta)
     statsB = B.stats(nsamples, beta)
     statsAB = AB.stats(nsamples, beta)
