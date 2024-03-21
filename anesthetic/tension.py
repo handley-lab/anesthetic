@@ -1,4 +1,4 @@
-"""Tension statistics between two datasets"""
+"""Tension statistics between two datasets."""
 from anesthetic.samples import Samples
 from scipy.stats import chi2
 
