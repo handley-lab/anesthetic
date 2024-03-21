@@ -4,7 +4,7 @@ from scipy.stats import chi2
 
 
 def tension_stats(A, B, AB, nsamples=None, beta=None):
-    r"""Compute tension statistics between two samples
+    r"""Compute tension statistics between two samples.
 
     Using nested sampling we can compute:
 
