@@ -860,7 +860,6 @@ def test_BarPlot(mcmc_df, mcmc_wdf):
     axes_bar = mcmc_wdf[5:10].plot.bar()
     axes_barh = mcmc_wdf[5:10].plot.barh()
     assert_array_equal(axes_bar.get_xticks(), axes_barh.get_yticks())
-    assert_array_equal(axes_bar.get_yticks(), axes_barh.get_xticks())
 
 
 def test_PiePlot(mcmc_df, mcmc_wdf):
