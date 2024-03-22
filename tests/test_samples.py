@@ -516,10 +516,7 @@ def test_plot_logscale_2d(kind):
 
 def test_logscale_ticks():
     np.random.seed(42)
-    plt.rcParams['figure.figsize'] = 3, 3
-    plt.rcParams['font.size'] = 10
-
-    ndim = 3
+    ndim = 5
     data = np.exp(10 * np.random.randn(200, ndim))
     params = [f'a{i}' for i in range(ndim)]
     fig, axes = make_2d_axes(params, logx=params, logy=params, upper=False)
