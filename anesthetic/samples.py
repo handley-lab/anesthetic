@@ -182,7 +182,7 @@ class Samples(WeightedLabelledDataFrame):
 
         return axes
 
-    def plot_2d(self, axes=None, *args, **kwargs):
+    def plot_2d(self, axes=None, rasterize_scatter=False, *args, **kwargs):
         """Create an array of 2D plots.
 
         To avoid interfering with y-axis sharing, one-dimensional plots are
@@ -206,6 +206,12 @@ class Samples(WeightedLabelledDataFrame):
             It is not advisible to plot an entire frame, as it is
             computationally expensive, and liable to run into linear algebra
             errors for degenerate derived parameters.
+
+        rasterize_scatter : bool, optional
+            Setting to True will rasterize just the scatter plots and leave
+            all other types of plots as vector images. 
+            Default is False. 
+            
 
         kind/kinds : dict, optional
             What kinds of plots to produce. Dictionary takes the keys
@@ -344,11 +350,14 @@ class Samples(WeightedLabelledDataFrame):
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
+                            if rasterize_scatter == True and lkwargs['kind'] == 'scatter_2d':
+                                lkwargs['zorder'] = -1
                             self.plot(x, y, ax=ax, xlabel=xlabel,
                                       logx=x in logx, logy=y in logy,
                                       ylabel=ylabel, *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
+                            ax.set_rasterization_zorder(0)
                     else:
                         if x == y:
                             ax.twin.plot([], [])
