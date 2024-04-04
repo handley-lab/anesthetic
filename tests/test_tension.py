@@ -59,7 +59,7 @@ def test_tension_stats_compatiable_gaussian():
 def test_tension_stats_incompatiable_gaussian():
     np.random.rand(0)
     d = 3
-    V = 6.
+    V = 6.0
     nlive = 1000
     bounds = [[-1, 1], [0, 3], [0, 1]]
 
