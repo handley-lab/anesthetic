@@ -6,9 +6,9 @@ from anesthetic.tension import tension_stats
 
 def test_tension_stats_compatiable_gaussian():
     d = 3
-    V = 1.
+    V = 6.0
     nlive = 1000
-    bounds = [[0, 1], [0, 1], [0, 1]]
+    bounds = [[-1, 1], [0, 3], [0, 1]]
 
     meanA = [0.1, 0.3, 0.5]
     covA = np.array([[.01, 0.009, 0],
@@ -51,13 +51,17 @@ def test_tension_stats_compatiable_gaussian():
     logI_exact = -d/2 - 1/2 * slogdet(2*np.pi*(covA+covB))[1] + np.log(V)
     assert logI_mean - 3 * logI_std < logI_exact < logI_mean + 3 * logI_std
 
+    assert samples_stats.get_labels().tolist() == (['$\\log{R}$',
+                                                    '$\\log{I}$', '$\\log{S}$',
+                                                    '$d_G$', '$p$'])
+
 
 def test_tension_stats_incompatiable_gaussian():
     np.random.rand(0)
     d = 3
-    V = 1.
+    V = 6.
     nlive = 1000
-    bounds = [[0, 1], [0, 1], [0, 1]]
+    bounds = [[-1, 1], [0, 3], [0, 1]]
 
     meanA = [0.1, 0.3, 0.5]
     covA = np.array([[.01, 0.009, 0],
@@ -99,3 +103,7 @@ def test_tension_stats_incompatiable_gaussian():
     logI_mean = samples_stats.logI.mean()
     logI_exact = -d/2 - 1/2 * slogdet(2*np.pi*(covA+covB))[1] + np.log(V)
     assert logI_mean - 3 * logI_std < logI_exact < logI_mean + 3 * logI_std
+
+    assert samples_stats.get_labels().tolist() == (['$\\log{R}$',
+                                                    '$\\log{I}$', '$\\log{S}$',
+                                                    '$d_G$', '$p$'])
