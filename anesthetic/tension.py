@@ -16,7 +16,7 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):
     - ``D_KL``: Kullback--Leibler divergence
 
         .. math::
-            D_{KL} = \int \mathcal{P} \log(\mathcal{P} / \pi) d\theta
+            D_\mathrm{KL} = \int \mathcal{P} \log(\mathcal{P} / \pi) d\theta
 
     - ``logL_P``: posterior averaged log-likelihood
 
