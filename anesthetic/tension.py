@@ -16,18 +16,18 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):
     - ``D_KL``: Kullback--Leibler divergence
 
         .. math::
-            D_\mathrm{KL} = \int \mathcal{P} \log(\mathcal{P} / \pi) d\theta
+            D_\mathrm{KL} = \int P \log(P / \pi) d\theta
 
     - ``logL_P``: posterior averaged log-likelihood
 
         .. math::
-            \langle\log L\rangle_\mathcal{P} = \int \mathcal{P} \log L d\theta
+            \langle\log L\rangle_P = \int P \log L d\theta
 
     - ``d_G``: Gaussian model dimensionality
         (or posterior variance of the log-likelihood)
 
         .. math::
-            d_\mathrm{G}/2 = \mathrm{var}(\log L)_\mathcal{P}
+            d_\mathrm{G}/2 = \mathrm{var}(\log L)_P
 
     - ``p``: p-value for the tension between two samples
 
@@ -54,7 +54,7 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):
             values inferred by nested sampling
 
     beta : float, array-like, optional
-        inverse temperature(s) beta=1/kT. Default self.beta
+        inverse temperature(s) beta=1/kT. Default 1
 
     Returns
     -------
@@ -62,9 +62,9 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):
         DataFrame containing the following tension statistics:
         logZ, D_KL, logL_P, d_G, p
     """
-    statsA = A.stats(nsamples, beta)
-    statsB = B.stats(nsamples, beta)
-    statsAB = AB.stats(nsamples, beta)
+    statsA = A.stats(nsample=nsamples, beta=beta)
+    statsB = B.stats(nsample=nsamples, beta=beta)
+    statsAB = AB.stats(nsample=nsamples, beta=beta)
 
     samples_stats = Samples(index=statsA.index)
 
