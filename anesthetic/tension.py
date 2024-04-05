@@ -11,28 +11,28 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):
     - ``logZ``: Bayesian evidence
 
         .. math::
-            \log Z = \int L \pi d\theta
+            \log Z = \log \int L \pi d\theta
 
     - ``D_KL``: Kullback--Leibler divergence
 
         .. math::
-            D_{KL} = \int P \log(P / \pi) d\theta
+            D_{KL} = \int \mathcal{P} \log(\mathcal{P} / \pi) d\theta
 
     - ``logL_P``: posterior averaged log-likelihood
 
         .. math::
-            \langle\log L\rangle_P = \int P \log L d\theta
+            \langle\log L\rangle_\mathcal{P} = \int \mathcal{P} \log L d\theta
 
     - ``d_G``: Gaussian model dimensionality
         (or posterior variance of the log-likelihood)
 
         .. math::
-            d_G/2 = \langle(\log L)^2\rangle_P - \langle\log L\rangle_P^2
+            d_\mathrm{G}/2 = \mathrm{var}(\log L)_\mathcal{P}
 
     - ``p``: p-value for the tension between two samples
 
         .. math::
-            p = \int_{d_G - 2 \log S}^{\infty} \chi^2 (x)dx
+            p = \int_{d_\mathrm{G} - 2 \log S}^{\infty} \chi^2 (x)dx
 
     Parameters
     ----------
@@ -82,7 +82,7 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):
 
     d_G = statsA.d_G + statsB.d_G - statsAB.d_G
     samples_stats['d_G'] = d_G
-    samples_stats.set_label('d_G', r'$d_G$')
+    samples_stats.set_label('d_G', r'$d_\mathrm{G}$')
 
     p = chi2.sf(d_G-2*logS, d_G)
     samples_stats['p'] = p
