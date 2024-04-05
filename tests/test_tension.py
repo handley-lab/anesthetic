@@ -51,9 +51,9 @@ def test_tension_stats_compatiable_gaussian():
     logI_exact = -d/2 - 1/2 * slogdet(2*np.pi*(covA+covB))[1] + np.log(V)
     assert logI_mean - 3 * logI_std < logI_exact < logI_mean + 3 * logI_std
 
-    assert samples_stats.get_labels().tolist() == (['$\\log{R}$',
-                                                    '$\\log{I}$', '$\\log{S}$',
-                                                    '$d_G$', '$p$'])
+    assert samples_stats.get_labels().tolist() == ([r'$\log{R}$',
+                                                    r'$\log{I}$', r'$\log{S}$',
+                                                    r'$d_\mathrm{G}$', r'$p$'])
 
 
 def test_tension_stats_incompatiable_gaussian():
