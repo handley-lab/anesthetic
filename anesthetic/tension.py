@@ -62,9 +62,9 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):
         DataFrame containing the following tension statistics:
         logZ, D_KL, logL_P, d_G, p
     """
-    statsA = A.stats(nsample=nsamples, beta=beta)
-    statsB = B.stats(nsample=nsamples, beta=beta)
-    statsAB = AB.stats(nsample=nsamples, beta=beta)
+    statsA = A.stats(nsamples=nsamples, beta=beta)
+    statsB = B.stats(nsamples=nsamples, beta=beta)
+    statsAB = AB.stats(nsamples=nsamples, beta=beta)
 
     samples_stats = Samples(index=statsA.index)
 
