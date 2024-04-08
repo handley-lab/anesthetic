@@ -369,6 +369,8 @@ class Samples(WeightedLabelledDataFrame):
                         else:
                             ax.plot([], [])
 
+        axes._set_logticks()
+
         return axes
 
     plot_2d_default_kinds = {
