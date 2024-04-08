@@ -514,6 +514,25 @@ def test_plot_logscale_2d(kind):
                     assert ax.twin.get_yscale() == 'linear'
 
 
+def test_logscale_ticks():
+    np.random.seed(42)
+    ndim = 5
+    data = np.exp(10 * np.random.randn(200, ndim))
+    params = [f'a{i}' for i in range(ndim)]
+    fig, axes = make_2d_axes(params, logx=params, logy=params, upper=False)
+    samples = Samples(data, columns=params)
+    samples.plot_2d(axes)
+    for _, col in axes.iterrows():
+        for _, ax in col.items():
+            if ax is not None:
+                xlims = ax.get_xlim()
+                xticks = ax.get_xticks()
+                assert np.sum((xticks > xlims[0]) & (xticks < xlims[1])) > 1
+                ylims = ax.get_ylim()
+                yticks = ax.get_yticks()
+                assert np.sum((yticks > ylims[0]) & (yticks < ylims[1])) > 1
+
+
 @pytest.mark.parametrize('k', ['hist_1d', 'hist'])
 @pytest.mark.parametrize('b', ['scott', 10, np.logspace(-3, 0, 20)])
 @pytest.mark.parametrize('r', [None, (1e-5, 1)])

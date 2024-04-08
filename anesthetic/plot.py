@@ -18,7 +18,7 @@ from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
 from matplotlib.axes import Axes
 import matplotlib.cbook as cbook
 import matplotlib.lines as mlines
-from matplotlib.ticker import MaxNLocator, AutoMinorLocator
+from matplotlib.ticker import MaxNLocator, AutoMinorLocator, LogLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.transforms import Affine2D
 from anesthetic.utils import nest_level
@@ -387,6 +387,15 @@ class AxesDataFrame(DataFrame):
                         ax.set_xscale('log')
                     if y in self._logy:
                         ax.set_yscale('log')
+
+    def _set_logticks(self):
+        for y, rows in self.iterrows():
+            for x, ax in rows.items():
+                if ax is not None:
+                    if x in self._logx:
+                        ax.xaxis.set_major_locator(LogLocator(numticks=3))
+                    if y in self._logy:
+                        ax.yaxis.set_major_locator(LogLocator(numticks=3))
 
     @staticmethod
     def _set_labels(axes, labels, **kwargs):
