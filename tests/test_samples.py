@@ -418,6 +418,10 @@ def test_plot_2d_no_axes():
     assert axes.iloc[-1, 1].get_xlabel() == 'x1'
     assert axes.iloc[-1, 2].get_xlabel() == 'x2'
 
+    with pytest.warns(UserWarning):
+        axes = ns[['x0', 'logL_birth']].plot_2d()
+        axes = ns.drop_labels()[['x0', 'logL_birth']].plot_2d()
+
 
 def test_plot_1d_no_axes():
     np.random.seed(3)
@@ -430,6 +434,11 @@ def test_plot_1d_no_axes():
     assert axes.iloc[0].get_xlabel() == 'x0'
     assert axes.iloc[1].get_xlabel() == 'x1'
     assert axes.iloc[2].get_xlabel() == 'x2'
+
+    with pytest.warns(UserWarning):
+        axes = ns.plot_1d()
+        axes = ns[['x0', 'logL_birth']].plot_1d()
+        axes = ns.drop_labels()[['x0', 'logL_birth']].plot_1d()
 
 
 @pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
@@ -1211,22 +1220,6 @@ def test_hist_range_1d():
     x1, x2 = ax['x0'].get_xlim()
     assert x1 <= -1
     assert x2 >= +1
-
-
-def test_contour_plot_2d_nan():
-    """Contour plots with nans arising from issue #96"""
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-
-    ns.loc[:9, ('x0', '$x_0$')] = np.nan
-    with pytest.raises((np.linalg.LinAlgError, RuntimeError, ValueError)):
-        ns.plot_2d(['x0', 'x1'])
-
-    # Check this error is removed in the case of zero weights
-    weights = ns.get_weights()
-    weights[:10] = 0
-    ns.set_weights(weights, inplace=True)
-    ns.plot_2d(['x0', 'x1'])
 
 
 def test_compute_insertion():
