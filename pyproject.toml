@@ -67,8 +67,8 @@ ultranest = ["h5py"]
 astropy = ["astropy"]
 fastkde = ["fastkde"]
 getdist = ["getdist"]
-hdf5 = ["tables"]
-all = ["h5py", "astropy", "fastkde", "getdist", "tables"]
+hdf5 = ["tables==3.8.0"]
+all = ["h5py", "astropy", "fastkde", "getdist", "tables==3.8.0"]
 
 [project.scripts]
 anesthetic = "anesthetic.scripts:gui"
