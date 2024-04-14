@@ -8,31 +8,33 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
 
     Using nested sampling we can compute:
 
-    - ``logZ``: Bayesian evidence
+    - ``logR``: Logarithmic of R statistic
 
       .. math::
-          \\log Z = \\log \\int L \\pi d\\theta
+        \\log R = \\log Z_\\mathrm{AB} - \\log Z_\\mathrm{A}
+                     - \\log Z_\\mathrm{B}
 
-    - ``D_KL``: Kullback--Leibler divergence
-
-      .. math::
-          D_\\mathrm{KL} = \\int P \\log(P / \\pi) d\\theta
-
-    - ``logL_P``: posterior averaged log-likelihood
+    - ``logI``: Logarithmic of information ratio
 
       .. math::
-          \\langle\\log L\\rangle_P = \\int P \\log L d\\theta
+        \\log I = D_\\mathrm{KL}^A + D_\\mathrm{KL}^B - D_\\mathrm{KL}^{AB}
+
+    - ``logS``: Logarithmic of suspiciousness
+
+      .. math::
+        \\log S = \\log L_\\mathrm{AB} - \\log
+        L_\\mathrm{A} - \\log L_\\mathrm{B}
 
     - ``d_G``: Gaussian model dimensionality
       (or posterior variance of the log-likelihood)
 
       .. math::
-          d_\\mathrm{G}/2 = \\mathrm{var}(\\log L)_P
+        d_\\mathrm{G}/2 = \\mathrm{var}(\\log L)_P
 
     - ``p``: p-value for the tension between two samples
 
       .. math::
-          p = \\int_{d_\\mathrm{G} - 2 \\log S}^{\\infty} \\chi^2 (x)dx
+        p = \\int_{d_\\mathrm{G} - 2 \\log S}^{\\infty} \\chi^2 (x)dx
 
     Parameters
     ----------
@@ -60,7 +62,7 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     -------
     samples_stats : :class:`anesthetic.samples.Samples`
         DataFrame containing the following tension statistics:
-        logZ, D_KL, logL_P, d_G, p
+        logR, logI, logS, d_G, p
     """
     statsA = A.stats(nsamples=nsamples, beta=beta)
     statsB = B.stats(nsamples=nsamples, beta=beta)
@@ -76,7 +78,7 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     samples_stats['logI'] = logI
     samples_stats.set_label('logI', r'$\log{I}$')
 
-    logS = logR-logI
+    logS = statsAB.logL_P - statsA.logL_P - statsB.logL_P
     samples_stats['logS'] = logS
     samples_stats.set_label('logS', r'$\log{S}$')
 
