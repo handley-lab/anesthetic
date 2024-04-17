@@ -1431,6 +1431,10 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
           effective samples in :func:`anesthetic.utils.neff`
           with ``beta=ncompress``.
 
+    Other Parameters
+    ----------------
+    **kwargs : rasterized = True (by default we rasterize scatter plots)
+
     Returns
     -------
     lines : :class:`matplotlib.lines.Line2D`
@@ -1454,10 +1458,10 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None else cmap(0.68)))
-
+    rasterized = kwargs.pop('raster', True) 
     kwargs.pop('q', None)
 
-    points = ax.plot(data_x, data_y, 'o', color=color, markersize=markersize,
+    points = ax.plot(data_x, data_y, 'o', color=color, markersize=markersize, rasterized=rasterized,
                      *args, **kwargs)
     return points
 
