@@ -356,7 +356,7 @@ class Samples(WeightedLabelledDataFrame):
                             if np.isinf(self[x]).any():
                                 warnings.warn(f"column {y} has inf values.")
                             selfxy = self[[x, y]]
-                            selfxy = self.replace([-np.inf, np.inf], np.nan)
+                            selfxy = selfxy.replace([-np.inf, np.inf], np.nan)
                             selfxy = selfxy.dropna(axis=0)
                             selfxy.plot(x, y, ax=ax, xlabel=xlabel,
                                         logx=x in logx, logy=y in logy,
