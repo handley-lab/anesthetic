@@ -394,8 +394,12 @@ class AxesDataFrame(DataFrame):
                 if ax is not None:
                     if x in self._logx:
                         ax.xaxis.set_major_locator(LogLocator(numticks=3))
+                        if x != y:
+                            ax.set_xlim(ax.dataLim.intervalx)
                     if y in self._logy:
                         ax.yaxis.set_major_locator(LogLocator(numticks=3))
+                        if y != x:
+                            ax.set_ylim(ax.dataLim.intervaly)
 
     @staticmethod
     def _set_labels(axes, labels, **kwargs):
