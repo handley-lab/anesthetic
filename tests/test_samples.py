@@ -308,31 +308,29 @@ def test_plot_2d_colours(kind):
     kinds = {'diagonal': kind + '_1d',
              'lower': kind + '_2d',
              'upper': 'scatter_2d'}
-    gd.plot_2d(axes, kind=kinds, label="gd")
-    pc.plot_2d(axes, kind=kinds, label="pc")
-    mn.plot_2d(axes, kind=kinds, label="mn")
-    gd_colors = []
-    pc_colors = []
-    mn_colors = []
+    gd.plot_2d(axes, kind=kinds, label="A")
+    pc.plot_2d(axes, kind=kinds, label="B")
+    mn.plot_2d(axes, kind=kinds, label="C")
+    gd.plot_2d(axes, kind=kinds, label="D", color='C7')
+    pc.plot_2d(axes, kind=kinds, label="E", color='C6')
+    mn.plot_2d(axes, kind=kinds, label="F", color='C5')
+
+    from collections import defaultdict
+    d = defaultdict(set)
+
     for y, rows in axes.iterrows():
         for x, ax in rows.items():
             handles, labels = ax.get_legend_handles_labels()
             for handle, label in zip(handles, labels):
                 if isinstance(handle, Rectangle):
-                    color = to_hex(handle.get_facecolor())
+                    color = handle.get_facecolor()
                 else:
                     color = handle.get_color()
+                color = to_hex(color)
+                d[label].add(color)
 
-                if label == 'gd':
-                    gd_colors.append(color)
-                elif label == 'pc':
-                    pc_colors.append(color)
-                elif label == 'mn':
-                    mn_colors.append(color)
-
-    assert len(set(gd_colors)) == 1
-    assert len(set(mn_colors)) == 1
-    assert len(set(pc_colors)) == 1
+    for v in d.values():
+        assert len(v) == 1
 
 
 @pytest.mark.parametrize('kwargs', [dict(color='r', alpha=0.5, ls=':', lw=1),
