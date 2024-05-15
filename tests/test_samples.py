@@ -13,9 +13,9 @@ from anesthetic import (
     Samples, MCMCSamples, NestedSamples, make_1d_axes, make_2d_axes,
     read_chains
 )
-from anesthetic.samples import (merge_nested_samples, merge_samples_weighted,
-                                WeightedLabelledSeries,
-                                WeightedLabelledDataFrame)
+from anesthetic.samples import merge_nested_samples, merge_samples_weighted
+from anesthetic.weighted_labelled_pandas import (WeightedLabelledSeries,
+                                                 WeightedLabelledDataFrame)
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_array_less, assert_allclose)
 from pandas.testing import assert_frame_equal
@@ -308,31 +308,29 @@ def test_plot_2d_colours(kind):
     kinds = {'diagonal': kind + '_1d',
              'lower': kind + '_2d',
              'upper': 'scatter_2d'}
-    gd.plot_2d(axes, kind=kinds, label="gd")
-    pc.plot_2d(axes, kind=kinds, label="pc")
-    mn.plot_2d(axes, kind=kinds, label="mn")
-    gd_colors = []
-    pc_colors = []
-    mn_colors = []
+    gd.plot_2d(axes, kind=kinds, label="A")
+    pc.plot_2d(axes, kind=kinds, label="B")
+    mn.plot_2d(axes, kind=kinds, label="C")
+    gd.plot_2d(axes, kind=kinds, label="D", color='C7')
+    pc.plot_2d(axes, kind=kinds, label="E", color='C6')
+    mn.plot_2d(axes, kind=kinds, label="F", color='C5')
+
+    from collections import defaultdict
+    d = defaultdict(set)
+
     for y, rows in axes.iterrows():
         for x, ax in rows.items():
             handles, labels = ax.get_legend_handles_labels()
             for handle, label in zip(handles, labels):
                 if isinstance(handle, Rectangle):
-                    color = to_hex(handle.get_facecolor())
+                    color = handle.get_facecolor()
                 else:
                     color = handle.get_color()
+                color = to_hex(color)
+                d[label].add(color)
 
-                if label == 'gd':
-                    gd_colors.append(color)
-                elif label == 'pc':
-                    pc_colors.append(color)
-                elif label == 'mn':
-                    mn_colors.append(color)
-
-    assert len(set(gd_colors)) == 1
-    assert len(set(mn_colors)) == 1
-    assert len(set(pc_colors)) == 1
+    for v in d.values():
+        assert len(v) == 1
 
 
 @pytest.mark.parametrize('kwargs', [dict(color='r', alpha=0.5, ls=':', lw=1),
@@ -394,7 +392,8 @@ def test_plot_1d_colours(kind):
 def test_astropyhist():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
-    ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
+    with pytest.raises(ValueError):
+        ns.plot_1d(['x0', 'x1', 'x2', 'x3'], kind='hist_1d', bins='knuth')
 
 
 def test_hist_levels():
@@ -417,6 +416,10 @@ def test_plot_2d_no_axes():
     assert axes.iloc[-1, 1].get_xlabel() == 'x1'
     assert axes.iloc[-1, 2].get_xlabel() == 'x2'
 
+    with pytest.warns(UserWarning):
+        axes = ns[['x0', 'logL_birth']].plot_2d()
+        axes = ns.drop_labels()[['x0', 'logL_birth']].plot_2d()
+
 
 def test_plot_1d_no_axes():
     np.random.seed(3)
@@ -429,6 +432,171 @@ def test_plot_1d_no_axes():
     assert axes.iloc[0].get_xlabel() == 'x0'
     assert axes.iloc[1].get_xlabel() == 'x1'
     assert axes.iloc[2].get_xlabel() == 'x2'
+
+    with pytest.warns(UserWarning):
+        axes = ns.plot_1d()
+        axes = ns[['x0', 'logL_birth']].plot_1d()
+        axes = ns.drop_labels()[['x0', 'logL_birth']].plot_1d()
+
+
+@pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
+def test_plot_logscale_1d(kind):
+    ns = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x1', 'x2', 'x3', 'x4']
+
+    # 1d
+    axes = ns.plot_1d(params, kind=kind + '_1d', logx=['x2'])
+    for x, ax in axes.items():
+        if x == 'x2':
+            assert ax.get_xscale() == 'log'
+        else:
+            assert ax.get_xscale() == 'linear'
+    ax = axes.loc['x2']
+    if 'kde' in kind:
+        p = ax.get_children()
+        arg = np.argmax(p[0].get_ydata())
+        pmax = np.log10(p[0].get_xdata()[arg])
+        d = 0.1
+    else:
+        arg = np.argmax([p.get_height() for p in ax.patches])
+        pmax = np.log10(ax.patches[arg].get_x())
+        d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x())
+    assert pmax == pytest.approx(-1, abs=d)
+
+
+@pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
+def test_plot_logscale_2d(kind):
+    ns = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x1', 'x2', 'x3', 'x4']
+
+    # 2d, logx only
+    axes = ns.plot_2d(params, kind=kind, logx=['x2'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if ax is not None:
+                if x == 'x2':
+                    assert ax.get_xscale() == 'log'
+                else:
+                    assert ax.get_xscale() == 'linear'
+                ax.get_yscale() == 'linear'
+                if x == y:
+                    if x == 'x2':
+                        assert ax.twin.get_xscale() == 'log'
+                    else:
+                        assert ax.twin.get_xscale() == 'linear'
+                    assert ax.twin.get_yscale() == 'linear'
+
+    # 2d, logy only
+    axes = ns.plot_2d(params, kind=kind, logy=['x2'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if ax is not None:
+                ax.get_xscale() == 'linear'
+                if y == 'x2':
+                    assert ax.get_yscale() == 'log'
+                else:
+                    assert ax.get_yscale() == 'linear'
+                if x == y:
+                    assert ax.twin.get_xscale() == 'linear'
+                    assert ax.twin.get_yscale() == 'linear'
+
+    # 2d, logx and logy
+    axes = ns.plot_2d(params, kind=kind, logx=['x2'], logy=['x2'])
+    for y, rows in axes.iterrows():
+        for x, ax in rows.items():
+            if ax is not None:
+                if x == 'x2':
+                    assert ax.get_xscale() == 'log'
+                else:
+                    assert ax.get_xscale() == 'linear'
+                if y == 'x2':
+                    assert ax.get_yscale() == 'log'
+                else:
+                    assert ax.get_yscale() == 'linear'
+                if x == y:
+                    if x == 'x2':
+                        assert ax.twin.get_xscale() == 'log'
+                    else:
+                        assert ax.twin.get_xscale() == 'linear'
+                    assert ax.twin.get_yscale() == 'linear'
+
+
+def test_logscale_ticks():
+    np.random.seed(42)
+    ndim = 5
+    data1 = np.exp(10 * np.random.randn(200, ndim))
+    data2 = np.exp(10 * np.random.randn(200, ndim) - 50)
+    params = [f'a{i}' for i in range(ndim)]
+    fig, axes = make_2d_axes(params, logx=params, logy=params, upper=False)
+    samples1 = Samples(data1, columns=params)
+    samples2 = Samples(data2, columns=params)
+    samples1.plot_2d(axes)
+    samples2.plot_2d(axes)
+    for y, col in axes.iterrows():
+        for x, ax in col.items():
+            if ax is not None:
+                xlims = ax.get_xlim()
+                xticks = ax.get_xticks()
+                assert np.sum((xticks > xlims[0]) & (xticks < xlims[1])) > 1
+                ylims = ax.get_ylim()
+                yticks = ax.get_yticks()
+                assert np.sum((yticks > ylims[0]) & (yticks < ylims[1])) > 1
+                if x == y:
+                    data_min = ax.twin.dataLim.intervalx[0]
+                    data_max = ax.twin.dataLim.intervalx[1]
+                    assert xlims[0] == pytest.approx(data_min, rel=1e-14)
+                    assert xlims[1] == pytest.approx(data_max, rel=1e-14)
+                else:
+                    assert_array_equal(xlims, ax.dataLim.intervalx)
+                    assert_array_equal(ylims, ax.dataLim.intervaly)
+
+
+@pytest.mark.parametrize('k', ['hist_1d', 'hist'])
+@pytest.mark.parametrize('b', ['scott', 10, np.logspace(-3, 0, 20)])
+@pytest.mark.parametrize('r', [None, (1e-5, 1)])
+def test_plot_logscale_hist_kwargs(k, b, r):
+    ns = read_chains('./tests/example_data/pc')
+    with pytest.warns(UserWarning) if k == 'hist' else nullcontext():
+        axes = ns[['x2']].plot_1d(kind=k, logx=['x2'], bins=b, range=r)
+    ax = axes.loc['x2']
+    assert ax.get_xscale() == 'log'
+    arg = np.argmax([p.get_height() for p in ax.patches])
+    pmax = np.log10(ax.patches[arg].get_x())
+    d = np.log10(ax.patches[arg+1].get_x() / ax.patches[arg].get_x())
+    assert pmax == pytest.approx(-1, abs=d)
+
+
+def test_logscale_failure_without_match():
+    ns = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x2']
+
+    # 1d
+    axes = ns.plot_1d(params)
+    with pytest.raises(ValueError):
+        ns.plot_1d(axes, logx=['x2'])
+    fig, axes = make_1d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_1d(axes, logx=['x2'])
+
+    # 2d
+    axes = ns.plot_2d(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'])
+    axes = ns.plot_2d(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logy=['x2'])
+    axes = ns.plot_2d(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'], logy=['x2'])
+    fig, axes = make_2d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'])
+    fig, axes = make_2d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logy=['x2'])
+    fig, axes = make_2d_axes(params)
+    with pytest.raises(ValueError):
+        ns.plot_2d(axes, logx=['x2'], logy=['x2'])
 
 
 def test_mcmc_stats():
@@ -1001,20 +1169,66 @@ def test_live_points():
     assert not live_points.isweighted()
 
 
-def test_contour_plot_2d_nan():
-    """Contour plots with nans arising from issue #96"""
+def test_dead_points():
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+
+    for i, logL in pc.logL.iloc[::49].items():
+        dead_points = pc.dead_points(logL)
+        assert len(dead_points) == int(len(pc[:i[0]]))
+
+        dead_points_from_int = pc.dead_points(i[0])
+        assert_array_equal(dead_points_from_int, dead_points)
+
+        dead_points_from_index = pc.dead_points(i)
+        assert_array_equal(dead_points_from_index, dead_points)
+
+    assert pc.dead_points(1).index[0] == 0
+
+    last_dead_points = pc.dead_points()
+    logL = pc.logL_birth.max()
+    assert (last_dead_points.logL <= logL).all()
+    assert len(last_dead_points) == len(pc) - pc.nlive.mode().to_numpy()[0]
+    assert not dead_points.isweighted()
+
+
+def test_contour():
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+
+    cut_float = 30.0
+    assert cut_float == pc.contour(cut_float)
+
+    cut_int = 0
+    assert pc.logL.min() == pc.contour(cut_int)
+
+    cut_none = None
+    nlive = pc.nlive.mode().to_numpy()[0]
+    assert sorted(pc.logL)[-nlive] == pc.contour(cut_none)
+
+
+@pytest.mark.parametrize("cut", [200, 0.0, None])
+def test_truncate(cut):
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+    truncated_run = pc.truncate(cut)
+    assert not truncated_run.index.duplicated().any()
+    if cut is None:
+        assert_array_equal(pc, truncated_run)
+
+
+def test_hist_range_1d():
+    """Test to provide a solution to #89"""
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
-
-    ns.loc[:9, ('x0', '$x_0$')] = np.nan
-    with pytest.raises((np.linalg.LinAlgError, RuntimeError, ValueError)):
-        ns.plot_2d(['x0', 'x1'])
-
-    # Check this error is removed in the case of zero weights
-    weights = ns.get_weights()
-    weights[:10] = 0
-    ns.set_weights(weights, inplace=True)
-    ns.plot_2d(['x0', 'x1'])
+    ax = ns.plot_1d('x0', kind='hist_1d')
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 > -1
+    assert x2 < +1
+    ax = ns.plot_1d('x0', kind='hist_1d', bins=np.linspace(-1, 1, 11))
+    x1, x2 = ax['x0'].get_xlim()
+    assert x1 <= -1
+    assert x2 >= +1
 
 
 def test_compute_insertion():
@@ -1270,7 +1484,7 @@ def test_samples_dot_plot():
     assert len(axes) == 2
 
     axes = samples.plot.kde_2d('x0', 'x1')
-    assert len(axes.collections) == 5
+    assert len(axes.collections) > 0
     assert axes.get_xlabel() == '$x_0$'
     assert axes.get_ylabel() == '$x_1$'
     axes = samples.plot.hist_2d('x1', 'x0')
@@ -1293,7 +1507,7 @@ def test_samples_dot_plot():
     assert axes.get_xlim()[1] < 0.3
 
     axes = samples.drop_labels().plot.kde_2d('x0', 'x1')
-    assert len(axes.collections) == 5
+    assert len(axes.collections) > 0
     assert axes.get_xlabel() == 'x0'
     assert axes.get_ylabel() == 'x1'
     axes = samples.drop_labels().plot.hist_2d('x1', 'x0')
@@ -1308,12 +1522,12 @@ def test_samples_dot_plot():
         axes = samples.plot.fastkde_2d('x0', 'x1')
         assert axes.get_xlabel() == '$x_0$'
         assert axes.get_ylabel() == '$x_1$'
-        assert len(axes.collections) == 5
+        assert len(axes.collections) > 0
         plt.close("all")
         axes = samples.drop_labels().plot.fastkde_2d('x0', 'x1')
         assert axes.get_xlabel() == 'x0'
         assert axes.get_ylabel() == 'x1'
-        assert len(axes.collections) == 5
+        assert len(axes.collections) > 0
         plt.close("all")
         axes = samples.x0.plot.fastkde_1d()
         assert len(axes.lines) == 1

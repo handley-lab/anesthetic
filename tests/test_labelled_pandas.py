@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.testing import assert_array_equal
-from anesthetic.labelled_pandas import LabelledSeries, LabelledDataFrame
+from anesthetic.labelled_pandas import (LabelledSeries, LabelledDataFrame,
+                                        read_csv)
 from pandas import Series, DataFrame, MultiIndex
 import pandas.testing
 import pytest
@@ -469,3 +470,29 @@ def test_drop_labels(lframe_index):
     assert_frame_equal_not_index(ldf, nolabels)
     assert_frame_equal(nolabels.drop_labels(), nolabels)
     assert nolabels.drop_labels() is not nolabels
+
+
+def test_read_csv(tmp_path):
+    filename = tmp_path / 'mcmc_ldf.csv'
+
+    lframe = LabelledDataFrame(np.random.rand(3, 3),
+                               index=['A', 'B', 'C'],
+                               columns=['a', 'b', 'c'])
+    lframe.to_csv(filename)
+    lframe_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(lframe, lframe_)
+
+    lframe.set_labels(['$A$', '$B$', '$C$'], axis=0, inplace=True)
+    lframe.to_csv(filename)
+    lframe_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(lframe, lframe_)
+
+    lframe.set_labels(['$a$', '$b$', '$c$'], axis=1, inplace=True)
+    lframe.to_csv(filename)
+    lframe_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(lframe, lframe_)
+
+    lframe = lframe.drop_labels(axis=0)
+    lframe.to_csv(filename)
+    lframe_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(lframe, lframe_)

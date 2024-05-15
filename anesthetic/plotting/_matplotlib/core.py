@@ -52,11 +52,11 @@ class _WeightedMPLPlot(MPLPlot):
         else:
             return super()._get_index_name()
 
-    def _get_xticks(self, convert_period: bool = False):
+    def _get_xticks(self):
         if isinstance(self.data, _WeightedObject):
             return self.data.drop_weights().index._mpl_repr()
         else:
-            return super()._get_xticks(convert_period)
+            return super()._get_xticks()
 
 
 def _compress_weights(kwargs, data):
@@ -82,7 +82,7 @@ class ScatterPlot(_CompressedMPLPlot, _ScatterPlot):
 
 class _PlanePlot2d(PlanePlot):
 
-    def _make_plot(self):
+    def _make_plot(self, fig):
         if self.colormap is not None:
             self.kwds['cmap'] = plt.get_cmap(self.colormap)
         colors = self._get_colors()
@@ -100,6 +100,8 @@ class _PlanePlot2d(PlanePlot):
         ax = self._get_ax(0)  # another one of these hard-coded 0s
 
         kwds = self.kwds.copy()
+        if self.color is not None:
+            kwds["color"] = self.color
         label = pprint_thing(self.label)
         kwds["label"] = label
 
@@ -108,9 +110,6 @@ class _PlanePlot2d(PlanePlot):
             raise TypeError("'style' keyword argument is not "
                             f"supported by {self._kind}")
         self._plot(ax, x.values, y.values, **kwds)
-
-    def _args_adjust(self):
-        pass
 
 
 class ScatterPlot2d(_CompressedMPLPlot, _PlanePlot2d):
@@ -131,6 +130,8 @@ class HexBinPlot(_HexBinPlot):
             C = '__weights'
             data[C] = data.get_weights()
             kwargs['reduce_C_function'] = np.sum
+            if 'mincnt' not in kwargs:
+                kwargs['mincnt'] = np.finfo(np.float64).tiny
         super().__init__(data, x, y, C=C, **kwargs)
 
 

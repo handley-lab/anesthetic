@@ -1,4 +1,5 @@
-from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.weighted_pandas import (WeightedDataFrame, WeightedSeries,
+                                        read_csv)
 from pandas import DataFrame, MultiIndex
 import pandas.testing
 from anesthetic.utils import neff
@@ -408,7 +409,7 @@ def test_WeightedDataFrame_compress(frame):
 
 
 def test_WeightedDataFrame_nan(frame):
-    frame['A'][0] = np.nan
+    frame.loc[0, 'A'] = np.nan
     assert ~frame.mean().isna().any()
     assert ~frame.mean(axis=1).isna().any()
     assert_array_equal(frame.mean(skipna=False).isna(), [True] + [False]*5)
@@ -421,7 +422,7 @@ def test_WeightedDataFrame_nan(frame):
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
                        [True, False, False, False, False, False])
 
-    frame['B'][2] = np.nan
+    frame.loc[2, 'B'] = np.nan
     assert ~frame.mean().isna().any()
     assert_array_equal(frame.mean(skipna=False).isna(),
                        [True, True] + [False]*4)
@@ -434,10 +435,10 @@ def test_WeightedDataFrame_nan(frame):
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
                        [True, False, True, False, False, False])
 
-    frame['C'][4] = np.nan
-    frame['D'][5] = np.nan
-    frame['E'][6] = np.nan
-    frame['F'][7] = np.nan
+    frame.loc[4, 'C'] = np.nan
+    frame.loc[5, 'D'] = np.nan
+    frame.loc[6, 'E'] = np.nan
+    frame.loc[7, 'F'] = np.nan
     assert ~frame.mean().isna().any()
     assert frame.mean(skipna=False).isna().all()
     assert_array_equal(frame.mean(axis=1, skipna=False).isna()[0:6],
@@ -492,7 +493,7 @@ def test_WeightedSeries_cov(frame):
     assert_allclose(frame.A.cov(frame.A), 1./12, atol=1e-2)
     assert_allclose(frame.A.cov(frame.B), 0, atol=1e-2)
 
-    frame['A'][0] = np.nan
+    frame.loc[0, 'A'] = np.nan
     assert_allclose(frame.A.cov(frame.A), 1./12, atol=1e-2)
     assert_allclose(frame.A.cov(frame.B), 0, atol=1e-2)
 
@@ -1005,3 +1006,27 @@ def test_style(mcmc_wdf):
         ax = mcmc_wdf.plot.kde_2d('x', 'y', style='c')
     with pytest.raises(TypeError):
         ax = mcmc_wdf.plot.scatter_2d('x', 'y', style='c')
+
+
+def test_read_csv(tmp_path, mcmc_wdf):
+    filename = tmp_path / 'mcmc_wdf.csv'
+
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
+
+    mcmc_wdf.set_weights(np.random.rand(mcmc_wdf.shape[1]),
+                         axis=1, inplace=True)
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
+
+    mcmc_wdf = mcmc_wdf.drop_weights(axis=0)
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
+
+    mcmc_wdf = mcmc_wdf.drop_weights(axis=1)
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)

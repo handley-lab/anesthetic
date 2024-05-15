@@ -22,29 +22,56 @@ from anesthetic.plot import (
     hist_plot_1d,
     quantile_plot_interval,
 )
-from anesthetic.utils import quantile, histogram_bin_edges
+from anesthetic.utils import histogram_bin_edges
 
 
 class HistPlot(_WeightedMPLPlot, _HistPlot):
+
     # noqa: disable=D101
-    def _calculate_bins(self, data):
+    def _adjust_bins(self, bins) -> None:
+        if (
+                isinstance(bins, str) and
+                bins in ['fd', 'scott', 'sqrt']
+        ):
+            bins = self._calculate_bins(self.data, bins)
+        return super()._adjust_bins(bins)
+
+    # noqa: disable=D101
+    def _calculate_bins(self, data, bins):
+        if self.logx:
+            data = np.log10(data)
+            if self._bin_range is not None:
+                xmin, xmax = self._bin_range
+                self._bin_range = (np.log10(xmin), np.log10(xmax))
         nd_values = data.infer_objects(copy=False)._get_numeric_data()
         values = np.ravel(nd_values)
-        weights = self.kwds.get("weights", None)
+        weights = self.weights
         if weights is not None:
-            try:
-                weights = np.broadcast_to(weights[:, None], nd_values.shape)
-            except ValueError:
-                pass
+            weights = np.broadcast_to(weights[:, None], nd_values.shape)
             weights = np.ravel(weights)
             weights = weights[~isna(values)]
 
         values = values[~isna(values)]
 
-        hist, bins = np.histogram(
-            values, bins=self.bins, range=self.kwds.get("range", None),
-            weights=weights
-        )
+        if isinstance(bins, str) and bins in ['fd', 'scott', 'sqrt']:
+            bins = histogram_bin_edges(
+                values,
+                weights=weights,
+                bins=bins,
+                beta=self.kwds.pop('beta', 'equal'),
+                range=self._bin_range
+            )
+        else:
+            bins = np.histogram_bin_edges(
+                values,
+                weights=weights,
+                bins=bins,
+                range=self._bin_range
+            )
+        if self.logx:
+            bins = 10**bins
+            if self._bin_range is not None:
+                self._bin_range = (xmin, xmax)
         return bins
 
     def _get_colors(self, num_colors=None, color_kwds='color'):
@@ -149,23 +176,14 @@ class Hist1dPlot(HistPlot):
     ) -> None:
         super().__init__(data, bins=bins, bottom=bottom, **kwargs)
 
-    def _args_adjust(self) -> None:
-        if 'range' not in self.kwds:
+    def _calculate_bins(self, data, bins):
+        if self._bin_range is None:
             q = self.kwds.get('q', 5)
             q = quantile_plot_interval(q=q)
-            weights = self.kwds.get('weights', None)
-            xmin = quantile(self.data, q[0], weights)
-            xmax = quantile(self.data, q[-1], weights)
-            self.kwds['range'] = (xmin, xmax)
-        if isinstance(self.bins, str) and self.bins in ['fd', 'scott', 'sqrt']:
-            self.bins = histogram_bin_edges(
-                self.data,
-                weights=self.kwds.get('weights', None),
-                bins=self.bins,
-                beta=self.kwds.pop('beta', 'equal'),
-                range=self.kwds.get('range', None)
-            )
-        super()._args_adjust()
+            xmin, xmax = data.quantile(q).to_numpy().ravel()
+            self._bin_range = (xmin, xmax)
+        bins = super()._calculate_bins(data, bins)
+        return bins
 
     @classmethod
     def _plot(

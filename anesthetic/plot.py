@@ -18,7 +18,7 @@ from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
 from matplotlib.axes import Axes
 import matplotlib.cbook as cbook
 import matplotlib.lines as mlines
-from matplotlib.ticker import MaxNLocator, AutoMinorLocator
+from matplotlib.ticker import MaxNLocator, AutoMinorLocator, LogLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.transforms import Affine2D
 from anesthetic.utils import nest_level
@@ -43,6 +43,8 @@ class AxesSeries(Series):
     labels : dict(str:str), optional
         Dictionary mapping params to plot labels.
         Default: params
+    logx : list(str), optional
+        List of parameters to be plotted on a log scale.
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
@@ -58,14 +60,23 @@ class AxesSeries(Series):
 
     """
 
+    _metadata = ['_logx']
+    _logx = []
+
     def __init__(self, data=None, index=None, fig=None, ncol=None, labels=None,
-                 gridspec_kw=None, subplot_spec=None, *args, **kwargs):
+                 logx=None, gridspec_kw=None, subplot_spec=None,
+                 *args, **kwargs):
         if data is None and index is not None:
             data = self.axes_series(index=index, fig=fig, ncol=ncol,
                                     gridspec_kw=gridspec_kw,
                                     subplot_spec=subplot_spec)
             self._set_xlabels(axes=data, labels=labels)
         super().__init__(data=data, index=index, *args, **kwargs)
+        if logx is None:
+            self._logx = []
+        else:
+            self._logx = logx
+            self._set_xscale()
 
     @property
     def _constructor(self):
@@ -99,6 +110,11 @@ class AxesSeries(Series):
             axes[p] = ax = fig.add_subplot(g)
             ax.set_yticks([])
         return axes
+
+    def _set_xscale(self):
+        for p, ax in self.items():
+            if p in self._logx:
+                ax.set_xscale('log')
 
     @staticmethod
     def _set_xlabels(axes, labels, **kwargs):
@@ -148,6 +164,9 @@ class AxesDataFrame(DataFrame):
         If 'outer', plot ticks only on the very left and very bottom.
         If 'inner', plot ticks also in inner subplots.
         If None, plot no ticks at all.
+    logx, logy : list(str), optional
+        Lists of parameters to be plotted on a log scale on the x-axis or
+        y-axis, respectively.
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
         constructor used to create the grid the subplots are placed on.
@@ -171,10 +190,14 @@ class AxesDataFrame(DataFrame):
 
     """
 
+    _metadata = ['_logx', '_logy']
+    _logx = []
+    _logy = []
+
     def __init__(self, data=None, index=None, columns=None, fig=None,
                  lower=True, diagonal=True, upper=True, labels=None,
-                 ticks='inner', gridspec_kw=None, subplot_spec=None,
-                 *args, **kwargs):
+                 ticks='inner', logx=None, logy=None,
+                 gridspec_kw=None, subplot_spec=None, *args, **kwargs):
         if data is None and index is not None and columns is not None:
             position = self._position_frame(index=index,
                                             columns=columns,
@@ -193,6 +216,16 @@ class AxesDataFrame(DataFrame):
                          index=index,
                          columns=columns,
                          *args, **kwargs)
+        if logx is None:
+            self._logx = []
+        else:
+            self._logx = logx
+        if logy is None:
+            self._logy = []
+        else:
+            self._logy = logy
+        if self._logx or self._logy:
+            self._set_scale()
         self.tick_params(axis='both', which='both', labelrotation=45,
                          labelsize='small')
 
@@ -214,12 +247,12 @@ class AxesDataFrame(DataFrame):
             for i, x in enumerate(columns):
                 if all_params.index(x) < all_params.index(y):
                     if lower:
-                        position[x][y] = -1
+                        position.loc[y, x] = -1
                 elif all_params.index(x) > all_params.index(y):
                     if upper:
-                        position[x][y] = +1
+                        position.loc[y, x] = +1
                 elif diagonal:
-                    position[x][y] = 0
+                    position.loc[y, x] = 0
         return position
 
     @classmethod
@@ -244,7 +277,7 @@ class AxesDataFrame(DataFrame):
                                          hspace=hspace, wspace=wspace,
                                          subplot_spec=subplot_spec,
                                          **gridspec_kw)
-        axes[:][:] = None
+        axes.loc[:, :] = None
         for j, y in enumerate(axes.index[::-1]):
             for i, x in enumerate(axes.columns):
                 if position[x][y] is not None:
@@ -252,7 +285,7 @@ class AxesDataFrame(DataFrame):
                     sx = sx[0] if sx else None
                     sy = list(axes.T[y].dropna())
                     sy = sy[0] if sy else None
-                    axes[x][y] = fig.add_subplot(
+                    axes.loc[y, x] = fig.add_subplot(
                         gs[axes.index.size - 1 - j, i], sharex=sx, sharey=sy
                     )
                     if position[x][y] == 0:
@@ -289,15 +322,19 @@ class AxesDataFrame(DataFrame):
         class DiagonalAxes(type(ax)):
             def set_xlim(self, left=None, right=None, emit=True, auto=False,
                          xmin=None, xmax=None):
-                super().set_ylim(bottom=left, top=right, emit=True, auto=auto,
-                                 ymin=xmin, ymax=xmax)
+                if (self.get_xaxis().get_scale() ==
+                        self.get_yaxis().get_scale()):
+                    super().set_ylim(bottom=left, top=right, emit=True,
+                                     auto=auto, ymin=xmin, ymax=xmax)
                 return super().set_xlim(left=left, right=right, emit=emit,
                                         auto=auto, xmin=xmin, xmax=xmax)
 
             def set_ylim(self, bottom=None, top=None, emit=True, auto=False,
                          ymin=None, ymax=None):
-                super().set_xlim(left=bottom, right=top, emit=True, auto=auto,
-                                 xmin=ymin, xmax=ymax)
+                if (self.get_xaxis().get_scale() ==
+                        self.get_yaxis().get_scale()):
+                    super().set_xlim(left=bottom, right=top, emit=True,
+                                     auto=auto, xmin=ymin, xmax=ymax)
                 return super().set_ylim(bottom=bottom, top=top, emit=emit,
                                         auto=auto, ymin=ymin, ymax=ymax)
 
@@ -341,6 +378,28 @@ class AxesDataFrame(DataFrame):
                 return bottom, top
 
         ax.__class__ = OffDiagonalAxes
+
+    def _set_scale(self):
+        for y, rows in self.iterrows():
+            for x, ax in rows.items():
+                if ax is not None:
+                    if x in self._logx:
+                        ax.set_xscale('log')
+                    if y in self._logy:
+                        ax.set_yscale('log')
+
+    def _set_logticks(self):
+        for y, rows in self.iterrows():
+            for x, ax in rows.items():
+                if ax is not None:
+                    if x in self._logx:
+                        ax.xaxis.set_major_locator(LogLocator(numticks=3))
+                        if x != y:
+                            ax.set_xlim(ax.dataLim.intervalx)
+                    if y in self._logy:
+                        ax.yaxis.set_major_locator(LogLocator(numticks=3))
+                        if y != x:
+                            ax.set_ylim(ax.dataLim.intervaly)
 
     @staticmethod
     def _set_labels(axes, labels, **kwargs):
@@ -559,7 +618,7 @@ class AxesDataFrame(DataFrame):
                         ax.scatter(params[x], params[y], zorder=z, **kwargs)
 
 
-def make_1d_axes(params, ncol=None, labels=None,
+def make_1d_axes(params, ncol=None, labels=None, logx=None,
                  gridspec_kw=None, subplot_spec=None, **fig_kw):
     """Create a set of axes for plotting 1D marginalised posteriors.
 
@@ -575,6 +634,9 @@ def make_1d_axes(params, ncol=None, labels=None,
     labels : dict(str:str), optional
         Dictionary mapping params to plot labels.
         Default: params
+
+    logx : list(str), optional
+        List of parameters to be plotted on a log scale.
 
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
@@ -611,6 +673,7 @@ def make_1d_axes(params, ncol=None, labels=None,
                       fig=fig,
                       ncol=ncol,
                       labels=labels,
+                      logx=logx,
                       gridspec_kw=gridspec_kw,
                       subplot_spec=subplot_spec)
     if gridspec_kw is None:
@@ -619,7 +682,8 @@ def make_1d_axes(params, ncol=None, labels=None,
 
 
 def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
-                 ticks='inner', gridspec_kw=None, subplot_spec=None, **fig_kw):
+                 ticks='inner', logx=None, logy=None,
+                 gridspec_kw=None, subplot_spec=None, **fig_kw):
     """Create a set of axes for plotting 2D marginalised posteriors.
 
     Parameters
@@ -646,6 +710,10 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
         * ``'outer'``: plot ticks only on the very left and very bottom.
         * ``'inner'``: plot ticks also in inner subplots.
         * ``None``: plot no ticks at all.
+
+    logx, logy : list(str), optional
+        Lists of parameters to be plotted on a log scale on the x-axis or
+        y-axis, respectively.
 
     gridspec_kw : dict, optional
         Dict with keywords passed to the :class:`matplotlib.gridspec.GridSpec`
@@ -689,6 +757,8 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
                          upper=upper,
                          labels=labels,
                          ticks=ticks,
+                         logx=logx,
+                         logy=logy,
                          gridspec_kw=gridspec_kw,
                          subplot_spec=subplot_spec)
     fig.align_labels()
@@ -739,13 +809,15 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     """
     kwargs = normalize_kwargs(kwargs)
+    if ax.get_xaxis().get_scale() == 'log':
+        data = np.log10(data)
     xmin = kwargs.pop('xmin', None)
     xmax = kwargs.pop('xmax', None)
     levels = kwargs.pop('levels', [0.95, 0.68])
     density = kwargs.pop('density', False)
 
     cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+    color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None
                                  else plt.get_cmap(cmap)(0.68)))
     facecolor = kwargs.pop('facecolor', False)
@@ -768,6 +840,8 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[-1], p)))
 
     area = np.trapz(x=x[i], y=p[i]) if density else 1
+    if ax.get_xaxis().get_scale() == 'log':
+        x = 10**x
     ans = ax.plot(x[i], p[i]/area, color=color, *args, **kwargs)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
@@ -853,6 +927,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     if weights is not None:
         data = data[weights != 0]
         weights = weights[weights != 0]
+    if ax.get_xaxis().get_scale() == 'log':
+        data = np.log10(data)
 
     ncompress = kwargs.pop('ncompress', False)
     nplot = kwargs.pop('nplot_1d', 100)
@@ -861,7 +937,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     density = kwargs.pop('density', False)
 
     cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+    color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None
                                  else plt.get_cmap(cmap)(0.68)))
     facecolor = kwargs.pop('facecolor', False)
@@ -887,6 +963,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     pp = cut_and_normalise_gaussian(x, p, bw, xmin=data.min(), xmax=data.max())
     pp /= pp.max()
     area = np.trapz(x=x, y=pp) if density else 1
+    if ax.get_xaxis().get_scale() == 'log':
+        x = 10**x
     ans = ax.plot(x, pp/area, color=color, *args, **kwargs)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
@@ -947,35 +1025,47 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     """
     kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
-    bins = kwargs.pop('bins', 10)
+    bins = kwargs.pop('bins', 'fd')
     histtype = kwargs.pop('histtype', 'bar')
     density = kwargs.get('density', False)
 
     cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+    color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None
                                  else plt.get_cmap(cmap)(0.68)))
 
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
+    if ax.get_xaxis().get_scale() == 'log':
+        data = np.log10(data)
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
-    range = kwargs.pop('range', (xmin, xmax))
-
-    if isinstance(bins, str) and bins in ['fd', 'scott', 'sqrt']:
-        bins = histogram_bin_edges(data,
-                                   weights=weights,
-                                   bins=bins,
-                                   beta=kwargs.pop('beta', 'equal'),
-                                   range=range)
+    if 'range' in kwargs and ax.get_xaxis().get_scale() == 'log':
+        range = kwargs.pop('range')
+        if range is not None:
+            range = (np.log10(range[0]), np.log10(range[1]))
+        else:
+            range = (data.min(), data.max())
+    else:
+        range = kwargs.pop('range', (xmin, xmax))
+    if isinstance(bins, (int, str)):
+        if isinstance(bins, int):
+            bins = np.linspace(range[0], range[1], bins+1)
+        elif isinstance(bins, str) and bins in ['fd', 'scott', 'sqrt']:
+            bins = histogram_bin_edges(data,
+                                       weights=weights,
+                                       bins=bins,
+                                       beta=kwargs.pop('beta', 'equal'),
+                                       range=range)
+        if ax.get_xaxis().get_scale() == 'log':
+            bins = 10 ** bins
+    if ax.get_xaxis().get_scale() == 'log':
+        data = 10**data
+        range = (10**range[0], 10**range[1])
     if isinstance(bins, str) and bins in ['knuth', 'freedman', 'blocks']:
-        try:
-            from astropy.visualization import hist
-            h, edges, bars = hist(data, ax=ax, bins=bins,
-                                  range=range, histtype=histtype,
-                                  color=color, *args, **kwargs)
-        except ImportError:
-            raise ImportError("You need to install astropy to use astropyhist")
+        raise ValueError("The astropy strings 'knuth', 'freedman', and "
+                         "'blocks' are no longer supported. Please use the"
+                         "similar 'fd', 'scott', or 'sqrt' from now on.")
     else:
         h, edges, bars = ax.hist(data, weights=weights, bins=bins,
                                  range=range, histtype=histtype,
@@ -1034,11 +1124,19 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = kwargs.pop('xmax', None)
     ymin = kwargs.pop('ymin', None)
     ymax = kwargs.pop('ymax', None)
+    if ax.get_xaxis().get_scale() == 'log':
+        data_x = np.log10(data_x)
+        xmin = None if xmin is None else np.log10(xmin)
+        xmax = None if xmax is None else np.log10(xmax)
+    if ax.get_yaxis().get_scale() == 'log':
+        data_y = np.log10(data_y)
+        ymin = None if ymin is None else np.log10(ymin)
+        ymax = None if ymax is None else np.log10(ymax)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
 
-    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    color = kwargs.pop('color', ax._get_lines.get_next_color())
     facecolor = kwargs.pop('facecolor', True)
     edgecolor = kwargs.pop('edgecolor', None)
     cmap = kwargs.pop('cmap', None)
@@ -1060,13 +1158,17 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     i = (pdf >= levels[0]*0.5).any(axis=0)
     j = (pdf >= levels[0]*0.5).any(axis=1)
 
+    if ax.get_xaxis().get_scale() == 'log':
+        x = 10**x
+    if ax.get_yaxis().get_scale() == 'log':
+        y = 10**y
+
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
         contf = ax.contourf(x[i], y[j], pdf[np.ix_(j, i)], levels, cmap=cmap,
                             zorder=zorder, vmin=0, vmax=pdf.max(),
                             *args, **kwargs)
-        for c in contf.collections:
-            c.set_cmap(cmap)
+        contf.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                                    fc=cmap(0.999), ec=cmap(0.32)))
         cmap = None
@@ -1085,8 +1187,6 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                       vmin=vmin, vmax=vmax, linewidths=linewidths,
                       colors=edgecolor, cmap=cmap, *args, **kwargs)
 
-    ax.set_xlim(xmin, xmax, auto=True)
-    ax.set_ylim(ymin, ymax, auto=True)
     return contf, cont
 
 
@@ -1150,6 +1250,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         data_x = data_x[weights != 0]
         data_y = data_y[weights != 0]
         weights = weights[weights != 0]
+    if ax.get_xaxis().get_scale() == 'log':
+        data_x = np.log10(data_x)
+    if ax.get_yaxis().get_scale() == 'log':
+        data_y = np.log10(data_y)
 
     ncompress = kwargs.pop('ncompress', 'equal')
     nplot = kwargs.pop('nplot_2d', 1000)
@@ -1158,7 +1262,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
 
-    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    color = kwargs.pop('color', ax._get_lines.get_next_color())
     facecolor = kwargs.pop('facecolor', True)
     edgecolor = kwargs.pop('edgecolor', None)
     cmap = kwargs.pop('cmap', None)
@@ -1190,13 +1294,16 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                    xmin=data_y.min(), xmax=data_y.max())
 
     levels = iso_probability_contours(P, contours=levels)
+    if ax.get_xaxis().get_scale() == 'log':
+        X = 10**X
+    if ax.get_yaxis().get_scale() == 'log':
+        Y = 10**Y
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
         contf = ax.contourf(X, Y, P, levels=levels, cmap=cmap, zorder=zorder,
                             vmin=0, vmax=P.max(), *args, **kwargs)
-        for c in contf.collections:
-            c.set_cmap(cmap)
+        contf.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                                    fc=cmap(0.999), ec=cmap(0.32)))
         cmap = None
@@ -1253,12 +1360,16 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     """
     kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
+    if ax.get_xaxis().get_scale() == 'log':
+        data_x = np.log10(data_x)
+    if ax.get_yaxis().get_scale() == 'log':
+        data_y = np.log10(data_y)
 
     vmin = kwargs.pop('vmin', 0)
     label = kwargs.pop('label', None)
     levels = kwargs.pop('levels', None)
 
-    color = kwargs.pop('color', next(ax._get_lines.prop_cycler)['color'])
+    color = kwargs.pop('color', ax._get_lines.get_next_color())
     cmap = kwargs.pop('cmap', basic_cmap(color))
 
     q = kwargs.pop('q', 5)
@@ -1269,17 +1380,13 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymax = quantile(data_y, q[-1], weights)
     rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
-    if levels is None:
-        pdf, x, y, image = ax.hist2d(data_x, data_y, weights=weights,
-                                     cmap=cmap, range=rge, vmin=vmin,
-                                     *args, **kwargs)
-    else:
-        bins = kwargs.pop('bins', 10)
-        density = kwargs.pop('density', False)
-        cmin = kwargs.pop('cmin', None)
-        cmax = kwargs.pop('cmax', None)
-        pdf, x, y = np.histogram2d(data_x, data_y, bins, rge,
-                                   density, weights)
+    bins = kwargs.pop('bins', 10)
+    density = kwargs.pop('density', False)
+    cmin = kwargs.pop('cmin', None)
+    cmax = kwargs.pop('cmax', None)
+    pdf, x, y = np.histogram2d(data_x, data_y, bins, rge,
+                               density, weights)
+    if levels is not None:
         levels = iso_probability_contours(pdf, levels)
         pdf = np.digitize(pdf, levels, right=True)
         pdf = np.array(levels)[pdf]
@@ -1288,9 +1395,13 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
             pdf[pdf < cmin] = np.ma.masked
         if cmax is not None:
             pdf[pdf > cmax] = np.ma.masked
-        snap = kwargs.pop('snap', True)
-        image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=vmin, snap=snap,
-                              *args, **kwargs)
+    snap = kwargs.pop('snap', True)
+    if ax.get_xaxis().get_scale() == 'log':
+        x = 10**x
+    if ax.get_yaxis().get_scale() == 'log':
+        y = 10**y
+    image = ax.pcolormesh(x, y, pdf.T, cmap=cmap, vmin=vmin, snap=snap,
+                          *args, **kwargs)
 
     ax.add_patch(plt.Rectangle((0, 0), 0, 0, fc=cmap(0.999), ec=cmap(0.32),
                                lw=2, label=label))
@@ -1345,7 +1456,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     markersize = kwargs.pop('markersize', 1)
     cmap = kwargs.pop('cmap', None)
-    color = kwargs.pop('color', (next(ax._get_lines.prop_cycler)['color']
+    color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None else cmap(0.68)))
 
     kwargs.pop('q', None)

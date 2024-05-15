@@ -72,7 +72,6 @@ anesthetic.samples module
 .. automodule:: anesthetic.samples
    :members:
    :undoc-members:
-   :show-inheritance:
 
 
 anesthetic.scripts module
@@ -97,6 +96,15 @@ anesthetic.utils module
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: anesthetic.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.weighted\_labelled\_pandas module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.weighted_labelled_pandas
    :members:
    :undoc-members:
    :show-inheritance:

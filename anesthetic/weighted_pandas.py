@@ -16,13 +16,36 @@ from anesthetic.utils import (compress_weights, neff, quantile,
                               credibility_interval)
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plotting import PlotAccessor
+import pandas as pd
+
+
+def read_csv(filename, *args, **kwargs):
+    """Read a CSV file into a ``WeightedDataFrame``."""
+    df = pd.read_csv(filename, index_col=[0, 1], header=[0, 1],
+                     *args, **kwargs)
+    wdf = WeightedDataFrame(df)
+    if wdf.isweighted(0) and wdf.isweighted(1):
+        wdf.set_weights(wdf.get_weights(axis=1).astype(float),
+                        axis=1, inplace=True)
+        return wdf
+    df = pd.read_csv(filename, index_col=[0, 1], *args, **kwargs)
+    wdf = WeightedDataFrame(df)
+    if wdf.isweighted(0):
+        return wdf
+    df = pd.read_csv(filename, index_col=0, header=[0, 1], *args, **kwargs)
+    wdf = WeightedDataFrame(df)
+    if wdf.isweighted(1):
+        wdf.set_weights(wdf.get_weights(axis=1).astype(float),
+                        axis=1, inplace=True)
+        return wdf
+    df = pd.read_csv(filename, index_col=0, *args, **kwargs)
+    return WeightedDataFrame(df)
 
 
 class WeightedGroupBy(GroupBy):
     """Weighted version of ``pandas.core.groupby.GroupBy``."""
 
-    grouper: ops.BaseGrouper
-    """:meta private:"""
+    _grouper: ops.BaseGrouper
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -96,10 +119,10 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 subset = self.obj
             return WeightedDataFrameGroupBy(
                 subset,
-                self.grouper,
+                self._grouper,
                 axis=self.axis,
                 level=self.level,
-                grouper=self.grouper,
+                grouper=self._grouper,
                 exclusions=self.exclusions,
                 selection=key,
                 as_index=self.as_index,
@@ -115,7 +138,7 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
             return WeightedSeriesGroupBy(
                 subset,
                 level=self.level,
-                grouper=self.grouper,
+                grouper=self._grouper,
                 selection=key,
                 sort=self.sort,
                 group_keys=self.group_keys,
