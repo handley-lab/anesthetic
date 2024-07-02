@@ -839,7 +839,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     p /= p.max()
     i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[-1], p)))
 
-    area = np.trapz(x=x[i], y=p[i]) if density else 1
+    area = np.trapezoid(x=x[i], y=p[i]) if density else 1
     if ax.get_xaxis().get_scale() == 'log':
         x = 10**x
     ans = ax.plot(x[i], p[i]/area, color=color, *args, **kwargs)
@@ -962,7 +962,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     bw = np.sqrt(kde.covariance[0, 0])
     pp = cut_and_normalise_gaussian(x, p, bw, xmin=data.min(), xmax=data.max())
     pp /= pp.max()
-    area = np.trapz(x=x, y=pp) if density else 1
+    area = np.trapezoid(x=x, y=pp) if density else 1
     if ax.get_xaxis().get_scale() == 'log':
         x = 10**x
     ans = ax.plot(x, pp/area, color=color, *args, **kwargs)
