@@ -16,7 +16,7 @@ from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
 from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_labelled_pandas import WeightedLabelledDataFrame
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
-                             AxesSeries, AxesDataFrame)
+                             AxesSeries, AxesDataFrame, basic_cmap)
 from anesthetic.utils import adjust_docstrings
 
 
@@ -452,7 +452,7 @@ class Samples(WeightedLabelledDataFrame):
             "samples.set_label(label, tex)   # anesthetic 2.0\n\n"
             "tex = samples.tex[label]        # anesthetic 1.0\n"
             "tex = samples.get_label(label)  # anesthetic 2.0"
-            )
+        )
 
     def to_hdf(self, path_or_buf, key, *args, **kwargs):  # noqa: D102
         import anesthetic.read.hdf
@@ -646,6 +646,8 @@ class NestedSamples(Samples):
     We extend the :class:`Samples` class with the additional methods:
 
     * ``self.live_points(logL)``
+    * ``self.n_live(i)``
+    * ``self.LX(beta, logX)``
     * ``self.set_beta(beta)``
     * ``self.prior()``
     * ``self.posterior_points(beta)``
@@ -657,6 +659,8 @@ class NestedSamples(Samples):
     * ``self.recompute()``
     * ``self.gui()``
     * ``self.importance_sample()``
+    * ``self.plot_types()``
+    * ``self.points_to_plot(plot_type, label, evolution, beta)``
 
     Parameters
     ----------
@@ -1164,6 +1168,14 @@ class NestedSamples(Samples):
         i = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
 
+    def n_live(self, i):
+        return self.nlive.iloc[i]
+
+    def LX(self, beta, logX):
+        LX = self.logL*beta + logX
+        return LX
+
+
     def dead_points(self, logL=None):
         """Get the dead points at a given contour.
 
@@ -1334,6 +1346,74 @@ class NestedSamples(Samples):
         else:
             return samples.__finalize__(self, "recompute")
 
+    def plot_types(self):
+        return 'live', 'posterior'
+
+    def points_to_plot(self, plot_type, label, evolution, beta, base_color):
+        if plot_type == 'posterior':
+            return [self.posterior_points(beta)[label]], [base_color]
+        elif plot_type == 'live':
+            logL = self.logL.iloc[evolution]
+            return [self.live_points(logL)[label]], [base_color]
+        else:
+            raise ValueError("Unreachable code")
+
+
+class DiffusiveNestedSamples(NestedSamples):
+    """Storage and plotting tools for Diffusive Nested Sampling samples.
+
+    We overwrite the following methods of the :class:`NestedSamples` class:
+
+    * ``self.n_live(i)``
+    * ``self.LX(beta, logX)``
+    * ``self.plot_types()``
+    * ``self.points_to_plot(plot_type, label, evolution, beta)``
+
+    """
+
+    def __init__(self, sample_info, levels, samples, *args, **kwargs):
+        super().__init__(samples, *args, **kwargs)
+        particle_IDs = sample_info[:, 3]
+        # particle IDs start at 0, so num_particles is max(ID)+1
+        self.num_particles = np.max(particle_IDs) + 1
+        # default logzero for DNest4 is -1e300
+        self.logzero = kwargs.get('logzero', -1e300)
+        self.samples_with_info = pandas.DataFrame(
+            np.concatenate([samples, sample_info], axis=1),
+            columns=[kwargs.get('columns') + ['level', 'logL', 'tiebreaker', 'ID']])
+        self.samples_with_info[['level', 'ID']] = self.samples_with_info[['level', 'ID']].astype(int)
+        self.levels = pandas.DataFrame(
+            levels,
+            columns=['log_X', 'log_likelihood', 'tiebreaker', 'accepts', 'tries', 'exceeds', 'visits']
+        )
+
+    def samples_at_level(self, level_index, label):
+        selection = (self.samples_with_info.level == level_index).squeeze()
+        return self.samples_with_info[selection][label].to_numpy()
+
+    def n_live(self, *args):
+        # n_live is constant because diffusive nested sampling keeps all particles alive and evolves them using MCMC
+        return self.num_particles
+
+    def LX(self, beta, logX):
+        LX = super().LX(beta, logX)
+        return LX
+
+    def plot_types(self):
+        return 'visited points',
+
+    def points_to_plot(self, plot_type, label, evolution, beta, base_color):
+        if plot_type == 'visited points':
+            base_color = 'C0'
+            logX = self.logX().to_numpy()[evolution]
+            max_level_index = self.levels[self.levels['log_X'] >= logX].tail(1).index.to_list()[0]
+            colors = [basic_cmap(base_color)(float(j) / float(max_level_index + 1)) for j in range(1, max_level_index + 2)]
+            samples = [self.samples_at_level(j, label) for j in range(max_level_index + 1)]
+            assert len(colors) == len(samples)
+            return samples, colors
+        else:
+            raise ValueError("Unreachable code")
+
 
 def merge_nested_samples(runs):
     """Merge one or more nested sampling runs.
@@ -1404,7 +1484,7 @@ def merge_samples_weighted(samples, weights=None, label=None):
     for s, w in zip(mcmc_samples, weights):
         # Normalize the given weights
         new_weights = s.get_weights() / s.get_weights().sum()
-        new_weights *= w/np.sum(weights)
+        new_weights *= w / np.sum(weights)
         s = Samples(s, weights=new_weights)
         new_samples.append(s)
 

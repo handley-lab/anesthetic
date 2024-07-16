@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
 from anesthetic.testing import assert_frame_equal
-from anesthetic import MCMCSamples, NestedSamples
+from anesthetic import MCMCSamples, NestedSamples, DiffusiveNestedSamples
 from anesthetic import read_chains
 from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
@@ -14,6 +14,7 @@ from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 from anesthetic.read.nestedfit import read_nestedfit
+from anesthetic.read.dnest4 import read_dnest4
 from anesthetic.read.hdf import HDFStore, read_hdf
 from anesthetic.read.csv import read_csv
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
@@ -331,3 +332,21 @@ def test_read_csv(tmp_path, root):
     samples_ = read_chains(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
+
+
+def test_read_dnest():
+    np.random.seed(3)
+    ns = read_dnest4('./tests/example_data/dnest4')
+    params = ['x0', 'x1', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = [r'$x0$',
+              r'$x1$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+
+    assert_array_equal(ns.get_labels(), labels)
+
+    assert isinstance(ns, DiffusiveNestedSamples)
+    ns.plot_2d(['x0', 'x1'])
+    ns.plot_1d(['x0', 'x1'])
