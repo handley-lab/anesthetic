@@ -14,6 +14,7 @@ from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 from anesthetic.read.nestedfit import read_nestedfit
+from anesthetic.read.dnest4 import read_dnest4
 from anesthetic.read.hdf import HDFStore, read_hdf
 from anesthetic.read.csv import read_csv
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
@@ -331,3 +332,20 @@ def test_read_csv(tmp_path, root):
     samples_ = read_chains(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
+
+
+def test_read_dnest():
+    np.random.seed(3)
+    ns = read_dnest4('./tests/example_data/dnest4')
+    params = ['x0', 'x1', 'x2', 'logL']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = ['x0',
+              'x1',
+              'x2',
+              r'$\ln\mathcal{L}$'
+              ]
+    assert_array_equal(ns.get_labels(), labels)
+
+    assert isinstance(ns, MCMCSamples)
+    ns.plot_2d(['x0', 'x1', 'x2'])
+    ns.plot_1d(['x0', 'x1', 'x2'])

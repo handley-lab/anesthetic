@@ -261,7 +261,7 @@ class TrianglePlot(Widget):
 
         Parameters
         ----------
-            f: func: str -> array(float)
+            f: func: str -> array(float), color
                 this function should take in a parameter label i, and return an
                 array-like object of the i-coordinate of the samples
 
@@ -270,12 +270,20 @@ class TrianglePlot(Widget):
             for x, ax in row.items():
                 if ax is not None:
                     if x == y:
-                        datx, daty = histogram(f(x), bins='auto')
-                        ax.twin.lines[0].set_xdata(datx)
-                        ax.twin.lines[0].set_ydata(daty)
+                        ax.twin.clear()
+                        _values, _color = f(x)
+                        for i, color in enumerate(_color):
+                            # datx, daty = histogram(values, bins='auto')
+                            ax.twin.hist(_values[i], color=color, histtype='bar' if i==len(_color)-1 else 'step')
+                            # ax.twin.lines[0].set_xdata(datx)
+                            # ax.twin.lines[0].set_ydata(daty)
+                            # ax.twin.lines[0].set_color(color)
                     else:
-                        ax.lines[0].set_xdata(f(x))
-                        ax.lines[0].set_ydata(f(y))
+                        ax.clear()
+                        _x_values, _x_color = f(x)
+                        _y_values, _y_color = f(y)
+                        for i, color in enumerate(_x_color):
+                            ax.plot(_x_values[i], _y_values[i], 'o', color=color)
 
     def reset_range(self):
         """Reset the range of each grid."""

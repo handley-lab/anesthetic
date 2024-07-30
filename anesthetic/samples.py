@@ -17,7 +17,7 @@ from anesthetic.gui.plot import RunPlotter
 from anesthetic.weighted_labelled_pandas import WeightedLabelledDataFrame
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
-from anesthetic.utils import adjust_docstrings
+from anesthetic.utils import adjust_docstrings, logdiffexp, logsumexp
 
 
 class Samples(WeightedLabelledDataFrame):
@@ -71,7 +71,7 @@ class Samples(WeightedLabelledDataFrame):
                 ">>> %s(root=%s)\n\nwith\n\n"
                 ">>> from anesthetic import read_chains\n"
                 ">>> read_chains(%s)" % (name, name, root, root)
-                )
+            )
         logzero = kwargs.pop('logzero', -1e30)
         logL = kwargs.pop('logL', None)
         if logL is not None:
@@ -139,7 +139,7 @@ class Samples(WeightedLabelledDataFrame):
             raise ValueError(
                 "You are using the anesthetic 1.0 kwarg \'plot_type\' instead "
                 "of anesthetic 2.0 \'kind\'. Please update your code."
-                )
+            )
 
         if axes is None:
             axes = self.drop_labels().columns
@@ -163,13 +163,13 @@ class Samples(WeightedLabelledDataFrame):
                 "You are using \'kde\' as a plot kind. "
                 "\'kde_1d\' is the appropriate keyword for anesthetic. "
                 "Your plots may look odd if you use this argument."
-                )
+            )
         elif kwargs['kind'] == 'hist':
             warnings.warn(
                 "You are using \'hist\' as a plot kind. "
                 "\'hist_1d\' is the appropriate keyword for anesthetic. "
                 "Your plots may look odd if you use this argument."
-                )
+            )
 
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
@@ -277,7 +277,7 @@ class Samples(WeightedLabelledDataFrame):
                 "You are using the anesthetic 1.0 kwarg \'types\' instead of "
                 "anesthetic 2.0 \'kind' or \'kinds\' (synonyms). "
                 "Please update your code."
-                )
+            )
         kind = kwargs.pop('kind', 'default')
         kind = kwargs.pop('kinds', kind)
 
@@ -332,14 +332,14 @@ class Samples(WeightedLabelledDataFrame):
                             "\'kde_1d\' and \'kde_2d\' are the appropriate "
                             "keywords for anesthetic. Your plots may look "
                             "odd if you use this argument."
-                            )
+                        )
                     elif lkwargs['kind'] == 'hist':
                         warnings.warn(
                             "You are using \'hist\' as a plot kind. "
                             "\'hist_1d\' and \'hist_2d\' are the appropriate "
                             "keywords for anesthetic. Your plots may look "
                             "odd if you use this argument."
-                            )
+                        )
                     if x in self and y in self and lkwargs['kind'] is not None:
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
@@ -452,7 +452,7 @@ class Samples(WeightedLabelledDataFrame):
             "samples.set_label(label, tex)   # anesthetic 2.0\n\n"
             "tex = samples.tex[label]        # anesthetic 1.0\n"
             "tex = samples.get_label(label)  # anesthetic 2.0"
-            )
+        )
 
     def to_hdf(self, path_or_buf, key, *args, **kwargs):  # noqa: D102
         import anesthetic.read.hdf
@@ -536,7 +536,7 @@ class MCMCSamples(Samples):
             nsamples = chains.count().iloc[:, 0].to_numpy()
             ndrop = ndrop * nsamples
         ndrop = ndrop.astype(int)
-        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1]),
+        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name - 1]),
                                       include_groups=False).index,
                          inplace=inplace)
         if reset_index:
@@ -595,8 +595,8 @@ class MCMCSamples(Samples):
                       and 'chi2' not in key
                       and 'logL' not in key
                       and 'chain' not in key]
-        chains = self[params+['chain']].groupby(
-                ('chain', '$n_\\mathrm{chain}$'), sort=False,
+        chains = self[params + ['chain']].groupby(
+            ('chain', '$n_\\mathrm{chain}$'), sort=False,
         )
         nchains = chains.ngroups
 
@@ -620,7 +620,7 @@ class MCMCSamples(Samples):
             raise np.linalg.LinAlgError(
                 "Make sure you do not have linearly dependent parameters, "
                 "e.g. having both `As` and `A=1e9*As` causes trouble.") from e
-        D = np.linalg.eigvalsh(invU.T @ ((nchains+1)/nchains * B) @ invU)
+        D = np.linalg.eigvalsh(invU.T @ ((nchains + 1) / nchains * B) @ invU)
         # The factor of `(nchains+1)/nchains` accounts for the additional
         # uncertainty from using a finite number of chains.
         Rminus1_tot = np.max(np.abs(D))
@@ -638,6 +638,141 @@ class MCMCSamples(Samples):
         if per_param == 'cov':
             return Rminus1_cov
         return Rminus1_tot, Rminus1_cov
+
+
+class DiffusiveNestedSamples:
+    # TODO repace column names
+    _metadata = Samples._metadata + ['root', '_beta']
+
+    def __len__(self):
+        print('levels shape', self.levels.shape)
+        return self.levels.shape[0]
+
+    def __init__(self, *args, **kwargs):
+        self.logzero = kwargs.pop('logzero', -1e300)
+        self._beta = kwargs.pop('beta', 1.)
+        samples = kwargs.pop('samples', None)
+        levels = kwargs.pop('levels', None)
+        sample_info = kwargs.pop('sample_info', None)
+        weights = kwargs.pop('weights', None)
+        prior_weights = kwargs.pop('prior_weights', None)
+        self.logx_samples = kwargs.pop('logx_samples', None)
+        self.posterior_weights = kwargs.pop('posterior_weights', None)
+        columns = kwargs.pop('columns', None)
+
+        self.samples = pandas.DataFrame(np.concatenate([samples, sample_info], axis=1),
+                                        columns=columns + ['level', 'log_likelihood', 'tiebreaker', 'ID'])
+        self.samples['posterior weights'] = weights
+        self.params = self.samples.columns
+        self.samples.ID = self.samples.ID.astype(int)
+        self.samples.level = self.samples.level.astype(int)
+        self.levels = np.sort(self.samples.level.unique())
+        self.level_info = pandas.DataFrame(
+            levels, columns=['log_X', 'log_likelihood', 'tiebreaker', 'accepts', 'tries', 'exceeds', 'visits']
+        )
+
+        self.log_X_samples = []
+        self.log_L_samples = []
+
+        for i in range(0, levels.shape[0]):
+            samples_on_this_level = self.samples[self.samples['level'] == i]
+            # print('samples on this level')
+            # print(samples_on_this_level)
+            # Generate intermediate logx values
+            logx_max = levels[i, 0]
+            if i == levels.shape[0] - 1:
+                logx_min = self.logzero
+            else:
+                logx_min = levels[i + 1, 0]
+            N = len(samples_on_this_level.index)
+            Umin = np.exp(logx_min - logx_max)
+            # TODO temporary
+            assert N != 0
+            # if N == 0:
+            # U = Umin + (1. - Umin)*np.random.rand(len(which))
+            # else:
+            U = Umin + (1. - Umin) * np.linspace(1. / (N + 1), 1. - 1. / (N + 1), N)
+            logx_samples_thisLevel = np.sort(logx_max + np.log(U))[::-1]
+            # print('samples this level', i, samples_on_this_level)
+            # print('logx this level', i, logx_samples_thisLevel)
+            self.log_X_samples += list(logx_samples_thisLevel)
+            self.log_L_samples += list(np.sort(samples_on_this_level['log_likelihood']))
+
+        self.samples['log_X'] = self.log_X_samples
+
+        # print('sample_info[:,1]')
+        # print(sample_info[:,1])
+        # print('prior weights')
+        # print(prior_weights)
+        self.samples['LX'] = sample_info[:, 1] # + prior_weights
+
+    def samples_at_level(self, level_index, label):
+        return self.samples[self.samples.level == level_index][label].to_numpy()
+
+    def D_KL(self, beta):
+        return pandas.DataFrame(data=np.zeros(shape=beta.shape[0]))[0]
+
+    def get_labels_map(self, axis=0, fill=True):
+        """Retrieve mapping from paramnames to labels from an axis."""
+        return None
+
+    def logX(self):
+        """Log-Volume.
+
+        The log of the prior volume contained within each iso-likelihood
+        contour.
+
+        Returns
+        -------
+        if nsamples is None:
+            WeightedSeries like self
+        """
+        return self.logx_samples
+
+    @property
+    def logL(self):
+        """Log-Likelihood."""
+        return self.samples['LX']
+
+    @property
+    def LX(self):
+        return self.posterior_weights
+
+    def gui(self, params=None):
+        """Construct a graphical user interface for viewing samples."""
+        return RunPlotter(self, params)
+
+    @property
+    def beta(self):
+        """Thermodynamic inverse temperature."""
+        return self._beta
+
+    @beta.setter
+    def beta(self, beta):
+        self._beta = beta
+        logw = self.logw(beta=beta)
+        self.set_weights(np.exp(logw - logw.max()), inplace=True)
+
+    def set_beta(self, beta, inplace=False):
+        """Change the inverse temperature.
+
+        Parameters
+        ----------
+        beta : float
+            Inverse temperature to set.
+            (``beta=0`` corresponds to the prior distribution.)
+
+        inplace : bool, default=False
+            Indicates whether to modify the existing array, or return a copy
+            with the inverse temperature changed.
+
+        """
+        if inplace:
+            self.beta = beta
+        else:
+            data = self.copy()
+            data.beta = beta
+            return data
 
 
 class NestedSamples(Samples):
@@ -759,7 +894,7 @@ class NestedSamples(Samples):
             "samples.stats(1000)      # anesthetic 2.0\n\n"
             "Check out the new temperature functionality: help(samples.stats),"
             " as well as average loglikelihoods: help(samples.logL_P)"
-            )
+        )
 
     def stats(self, nsamples=None, beta=None):
         r"""Compute Nested Sampling statistics.
@@ -845,19 +980,19 @@ class NestedSamples(Samples):
             samples = Samples(index=logw.columns, columns=self.columns[:0])
         samples['logZ'] = self.logZ(logw)
         samples.set_label('logZ', r'$\ln\mathcal{Z}$')
-        w = np.exp(logw-samples['logZ'])
+        w = np.exp(logw - samples['logZ'])
 
         betalogL = self._betalogL(beta)
-        S = (logw*0).add(betalogL, axis=0) - samples.logZ
+        S = (logw * 0).add(betalogL, axis=0) - samples.logZ
 
-        samples['D_KL'] = (S*w).sum()
+        samples['D_KL'] = (S * w).sum()
         samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$')
 
         samples['logL_P'] = samples['logZ'] + samples['D_KL']
         samples.set_label('logL_P',
                           r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$')
 
-        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()*2
+        samples['d_G'] = ((S - samples.D_KL) ** 2 * w).sum() * 2
         samples.set_label('d_G', r'$d_\mathrm{G}$')
 
         samples.label = self.label
@@ -884,7 +1019,7 @@ class NestedSamples(Samples):
             WeightedDataFrame like self, columns range(nsamples)
         """
         if nsamples is None:
-            t = np.log(self.nlive/(self.nlive+1))
+            t = np.log(self.nlive / (self.nlive + 1))
         else:
             r = np.log(np.random.rand(len(self), nsamples))
             w = self.get_weights()
@@ -900,7 +1035,7 @@ class NestedSamples(Samples):
         # noqa: disable=D102
         raise NotImplementedError(
             "This is anesthetic 1.0 syntax. You should instead use logdX."
-            )
+        )
 
     def logdX(self, nsamples=None):
         """Compute volume of shell of loglikelihood.
@@ -922,7 +1057,7 @@ class NestedSamples(Samples):
         logX = self.logX(nsamples)
         logXp = logX.shift(1, fill_value=0)
         logXm = logX.shift(-1, fill_value=-np.inf)
-        logdX = np.log(1 - np.exp(logXm-logXp)) + logXp - np.log(2)
+        logdX = np.log(1 - np.exp(logXm - logXp)) + logXp - np.log(2)
         logdX.name = 'logdX'
 
         return logdX
@@ -1001,7 +1136,7 @@ class NestedSamples(Samples):
             cols = MultiIndex.from_product([betalogL.columns, logdX.columns])
             logdX = logdX.reindex(columns=cols, level='samples')
             betalogL = betalogL.reindex(columns=cols, level='beta')
-            logw = betalogL+logdX
+            logw = betalogL + logdX
         return logw
 
     def logZ(self, nsamples=None, beta=None):
@@ -1051,16 +1186,16 @@ class NestedSamples(Samples):
             "samples.D_KL(1000)  # anesthetic 2.0\n\n"
             "Check out the new temperature functionality: help(samples.D_KL), "
             "as well as average loglikelihoods: help(samples.logL_P)"
-            )
+        )
 
     def D_KL(self, nsamples=None, beta=None):
         """Kullback--Leibler divergence."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
-        S = (logw*0).add(betalogL, axis=0) - logZ
-        w = np.exp(logw-logZ)
-        D_KL = (S*w).sum()
+        S = (logw * 0).add(betalogL, axis=0) - logZ
+        w = np.exp(logw - logZ)
+        D_KL = (S * w).sum()
         if np.isscalar(D_KL):
             return D_KL
         else:
@@ -1078,17 +1213,17 @@ class NestedSamples(Samples):
             "samples.d_G(1000)  # anesthetic 2.0\n\n"
             "Check out the new temperature functionality: help(samples.d_G), "
             "as well as average loglikelihoods: help(samples.logL_P)"
-            )
+        )
 
     def d_G(self, nsamples=None, beta=None):
         """Bayesian model dimensionality."""
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
-        S = (logw*0).add(betalogL, axis=0) - logZ
-        w = np.exp(logw-logZ)
-        D_KL = (S*w).sum()
-        d_G = ((S-D_KL)**2*w).sum()*2
+        S = (logw * 0).add(betalogL, axis=0) - logZ
+        w = np.exp(logw - logZ)
+        D_KL = (S * w).sum()
+        d_G = ((S - D_KL) ** 2 * w).sum() * 2
         if np.isscalar(d_G):
             return d_G
         else:
@@ -1102,9 +1237,9 @@ class NestedSamples(Samples):
         logw = self.logw(nsamples, beta)
         logZ = self.logZ(logw, beta)
         betalogL = self._betalogL(beta)
-        betalogL = (logw*0).add(betalogL, axis=0)
-        w = np.exp(logw-logZ)
-        logL_P = (betalogL*w).sum()
+        betalogL = (logw * 0).add(betalogL, axis=0)
+        w = np.exp(logw - logZ)
+        logL_P = (betalogL * w).sum()
         if np.isscalar(logL_P):
             return logL_P
         else:
@@ -1404,7 +1539,7 @@ def merge_samples_weighted(samples, weights=None, label=None):
     for s, w in zip(mcmc_samples, weights):
         # Normalize the given weights
         new_weights = s.get_weights() / s.get_weights().sum()
-        new_weights *= w/np.sum(weights)
+        new_weights *= w / np.sum(weights)
         s = Samples(s, weights=new_weights)
         new_samples.append(s)
 

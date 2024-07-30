@@ -5,6 +5,7 @@ from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 from anesthetic.read.nestedfit import read_nestedfit
+from anesthetic.read.dnest4 import read_dnest4
 from anesthetic.read.csv import read_csv
 
 
@@ -19,6 +20,7 @@ def read_chains(root, *args, **kwargs):
         * `Nested_fit <https://github.com/martinit18/Nested_Fit>`_,
         * `CosmoMC <https://github.com/cmbant/CosmoMC>`_,
         * `Cobaya <https://github.com/CobayaSampler/cobaya>`_,
+        * `DNest4 <https://github.com/eggplantbren/DNest4/tree/master/code>`_,
         * anything `GetDist <https://github.com/cmbant/getdist>`_ compatible,
         * files produced using ``DataFrame.to_csv()`` from anesthetic.
 
@@ -53,7 +55,7 @@ def read_chains(root, *args, **kwargs):
         )
     errors = []
     readers = [
-        read_polychord, read_multinest, read_cobaya, read_ultranest,
+        read_polychord, read_multinest, read_cobaya, read_ultranest, read_dnest4,
         read_nestedfit, read_getdist, read_csv
     ]
     for read in readers:
