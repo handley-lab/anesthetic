@@ -1434,11 +1434,9 @@ class DiffusiveNestedSamples(NestedSamples):
         self.logzero = kwargs.get('logzero', -1e300)
         sample_info_columns = [kwargs.get('columns') +
                                ['level', 'logL', 'tiebreaker', 'ID']]
-        self.samples_with_info = pandas.DataFrame(
+        self.attrs["samples_with_info"] = pandas.DataFrame(
             np.concatenate([samples, sample_info], axis=1),
             columns=sample_info_columns)
-        self.samples_with_info[['level', 'ID']] = \
-            self.samples_with_info[['level', 'ID']].astype(int)
         level_columns = ['log_X',
                          'log_likelihood',
                          'tiebreaker',
@@ -1446,7 +1444,11 @@ class DiffusiveNestedSamples(NestedSamples):
                          'tries',
                          'exceeds',
                          'visits']
-        self.levels = pandas.DataFrame(levels, columns=level_columns)
+        self.attrs["levels"] = pandas.DataFrame(levels, columns=level_columns)
+
+    @property
+    def _constructor(self):
+        return NestedSamples
 
     def samples_at_level(self, level_index, label):
         """
@@ -1463,8 +1465,9 @@ class DiffusiveNestedSamples(NestedSamples):
         -------
             numpy.ndarray:
         """
-        selection = (self.samples_with_info.level == level_index).squeeze()
-        return self.samples_with_info[selection][label].to_numpy()
+        samples = self.attrs["samples_with_info"]
+        selection = (samples.level == level_index).squeeze()
+        return samples[selection][label].to_numpy()
 
     def n_live(self, *args):
         """
@@ -1484,24 +1487,6 @@ class DiffusiveNestedSamples(NestedSamples):
         live points at iteration i
         """
         return self.num_particles
-
-    def LX(self, beta, logX):
-        """
-        Get LX, e.g., for Higson plot.
-
-        Parameters
-        ----------
-        beta: float
-            temperature
-        logX: np.ndarray
-            prior volumes
-
-        Returns
-        -------
-         LX: np.ndarray
-        """
-        LX = super().LX(beta, logX)
-        return LX
 
     def plot_types(self):
         """
@@ -1536,9 +1521,9 @@ class DiffusiveNestedSamples(NestedSamples):
         List[tuple[float]: colors to use
         """
         if plot_type == 'visited points':
-            base_color = 'C0'
             logX = self.logX().to_numpy()[evolution]
-            levels_to_plot = self.levels[self.levels['log_X'] >= logX]
+            levels = self.attrs["levels"]
+            levels_to_plot = levels[levels['log_X'] >= logX]
             max_level_index = levels_to_plot.tail(1).index.to_list()[0]
             colors = [basic_cmap(base_color)(float(j) / (max_level_index + 1))
                       for j in range(1, max_level_index + 2)]

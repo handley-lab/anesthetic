@@ -24,7 +24,9 @@ def _determine_columns_and_labels(n_params, header, delim=' '):
 def read_dnest4(root,
                 levels_file='levels.txt',
                 sample_file='sample.txt',
-                sample_info_file='sample_info.txt'):
+                sample_info_file='sample_info.txt',
+                *args,
+                **kwargs):
     """
     Read dnest4 output files.
 
@@ -57,11 +59,15 @@ def read_dnest4(root,
         header = f.readline()
 
     n_params = samples.shape[1]
-    columns, labels = _determine_columns_and_labels(n_params, header)
 
     sample_level = sample_info[:, 0].astype(int)
     logL = sample_info[:, 1]
     logL_birth = levels[sample_level, 1]
+
+    kwargs['label'] = kwargs.get('label', os.path.basename(root))
+    columns, labels = _determine_columns_and_labels(n_params, header)
+    columns = kwargs.pop('columns', columns)
+    labels = kwargs.pop('labels', labels)
 
     return DiffusiveNestedSamples(sample_info=sample_info,
                                   levels=levels,
@@ -69,4 +75,6 @@ def read_dnest4(root,
                                   logL=logL,
                                   logL_birth=logL_birth,
                                   columns=columns,
-                                  labels=labels)
+                                  labels=labels,
+                                  *args,
+                                  **kwargs)
