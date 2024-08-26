@@ -270,19 +270,21 @@ class TrianglePlot(Widget):
             for x, ax in row.items():
                 if ax is not None:
                     x_values, colors = f(x)
-                    if x == y and len(ax.twin.lines)==len(colors):
-                        # if there are as many lines as colors, the lines can be updated efficiently
+                    if x == y and len(ax.twin.lines) == len(colors):
+                        # if there are as many lines as colors,
+                        # the lines can be updated efficiently
                         for i, color in enumerate(colors):
                             datx, daty = histogram(x_values[i], bins='auto')
                             ax.twin.lines[i].set_xdata(datx)
                             ax.twin.lines[i].set_ydata(daty)
                             ax.twin.lines[i].set_color(color)
-                    elif x==y and len(ax.twin.lines)!=len(colors):
-                        # if there are NOT as many lines as colors, the lines need to be replaced
+                    elif x == y and len(ax.twin.lines) != len(colors):
+                        # if there are NOT as many lines as colors,
+                        # the lines need to be replaced
                         ax.twin.clear()
                         for i, color in enumerate(colors):
                             ax.twin.hist(x_values[i], color=color)
-                    elif len(ax.lines)==len(colors):
+                    elif len(ax.lines) == len(colors):
                         y_values, _ = f(y)
                         for i, color in enumerate(colors):
                             ax.lines[i].set_xdata(x_values[i])

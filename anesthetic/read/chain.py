@@ -55,8 +55,8 @@ def read_chains(root, *args, **kwargs):
         )
     errors = []
     readers = [
-        read_polychord, read_multinest, read_cobaya, read_ultranest, read_dnest4,
-        read_nestedfit, read_getdist, read_csv
+        read_polychord, read_multinest, read_cobaya, read_ultranest,
+        read_dnest4, read_nestedfit, read_getdist, read_csv
     ]
     for read in readers:
         try:

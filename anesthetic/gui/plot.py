@@ -203,7 +203,8 @@ class RunPlotter(object):
         gs0 = sGS(1, 2, width_ratios=[19, 1], subplot_spec=gs[0])
         gs1 = sGS(1, 3, width_ratios=[4, 1, 1], subplot_spec=gs[1])
         gs10 = sGS(2, 1, height_ratios=[1, 4], subplot_spec=gs1[0])
-        gs11 = sGS(3, 1, height_ratios=[1, 1, len(self.samples.plot_types())], subplot_spec=gs1[1])
+        gs11 = sGS(3, 1, height_ratios=[1, 1, len(self.samples.plot_types())],
+                   subplot_spec=gs1[1])
 
         self.triangle = TrianglePlot(self.fig, gs0[0])
         beta = np.logspace(-10, 10, 101)

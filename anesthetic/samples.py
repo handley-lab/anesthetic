@@ -1169,12 +1169,38 @@ class NestedSamples(Samples):
         return Samples(self[i]).set_weights(None)
 
     def n_live(self, i):
+        """
+        Get live points at iteration i.
+
+        Parameters
+        ----------
+        i: i
+            nested sampling iteration
+
+        Returns
+        -------
+        live points at teration i
+
+        """
         return self.nlive.iloc[i]
 
     def LX(self, beta, logX):
+        """
+        Get LX, e.g., for Higson plot.
+
+        Parameters
+        ----------
+        beta: float
+            temperature
+        logX: np.ndarray
+            prior volumes
+
+        Returns
+        -------
+         LX: np.ndarray
+        """
         LX = self.logL*beta + logX
         return LX
-
 
     def dead_points(self, logL=None):
         """Get the dead points at a given contour.
@@ -1347,9 +1373,37 @@ class NestedSamples(Samples):
             return samples.__finalize__(self, "recompute")
 
     def plot_types(self):
+        """
+        Get types of plots supported by this class.
+
+        Returns
+        -------
+        tuple[str]
+        """
         return 'live', 'posterior'
 
     def points_to_plot(self, plot_type, label, evolution, beta, base_color):
+        """
+        Get samples for plotting.
+
+        Parameters
+        ----------
+        plot_type: str
+            see plot_types() for supported types.
+        label: str
+            column to plot
+        evolution: int
+            iteration to plot
+        beta: float
+            temperature
+        base_color:
+            base_color used to create color palette
+
+        Returns
+        -------
+        List[array-like]: list of points to plot
+        List[tuple[float]: colors to use
+        """
         if plot_type == 'posterior':
             return [self.posterior_points(beta)[label]], [base_color]
         elif plot_type == 'live':
@@ -1378,37 +1432,118 @@ class DiffusiveNestedSamples(NestedSamples):
         self.num_particles = np.max(particle_IDs) + 1
         # default logzero for DNest4 is -1e300
         self.logzero = kwargs.get('logzero', -1e300)
+        sample_info_columns = [kwargs.get('columns') +
+                               ['level', 'logL', 'tiebreaker', 'ID']]
         self.samples_with_info = pandas.DataFrame(
             np.concatenate([samples, sample_info], axis=1),
-            columns=[kwargs.get('columns') + ['level', 'logL', 'tiebreaker', 'ID']])
-        self.samples_with_info[['level', 'ID']] = self.samples_with_info[['level', 'ID']].astype(int)
-        self.levels = pandas.DataFrame(
-            levels,
-            columns=['log_X', 'log_likelihood', 'tiebreaker', 'accepts', 'tries', 'exceeds', 'visits']
-        )
+            columns=sample_info_columns)
+        self.samples_with_info[['level', 'ID']] = \
+            self.samples_with_info[['level', 'ID']].astype(int)
+        level_columns = ['log_X',
+                         'log_likelihood',
+                         'tiebreaker',
+                         'accepts',
+                         'tries',
+                         'exceeds',
+                         'visits']
+        self.levels = pandas.DataFrame(levels, columns=level_columns)
 
     def samples_at_level(self, level_index, label):
+        """
+        Get samples with given level assignment `level_index`.
+
+        Parameters
+        ----------
+        level_index: int
+            level assignment
+        label:
+            column of samples to return
+
+        Returns
+        -------
+            numpy.ndarray:
+        """
         selection = (self.samples_with_info.level == level_index).squeeze()
         return self.samples_with_info[selection][label].to_numpy()
 
     def n_live(self, *args):
-        # n_live is constant because diffusive nested sampling keeps all particles alive and evolves them using MCMC
+        """
+        Get live points at iteration i.
+
+        For diffusive nested sampling, n_live is constant,
+        because diffusive nested sampling keeps all particles
+        alive and evolves them using MCMC.
+
+        Parameters
+        ----------
+        i: i
+            nested sampling iteration
+
+        Returns
+        -------
+        live points at iteration i
+        """
         return self.num_particles
 
     def LX(self, beta, logX):
+        """
+        Get LX, e.g., for Higson plot.
+
+        Parameters
+        ----------
+        beta: float
+            temperature
+        logX: np.ndarray
+            prior volumes
+
+        Returns
+        -------
+         LX: np.ndarray
+        """
         LX = super().LX(beta, logX)
         return LX
 
     def plot_types(self):
+        """
+        Get types of plots supported by this class.
+
+        Returns
+        -------
+        tuple[str]
+        """
         return 'visited points',
 
     def points_to_plot(self, plot_type, label, evolution, beta, base_color):
+        """
+        Get samples for plotting.
+
+        Parameters
+        ----------
+        plot_type: str
+            see plot_types() for supported types.
+        label: str
+            column to plot
+        evolution: int
+            iteration to plot
+        beta: float
+            temperature
+        base_color:
+            base_color used to create color palette
+
+        Returns
+        -------
+        List[array-like]: list of points to plot
+        List[tuple[float]: colors to use
+        """
         if plot_type == 'visited points':
             base_color = 'C0'
             logX = self.logX().to_numpy()[evolution]
-            max_level_index = self.levels[self.levels['log_X'] >= logX].tail(1).index.to_list()[0]
-            colors = [basic_cmap(base_color)(float(j) / float(max_level_index + 1)) for j in range(1, max_level_index + 2)]
-            samples = [self.samples_at_level(j, label) for j in range(max_level_index + 1)]
+            levels_to_plot = self.levels[self.levels['log_X'] >= logX]
+            max_level_index = levels_to_plot.tail(1).index.to_list()[0]
+            colors = [basic_cmap(base_color)(float(j) / (max_level_index + 1))
+                      for j in range(1, max_level_index + 2)]
+            samples = [self.samples_at_level(j, label)
+                       for j in range(max_level_index + 1)]
             assert len(colors) == len(samples)
             return samples, colors
         else:
