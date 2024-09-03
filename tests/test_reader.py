@@ -347,6 +347,37 @@ def test_read_dnest():
 
     assert_array_equal(ns.get_labels(), labels)
 
+
     assert isinstance(ns, DiffusiveNestedSamples)
+    assert ns.samples_at_level(9, label='x1').shape == (45, 1)
+    assert ns.plot_types() == ('visited points',)
+
+    ns.points_to_plot('visited points', label='x1', evolution=0, beta=1, base_color='C0')
+
+    with pytest.raises(ValueError) as exc_info:
+        ns.points_to_plot('live', label='x1', evolution=0, beta=1, base_color='C0')
+    assert str(exc_info.value) == 'plot_type not supported'
+    with pytest.raises(ValueError) as exc_info:
+        ns.points_to_plot('posterior', label='x1', evolution=0, beta=1, base_color='C0')
+    assert str(exc_info.value) == 'plot_type not supported'
+    ns.plot_2d(['x0', 'x1'])
+    ns.plot_1d(['x0', 'x1'])
+
+
+def test_read_dnest4_no_column_names():
+    np.random.seed(3)
+    ns = read_dnest4('./tests/example_data/dnest4_no_column_names')
+    params = ['x0', 'x1', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = [r'$x0$',
+              r'$x1$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+
+    assert_array_equal(ns.get_labels(), labels)
+
+    assert isinstance(ns, DiffusiveNestedSamples)
+    assert ns.samples_at_level(9, label='x1').shape == (45, 1)
     ns.plot_2d(['x0', 'x1'])
     ns.plot_1d(['x0', 'x1'])

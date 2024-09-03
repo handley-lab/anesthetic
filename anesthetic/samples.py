@@ -1532,7 +1532,7 @@ class DiffusiveNestedSamples(NestedSamples):
             assert len(colors) == len(samples)
             return samples, colors
         else:
-            raise ValueError("Unreachable code")
+            raise ValueError("plot_type not supported")
 
 
 def merge_nested_samples(runs):

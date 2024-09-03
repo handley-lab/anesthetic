@@ -39,6 +39,10 @@ def test_gui(root):
     old = plotter.evolution()
     plotter.evolution.slider.set_val(5)
     assert plotter.evolution() != old
+    old = plotter.evolution()
+    plotter.evolution.slider.set_val(5.5)
+    assert plotter.evolution() != old
+    old = plotter.evolution()
     plotter.evolution.slider.set_val(0)
     assert plotter.evolution() == old
     plotter.type.buttons.set_active(1)
