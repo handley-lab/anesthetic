@@ -226,7 +226,7 @@ class TrianglePlot(Widget):
         self.fig.delaxes(self.ax)
         _, self.ax = make_2d_axes([], fig=self.fig, subplot_spec=self.gridspec)
 
-    def draw(self, params, labels={}):
+    def draw(self, params, labels={}, color='k'):
         """Draw a new triangular grid for list of parameters.
 
         Parameters
@@ -252,9 +252,9 @@ class TrianglePlot(Widget):
             for x, ax in row.items():
                 if ax is not None:
                     if x == y:
-                        ax.twin.plot([None], [None], 'k-')
+                        ax.twin.plot([None], [None], '-', color=color)
                     else:
-                        ax.plot([None], [None], 'k.')
+                        ax.plot([None], [None], '.', color=color)
 
     def update(self, f):
         """Update the points in the triangle plot using f function.
@@ -269,13 +269,32 @@ class TrianglePlot(Widget):
         for y, row in self.ax.iterrows():
             for x, ax in row.items():
                 if ax is not None:
-                    if x == y:
-                        datx, daty = histogram(f(x), bins='auto')
-                        ax.twin.lines[0].set_xdata(datx)
-                        ax.twin.lines[0].set_ydata(daty)
+                    x_values, colors = f(x)
+                    if x == y and len(ax.twin.lines) == len(colors):
+                        # if there are as many lines as colors,
+                        # the lines can be updated efficiently
+                        for i, color in enumerate(colors):
+                            datx, daty = histogram(x_values[i], bins='auto')
+                            ax.twin.lines[i].set_xdata(datx)
+                            ax.twin.lines[i].set_ydata(daty)
+                            ax.twin.lines[i].set_color(color)
+                    elif x == y and len(ax.twin.lines) != len(colors):
+                        # if there are NOT as many lines as colors,
+                        # the lines need to be replaced
+                        ax.twin.clear()
+                        for i, color in enumerate(colors):
+                            ax.twin.hist(x_values[i], color=color)
+                    elif len(ax.lines) == len(colors):
+                        y_values, _ = f(y)
+                        for i, color in enumerate(colors):
+                            ax.lines[i].set_xdata(x_values[i])
+                            ax.lines[i].set_ydata(y_values[i])
+                            ax.lines[i].set_color(color)
                     else:
-                        ax.lines[0].set_xdata(f(x))
-                        ax.lines[0].set_ydata(f(y))
+                        ax.clear()
+                        y_values, _ = f(y)
+                        for i, color in enumerate(colors):
+                            ax.plot(x_values[i], y_values[i], 'o', color=color)
 
     def reset_range(self):
         """Reset the range of each grid."""

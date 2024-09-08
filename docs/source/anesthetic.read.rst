@@ -24,6 +24,15 @@ anesthetic.read.cobaya module
    :undoc-members:
    :show-inheritance:
 
+anesthetic.read.dnest4 module
+-----------------------------
+
+.. automodule:: anesthetic.read.dnest4
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 
 anesthetic.read.getdist module
 ------------------------------
