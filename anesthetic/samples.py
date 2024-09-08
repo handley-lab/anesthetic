@@ -1410,7 +1410,7 @@ class NestedSamples(Samples):
             logL = self.logL.iloc[evolution]
             return [self.live_points(logL)[label]], [base_color]
         else:
-            raise ValueError("Unreachable code")
+            raise ValueError("plot_type not supported")
 
 
 class DiffusiveNestedSamples(NestedSamples):

@@ -262,6 +262,14 @@ def test_read_polychord():
     assert_array_equal(ns_zero_live[cols], ns[cols])
     assert_array_equal(ns_single_live[cols], ns[cols])
 
+    with pytest.raises(ValueError) as exc_info:
+        ns.points_to_plot('visited points',
+                          label='x1',
+                          evolution=0,
+                          beta=1,
+                          base_color='C0')
+    assert str(exc_info.value) == 'plot_type not supported'
+
 
 @pytest.mark.parametrize('root', ['gd', 'cb'])
 def test_discard_burn_in(root):
