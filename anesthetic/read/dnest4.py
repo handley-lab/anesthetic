@@ -4,7 +4,7 @@ import numpy as np
 from anesthetic.samples import DiffusiveNestedSamples
 
 
-def _determine_columns_and_labels(n_params, header, delim=' '):
+def _determine_columns(n_params, header, delim=' '):
     """
     Determine column names from DNest4 output.
 
@@ -17,8 +17,7 @@ def _determine_columns_and_labels(n_params, header, delim=' '):
         columns = [f'x_{i}' for i in range(n_params)]
     else:
         columns = [d.strip() for d in dnest4_column_descriptions]
-    labels = {c: '$' + c + '$' for c in columns}
-    return columns, labels
+    return columns
 
 
 def read_dnest4(root,
@@ -65,9 +64,10 @@ def read_dnest4(root,
     logL_birth = levels[sample_level, 1]
 
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
-    columns, labels = _determine_columns_and_labels(n_params, header)
-    columns = kwargs.pop('columns', columns)
-    labels = kwargs.pop('labels', labels)
+    columns_ = _determine_columns(n_params, header)
+    columns = kwargs.pop('columns', columns_)
+    labels_ = {c: '$' + c + '$' for c in columns}
+    labels = kwargs.pop('labels', labels_)
 
     return DiffusiveNestedSamples(sample_info=sample_info,
                                   levels=levels,

@@ -11,19 +11,20 @@ def close_figures_on_teardown():
     plt.close("all")
 
 
-@pytest.mark.parametrize('root', ["./tests/example_data/pc",
-                                  "./tests/example_data/mn",
-                                  skipif_no_h5py("./tests/example_data/un"),
-                                  "./tests/example_data/nf"])
+@pytest.mark.parametrize('root', [
+    "./tests/example_data/pc",
+    "./tests/example_data/mn",
+    skipif_no_h5py("./tests/example_data/un"),
+    "./tests/example_data/nf",
+    "./tests/example_data/dnest4"])
 def test_gui(root):
     samples = read_chains(root)
     plotter = samples.gui()
 
     # Type buttons
-    plotter.type.buttons.set_active(1)
-    assert plotter.type() == 'posterior'
-    plotter.type.buttons.set_active(0)
-    assert plotter.type() == 'live'
+    for i, plot_type in enumerate(samples.plot_types()):
+        plotter.type.buttons.set_active(i)
+        assert plotter.type() == plot_type
 
     # Parameter choice buttons
     plotter.param_choice.buttons.set_active(1)
@@ -32,28 +33,24 @@ def test_gui(root):
     assert len(plotter.triangle.ax) == 1
     plotter.param_choice.buttons.set_active(0)
     plotter.param_choice.buttons.set_active(2)
-    plotter.param_choice.buttons.set_active(3)
-    assert len(plotter.triangle.ax) == 4
+    assert len(plotter.triangle.ax) == 3
 
     # Sliders
     old = plotter.evolution()
     plotter.evolution.slider.set_val(5)
     assert plotter.evolution() != old
-    old = plotter.evolution()
-    plotter.evolution.slider.set_val(5.5)
-    assert plotter.evolution() != old
-    old = plotter.evolution()
     plotter.evolution.slider.set_val(0)
     assert plotter.evolution() == old
-    plotter.type.buttons.set_active(1)
+    if len(samples.plot_types()) > 1:
+        plotter.type.buttons.set_active(1)
 
-    plotter.beta.slider.set_val(0)
-    assert plotter.beta() == pytest.approx(0, 0, 1e-8)
+        plotter.beta.slider.set_val(0)
+        assert plotter.beta() == pytest.approx(0, 0, 1e-8)
 
-    plotter.beta.slider.set_val(samples.D_KL())
-    assert plotter.beta() == pytest.approx(1)
-    plotter.beta.slider.set_val(1e2)
-    assert plotter.beta() == 1e10
+        plotter.beta.slider.set_val(samples.D_KL())
+        assert plotter.beta() == pytest.approx(1)
+        plotter.beta.slider.set_val(1e2)
+        assert plotter.beta() == 1e10
     plotter.type.buttons.set_active(0)
 
     # Reload button

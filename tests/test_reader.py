@@ -378,10 +378,10 @@ def test_read_dnest():
 def test_read_dnest4_no_column_names():
     np.random.seed(3)
     ns = read_dnest4('./tests/example_data/dnest4_no_column_names')
-    params = ['x0', 'x1', 'logL', 'logL_birth', 'nlive']
+    params = ['x_0', 'x_1', 'logL', 'logL_birth', 'nlive']
     assert_array_equal(ns.drop_labels().columns, params)
-    labels = [r'$x0$',
-              r'$x1$',
+    labels = [r'$x_0$',
+              r'$x_1$',
               r'$\ln\mathcal{L}$',
               r'$\ln\mathcal{L}_\mathrm{birth}$',
               r'$n_\mathrm{live}$']
@@ -389,6 +389,27 @@ def test_read_dnest4_no_column_names():
     assert_array_equal(ns.get_labels(), labels)
 
     assert isinstance(ns, DiffusiveNestedSamples)
-    assert ns.samples_at_level(9, label='x1').shape == (45, 1)
-    ns.plot_2d(['x0', 'x1'])
-    ns.plot_1d(['x0', 'x1'])
+    assert ns.samples_at_level(9, label='x_1').shape == (45, 1)
+    ns.plot_2d(['x_0', 'x_1'])
+    ns.plot_1d(['x_0', 'x_1'])
+
+
+def test_read_dnest4_override_column_names():
+    np.random.seed(3)
+    columns = ['y0', 'y1']
+    ns = read_dnest4('./tests/example_data/dnest4_no_column_names',
+                     columns=columns)
+    params = ['y0', 'y1', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = [r'$y0$',
+              r'$y1$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+
+    assert_array_equal(ns.get_labels(), labels)
+
+    assert isinstance(ns, DiffusiveNestedSamples)
+    assert ns.samples_at_level(9, label='y0').shape == (45, 1)
+    ns.plot_2d(['y0', 'y1'])
+    ns.plot_1d(['y0', 'y1'])
