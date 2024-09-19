@@ -11,7 +11,7 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     - ``logR``: Logarithmic of R statistic
 
       .. math::
-        \\log\\mathcal{R} = \\log\\mathcal{Z}_\\\mathrm{AB}
+        \\log\\mathcal{R} = \\log\\mathcal{Z}_\\mathrm{AB}
                             - \\log\\mathcal{Z}_\\mathrm{A}
                             - \\log\\mathcal{Z}_\\mathrm{B}
 
@@ -33,12 +33,12 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
       (or posterior variance of the log-likelihood)
 
       .. math::
-        d_\\mathrm{G}/2 = \\mathrm{var}(\\log\mathcal{L})_\mathcal{P}
+        d_\\mathrm{G}/2 = \\mathrm{var}(\\log\\mathcal{L})_\\mathcal{P}
 
     - ``p``: p-value for the tension between two samples
 
       .. math::
-        p = \\int_{d_\\mathrm{G} - 2 \\log\mathcal{S}}^{\\infty} \\chi^2 (x)dx
+        p = \\int_{d_\\mathrm{G} - 2 \\log\\mathcal{S}}^{\\infty} \\chi^2 (x)dx
 
     Parameters
     ----------
