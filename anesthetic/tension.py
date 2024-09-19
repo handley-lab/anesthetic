@@ -3,7 +3,7 @@ from anesthetic.samples import Samples
 from scipy.stats import chi2
 
 
-def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
+def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     """Compute tension statistics between two samples.
 
     Using nested sampling we can compute:
@@ -11,30 +11,34 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     - ``logR``: Logarithmic of R statistic
 
       .. math::
-        \\log R = \\log Z_\\mathrm{AB} - \\log Z_\\mathrm{A}
-                     - \\log Z_\\mathrm{B}
+        \\log \mathcal{R} = \\log \mathcal{Z}_\\mathrm{AB} 
+                            - \\log \mathcal{Z}_\\mathrm{A}
+                            - \\log \mathcal{Z}_\\mathrm{B}
 
     - ``logI``: Logarithmic of information ratio
 
       .. math::
-        \\log I = D_\\mathrm{KL}^A + D_\\mathrm{KL}^B - D_\\mathrm{KL}^{AB}
+        \\log \mathcal{I} = \mathcal{D}_\\mathrm{KL}^A 
+                            + \mathcal{D}_\\mathrm{KL}^B 
+                            - \mathcal{D}_\\mathrm{KL}^{AB}
 
     - ``logS``: Logarithmic of suspiciousness
 
       .. math::
-        \\log S = \\log L_\\mathrm{AB} - \\log
-        L_\\mathrm{A} - \\log L_\\mathrm{B}
+        \\log \mathcal{S} = \\log \mathcal{L}_\\mathrm{AB} 
+                            - \\log \mathcal{L}_\\mathrm{A} 
+                            - \\log \mathcal{L}_\\mathrm{B}
 
     - ``d_G``: Gaussian model dimensionality
       (or posterior variance of the log-likelihood)
 
       .. math::
-        d_\\mathrm{G}/2 = \\mathrm{var}(\\log L)_P
+        d_\\mathrm{G}/2 = \\mathrm{var}(\\log \mathcal{L})_\mathcal{P}
 
     - ``p``: p-value for the tension between two samples
 
       .. math::
-        p = \\int_{d_\\mathrm{G} - 2 \\log S}^{\\infty} \\chi^2 (x)dx
+        p = \\int_{d_\\mathrm{G} - 2 \\log \mathcal{S}}^{\\infty} \\chi^2 (x)dx
 
     Parameters
     ----------
@@ -72,15 +76,15 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
 
     logR = statsAB.logZ-statsA.logZ-statsB.logZ
     samples_stats['logR'] = logR
-    samples_stats.set_label('logR', r'$\log{R}$')
+    samples_stats.set_label('logR', r'$\log\mathcal{R}$')
 
     logI = statsA.D_KL + statsB.D_KL - statsAB.D_KL
     samples_stats['logI'] = logI
-    samples_stats.set_label('logI', r'$\log{I}$')
+    samples_stats.set_label('logI', r'$\log\mathcal{I}$')
 
     logS = statsAB.logL_P - statsA.logL_P - statsB.logL_P
     samples_stats['logS'] = logS
-    samples_stats.set_label('logS', r'$\log{S}$')
+    samples_stats.set_label('logS', r'$\log\mathcal{S}$')
 
     d_G = statsA.d_G + statsB.d_G - statsAB.d_G
     samples_stats['d_G'] = d_G

@@ -1,7 +1,7 @@
 from anesthetic.examples.perfect_ns import correlated_gaussian
 import numpy as np
 from numpy.linalg import inv, solve, slogdet
-from anesthetic.tension import tension_stats
+from anesthetic.tension import stats
 
 
 def test_tension_stats_compatiable_gaussian():
@@ -32,8 +32,7 @@ def test_tension_stats_compatiable_gaussian():
 
     nsamples = 1000
     beta = 1
-    samples_stats = tension_stats(samplesA, samplesB, samplesAB,
-                                  nsamples, beta)
+    samples_stats = stats(samplesA, samplesB, samplesAB, nsamples, beta)
 
     logR_std = samples_stats.logR.std()
     logR_mean = samples_stats.logR.mean()
@@ -51,8 +50,9 @@ def test_tension_stats_compatiable_gaussian():
     logI_exact = -d/2 - 1/2 * slogdet(2*np.pi*(covA+covB))[1] + np.log(V)
     assert logI_mean - 3 * logI_std < logI_exact < logI_mean + 3 * logI_std
 
-    assert samples_stats.get_labels().tolist() == ([r'$\log{R}$',
-                                                    r'$\log{I}$', r'$\log{S}$',
+    assert samples_stats.get_labels().tolist() == ([r'$\log\mathcal{R}$',
+                                                    r'$\log\mathcal{I}$',
+                                                    r'$\log\mathcal{S}$',
                                                     r'$d_\mathrm{G}$', r'$p$'])
 
 
@@ -85,8 +85,7 @@ def test_tension_stats_incompatiable_gaussian():
 
     nsamples = 1000
     beta = 1
-    samples_stats = tension_stats(samplesA, samplesB, samplesAB,
-                                  nsamples, beta)
+    samples_stats = stats(samplesA, samplesB, samplesAB, nsamples, beta)
 
     logR_std = samples_stats.logR.std()
     logR_mean = samples_stats.logR.mean()
@@ -104,6 +103,7 @@ def test_tension_stats_incompatiable_gaussian():
     logI_exact = -d/2 - 1/2 * slogdet(2*np.pi*(covA+covB))[1] + np.log(V)
     assert logI_mean - 3 * logI_std < logI_exact < logI_mean + 3 * logI_std
 
-    assert samples_stats.get_labels().tolist() == ([r'$\log{R}$',
-                                                    r'$\log{I}$', r'$\log{S}$',
+    assert samples_stats.get_labels().tolist() == ([r'$\log\mathcal{R}$',
+                                                    r'$\log\mathcal{I}$',
+                                                    r'$\log\mathcal{S}$',
                                                     r'$d_\mathrm{G}$', r'$p$'])
