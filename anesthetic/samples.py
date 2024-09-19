@@ -761,7 +761,7 @@ class NestedSamples(Samples):
             " as well as average loglikelihoods: help(samples.logL_P)"
             )
 
-    def stats(self, nsamples=None, beta=None):
+    def stats(self, nsamples=None, beta=None, norm=None):
         r"""Compute Nested Sampling statistics.
 
         Using nested sampling we can compute:
@@ -822,6 +822,11 @@ class NestedSamples(Samples):
         beta : float, array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
+        norm : Series, :class:`Samples`, optional
+            :meth:`NestedSamples.stats` output used for normalisation.
+            Can be either a Series of mean values or Samples produced with
+            matching `nsamples` and `beta`.
+
         Returns
         -------
         if beta is scalar and nsamples is None:
@@ -861,6 +866,26 @@ class NestedSamples(Samples):
         samples.set_label('d_G', r'$d_\mathrm{G}$')
 
         samples.label = self.label
+
+        if norm is not None:
+            samples['Delta_logZ'] = samples['logZ'] - norm['logZ']
+            samples.set_label('Delta_logZ',
+                              r"$\Delta\ln\mathcal{Z}$")
+
+            samples['Delta_D_KL'] = samples['D_KL'] - norm['D_KL']
+            samples.set_label('Delta_D_KL',
+                              r"$\Delta\mathcal{D}_\mathrm{KL}$")
+
+            samples['Delta_logL_P'] = samples['logL_P'] - norm['logL_P']
+            samples.set_label(
+                'Delta_logL_P',
+                r"$\Delta\langle\ln\mathcal{L}\rangle_\mathcal{P}$"
+            )
+
+            samples['Delta_d_G'] = samples['d_G'] - norm['d_G']
+            samples.set_label('Delta_d_G',
+                              r"$\Delta d_\mathrm{G}$")
+
         return samples
 
     def logX(self, nsamples=None):
