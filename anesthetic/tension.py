@@ -42,17 +42,14 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
 
     Parameters
     ----------
-    A : :class:`anesthetic.samples.Samples` or \
-        :class:`anesthetic.samples.NestedSamples`
-        (Nested) Samples from a sampling run using only dataset A.
+    A : :class:`anesthetic.samples.NestedSamples`
+        Nested Samples from a sampling run using only dataset A.
 
-    B : :class:`anesthetic.samples.Samples` or \
-        :class:`anesthetic.samples.NestedSamples`
-        (Nested) Samples from a sampling run using only dataset B.
+    B : :class:`anesthetic.samples.NestedSamples`
+        Nested Samples from a sampling run using only dataset B.
 
-    AB : :class:`anesthetic.samples.Samples` or \
-         :class:`anesthetic.samples.NestedSamples`
-        (Nested) Samples from a sampling run using datasets A and B jointly.
+    AB : :class:`anesthetic.samples.NestedSamples`
+        Nested Samples from a sampling run using datasets A and B jointly.
 
     nsamples : int, optional
         - If nsamples is not supplied, calculate mean value
