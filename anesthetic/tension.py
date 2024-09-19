@@ -8,21 +8,21 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
 
     Using nested sampling we can compute:
 
-    - ``logR``: Logarithmic of R statistic
+    - ``logR``: Logarithm of R statistic
 
       .. math::
         \\log\\mathcal{R} = \\log\\mathcal{Z}_\\mathrm{AB}
                             - \\log\\mathcal{Z}_\\mathrm{A}
                             - \\log\\mathcal{Z}_\\mathrm{B}
 
-    - ``logI``: Logarithmic of information ratio
+    - ``logI``: Logarithm of information ratio
 
       .. math::
         \\log\\mathcal{I} = \\mathcal{D}_\\mathrm{KL}^A
                             + \\mathcal{D}_\\mathrm{KL}^B
                             - \\mathcal{D}_\\mathrm{KL}^{AB}
 
-    - ``logS``: Logarithmic of suspiciousness
+    - ``logS``: Logarithm of suspiciousness
 
       .. math::
         \\log\\mathcal{S} = \\log\\mathcal{L}_\\mathrm{AB}
