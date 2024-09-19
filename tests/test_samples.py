@@ -308,31 +308,29 @@ def test_plot_2d_colours(kind):
     kinds = {'diagonal': kind + '_1d',
              'lower': kind + '_2d',
              'upper': 'scatter_2d'}
-    gd.plot_2d(axes, kind=kinds, label="gd")
-    pc.plot_2d(axes, kind=kinds, label="pc")
-    mn.plot_2d(axes, kind=kinds, label="mn")
-    gd_colors = []
-    pc_colors = []
-    mn_colors = []
+    gd.plot_2d(axes, kind=kinds, label="A")
+    pc.plot_2d(axes, kind=kinds, label="B")
+    mn.plot_2d(axes, kind=kinds, label="C")
+    gd.plot_2d(axes, kind=kinds, label="D", color='C7')
+    pc.plot_2d(axes, kind=kinds, label="E", color='C6')
+    mn.plot_2d(axes, kind=kinds, label="F", color='C5')
+
+    from collections import defaultdict
+    d = defaultdict(set)
+
     for y, rows in axes.iterrows():
         for x, ax in rows.items():
             handles, labels = ax.get_legend_handles_labels()
             for handle, label in zip(handles, labels):
                 if isinstance(handle, Rectangle):
-                    color = to_hex(handle.get_facecolor())
+                    color = handle.get_facecolor()
                 else:
                     color = handle.get_color()
+                color = to_hex(color)
+                d[label].add(color)
 
-                if label == 'gd':
-                    gd_colors.append(color)
-                elif label == 'pc':
-                    pc_colors.append(color)
-                elif label == 'mn':
-                    mn_colors.append(color)
-
-    assert len(set(gd_colors)) == 1
-    assert len(set(mn_colors)) == 1
-    assert len(set(pc_colors)) == 1
+    for v in d.values():
+        assert len(v) == 1
 
 
 @pytest.mark.parametrize('kwargs', [dict(color='r', alpha=0.5, ls=':', lw=1),
@@ -526,13 +524,16 @@ def test_plot_logscale_2d(kind):
 def test_logscale_ticks():
     np.random.seed(42)
     ndim = 5
-    data = np.exp(10 * np.random.randn(200, ndim))
+    data1 = np.exp(10 * np.random.randn(200, ndim))
+    data2 = np.exp(10 * np.random.randn(200, ndim) - 50)
     params = [f'a{i}' for i in range(ndim)]
     fig, axes = make_2d_axes(params, logx=params, logy=params, upper=False)
-    samples = Samples(data, columns=params)
-    samples.plot_2d(axes)
-    for _, col in axes.iterrows():
-        for _, ax in col.items():
+    samples1 = Samples(data1, columns=params)
+    samples2 = Samples(data2, columns=params)
+    samples1.plot_2d(axes)
+    samples2.plot_2d(axes)
+    for y, col in axes.iterrows():
+        for x, ax in col.items():
             if ax is not None:
                 xlims = ax.get_xlim()
                 xticks = ax.get_xticks()
@@ -540,6 +541,14 @@ def test_logscale_ticks():
                 ylims = ax.get_ylim()
                 yticks = ax.get_yticks()
                 assert np.sum((yticks > ylims[0]) & (yticks < ylims[1])) > 1
+                if x == y:
+                    data_min = ax.twin.dataLim.intervalx[0]
+                    data_max = ax.twin.dataLim.intervalx[1]
+                    assert xlims[0] == pytest.approx(data_min, rel=1e-14)
+                    assert xlims[1] == pytest.approx(data_max, rel=1e-14)
+                else:
+                    assert_array_equal(xlims, ax.dataLim.intervalx)
+                    assert_array_equal(ylims, ax.dataLim.intervaly)
 
 
 @pytest.mark.parametrize('k', ['hist_1d', 'hist'])

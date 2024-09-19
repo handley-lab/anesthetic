@@ -100,6 +100,8 @@ class _PlanePlot2d(PlanePlot):
         ax = self._get_ax(0)  # another one of these hard-coded 0s
 
         kwds = self.kwds.copy()
+        if self.color is not None:
+            kwds["color"] = self.color
         label = pprint_thing(self.label)
         kwds["label"] = label
 
