@@ -11,22 +11,22 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     - ``logR``: Logarithmic of R statistic
 
       .. math::
-        \\log\\mathcal{R} = \\log\\mathcal{Z}_\\\mathrm{AB} 
+        \\log\\mathcal{R} = \\log\\mathcal{Z}_\\\mathrm{AB}
                             - \\log\\mathcal{Z}_\\mathrm{A}
                             - \\log\\mathcal{Z}_\\mathrm{B}
 
     - ``logI``: Logarithmic of information ratio
 
       .. math::
-        \\log\mathcal{I} = \\mathcal{D}_\\mathrm{KL}^A 
-                            + \\mathcal{D}_\\mathrm{KL}^B 
+        \\log\\mathcal{I} = \\mathcal{D}_\\mathrm{KL}^A
+                            + \\mathcal{D}_\\mathrm{KL}^B
                             - \\mathcal{D}_\\mathrm{KL}^{AB}
 
     - ``logS``: Logarithmic of suspiciousness
 
       .. math::
-        \\log\mathcal{S} = \\log\\mathcal{L}_\\mathrm{AB} 
-                            - \\log\\mathcal{L}_\\mathrm{A} 
+        \\log\\mathcal{S} = \\log\\mathcal{L}_\\mathrm{AB}
+                            - \\log\\mathcal{L}_\\mathrm{A}
                             - \\log\\mathcal{L}_\\mathrm{B}
 
     - ``d_G``: Gaussian model dimensionality
