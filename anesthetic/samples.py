@@ -825,22 +825,24 @@ class NestedSamples(Samples):
         norm : Series, :class:`Samples`, optional
             :meth:`NestedSamples.stats` output used for normalisation.
             Can be either a Series of mean values or Samples produced with
-            matching `nsamples` and `beta`.
+            matching `nsamples` and `beta`. In addition to the columns
+            ['logZ', 'D_KL', 'logL_P', 'd_G'], this adds the normalised
+            versions ['Delta_logZ', 'Delta_D_KL', 'Delta_logL_P', 'Delta_d_G'].
 
         Returns
         -------
         if beta is scalar and nsamples is None:
-            Series, index ['logZ', 'd_G', 'DK_L', 'logL_P']
+            Series, index ['logZ', 'd_G', 'D_KL', 'logL_P']
         elif beta is scalar and nsamples is int:
             :class:`Samples`, index range(nsamples),
-            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
+            columns ['logZ', 'd_G', 'D_KL', 'logL_P']
         elif beta is array-like and nsamples is None:
             :class:`Samples`, index beta,
-            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
+            columns ['logZ', 'd_G', 'D_KL', 'logL_P']
         elif beta is array-like and nsamples is int:
             :class:`Samples`, index :class:`pandas.MultiIndex` the product of
             beta and range(nsamples)
-            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
+            columns ['logZ', 'd_G', 'D_KL', 'logL_P']
         """
         logw = self.logw(nsamples, beta)
         if nsamples is None and beta is None:
