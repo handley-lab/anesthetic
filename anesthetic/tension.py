@@ -71,17 +71,17 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
 
     samples_stats = Samples(index=statsA.index)
 
-    logR = statsAB.logZ-statsA.logZ-statsB.logZ
+    logR = statsAB.logZ - statsA.logZ - statsB.logZ
     samples_stats['logR'] = logR
-    samples_stats.set_label('logR', r'$\log\mathcal{R}$')
+    samples_stats.set_label('logR', r'$\ln\mathcal{R}$')
 
     logI = statsA.D_KL + statsB.D_KL - statsAB.D_KL
     samples_stats['logI'] = logI
-    samples_stats.set_label('logI', r'$\log\mathcal{I}$')
+    samples_stats.set_label('logI', r'$\ln\mathcal{I}$')
 
     logS = statsAB.logL_P - statsA.logL_P - statsB.logL_P
     samples_stats['logS'] = logS
-    samples_stats.set_label('logS', r'$\log\mathcal{S}$')
+    samples_stats.set_label('logS', r'$\ln\mathcal{S}$')
 
     d_G = statsA.d_G + statsB.d_G - statsAB.d_G
     samples_stats['d_G'] = d_G
