@@ -4,7 +4,7 @@ from numpy.linalg import inv, solve, slogdet
 from anesthetic.tension import stats
 
 
-def test_tension_stats_compatiable_gaussian():
+def test_tension_stats_compatible_gaussian():
     d = 3
     V = 6.0
     nlive = 1000
@@ -56,7 +56,7 @@ def test_tension_stats_compatiable_gaussian():
                                                     r'$d_\mathrm{G}$', r'$p$'])
 
 
-def test_tension_stats_incompatiable_gaussian():
+def test_tension_stats_incompatible_gaussian():
     np.random.rand(0)
     d = 3
     V = 6.0
