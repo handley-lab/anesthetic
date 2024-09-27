@@ -1329,15 +1329,17 @@ class NestedSamples(Samples):
             n_bad = invalid.sum()
             n_equal = (samples.logL == samples.logL_birth).sum()
             if n_bad:
-                warnings.warn("%i out of %i samples have logL <= logL_birth,"
-                              "\n%i of which have logL == logL_birth."
-                              "\nThis may just indicate numerical rounding "
-                              "errors at the peak of the likelihood, but "
-                              "further investigation of the chains files is "
-                              "recommended."
-                              "\nDropping the invalid samples." %
-                              (n_bad, len(samples), n_equal),
-                              RuntimeWarning)
+                n_inf = ((samples.logL == samples.logL_birth) &
+                         (samples.logL == -np.inf)).sum()
+                if n_bad > n_inf:
+                    warnings.warn(
+                        "%i out of %i samples have logL <= logL_birth,\n"
+                        "%i of which have logL == logL_birth.\n"
+                        "This may just indicate numerical rounding errors at "
+                        "the peak of the likelihood, but further "
+                        "investigation of the chains files is recommended.\n"
+                        "Dropping the invalid samples."
+                        % (n_bad, len(samples), n_equal), RuntimeWarning)
                 samples = samples[~invalid].reset_index(drop=True)
 
             samples.sort_values('logL', inplace=True)

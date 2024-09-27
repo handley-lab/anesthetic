@@ -1187,6 +1187,7 @@ def test_beta():
 def test_beta_with_logL_infinities():
     ns = read_chains("./tests/example_data/pc")
     ns.loc[:10, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
+    ns.loc[1000, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
     with pytest.warns(RuntimeWarning):
         ns.recompute(inplace=True)
     assert (ns.logL == -np.inf).sum() == 0
