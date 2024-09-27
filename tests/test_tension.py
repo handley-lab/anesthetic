@@ -11,16 +11,16 @@ def test_tension_stats_compatible_gaussian():
     bounds = [[-1, 1], [0, 3], [0, 1]]
 
     meanA = [0.1, 0.3, 0.5]
-    covA = np.array([[.01, 0.009, 0],
-                     [0.009, .01, 0],
-                     [0, 0, 0.1]])*0.01
+    covA = 0.01 * np.array([[0.010, 0.009, 0.0],
+                            [0.009, 0.010, 0.0],
+                            [0.000, 0.000, 0.1]])
     logLmaxA = 0
     samplesA = correlated_gaussian(nlive, meanA, covA, bounds, logLmaxA)
 
     meanB = [0.1, 0.3, 0.5]
-    covB = np.array([[.01, -0.009, 0.01],
-                     [-0.009, .01, -0.001],
-                     [0.01, -0.001, 0.1]])*0.01
+    covB = 0.01 * np.array([[+0.010, -0.009, +0.010],
+                            [-0.009, +0.010, -0.001],
+                            [+0.010, -0.001, +0.100]])
     logLmaxB = 0
     samplesB = correlated_gaussian(nlive, meanB, covB, bounds, logLmaxB)
 
@@ -64,16 +64,16 @@ def test_tension_stats_incompatible_gaussian():
     bounds = [[-1, 1], [0, 3], [0, 1]]
 
     meanA = [0.1, 0.3, 0.5]
-    covA = np.array([[.01, 0.009, 0],
-                     [0.009, .01, 0],
-                     [0, 0, 0.1]])*0.01
+    covA = 0.01 * np.array([[0.010, 0.009, 0.0],
+                            [0.009, 0.010, 0.0],
+                            [0.000, 0.000, 0.1]])
     logLmaxA = 0
     samplesA = correlated_gaussian(nlive, meanA, covA, bounds, logLmaxA)
 
     meanB = [0.15, 0.25, 0.45]
-    covB = np.array([[.01, -0.009, 0.01],
-                     [-0.009, .01, -0.001],
-                     [0.01, -0.001, 0.1]])*0.01
+    covB = 0.01 * np.array([[+0.010, -0.009, +0.010],
+                            [-0.009, +0.010, -0.001],
+                            [+0.010, -0.001, +0.100]])
     logLmaxB = 0
     samplesB = correlated_gaussian(nlive, meanB, covB, bounds, logLmaxB)
 
