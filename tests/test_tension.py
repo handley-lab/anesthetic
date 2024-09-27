@@ -25,9 +25,9 @@ def test_tension_stats_compatible_gaussian():
     samplesB = correlated_gaussian(nlive, meanB, covB, bounds, logLmaxB)
 
     covAB = inv(inv(covA) + inv(covB))
-    meanAB = covAB@(solve(covA, meanA)+solve(covB, meanB))
+    meanAB = covAB @ (solve(covA, meanA) + solve(covB, meanB))
     dmeanAB = np.array(meanA)-np.array(meanB)
-    logLmaxAB = -1/2 * dmeanAB@solve(covA+covB, dmeanAB) + logLmaxA + logLmaxB
+    logLmaxAB = -dmeanAB @ solve(covA+covB, dmeanAB) / 2 + logLmaxA + logLmaxB
     samplesAB = correlated_gaussian(nlive, meanAB, covAB, bounds, logLmaxAB)
 
     nsamples = 1000
@@ -36,18 +36,18 @@ def test_tension_stats_compatible_gaussian():
 
     logR_std = samples_stats.logR.std()
     logR_mean = samples_stats.logR.mean()
-    logR_exact = (-1/2*dmeanAB@solve(covA+covB, dmeanAB) -
-                  1/2*slogdet(2*np.pi*(covA+covB))[1] + np.log(V))
+    logR_exact = np.log(V) - (dmeanAB @ solve(covA+covB, dmeanAB) / 2
+                              + slogdet(2*np.pi*(covA+covB))[1] / 2)
     assert logR_mean - 3 * logR_std < logR_exact < logR_mean + 3 * logR_std
 
     logS_std = samples_stats.logS.std()
     logS_mean = samples_stats.logS.mean()
-    logS_exact = d/2 - 1/2*dmeanAB@solve(covA+covB, dmeanAB)
+    logS_exact = d / 2 - dmeanAB @ solve(covA+covB, dmeanAB) / 2
     assert logS_mean - 3 * logS_std < logS_exact < logS_mean + 3 * logS_std
 
     logI_std = samples_stats.logI.std()
     logI_mean = samples_stats.logI.mean()
-    logI_exact = -d/2 - 1/2 * slogdet(2*np.pi*(covA+covB))[1] + np.log(V)
+    logI_exact = np.log(V) - d / 2 - slogdet(2*np.pi*(covA+covB))[1] / 2
     assert logI_mean - 3 * logI_std < logI_exact < logI_mean + 3 * logI_std
 
     assert samples_stats.get_labels().tolist() == ([r'$\log\mathcal{R}$',
@@ -78,9 +78,9 @@ def test_tension_stats_incompatible_gaussian():
     samplesB = correlated_gaussian(nlive, meanB, covB, bounds, logLmaxB)
 
     covAB = inv(inv(covA) + inv(covB))
-    meanAB = covAB@(solve(covA, meanA)+solve(covB, meanB))
+    meanAB = covAB @ (solve(covA, meanA)+solve(covB, meanB))
     dmeanAB = np.array(meanA)-np.array(meanB)
-    logLmaxAB = -1/2 * dmeanAB@solve(covA+covB, dmeanAB) + logLmaxA + logLmaxB
+    logLmaxAB = -dmeanAB @ solve(covA+covB, dmeanAB) / 2 + logLmaxA + logLmaxB
     samplesAB = correlated_gaussian(nlive, meanAB, covAB, bounds, logLmaxAB)
 
     nsamples = 1000
@@ -89,18 +89,18 @@ def test_tension_stats_incompatible_gaussian():
 
     logR_std = samples_stats.logR.std()
     logR_mean = samples_stats.logR.mean()
-    logR_exact = (-1/2*dmeanAB@solve(covA+covB, dmeanAB) -
-                  1/2*slogdet(2*np.pi*(covA+covB))[1] + np.log(V))
+    logR_exact = np.log(V) - (dmeanAB @ solve(covA+covB, dmeanAB) / 2
+                              + slogdet(2*np.pi*(covA+covB))[1] / 2)
     assert logR_mean - 3 * logR_std < logR_exact < logR_mean + 3 * logR_std
 
     logS_std = samples_stats.logS.std()
     logS_mean = samples_stats.logS.mean()
-    logS_exact = d/2 - 1/2*dmeanAB@solve(covA+covB, dmeanAB)
+    logS_exact = d / 2 - dmeanAB @ solve(covA+covB, dmeanAB) / 2
     assert logS_mean - 3 * logS_std < logS_exact < logS_mean + 3 * logS_std
 
     logI_std = samples_stats.logI.std()
     logI_mean = samples_stats.logI.mean()
-    logI_exact = -d/2 - 1/2 * slogdet(2*np.pi*(covA+covB))[1] + np.log(V)
+    logI_exact = np.log(V) - d / 2 - slogdet(2*np.pi*(covA+covB))[1] / 2
     assert logI_mean - 3 * logI_std < logI_exact < logI_mean + 3 * logI_std
 
     assert samples_stats.get_labels().tolist() == ([r'$\log\mathcal{R}$',
