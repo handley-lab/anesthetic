@@ -1,12 +1,12 @@
+from importlib.util import find_spec
 import pytest
-import sys
 
 try:
     import astropy  # noqa: F401
 except ImportError:
     pass
 
-condition = 'astropy' not in sys.modules
+condition = find_spec('astropy') is None
 reason = "requires astropy package"
 raises = ImportError
 astropy_mark_skip = pytest.mark.skipif(condition, reason=reason)
@@ -22,7 +22,7 @@ try:
 except ImportError:
     pass
 reason = "requires fastkde package"
-condition = 'fastkde' not in sys.modules
+condition = find_spec('fastkde') is None
 raises = ImportError
 fastkde_mark_skip = pytest.mark.skipif(condition, reason=reason)
 fastkde_mark_xfail = pytest.mark.xfail(condition, raises=raises, reason=reason)
@@ -36,7 +36,7 @@ try:
     import getdist  # noqa: F401
 except ImportError:
     pass
-condition = 'getdist' not in sys.modules
+condition = find_spec('getdist') is None
 reason = "requires getdist package"
 raises = ImportError
 getdist_mark_skip = pytest.mark.skipif(condition, reason=reason)
@@ -65,7 +65,7 @@ try:
 except ImportError:
     pass
 
-condition = 'h5py' not in sys.modules
+condition = find_spec('h5py') is None
 reason = "requires h5py package"
 raises = ImportError
 h5py_mark_skip = pytest.mark.skipif(condition, reason=reason)
