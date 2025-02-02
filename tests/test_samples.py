@@ -946,21 +946,45 @@ def test_stats():
     beta = [0., 0.5, 1.]
 
     vals = ['logZ', 'D_KL', 'logL_P', 'd_G']
+    delta_vals = ['Delta_logZ', 'Delta_D_KL', 'Delta_logL_P', 'Delta_d_G']
 
     labels = [r'$\ln\mathcal{Z}$',
               r'$\mathcal{D}_\mathrm{KL}$',
               r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$',
               r'$d_\mathrm{G}$']
+    delta_labels = [r'$\Delta\ln\mathcal{Z}$',
+                    r'$\Delta\mathcal{D}_\mathrm{KL}$',
+                    r'$\Delta\langle\ln\mathcal{L}\rangle_\mathcal{P}$',
+                    r'$\Delta d_\mathrm{G}$']
 
     stats = pc.stats()
     assert isinstance(stats, WeightedLabelledSeries)
     assert_array_equal(stats.drop_labels().index, vals)
     assert_array_equal(stats.get_labels(), labels)
 
+    stats = pc.stats(norm=pc.stats())
+    assert isinstance(stats, WeightedLabelledSeries)
+    assert_array_equal(stats.drop_labels().index, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+
     stats = pc.stats(nsamples=nsamples)
     assert isinstance(stats, WeightedLabelledDataFrame)
     assert_array_equal(stats.drop_labels().columns, vals)
     assert_array_equal(stats.get_labels(), labels)
+    assert stats.index.name == 'samples'
+    assert_array_equal(stats.index, range(nsamples))
+
+    stats = pc.stats(nsamples=nsamples, norm=pc.stats())
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.name == 'samples'
+    assert_array_equal(stats.index, range(nsamples))
+
+    stats = pc.stats(nsamples=nsamples, norm=pc.stats(nsamples=nsamples))
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
     assert stats.index.name == 'samples'
     assert_array_equal(stats.index, range(nsamples))
 
@@ -971,6 +995,20 @@ def test_stats():
     assert stats.index.name == 'beta'
     assert_array_equal(stats.index, beta)
 
+    stats = pc.stats(beta=beta, norm=pc.stats())
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.name == 'beta'
+    assert_array_equal(stats.index, beta)
+
+    stats = pc.stats(beta=beta, norm=pc.stats(beta=beta))
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.name == 'beta'
+    assert_array_equal(stats.index, beta)
+
     stats = pc.stats(nsamples=nsamples, beta=beta)
     assert isinstance(stats, WeightedLabelledDataFrame)
     assert_array_equal(stats.drop_labels().columns, vals)
@@ -978,7 +1016,23 @@ def test_stats():
     assert stats.index.names == ['beta', 'samples']
     assert stats.index.levshape == (len(beta), nsamples)
 
+    stats = pc.stats(nsamples=nsamples, beta=beta, norm=pc.stats())
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.names == ['beta', 'samples']
+    assert stats.index.levshape == (len(beta), nsamples)
+
+    stats = pc.stats(nsamples=nsamples, beta=beta,
+                     norm=pc.stats(nsamples=nsamples, beta=beta))
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.names == ['beta', 'samples']
+    assert stats.index.levshape == (len(beta), nsamples)
+
     for beta in [1., 0., 0.5]:
+        np.random.seed(42)
         pc.beta = beta
         n = 1000
         PC = pc.stats(n, beta)
@@ -1133,6 +1187,7 @@ def test_beta():
 def test_beta_with_logL_infinities():
     ns = read_chains("./tests/example_data/pc")
     ns.loc[:10, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
+    ns.loc[1000, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
     with pytest.warns(RuntimeWarning):
         ns.recompute(inplace=True)
     assert (ns.logL == -np.inf).sum() == 0
