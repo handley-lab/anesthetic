@@ -46,14 +46,14 @@ def test_tension_stats_compatible_gaussian():
     logS_exact = d / 2 - dmu_cov_dmu_AB / 2
     assert s.logS.mean() == approx(logS_exact, abs=3*s.logS.std())
 
-    logI_exact = logV - d / 2 - slogdet(2*np.pi*(covA+covB))[1] / 2
-    assert s.logI.mean() == approx(logI_exact, abs=3*s.logI.std())
+    I_exact = np.exp(logV - d / 2 - slogdet(2*np.pi*(covA+covB))[1] / 2)
+    assert s.I.mean() == approx(I_exact, abs=3*s.I.std())
 
-    assert s.logS.mean() == approx(s.logR.mean() - s.logI.mean(),
+    assert s.logS.mean() == approx(s.logR.mean() - np.log(s.I).mean(),
                                    abs=3*s.logS.std())
 
     assert s.get_labels().tolist() == ([r'$\ln\mathcal{R}$',
-                                        r'$\ln\mathcal{I}$',
+                                        r'$\mathcal{I}$',
                                         r'$\ln\mathcal{S}$',
                                         r'$d_\mathrm{G}$',
                                         r'$p$'])
@@ -106,14 +106,14 @@ def test_tension_stats_incompatible_gaussian():
     logS_exact = d / 2 - dmu_cov_dmu_AB / 2
     assert s.logS.mean() == approx(logS_exact, abs=3*s.logS.std())
 
-    logI_exact = logV - d / 2 - slogdet(2*np.pi*(covA+covB))[1] / 2
-    assert s.logI.mean() == approx(logI_exact, abs=3*s.logI.std())
+    I_exact = np.exp(logV - d / 2 - slogdet(2*np.pi*(covA+covB))[1] / 2)
+    assert s.I.mean() == approx(I_exact, abs=3*s.I.std())
 
-    assert s.logS.mean() == approx(s.logR.mean() - s.logI.mean(),
+    assert s.logS.mean() == approx(s.logR.mean() - np.log(s.I).mean(),
                                    abs=3*s.logS.std())
 
     assert s.get_labels().tolist() == ([r'$\ln\mathcal{R}$',
-                                        r'$\ln\mathcal{I}$',
+                                        r'$\mathcal{I}$',
                                         r'$\ln\mathcal{S}$',
                                         r'$d_\mathrm{G}$',
                                         r'$p$'])

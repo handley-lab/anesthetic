@@ -1,6 +1,7 @@
 """Tension statistics between two datasets."""
 from anesthetic.samples import Samples
 from scipy.stats import chi2
+import numpy as np
 
 
 def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
@@ -13,10 +14,10 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
       .. math::
         \log R = \log Z_{AB} - \log Z_{A} - \log Z_{B}
 
-    - ``logI``: information ratio
+    - ``I``: information ratio
 
       .. math::
-        \log I = D_{KL}^{A} + D_{KL}^{B} - D_{KL}^{AB}
+        I = exp(D_{KL}^{A} + D_{KL}^{B} - D_{KL}^{AB})
 
     - ``logS``: suspiciousness
 
@@ -65,7 +66,7 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     -------
     samples : :class:`anesthetic.samples.Samples`
         DataFrame containing the following tension statistics in columns:
-        ['logR', 'logI', 'logS', 'd_G', 'p']
+        ['logR', 'I', 'logS', 'd_G', 'p']
     """
     columns = ['logZ', 'D_KL', 'logL_P', 'd_G']
     if set(columns).issubset(A.drop_labels().columns):
@@ -89,8 +90,8 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     samples['logR'] = statsAB['logZ'] - statsA['logZ'] - statsB['logZ']
     samples.set_label('logR', r'$\ln\mathcal{R}$')
 
-    samples['logI'] = statsA['D_KL'] + statsB['D_KL'] - statsAB['D_KL']
-    samples.set_label('logI', r'$\ln\mathcal{I}$')
+    samples['I'] = np.exp(statsA['D_KL'] + statsB['D_KL'] - statsAB['D_KL'])
+    samples.set_label('I', r'$\mathcal{I}$')
 
     samples['logS'] = statsAB['logL_P'] - statsA['logL_P'] - statsB['logL_P']
     samples.set_label('logS', r'$\ln\mathcal{S}$')
