@@ -1,7 +1,6 @@
 """Tension statistics between two datasets."""
 from anesthetic.samples import Samples
 from scipy.stats import chi2
-import numpy as np
 
 
 def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
