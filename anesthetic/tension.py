@@ -17,7 +17,7 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     - ``I``: information ratio
 
       .. math::
-        I = exp(D_{KL}^{A} + D_{KL}^{B} - D_{KL}^{AB})
+        I = D_{KL}^{A} + D_{KL}^{B} - D_{KL}^{AB}
 
     - ``logS``: suspiciousness
 
@@ -90,7 +90,7 @@ def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     samples['logR'] = statsAB['logZ'] - statsA['logZ'] - statsB['logZ']
     samples.set_label('logR', r'$\ln\mathcal{R}$')
 
-    samples['I'] = np.exp(statsA['D_KL'] + statsB['D_KL'] - statsAB['D_KL'])
+    samples['I'] = statsA['D_KL'] + statsB['D_KL'] - statsAB['D_KL']
     samples.set_label('I', r'$\mathcal{I}$')
 
     samples['logS'] = statsAB['logL_P'] - statsA['logL_P'] - statsB['logL_P']
