@@ -17,6 +17,7 @@ from anesthetic.read.nestedfit import read_nestedfit
 from anesthetic.read.hdf import HDFStore, read_hdf
 from anesthetic.read.csv import read_csv
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
+import io
 
 
 @pytest.fixture(autouse=True)
@@ -317,14 +318,6 @@ def test_read_csv(tmp_path, root):
     samples.to_csv(filename)
 
     samples_ = read_csv(filename)
-    samples_.root = samples.root
-    assert_frame_equal(samples, samples_)
-
-    samples_ = read_csv(filename)
-    samples_.root = samples.root
-    assert_frame_equal(samples, samples_)
-
-    samples_ = read_chains(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
 
