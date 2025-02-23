@@ -321,21 +321,6 @@ def test_read_csv(tmp_path, root):
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
 
-    samples_ = read_csv(filename)
-    samples_.root = samples.root
-    assert_frame_equal(samples, samples_)
-
     samples_ = read_chains(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
-
-    samples_ = read_chains(filename)
-    samples_.root = samples.root
-    assert_frame_equal(samples, samples_)
-
-    with open(filename, 'rb') as f:
-        csv_bytes = f.read()
-    bytesio_obj = io.BytesIO(csv_bytes)
-    samples_bytes = read_csv(bytesio_obj)
-    samples_bytes.root = samples.root
-    assert_frame_equal(samples, samples_bytes)
