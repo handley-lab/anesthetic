@@ -18,6 +18,7 @@ from anesthetic.read.hdf import HDFStore, read_hdf
 from anesthetic.read.csv import read_csv
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
 import io
+import pandas as pd
 
 
 @pytest.fixture(autouse=True)
@@ -324,3 +325,16 @@ def test_read_csv(tmp_path, root):
     samples_ = read_chains(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
+
+    with open(filename, 'rb') as f:
+        csv_bytes = f.read()
+    bytesio_obj = io.BytesIO(csv_bytes)
+    samples_bytes = read_csv(bytesio_obj)
+    samples_bytes.root = samples.root
+    samples.columns = list(range(samples.shape[1]))
+    samples_bytes.columns = list(range(samples_bytes.shape[1]))
+    samples = samples.reset_index(drop=True)
+    samples_bytes = samples_bytes.reset_index(drop=True)
+    samples = samples.apply(pd.to_numeric, errors='coerce')
+    samples_bytes = samples_bytes.apply(pd.to_numeric, errors='coerce')
+    assert_frame_equal(samples, samples_bytes, check_dtype=False, check_like=True, check_names=False)
