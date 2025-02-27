@@ -330,4 +330,5 @@ def test_read_csv(tmp_path, root):
     bytesio_obj = io.BytesIO(csv_bytes)
     samples_bytes = read_csv(bytesio_obj)
     samples_bytes.root = samples.root
-    np.testing.assert_allclose(samples.values, samples_bytes.values, rtol=1e-5)
+    samples_bytes.label = samples.label
+    assert_frame_equal(samples, samples_bytes)
