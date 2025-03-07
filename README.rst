@@ -2,7 +2,7 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
-:Version: 2.9.0
+:Version: 2.9.4
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
@@ -18,6 +18,9 @@ anesthetic: nested sampling post-processing
 .. image:: https://badge.fury.io/py/anesthetic.svg
    :target: https://badge.fury.io/py/anesthetic
    :alt: PyPi location
+.. image:: https://anaconda.org/handley-lab/anesthetic/badges/version.svg
+   :target: https://anaconda.org/handley-lab/anesthetic
+   :alt: Conda location
 .. image:: https://zenodo.org/badge/175663535.svg
    :target: https://zenodo.org/badge/latestdoi/175663535
    :alt: Permanent DOI for this release
@@ -72,7 +75,13 @@ Installation
 
     pip install anesthetic
 
-or from the repository
+via conda
+
+.. code:: bash
+
+    conda install -c handley-lab anesthetic
+
+or from the github repository
 
 .. code:: bash
 

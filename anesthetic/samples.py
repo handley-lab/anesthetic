@@ -175,8 +175,11 @@ class Samples(WeightedLabelledDataFrame):
         for x, ax in axes.items():
             if x in self and kwargs['kind'] is not None:
                 xlabel = self.get_label(x)
-                self[x].plot(ax=ax, xlabel=xlabel, logx=x in logx,
-                             *args, **kwargs)
+                if np.isinf(self[x]).any():
+                    warnings.warn(f"column {x} has inf values.")
+                selfx = self[x].replace([-np.inf, np.inf], np.nan)
+                selfx.plot(ax=ax, xlabel=xlabel, logx=x in logx,
+                           *args, **kwargs)
                 ax.set_xlabel(xlabel)
             else:
                 ax.plot([], [])
@@ -240,6 +243,9 @@ class Samples(WeightedLabelledDataFrame):
                 - 'hist_1d': 1d histograms down the diagonal
                 - 'hist_2d': 2d histograms in lower triangle
                 - 'hist': 1d & 2d histograms in lower & diagonal
+                - 'scatter_2d': 2d scatter in lower triangle
+                - 'scatter': 1d histograms down diagonal
+                             & 2d scatter in lower triangle
 
             Feel free to add your own to this list!
             Default:
@@ -338,16 +344,24 @@ class Samples(WeightedLabelledDataFrame):
                     if x in self and y in self and lkwargs['kind'] is not None:
                         xlabel = self.get_label(x)
                         ylabel = self.get_label(y)
+                        if np.isinf(self[x]).any():
+                            warnings.warn(f"column {x} has inf values.")
                         if x == y:
-                            self[x].plot(ax=ax.twin, xlabel=xlabel,
-                                         logx=x in logx,
-                                         *args, **lkwargs)
+                            selfx = self[x].replace([-np.inf, np.inf], np.nan)
+                            selfx.plot(ax=ax.twin, xlabel=xlabel,
+                                       logx=x in logx,
+                                       *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                         else:
-                            self.plot(x, y, ax=ax, xlabel=xlabel,
-                                      logx=x in logx, logy=y in logy,
-                                      ylabel=ylabel, *args, **lkwargs)
+                            if np.isinf(self[x]).any():
+                                warnings.warn(f"column {y} has inf values.")
+                            selfxy = self[[x, y]]
+                            selfxy = selfxy.replace([-np.inf, np.inf], np.nan)
+                            selfxy = selfxy.dropna(axis=0)
+                            selfxy.plot(x, y, ax=ax, xlabel=xlabel,
+                                        logx=x in logx, logy=y in logy,
+                                        ylabel=ylabel, *args, **lkwargs)
                             ax.set_xlabel(xlabel)
                             ax.set_ylabel(ylabel)
                     else:
@@ -355,6 +369,8 @@ class Samples(WeightedLabelledDataFrame):
                             ax.twin.plot([], [])
                         else:
                             ax.plot([], [])
+
+        axes._set_logticks()
 
         return axes
 
@@ -369,6 +385,8 @@ class Samples(WeightedLabelledDataFrame):
         'hist': {'diagonal': 'hist_1d', 'lower': 'hist_2d'},
         'hist_1d': {'diagonal': 'hist_1d'},
         'hist_2d': {'lower': 'hist_2d'},
+        'scatter': {'diagonal': 'hist_1d', 'lower': 'scatter_2d'},
+        'scatter_2d': {'lower': 'scatter_2d'},
     }
 
     def importance_sample(self, logL_new, action='add', inplace=False):
@@ -744,7 +762,7 @@ class NestedSamples(Samples):
             " as well as average loglikelihoods: help(samples.logL_P)"
             )
 
-    def stats(self, nsamples=None, beta=None):
+    def stats(self, nsamples=None, beta=None, norm=None):
         r"""Compute Nested Sampling statistics.
 
         Using nested sampling we can compute:
@@ -805,20 +823,27 @@ class NestedSamples(Samples):
         beta : float, array-like, optional
             inverse temperature(s) beta=1/kT. Default self.beta
 
+        norm : Series, :class:`Samples`, optional
+            :meth:`NestedSamples.stats` output used for normalisation.
+            Can be either a Series of mean values or Samples produced with
+            matching `nsamples` and `beta`. In addition to the columns
+            ['logZ', 'D_KL', 'logL_P', 'd_G'], this adds the normalised
+            versions ['Delta_logZ', 'Delta_D_KL', 'Delta_logL_P', 'Delta_d_G'].
+
         Returns
         -------
         if beta is scalar and nsamples is None:
-            Series, index ['logZ', 'd_G', 'DK_L', 'logL_P']
+            Series, index ['logZ', 'd_G', 'D_KL', 'logL_P']
         elif beta is scalar and nsamples is int:
             :class:`Samples`, index range(nsamples),
-            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
+            columns ['logZ', 'd_G', 'D_KL', 'logL_P']
         elif beta is array-like and nsamples is None:
             :class:`Samples`, index beta,
-            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
+            columns ['logZ', 'd_G', 'D_KL', 'logL_P']
         elif beta is array-like and nsamples is int:
             :class:`Samples`, index :class:`pandas.MultiIndex` the product of
             beta and range(nsamples)
-            columns ['logZ', 'd_G', 'DK_L', 'logL_P']
+            columns ['logZ', 'd_G', 'D_KL', 'logL_P']
         """
         logw = self.logw(nsamples, beta)
         if nsamples is None and beta is None:
@@ -844,6 +869,26 @@ class NestedSamples(Samples):
         samples.set_label('d_G', r'$d_\mathrm{G}$')
 
         samples.label = self.label
+
+        if norm is not None:
+            samples['Delta_logZ'] = samples['logZ'] - norm['logZ']
+            samples.set_label('Delta_logZ',
+                              r"$\Delta\ln\mathcal{Z}$")
+
+            samples['Delta_D_KL'] = samples['D_KL'] - norm['D_KL']
+            samples.set_label('Delta_D_KL',
+                              r"$\Delta\mathcal{D}_\mathrm{KL}$")
+
+            samples['Delta_logL_P'] = samples['logL_P'] - norm['logL_P']
+            samples.set_label(
+                'Delta_logL_P',
+                r"$\Delta\langle\ln\mathcal{L}\rangle_\mathcal{P}$"
+            )
+
+            samples['Delta_d_G'] = samples['d_G'] - norm['d_G']
+            samples.set_label('Delta_d_G',
+                              r"$\Delta d_\mathrm{G}$")
+
         return samples
 
     def logX(self, nsamples=None):
@@ -1305,15 +1350,17 @@ class NestedSamples(Samples):
             n_bad = invalid.sum()
             n_equal = (samples.logL == samples.logL_birth).sum()
             if n_bad:
-                warnings.warn("%i out of %i samples have logL <= logL_birth,"
-                              "\n%i of which have logL == logL_birth."
-                              "\nThis may just indicate numerical rounding "
-                              "errors at the peak of the likelihood, but "
-                              "further investigation of the chains files is "
-                              "recommended."
-                              "\nDropping the invalid samples." %
-                              (n_bad, len(samples), n_equal),
-                              RuntimeWarning)
+                n_inf = ((samples.logL == samples.logL_birth) &
+                         (samples.logL == -np.inf)).sum()
+                if n_bad > n_inf:
+                    warnings.warn(
+                        "%i out of %i samples have logL <= logL_birth,\n"
+                        "%i of which have logL == logL_birth.\n"
+                        "This may just indicate numerical rounding errors at "
+                        "the peak of the likelihood, but further "
+                        "investigation of the chains files is recommended.\n"
+                        "Dropping the invalid samples."
+                        % (n_bad, len(samples), n_equal), RuntimeWarning)
                 samples = samples[~invalid].reset_index(drop=True)
 
             samples.sort_values('logL', inplace=True)

@@ -308,31 +308,29 @@ def test_plot_2d_colours(kind):
     kinds = {'diagonal': kind + '_1d',
              'lower': kind + '_2d',
              'upper': 'scatter_2d'}
-    gd.plot_2d(axes, kind=kinds, label="gd")
-    pc.plot_2d(axes, kind=kinds, label="pc")
-    mn.plot_2d(axes, kind=kinds, label="mn")
-    gd_colors = []
-    pc_colors = []
-    mn_colors = []
+    gd.plot_2d(axes, kind=kinds, label="A")
+    pc.plot_2d(axes, kind=kinds, label="B")
+    mn.plot_2d(axes, kind=kinds, label="C")
+    gd.plot_2d(axes, kind=kinds, label="D", color='C7')
+    pc.plot_2d(axes, kind=kinds, label="E", color='C6')
+    mn.plot_2d(axes, kind=kinds, label="F", color='C5')
+
+    from collections import defaultdict
+    d = defaultdict(set)
+
     for y, rows in axes.iterrows():
         for x, ax in rows.items():
             handles, labels = ax.get_legend_handles_labels()
             for handle, label in zip(handles, labels):
                 if isinstance(handle, Rectangle):
-                    color = to_hex(handle.get_facecolor())
+                    color = handle.get_facecolor()
                 else:
                     color = handle.get_color()
+                color = to_hex(color)
+                d[label].add(color)
 
-                if label == 'gd':
-                    gd_colors.append(color)
-                elif label == 'pc':
-                    pc_colors.append(color)
-                elif label == 'mn':
-                    mn_colors.append(color)
-
-    assert len(set(gd_colors)) == 1
-    assert len(set(mn_colors)) == 1
-    assert len(set(pc_colors)) == 1
+    for v in d.values():
+        assert len(v) == 1
 
 
 @pytest.mark.parametrize('kwargs', [dict(color='r', alpha=0.5, ls=':', lw=1),
@@ -418,6 +416,10 @@ def test_plot_2d_no_axes():
     assert axes.iloc[-1, 1].get_xlabel() == 'x1'
     assert axes.iloc[-1, 2].get_xlabel() == 'x2'
 
+    with pytest.warns(UserWarning):
+        axes = ns[['x0', 'logL_birth']].plot_2d()
+        axes = ns.drop_labels()[['x0', 'logL_birth']].plot_2d()
+
 
 def test_plot_1d_no_axes():
     np.random.seed(3)
@@ -430,6 +432,11 @@ def test_plot_1d_no_axes():
     assert axes.iloc[0].get_xlabel() == 'x0'
     assert axes.iloc[1].get_xlabel() == 'x1'
     assert axes.iloc[2].get_xlabel() == 'x2'
+
+    with pytest.warns(UserWarning):
+        axes = ns.plot_1d()
+        axes = ns[['x0', 'logL_birth']].plot_1d()
+        axes = ns.drop_labels()[['x0', 'logL_birth']].plot_1d()
 
 
 @pytest.mark.parametrize('kind', ['kde', 'hist', skipif_no_fastkde('fastkde')])
@@ -512,6 +519,36 @@ def test_plot_logscale_2d(kind):
                     else:
                         assert ax.twin.get_xscale() == 'linear'
                     assert ax.twin.get_yscale() == 'linear'
+
+
+def test_logscale_ticks():
+    np.random.seed(42)
+    ndim = 5
+    data1 = np.exp(10 * np.random.randn(200, ndim))
+    data2 = np.exp(10 * np.random.randn(200, ndim) - 50)
+    params = [f'a{i}' for i in range(ndim)]
+    fig, axes = make_2d_axes(params, logx=params, logy=params, upper=False)
+    samples1 = Samples(data1, columns=params)
+    samples2 = Samples(data2, columns=params)
+    samples1.plot_2d(axes)
+    samples2.plot_2d(axes)
+    for y, col in axes.iterrows():
+        for x, ax in col.items():
+            if ax is not None:
+                xlims = ax.get_xlim()
+                xticks = ax.get_xticks()
+                assert np.sum((xticks > xlims[0]) & (xticks < xlims[1])) > 1
+                ylims = ax.get_ylim()
+                yticks = ax.get_yticks()
+                assert np.sum((yticks > ylims[0]) & (yticks < ylims[1])) > 1
+                if x == y:
+                    data_min = ax.twin.dataLim.intervalx[0]
+                    data_max = ax.twin.dataLim.intervalx[1]
+                    assert xlims[0] == pytest.approx(data_min, rel=1e-14)
+                    assert xlims[1] == pytest.approx(data_max, rel=1e-14)
+                else:
+                    assert_array_equal(xlims, ax.dataLim.intervalx)
+                    assert_array_equal(ylims, ax.dataLim.intervaly)
 
 
 @pytest.mark.parametrize('k', ['hist_1d', 'hist'])
@@ -909,21 +946,45 @@ def test_stats():
     beta = [0., 0.5, 1.]
 
     vals = ['logZ', 'D_KL', 'logL_P', 'd_G']
+    delta_vals = ['Delta_logZ', 'Delta_D_KL', 'Delta_logL_P', 'Delta_d_G']
 
     labels = [r'$\ln\mathcal{Z}$',
               r'$\mathcal{D}_\mathrm{KL}$',
               r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$',
               r'$d_\mathrm{G}$']
+    delta_labels = [r'$\Delta\ln\mathcal{Z}$',
+                    r'$\Delta\mathcal{D}_\mathrm{KL}$',
+                    r'$\Delta\langle\ln\mathcal{L}\rangle_\mathcal{P}$',
+                    r'$\Delta d_\mathrm{G}$']
 
     stats = pc.stats()
     assert isinstance(stats, WeightedLabelledSeries)
     assert_array_equal(stats.drop_labels().index, vals)
     assert_array_equal(stats.get_labels(), labels)
 
+    stats = pc.stats(norm=pc.stats())
+    assert isinstance(stats, WeightedLabelledSeries)
+    assert_array_equal(stats.drop_labels().index, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+
     stats = pc.stats(nsamples=nsamples)
     assert isinstance(stats, WeightedLabelledDataFrame)
     assert_array_equal(stats.drop_labels().columns, vals)
     assert_array_equal(stats.get_labels(), labels)
+    assert stats.index.name == 'samples'
+    assert_array_equal(stats.index, range(nsamples))
+
+    stats = pc.stats(nsamples=nsamples, norm=pc.stats())
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.name == 'samples'
+    assert_array_equal(stats.index, range(nsamples))
+
+    stats = pc.stats(nsamples=nsamples, norm=pc.stats(nsamples=nsamples))
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
     assert stats.index.name == 'samples'
     assert_array_equal(stats.index, range(nsamples))
 
@@ -934,6 +995,20 @@ def test_stats():
     assert stats.index.name == 'beta'
     assert_array_equal(stats.index, beta)
 
+    stats = pc.stats(beta=beta, norm=pc.stats())
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.name == 'beta'
+    assert_array_equal(stats.index, beta)
+
+    stats = pc.stats(beta=beta, norm=pc.stats(beta=beta))
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.name == 'beta'
+    assert_array_equal(stats.index, beta)
+
     stats = pc.stats(nsamples=nsamples, beta=beta)
     assert isinstance(stats, WeightedLabelledDataFrame)
     assert_array_equal(stats.drop_labels().columns, vals)
@@ -941,7 +1016,23 @@ def test_stats():
     assert stats.index.names == ['beta', 'samples']
     assert stats.index.levshape == (len(beta), nsamples)
 
+    stats = pc.stats(nsamples=nsamples, beta=beta, norm=pc.stats())
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.names == ['beta', 'samples']
+    assert stats.index.levshape == (len(beta), nsamples)
+
+    stats = pc.stats(nsamples=nsamples, beta=beta,
+                     norm=pc.stats(nsamples=nsamples, beta=beta))
+    assert isinstance(stats, WeightedLabelledDataFrame)
+    assert_array_equal(stats.drop_labels().columns, vals + delta_vals)
+    assert_array_equal(stats.get_labels(), labels + delta_labels)
+    assert stats.index.names == ['beta', 'samples']
+    assert stats.index.levshape == (len(beta), nsamples)
+
     for beta in [1., 0., 0.5]:
+        np.random.seed(42)
         pc.beta = beta
         n = 1000
         PC = pc.stats(n, beta)
@@ -1096,6 +1187,7 @@ def test_beta():
 def test_beta_with_logL_infinities():
     ns = read_chains("./tests/example_data/pc")
     ns.loc[:10, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
+    ns.loc[1000, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
     with pytest.warns(RuntimeWarning):
         ns.recompute(inplace=True)
     assert (ns.logL == -np.inf).sum() == 0
@@ -1195,7 +1287,7 @@ def test_truncate(cut):
 def test_terminated(criterion, args, terminated):
     np.random.seed(4)
     pc = read_chains("./tests/example_data/pc")
-    assert pc.terminated(criterion, *args) is terminated
+    assert pc.terminated(criterion, args) == terminated
 
 
 def test_hist_range_1d():
@@ -1210,22 +1302,6 @@ def test_hist_range_1d():
     x1, x2 = ax['x0'].get_xlim()
     assert x1 <= -1
     assert x2 >= +1
-
-
-def test_contour_plot_2d_nan():
-    """Contour plots with nans arising from issue #96"""
-    np.random.seed(3)
-    ns = read_chains('./tests/example_data/pc')
-
-    ns.loc[:9, ('x0', '$x_0$')] = np.nan
-    with pytest.raises((np.linalg.LinAlgError, RuntimeError, ValueError)):
-        ns.plot_2d(['x0', 'x1'])
-
-    # Check this error is removed in the case of zero weights
-    weights = ns.get_weights()
-    weights[:10] = 0
-    ns.set_weights(weights, inplace=True)
-    ns.plot_2d(['x0', 'x1'])
 
 
 def test_compute_insertion():
