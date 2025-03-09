@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 from anesthetic import read_chains
 import pytest
+
+from anesthetic.samples import DiffusiveNestedSamples
 from utils import skipif_no_h5py
 
 
@@ -16,15 +18,20 @@ def close_figures_on_teardown():
     "./tests/example_data/mn",
     skipif_no_h5py("./tests/example_data/un"),
     "./tests/example_data/nf",
-    "./tests/example_data/dnest4"])
+    "./tests/example_data/dnest4/column_names_given"])
 def test_gui(root):
     samples = read_chains(root)
     plotter = samples.gui()
 
     # Type buttons
-    for i, plot_type in enumerate(samples.plot_types()):
-        plotter.type.buttons.set_active(i)
-        assert plotter.type() == plot_type
+    if isinstance(samples, DiffusiveNestedSamples):
+        plotter.type.buttons.set_active(0)
+        assert plotter.type() == 'visited points'
+    else:
+        plotter.type.buttons.set_active(0)
+        assert plotter.type() == 'live'
+        plotter.type.buttons.set_active(1)
+        assert plotter.type() == 'posterior'
 
     # Parameter choice buttons
     plotter.param_choice.buttons.set_active(1)

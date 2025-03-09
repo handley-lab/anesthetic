@@ -344,7 +344,7 @@ def test_read_csv(tmp_path, root):
 
 def test_read_dnest():
     np.random.seed(3)
-    ns = read_dnest4('./tests/example_data/dnest4')
+    ns = read_dnest4('./tests/example_data/dnest4/column_names_given')
     params = ['x0', 'x1', 'logL', 'logL_birth', 'nlive']
     assert_array_equal(ns.drop_labels().columns, params)
     labels = [r'$x0$',
@@ -385,7 +385,7 @@ def test_read_dnest():
 
 def test_read_dnest4_no_column_names():
     np.random.seed(3)
-    ns = read_dnest4('./tests/example_data/dnest4_no_column_names')
+    ns = read_dnest4('./tests/example_data/dnest4/no_column_names')
     params = ['x_0', 'x_1', 'logL', 'logL_birth', 'nlive']
     assert_array_equal(ns.drop_labels().columns, params)
     labels = [r'$x_0$',
@@ -405,7 +405,7 @@ def test_read_dnest4_no_column_names():
 def test_read_dnest4_override_column_names():
     np.random.seed(3)
     columns = ['y0', 'y1']
-    ns = read_dnest4('./tests/example_data/dnest4_no_column_names',
+    ns = read_dnest4('./tests/example_data/dnest4/no_column_names',
                      columns=columns)
     params = ['y0', 'y1', 'logL', 'logL_birth', 'nlive']
     assert_array_equal(ns.drop_labels().columns, params)

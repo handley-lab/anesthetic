@@ -264,7 +264,7 @@ class RunPlotter(object):
         LX = np.exp(LX-LX.max())
         i = self.evolution()
         logL = self.samples.logL.iloc[i]
-        n = self.samples.n_live(i)
+        n = self.samples.get_nlive(i)
 
         self.triangle.update(self.points)
 

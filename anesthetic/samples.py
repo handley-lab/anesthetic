@@ -646,7 +646,7 @@ class NestedSamples(Samples):
     We extend the :class:`Samples` class with the additional methods:
 
     * ``self.live_points(logL)``
-    * ``self.n_live(i)``
+    * ``self.get_nlive(iteration)``
     * ``self.LX(beta, logX)``
     * ``self.set_beta(beta)``
     * ``self.prior()``
@@ -1168,21 +1168,21 @@ class NestedSamples(Samples):
         i = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
 
-    def n_live(self, i):
+    def get_nlive(self, iteration):
         """
-        Get live points at iteration i.
+        Get live points at iteration `iteration`.
 
         Parameters
         ----------
-        i: i
+        iteration: iteration
             nested sampling iteration
 
         Returns
         -------
-        live points at teration i
+        live points at iteration  `iteration`
 
         """
-        return self.nlive.iloc[i]
+        return self.nlive.iloc[iteration]
 
     def LX(self, beta, logX):
         """
@@ -1418,7 +1418,7 @@ class DiffusiveNestedSamples(NestedSamples):
 
     We overwrite the following methods of the :class:`NestedSamples` class:
 
-    * ``self.n_live(i)``
+    * ``self.get_nlive(iteration)``
     * ``self.LX(beta, logX)``
     * ``self.plot_types()``
     * ``self.points_to_plot(plot_type, label, evolution, beta)``
@@ -1469,22 +1469,17 @@ class DiffusiveNestedSamples(NestedSamples):
         selection = (samples.level == level_index).squeeze()
         return samples[selection][label].to_numpy()
 
-    def n_live(self, *args):
+    def get_nlive(self, *args):
         """
         Get live points at iteration i.
 
-        For diffusive nested sampling, n_live is constant,
+        For diffusive nested sampling, nlive is constant,
         because diffusive nested sampling keeps all particles
         alive and evolves them using MCMC.
 
-        Parameters
-        ----------
-        i: i
-            nested sampling iteration
-
         Returns
         -------
-        live points at iteration i
+        live points at any iteration are equal to the number of particles
         """
         return self.num_particles
 
