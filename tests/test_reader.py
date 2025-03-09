@@ -422,4 +422,3 @@ def test_read_dnest4_override_column_names():
     assert ns.samples_at_level(9, label='y0').shape == (45, 1)
     ns.plot_2d(['y0', 'y1'])
     ns.plot_1d(['y0', 'y1'])
-
