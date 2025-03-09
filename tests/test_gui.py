@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 from anesthetic import read_chains
 import pytest
+
+from anesthetic.samples import DiffusiveNestedSamples
 from utils import skipif_no_h5py
 
 
@@ -11,19 +13,25 @@ def close_figures_on_teardown():
     plt.close("all")
 
 
-@pytest.mark.parametrize('root', ["./tests/example_data/pc",
-                                  "./tests/example_data/mn",
-                                  skipif_no_h5py("./tests/example_data/un"),
-                                  "./tests/example_data/nf"])
+@pytest.mark.parametrize('root', [
+    "./tests/example_data/pc",
+    "./tests/example_data/mn",
+    skipif_no_h5py("./tests/example_data/un"),
+    "./tests/example_data/nf",
+    "./tests/example_data/dnest4/column_names_given"])
 def test_gui(root):
     samples = read_chains(root)
     plotter = samples.gui()
 
     # Type buttons
-    plotter.type.buttons.set_active(1)
-    assert plotter.type() == 'posterior'
-    plotter.type.buttons.set_active(0)
-    assert plotter.type() == 'live'
+    if isinstance(samples, DiffusiveNestedSamples):
+        plotter.type.buttons.set_active(0)
+        assert plotter.type() == 'visited points'
+    else:
+        plotter.type.buttons.set_active(0)
+        assert plotter.type() == 'live'
+        plotter.type.buttons.set_active(1)
+        assert plotter.type() == 'posterior'
 
     # Parameter choice buttons
     plotter.param_choice.buttons.set_active(1)
@@ -32,8 +40,7 @@ def test_gui(root):
     assert len(plotter.triangle.ax) == 1
     plotter.param_choice.buttons.set_active(0)
     plotter.param_choice.buttons.set_active(2)
-    plotter.param_choice.buttons.set_active(3)
-    assert len(plotter.triangle.ax) == 4
+    assert len(plotter.triangle.ax) == 3
 
     # Sliders
     old = plotter.evolution()
@@ -41,15 +48,16 @@ def test_gui(root):
     assert plotter.evolution() != old
     plotter.evolution.slider.set_val(0)
     assert plotter.evolution() == old
-    plotter.type.buttons.set_active(1)
+    if len(samples.plot_types()) > 1:
+        plotter.type.buttons.set_active(1)
 
-    plotter.beta.slider.set_val(0)
-    assert plotter.beta() == pytest.approx(0, 0, 1e-8)
+        plotter.beta.slider.set_val(0)
+        assert plotter.beta() == pytest.approx(0, 0, 1e-8)
 
-    plotter.beta.slider.set_val(samples.D_KL())
-    assert plotter.beta() == pytest.approx(1)
-    plotter.beta.slider.set_val(1e2)
-    assert plotter.beta() == 1e10
+        plotter.beta.slider.set_val(samples.D_KL())
+        assert plotter.beta() == pytest.approx(1)
+        plotter.beta.slider.set_val(1e2)
+        assert plotter.beta() == 1e10
     plotter.type.buttons.set_active(0)
 
     # Reload button

@@ -44,6 +44,7 @@ pandas.options.display.max_colwidth = 14
 Samples = anesthetic.samples.Samples
 MCMCSamples = anesthetic.samples.MCMCSamples
 NestedSamples = anesthetic.samples.NestedSamples
+DiffusiveNestedSamples = anesthetic.samples.DiffusiveNestedSamples
 make_2d_axes = anesthetic.plot.make_2d_axes
 make_1d_axes = anesthetic.plot.make_1d_axes
 

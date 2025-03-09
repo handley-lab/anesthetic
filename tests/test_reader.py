@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
 from anesthetic.testing import assert_frame_equal
-from anesthetic import MCMCSamples, NestedSamples
+from anesthetic import MCMCSamples, NestedSamples, DiffusiveNestedSamples
 from anesthetic import read_chains
 from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
@@ -14,6 +14,7 @@ from anesthetic.read.cobaya import read_cobaya
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 from anesthetic.read.nestedfit import read_nestedfit
+from anesthetic.read.dnest4 import read_dnest4
 from anesthetic.read.hdf import HDFStore, read_hdf
 from anesthetic.read.csv import read_csv
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
@@ -262,6 +263,14 @@ def test_read_polychord():
     assert_array_equal(ns_zero_live[cols], ns[cols])
     assert_array_equal(ns_single_live[cols], ns[cols])
 
+    with pytest.raises(ValueError) as exc_info:
+        ns.points_to_plot('visited points',
+                          label='x1',
+                          evolution=0,
+                          beta=1,
+                          base_color='C0')
+    assert str(exc_info.value) == 'plot_type not supported'
+
 
 @pytest.mark.parametrize('root', ['gd', 'cb'])
 def test_discard_burn_in(root):
@@ -332,3 +341,84 @@ def test_read_csv(tmp_path, root):
     samples_bytes.root = samples.root
     samples_bytes.label = samples.label
     assert_frame_equal(samples, samples_bytes)
+
+
+def test_read_dnest():
+    np.random.seed(3)
+    ns = read_dnest4('./tests/example_data/dnest4/column_names_given')
+    params = ['x0', 'x1', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = [r'$x0$',
+              r'$x1$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+
+    assert_array_equal(ns.get_labels(), labels)
+
+    assert isinstance(ns, DiffusiveNestedSamples)
+    assert ns.samples_at_level(9, label='x1').shape == (45, 1)
+    assert ns.plot_types() == ('visited points',)
+
+    ns.points_to_plot('visited points',
+                      label='x1',
+                      evolution=0,
+                      beta=1,
+                      base_color='C0')
+
+    with pytest.raises(ValueError) as exc_info:
+        ns.points_to_plot('live',
+                          label='x1',
+                          evolution=0,
+                          beta=1,
+                          base_color='C0')
+    assert str(exc_info.value) == 'plot_type not supported'
+    with pytest.raises(ValueError) as exc_info:
+        ns.points_to_plot('posterior',
+                          label='x1',
+                          evolution=0,
+                          beta=1,
+                          base_color='C0')
+    assert str(exc_info.value) == 'plot_type not supported'
+    ns.plot_2d(['x0', 'x1'])
+    ns.plot_1d(['x0', 'x1'])
+
+
+def test_read_dnest4_no_column_names():
+    np.random.seed(3)
+    ns = read_dnest4('./tests/example_data/dnest4/no_column_names')
+    params = ['x_0', 'x_1', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = [r'$x_0$',
+              r'$x_1$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+
+    assert_array_equal(ns.get_labels(), labels)
+
+    assert isinstance(ns, DiffusiveNestedSamples)
+    assert ns.samples_at_level(9, label='x_1').shape == (45, 1)
+    ns.plot_2d(['x_0', 'x_1'])
+    ns.plot_1d(['x_0', 'x_1'])
+
+
+def test_read_dnest4_override_column_names():
+    np.random.seed(3)
+    columns = ['y0', 'y1']
+    ns = read_dnest4('./tests/example_data/dnest4/no_column_names',
+                     columns=columns)
+    params = ['y0', 'y1', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(ns.drop_labels().columns, params)
+    labels = [r'$y0$',
+              r'$y1$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+
+    assert_array_equal(ns.get_labels(), labels)
+
+    assert isinstance(ns, DiffusiveNestedSamples)
+    assert ns.samples_at_level(9, label='y0').shape == (45, 1)
+    ns.plot_2d(['y0', 'y1'])
+    ns.plot_1d(['y0', 'y1'])
