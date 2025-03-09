@@ -18,6 +18,7 @@ from anesthetic.read.dnest4 import read_dnest4
 from anesthetic.read.hdf import HDFStore, read_hdf
 from anesthetic.read.csv import read_csv
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
+import io
 
 
 @pytest.fixture(autouse=True)
@@ -329,17 +330,17 @@ def test_read_csv(tmp_path, root):
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
 
-    samples_ = read_csv(filename)
-    samples_.root = samples.root
-    assert_frame_equal(samples, samples_)
-
     samples_ = read_chains(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
 
-    samples_ = read_chains(filename)
-    samples_.root = samples.root
-    assert_frame_equal(samples, samples_)
+    with open(filename, 'rb') as f:
+        csv_bytes = f.read()
+    bytesio_obj = io.BytesIO(csv_bytes)
+    samples_bytes = read_csv(bytesio_obj)
+    samples_bytes.root = samples.root
+    samples_bytes.label = samples.label
+    assert_frame_equal(samples, samples_bytes)
 
 
 def test_read_dnest():
@@ -421,3 +422,4 @@ def test_read_dnest4_override_column_names():
     assert ns.samples_at_level(9, label='y0').shape == (45, 1)
     ns.plot_2d(['y0', 'y1'])
     ns.plot_1d(['y0', 'y1'])
+
