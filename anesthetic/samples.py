@@ -1255,7 +1255,7 @@ class NestedSamples(Samples):
         The remaining arguments are passed to the termination criterion.
         """
         try:
-            return termination.__dict__[criterion](self, *args, **kwargs)
+            return getattr(termination, criterion)(self, *args, **kwargs)
         except KeyError:
             raise KeyError("Unknown termination criterion: %s" % criterion)
 

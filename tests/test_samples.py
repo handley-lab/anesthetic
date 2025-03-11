@@ -1283,7 +1283,8 @@ def test_truncate(cut):
                           ("ndead", (2000,), False),
                           ("logL", (5.0,), True),
                           ("logL", (6.0,), False),
-                          ("invalid_criterion", (1.0,), pytest.raises(KeyError)
+                          ("invalid_criterion", (1.0,), pytest.raises(
+                              AttributeError)
                            ),
                           ])
 def test_terminated(criterion, args, expected):
