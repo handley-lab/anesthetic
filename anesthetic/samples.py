@@ -1254,10 +1254,7 @@ class NestedSamples(Samples):
 
         The remaining arguments are passed to the termination criterion.
         """
-        try:
-            return getattr(termination, criterion)(self, *args, **kwargs)
-        except KeyError:
-            raise KeyError("Unknown termination criterion: %s" % criterion)
+        return getattr(termination, criterion)(self, *args, **kwargs)
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
