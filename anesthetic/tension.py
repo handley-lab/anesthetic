@@ -3,7 +3,7 @@ from anesthetic.samples import Samples
 from scipy.stats import chi2
 
 
-def stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
+def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
     r"""Compute tension statistics between two samples.
 
     Using nested sampling we can compute:
