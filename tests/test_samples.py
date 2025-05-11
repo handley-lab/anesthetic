@@ -100,8 +100,8 @@ def test_build_samples():
     ns = NestedSamples(data=data, logL=logL, weights=weights, logzero=np.nan)
     assert not np.all(np.isfinite(mc.logL))
     assert not np.all(np.isfinite(ns.logL))
-    assert np.all(mc.logL == logL)
-    assert np.all(ns.logL == logL)
+    assert np.allclose(mc.logL, logL, equal_nan=True)
+    assert np.allclose(ns.logL, logL, equal_nan=True)
     assert not hasattr(mc, 'root')
     assert not hasattr(ns, 'root')
 
