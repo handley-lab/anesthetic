@@ -1163,7 +1163,8 @@ class NestedSamples(Samples):
             Loglikelihood of contour
         """
         if logL is None:
-            logL = self.loc[self.logL > self.logL_birth.max(numeric_only=True)].logL.iloc[0]
+            logL_max = self.logL_birth.max(numeric_only=True)
+            logL = self.loc[self.logL > logL_max].logL.iloc[0]
         elif isinstance(logL, float):
             pass
         else:

@@ -106,7 +106,6 @@ def test_build_samples():
     assert not hasattr(ns, 'root')
 
 
-
 def test_different_parameters():
     np.random.seed(3)
     params_x = ['x0', 'x1', 'x2', 'x3', 'x4']
