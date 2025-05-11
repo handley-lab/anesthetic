@@ -95,6 +95,17 @@ def test_build_samples():
     assert not hasattr(mc, 'root')
     assert not hasattr(ns, 'root')
 
+    logL[:10] = np.nan
+    mc = MCMCSamples(data=data, logL=logL, weights=weights, logzero=np.nan)
+    ns = NestedSamples(data=data, logL=logL, weights=weights, logzero=np.nan)
+    assert not np.all(np.isfinite(mc.logL))
+    assert not np.all(np.isfinite(ns.logL))
+    assert np.all(mc.logL == logL)
+    assert np.all(ns.logL == logL)
+    assert not hasattr(mc, 'root')
+    assert not hasattr(ns, 'root')
+
+
 
 def test_different_parameters():
     np.random.seed(3)
