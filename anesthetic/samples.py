@@ -1165,7 +1165,7 @@ class NestedSamples(Samples):
         if logL is None:
             logL_max = self.logL_birth.max(numeric_only=True)
             logL = self.loc[self.logL > logL_max].logL.iloc[0]
-        elif isinstance(logL, float):
+        elif isinstance(logL, (float, np.floating)):
             pass
         else:
             logL = float(self.logL[logL])
