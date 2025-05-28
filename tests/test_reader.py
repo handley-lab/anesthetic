@@ -263,6 +263,28 @@ def test_read_polychord():
     assert_array_equal(ns_single_live[cols], ns[cols])
 
 
+def test_read_blackjax():
+    np.random.seed(3)
+    bj = read_chains('./tests/example_data/bj')
+    assert isinstance(bj, NestedSamples)
+    params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(bj.drop_labels().columns, params)
+    labels = ['$x_0$',
+              '$x_1$',
+              '$x_2$',
+              '$x_3$',
+              '$x_4$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+    assert_array_equal(bj.get_labels(), labels)
+    assert bj.nlive[0] == 125
+    assert np.isnan(bj.logL_birth[0])
+    bj.recompute()
+    assert bj.nlive[0] == 125
+    assert np.isnan(bj.logL_birth[0])
+
+
 @pytest.mark.parametrize('root', ['gd', 'cb'])
 def test_discard_burn_in(root):
     with pytest.raises(KeyError):

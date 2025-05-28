@@ -5,7 +5,7 @@ storing a reference to both the widget object and the axis on which they are
 plotted.
 
 """
-
+import numpy as np
 from matplotlib.widgets import Button as mplButton
 from matplotlib.widgets import CheckButtons as mplCheckButtons
 from matplotlib.widgets import RadioButtons as mplRadioButtons
@@ -270,7 +270,9 @@ class TrianglePlot(Widget):
             for x, ax in row.items():
                 if ax is not None:
                     if x == y:
-                        datx, daty = histogram(f(x), bins='auto')
+                        dat = f(x)
+                        dat = dat[~np.isnan(dat)]
+                        datx, daty = histogram(dat, bins='auto')
                         ax.twin.lines[0].set_xdata(datx)
                         ax.twin.lines[0].set_ydata(daty)
                     else:
