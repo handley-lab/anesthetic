@@ -979,8 +979,8 @@ class NestedSamples(Samples):
                     betalogL[:] = 0.0
                 betalogL.name = 'betalogL'
             else:
-                betalogL = logL._constructor_expanddim(np.outer(self.logL, beta),
-                                                       self.index, columns=beta)
+                betalogL = logL._constructor_expanddim(
+                    np.outer(self.logL, beta), self.index, columns=beta)
                 if 0.0 in betalogL:
                     betalogL[0] = 0.0
                 betalogL.columns.name = 'beta'
