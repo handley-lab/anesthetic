@@ -1,6 +1,8 @@
 """Tension statistics between two datasets."""
-from anesthetic.samples import Samples
+import numpy as np
 from scipy.stats import chi2
+from scipy.special import erfinv
+from anesthetic.samples import Samples
 
 
 def tension_stats(joint, *separate):  # noqa: D301
@@ -88,4 +90,8 @@ def tension_stats(joint, *separate):  # noqa: D301
     p = chi2.sf(samples['d_G'] - 2 * samples['logS'], df=samples['d_G'])
     samples['p'] = p
     samples.set_label('p', '$p$')
+
+    samples['tension'] = erfinv(1-p) * np.sqrt(2)
+    samples.set_label('tension', r'tension~[$\sigma$]')
+
     return samples
