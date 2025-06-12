@@ -2,8 +2,7 @@ from pytest import approx, raises
 from anesthetic.examples.perfect_ns import correlated_gaussian
 import numpy as np
 from numpy.linalg import inv, slogdet
-from pandas.testing import assert_series_equal
-from anesthetic.tension import stats
+from anesthetic.tension import tension_stats
 
 
 def test_tension_stats_compatible_gaussian():
@@ -37,8 +36,14 @@ def test_tension_stats_compatible_gaussian():
     samplesAB = correlated_gaussian(nlive, muAB, covAB, bounds, logLmaxAB)
 
     nsamples = 10
-    beta = 1
-    s = stats(samplesA, samplesB, samplesAB, nsamples, beta)
+    statsA = samplesA.stats(nsamples=nsamples)
+    statsB = samplesB.stats(nsamples=nsamples)
+    statsAB = samplesAB.stats(nsamples=nsamples)
+    with raises(ValueError):
+        tension_stats(samplesAB, statsA, statsB)
+    with raises(ValueError):
+        tension_stats(statsAB, samplesA, statsB)
+    s = tension_stats(statsAB, statsA, statsB)
 
     logR_exact = logV - dmu_cov_dmu_AB/2 - slogdet(2*np.pi*(covA+covB))[1]/2
     assert s.logR.mean() == approx(logR_exact, abs=3*s.logR.std())
@@ -58,12 +63,8 @@ def test_tension_stats_compatible_gaussian():
                                         r'$d_\mathrm{G}$',
                                         r'$p$'])
 
-    with raises(ValueError):
-        stats(samplesA.stats(nsamples=5), samplesB, samplesAB, nsamples)
-    s2 = stats(samplesA.stats(nsamples=nsamples),
-               samplesB.stats(nsamples=nsamples),
-               samplesAB.stats(nsamples=nsamples))
-    assert_series_equal(s2.mean(), s.mean(), atol=s2.std().max())
+    # Test for more than two datasets.
+    tension_stats(statsAB, statsA, statsB, statsB)
 
 
 def test_tension_stats_incompatible_gaussian():
@@ -97,8 +98,10 @@ def test_tension_stats_incompatible_gaussian():
     samplesAB = correlated_gaussian(nlive, muAB, covAB, bounds, logLmaxAB)
 
     nsamples = 10
-    beta = 1
-    s = stats(samplesA, samplesB, samplesAB, nsamples, beta)
+    statsA = samplesA.stats(nsamples=nsamples)
+    statsB = samplesB.stats(nsamples=nsamples)
+    statsAB = samplesAB.stats(nsamples=nsamples)
+    s = tension_stats(statsAB, statsA, statsB)
 
     logR_exact = logV - dmu_cov_dmu_AB/2 - slogdet(2*np.pi*(covA+covB))[1]/2
     assert s.logR.mean() == approx(logR_exact, abs=3*s.logR.std())
@@ -117,10 +120,3 @@ def test_tension_stats_incompatible_gaussian():
                                         r'$\ln\mathcal{S}$',
                                         r'$d_\mathrm{G}$',
                                         r'$p$'])
-
-    with raises(ValueError):
-        stats(samplesA.stats(nsamples=5), samplesB, samplesAB, nsamples)
-    s2 = stats(samplesA.stats(nsamples=nsamples),
-               samplesB.stats(nsamples=nsamples),
-               samplesAB.stats(nsamples=nsamples))
-    assert_series_equal(s2.mean(), s.mean(), atol=s2.std().max())
