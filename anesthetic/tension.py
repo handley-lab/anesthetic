@@ -39,6 +39,11 @@ def tension_stats(joint, *separate):  # noqa: D301
       .. math::
         p = \int_{d-2\log{S}}^{\infty} \chi^2_d(x) dx
 
+    - ``tension``: tension quantification in terms of numbers of sigma
+
+      .. math::
+        \sqrt{2} \rm{erf}^{-1}(1-p)
+
     Parameters
     ----------
     joint : :class:`anesthetic.samples.Samples`
