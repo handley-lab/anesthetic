@@ -5,12 +5,6 @@ from pathlib import Path
 
 
 def read_csv(filename, *args, **kwargs):
-<<<<<<< tension
-    """Read a CSV file into a :class:`anesthetic.samples.Samples` object."""
-    filename = Path(filename)
-    kwargs['label'] = kwargs.get('label', filename.stem)
-    wldf = wl_read_csv(filename.with_suffix('.csv'))
-=======
     """Read a CSV file into a :class:`Samples` object."""
     try:
         filename = Path(filename)
@@ -19,7 +13,6 @@ def read_csv(filename, *args, **kwargs):
     except TypeError:
         pass
     wldf = wl_read_csv(filename)
->>>>>>> master
     if 'nlive' in wldf.columns:
         return NestedSamples(wldf, *args, **kwargs)
     else:
