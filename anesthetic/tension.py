@@ -3,10 +3,14 @@ from anesthetic.samples import Samples
 from scipy.stats import chi2
 
 
-def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
-    r"""Compute tension statistics between two samples.
+def tension_stats(separate, joint):  # noqa: D301
+    r"""Compute tension statistics between two or more samples.
 
-    Using nested sampling we can compute:
+    With the Bayesian (log-)evidence ``logZ``, Kullback--Leibler divergence
+    ``D_KL``, posterior average of the log-likelihood ``logL_P``, and Gaussian
+    model dimensionality ``d_G``, we can compute the following tension
+    statistics between two or more samples (example here for simplicity just
+    with two datasets A and B):
 
     - ``logR``: R statistic for dataset consistency
 
@@ -35,31 +39,17 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
 
     Parameters
     ----------
-    A : :class:`anesthetic.samples.Samples`
-        :class:`anesthetic.samples.NestedSamples` object from a sampling run
-        using only dataset A.
-        Alternatively, you can pass a precomputed stats object returned from
+    separate : list(:class:`anesthetic.samples.Samples`)
+        List of Bayesian stats from independent nested sampling runs using
+        various datasets (A, B, ...) separately. The list should contain stats
+        objects with the columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned
+        by :meth:`anesthetic.samples.NestedSamples.stats`.
+
+    joint : :class:`anesthetic.samples.Samples`
+        Bayesian stats from a nested sampling run using all the datasets from
+        the list in ``separate`` jointly. Again, this should be a stats object
+        with columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned by
         :meth:`anesthetic.samples.NestedSamples.stats`.
-
-    B : :class:`anesthetic.samples.Samples`
-        :class:`anesthetic.samples.NestedSamples` object from a sampling run
-        using only dataset B.
-        Alternatively, you can pass the precomputed stats object returned from
-        :meth:`anesthetic.samples.NestedSamples.stats`.
-
-    AB : :class:`anesthetic.samples.Samples`
-        :class:`anesthetic.samples.NestedSamples` object from a sampling run
-        using both datasets A and B jointly.
-        Alternatively, you can pass the precomputed stats object returned from
-        :meth:`anesthetic.samples.NestedSamples.stats`.
-
-    nsamples : int, optional
-        - If nsamples is not supplied, calculate mean value.
-        - If nsamples is integer, draw nsamples from the distribution of
-          values inferred by nested sampling.
-
-    beta : float, array-like, default=1
-        Inverse temperature(s) `beta=1/kT`.
 
     Returns
     -------
@@ -68,34 +58,31 @@ def tension_stats(A, B, AB, nsamples=None, beta=None):  # noqa: D301
         ['logR', 'I', 'logS', 'd_G', 'p']
     """
     columns = ['logZ', 'D_KL', 'logL_P', 'd_G']
-    if set(columns).issubset(A.drop_labels().columns):
-        statsA = A
-    else:
-        statsA = A.stats(nsamples=nsamples, beta=beta)
-    if set(columns).issubset(B.drop_labels().columns):
-        statsB = B
-    else:
-        statsB = B.stats(nsamples=nsamples, beta=beta)
-    if set(columns).issubset(AB.drop_labels().columns):
-        statsAB = AB
-    else:
-        statsAB = AB.stats(nsamples=nsamples, beta=beta)
-    if statsA.shape != statsAB.shape or statsB.shape != statsAB.shape:
-        raise ValueError("Shapes of stats_A, stats_B, and stats_AB do not "
-                         "match. Make sure to pass consistent `nsamples`.")
+    if not set(columns).issubset(joint.drop_labels().columns):
+        raise ValueError("The DataFrame passed to `joint` needs to contain"
+                         "the columns 'logZ', 'D_KL', 'logL_P', and 'd_G'.")
+    for s in separate:
+        if not set(columns).issubset(s.drop_labels().columns):
+            raise ValueError("The DataFrames passed to `separate` need to "
+                             "contain the columns 'logZ', 'D_KL', 'logL_P', "
+                             "and 'd_G'.")
+    separate_stats = separate[0][columns].copy()
+    for s in separate[1:]:
+        separate_stats += s
+    joint_stats = joint[columns].copy()
 
-    samples = Samples(index=statsA.index)
+    samples = Samples(index=joint_stats.index)
 
-    samples['logR'] = statsAB['logZ'] - statsA['logZ'] - statsB['logZ']
+    samples['logR'] = joint_stats['logZ'] - separate_stats['logZ']
     samples.set_label('logR', r'$\ln\mathcal{R}$')
 
-    samples['I'] = statsA['D_KL'] + statsB['D_KL'] - statsAB['D_KL']
+    samples['I'] = separate_stats['D_KL'] - joint_stats['D_KL']
     samples.set_label('I', r'$\mathcal{I}$')
 
-    samples['logS'] = statsAB['logL_P'] - statsA['logL_P'] - statsB['logL_P']
+    samples['logS'] = joint_stats['logL_P'] - separate_stats['logL_P']
     samples.set_label('logS', r'$\ln\mathcal{S}$')
 
-    samples['d_G'] = statsA['d_G'] + statsB['d_G'] - statsAB['d_G']
+    samples['d_G'] = separate_stats['d_G'] - joint_stats['d_G']
     samples.set_label('d_G', r'$d_\mathrm{G}$')
 
     p = chi2.sf(samples['d_G'] - 2 * samples['logS'], df=samples['d_G'])
