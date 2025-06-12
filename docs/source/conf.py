@@ -240,7 +240,7 @@ intersphinx_mapping = {
         'scipy':('https://docs.scipy.org/doc/scipy', None),
         'pandas':('https://pandas.pydata.org/pandas-docs/stable', None),
         'matplotlib':('https://matplotlib.org/stable', None),
-        'getdist':('https://getdist.readthedocs.io/en/latest/', None)
+        'getdist':('https://getdist.readthedocs.io/en/latest/', None),
         }
 
 # -- Options for todo extension ----------------------------------------------
