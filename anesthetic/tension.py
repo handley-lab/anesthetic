@@ -3,7 +3,7 @@ from anesthetic.samples import Samples
 from scipy.stats import chi2
 
 
-def tension_stats(separate, joint):  # noqa: D301
+def tension_stats(joint, *separate):  # noqa: D301
     r"""Compute tension statistics between two or more samples.
 
     With the Bayesian (log-)evidence ``logZ``, Kullback--Leibler divergence
@@ -39,16 +39,16 @@ def tension_stats(separate, joint):  # noqa: D301
 
     Parameters
     ----------
-    separate : list(:class:`anesthetic.samples.Samples`)
-        List of Bayesian stats from independent nested sampling runs using
-        various datasets (A, B, ...) separately. The list should contain stats
-        objects with the columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned
-        by :meth:`anesthetic.samples.NestedSamples.stats`.
-
     joint : :class:`anesthetic.samples.Samples`
         Bayesian stats from a nested sampling run using all the datasets from
-        the list in ``separate`` jointly. Again, this should be a stats object
-        with columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned by
+        the list in ``separate`` jointly. Again, this should be a ``stats``
+        object with columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned by
+        :meth:`anesthetic.samples.NestedSamples.stats`.
+
+    *separate
+        Bayesian stats from independent nested sampling runs using various
+        datasets (A, B, ...) separately. Each should be a ``stats`` object
+        with the columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned by
         :meth:`anesthetic.samples.NestedSamples.stats`.
 
     Returns
