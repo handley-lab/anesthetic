@@ -762,7 +762,7 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
                          logy=logy,
                          gridspec_kw=gridspec_kw,
                          subplot_spec=subplot_spec)
-    fig.align_labels()
+    fig.align_labels([a for a in axes.values.flatten() if isinstance(a, Axes)])
     return fig, axes
 
 
