@@ -310,7 +310,7 @@ def compute_nlive(death, birth):
                          index=b.index + len(b))
     b['n'] = +1
     d['n'] = -1
-    t = pandas.concat([b, d]).sort_values(['logL', 'n'])
+    t = pandas.concat([b, d]).sort_values(['logL', 'n'], na_position='first')
     n = t.n.cumsum()
     return (n[d.index]+1).to_numpy()
 
