@@ -1164,8 +1164,9 @@ class NestedSamples(Samples):
             Loglikelihood of contour
         """
         if logL is None:
-            logL = self.loc[self.logL > self.logL_birth.max()].logL.iloc[0]
-        elif isinstance(logL, float):
+            logL_max = self.logL_birth.max(numeric_only=True)
+            logL = self.loc[self.logL > logL_max].logL.iloc[0]
+        elif isinstance(logL, (float, np.floating)):
             pass
         else:
             logL = float(self.logL[logL])
@@ -1189,7 +1190,7 @@ class NestedSamples(Samples):
                 - last set of live points if no argument provided
         """
         logL = self.contour(logL)
-        i = ((self.logL >= logL) & (self.logL_birth < logL)).to_numpy()
+        i = ((self.logL >= logL) & ~(self.logL_birth >= logL)).to_numpy()
         return Samples(self[i]).set_weights(None)
 
     def dead_points(self, logL=None):
