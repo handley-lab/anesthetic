@@ -18,6 +18,7 @@ from anesthetic.weighted_labelled_pandas import WeightedLabelledDataFrame
 from anesthetic.plot import (make_1d_axes, make_2d_axes,
                              AxesSeries, AxesDataFrame)
 from anesthetic.utils import adjust_docstrings
+from anesthetic import termination
 
 
 class Samples(WeightedLabelledDataFrame):
@@ -1238,6 +1239,23 @@ class NestedSamples(Samples):
         live_points = self.live_points(logL)
         index = np.concatenate([dead_points.index, live_points.index])
         return self.loc[index].recompute()
+
+    def terminated(self, criterion='logZ', *args, **kwargs):
+        """Check if a simulated run has terminated.
+
+        Parameters
+        ----------
+        criterion : str, optional
+            The termination criterion to choose.
+            This should be one of
+            {'logZ', 'D_KL', 'logX', 'ndead', 'logL'}.
+            Default is logZ.
+            See the documentation for the specific criterion in
+            ``anesthetic.termination`` for more details.
+
+        The remaining arguments are passed to the termination criterion.
+        """
+        return getattr(termination, criterion)(self, *args, **kwargs)
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
