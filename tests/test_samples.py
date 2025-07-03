@@ -4,7 +4,7 @@ import pytest
 from contextlib import nullcontext
 from math import floor, ceil
 import numpy as np
-from pandas import MultiIndex
+from pandas import MultiIndex, Series
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
@@ -1282,6 +1282,58 @@ def test_truncate(cut):
         assert_array_equal(pc, truncated_run)
 
 
+@pytest.mark.parametrize("criterion,args,expected",
+                         [("logZ", (1e-3,), False),
+                          ("logZ",
+                           dict(eps=1e-3, nsamples=10),
+                           Series(
+                               [False] * 10,
+                               index=np.arange(10),
+                               name="terminated",
+                           )
+                           ),
+                          ("logZ", (1e-1,), True),
+                          ("D_KL", (1e-1,), True),
+                          ("D_KL",
+                           dict(eps=1e-1, nsamples=10),
+                           Series(
+                               [True] * 10,
+                               index=np.arange(10),
+                               name="terminated",
+                           )
+                           ),
+                          ("D_KL", (1e-3,), False),
+                          ("logX", (-10.0,), True),
+                          ("logX", dict(max_logX=-10.0, nsamples=10),
+                           Series(
+                               [True] * 10,
+                               index=np.arange(10),
+                               name="terminated",
+                           )
+                           ),
+                          ("logX", (-15.0,), False),
+                          ("ndead", (1000,), True),
+                          ("ndead", (2000,), False),
+                          ("logL", (5.0,), True),
+                          ("logL", (6.0,), False),
+                          ("invalid_criterion", (1.0,), pytest.raises(
+                              AttributeError)
+                           ),
+                          ])
+def test_terminated(criterion, args, expected):
+    np.random.seed(4)
+    pc = read_chains("./tests/example_data/pc")
+    if isinstance(expected, bool):
+        assert pc.terminated(criterion, *args) == expected
+    elif isinstance(expected, Series):
+        terminated = pc.terminated(criterion, **args)
+        assert expected.equals(terminated)
+        assert expected.name == terminated.name
+    else:
+        with expected:
+            pc.terminated(criterion, *args)
+
+
 def test_hist_range_1d():
     """Test to provide a solution to #89"""
     np.random.seed(3)
@@ -2063,6 +2115,9 @@ def test_axes_limits_2d(kind, kwargs):
     xmin, xmax = axes['x0']['x1'].get_xlim()
     ymin, ymax = axes['x0']['x1'].get_ylim()
     assert -3.9 < xmin < -3
+    assert 3 < xmax < 3.9
+    assert -3.9 < ymin < -3
+    assert 3 < ymax < 3.9
     assert 3 < xmax < 3.9
     assert -3.9 < ymin < -3
     assert 3 < ymax < 3.9
