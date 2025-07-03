@@ -4,7 +4,7 @@ import pytest
 from contextlib import nullcontext
 from math import floor, ceil
 import numpy as np
-from pandas import MultiIndex
+from pandas import MultiIndex, Series
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
@@ -1284,10 +1284,33 @@ def test_truncate(cut):
 
 @pytest.mark.parametrize("criterion,args,expected",
                          [("logZ", (1e-3,), False),
+                          ("logZ",
+                           dict(eps=1e-3, nsamples=10),
+                           Series(
+                               [False] * 10,
+                               index=np.arange(10),
+                               name="terminated",
+                           )
+                           ),
                           ("logZ", (1e-1,), True),
                           ("D_KL", (1e-1,), True),
+                          ("D_KL",
+                           dict(eps=1e-1, nsamples=10),
+                           Series(
+                               [True] * 10,
+                               index=np.arange(10),
+                               name="terminated",
+                           )
+                           ),
                           ("D_KL", (1e-3,), False),
                           ("logX", (-10.0,), True),
+                          ("logX", dict(max_logX=-10.0, nsamples=10),
+                           Series(
+                               [True] * 10,
+                               index=np.arange(10),
+                               name="terminated",
+                           )
+                           ),
                           ("logX", (-15.0,), False),
                           ("ndead", (1000,), True),
                           ("ndead", (2000,), False),
@@ -1302,6 +1325,10 @@ def test_terminated(criterion, args, expected):
     pc = read_chains("./tests/example_data/pc")
     if isinstance(expected, bool):
         assert pc.terminated(criterion, *args) == expected
+    elif isinstance(expected, Series):
+        terminated = pc.terminated(criterion, **args)
+        assert expected.equals(terminated)
+        assert expected.name == terminated.name
     else:
         with expected:
             pc.terminated(criterion, *args)
