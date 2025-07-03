@@ -28,7 +28,7 @@ def D_KL(samples, eps=1e-3, nsamples=None, beta=None):
 def logX(samples, max_logX, nsamples=None):
     """Terminate when the log-volume of the live points reaches a threshold."""
     i_live = samples.live_points().index
-    return samples.logX(nsamples)[i_live[0]] < max_logX
+    return samples.logX(nsamples).loc[i_live[0]] < max_logX
 
 
 def ndead(samples, max_ndead):
