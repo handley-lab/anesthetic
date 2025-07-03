@@ -7,8 +7,8 @@ def logZ(samples, eps=1e-3, nsamples=None, beta=None):
     """Terminate when evidence in the live points is fraction eps of total."""
     i_live = samples.live_points().index
     logw = samples.logw(nsamples, beta)
-    logZ_live = logsumexp(logw[i_live])
-    logZ = logsumexp(logw)
+    logZ_live = logsumexp(logw.loc[i_live])
+    logZ = logsumexp(logw, axis=0)
     return logZ_live - logZ < np.log(eps)
 
 
