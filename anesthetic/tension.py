@@ -1,16 +1,16 @@
 """Tension statistics between two datasets."""
 import numpy as np
 from scipy.stats import chi2
-from scipy.special import erfinv
+from scipy.special import erfcinv
 from anesthetic.samples import Samples
 
 
-def tension_stats(joint, *separate):  # noqa: D301
+def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):  # noqa: D301
     r"""Compute tension statistics between two or more samples.
 
     With the Bayesian (log-)evidence ``logZ``, Kullback--Leibler divergence
     ``D_KL``, posterior average of the log-likelihood ``logL_P``, and Gaussian
-    model dimensionality ``d_G``, we can compute the following tension
+    model dimensionality ``d_G``, and correction factors ``F`` for discarded pprior samples, we can compute the following tension
     statistics between two or more samples (example here for simplicity just
     with two datasets A and B):
 
@@ -39,10 +39,10 @@ def tension_stats(joint, *separate):  # noqa: D301
       .. math::
         p = \int_{d-2\log{S}}^{\infty} \chi^2_d(x) dx
 
-    - ``tension``: tension quantification in terms of numbers of sigma
+    - ``tension``: tension quantification in terms of numbers of sigma calculated from p
 
       .. math::
-        \sqrt{2} \rm{erf}^{-1}(1-p)
+        \sqrt{2} \rm{erfc}^{-1}(p)
 
     Parameters
     ----------
@@ -53,16 +53,23 @@ def tension_stats(joint, *separate):  # noqa: D301
         :meth:`anesthetic.samples.NestedSamples.stats`.
 
     *separate
-        Bayesian stats from independent nested sampling runs using various
+        A variable number of Bayesian stats from independent nested sampling runs using various
         datasets (A, B, ...) separately. Each should be a ``stats`` object
         with the columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned by
         :meth:`anesthetic.samples.NestedSamples.stats`.
+
+    joint_f : float, optional
+        Correction factor `F = nprior / ndiscarded` for the `joint` sample.
+        Defaults to 1.0 (no correction).
+
+    separate_fs : list or tuple of float, optional
+        A list of correction factors `F` for each of the `separate` samples, the order is irrelevant. If None, defaults to 1.0 for all.
 
     Returns
     -------
     samples : :class:`anesthetic.samples.Samples`
         DataFrame containing the following tension statistics in columns:
-        ['logR', 'I', 'logS', 'd_G', 'p']
+        ['logR', 'I', 'logS', 'd_G', 'p', 'tension']
     """
     columns = ['logZ', 'D_KL', 'logL_P', 'd_G']
     if not set(columns).issubset(joint.drop_labels().columns):
@@ -78,12 +85,24 @@ def tension_stats(joint, *separate):  # noqa: D301
         separate_stats += s
     joint_stats = joint[columns].copy()
 
+    if separate_fs is None:
+        separate_fs = [1.0] * len(separate)
+    elif len(separate_fs) != len(separate):
+        raise ValueError(
+            f"The number of 'separate_fs' ({len(separate_fs)}) must match "
+            f"the number of 'separate' samples ({len(separate)})."
+        )
+
+    log_f_joint = np.log(joint_f)
+    log_f_separate_sum = np.sum([np.log(f) for f in separate_fs])
+    log_F_correction = log_f_joint - log_f_separate_sum
+
     samples = Samples(index=joint_stats.index)
 
-    samples['logR'] = joint_stats['logZ'] - separate_stats['logZ']
+    samples['logR'] = joint_stats['logZ'] - separate_stats['logZ'] + log_F_correction
     samples.set_label('logR', r'$\ln\mathcal{R}$')
 
-    samples['I'] = separate_stats['D_KL'] - joint_stats['D_KL']
+    samples['I'] = separate_stats['D_KL'] - joint_stats['D_KL'] + log_F_correction
     samples.set_label('I', r'$\mathcal{I}$')
 
     samples['logS'] = joint_stats['logL_P'] - separate_stats['logL_P']
@@ -96,7 +115,7 @@ def tension_stats(joint, *separate):  # noqa: D301
     samples['p'] = p
     samples.set_label('p', '$p$')
 
-    samples['tension'] = erfinv(1-p) * np.sqrt(2)
+    samples['tension'] = erfcinv(p) * np.sqrt(2)
     samples.set_label('tension', r'tension~[$\sigma$]')
 
     return samples
