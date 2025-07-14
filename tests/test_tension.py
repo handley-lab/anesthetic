@@ -43,6 +43,8 @@ def test_tension_stats_compatible_gaussian():
         tension_stats(samplesAB, statsA, statsB)
     with raises(ValueError):
         tension_stats(statsAB, samplesA, statsB)
+    with raises(ValueError):
+        tension_stats(statsAB, statsA, statsB, separate_fs=[1.0])
     s = tension_stats(statsAB, statsA, statsB)
 
     logR_exact = logV - dmu_cov_dmu_AB/2 - slogdet(2*np.pi*(covA+covB))[1]/2
