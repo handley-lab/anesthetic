@@ -1,18 +1,19 @@
-"""Tension statistics between two datasets."""
+"""Tension statistics between two or more datasets."""
+
 import numpy as np
 from scipy.stats import chi2
 from scipy.special import erfcinv
 from anesthetic.samples import Samples
 
 
-def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):  # noqa: D301
+def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):
     r"""Compute tension statistics between two or more samples.
 
     With the Bayesian (log-)evidence ``logZ``, Kullback--Leibler divergence
-    ``D_KL``, posterior average of the log-likelihood ``logL_P``, and Gaussian
-    model dimensionality ``d_G``, and correction factors ``F`` for discarded pprior samples, we can compute the following tension
-    statistics between two or more samples (example here for simplicity just
-    with two datasets A and B):
+    ``D_KL``, posterior average of the log-likelihood ``logL_P``, Gaussian
+    model dimensionality ``d_G``, and correction factors ``F`` for discarded
+    prior samples, we can compute tension statistics between two or more
+    samples (example here for simplicity just with two datasets A and B):
 
     - ``logR``: R statistic for dataset consistency
 
@@ -39,7 +40,8 @@ def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):  # noqa: D30
       .. math::
         p = \int_{d-2\log{S}}^{\infty} \chi^2_d(x) dx
 
-    - ``tension``: tension quantification in terms of numbers of sigma calculated from p
+    - ``tension``: tension quantification in terms of numbers of sigma
+      calculated from p
 
       .. math::
         \sqrt{2} \rm{erfc}^{-1}(p)
@@ -48,22 +50,23 @@ def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):  # noqa: D30
     ----------
     joint : :class:`anesthetic.samples.Samples`
         Bayesian stats from a nested sampling run using all the datasets from
-        the list in ``separate`` jointly. Again, this should be a ``stats``
-        object with columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned by
+        the list in ``separate`` jointly. This should be a ``stats`` object
+        with columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned by
         :meth:`anesthetic.samples.NestedSamples.stats`.
 
     *separate
-        A variable number of Bayesian stats from independent nested sampling runs using various
-        datasets (A, B, ...) separately. Each should be a ``stats`` object
-        with the columns ['logZ', 'D_KL', 'logL_P', 'd_G'] as returned by
-        :meth:`anesthetic.samples.NestedSamples.stats`.
+        A variable number of Bayesian stats from independent nested sampling
+        runs using various datasets (A, B, ...) separately. Each should be a
+        ``stats`` object with the columns ['logZ', 'D_KL', 'logL_P', 'd_G']
+        as returned by :meth:`anesthetic.samples.NestedSamples.stats`.
 
     joint_f : float, optional
         Correction factor `F = nprior / ndiscarded` for the `joint` sample.
         Defaults to 1.0 (no correction).
 
     separate_fs : list or tuple of float, optional
-        A list of correction factors `F` for each of the `separate` samples, the order is irrelevant. If None, defaults to 1.0 for all.
+        A list of correction factors `F` for each of the `separate` samples.
+        If None, defaults to 1.0 for all. The order is irrelevant.
 
     Returns
     -------
@@ -71,15 +74,19 @@ def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):  # noqa: D30
         DataFrame containing the following tension statistics in columns:
         ['logR', 'I', 'logS', 'd_G', 'p', 'tension']
     """
-    columns = ['logZ', 'D_KL', 'logL_P', 'd_G']
+    columns = ["logZ", "D_KL", "logL_P", "d_G"]
     if not set(columns).issubset(joint.drop_labels().columns):
-        raise ValueError("The DataFrame passed to `joint` needs to contain"
-                         "the columns 'logZ', 'D_KL', 'logL_P', and 'd_G'.")
+        raise ValueError(
+            "The DataFrame passed to `joint` needs to contain"
+            "the columns 'logZ', 'D_KL', 'logL_P', and 'd_G'."
+        )
     for s in separate:
         if not set(columns).issubset(s.drop_labels().columns):
-            raise ValueError("The DataFrames passed to `separate` need to "
-                             "contain the columns 'logZ', 'D_KL', 'logL_P', "
-                             "and 'd_G'.")
+            raise ValueError(
+                "The DataFrames passed to `separate` need to "
+                "contain the columns 'logZ', 'D_KL', 'logL_P', "
+                "and 'd_G'."
+            )
     separate_stats = separate[0][columns].copy()
     for s in separate[1:]:
         separate_stats += s
@@ -99,23 +106,26 @@ def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):  # noqa: D30
 
     samples = Samples(index=joint_stats.index)
 
-    samples['logR'] = joint_stats['logZ'] - separate_stats['logZ'] + log_F_correction
-    samples.set_label('logR', r'$\ln\mathcal{R}$')
+    # Wrap long lines in parentheses for clean line breaks
+    samples["logR"] = (joint_stats["logZ"] -
+                       separate_stats["logZ"] + log_F_correction)
+    samples.set_label("logR", r"$\ln\mathcal{R}$")
 
-    samples['I'] = separate_stats['D_KL'] - joint_stats['D_KL'] + log_F_correction
-    samples.set_label('I', r'$\mathcal{I}$')
+    samples["I"] = (separate_stats["D_KL"] -
+                    joint_stats["D_KL"] + log_F_correction)
+    samples.set_label("I", r"$\mathcal{I}$")
 
-    samples['logS'] = joint_stats['logL_P'] - separate_stats['logL_P']
-    samples.set_label('logS', r'$\ln\mathcal{S}$')
+    samples["logS"] = joint_stats["logL_P"] - separate_stats["logL_P"]
+    samples.set_label("logS", r"$\ln\mathcal{S}$")
 
-    samples['d_G'] = separate_stats['d_G'] - joint_stats['d_G']
-    samples.set_label('d_G', r'$d_\mathrm{G}$')
+    samples["d_G"] = separate_stats["d_G"] - joint_stats["d_G"]
+    samples.set_label("d_G", r"$d_\mathrm{G}$")
 
-    p = chi2.sf(samples['d_G'] - 2 * samples['logS'], df=samples['d_G'])
-    samples['p'] = p
-    samples.set_label('p', '$p$')
+    p = chi2.sf(samples["d_G"] - 2 * samples["logS"], df=samples["d_G"])
+    samples["p"] = p
+    samples.set_label("p", "$p$")
 
-    samples['tension'] = erfcinv(p) * np.sqrt(2)
-    samples.set_label('tension', r'tension~[$\sigma$]')
+    samples["tension"] = erfcinv(p) * np.sqrt(2)
+    samples.set_label("tension", r"tension~[$\sigma$]")
 
     return samples
