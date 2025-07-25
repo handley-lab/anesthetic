@@ -138,3 +138,41 @@ other plotters:
 
     from anesthetic.convert import to_getdist
     getdist_samples = to_getdist(samples)
+
+
+Converting to/from ChainConsumer
+=================================
+
+anesthetic also provides tools for converting to and from `ChainConsumer
+<https://samreay.github.io/ChainConsumer/>`_ format for interoperability
+with ChainConsumer plotting and analysis tools:
+
+Converting from ChainConsumer to anesthetic::
+
+    from anesthetic.convert import from_chainconsumer
+    # Assuming you have a ChainConsumer object `cc`
+    samples_dict = from_chainconsumer(cc, columns=['param1', 'param2'])
+    # Returns: {'chain_name1': MCMCSamples, 'chain_name2': MCMCSamples, ...}
+
+Converting from anesthetic to ChainConsumer::
+
+    from anesthetic.convert import to_chainconsumer
+    
+    # Convert single samples
+    chainconsumer_obj = to_chainconsumer(samples, params=['param1', 'param2'])
+    # Returns: ChainConsumer object with one chain
+    
+    # Convert multiple samples with custom names
+    chainconsumer_obj = to_chainconsumer([samples1, samples2], 
+                                       params=['param1', 'param2'],
+                                       names=['chain1', 'chain2'])
+    # Returns: ChainConsumer object with multiple chains
+    
+    # The function automatically uses sample labels as chain names if available
+    # Additional ChainConsumer styling can be passed as keyword arguments
+    chainconsumer_obj = to_chainconsumer([samples1, samples2],
+                                       params=['omegam', 'H0'],
+                                       colors=['red', 'blue'],
+                                       linestyle=['-', '--'],
+                                       shade_alpha=[0.8, 0.6])
+    # Returns: ChainConsumer object with styled chains ready for plotting
