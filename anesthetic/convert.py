@@ -32,26 +32,27 @@ def to_getdist(samples):
 
 def from_chainconsumer(cc, columns=None):
     """Convert ChainConsumer object to dictionary of anesthetic samples.
-    
+
     Parameters
     ----------
     cc : ChainConsumer
         ChainConsumer object containing multiple chains
     columns : list, optional
         Parameter names to use. If None, uses chain.parameters
-        
+
     Returns
     -------
     samples_dict : dict
         Dictionary mapping chain names to MCMCSamples objects
     """
     try:
-        from chainconsumer import ChainConsumer
+        from chainconsumer import ChainConsumer  # noqa: F401
     except ModuleNotFoundError:
-        raise ImportError("You need to install ChainConsumer to use from_chainconsumer")
-    
+        raise ImportError("You need to install ChainConsumer to use "
+                          "from_chainconsumer")
+
     from .samples import MCMCSamples
-    
+
     samples_dict = {}
     for chain in cc.chains:
         samples_dict[chain.name] = MCMCSamples(
@@ -60,47 +61,54 @@ def from_chainconsumer(cc, columns=None):
             columns=columns or chain.parameters,
             labels=chain.parameters
         )
-    
+
     return samples_dict
 
 
-def to_chainconsumer(samples, params, names=None, colors=None, chainconsumer=None, **kwargs):
+def to_chainconsumer(samples, params, names=None, colors=None,
+                     chainconsumer=None, **kwargs):
     """Convert anesthetic samples to ChainConsumer object.
-    
+
     Parameters
     ----------
     samples : :class:`anesthetic.samples.Samples` or list
-        Single anesthetic samples object or list of anesthetic samples to be converted
+        Single anesthetic samples object or list of anesthetic samples to be
+        converted
     params : list
         List of parameter names to include.
     names : str or list, optional
-        Name(s) for the chain(s) in ChainConsumer. If single samples and str provided,
-        uses that name. If list of samples, should be list of names with same length.
-        If None, uses sample labels or generates names like 'chain1', 'chain2', etc.
+        Name(s) for the chain(s) in ChainConsumer. If single samples and str
+        provided, uses that name. If list of samples, should be list of names
+        with same length. If None, uses sample labels or generates names like
+        'chain1', 'chain2', etc.
     colors : str or list, optional
-        Color(s) for the chain(s) in ChainConsumer. If single samples and str provided,
-        uses that color. If list of samples, should be list of colors with same length.
-        If None, ChainConsumer will use default colors.
-    chainconsumer : :class:`ChainConsumer.ChainConsumer`, optional
-        Existing ChainConsumer object to add chains to. If None, creates a new one.
+        Color(s) for the chain(s) in ChainConsumer. If single samples and str
+        provided, uses that color. If list of samples, should be list of
+        colors with same length. If None, ChainConsumer will use default
+        colors.
+    chainconsumer : ChainConsumer, optional
+        Existing ChainConsumer object to add chains to. If None, creates a
+        new one.
     **kwargs : dict
         Additional keyword arguments to pass to ChainConsumer.add_chain().
-        Can be a single dict (applied to all chains) or list of dicts (one per chain).
-        
+        Can be a single dict (applied to all chains) or list of dicts (one
+        per chain).
+
     Returns
     -------
-    chainconsumer : :class:`ChainConsumer.ChainConsumer`
+    chainconsumer : ChainConsumer
         ChainConsumer object with the samples added
     """
     try:
         from chainconsumer import ChainConsumer
     except ModuleNotFoundError:
-        raise ImportError("You need to install ChainConsumer to use to_chainconsumer")
-    
+        raise ImportError("You need to install ChainConsumer to use "
+                          "to_chainconsumer")
+
     # Handle single sample vs list of samples
     if not isinstance(samples, list):
         samples = [samples]
-    
+
     # Handle names
     if names is None:
         names = []
@@ -114,48 +122,52 @@ def to_chainconsumer(samples, params, names=None, colors=None, chainconsumer=Non
         if len(samples) == 1:
             names = [names]
         else:
-            raise ValueError("If providing string name, samples must be a single object, not a list")
+            raise ValueError("If providing string name, samples must be a "
+                             "single object, not a list")
     elif len(names) != len(samples):
         raise ValueError("Length of names must match length of samples list")
-    
+
     # Handle colors
     if colors is not None:
         if isinstance(colors, str):
             if len(samples) == 1:
                 colors = [colors]
             else:
-                raise ValueError("If providing string color, samples must be a single object, not a list")
+                raise ValueError("If providing string color, samples must "
+                                 "be a single object, not a list")
         elif len(colors) != len(samples):
-            raise ValueError("Length of colors must match length of samples list")
-    
+            raise ValueError("Length of colors must match length of "
+                             "samples list")
+
     # Use existing ChainConsumer object or create new one
     c = chainconsumer if chainconsumer is not None else ChainConsumer()
-    
+
     # Add each chain
     for i, sample in enumerate(samples):
         # Get parameter columns and positions
         index = sample.drop_labels().columns
         positions = [index.get_loc(p) for p in params]
-        
+
         # Get labels for the selected parameters
         if sample.islabelled():
             labels = sample.get_labels()[positions].tolist()
         else:
             labels = params
-        
+
         # Handle kwargs - can be single dict or list of dicts
         if isinstance(kwargs, list):
             if len(kwargs) != len(samples):
-                raise ValueError("If kwargs is a list, it must have same length as samples")
+                raise ValueError("If kwargs is a list, it must have same "
+                                 "length as samples")
             chain_kwargs = kwargs[i] if i < len(kwargs) else {}
         else:
             chain_kwargs = kwargs
-        
+
         # Add color to kwargs if provided
         if colors is not None:
-            chain_kwargs = chain_kwargs.copy()  # Don't modify original kwargs
+            chain_kwargs = chain_kwargs.copy()  # Don't modify original
             chain_kwargs['color'] = colors[i]
-        
+
         # Add the chain
         c.add_chain(
             sample.to_numpy()[:, positions],
@@ -164,5 +176,5 @@ def to_chainconsumer(samples, params, names=None, colors=None, chainconsumer=Non
             name=names[i],
             **chain_kwargs
         )
-    
+
     return c
