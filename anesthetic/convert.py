@@ -64,7 +64,7 @@ def from_chainconsumer(cc, columns=None):
     return samples_dict
 
 
-def to_chainconsumer(samples, params, names=None, colors=None, **kwargs):
+def to_chainconsumer(samples, params, names=None, colors=None, chainconsumer=None, **kwargs):
     """Convert anesthetic samples to ChainConsumer object.
     
     Parameters
@@ -81,6 +81,8 @@ def to_chainconsumer(samples, params, names=None, colors=None, **kwargs):
         Color(s) for the chain(s) in ChainConsumer. If single samples and str provided,
         uses that color. If list of samples, should be list of colors with same length.
         If None, ChainConsumer will use default colors.
+    chainconsumer : :class:`ChainConsumer.ChainConsumer`, optional
+        Existing ChainConsumer object to add chains to. If None, creates a new one.
     **kwargs : dict
         Additional keyword arguments to pass to ChainConsumer.add_chain().
         Can be a single dict (applied to all chains) or list of dicts (one per chain).
@@ -126,8 +128,8 @@ def to_chainconsumer(samples, params, names=None, colors=None, **kwargs):
         elif len(colors) != len(samples):
             raise ValueError("Length of colors must match length of samples list")
     
-    # Create ChainConsumer object
-    c = ChainConsumer()
+    # Use existing ChainConsumer object or create new one
+    c = chainconsumer if chainconsumer is not None else ChainConsumer()
     
     # Add each chain
     for i, sample in enumerate(samples):
