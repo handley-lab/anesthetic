@@ -6,6 +6,7 @@ from anesthetic.convert import to_chainconsumer, from_chainconsumer, to_getdist
 from anesthetic.samples import MCMCSamples
 from utils import getdist_mark_xfail, chainconsumer_mark_xfail
 
+
 @getdist_mark_xfail
 def test_to_getdist():
     anesthetic_samples = read_chains('./tests/example_data/gd')
@@ -19,6 +20,7 @@ def test_to_getdist():
                         anesthetic_samples.drop_labels().columns):
 
         assert param.name == p
+
 
 @chainconsumer_mark_xfail
 def test_to_chainconsumer():
@@ -62,7 +64,7 @@ def test_to_chainconsumer():
     to_chainconsumer(s2, chainconsumer=c_existing)
     assert len(c_existing.chains) == 2
     assert c_existing.chains[0].name.strip() == "pre-existing"
-    assert c_existing.chains[1].name.strip() == "chain1" # Default name
+    assert c_existing.chains[1].name.strip() == "chain1"  # Default name
 
     # Test 6: Test kwargs (single dict and list of dicts)
     c = to_chainconsumer([s1, s2], grid=True, linestyle="--")
@@ -82,20 +84,34 @@ def test_to_chainconsumer():
     assert c.chains[1].linestyle == ':'
     assert c.chains[1].shade_alpha == 0.6
 
+    # Test 7: unlabelled sample (covers else branch for labels)
+    s2_unlabelled = s2.drop_labels()
+    c_unlabelled = to_chainconsumer(s2_unlabelled, params=params)
+    assert c_unlabelled.chains[0].parameters == params
+
+
 @chainconsumer_mark_xfail
 def test_to_chainconsumer_error_handling():
     """Test the ValueError exceptions in to_chainconsumer."""
     s1 = read_chains('./tests/example_data/gd')
     s2 = read_chains('./tests/example_data/pc')
 
-    with pytest.raises(ValueError, match="If providing string name, samples must be a single object"):
+    with pytest.raises(ValueError,
+                       match="If providing string name, "
+                             "samples must be a single object"):
         to_chainconsumer([s1, s2], names='a_single_name')
 
-    with pytest.raises(ValueError, match="Length of names must match length of samples list"):
+    with pytest.raises(ValueError,
+                       match="Length of names must match "
+                             "length of samples list"):
         to_chainconsumer([s1, s2], names=['only_one_name'])
 
-    with pytest.raises(ValueError, match="chain_specific_kwargs must be a list with the same length as samples"):
-        to_chainconsumer([s1, s2], chain_specific_kwargs=[{'shade_alpha': 0.5}])
+    with pytest.raises(ValueError,
+                       match="chain_specific_kwargs must be a "
+                             "list with the same length as samples"):
+        to_chainconsumer([s1, s2],
+                         chain_specific_kwargs=[{'shade_alpha': 0.5}])
+
 
 @chainconsumer_mark_xfail
 def test_from_chainconsumer_conversion():
@@ -120,7 +136,8 @@ def test_from_chainconsumer_conversion():
     chain1_converted = samples_dict['chain1']
     assert_array_equal(chain1_converted.to_numpy(), chain1_original.chain)
     assert_array_equal(chain1_converted.get_weights(), chain1_original.weights)
-    assert_array_equal(chain1_converted.columns.get_level_values(0), chain1_original.parameters)
+    assert_array_equal(chain1_converted.columns.get_level_values(0),
+                       chain1_original.parameters)
 
     # Test 2: Conversion of a single chain object
     c_single = to_chainconsumer(s1)

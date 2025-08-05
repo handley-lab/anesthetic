@@ -128,7 +128,6 @@ def to_chainconsumer(samples, params=None, names=None,
     elif len(names) != len(samples):
         raise ValueError("Length of names must match length of samples list")
 
-
     c = chainconsumer if chainconsumer is not None else ChainConsumer()
 
     common_kwargs = kwargs.copy()
@@ -152,8 +151,10 @@ def to_chainconsumer(samples, params=None, names=None,
         final_chain_kwargs = common_kwargs.copy()
 
         if chain_specific_kwargs:
-            if not isinstance(chain_specific_kwargs, list) or len(chain_specific_kwargs) != len(samples):
-                raise ValueError("chain_specific_kwargs must be a list with the same length as samples")
+            if (not isinstance(chain_specific_kwargs, list) or
+                    len(chain_specific_kwargs) != len(samples)):
+                raise ValueError("chain_specific_kwargs must be a list with "
+                                 "the same length as samples")
             final_chain_kwargs.update(chain_specific_kwargs[i])
 
         c.add_chain(
