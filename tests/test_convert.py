@@ -1,6 +1,5 @@
 import pytest
 from numpy.testing import assert_array_equal
-from chainconsumer import ChainConsumer
 from anesthetic import read_chains
 from anesthetic.convert import to_chainconsumer, from_chainconsumer, to_getdist
 from anesthetic.samples import MCMCSamples
@@ -59,6 +58,7 @@ def test_to_chainconsumer():
     assert c.chains[1].name.strip() == 'chain2'  # Falls back to default naming
 
     # Test 5: Add to an existing ChainConsumer object
+    from chainconsumer import ChainConsumer
     c_existing = ChainConsumer()
     c_existing.add_chain(s1.to_numpy(), name="pre-existing")
     to_chainconsumer(s2, chainconsumer=c_existing)
