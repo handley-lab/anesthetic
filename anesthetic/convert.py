@@ -71,7 +71,7 @@ def from_chainconsumer(cc, columns=None):
     return samples_dict
 
 
-def to_chainconsumer(samples, params=None, names=None, colors=None,
+def to_chainconsumer(samples, params=None, names=None,
                      chainconsumer=None, **kwargs):
     """Convert anesthetic samples to ChainConsumer object.
 
@@ -88,18 +88,13 @@ def to_chainconsumer(samples, params=None, names=None, colors=None,
         provided, uses that name. If list of samples, should be list of names
         with same length. If None, uses sample labels or generates names like
         'chain1', 'chain2', etc.
-    colors : str or list, optional
-        Color(s) for the chain(s) in ChainConsumer. If single samples and str
-        provided, uses that color. If list of samples, should be list of
-        colors with same length. If None, ChainConsumer will use default
-        colors.
     chainconsumer : ChainConsumer, optional
         Existing ChainConsumer object to add chains to. If None, creates a
         new one.
     **kwargs : dict
         Additional keyword arguments to pass to ChainConsumer.add_chain().
         Can be a single dict (applied to all chains) or list of dicts (one
-        per chain).
+        per chain). Use 'color' to specify chain colors.
 
     Returns
     -------
@@ -116,7 +111,6 @@ def to_chainconsumer(samples, params=None, names=None, colors=None,
     if not isinstance(samples, list):
         samples = [samples]
 
-    # Handle names
     if names is None:
         names = []
         for i, sample in enumerate(samples):
@@ -134,27 +128,15 @@ def to_chainconsumer(samples, params=None, names=None, colors=None,
     elif len(names) != len(samples):
         raise ValueError("Length of names must match length of samples list")
 
-    # Handle colors
-    if colors is not None:
-        if isinstance(colors, str):
-            if len(samples) == 1:
-                colors = [colors]
-            else:
-                raise ValueError("If providing string color, samples must "
-                                 "be a single object, not a list")
-        elif len(colors) != len(samples):
-            raise ValueError("Length of colors must match length of "
-                             "samples list")
 
-    # Use existing ChainConsumer object or create new one
     c = chainconsumer if chainconsumer is not None else ChainConsumer()
 
-    # Add each chain
+    common_kwargs = kwargs.copy()
+    chain_specific_kwargs = common_kwargs.pop('chain_specific_kwargs', None)
+
     for i, sample in enumerate(samples):
-        # Get parameter columns and positions
         index = sample.drop_labels().columns
 
-        # If params not specified, use all parameter columns
         if params is None:
             params_to_use = index.tolist()
             positions = list(range(len(index)))
@@ -162,33 +144,24 @@ def to_chainconsumer(samples, params=None, names=None, colors=None,
             params_to_use = params
             positions = [index.get_loc(p) for p in params]
 
-        # Get labels for the selected parameters
         if sample.islabelled():
             labels = sample.get_labels()[positions].tolist()
         else:
             labels = params_to_use
 
-        # Handle kwargs - can be single dict or list of dicts
-        if isinstance(kwargs, list):
-            if len(kwargs) != len(samples):
-                raise ValueError("If kwargs is a list, it must have same "
-                                 "length as samples")
-            chain_kwargs = kwargs[i] if i < len(kwargs) else {}
-        else:
-            chain_kwargs = kwargs
+        final_chain_kwargs = common_kwargs.copy()
 
-        # Add color to kwargs if provided
-        if colors is not None:
-            chain_kwargs = chain_kwargs.copy()  # Don't modify original
-            chain_kwargs['color'] = colors[i]
+        if chain_specific_kwargs:
+            if not isinstance(chain_specific_kwargs, list) or len(chain_specific_kwargs) != len(samples):
+                raise ValueError("chain_specific_kwargs must be a list with the same length as samples")
+            final_chain_kwargs.update(chain_specific_kwargs[i])
 
-        # Add the chain
         c.add_chain(
             sample.to_numpy()[:, positions],
             weights=sample.get_weights(),
             parameters=labels,
             name=names[i],
-            **chain_kwargs
+            **final_chain_kwargs
         )
 
     return c

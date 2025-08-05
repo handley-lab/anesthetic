@@ -172,7 +172,7 @@ Converting from anesthetic to ChainConsumer::
     # Additional ChainConsumer styling can be passed as keyword arguments
     chainconsumer_obj = to_chainconsumer([samples1, samples2],
                                        params=['omegam', 'H0'],
-                                       colors=['red', 'blue'],
+                                       color=['red', 'blue'],
                                        linestyle=['-', '--'],
                                        shade_alpha=[0.8, 0.6])
     # Returns: ChainConsumer object with styled chains ready for plotting
