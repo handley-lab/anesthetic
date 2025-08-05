@@ -31,19 +31,21 @@ def to_getdist(samples):
 
 
 def from_chainconsumer(cc, columns=None):
-    """Convert ChainConsumer object to dictionary of anesthetic samples.
+    """Convert ChainConsumer object to anesthetic samples.
 
     Parameters
     ----------
     cc : ChainConsumer
-        ChainConsumer object containing multiple chains
+        ChainConsumer object containing one or more chains
     columns : list, optional
         Parameter names to use. If None, uses chain.parameters
 
     Returns
     -------
-    samples_dict : dict
-        Dictionary mapping chain names to MCMCSamples objects
+    samples : MCMCSamples or dict
+        If single chain: returns MCMCSamples object directly
+        If multiple chains: returns dictionary mapping chain names to
+        MCMCSamples objects
     """
     try:
         from chainconsumer import ChainConsumer  # noqa: F401
@@ -62,10 +64,14 @@ def from_chainconsumer(cc, columns=None):
             labels=chain.parameters
         )
 
+    # If only one chain, return the samples directly instead of dictionary
+    if len(samples_dict) == 1:
+        return list(samples_dict.values())[0]
+
     return samples_dict
 
 
-def to_chainconsumer(samples, params, names=None, colors=None,
+def to_chainconsumer(samples, params=None, names=None, colors=None,
                      chainconsumer=None, **kwargs):
     """Convert anesthetic samples to ChainConsumer object.
 
@@ -74,8 +80,9 @@ def to_chainconsumer(samples, params, names=None, colors=None,
     samples : :class:`anesthetic.samples.Samples` or list
         Single anesthetic samples object or list of anesthetic samples to be
         converted
-    params : list
-        List of parameter names to include.
+    params : list, optional
+        List of parameter names to include. If None, uses all parameter
+        columns from the samples (excluding labels and weight columns).
     names : str or list, optional
         Name(s) for the chain(s) in ChainConsumer. If single samples and str
         provided, uses that name. If list of samples, should be list of names
@@ -146,13 +153,20 @@ def to_chainconsumer(samples, params, names=None, colors=None,
     for i, sample in enumerate(samples):
         # Get parameter columns and positions
         index = sample.drop_labels().columns
-        positions = [index.get_loc(p) for p in params]
+
+        # If params not specified, use all parameter columns
+        if params is None:
+            params_to_use = index.tolist()
+            positions = list(range(len(index)))
+        else:
+            params_to_use = params
+            positions = [index.get_loc(p) for p in params]
 
         # Get labels for the selected parameters
         if sample.islabelled():
             labels = sample.get_labels()[positions].tolist()
         else:
-            labels = params
+            labels = params_to_use
 
         # Handle kwargs - can be single dict or list of dicts
         if isinstance(kwargs, list):
