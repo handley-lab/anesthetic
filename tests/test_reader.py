@@ -75,12 +75,12 @@ def test_read_cobayamcmc():
     ))
     assert_array_equal(mcmc.get_weights(), w)
     params = ['x0', 'x1', 'minuslogprior', 'minuslogprior__0', 'chi2',
-              'chi2__norm', 'logL', 'chain']
+              'chi2__norm', 'logP', 'logL', 'chain']
     assert_array_equal(mcmc.drop_labels().columns, params)
 
-    labels = ['$x_0$', '$x_1$', '', '', r'$\chi^2$',
-              r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
-              r'$n_\mathrm{chain}$']
+    labels = ['$x_0$', '$x_1$', r'$-\ln\pi$', r'$-\ln\pi_\mathrm{0}$',
+              r'$\chi^2$', r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{P}$',
+              r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
 
     if getdist_mark_skip.args[0]:
         labels[:6] = [''] * 6
@@ -99,10 +99,13 @@ def test_read_cobayamcmc():
     # compare directly with getdist
     if not getdist_mark_skip.args[0]:
         import getdist
-        mcmc_gd = getdist.loadMCSamples(
+        g = getdist.loadMCSamples(
             file_root="./tests/example_data/cb_single_chain"
         )
-        assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
+        # Note that GetDist's `loglikes` attribute actually corresponds to
+        # `minuslogposterior`. Hence, the following slightly confusing asserts.
+        assert_array_almost_equal(mcmc.logP, -g.loglikes, decimal=15)
+        assert_array_almost_equal(mcmc.logL, -g.getParams().chi2/2, decimal=15)
 
 
 def test_read_montepython():
