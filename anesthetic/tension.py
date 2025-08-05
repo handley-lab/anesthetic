@@ -6,14 +6,14 @@ from scipy.special import erfcinv
 from anesthetic.samples import Samples
 
 
-def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):
+def tension_stats(joint, *separate):
     r"""Compute tension statistics between two or more samples.
 
     With the Bayesian (log-)evidence ``logZ``, Kullback--Leibler divergence
     ``D_KL``, posterior average of the log-likelihood ``logL_P``, Gaussian
-    model dimensionality ``d_G``, and correction factors ``F`` for discarded
-    prior samples, we can compute tension statistics between two or more
-    samples (example here for simplicity just with two datasets A and B):
+    model dimensionality ``d_G``, we can compute tension statistics between 
+    two or more samples (example here for simplicity just with two datasets 
+    A and B):
 
     - ``logR``: R statistic for dataset consistency
 
@@ -60,14 +60,6 @@ def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):
         ``stats`` object with the columns ['logZ', 'D_KL', 'logL_P', 'd_G']
         as returned by :meth:`anesthetic.samples.NestedSamples.stats`.
 
-    joint_f : float, optional
-        Correction factor `F = nprior / ndiscarded` for the `joint` sample.
-        Defaults to 1.0 (no correction).
-
-    separate_fs : list or tuple of float, optional
-        A list of correction factors `F` for each of the `separate` samples.
-        If None, defaults to 1.0 for all. The order is irrelevant.
-
     Returns
     -------
     samples : :class:`anesthetic.samples.Samples`
@@ -92,27 +84,12 @@ def tension_stats(joint, *separate, joint_f=1.0, separate_fs=None):
         separate_stats += s
     joint_stats = joint[columns].copy()
 
-    if separate_fs is None:
-        separate_fs = [1.0] * len(separate)
-    elif len(separate_fs) != len(separate):
-        raise ValueError(
-            f"The number of 'separate_fs' ({len(separate_fs)}) must match "
-            f"the number of 'separate' samples ({len(separate)})."
-        )
-
-    log_f_joint = np.log(joint_f)
-    log_f_separate_sum = np.sum([np.log(f) for f in separate_fs])
-    log_F_correction = log_f_joint - log_f_separate_sum
-
     samples = Samples(index=joint_stats.index)
 
-    # Wrap long lines in parentheses for clean line breaks
-    samples["logR"] = (joint_stats["logZ"] -
-                       separate_stats["logZ"] + log_F_correction)
+    samples["logR"] = joint_stats["logZ"] - separate_stats["logZ"]
     samples.set_label("logR", r"$\ln\mathcal{R}$")
 
-    samples["I"] = (separate_stats["D_KL"] -
-                    joint_stats["D_KL"] + log_F_correction)
+    samples["I"] = separate_stats["D_KL"] - joint_stats["D_KL"]
     samples.set_label("I", r"$\mathcal{I}$")
 
     samples["logS"] = joint_stats["logL_P"] - separate_stats["logL_P"]
