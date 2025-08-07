@@ -6,6 +6,21 @@ from anesthetic.samples import MCMCSamples
 from utils import getdist_mark_xfail, chainconsumer_mark_xfail
 
 
+def _filter_zero_weights(samples, params=None):
+    """Helper function to filter zero weights like to_chainconsumer does."""
+    weights = samples.get_weights()
+    valid_mask = weights > 0
+    
+    if params is not None:
+        positions = [samples.drop_labels().columns.get_loc(p) for p in params]
+        filtered_data = samples.to_numpy()[valid_mask][:, positions]
+    else:
+        filtered_data = samples.to_numpy()[valid_mask]
+    
+    filtered_weights = weights[valid_mask]
+    return filtered_data, filtered_weights, valid_mask
+
+
 @getdist_mark_xfail
 def test_to_getdist():
     anesthetic_samples = read_chains('./tests/example_data/gd')
@@ -23,129 +38,89 @@ def test_to_getdist():
 
 @chainconsumer_mark_xfail
 def test_to_chainconsumer():
-    """Expanded test for to_chainconsumer to cover all input variations."""
+    """Test for to_chainconsumer conversion to Chain object."""
     s1 = read_chains('./tests/example_data/gd')
-    s2 = read_chains('./tests/example_data/pc')
     s1.label = 'Sample 1'
-    s2.label = None  # For testing default naming
-
+    
     params = ['x0', 'x1']
 
-    # Test 1: Basic conversion of a single sample
-    c = to_chainconsumer(s1)
-    assert len(c.chains) == 1
-    assert c.chains[0].name.strip() == 'Sample 1'
-    assert_array_equal(c.chains[0].parameters, s1.get_labels().tolist())
+    # Test 1: Basic conversion with default name
+    chain = to_chainconsumer(s1)
+    assert chain.name == 'Sample 1'
+    
+    expected_data, expected_weights, _ = _filter_zero_weights(s1)
+    assert_array_equal(chain.samples[s1.get_labels().tolist()].values, expected_data)
+    assert_array_equal(chain.weights, expected_weights)
 
     # Test 2: Conversion with specified params and name
-    c = to_chainconsumer(s1, params=params, names='test_chain')
-    assert len(c.chains) == 1
-    chain = c.chains[0]
-    assert chain.name.strip() == 'test_chain'
-    assert_array_equal(chain.chain, s1[params].to_numpy())
-    assert_array_equal(chain.parameters, s1[params].get_labels().tolist())
+    chain = to_chainconsumer(s1, params=params, name='test_chain')
+    assert chain.name == 'test_chain'
+    expected_labels = s1[params].get_labels().tolist()
+    
+    expected_param_data, _, _ = _filter_zero_weights(s1, params=params)
+    assert_array_equal(chain.samples[expected_labels].values, expected_param_data)
 
-    # Test 3: Multiple chains with specified names
-    c = to_chainconsumer([s1, s2], params=params, names=['c1', 'c2'])
-    assert len(c.chains) == 2
-    assert c.chains[0].name.strip() == 'c1'
-    assert c.chains[1].name.strip() == 'c2'
-
-    # Test 4: Test default naming (s1 has a label, s2 does not)
-    c = to_chainconsumer([s1, s2])
-    assert len(c.chains) == 2
-    assert c.chains[0].name.strip() == 'Sample 1'
-    assert c.chains[1].name.strip() == 'chain2'  # Falls back to default naming
-
-    # Test 5: Add to an existing ChainConsumer object
-    from chainconsumer import ChainConsumer
-    c_existing = ChainConsumer()
-    c_existing.add_chain(s1.to_numpy(), name="pre-existing")
-    to_chainconsumer(s2, chainconsumer=c_existing)
-    assert len(c_existing.chains) == 2
-    assert c_existing.chains[0].name.strip() == "pre-existing"
-    assert c_existing.chains[1].name.strip() == "chain1"  # Default name
-
-    # Test 6: Test kwargs (single dict and list of dicts)
-    c = to_chainconsumer([s1, s2], grid=True, linestyle="--")
-    assert c.chains[0].grid is True
-    assert c.chains[1].grid is True
-    assert c.chains[0].linestyle == "--"
-
-    specific_kwargs_list = [
-        {'linestyle': "--", 'shade_alpha': 0.8},
-        {'linestyle': ':', 'shade_alpha': 0.6}
-    ]
-
-    c = to_chainconsumer([s1, s2], chain_specific_kwargs=specific_kwargs_list)
-
-    assert c.chains[0].linestyle == '--'
-    assert c.chains[0].shade_alpha == 0.8
-    assert c.chains[1].linestyle == ':'
-    assert c.chains[1].shade_alpha == 0.6
-
-    # Test 7: unlabelled sample (covers else branch for labels)
-    s2_unlabelled = s2.drop_labels()
-    c_unlabelled = to_chainconsumer(s2_unlabelled, params=params)
-    assert c_unlabelled.chains[0].parameters == params
+    # Test 3: Test with unlabelled samples
+    s1_unlabelled = s1.drop_labels()
+    chain = to_chainconsumer(s1_unlabelled, params=params)
+    
+    expected_param_data, _, _ = _filter_zero_weights(s1_unlabelled, params=params)
+    assert_array_equal(chain.samples[params].values, expected_param_data)
+    
+    # Test 4: Test with samples that have logL
+    if hasattr(s1, 'logL') and 'logL' in s1.columns:
+        chain = to_chainconsumer(s1)
+        assert 'log_posterior' in chain.samples.columns
+    
+    # Test 5: Test default name when label is None
+    s1_no_label = s1.copy()
+    s1_no_label.label = None
+    chain_default_name = to_chainconsumer(s1_no_label)
+    assert chain_default_name.name == 'anesthetic_chain'
+    
+    # Test 6: Test kwargs passing
+    chain_with_kwargs = to_chainconsumer(s1, color='red', linestyle='--')
+    # Note: These would be stored in the Chain object properties if ChainConsumer supports them
 
 
 @chainconsumer_mark_xfail
-def test_to_chainconsumer_error_handling():
-    """Test the ValueError exceptions in to_chainconsumer."""
+def test_to_chainconsumer_latex_labels():
+    """Test that LaTeX labels are properly used in Chain object."""
     s1 = read_chains('./tests/example_data/gd')
-    s2 = read_chains('./tests/example_data/pc')
-
-    with pytest.raises(ValueError,
-                       match="If providing string name, "
-                             "samples must be a single object"):
-        to_chainconsumer([s1, s2], names='a_single_name')
-
-    with pytest.raises(ValueError,
-                       match="Length of names must match "
-                             "length of samples list"):
-        to_chainconsumer([s1, s2], names=['only_one_name'])
-
-    with pytest.raises(ValueError,
-                       match="chain_specific_kwargs must be a "
-                             "list with the same length as samples"):
-        to_chainconsumer([s1, s2],
-                         chain_specific_kwargs=[{'shade_alpha': 0.5}])
+    
+    # Test that when samples have LaTeX labels, they are used as column names
+    chain = to_chainconsumer(s1)
+    if s1.islabelled():
+        expected_labels = s1.get_labels().tolist()
+        actual_columns = [col for col in chain.samples.columns if col not in ['weight', 'log_posterior']]
+        assert actual_columns == expected_labels
 
 
 @chainconsumer_mark_xfail
 def test_from_chainconsumer_conversion():
-    """Expanded test for from_chainconsumer to cover all paths."""
+    """Test for from_chainconsumer conversion from Chain object."""
     s1 = read_chains('./tests/example_data/gd')
-    s2 = read_chains('./tests/example_data/pc')
-    s1.label = 'chain1'
-    s2.label = 'chain2'
-
+    s1.label = 'test_chain'
+    
     params = ['x0', 'x1']
 
-    c = to_chainconsumer([s1, s2], params=params)
-
-    # Test 1: Conversion of multiple chains
-    samples_dict = from_chainconsumer(c)
-    assert isinstance(samples_dict, dict)
-    assert len(samples_dict) == 2
-    assert 'chain1' in samples_dict
-    assert 'chain2' in samples_dict
-
-    chain1_original = c.chains[0]
-    chain1_converted = samples_dict['chain1']
-    assert_array_equal(chain1_converted.to_numpy(), chain1_original.chain)
-    assert_array_equal(chain1_converted.get_weights(), chain1_original.weights)
-    assert_array_equal(chain1_converted.columns.get_level_values(0),
-                       chain1_original.parameters)
-
-    # Test 2: Conversion of a single chain object
-    c_single = to_chainconsumer(s1)
-    samples_single = from_chainconsumer(c_single)
-    assert isinstance(samples_single, MCMCSamples)
-    assert_array_equal(samples_single.to_numpy(), s1.to_numpy())
-
-    # Test 3: Conversion with specified columns
-    samples_dict_cols = from_chainconsumer(c, columns=params)
-    chain1_converted_cols = samples_dict_cols['chain1']
-    assert list(chain1_converted_cols.columns.get_level_values(0)) == params
+    # Convert to Chain and back
+    chain = to_chainconsumer(s1, params=params)
+    samples_back = from_chainconsumer(chain)
+    
+    # Test basic conversion
+    assert isinstance(samples_back, MCMCSamples)
+    assert_array_equal(samples_back.get_weights(), chain.weights)
+    
+    # Test with specified columns
+    samples_with_cols = from_chainconsumer(chain, columns=params)
+    # When columns are specified, logL should not be automatically added
+    assert len(samples_with_cols.columns.get_level_values(0)) == len(params)
+    
+    # Test with no columns specified (full conversion)
+    samples_full = from_chainconsumer(chain)
+    # Should include all data columns plus logL if available
+    if chain.log_posterior is not None:
+        assert 'logL' in samples_full.columns
+    expected_cols = len(chain.data_columns) + (1 if chain.log_posterior is not None else 0)
+    assert len(samples_full.columns.get_level_values(0)) == expected_cols

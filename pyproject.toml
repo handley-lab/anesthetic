@@ -67,7 +67,7 @@ ultranest = ["h5py"]
 astropy = ["astropy"]
 fastkde = ["fastkde"]
 getdist = ["getdist"]
-chainconsumer = ["chainconsumer>=0.34.0"]
+chainconsumer = ["chainconsumer"]
 hdf5 = ["tables==3.8.0"]
 all = ["h5py", "astropy", "fastkde", "getdist", "chainconsumer", "tables"]
 

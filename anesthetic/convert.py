@@ -30,139 +30,123 @@ def to_getdist(samples):
                                        labels=labels)
 
 
-def from_chainconsumer(cc, columns=None):
-    """Convert ChainConsumer object to anesthetic samples.
+def from_chainconsumer(chain, columns=None):
+    """Convert ChainConsumer Chain object to anesthetic samples.
 
     Parameters
     ----------
-    cc : ChainConsumer
-        ChainConsumer object containing one or more chains
+    chain : Chain
+        ChainConsumer Chain object
     columns : list, optional
-        Parameter names to use. If None, uses chain.parameters
+        Parameter names to use. If None, uses chain.data_columns
 
     Returns
     -------
-    samples : MCMCSamples or dict
-        If single chain: returns MCMCSamples object directly
-        If multiple chains: returns dictionary mapping chain names to
-        MCMCSamples objects
+    samples : MCMCSamples
+        Anesthetic MCMCSamples object
     """
     try:
-        from chainconsumer import ChainConsumer  # noqa: F401
+        from chainconsumer.chain import Chain  # noqa: F401
     except ModuleNotFoundError:
         raise ImportError("You need to install ChainConsumer to use "
                           "from_chainconsumer")
 
     from .samples import MCMCSamples
 
-    samples_dict = {}
-    for chain in cc.chains:
-        samples_dict[chain.name] = MCMCSamples(
-            chain.chain,
-            weights=chain.weights,
-            columns=columns or chain.parameters,
-            labels=chain.parameters
-        )
+    chain_data = chain.data_samples
+    
+    # Only include logL if columns is None (i.e., using all data)
+    # If specific columns are requested, don't add logL unless explicitly requested
+    include_logL = columns is None and chain.log_posterior is not None
+    
+    return MCMCSamples(
+        chain_data.values,
+        weights=chain.weights,
+        columns=columns or chain.data_columns,
+        labels=columns or chain.data_columns,
+        logL=chain.log_posterior if include_logL else None
+    )
 
-    # If only one chain, return the samples directly instead of dictionary
-    if len(samples_dict) == 1:
-        return list(samples_dict.values())[0]
 
-    return samples_dict
-
-
-def to_chainconsumer(samples, params=None, names=None,
-                     chainconsumer=None, **kwargs):
-    """Convert anesthetic samples to ChainConsumer object.
+def to_chainconsumer(samples, params=None, name=None, filter_zero_weights=True, **kwargs):
+    """Convert anesthetic samples to ChainConsumer Chain object.
 
     Parameters
     ----------
-    samples : :class:`anesthetic.samples.Samples` or list
-        Single anesthetic samples object or list of anesthetic samples to be
-        converted
+    samples : :class:`anesthetic.samples.Samples`
+        Anesthetic samples object to be converted
     params : list, optional
         List of parameter names to include. If None, uses all parameter
         columns from the samples (excluding labels and weight columns).
-    names : str or list, optional
-        Name(s) for the chain(s) in ChainConsumer. If single samples and str
-        provided, uses that name. If list of samples, should be list of names
-        with same length. If None, uses sample labels or generates names like
-        'chain1', 'chain2', etc.
-    chainconsumer : ChainConsumer, optional
-        Existing ChainConsumer object to add chains to. If None, creates a
-        new one.
+    name : str, optional
+        Name for the chain. If None, uses sample label or 'chain1'.
+    filter_zero_weights : bool, optional
+        If True, filter out samples with zero weights (recommended for ChainConsumer).
+        Default is True.
     **kwargs : dict
-        Additional keyword arguments to pass to ChainConsumer.add_chain().
-        Can be a single dict (applied to all chains) or list of dicts (one
-        per chain). Use 'color' to specify chain colors.
+        Additional keyword arguments to pass to Chain constructor.
 
     Returns
     -------
-    chainconsumer : ChainConsumer
-        ChainConsumer object with the samples added
+    chain : Chain
+        ChainConsumer Chain object
     """
     try:
-        from chainconsumer import ChainConsumer
+        from chainconsumer.chain import Chain
     except ModuleNotFoundError:
         raise ImportError("You need to install ChainConsumer to use "
                           "to_chainconsumer")
 
-    # Handle single sample vs list of samples
-    if not isinstance(samples, list):
-        samples = [samples]
+    import pandas as pd
+    import numpy as np
 
-    if names is None:
-        names = []
-        for i, sample in enumerate(samples):
-            # Use the sample's label if available, otherwise default naming
-            if hasattr(sample, 'label') and sample.label:
-                names.append(sample.label)
-            else:
-                names.append(f"chain{i+1}")
-    elif isinstance(names, str):
-        if len(samples) == 1:
-            names = [names]
+    if name is None:
+        if hasattr(samples, 'label') and samples.label:
+            name = samples.label
         else:
-            raise ValueError("If providing string name, samples must be a "
-                             "single object, not a list")
-    elif len(names) != len(samples):
-        raise ValueError("Length of names must match length of samples list")
+            name = 'anesthetic_chain'
 
-    c = chainconsumer if chainconsumer is not None else ChainConsumer()
+    index = samples.drop_labels().columns
 
-    common_kwargs = kwargs.copy()
-    chain_specific_kwargs = common_kwargs.pop('chain_specific_kwargs', None)
+    if params is None:
+        params_to_use = index.tolist()
+        positions = list(range(len(index)))
+    else:
+        params_to_use = params
+        positions = [index.get_loc(p) for p in params]
 
-    for i, sample in enumerate(samples):
-        index = sample.drop_labels().columns
+    weights = samples.get_weights()
+    param_data = samples.to_numpy()[:, positions]
+    log_posterior = samples.logL.to_numpy() if hasattr(samples, 'logL') and 'logL' in samples.columns else None
+    # Chainconsumer requires weights to be > 0.
+    if filter_zero_weights:
+        valid_mask = weights > 0
+        n_filtered = (~valid_mask).sum()
+        if n_filtered > 0:
+            print(f"Filtering {n_filtered} zero-weight samples out of {len(weights)} for ChainConsumer")
+            weights = weights[valid_mask]
+            param_data = param_data[valid_mask, :]
+            if log_posterior is not None:
+                log_posterior = log_posterior[valid_mask]
+    
+    if samples.islabelled():
+        latex_labels = samples.get_labels()[positions].tolist()
+    else:
+        latex_labels = params_to_use
+    
+    df_dict = {}
+    for j, latex_label in enumerate(latex_labels):
+        df_dict[latex_label] = param_data[:, j]
+    
+    df_dict['weight'] = weights
+    
+    if log_posterior is not None:
+        df_dict['log_posterior'] = log_posterior
+    
+    df = pd.DataFrame(df_dict)
 
-        if params is None:
-            params_to_use = index.tolist()
-            positions = list(range(len(index)))
-        else:
-            params_to_use = params
-            positions = [index.get_loc(p) for p in params]
-
-        if sample.islabelled():
-            labels = sample.get_labels()[positions].tolist()
-        else:
-            labels = params_to_use
-
-        final_chain_kwargs = common_kwargs.copy()
-
-        if chain_specific_kwargs:
-            if (not isinstance(chain_specific_kwargs, list) or
-                    len(chain_specific_kwargs) != len(samples)):
-                raise ValueError("chain_specific_kwargs must be a list with "
-                                 "the same length as samples")
-            final_chain_kwargs.update(chain_specific_kwargs[i])
-
-        c.add_chain(
-            sample.to_numpy()[:, positions],
-            weights=sample.get_weights(),
-            parameters=labels,
-            name=names[i],
-            **final_chain_kwargs
-        )
-
-    return c
+    return Chain(
+        samples=df,
+        name=name,
+        **kwargs
+    )
