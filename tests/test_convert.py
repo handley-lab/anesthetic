@@ -200,7 +200,15 @@ def test_to_chainconsumer_v0():
     except ValueError as e:
         assert "Length of 'names' must match" in str(e)
 
-    # Test 11: Error handling - Mismatched chain_specific_kwargs length
+    # Test 11: Error handling - chain_specific_kwargs wrong type
+    try:
+        to_chainconsumer([s1, s2],
+                         chain_specific_kwargs={'shade_alpha': 0.5})
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        assert "chain_specific_kwargs must be a list of dictionaries" in str(e)
+
+    # Test 12: Error handling - Mismatched chain_specific_kwargs length
     try:
         to_chainconsumer([s1, s2],
                          chain_specific_kwargs=[{'shade_alpha': 0.5}])
