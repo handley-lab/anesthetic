@@ -176,7 +176,7 @@ def to_chainconsumer(samples, params=None, name=None, **kwargs):
 
 
 def _to_chainconsumer_v1(samples, params=None, name=None, **kwargs):
-    """Implementation for chainconsumer >= 1.0.0."""
+    """Convert anesthetic samples to ChainConsumer v1.x Chain object."""
     from chainconsumer.chain import Chain
 
     if name is None:
@@ -212,7 +212,7 @@ def _to_chainconsumer_v1(samples, params=None, name=None, **kwargs):
 
 def _to_chainconsumer_v0(samples, params=None, names=None,
                          cc=None, chain_kwargs=None, **kwargs):
-    """Implementation for chainconsumer < 1.0.0."""
+    """Convert anesthetic samples to ChainConsumer v0.x object."""
     from chainconsumer import ChainConsumer
 
     if not isinstance(samples, list):
