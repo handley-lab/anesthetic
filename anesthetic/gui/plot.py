@@ -202,7 +202,8 @@ class RunPlotter(object):
         gs11 = sGS(3, 1, height_ratios=[1, 1, 2], subplot_spec=gs1[1])
 
         self.triangle = TrianglePlot(self.fig, gs0[0])
-        beta = np.logspace(-10, 10, 101)
+        beta = np.logspace(np.log10(self.samples.beta_min()), 
+                          np.log10(self.samples.beta_max()), 101)
         D_KL = self.samples.D_KL(beta=beta).to_numpy()
         self.beta = Beta(beta, D_KL, self.fig, gs0[1], self.update)
         logX = self.samples.logX().to_numpy()
