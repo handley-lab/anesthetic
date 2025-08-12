@@ -972,18 +972,19 @@ class NestedSamples(Samples):
         if beta is None:
             beta = self.beta
         logL = self.logL
-        with np.errstate(divide='ignore', invalid='ignore'):
-            if np.isscalar(beta):
-                betalogL = beta * logL
-                if beta == 0:
-                    betalogL[:] = 0.0
-                betalogL.name = 'betalogL'
+        if np.isscalar(beta):
+            if beta == 0:
+                betalogL = pandas.Series(np.zeros_like(logL), index=logL.index)
             else:
+                betalogL = beta * logL
+            betalogL.name = 'betalogL'
+        else:
+            with np.errstate(divide='ignore', invalid='ignore'):
                 betalogL = logL._constructor_expanddim(
                     np.outer(self.logL, beta), self.index, columns=beta)
-                if 0.0 in betalogL:
-                    betalogL[0] = 0.0
-                betalogL.columns.name = 'beta'
+                if 0.0 in betalogL.columns:
+                    betalogL[0.0] = 0.0
+            betalogL.columns.name = 'beta'
         return betalogL
 
     def logw(self, nsamples=None, beta=None):
