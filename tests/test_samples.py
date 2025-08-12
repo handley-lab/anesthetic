@@ -1325,6 +1325,9 @@ def test_contour():
     nlive = pc.nlive.mode().to_numpy()[0]
     assert sorted(pc.logL)[-nlive] == pc.contour(cut_none)
 
+    for logL in [-5.0, np.float32(-5.0), np.float64(-5.0)]:
+        assert logL == pc.contour(logL)
+
 
 @pytest.mark.parametrize("cut", [200, 0.0, None])
 def test_truncate(cut):
