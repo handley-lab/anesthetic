@@ -781,6 +781,24 @@ def test_weighted_dataframe_nan_consistency():
         assert_allclose(df_result[col], series_result, rtol=1e-10)
 
 
+def test_weighted_dataframe_mean_ground_truth():
+    """Test DataFrame mean with ground truth values."""
+    data = [[1.0, np.nan, 3.0], [4.0, 5.0, np.nan]]
+    weights = [0.4, 0.6]
+    expected_means = {'A': 2.8, 'B': 5.0, 'C': 3.0}
+    
+    df = WeightedDataFrame(data, columns=['A', 'B', 'C'], weights=weights)
+    result = df.mean(skipna=True)
+    
+    for col, expected in expected_means.items():
+        assert_allclose(result[col], expected, rtol=1e-10)
+        
+        # Also test against ground truth function
+        col_data = df[col].values
+        ground_truth = ground_truth_mean(col_data, weights)
+        assert_allclose(result[col], ground_truth, rtol=1e-10)
+
+
 @pytest.fixture
 def mcmc_df():
     np.random.seed(0)
