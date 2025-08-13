@@ -238,6 +238,7 @@ class _WeightedObject(object):
         with temporary_seed(int(seed)):
             return np.random.rand(self.shape[axis])
 
+
     def reset_index(self, level=None, drop=False, inplace=False,
                     *args, **kwargs):
         """Reset the index, retaining weights."""
@@ -322,63 +323,34 @@ class WeightedSeries(_WeightedObject, Series):
     def kurt(self, skipna=True):  # noqa: D102
         if self.get_weights().sum() == 0:
             return np.nan
-        if skipna:
-            valid = ~self.isnull()
-            if not valid.any():
-                return np.nan
-            valid_data = self[valid]
-            valid_weights = self.get_weights()[valid]
-            mean = np.average(valid_data, weights=valid_weights)
-            var = np.average((valid_data - mean)**2, weights=valid_weights)
-            if var == 0:
-                return np.nan
-            std = np.sqrt(var)
-            return np.average(((valid_data - mean) / std)**4, weights=valid_weights)
-        else:
-            mean = np.average(self, weights=self.get_weights())
-            var = np.average((self - mean)**2, weights=self.get_weights())
-            if var == 0:
-                return np.nan
-            std = np.sqrt(var)
-            return np.average(((self - mean) / std)**4, weights=self.get_weights())
+        null = self.isnull() & skipna
+        mean = self.mean(skipna=skipna)
+        std = self.std(skipna=skipna)
+        if np.isnan(mean) or np.isnan(std) or std == 0:
+            return np.nan
+        weights = masked_array(self.get_weights(), null) if skipna else self.get_weights()
+        return np.average(masked_array(((self-mean)/std)**4, null), weights=weights)
 
     def skew(self, skipna=True):  # noqa: D102
         if self.get_weights().sum() == 0:
             return np.nan
-        if skipna:
-            valid = ~self.isnull()
-            if not valid.any():
-                return np.nan
-            valid_data = self[valid]
-            valid_weights = self.get_weights()[valid]
-            mean = np.average(valid_data, weights=valid_weights)
-            var = np.average((valid_data - mean)**2, weights=valid_weights)
-            if var == 0:
-                return np.nan
-            std = np.sqrt(var)
-            return np.average(((valid_data - mean) / std)**3, weights=valid_weights)
-        else:
-            mean = np.average(self, weights=self.get_weights())
-            var = np.average((self - mean)**2, weights=self.get_weights())
-            if var == 0:
-                return np.nan
-            std = np.sqrt(var)
-            return np.average(((self - mean) / std)**3, weights=self.get_weights())
+        null = self.isnull() & skipna
+        mean = self.mean(skipna=skipna)
+        std = self.std(skipna=skipna)
+        if np.isnan(mean) or np.isnan(std) or std == 0:
+            return np.nan
+        weights = masked_array(self.get_weights(), null) if skipna else self.get_weights()
+        return np.average(masked_array(((self-mean)/std)**3, null), weights=weights)
 
     def mad(self, skipna=True):  # noqa: D102
         if self.get_weights().sum() == 0:
             return np.nan
-        if skipna:
-            valid = ~self.isnull()
-            if not valid.any():
-                return np.nan
-            valid_data = self[valid]
-            valid_weights = self.get_weights()[valid]
-            mean = np.average(valid_data, weights=valid_weights)
-            return np.average(np.abs(valid_data - mean), weights=valid_weights)
-        else:
-            mean = np.average(self, weights=self.get_weights())
-            return np.average(np.abs(self - mean), weights=self.get_weights())
+        null = self.isnull() & skipna
+        mean = self.mean(skipna=skipna)
+        if np.isnan(mean):
+            return np.nan
+        weights = masked_array(self.get_weights(), null) if skipna else self.get_weights()
+        return np.average(masked_array(abs(self-mean), null), weights=weights)
 
     def sem(self, skipna=True):  # noqa: D102
         return np.sqrt(self.var(skipna=skipna)/self.neff())
@@ -502,38 +474,17 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             if self.get_weights(axis).sum() == 0:
                 return self._constructor_sliced(np.nan,
                                                 index=self._get_axis(1-axis))
-            if skipna:
-                # For DataFrames, we need to handle NaNs per column/row
-                if axis == 0:  # Column-wise variance
-                    result = []
-                    for col in self.columns:
-                        series = self[col]
-                        valid = ~series.isnull()
-                        if not valid.any():
-                            result.append(np.nan)
-                        else:
-                            valid_data = series[valid]
-                            valid_weights = self.get_weights()[valid]
-                            mean = np.average(valid_data, weights=valid_weights)
-                            result.append(np.average((valid_data - mean)**2, weights=valid_weights))
-                    return self._constructor_sliced(result, index=self.columns)
-                else:  # Row-wise variance (axis=1)
-                    result = []
-                    for idx in self.index:
-                        row = self.loc[idx]
-                        valid = ~row.isnull()
-                        if not valid.any():
-                            result.append(np.nan)
-                        else:
-                            valid_data = row[valid]
-                            valid_weights = self.get_weights(axis=1)[valid]
-                            mean = np.average(valid_data, weights=valid_weights)
-                            result.append(np.average((valid_data - mean)**2, weights=valid_weights))
-                    return self._constructor_sliced(result, index=self.index)
+            null = self.isnull() & skipna
+            mean = self.mean(axis=axis, skipna=skipna)
+            # Broadcast weights to DataFrame shape and mask identically to data
+            weights_1d = self.get_weights(axis)
+            if axis == 0:
+                weights = np.broadcast_to(weights_1d[:, None], self.shape)
             else:
-                mean = self.mean(axis=axis, skipna=False)
-                var = np.average((self-mean)**2, weights=self.get_weights(axis), axis=axis)
-                return self._constructor_sliced(var, index=self._get_axis(1-axis))
+                weights = np.broadcast_to(weights_1d[None, :], self.shape)
+            var = np.average(masked_array((self-mean)**2, null),
+                             weights=masked_array(weights, null), axis=axis)
+            return self._constructor_sliced(var, index=self._get_axis(1-axis))
         else:
             return super().var(axis=axis, skipna=skipna, *args, **kwargs)
 
@@ -614,49 +565,18 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             if self.get_weights(axis).sum() == 0:
                 return self._constructor_sliced(np.nan,
                                                 index=self._get_axis(1-axis))
-            if skipna:
-                # For DataFrames, we need to handle NaNs per column/row
-                if axis == 0:  # Column-wise kurtosis
-                    result = []
-                    for col in self.columns:
-                        series = self[col]
-                        valid = ~series.isnull()
-                        if not valid.any():
-                            result.append(np.nan)
-                        else:
-                            valid_data = series[valid]
-                            valid_weights = self.get_weights()[valid]
-                            mean = np.average(valid_data, weights=valid_weights)
-                            var = np.average((valid_data - mean)**2, weights=valid_weights)
-                            if var == 0:
-                                result.append(np.nan)
-                            else:
-                                std = np.sqrt(var)
-                                result.append(np.average(((valid_data - mean) / std)**4, weights=valid_weights))
-                    return self._constructor_sliced(result, index=self.columns)
-                else:  # Row-wise kurtosis (axis=1)
-                    result = []
-                    for idx in self.index:
-                        row = self.loc[idx]
-                        valid = ~row.isnull()
-                        if not valid.any():
-                            result.append(np.nan)
-                        else:
-                            valid_data = row[valid]
-                            valid_weights = self.get_weights(axis=1)[valid]
-                            mean = np.average(valid_data, weights=valid_weights)
-                            var = np.average((valid_data - mean)**2, weights=valid_weights)
-                            if var == 0:
-                                result.append(np.nan)
-                            else:
-                                std = np.sqrt(var)
-                                result.append(np.average(((valid_data - mean) / std)**4, weights=valid_weights))
-                    return self._constructor_sliced(result, index=self.index)
+            null = self.isnull() & skipna
+            mean = self.mean(axis=axis, skipna=skipna)
+            std = self.std(axis=axis, skipna=skipna)
+            # Broadcast weights to DataFrame shape and mask identically to data
+            weights_1d = self.get_weights(axis)
+            if axis == 0:
+                weights = np.broadcast_to(weights_1d[:, None], self.shape)
             else:
-                mean = self.mean(axis=axis, skipna=False)
-                std = self.std(axis=axis, skipna=False)
-                kurt = np.average(((self-mean)/std)**4, weights=self.get_weights(axis), axis=axis)
-                return self._constructor_sliced(kurt, index=self._get_axis(1-axis))
+                weights = np.broadcast_to(weights_1d[None, :], self.shape)
+            kurt = np.average(masked_array(((self-mean)/std)**4, null),
+                              weights=masked_array(weights, null), axis=axis)
+            return self._constructor_sliced(kurt, index=self._get_axis(1-axis))
         else:
             return super().kurt(axis=axis, skipna=skipna, *args, **kwargs)
 
@@ -665,49 +585,18 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             if self.get_weights(axis).sum() == 0:
                 return self._constructor_sliced(np.nan,
                                                 index=self._get_axis(1-axis))
-            if skipna:
-                # For DataFrames, we need to handle NaNs per column/row
-                if axis == 0:  # Column-wise skewness
-                    result = []
-                    for col in self.columns:
-                        series = self[col]
-                        valid = ~series.isnull()
-                        if not valid.any():
-                            result.append(np.nan)
-                        else:
-                            valid_data = series[valid]
-                            valid_weights = self.get_weights()[valid]
-                            mean = np.average(valid_data, weights=valid_weights)
-                            var = np.average((valid_data - mean)**2, weights=valid_weights)
-                            if var == 0:
-                                result.append(np.nan)
-                            else:
-                                std = np.sqrt(var)
-                                result.append(np.average(((valid_data - mean) / std)**3, weights=valid_weights))
-                    return self._constructor_sliced(result, index=self.columns)
-                else:  # Row-wise skewness (axis=1)
-                    result = []
-                    for idx in self.index:
-                        row = self.loc[idx]
-                        valid = ~row.isnull()
-                        if not valid.any():
-                            result.append(np.nan)
-                        else:
-                            valid_data = row[valid]
-                            valid_weights = self.get_weights(axis=1)[valid]
-                            mean = np.average(valid_data, weights=valid_weights)
-                            var = np.average((valid_data - mean)**2, weights=valid_weights)
-                            if var == 0:
-                                result.append(np.nan)
-                            else:
-                                std = np.sqrt(var)
-                                result.append(np.average(((valid_data - mean) / std)**3, weights=valid_weights))
-                    return self._constructor_sliced(result, index=self.index)
+            null = self.isnull() & skipna
+            mean = self.mean(axis=axis, skipna=skipna)
+            std = self.std(axis=axis, skipna=skipna)
+            # Broadcast weights to DataFrame shape and mask identically to data
+            weights_1d = self.get_weights(axis)
+            if axis == 0:
+                weights = np.broadcast_to(weights_1d[:, None], self.shape)
             else:
-                mean = self.mean(axis=axis, skipna=False)
-                std = self.std(axis=axis, skipna=False)
-                skew = np.average(((self-mean)/std)**3, weights=self.get_weights(axis), axis=axis)
-                return self._constructor_sliced(skew, index=self._get_axis(1-axis))
+                weights = np.broadcast_to(weights_1d[None, :], self.shape)
+            skew = np.average(masked_array(((self-mean)/std)**3, null),
+                              weights=masked_array(weights, null), axis=axis)
+            return self._constructor_sliced(skew, index=self._get_axis(1-axis))
         else:
             return super().skew(axis=axis, skipna=skipna, *args, **kwargs)
 
@@ -716,38 +605,17 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             if self.get_weights(axis).sum() == 0:
                 return self._constructor_sliced(np.nan,
                                                 index=self._get_axis(1-axis))
-            if skipna:
-                # For DataFrames, we need to handle NaNs per column/row
-                if axis == 0:  # Column-wise mean absolute deviation
-                    result = []
-                    for col in self.columns:
-                        series = self[col]
-                        valid = ~series.isnull()
-                        if not valid.any():
-                            result.append(np.nan)
-                        else:
-                            valid_data = series[valid]
-                            valid_weights = self.get_weights()[valid]
-                            mean = np.average(valid_data, weights=valid_weights)
-                            result.append(np.average(np.abs(valid_data - mean), weights=valid_weights))
-                    return self._constructor_sliced(result, index=self.columns)
-                else:  # Row-wise mean absolute deviation (axis=1)
-                    result = []
-                    for idx in self.index:
-                        row = self.loc[idx]
-                        valid = ~row.isnull()
-                        if not valid.any():
-                            result.append(np.nan)
-                        else:
-                            valid_data = row[valid]
-                            valid_weights = self.get_weights(axis=1)[valid]
-                            mean = np.average(valid_data, weights=valid_weights)
-                            result.append(np.average(np.abs(valid_data - mean), weights=valid_weights))
-                    return self._constructor_sliced(result, index=self.index)
+            null = self.isnull() & skipna
+            mean = self.mean(axis=axis, skipna=skipna)
+            # Broadcast weights to DataFrame shape and mask identically to data
+            weights_1d = self.get_weights(axis)
+            if axis == 0:
+                weights = np.broadcast_to(weights_1d[:, None], self.shape)
             else:
-                mean = self.mean(axis=axis, skipna=False)
-                mad = np.average(np.abs(self-mean), weights=self.get_weights(axis), axis=axis)
-                return self._constructor_sliced(mad, index=self._get_axis(1-axis))
+                weights = np.broadcast_to(weights_1d[None, :], self.shape)
+            mad = np.average(masked_array(abs(self-mean), null),
+                             weights=masked_array(weights, null), axis=axis)
+            return self._constructor_sliced(mad, index=self._get_axis(1-axis))
         else:
             # pandas DataFrame doesn't have mad method in recent versions
             # Implement basic mad for unweighted case
