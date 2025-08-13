@@ -238,17 +238,6 @@ class _WeightedObject(object):
         with temporary_seed(int(seed)):
             return np.random.rand(self.shape[axis])
 
-    def _get_broadcast_weights(self, axis, mask=None):
-        """Broadcast 1D weights to DataFrame shape, optionally applying a mask."""
-        weights_1d = self.get_weights(axis)
-        if axis == 0:
-            weights_2d = np.broadcast_to(weights_1d[:, None], self.shape)
-        else:
-            weights_2d = np.broadcast_to(weights_1d[None, :], self.shape)
-        
-        if mask is not None:
-            return masked_array(weights_2d, mask)
-        return weights_2d
 
 
     def reset_index(self, level=None, drop=False, inplace=False,
@@ -443,8 +432,10 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                 return self._constructor_sliced(np.nan,
                                                 index=self._get_axis(1-axis))
             null = self.isnull() & skipna
-            weights = self._get_broadcast_weights(axis, mask=null)
-            mean = np.average(masked_array(self, null), weights=weights, axis=axis)
+            weights = np.broadcast_to(self.get_weights(axis)[..., None] if axis == 0 
+                                    else self.get_weights(axis)[None, ...], self.shape)
+            mean = np.average(masked_array(self, null), 
+                            weights=masked_array(weights, null), axis=axis)
             return self._constructor_sliced(mean, index=self._get_axis(1-axis))
         else:
             return super().mean(axis=axis, skipna=skipna, *args, **kwargs)
@@ -465,9 +456,10 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                                                 index=self._get_axis(1-axis))
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
-            weights = self._get_broadcast_weights(axis, mask=null)
+            weights = np.broadcast_to(self.get_weights(axis)[..., None] if axis == 0 
+                                    else self.get_weights(axis)[None, ...], self.shape)
             var = np.average(masked_array((self-mean)**2, null),
-                             weights=weights, axis=axis)
+                           weights=masked_array(weights, null), axis=axis)
             return self._constructor_sliced(var, index=self._get_axis(1-axis))
         else:
             return super().var(axis=axis, skipna=skipna, *args, **kwargs)
@@ -552,9 +544,10 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             std = self.std(axis=axis, skipna=skipna)
-            weights = self._get_broadcast_weights(axis, mask=null)
+            weights = np.broadcast_to(self.get_weights(axis)[..., None] if axis == 0 
+                                    else self.get_weights(axis)[None, ...], self.shape)
             kurt = np.average(masked_array(((self-mean)/std)**4, null),
-                              weights=weights, axis=axis)
+                            weights=masked_array(weights, null), axis=axis)
             return self._constructor_sliced(kurt, index=self._get_axis(1-axis))
         else:
             return super().kurt(axis=axis, skipna=skipna, *args, **kwargs)
@@ -567,9 +560,10 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
             std = self.std(axis=axis, skipna=skipna)
-            weights = self._get_broadcast_weights(axis, mask=null)
+            weights = np.broadcast_to(self.get_weights(axis)[..., None] if axis == 0 
+                                    else self.get_weights(axis)[None, ...], self.shape)
             skew = np.average(masked_array(((self-mean)/std)**3, null),
-                              weights=weights, axis=axis)
+                            weights=masked_array(weights, null), axis=axis)
             return self._constructor_sliced(skew, index=self._get_axis(1-axis))
         else:
             return super().skew(axis=axis, skipna=skipna, *args, **kwargs)
@@ -581,9 +575,10 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                                                 index=self._get_axis(1-axis))
             null = self.isnull() & skipna
             mean = self.mean(axis=axis, skipna=skipna)
-            weights = self._get_broadcast_weights(axis, mask=null)
+            weights = np.broadcast_to(self.get_weights(axis)[..., None] if axis == 0 
+                                    else self.get_weights(axis)[None, ...], self.shape)
             mad = np.average(masked_array(abs(self-mean), null),
-                             weights=weights, axis=axis)
+                           weights=masked_array(weights, null), axis=axis)
             return self._constructor_sliced(mad, index=self._get_axis(1-axis))
         else:
             # pandas DataFrame doesn't have mad method in recent versions
