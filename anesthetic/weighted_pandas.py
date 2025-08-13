@@ -361,15 +361,6 @@ class WeightedSeries(_WeightedObject, Series):
         weights = masked_array(self.get_weights(), null) if skipna else self.get_weights()
         return np.average(masked_array(((self-mean)/std)**3, null), weights=weights)
 
-    def mad(self, skipna=True):  # noqa: D102
-        if self.get_weights().sum() == 0:
-            return np.nan
-        null = self.isnull() & skipna
-        mean = self.mean(skipna=skipna)
-        if np.isnan(mean):
-            return np.nan
-        weights = masked_array(self.get_weights(), null) if skipna else self.get_weights()
-        return np.average(masked_array(abs(self-mean), null), weights=weights)
 
     def sem(self, skipna=True):  # noqa: D102
         return np.sqrt(self.var(skipna=skipna)/self.neff())
@@ -550,39 +541,6 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return np.average(masked_array(((data-mean)/std)**3, null), weights=weights, axis=ax)
         return self._weighted_stat(_skew_func, axis, skipna)
 
-    def mad(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        """Mean Absolute Deviation - anesthetic extension (not in pandas 2.0+)."""
-        if not self.isweighted(axis):
-            # For unweighted data, use simple calculation
-            mean_vals = self.mean(axis=axis, skipna=skipna)
-            if axis == 0:
-                result = []
-                for i, col in enumerate(self.columns):
-                    col_data = self.iloc[:, i]
-                    if skipna:
-                        col_data = col_data.dropna()
-                    if len(col_data) == 0:
-                        result.append(np.nan)
-                    else:
-                        result.append(np.abs(col_data - mean_vals.iloc[i]).mean())
-                return self._constructor_sliced(result, index=self.columns)
-            else:
-                result = []
-                for i, idx in enumerate(self.index):
-                    row_data = self.iloc[i, :]
-                    if skipna:
-                        row_data = row_data.dropna()
-                    if len(row_data) == 0:
-                        result.append(np.nan)
-                    else:
-                        result.append(np.abs(row_data - mean_vals.iloc[i]).mean())
-                return self._constructor_sliced(result, index=self.index)
-        else:
-            # For weighted data, use weighted calculation
-            def _mad_func(data, null, weights, ax, sk):
-                mean = self.mean(axis=ax, skipna=sk)
-                return np.average(masked_array(abs(data-mean), null), weights=weights, axis=ax)
-            return self._weighted_stat(_mad_func, axis, skipna)
 
     def sem(self, axis=0, skipna=True):  # noqa: D102
         n = self.neff(axis)
