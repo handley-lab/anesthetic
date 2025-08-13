@@ -662,7 +662,7 @@ def ground_truth_std(data, weights):
     ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4], 3.0),
     
     # Case 2: NaN at beginning
-    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4], 10/3),
+    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4], 29/9),  # (2*0.2 + 3*0.3 + 4*0.4) / (0.2+0.3+0.4)
     
     # Case 3: NaN at end  
     ([1.0, 2.0, 3.0, np.nan], [0.1, 0.2, 0.3, 0.4], 7/3),
@@ -671,7 +671,7 @@ def ground_truth_std(data, weights):
     ([1.0, np.nan, 3.0, np.nan, 5.0], [0.1, 0.2, 0.3, 0.1, 0.3], 25/7),
     
     # Case 5: NaN with large weight (tests that weight is excluded)
-    ([10.0, np.nan, 30.0], [1.0, 5.0, 2.0], 50/3),
+    ([10.0, np.nan, 30.0], [1.0, 5.0, 2.0], 70/3),  # (10*1 + 30*2) / (1+2)
     
     # Case 6: NaN with zero weight (should be same as excluding it)
     ([1.0, 2.0, np.nan], [0.5, 0.5, 0.0], 1.5),
@@ -701,29 +701,36 @@ def test_weighted_mean_skipna_false_returns_nan(data, weights):
     assert np.isnan(result)
 
 
-@pytest.mark.parametrize("data, weights", [
-    ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4]),
-    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4]),
-    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25]),
+@pytest.mark.parametrize("data, weights, expected_var", [
+    ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4], 1.4285714285714284),
+    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4], 0.6172839506172839),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 1.0),
 ])
-def test_weighted_var_nan_correctness(data, weights):
+def test_weighted_var_nan_correctness(data, weights, expected_var):
     """Test that var(skipna=True) returns numerically correct results."""
     series = WeightedSeries(data, weights=weights)
     result = series.var(skipna=True)
+    
+    # Test against pre-calculated expected value
+    assert_allclose(result, expected_var, rtol=1e-10)
     
     # Test against ground truth function
     ground_truth = ground_truth_var(data, weights)
     assert_allclose(result, ground_truth, rtol=1e-10)
 
 
-@pytest.mark.parametrize("data, weights", [
-    ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4]),
-    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4]),
+@pytest.mark.parametrize("data, weights, expected_std", [
+    ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4], 1.1952286093343936),
+    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4], 0.7856742013183862),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 1.0),
 ])
-def test_weighted_std_nan_correctness(data, weights):
+def test_weighted_std_nan_correctness(data, weights, expected_std):
     """Test that std(skipna=True) returns numerically correct results."""
     series = WeightedSeries(data, weights=weights)
     result = series.std(skipna=True)
+    
+    # Test against pre-calculated expected value
+    assert_allclose(result, expected_std, rtol=1e-10)
     
     # Test against ground truth function
     ground_truth = ground_truth_std(data, weights)

@@ -264,8 +264,13 @@ class WeightedSeries(_WeightedObject, Series):
     def mean(self, skipna=True):  # noqa: D102
         if self.get_weights().sum() == 0:
             return np.nan
-        null = self.isnull() & skipna
-        return np.average(masked_array(self, null), weights=self.get_weights())
+        if skipna:
+            valid = ~self.isnull()
+            if not valid.any():
+                return np.nan
+            return np.average(self[valid], weights=self.get_weights()[valid])
+        else:
+            return np.average(self, weights=self.get_weights())
 
     def std(self, *args, **kwargs):  # noqa: D102
         return np.sqrt(self.var(*args, **kwargs))
