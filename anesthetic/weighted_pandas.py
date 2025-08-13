@@ -244,11 +244,17 @@ class _WeightedObject(object):
             # Get the calling method name automatically
             import inspect
             method_name = inspect.stack()[1].function
-            # Use ddof=0 for consistency with weighted statistics (population variance)
-            if method_name in ['var', 'std']:
-                return getattr(super(), method_name)(axis=axis, skipna=skipna, ddof=0)
+            
+            # Check if the method exists in pandas DataFrame
+            if hasattr(super(), method_name):
+                # Use ddof=0 for consistency with weighted statistics (population variance)
+                if method_name in ['var', 'std']:
+                    return getattr(super(), method_name)(axis=axis, skipna=skipna, ddof=0)
+                else:
+                    return getattr(super(), method_name)(axis=axis, skipna=skipna)
             else:
-                return getattr(super(), method_name)(axis=axis, skipna=skipna)
+                # Method doesn't exist in pandas (e.g., mad) - fall through to weighted calculation
+                pass
         if self.get_weights(axis).sum() == 0:
             return self._constructor_sliced(np.nan, index=self._get_axis(1-axis))
         
@@ -545,44 +551,38 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         return self._weighted_stat(_skew_func, axis, skipna)
 
     def mad(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        if self.isweighted(axis):
+        """Mean Absolute Deviation - anesthetic extension (not in pandas 2.0+)."""
+        if not self.isweighted(axis):
+            # For unweighted data, use simple calculation
+            mean_vals = self.mean(axis=axis, skipna=skipna)
+            if axis == 0:
+                result = []
+                for i, col in enumerate(self.columns):
+                    col_data = self.iloc[:, i]
+                    if skipna:
+                        col_data = col_data.dropna()
+                    if len(col_data) == 0:
+                        result.append(np.nan)
+                    else:
+                        result.append(np.abs(col_data - mean_vals.iloc[i]).mean())
+                return self._constructor_sliced(result, index=self.columns)
+            else:
+                result = []
+                for i, idx in enumerate(self.index):
+                    row_data = self.iloc[i, :]
+                    if skipna:
+                        row_data = row_data.dropna()
+                    if len(row_data) == 0:
+                        result.append(np.nan)
+                    else:
+                        result.append(np.abs(row_data - mean_vals.iloc[i]).mean())
+                return self._constructor_sliced(result, index=self.index)
+        else:
+            # For weighted data, use weighted calculation
             def _mad_func(data, null, weights, ax, sk):
                 mean = self.mean(axis=ax, skipna=sk)
                 return np.average(masked_array(abs(data-mean), null), weights=weights, axis=ax)
             return self._weighted_stat(_mad_func, axis, skipna)
-        else:
-            # pandas DataFrame doesn't have mad method in recent versions
-            # Implement basic mad for unweighted case
-            if axis == 0:  # column-wise
-                mean = super().mean(axis=0, skipna=skipna)
-                result = []
-                for col in self.columns:
-                    col_data = self[col]
-                    col_mean = mean[col] 
-                    if skipna:
-                        valid_data = col_data.dropna()
-                        if len(valid_data) == 0:
-                            result.append(np.nan)
-                        else:
-                            result.append(np.abs(valid_data - col_mean).mean())
-                    else:
-                        result.append(np.abs(col_data - col_mean).mean())
-                return self._constructor_sliced(result, index=self.columns)
-            else:  # row-wise
-                mean = super().mean(axis=1, skipna=skipna)
-                result = []
-                for idx in self.index:
-                    row_data = self.loc[idx]
-                    row_mean = mean[idx]
-                    if skipna:
-                        valid_data = row_data.dropna()
-                        if len(valid_data) == 0:
-                            result.append(np.nan)
-                        else:
-                            result.append(np.abs(valid_data - row_mean).mean())
-                    else:
-                        result.append(np.abs(row_data - row_mean).mean())
-                return self._constructor_sliced(result, index=self.index)
 
     def sem(self, axis=0, skipna=True):  # noqa: D102
         n = self.neff(axis)
