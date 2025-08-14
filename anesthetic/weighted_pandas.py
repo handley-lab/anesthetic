@@ -617,22 +617,27 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
             return df
         else:
-            # For unweighted data, if ncompress is an integer > 0, randomly subsample
-            if isinstance(ncompress, int) and not isinstance(ncompress, bool) and ncompress > 0:
+            # For unweighted data, if ncompress is an integer > 0,
+            # randomly subsample
+            if (isinstance(ncompress, int) and
+                    not isinstance(ncompress, bool) and ncompress > 0):
                 n_current = self.shape[axis]
                 if ncompress >= n_current:
-                    return self  # No need to compress if requested size >= current size
+                    # No need to compress if requested size >= current size
+                    return self
                 # Random subsample
                 np.random.seed(int(self._rand(axis).sum() * 1000) % 2**32)
                 if axis == 0:
-                    indices = np.random.choice(n_current, ncompress, replace=False)
+                    indices = np.random.choice(n_current, ncompress,
+                                               replace=False)
                     return self.iloc[indices]
                 else:
-                    indices = np.random.choice(n_current, ncompress, replace=False)
+                    indices = np.random.choice(n_current, ncompress,
+                                               replace=False)
                     return self.iloc[:, indices]
             else:
-                # For other ncompress values (True, str, etc.) on unweighted data, 
-                # return self unchanged
+                # For other ncompress values (True, str, etc.) on unweighted
+                # data, return self unchanged
                 return self
 
     def sample(self, *args, **kwargs):  # noqa: D102
