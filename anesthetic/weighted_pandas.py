@@ -239,31 +239,34 @@ class _WeightedObject(object):
             return np.random.rand(self.shape[axis])
 
     def _weighted_stat(self, func, axis=0, skipna=True):
-        """Common pattern for weighted DataFrame statistics."""
+        """Compute weighted statistics using common pattern."""
         if not self.isweighted(axis):
             # Get the calling method name automatically
             import inspect
             method_name = inspect.stack()[1].function
-            
+
             # Check if the method exists in pandas DataFrame
             if hasattr(super(), method_name):
-                # Use ddof=0 for consistency with weighted statistics (population variance)
+                # Use ddof=0 for consistency with weighted statistics
                 if method_name in ['var', 'std']:
-                    return getattr(super(), method_name)(axis=axis, skipna=skipna, ddof=0)
+                    return getattr(super(), method_name)(
+                        axis=axis, skipna=skipna, ddof=0)
                 else:
-                    return getattr(super(), method_name)(axis=axis, skipna=skipna)
+                    return getattr(super(), method_name)(
+                        axis=axis, skipna=skipna)
             else:
-                # Method doesn't exist in pandas (e.g., mad) - fall through to weighted calculation
+                # Method doesn't exist in pandas - fall through to weighted
                 pass
         if self.get_weights(axis).sum() == 0:
-            return self._constructor_sliced(np.nan, index=self._get_axis(1-axis))
-        
+            return self._constructor_sliced(
+                np.nan, index=self._get_axis(1-axis))
+
         null = self.isnull() & skipna
-        weights = np.broadcast_to(self.get_weights(axis)[..., None] if axis == 0 
-                                else self.get_weights(axis)[None, ...], self.shape)
+        weights = np.broadcast_to(
+            self.get_weights(axis)[..., None] if axis == 0
+            else self.get_weights(axis)[None, ...], self.shape)
         result = func(self, null, masked_array(weights, null), axis, skipna)
         return self._constructor_sliced(result, index=self._get_axis(1-axis))
-
 
     def reset_index(self, level=None, drop=False, inplace=False,
                     *args, **kwargs):
@@ -316,7 +319,8 @@ class WeightedSeries(_WeightedObject, Series):
             return np.nan
         mean = self.mean(skipna=skipna)
         weights = masked_array(self.get_weights(), null)
-        return np.average(masked_array((self - mean)**2, null), weights=weights)
+        return np.average(
+            masked_array((self - mean)**2, null), weights=weights)
 
     def cov(self, other, *args, **kwargs):  # noqa: D102
 
@@ -348,7 +352,8 @@ class WeightedSeries(_WeightedObject, Series):
         if np.isnan(mean) or np.isnan(std) or std == 0:
             return np.nan
         weights = masked_array(self.get_weights(), null)
-        return np.average(masked_array(((self-mean)/std)**4, null), weights=weights)
+        return np.average(
+            masked_array(((self-mean)/std)**4, null), weights=weights)
 
     def skew(self, skipna=True):  # noqa: D102
         if self.get_weights().sum() == 0:
@@ -359,8 +364,8 @@ class WeightedSeries(_WeightedObject, Series):
         if np.isnan(mean) or np.isnan(std) or std == 0:
             return np.nan
         weights = masked_array(self.get_weights(), null)
-        return np.average(masked_array(((self-mean)/std)**3, null), weights=weights)
-
+        return np.average(
+            masked_array(((self-mean)/std)**3, null), weights=weights)
 
     def sem(self, skipna=True):  # noqa: D102
         return np.sqrt(self.var(skipna=skipna)/self.neff())
@@ -437,7 +442,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def mean(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         def _mean_func(data, null, weights, ax, sk):
-            return np.average(masked_array(data, null), weights=weights, axis=ax)
+            return np.average(
+                masked_array(data, null), weights=weights, axis=ax)
         return self._weighted_stat(_mean_func, axis, skipna)
 
     def std(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
@@ -452,7 +458,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     def var(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         def _var_func(data, null, weights, ax, sk):
             mean = self.mean(axis=ax, skipna=sk)
-            return np.average(masked_array((data-mean)**2, null), weights=weights, axis=ax)
+            return np.average(
+                masked_array((data-mean)**2, null), weights=weights, axis=ax)
         return self._weighted_stat(_var_func, axis, skipna)
 
     def cov(self, *args, **kwargs):  # noqa: D102
@@ -531,16 +538,19 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         def _kurt_func(data, null, weights, ax, sk):
             mean = self.mean(axis=ax, skipna=sk)
             std = self.std(axis=ax, skipna=sk)
-            return np.average(masked_array(((data-mean)/std)**4, null), weights=weights, axis=ax)
+            return np.average(
+                masked_array(((data-mean)/std)**4, null), weights=weights,
+                axis=ax)
         return self._weighted_stat(_kurt_func, axis, skipna)
 
     def skew(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         def _skew_func(data, null, weights, ax, sk):
             mean = self.mean(axis=ax, skipna=sk)
             std = self.std(axis=ax, skipna=sk)
-            return np.average(masked_array(((data-mean)/std)**3, null), weights=weights, axis=ax)
+            return np.average(
+                masked_array(((data-mean)/std)**3, null), weights=weights,
+                axis=ax)
         return self._weighted_stat(_skew_func, axis, skipna)
-
 
     def sem(self, axis=0, skipna=True):  # noqa: D102
         n = self.neff(axis)
