@@ -294,7 +294,7 @@ class WeightedSeries(_WeightedObject, Series):
         null = self.isnull() & skipna
         if skipna and null.all():
             return np.nan
-        weights = masked_array(self.get_weights(), null) if skipna else self.get_weights()
+        weights = masked_array(self.get_weights(), null)
         return np.average(masked_array(self, null), weights=weights)
 
     def std(self, skipna=True, *args, **kwargs):  # noqa: D102
@@ -315,7 +315,7 @@ class WeightedSeries(_WeightedObject, Series):
         if skipna and null.all():
             return np.nan
         mean = self.mean(skipna=skipna)
-        weights = masked_array(self.get_weights(), null) if skipna else self.get_weights()
+        weights = masked_array(self.get_weights(), null)
         return np.average(masked_array((self - mean)**2, null), weights=weights)
 
     def cov(self, other, *args, **kwargs):  # noqa: D102
@@ -347,7 +347,7 @@ class WeightedSeries(_WeightedObject, Series):
         std = self.std(skipna=skipna)
         if np.isnan(mean) or np.isnan(std) or std == 0:
             return np.nan
-        weights = masked_array(self.get_weights(), null) if skipna else self.get_weights()
+        weights = masked_array(self.get_weights(), null)
         return np.average(masked_array(((self-mean)/std)**4, null), weights=weights)
 
     def skew(self, skipna=True):  # noqa: D102
@@ -358,7 +358,7 @@ class WeightedSeries(_WeightedObject, Series):
         std = self.std(skipna=skipna)
         if np.isnan(mean) or np.isnan(std) or std == 0:
             return np.nan
-        weights = masked_array(self.get_weights(), null) if skipna else self.get_weights()
+        weights = masked_array(self.get_weights(), null)
         return np.average(masked_array(((self-mean)/std)**3, null), weights=weights)
 
 
