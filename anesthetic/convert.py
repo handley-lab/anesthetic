@@ -59,9 +59,12 @@ def from_chainconsumer(cc_object, columns=None):
           more chains
         - For ChainConsumer v1.x: Single Chain object with samples data
     columns : list, optional
-        Parameter names to extract. If None, uses all available parameters:
-        - v0.x: Uses chain.parameters for each chain
-        - v1.x: Uses chain.data_columns (excluding weight/log_posterior)
+        Parameter names to use as anesthetic column identifiers. This maps
+        ChainConsumer parameter names to anesthetic parameter names:
+        - v0.x: Maps from chain.parameters for each chain
+        - v1.x: Maps from chain.data_columns (excluding weight/log_posterior)
+        If None, uses the original ChainConsumer parameter names directly.
+        Must have the same length and order as the ChainConsumer parameters.
 
     Returns
     -------
@@ -91,7 +94,7 @@ def from_chainconsumer(cc_object, columns=None):
             chain_data.values,
             weights=cc_object.weights,
             columns=columns or cc_object.data_columns,
-            labels=columns or cc_object.data_columns,
+            labels=cc_object.data_columns,
             logL=cc_object.log_posterior if include_logL else None
         )
     else:
@@ -136,7 +139,7 @@ def to_chainconsumer(samples, params=None, name=None, **kwargs):
     name : str or list of str, optional
         Name(s) for the chain(s). If None, uses sample labels or default names.
         For v0.x with multiple samples, can be a list of names.
-    chain_specific_kwargs : list of dict, optional (v0.x only)
+    chain_kwargs : list of dict, optional (v0.x only)
         List of dictionaries containing kwargs specific to each chain.
         Must have same length as samples list.
     **kwargs : dict
@@ -211,7 +214,7 @@ def _to_chainconsumer_v1(samples, params=None, name=None, **kwargs):
 
 
 def _to_chainconsumer_v0(samples, params=None, names=None,
-                         cc=None, chain_kwargs=None, **kwargs):
+                         cc=None, **kwargs):
     """Convert anesthetic samples to ChainConsumer v0.x object."""
     from chainconsumer import ChainConsumer
 
@@ -231,13 +234,13 @@ def _to_chainconsumer_v0(samples, params=None, names=None,
 
     c = cc or ChainConsumer()
 
-    chain_specific_kwargs = kwargs.pop('chain_specific_kwargs', None)
-    if chain_specific_kwargs is not None:
-        if not isinstance(chain_specific_kwargs, list):
-            raise ValueError("chain_specific_kwargs must be a list of "
+    chain_kwargs = kwargs.pop('chain_kwargs', None)
+    if chain_kwargs is not None:
+        if not isinstance(chain_kwargs, list):
+            raise ValueError("chain_kwargs must be a list of "
                              "dictionaries")
-        if len(chain_specific_kwargs) != len(samples):
-            raise ValueError("chain_specific_kwargs must be a list with "
+        if len(chain_kwargs) != len(samples):
+            raise ValueError("chain_kwargs must be a list with "
                              "the same length as samples")
 
     for i, sample in enumerate(samples):
@@ -247,9 +250,9 @@ def _to_chainconsumer_v0(samples, params=None, names=None,
         labels = (sample.get_labels()[positions].tolist()
                   if sample.islabelled() else params_to_use)
 
-        if chain_specific_kwargs:
+        if chain_kwargs:
             final_chain_kwargs = kwargs.copy()
-            final_chain_kwargs.update(chain_specific_kwargs[i])
+            final_chain_kwargs.update(chain_kwargs[i])
         else:
             final_chain_kwargs = kwargs
 

@@ -157,7 +157,7 @@ def test_to_chainconsumer_v0():
         {'linestyle': ':', 'shade_alpha': 0.6}
     ]
 
-    c = to_chainconsumer([s1, s2], chain_specific_kwargs=specific_kwargs_list)
+    c = to_chainconsumer([s1, s2], chain_kwargs=specific_kwargs_list)
 
     assert c.chains[0].linestyle == '--'
     assert c.chains[0].shade_alpha == 0.8
@@ -200,21 +200,21 @@ def test_to_chainconsumer_v0():
     except ValueError as e:
         assert "Length of 'names' must match" in str(e)
 
-    # Test 11: Error handling - chain_specific_kwargs wrong type
+    # Test 11: Error handling - chain_kwargs wrong type
     try:
         to_chainconsumer([s1, s2],
-                         chain_specific_kwargs={'shade_alpha': 0.5})
+                         chain_kwargs={'shade_alpha': 0.5})
         assert False, "Should have raised ValueError"
     except ValueError as e:
-        assert "chain_specific_kwargs must be a list of dictionaries" in str(e)
+        assert "chain_kwargs must be a list of dictionaries" in str(e)
 
-    # Test 12: Error handling - Mismatched chain_specific_kwargs length
+    # Test 12: Error handling - Mismatched chain_kwargs length
     try:
         to_chainconsumer([s1, s2],
-                         chain_specific_kwargs=[{'shade_alpha': 0.5}])
+                         chain_kwargs=[{'shade_alpha': 0.5}])
         assert False, "Should have raised ValueError"
     except ValueError as e:
-        assert ("chain_specific_kwargs must be a list with the same "
+        assert ("chain_kwargs must be a list with the same "
                 "length as samples" in str(e))
 
 
@@ -255,6 +255,13 @@ def test_from_chainconsumer_v1():
     assert list(samples_cols_back.columns.get_level_values(0)) == params
     assert_array_equal(samples_cols_back.to_numpy(),
                        s1[params].to_numpy()[s1.get_weights() > 0])
+
+    # Test 4: Verify LaTeX labels are preserved
+    if samples_cols_back.islabelled():
+        actual_latex = samples_cols_back.get_labels().tolist()
+        assert all('$' in label for label in actual_latex)
+        assert chain_cols.data_columns == actual_latex
+        assert len(actual_latex) == len(params)
 
 
 @chainconsumer_mark_xfail
