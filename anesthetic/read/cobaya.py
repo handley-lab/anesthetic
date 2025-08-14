@@ -21,7 +21,7 @@ def read_paramnames(root):
         paramnames = header.split()[2:]
         try:
             from getdist import loadMCSamples
-            s = loadMCSamples(file_root=root)
+            s = loadMCSamples(file_root=root, no_cache=True)
             labels = {p.name: '$' + p.label + '$' for p in s.paramNames.names}
             for p in paramnames:
                 if p == 'minuslogprior':
