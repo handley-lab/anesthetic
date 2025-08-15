@@ -298,7 +298,7 @@ def test_from_chainconsumer_v1():
     assert_array_equal(samples_back.get_weights(), weights)
     if 'logL' in samples_back.columns:
         assert_array_equal(samples_back['logL'].values.flatten(),
-                            log_posterior)
+                           log_posterior)
 
     # Test 2: Chain without log_posterior
     df2 = pd.DataFrame(samples, columns=params)
