@@ -61,7 +61,6 @@ def test_to_chainconsumer_v1():
                           if col not in ['weight']]
         assert actual_columns == expected_labels
 
-
     # Test 5: Test default naming when no label
     s1_no_label = s1.copy()
     s1_no_label.label = None

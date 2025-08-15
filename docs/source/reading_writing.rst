@@ -191,6 +191,7 @@ For **ChainConsumer v0.x** (supports multiple samples)::
     # Convert single samples
     cc = to_chainconsumer(samples, params=['param1', 'param2'])
     # Returns: ChainConsumer object with one chain
+    # The `params` parameter specifies which anesthetic columns to include
     
     # Convert multiple samples with custom names
     cc = to_chainconsumer([samples1, samples2], 
@@ -217,6 +218,7 @@ For **ChainConsumer v1.x** (single samples only)::
     chain = to_chainconsumer(samples, params=['param1', 'param2'], 
                             name='my_chain')
     # Returns: Chain object with samples DataFrame
+    # The `params` parameter specifies which anesthetic columns to include
     # Zero weights are automatically filtered out
     
     # For plotting, add Chain to ChainConsumer and use plotter
