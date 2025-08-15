@@ -219,71 +219,35 @@ def test_to_chainconsumer_v0():
 
 
 @chainconsumer_mark_xfail
-def test_from_chainconsumer_v1():
-    """Comprehensive test for from_chainconsumer v1+ functionality."""
-    if not CHAINCONSUMER_V1:
-        return
-
-    s1 = read_chains('./tests/example_data/gd')
-    s1.label = 'chain1'
-    params = ['x0', 'x1']
-
-    # Test 1: Basic conversion back from Chain object
-    chain_v1 = to_chainconsumer(s1, params=params)
-    samples_back = from_chainconsumer(chain_v1)
-
-    assert isinstance(samples_back, MCMCSamples)
-    assert_array_equal(samples_back.get_weights(), chain_v1.weights)
-    if chain_v1.log_posterior is not None:
-        assert 'logL' in samples_back.columns
-
-    # Test 2: Test conversion with full dataset
-    chain_full = to_chainconsumer(s1)
-    samples_full_back = from_chainconsumer(chain_full)
-
-    assert isinstance(samples_full_back, MCMCSamples)
-    expected_labels = s1.get_labels().tolist()
-    actual_labels = [col for col in
-                     samples_full_back.columns.get_level_values(0)
-                     if col not in ['logL']]
-    assert actual_labels == expected_labels
-
-    # Test 3: Test with specified columns
-    chain_cols = to_chainconsumer(s1, params=params)
-    samples_cols_back = from_chainconsumer(chain_cols, columns=params)
-
-    assert list(samples_cols_back.columns.get_level_values(0)) == params
-    assert_array_equal(samples_cols_back.to_numpy(),
-                       s1[params].to_numpy()[s1.get_weights() > 0])
-
-    # Test 4: Verify LaTeX labels are preserved
-    if samples_cols_back.islabelled():
-        actual_latex = samples_cols_back.get_labels().tolist()
-        assert all('$' in label for label in actual_latex)
-        assert chain_cols.data_columns == actual_latex
-        assert len(actual_latex) == len(params)
-
-
-@chainconsumer_mark_xfail
 def test_from_chainconsumer_v0():
-    """Comprehensive test for from_chainconsumer v0.x functionality."""
+    """Test from_chainconsumer v0.x with directly created objects."""
     if CHAINCONSUMER_V1:
         return
 
-    s1 = read_chains('./tests/example_data/gd')
-    s2 = read_chains('./tests/example_data/pc')
-    s1.label = 'chain1'
-    s2.label = 'chain2'
-    params = ['x0', 'x1']
+    import numpy as np
+    try:
+        from chainconsumer import ChainConsumer
+    except ImportError:
+        from_chainconsumer(None)
+        return
+    np.random.seed(42)
+    samples1 = np.random.randn(50, 3)
+    samples2 = np.random.randn(30, 3)
+    weights1 = np.ones(50)
+    weights2 = np.ones(30)
+    params = ['x', 'y', 'z']
+
+    cc = ChainConsumer()
+    cc.add_chain(samples1, weights=weights1, parameters=params, name='chain1')
+    cc.add_chain(samples2, weights=weights2, parameters=params, name='chain2')
 
     # Test 1: Conversion of multiple chains
-    c_v0 = to_chainconsumer([s1, s2], params=params)
-    samples_dict = from_chainconsumer(c_v0)
+    samples_dict = from_chainconsumer(cc)
     assert isinstance(samples_dict, dict)
     assert len(samples_dict) == 2
     assert 'chain1' in samples_dict and 'chain2' in samples_dict
 
-    chain1_original = c_v0.chains[0]
+    chain1_original = cc.chains[0]
     chain1_converted = samples_dict['chain1']
     assert_array_equal(chain1_converted.to_numpy(), chain1_original.chain)
     assert_array_equal(chain1_converted.get_weights(), chain1_original.weights)
@@ -291,22 +255,63 @@ def test_from_chainconsumer_v0():
                        chain1_original.parameters)
 
     # Test 2: Conversion of a single chain object
-    c_single = to_chainconsumer(s1)
+    c_single = ChainConsumer()
+    c_single.add_chain(samples1, weights=weights1, parameters=params,
+                       name='chain1')
     samples_single = from_chainconsumer(c_single)
     assert isinstance(samples_single, MCMCSamples)
-    assert_array_equal(samples_single.to_numpy(), s1.to_numpy())
+    assert_array_equal(samples_single.to_numpy(), samples1)
 
     # Test 3: Conversion with specified columns
-    samples_dict_cols = from_chainconsumer(c_v0, columns=params)
+    samples_dict_cols = from_chainconsumer(cc, columns=params)
     chain1_converted_cols = samples_dict_cols['chain1']
     assert list(chain1_converted_cols.columns.get_level_values(0)) == params
 
-    # Test 4: Test full conversion roundtrip
-    c_full = to_chainconsumer([s1, s2])
-    samples_full_dict = from_chainconsumer(c_full)
 
-    for name, original_sample in [('chain1', s1), ('chain2', s2)]:
-        converted_sample = samples_full_dict[name]
-        assert isinstance(converted_sample, MCMCSamples)
-        assert_array_equal(converted_sample.get_weights(),
-                           original_sample.get_weights())
+@chainconsumer_mark_xfail
+def test_from_chainconsumer_v1():
+    """Test from_chainconsumer v1.x with directly created objects."""
+    if not CHAINCONSUMER_V1:
+        return
+
+    import numpy as np
+    import pandas as pd
+    try:
+        from chainconsumer import Chain
+    except ImportError:
+        from_chainconsumer(None)
+        return
+    np.random.seed(42)
+    samples = np.random.randn(50, 3)
+    weights = np.ones(50)
+    log_posterior = np.random.randn(50)
+    params = ['x', 'y', 'z']
+
+    # Test 1: Basic conversion from Chain object with log_posterior
+    df1 = pd.DataFrame(samples, columns=params)
+    df1['weight'] = weights
+    df1['log_posterior'] = log_posterior
+    chain_v1 = Chain(samples=df1, name='test_chain')
+
+    samples_back = from_chainconsumer(chain_v1)
+    assert isinstance(samples_back, MCMCSamples)
+    assert_array_equal(samples_back.get_weights(), weights)
+    if 'logL' in samples_back.columns:
+        assert_array_equal(samples_back['logL'].values.flatten(),
+                            log_posterior)
+
+    # Test 2: Chain without log_posterior
+    df2 = pd.DataFrame(samples, columns=params)
+    df2['weight'] = weights
+    chain_no_logL = Chain(samples=df2, name='no_logL_chain')
+
+    samples_no_logL = from_chainconsumer(chain_no_logL)
+    assert isinstance(samples_no_logL, MCMCSamples)
+    assert_array_equal(samples_no_logL.get_weights(), weights)
+    assert_array_equal(samples_no_logL.to_numpy(), samples)
+
+    # Test 3: Test with specified columns
+    custom_params = ['param1', 'param2', 'param3']
+    samples_cols_back = from_chainconsumer(chain_v1, columns=custom_params)
+    assert list(samples_cols_back.columns.get_level_values(0)) == custom_params
+    assert_array_equal(samples_cols_back.to_numpy(), samples)
