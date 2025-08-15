@@ -50,7 +50,7 @@ def from_chainconsumer(cc_object, columns=None):
     ChainConsumer v1.x (>= 1.0.0):
         - Input: Single Chain object with .samples DataFrame
         - Output: Single MCMCSamples object
-        - Weights and log_posterior are extracted from Chain structure
+        - Weights are extracted from Chain structure
 
     Parameters
     ----------
@@ -62,7 +62,7 @@ def from_chainconsumer(cc_object, columns=None):
         Parameter names to use as anesthetic column identifiers. This maps
         ChainConsumer parameter names to anesthetic parameter names:
         - v0.x: Maps from chain.parameters for each chain
-        - v1.x: Maps from chain.data_columns (excluding weight/log_posterior)
+        - v1.x: Maps from chain.data_columns (excluding weight)
         If None, uses the original ChainConsumer parameter names directly.
         Must have the same length and order as the ChainConsumer parameters.
 
@@ -72,7 +72,7 @@ def from_chainconsumer(cc_object, columns=None):
         - For single chain: Returns MCMCSamples object directly
         - For multiple chains (v0.x only): Returns dict mapping chain names
           to MCMCSamples objects
-        - Includes weights and log-likelihood (logL) when available
+        - Includes weights when available
 
     Raises
     ------
@@ -89,13 +89,11 @@ def from_chainconsumer(cc_object, columns=None):
 
     if CHAINCONSUMER_V1:
         chain_data = cc_object.data_samples
-        include_logL = columns is None and cc_object.log_posterior is not None
         return MCMCSamples(
             chain_data.values,
             weights=cc_object.weights,
             columns=columns or cc_object.data_columns,
-            labels=cc_object.data_columns,
-            logL=cc_object.log_posterior if include_logL else None
+            labels=cc_object.data_columns
         )
     else:
         samples_dict = {}
@@ -192,14 +190,11 @@ def _to_chainconsumer_v1(samples, params=None, name=None, **kwargs):
 
     weights = samples.get_weights()
     param_data = samples.to_numpy()[:, positions]
-    log_posterior = samples.logL.to_numpy() if 'logL' in samples else None
 
     valid_mask = weights > 0
     if (~valid_mask).any():
         weights = weights[valid_mask]
         param_data = param_data[valid_mask, :]
-        if log_posterior is not None:
-            log_posterior = log_posterior[valid_mask]
 
     latex_labels = (samples.get_labels()[positions].tolist()
                     if samples.islabelled() else params_to_use)
@@ -207,8 +202,6 @@ def _to_chainconsumer_v1(samples, params=None, name=None, **kwargs):
     df_dict = {label: param_data[:, j]
                for j, label in enumerate(latex_labels)}
     df_dict['weight'] = weights
-    if log_posterior is not None:
-        df_dict['log_posterior'] = log_posterior
 
     return Chain(samples=pd.DataFrame(df_dict), name=name, **kwargs)
 

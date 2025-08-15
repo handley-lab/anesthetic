@@ -143,36 +143,98 @@ other plotters:
 Converting to/from ChainConsumer
 =================================
 
-anesthetic also provides tools for converting to and from `ChainConsumer
-<https://samreay.github.io/ChainConsumer/>`_ format for interoperability
-with ChainConsumer plotting and analysis tools:
+anesthetic provides tools for converting to and from `ChainConsumer
+<https://samreay.github.io/ChainConsumer/>`_ format for compatibility
+with ChainConsumer plotting and analysis tools. The conversion functions
+automatically detect the installed ChainConsumer version and use the
+appropriate API.
 
-Converting from ChainConsumer to anesthetic::
+**ChainConsumer Version Support:**
+
+* **ChainConsumer v0.x (< 1.0.0)**: Uses ChainConsumer objects with ``.chains`` list
+* **ChainConsumer v1.x (≥ 1.0.0)**: Uses Chain objects with structured DataFrame format
+
+Converting from ChainConsumer to anesthetic
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For **ChainConsumer v0.x**::
 
     from anesthetic.convert import from_chainconsumer
-    # Assuming you have a ChainConsumer object `cc`
+    # Assuming you have a ChainConsumer object `cc` with multiple chains
     samples_dict = from_chainconsumer(cc, columns=['param1', 'param2'])
     # Returns: {'chain_name1': MCMCSamples, 'chain_name2': MCMCSamples, ...}
+    
+    # The `columns` parameter remaps ChainConsumer parameter names to 
+    # anesthetic column names. If None, uses original ChainConsumer LaTeX labels.
+    
+    # For single chain ChainConsumer objects, returns MCMCSamples directly
+    single_samples = from_chainconsumer(single_chain_cc)
 
-Converting from anesthetic to ChainConsumer::
+For **ChainConsumer v1.x**::
+
+    from anesthetic.convert import from_chainconsumer
+    # Assuming you have a Chain object `chain`
+    samples = from_chainconsumer(chain, columns=['param1', 'param2'])  
+    # Returns: MCMCSamples object
+    # Automatically extracts weights from Chain structure
+    
+    # The `columns` parameter allows you to rename the data columns from
+    # ChainConsumer to different anesthetic parameter names
+
+Converting from anesthetic to ChainConsumer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For **ChainConsumer v0.x** (supports multiple samples)::
 
     from anesthetic.convert import to_chainconsumer
     
     # Convert single samples
-    chainconsumer_obj = to_chainconsumer(samples, params=['param1', 'param2'])
+    cc = to_chainconsumer(samples, params=['param1', 'param2'])
     # Returns: ChainConsumer object with one chain
     
     # Convert multiple samples with custom names
-    chainconsumer_obj = to_chainconsumer([samples1, samples2], 
-                                       params=['param1', 'param2'],
-                                       names=['chain1', 'chain2'])
+    cc = to_chainconsumer([samples1, samples2], 
+                         params=['param1', 'param2'],
+                         name=['chain1', 'chain2'])
     # Returns: ChainConsumer object with multiple chains
     
-    # The function automatically uses sample labels as chain names if available
-    # Additional ChainConsumer styling can be passed as keyword arguments
-    chainconsumer_obj = to_chainconsumer([samples1, samples2],
-                                       params=['omegam', 'H0'],
-                                       color=['red', 'blue'],
-                                       linestyle=['-', '--'],
-                                       shade_alpha=[0.8, 0.6])
-    # Returns: ChainConsumer object with styled chains ready for plotting
+    # Advanced styling with chain-specific kwargs
+    cc = to_chainconsumer([samples1, samples2],
+                         params=['omegam', 'H0'],
+                         chain_kwargs=[
+                             {'color': 'red', 'linestyle': '-'},
+                             {'color': 'blue', 'linestyle': '--'}
+                         ])
+    
+    # For plotting, use the ChainConsumer's plot method
+    cc.plotter.plot()
+
+For **ChainConsumer v1.x** (single samples only)::
+
+    from anesthetic.convert import to_chainconsumer
+    
+    # Convert single samples (lists not supported in v1.x)
+    chain = to_chainconsumer(samples, params=['param1', 'param2'], 
+                            name='my_chain')
+    # Returns: Chain object with samples DataFrame
+    # Zero weights are automatically filtered out
+    
+    # For plotting, add Chain to ChainConsumer and use plotter
+    from chainconsumer import ChainConsumer
+    cc = ChainConsumer()
+    cc.add_chain(chain)
+    cc.plotter.plot()
+
+**Automatic Version Detection:**
+
+The functions automatically detect your ChainConsumer version::
+
+    # This works with both v0.x and v1.x
+    converted = to_chainconsumer(samples)
+    converted_back = from_chainconsumer(converted)
+
+**Error Handling:**
+
+* **v1.x**: Raises ``TypeError`` when attempting to convert multiple samples
+* **v0.x**: Raises ``ValueError`` for invalid parameter combinations
+* Both versions raise ``ImportError`` if ChainConsumer is not installed

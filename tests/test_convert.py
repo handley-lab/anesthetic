@@ -44,7 +44,7 @@ def test_to_chainconsumer_v1():
     # The conversion should preserve the parameter columns that exist
     expected_labels = s1.get_labels().tolist()
     actual_cols = [c for c in chain.samples.columns
-                   if c not in ['weight', 'log_posterior']]
+                   if c not in ['weight']]
     # Check that labels match what's available
     available_labels = s1.get_labels().tolist()
     assert actual_cols == available_labels
@@ -58,12 +58,9 @@ def test_to_chainconsumer_v1():
     if s1.islabelled():
         expected_labels = s1.get_labels().tolist()
         actual_columns = [col for col in chain_full.samples.columns
-                          if col not in ['weight', 'log_posterior']]
+                          if col not in ['weight']]
         assert actual_columns == expected_labels
 
-    # Test 4: Test log_posterior handling
-    if 'logL' in s1:
-        assert 'log_posterior' in chain.samples.columns
 
     # Test 5: Test default naming when no label
     s1_no_label = s1.copy()
@@ -77,16 +74,12 @@ def test_to_chainconsumer_v1():
     data = np.random.randn(50, 2)
     weights = np.ones(50)
     weights[0:5] = 0
-    logL = np.random.randn(50)
-    samples_data = np.column_stack([data, logL])
-    samples = MCMCSamples(samples_data, weights=weights,
-                          columns=['x', 'y', 'logL'])
+    samples = MCMCSamples(data, weights=weights,
+                          columns=['x', 'y'])
 
     chain = to_chainconsumer(samples)
     assert len(chain.weights) == 45
     assert all(w > 0 for w in chain.weights)
-    if 'log_posterior' in chain.samples.columns:
-        assert len(chain.samples['log_posterior']) == 45
     assert len(chain.weights) == len(chain.samples)
     assert len(chain.weights) == 45
 
@@ -284,31 +277,26 @@ def test_from_chainconsumer_v1():
     np.random.seed(42)
     samples = np.random.randn(50, 3)
     weights = np.ones(50)
-    log_posterior = np.random.randn(50)
     params = ['x', 'y', 'z']
 
-    # Test 1: Basic conversion from Chain object with log_posterior
+    # Test 1: Basic conversion from Chain object
     df1 = pd.DataFrame(samples, columns=params)
     df1['weight'] = weights
-    df1['log_posterior'] = log_posterior
     chain_v1 = Chain(samples=df1, name='test_chain')
 
     samples_back = from_chainconsumer(chain_v1)
     assert isinstance(samples_back, MCMCSamples)
     assert_array_equal(samples_back.get_weights(), weights)
-    if 'logL' in samples_back.columns:
-        assert_array_equal(samples_back['logL'].values.flatten(),
-                           log_posterior)
 
-    # Test 2: Chain without log_posterior
+    # Test 2: Chain with different name
     df2 = pd.DataFrame(samples, columns=params)
     df2['weight'] = weights
-    chain_no_logL = Chain(samples=df2, name='no_logL_chain')
+    chain2 = Chain(samples=df2, name='test_chain2')
 
-    samples_no_logL = from_chainconsumer(chain_no_logL)
-    assert isinstance(samples_no_logL, MCMCSamples)
-    assert_array_equal(samples_no_logL.get_weights(), weights)
-    assert_array_equal(samples_no_logL.to_numpy(), samples)
+    samples2 = from_chainconsumer(chain2)
+    assert isinstance(samples2, MCMCSamples)
+    assert_array_equal(samples2.get_weights(), weights)
+    assert_array_equal(samples2.to_numpy(), samples)
 
     # Test 3: Test with specified columns
     custom_params = ['param1', 'param2', 'param3']
