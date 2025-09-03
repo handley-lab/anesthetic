@@ -113,8 +113,11 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
+          auto-update-conda: true
+          channels: conda-forge
+          conda-remove-defaults: true
+          channel-priority: strict
       - name: Conda info
         shell: bash -el {0}
         run: |
@@ -128,7 +131,6 @@ jobs:
       - name: Install dependencies
         shell: bash -l {0}
         run: |
-          conda config --append channels conda-forge
           conda install pytest pytest-cov
           conda install scipy numpy 'matplotlib>=3.6.1,<3.9.0' 'pandas~=2.2.0'
 
