@@ -1053,16 +1053,16 @@ def test_stats():
         assert abs(pc.logZ() - PC['logZ'].mean()) < tolerance_logZ
         assert PC['d_G'].mean() < 5 + 3 * max(PC['d_G'].std(), 1e-10)
         assert PC.cov()['D_KL']['logZ'] < 0
-        
+
         tolerance_logZ_series = max(PC.logZ.std() * 3, 1e-10)
         assert abs(PC.logZ.mean() - pc.logZ()) < tolerance_logZ_series
-        
+
         tolerance_D_KL = max(PC.D_KL.std() * 3, 1e-10)
         assert abs(PC.D_KL.mean() - pc.D_KL()) < tolerance_D_KL
-        
+
         tolerance_d_G = max(PC.d_G.std() * 3, 1e-10)
         assert abs(PC.d_G.mean() - pc.d_G()) < tolerance_d_G
-        
+
         tolerance_logL_P = max(PC.logL_P.std() * 3, 1e-10)
         assert abs(PC.logL_P.mean() - pc.logL_P()) < tolerance_logL_P
 
