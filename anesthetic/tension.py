@@ -11,8 +11,8 @@ def tension_stats(joint, *separate):
 
     With the Bayesian (log-)evidence ``logZ``, Kullback--Leibler divergence
     ``D_KL``, posterior average of the log-likelihood ``logL_P``, Gaussian
-    model dimensionality ``d_G``, we can compute tension statistics between 
-    two or more samples (example here for simplicity just with two datasets 
+    model dimensionality ``d_G``, we can compute tension statistics between
+    two or more samples (example here for simplicity just with two datasets
     A and B):
 
     - ``logR``: R statistic for dataset consistency
