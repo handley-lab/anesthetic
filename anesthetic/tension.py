@@ -1,5 +1,4 @@
 """Tension statistics between two or more datasets."""
-
 import numpy as np
 from scipy.stats import chi2
 from scipy.special import erfcinv
@@ -66,7 +65,11 @@ def tension_stats(joint, *separate):
         DataFrame containing the following tension statistics in columns:
         ['logR', 'I', 'logS', 'd_G', 'p', 'tension']
     """
-    columns = ["logZ", "D_KL", "logL_P", "d_G"]
+    columns = ["logL_P", "d_G"]
+    if "logZ" in joint.drop_labels().columns:
+        columns += ["logZ"]
+    if "D_KL" in joint.drop_labels().columns:
+        columns += ["D_KL"]
     if not set(columns).issubset(joint.drop_labels().columns):
         raise ValueError(
             "The DataFrame passed to `joint` needs to contain"
@@ -86,11 +89,13 @@ def tension_stats(joint, *separate):
 
     samples = Samples(index=joint_stats.index)
 
-    samples["logR"] = joint_stats["logZ"] - separate_stats["logZ"]
-    samples.set_label("logR", r"$\ln\mathcal{R}$")
+    if "logZ" in joint_stats.drop_labels().columns:
+        samples["logR"] = joint_stats["logZ"] - separate_stats["logZ"]
+        samples.set_label("logR", r"$\ln\mathcal{R}$")
 
-    samples["I"] = separate_stats["D_KL"] - joint_stats["D_KL"]
-    samples.set_label("I", r"$\mathcal{I}$")
+    if "D_KL" in joint_stats.drop_labels().columns:
+        samples["I"] = separate_stats["D_KL"] - joint_stats["D_KL"]
+        samples.set_label("I", r"$\mathcal{I}$")
 
     samples["logS"] = joint_stats["logL_P"] - separate_stats["logL_P"]
     samples.set_label("logS", r"$\ln\mathcal{S}$")
