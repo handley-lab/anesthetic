@@ -21,8 +21,14 @@ def read_paramnames(root):
         paramnames = header.split()[2:]
         try:
             from getdist import loadMCSamples
-            s = loadMCSamples(file_root=root)
+            s = loadMCSamples(file_root=root, no_cache=True)
             labels = {p.name: '$' + p.label + '$' for p in s.paramNames.names}
+            for p in paramnames:
+                if p == 'minuslogprior':
+                    labels.update({p: '$-\\ln\\pi$'})
+                elif 'minuslogprior_' in p:
+                    sub = p.split('_', maxsplit=1)[-1].lstrip('_')
+                    labels.update({p: f'$-\\ln\\pi_\\mathrm{{{sub}}}$'})
             return paramnames, labels
         except ImportError:
             return paramnames, {}
@@ -63,10 +69,14 @@ def read_cobaya(root, *args, **kwargs):
     samples = []
     for i, chains_file in chains_files:
         data = np.loadtxt(chains_file)
-        weights, logP, data = np.split(data, [1, 2], axis=1)
+        weights, minuslogP, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
-                           weights=weights.flatten(), logL=logP,
+                           weights=weights.flatten(),
                            labels=labels, *args, **kwargs)
+        mcmc['logP'] = -minuslogP
+        mcmc.set_label('logP', '$\\ln\\mathcal{P}$')
+        mcmc['logL'] = -mcmc['chi2'] / 2
+        mcmc.set_label('logL', '$\\ln\\mathcal{L}$')
         mcmc['chain'] = int(i) if i else np.nan
         samples.append(mcmc)
 
