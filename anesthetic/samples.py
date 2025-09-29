@@ -1180,11 +1180,11 @@ class NestedSamples(Samples):
 
     def beta_max(self):
         """Maximum numerically stable beta value.
-        
+
         Returns the beta value where the ratio between the maximum and
         second-maximum likelihood weights equals the maximum representable
         floating-point number. Beyond this beta, numerical precision is lost.
-        
+
         Returns
         -------
         beta_max : float
@@ -1193,7 +1193,7 @@ class NestedSamples(Samples):
         logL_sorted = np.sort(self.logL.values)[::-1]  # Descending order
         logL_max = logL_sorted[0]
         logL_next_max = logL_sorted[1] if len(logL_sorted) > 1 else logL_max
-        
+
         delta_logL = logL_max - logL_next_max
         if delta_logL > 0:
             finfo = np.finfo(np.float64)
@@ -1203,11 +1203,11 @@ class NestedSamples(Samples):
 
     def beta_min(self):
         """Minimum meaningful beta value.
-        
+
         Returns the beta value where likelihood weight differences become
         comparable to machine precision. Below this beta, all weights are
         effectively equal (uniform distribution).
-        
+
         Returns
         -------
         beta_min : float
@@ -1216,7 +1216,7 @@ class NestedSamples(Samples):
         logL_max = self.logL.max()
         logL_min = self.logL.min()
         logL_range = logL_max - logL_min
-        
+
         if logL_range > 0:
             finfo = np.finfo(np.float64)
             return finfo.eps / logL_range
