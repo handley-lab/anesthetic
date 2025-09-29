@@ -74,3 +74,16 @@ h5py_mark_xfail = pytest.mark.xfail(condition, raises=raises, reason=reason)
 
 def skipif_no_h5py(param):
     return pytest.param(param, marks=h5py_mark_skip)
+
+
+try:
+    import chainconsumer  # noqa: F401
+except ImportError:
+    pass
+
+condition = find_spec('chainconsumer') is None
+reason = "requires chainconsumer package"
+raises = ImportError
+chainconsumer_mark_skip = pytest.mark.skipif(condition, reason=reason)
+chainconsumer_mark_xfail = pytest.mark.xfail(condition, raises=raises,
+                                             reason=reason)
