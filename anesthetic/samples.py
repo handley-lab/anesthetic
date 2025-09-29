@@ -593,6 +593,7 @@ class MCMCSamples(Samples):
             params = [key for key in self.columns.get_level_values('params')
                       if 'prior' not in key
                       and 'chi2' not in key
+                      and 'logP' not in key
                       and 'logL' not in key
                       and 'chain' not in key]
         chains = self[params+['chain']].groupby(
