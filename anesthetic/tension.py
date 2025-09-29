@@ -17,7 +17,7 @@ def tension_stats(joint, *separate):
     - ``logR``: R statistic for dataset consistency
 
       .. math::
-        \log R = \log Z_{AB} - \log Z_{A} - \log Z_{B}
+        \ln R = \ln Z_{AB} - \ln Z_{A} - \ln Z_{B}
 
     - ``I``: information ratio
 
@@ -27,7 +27,7 @@ def tension_stats(joint, *separate):
     - ``logS``: suspiciousness
 
       .. math::
-        \log S = \log L_{AB} - \log L_{A} - \log L_{B}
+        \ln S = \ln L_{AB} - \ln L_{A} - \ln L_{B}
 
     - ``d_G``: Gaussian model dimensionality of shared constrained parameters
 
@@ -37,7 +37,7 @@ def tension_stats(joint, *separate):
     - ``p``: p-value for the tension between two samples
 
       .. math::
-        p = \int_{d-2\log{S}}^{\infty} \chi^2_d(x) dx
+        p = \int_{d-2\ln{S}}^{\infty} \chi^2_d(x) dx
 
     - ``tension``: tension quantification in terms of numbers of sigma
       calculated from p
