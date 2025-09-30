@@ -260,7 +260,7 @@ class _WeightedObject(object):
             return self._constructor_sliced(
                 np.nan, index=self._get_axis(1-axis))
 
-        null = self.isnull() & skipna
+        null = self.isna() & skipna
         weights = np.broadcast_to(
             self.get_weights(axis)[..., None] if axis == 0
             else self.get_weights(axis)[None, ...], self.shape)
@@ -293,7 +293,7 @@ class WeightedSeries(_WeightedObject, Series):
     def mean(self, skipna=True):  # noqa: D102
         if self.get_weights().sum() == 0:
             return np.nan
-        null = self.isnull() & skipna
+        null = self.isna() & skipna
         if skipna and null.all():
             return np.nan
         weights = masked_array(self.get_weights(), null)
@@ -313,7 +313,7 @@ class WeightedSeries(_WeightedObject, Series):
     def var(self, skipna=True):  # noqa: D102
         if self.get_weights().sum() == 0:
             return np.nan
-        null = self.isnull() & skipna
+        null = self.isna() & skipna
         if skipna and null.all():
             return np.nan
         mean = self.mean(skipna=skipna)
@@ -345,7 +345,7 @@ class WeightedSeries(_WeightedObject, Series):
     def kurt(self, skipna=True):  # noqa: D102
         if self.get_weights().sum() == 0:
             return np.nan
-        null = self.isnull() & skipna
+        null = self.isna() & skipna
         mean = self.mean(skipna=skipna)
         std = self.std(skipna=skipna)
         if np.isnan(mean) or np.isnan(std) or std == 0:
@@ -357,7 +357,7 @@ class WeightedSeries(_WeightedObject, Series):
     def skew(self, skipna=True):  # noqa: D102
         if self.get_weights().sum() == 0:
             return np.nan
-        null = self.isnull() & skipna
+        null = self.isna() & skipna
         mean = self.mean(skipna=skipna)
         std = self.std(skipna=skipna)
         if np.isnan(mean) or np.isnan(std) or std == 0:
@@ -463,7 +463,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
     def cov(self, *args, **kwargs):  # noqa: D102
         if self.isweighted():
-            null = self.isnull()
+            null = self.isna()
             mean = self.mean(skipna=True)
             x = masked_array(self - mean, null)
             cov = np.ma.dot(self.get_weights()*x.T, x) \
