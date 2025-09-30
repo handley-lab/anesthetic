@@ -263,7 +263,8 @@ class _WeightedObject(object):
         null = self.isna() & skipna
         weights = np.broadcast_to(
             self.get_weights(axis)[..., None] if axis == 0
-            else self.get_weights(axis)[None, ...], self.shape)
+            else self.get_weights(axis)[None, ...], self.shape
+        )
         result = func(self, null, masked_array(weights, null), axis, skipna)
         return self._constructor_sliced(result, index=self._get_axis(1-axis))
 
