@@ -198,13 +198,15 @@ def test_WeightedDataFrame_corrwith(frame):
     with pytest.raises(ValueError):
         unweighted.corrwith(frame[['A', 'B']])
 
-    # For uniform weights, weighted corrwith should match unweighted with ddof=0 equivalent
-    # Since pandas corrwith doesn't have ddof parameter, we expect them to be similar but not identical
-    # due to the different variance calculations (weighted uses population variance)
+    # For uniform weights, weighted corrwith should match unweighted with
+    # ddof=0.
+    # Since pandas corrwith doesn't have ddof parameter, we expect them to be
+    # similar but not identical due to the different variance calculations
+    # (weighted uses population variance).
     correl_1 = unweighted[:5].corrwith(unweighted[:4], axis=1)
     correl_2 = frame[:5].corrwith(frame[:4], axis=1)
     # Allow for difference due to ddof=0 vs ddof=1 approach
-    assert_allclose(correl_1.values[:-1], correl_2.values[:-1], rtol=0.3)  # More lenient tolerance
+    assert_allclose(correl_1.values[:-1], correl_2.values[:-1], rtol=0.3)
     assert np.isnan(correl_1.values[-1]) and np.isnan(correl_2.values[-1])
     assert correl_2.isweighted()
 
@@ -217,7 +219,8 @@ def test_WeightedDataFrame_corrwith(frame):
     assert_allclose(correl_4, correl_5)
 
     frame.set_weights(None, inplace=True)
-    assert_allclose(frame.corrwith(frame), unweighted.corrwith(unweighted), rtol=1e-4)
+    assert_allclose(frame.corrwith(frame), unweighted.corrwith(unweighted),
+                    rtol=1e-4)
 
 
 def test_WeightedDataFrame_median(frame):
@@ -285,8 +288,6 @@ def test_WeightedDataFrame_skew(frame):
     assert skew.isweighted()
     assert frame.T.skew().isweighted()
     assert_array_equal(skew.index, frame.index)
-
-
 
 
 def test_WeightedDataFrame_quantile(frame):
@@ -536,8 +537,6 @@ def test_WeightedSeries_skew(series):
     assert np.isnan(series.skew(skipna=False))
 
 
-
-
 def test_WeightedSeries_quantile(series):
 
     quantile = series.quantile()
@@ -641,19 +640,14 @@ def ground_truth_std(data, weights):
 @pytest.mark.parametrize("data, weights, expected_mean", [
     # Case 1: The original bug from Lukas's report
     ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4], 3.0),
-    
     # Case 2: NaN at beginning
-    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4], 29/9),  # (2*0.2 + 3*0.3 + 4*0.4) / (0.2+0.3+0.4)
-    
-    # Case 3: NaN at end  
+    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4], 29/9),
+    # Case 3: NaN at end
     ([1.0, 2.0, 3.0, np.nan], [0.1, 0.2, 0.3, 0.4], 7/3),
-    
     # Case 4: Multiple NaNs
     ([1.0, np.nan, 3.0, np.nan, 5.0], [0.1, 0.2, 0.3, 0.1, 0.3], 25/7),
-    
     # Case 5: NaN with large weight (tests that weight is excluded)
-    ([10.0, np.nan, 30.0], [1.0, 5.0, 2.0], 70/3),  # (10*1 + 30*2) / (1+2)
-    
+    ([10.0, np.nan, 30.0], [1.0, 5.0, 2.0], 70/3),
     # Case 6: NaN with zero weight (should be same as excluding it)
     ([1.0, 2.0, np.nan], [0.5, 0.5, 0.0], 1.5),
 ])
@@ -661,10 +655,10 @@ def test_weighted_mean_nan_correctness(data, weights, expected_mean):
     """Test that mean(skipna=True) returns numerically correct results."""
     series = WeightedSeries(data, weights=weights)
     result = series.mean(skipna=True)
-    
+
     # Test against hand-calculated expected value
     assert_allclose(result, expected_mean, rtol=1e-10)
-    
+
     # Test against ground truth function
     ground_truth = ground_truth_mean(data, weights)
     assert_allclose(result, ground_truth, rtol=1e-10)
@@ -691,10 +685,10 @@ def test_weighted_var_nan_correctness(data, weights, expected_var):
     """Test that var(skipna=True) returns numerically correct results."""
     series = WeightedSeries(data, weights=weights)
     result = series.var(skipna=True)
-    
+
     # Test against pre-calculated expected value
     assert_allclose(result, expected_var, rtol=1e-10)
-    
+
     # Test against ground truth function
     ground_truth = ground_truth_var(data, weights)
     assert_allclose(result, ground_truth, rtol=1e-10)
@@ -709,10 +703,10 @@ def test_weighted_std_nan_correctness(data, weights, expected_std):
     """Test that std(skipna=True) returns numerically correct results."""
     series = WeightedSeries(data, weights=weights)
     result = series.std(skipna=True)
-    
+
     # Test against pre-calculated expected value
     assert_allclose(result, expected_std, rtol=1e-10)
-    
+
     # Test against ground truth function
     ground_truth = ground_truth_std(data, weights)
     assert_allclose(result, ground_truth, rtol=1e-10)
@@ -723,7 +717,7 @@ def test_weighted_all_nan_returns_nan():
     data = [np.nan, np.nan, np.nan]
     weights = [0.3, 0.3, 0.4]
     series = WeightedSeries(data, weights=weights)
-    
+
     assert np.isnan(series.mean(skipna=True))
     assert np.isnan(series.var(skipna=True))
     assert np.isnan(series.std(skipna=True))
@@ -733,16 +727,16 @@ def test_weighted_equivalence_to_manual_filtering():
     """Test that skipna=True equals manual filtering of data and weights."""
     data = [1.0, np.nan, 3.0, np.nan, 5.0, 6.0]
     weights = [0.1, 0.2, 0.1, 0.3, 0.2, 0.1]
-    
+
     series = WeightedSeries(data, weights=weights)
-    
+
     # Manual filtering approach
     mask = ~np.isnan(data)
     filtered_data = np.array(data)[mask]
     filtered_weights = np.array(weights)[mask]
-    
+
     manual_series = WeightedSeries(filtered_data, weights=filtered_weights)
-    
+
     # Results should be identical
     assert_allclose(series.mean(skipna=True), manual_series.mean(), rtol=1e-10)
     assert_allclose(series.var(skipna=True), manual_series.var(), rtol=1e-10)
@@ -753,10 +747,10 @@ def test_weighted_dataframe_nan_consistency():
     """Test that DataFrame.mean()[col] equals Series.mean() for same data."""
     data = [[1.0, np.nan, 3.0], [4.0, 5.0, np.nan]]
     weights = [0.4, 0.6]
-    
+
     df = WeightedDataFrame(data, columns=['A', 'B', 'C'], weights=weights)
     df_result = df.mean(skipna=True)
-    
+
     for col in ['A', 'B', 'C']:
         series_result = df[col].mean(skipna=True)
         assert_allclose(df_result[col], series_result, rtol=1e-10)
@@ -767,13 +761,13 @@ def test_weighted_dataframe_mean_ground_truth():
     data = [[1.0, np.nan, 3.0], [4.0, 5.0, np.nan]]
     weights = [0.4, 0.6]
     expected_means = {'A': 2.8, 'B': 5.0, 'C': 3.0}
-    
+
     df = WeightedDataFrame(data, columns=['A', 'B', 'C'], weights=weights)
     result = df.mean(skipna=True)
-    
+
     for col, expected in expected_means.items():
         assert_allclose(result[col], expected, rtol=1e-10)
-        
+
         # Also test against ground truth function
         col_data = df[col].values
         ground_truth = ground_truth_mean(col_data, weights)
