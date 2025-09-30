@@ -242,8 +242,7 @@ class _WeightedObject(object):
         """Compute weighted statistics using common pattern."""
         if not self.isweighted(axis):
             # Get the calling method name automatically
-            import inspect
-            method_name = inspect.stack()[1].function
+            method_name = func.__name__
 
             # Check if the method exists in pandas DataFrame
             if hasattr(super(), method_name):
@@ -441,10 +440,10 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     """Weighted version of :class:`pandas.DataFrame`."""
 
     def mean(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        def _mean_func(data, null, weights, ax, sk):
+        def mean(data, null, weights, ax, sk):
             return np.average(
                 masked_array(data, null), weights=weights, axis=ax)
-        return self._weighted_stat(_mean_func, axis, skipna)
+        return self._weighted_stat(mean, axis, skipna)
 
     def std(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
         return np.sqrt(self.var(axis=axis, skipna=skipna, *args, **kwargs))
@@ -456,11 +455,11 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         return self.quantile(*args, **kwargs)
 
     def var(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        def _var_func(data, null, weights, ax, sk):
+        def var(data, null, weights, ax, sk):
             mean = self.mean(axis=ax, skipna=sk)
             return np.average(
                 masked_array((data-mean)**2, null), weights=weights, axis=ax)
-        return self._weighted_stat(_var_func, axis, skipna)
+        return self._weighted_stat(var, axis, skipna)
 
     def cov(self, *args, **kwargs):  # noqa: D102
         if self.isweighted():
@@ -535,22 +534,22 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return self._constructor_sliced(correl)
 
     def kurt(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        def _kurt_func(data, null, weights, ax, sk):
+        def kurt(data, null, weights, ax, sk):
             mean = self.mean(axis=ax, skipna=sk)
             std = self.std(axis=ax, skipna=sk)
             return np.average(
                 masked_array(((data-mean)/std)**4, null), weights=weights,
                 axis=ax)
-        return self._weighted_stat(_kurt_func, axis, skipna)
+        return self._weighted_stat(kurt, axis, skipna)
 
     def skew(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        def _skew_func(data, null, weights, ax, sk):
+        def skew(data, null, weights, ax, sk):
             mean = self.mean(axis=ax, skipna=sk)
             std = self.std(axis=ax, skipna=sk)
             return np.average(
                 masked_array(((data-mean)/std)**3, null), weights=weights,
                 axis=ax)
-        return self._weighted_stat(_skew_func, axis, skipna)
+        return self._weighted_stat(skew, axis, skipna)
 
     def sem(self, axis=0, skipna=True):  # noqa: D102
         n = self.neff(axis)
