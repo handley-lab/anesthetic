@@ -20,10 +20,10 @@ def tension_stats(joint, *separate):
       .. math::
         \log R = \log Z_{AB} - \log Z_{A} - \log Z_{B}
 
-    - ``I``: information ratio
+    - ``logI``: information ratio
 
       .. math::
-        I = D_{KL}^{A} + D_{KL}^{B} - D_{KL}^{AB}
+        \log I = D_{KL}^{A} + D_{KL}^{B} - D_{KL}^{AB}
 
     - ``logS``: suspiciousness
 
@@ -40,7 +40,7 @@ def tension_stats(joint, *separate):
       .. math::
         p = \int_{d-2\log{S}}^{\infty} \chi^2_d(x) dx
 
-    - ``tension``: tension quantification in terms of numbers of sigma
+    - ``sigma``: tension quantification in terms of numbers of sigma
       calculated from p
 
       .. math::
@@ -64,7 +64,7 @@ def tension_stats(joint, *separate):
     -------
     samples : :class:`anesthetic.samples.Samples`
         DataFrame containing the following tension statistics in columns:
-        ['logR', 'I', 'logS', 'd_G', 'p', 'tension']
+        ['logR', 'logI', 'logS', 'd_G', 'p', 'sigma']
     """
     columns = ["logZ", "D_KL", "logL_P", "d_G"]
     if not set(columns).issubset(joint.drop_labels().columns):
@@ -89,8 +89,8 @@ def tension_stats(joint, *separate):
     samples["logR"] = joint_stats["logZ"] - separate_stats["logZ"]
     samples.set_label("logR", r"$\ln\mathcal{R}$")
 
-    samples["I"] = separate_stats["D_KL"] - joint_stats["D_KL"]
-    samples.set_label("I", r"$\mathcal{I}$")
+    samples["logI"] = separate_stats["D_KL"] - joint_stats["D_KL"]
+    samples.set_label("logI", r"$\log\mathcal{I}$")
 
     samples["logS"] = joint_stats["logL_P"] - separate_stats["logL_P"]
     samples.set_label("logS", r"$\ln\mathcal{S}$")
@@ -102,7 +102,7 @@ def tension_stats(joint, *separate):
     samples["p"] = p
     samples.set_label("p", "$p$")
 
-    samples["tension"] = erfcinv(p) * np.sqrt(2)
-    samples.set_label("tension", r"tension~[$\sigma$]")
+    samples["sigma"] = erfcinv(p) * np.sqrt(2)
+    samples.set_label("sigma", r"$\sigma$")
 
     return samples
