@@ -1032,49 +1032,45 @@ def test_read_csv(tmp_path, mcmc_wdf):
     pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
 
 
-def test_unweighted_dataframe_compression():
+@pytest.mark.parametrize('n_requested, n_expected', [(100, 100),
+                                                     (200, 200),
+                                                     (500, 500),
+                                                     (1000, 1000),
+                                                     (1500, 1000),
+                                                     (True, 1000),
+                                                     (False, 1000),
+                                                     ('equal', 1000)])
+def test_unweighted_dataframe_compression(n_requested, n_expected):
     """Test compression works for unweighted DataFrames with integer."""
     # Create unweighted data
     np.random.seed(42)
     data = WeightedDataFrame(np.random.randn(1000, 3), columns=['A', 'B', 'C'])
     assert not data.isweighted()
 
-    # Test compression with integer values
-    for n in [100, 200, 500]:
-        compressed = data.compress(n)
-        assert len(compressed) == n
-        assert not compressed.isweighted()
-        assert list(compressed.columns) == list(data.columns)
-
-    # Test compression with values >= original size (should return unchanged)
-    compressed = data.compress(1000)
-    assert len(compressed) == 1000
-
-    compressed = data.compress(1500)
-    assert len(compressed) == 1000
-
-    # Test compression with non-integer values (should return unchanged)
-    compressed = data.compress(True)
-    assert len(compressed) == 1000
-
-    compressed = data.compress('equal')
-    assert len(compressed) == 1000
-
-    compressed = data.compress(False)
-    assert len(compressed) == 1000
+    # Test compression
+    compressed = data.compress(n_requested)
+    assert len(compressed) == n_expected
+    assert not compressed.isweighted()
+    assert list(compressed.columns) == list(data.columns)
 
 
 def test_unweighted_compression_axis():
     """Test compression with axis parameter for unweighted DataFrames."""
-    # Create unweighted data
+    # Create unweighted data with named columns
     np.random.seed(42)
-    data = WeightedDataFrame(np.random.randn(1000, 10))
+    columns = [f'col_{i}' for i in range(10)]
+    data = WeightedDataFrame(np.random.randn(1000, 10), columns=columns)
     assert not data.isweighted()
 
     # Test axis=0 (default - compress rows)
     compressed = data.compress(100, axis=0)
     assert compressed.shape == (100, 10)
+    # All columns should be preserved
+    assert list(compressed.columns) == columns
 
     # Test axis=1 (compress columns)
     compressed = data.compress(5, axis=1)
     assert compressed.shape == (1000, 5)
+    # Column names should be a subset of original (randomly subsampled)
+    assert all(col in columns for col in compressed.columns)
+    assert len(compressed.columns) == 5
