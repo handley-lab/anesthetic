@@ -14,33 +14,34 @@ def tension_stats(joint, *separate):
     two or more samples (example here for simplicity just with two datasets
     A and B):
 
-    - ``logR``: R statistic for dataset consistency
+    - ``logR``: R statistic for dataset consistency.
 
       .. math::
         \ln R = \ln Z_{AB} - \ln Z_{A} - \ln Z_{B}
 
-    - ``logI``: information ratio
+    - ``I``: mutual information estimate between data and params:
+      :math:`I(\Theta,A,B)`.
 
       .. math::
-        \log I = D_{KL}^{A} + D_{KL}^{B} - D_{KL}^{AB}
+        \hat{I} = D_{KL}^{A} + D_{KL}^{B} - D_{KL}^{AB}
 
-    - ``logS``: suspiciousness
+    - ``logS``: Suspiciousness.
 
       .. math::
         \ln S = \ln L_{AB} - \ln L_{A} - \ln L_{B}
 
-    - ``d_G``: Gaussian model dimensionality of shared constrained parameters
+    - ``d_G``: Gaussian model dimensionality of shared constrained parameters.
 
       .. math::
         d = d_{A} + d_{B} - d_{AB}
 
-    - ``p``: p-value for the tension between two samples
+    - ``p``: p-value for the tension between two samples based on `logS`.
 
       .. math::
         p = \int_{d-2\ln{S}}^{\infty} \chi^2_d(x) dx
 
     - ``sigma``: tension quantification in terms of numbers of sigma
-      calculated from p
+      calculated from `p`.
 
       .. math::
         \sqrt{2} \rm{erfc}^{-1}(p)
@@ -63,7 +64,7 @@ def tension_stats(joint, *separate):
     -------
     samples : :class:`anesthetic.samples.Samples`
         DataFrame containing the following tension statistics in columns:
-        ['logR', 'logI', 'logS', 'd_G', 'p', 'sigma']
+        ['logR', 'I', 'logS', 'd_G', 'p', 'sigma']
     """
     columns = ["logL_P", "d_G"]
     if "logZ" in joint.drop_labels().columns:
@@ -94,8 +95,8 @@ def tension_stats(joint, *separate):
         samples.set_label("logR", r"$\ln\mathcal{R}$")
 
     if "D_KL" in joint_stats.drop_labels().columns:
-        samples["logI"] = separate_stats["D_KL"] - joint_stats["D_KL"]
-        samples.set_label("logI", r"$\log\mathcal{I}$")
+        samples["I"] = separate_stats["D_KL"] - joint_stats["D_KL"]
+        samples.set_label("I", r"$\mathcal{I}$")
 
     samples["logS"] = joint_stats["logL_P"] - separate_stats["logL_P"]
     samples.set_label("logS", r"$\ln\mathcal{S}$")
