@@ -19,7 +19,7 @@ def tension_stats(joint, *separate):
       .. math::
         \ln R = \ln Z_{AB} - \ln Z_{A} - \ln Z_{B}
 
-    - ``I``: mutual information estimate between data and params:
+    - ``I``: Mutual information estimate between data and params:
       :math:`I(\Theta,A,B)`.
 
       .. math::
@@ -40,11 +40,11 @@ def tension_stats(joint, *separate):
       .. math::
         p = \int_{d-2\ln{S}}^{\infty} \chi^2_d(x) dx
 
-    - ``sigma``: tension quantification in terms of numbers of sigma
+    - ``sigma``: Tension quantification in terms of numbers of sigma
       calculated from `p`.
 
       .. math::
-        \sqrt{2} \rm{erfc}^{-1}(p)
+        \sqrt{2} {\rm erfc}^{-1}(p)
 
     Parameters
     ----------
