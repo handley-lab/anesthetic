@@ -868,7 +868,9 @@ def test_D_KL():
     n = 1000
     D_KL = pc.D_KL(n)
 
-    assert abs(D_KL.mean() - pc.D_KL()) < D_KL.std() * 3
+    # Handle zero variance case (e.g., on Windows) with a minimum tolerance
+    tolerance = max(D_KL.std() * 3, 1e-10)
+    assert abs(D_KL.mean() - pc.D_KL()) < tolerance
 
 
 def test_d_G():
@@ -1046,13 +1048,23 @@ def test_stats():
         pc.beta = beta
         n = 1000
         PC = pc.stats(n, beta)
-        assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
-        assert PC['d_G'].mean() < 5 + 3 * PC['d_G'].std()
+        # Handle zero variance case (e.g., on Windows) with minimum tolerances
+        tolerance_logZ = max(PC['logZ'].std(), 1e-10)
+        assert abs(pc.logZ() - PC['logZ'].mean()) < tolerance_logZ
+        assert PC['d_G'].mean() < 5 + 3 * max(PC['d_G'].std(), 1e-10)
         assert PC.cov()['D_KL']['logZ'] < 0
-        assert abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * 3
-        assert abs(PC.D_KL.mean() - pc.D_KL()) < PC.D_KL.std() * 3
-        assert abs(PC.d_G.mean() - pc.d_G()) < PC.d_G.std() * 3
-        assert abs(PC.logL_P.mean() - pc.logL_P()) < PC.logL_P.std() * 3
+
+        tolerance_logZ_series = max(PC.logZ.std() * 3, 1e-10)
+        assert abs(PC.logZ.mean() - pc.logZ()) < tolerance_logZ_series
+
+        tolerance_D_KL = max(PC.D_KL.std() * 3, 1e-10)
+        assert abs(PC.D_KL.mean() - pc.D_KL()) < tolerance_D_KL
+
+        tolerance_d_G = max(PC.d_G.std() * 3, 1e-10)
+        assert abs(PC.d_G.mean() - pc.d_G()) < tolerance_d_G
+
+        tolerance_logL_P = max(PC.logL_P.std() * 3, 1e-10)
+        assert abs(PC.logL_P.mean() - pc.logL_P()) < tolerance_logL_P
 
         n = 100
         assert ks_2samp(pc.logZ(n, beta), PC.logZ).pvalue > 0.05

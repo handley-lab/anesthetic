@@ -25,6 +25,15 @@ anesthetic.read.cobaya module
    :show-inheritance:
 
 
+anesthetic.read.csv module
+--------------------------
+
+.. automodule:: anesthetic.read.csv
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 anesthetic.read.getdist module
 ------------------------------
 
