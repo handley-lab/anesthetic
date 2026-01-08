@@ -1278,8 +1278,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
 
-    kwargs.pop('q', None)
-
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data_x, q[0], weights)
