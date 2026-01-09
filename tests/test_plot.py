@@ -695,7 +695,8 @@ def test_q_1d(plot_1d):
 
 
 @pytest.mark.parametrize('plot_2d', [kde_contour_plot_2d,
-                                     hist_plot_2d])
+                                     hist_plot_2d,
+                                     scatter_plot_2d])
 def test_q_2d(plot_2d):
     np.random.seed(42)
     d = np.random.randn(2, 1000)
