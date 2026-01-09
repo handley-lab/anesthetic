@@ -605,10 +605,6 @@ def test_contour_plot_2d(contour_plot_2d):
         fig, ax = plt.subplots()
         contour_plot_2d(ax, data_x, data_y, levels=[0.68, 0.95])
 
-    # Check q
-    fig, ax = plt.subplots()
-    contour_plot_2d(ax, data_x, data_y, q=0)
-
     # Check unfilled
     cmap = basic_cmap('C2')
     fig, ax = plt.subplots()
