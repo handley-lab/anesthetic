@@ -711,26 +711,34 @@ def test_q_2d(plot_2d):
             y = p.get_coordinates()[:, 0, 1]
         elif plot_2d == scatter_plot_2d:
             x, y = p[0].get_xydata().T
-            rel1 = 0.2  # bigger than for contour or hist due to mpl padding
-            rel2 = 0.2  # limits not glued to data for scatter plots
+            rel1 = 0.2  # bigger than for contour or hist
         return x, y, rel1, rel2
+
+    def expected_limits(plot_2d, x, y):
+        if plot_2d == scatter_plot_2d:
+            xpad = (x.max()-x.min()) * matplotlib.rcParams['axes.xmargin']
+            ypad = (y.max()-y.min()) * matplotlib.rcParams['axes.ymargin']
+            return (x.min()-xpad, x.max()+xpad), (y.min()-ypad, y.max()+ypad)
+        return (x.min(), x.max()), (y.min(), y.max())
 
     fig, ax = plt.subplots()
     # check that axis limits match data limits for single plot
     p = plot_2d(ax, d[0], d[1], q=1)  # int input for q
     x, y, rel1, rel2 = get_data_from_plot(plot_2d)
+    xlim, ylim = expected_limits(plot_2d, x, y)
     assert ax.get_xlim() == pytest.approx((-1, 1), rel=rel1)
     assert ax.get_ylim() == pytest.approx((-1, 1), rel=rel1)
-    assert (x.min(), x.max()) == pytest.approx(ax.get_xlim(), rel=rel2)
-    assert (y.min(), y.max()) == pytest.approx(ax.get_ylim(), rel=rel2)
+    assert xlim == pytest.approx(ax.get_xlim(), rel=rel2)
+    assert ylim == pytest.approx(ax.get_ylim(), rel=rel2)
 
     # check that axis limits grow with new, larger plot
     p = plot_2d(ax, d[0], d[1], q="2sigma")  # str input for q
     x, y, rel1, rel2 = get_data_from_plot(plot_2d)
+    xlim, ylim = expected_limits(plot_2d, x, y)
     assert ax.get_xlim() == pytest.approx((-2, 2), rel=rel1)
     assert ax.get_ylim() == pytest.approx((-2, 2), rel=rel1)
-    assert (x.min(), x.max()) == pytest.approx(ax.get_xlim(), rel=rel2)
-    assert (y.min(), y.max()) == pytest.approx(ax.get_ylim(), rel=rel2)
+    assert xlim == pytest.approx(ax.get_xlim(), rel=rel2)
+    assert ylim == pytest.approx(ax.get_ylim(), rel=rel2)
 
     # check that axis limits do not shrink with new, smaller plot
     p = plot_2d(ax, d[0], d[1], q=(0.025, 0.84))  # tuple input for q
