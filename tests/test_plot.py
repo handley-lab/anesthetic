@@ -701,7 +701,7 @@ def test_q_2d(plot_2d):
     np.random.seed(42)
     d = np.random.randn(2, 1000)
 
-    def get_data_from_plot(plot_2d):
+    def get_data_from_plot(plot_2d, p):
         if plot_2d == kde_contour_plot_2d:
             x, y = p[0].allsegs[0][0].T
         elif plot_2d == hist_plot_2d:
@@ -721,7 +721,7 @@ def test_q_2d(plot_2d):
     fig, ax = plt.subplots()
     # check that axis limits match data limits for single plot
     p = plot_2d(ax, d[0], d[1], q=1)  # int input for q
-    x, y = get_data_from_plot(plot_2d)
+    x, y = get_data_from_plot(plot_2d, p)
     xlim, ylim = expected_limits(plot_2d, x, y)
     assert ax.get_xlim() == pytest.approx((-1, 1), rel=0.2)
     assert ax.get_ylim() == pytest.approx((-1, 1), rel=0.2)
@@ -730,7 +730,7 @@ def test_q_2d(plot_2d):
 
     # check that axis limits grow with new, larger plot
     p = plot_2d(ax, d[0], d[1], q="2sigma")  # str input for q
-    x, y = get_data_from_plot(plot_2d)
+    x, y = get_data_from_plot(plot_2d, p)
     xlim, ylim = expected_limits(plot_2d, x, y)
     assert ax.get_xlim() == pytest.approx((-2, 2), rel=0.2)
     assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
@@ -739,7 +739,7 @@ def test_q_2d(plot_2d):
 
     # check that axis limits do not shrink with new, smaller plot
     p = plot_2d(ax, d[0], d[1], q=(0.025, 0.84))  # tuple input for q
-    x, y = get_data_from_plot(plot_2d)
+    x, y = get_data_from_plot(plot_2d, p)
     assert ax.get_xlim() == pytest.approx((-2, 2), rel=0.2)
     assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
     assert (x.min(), x.max()) == pytest.approx((-2, 1), rel=0.2)
