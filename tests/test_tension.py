@@ -61,7 +61,7 @@ def test_tension_stats_compatible_gaussian():
     assert s.sigma.mean() < 1
 
     assert s.get_labels().tolist() == ([r'$\ln R$',
-                                        r'$I$',
+                                        r'$\hat{I}$',
                                         r'$\ln S$',
                                         r'$d_\mathrm{G}$',
                                         r'$p$',
@@ -123,7 +123,7 @@ def test_tension_stats_incompatible_gaussian():
     assert s.sigma.mean() > 3
 
     assert s.get_labels().tolist() == ([r'$\ln R$',
-                                        r'$I$',
+                                        r'$\hat{I}$',
                                         r'$\ln S$',
                                         r'$d_\mathrm{G}$',
                                         r'$p$',

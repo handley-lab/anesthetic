@@ -96,7 +96,7 @@ def tension_stats(joint, *separate):
 
     if "D_KL" in joint_stats.drop_labels().columns:
         samples["I"] = separate_stats["D_KL"] - joint_stats["D_KL"]
-        samples.set_label("I", r"$I$")
+        samples.set_label("I", r"$\hat{I}$")
 
     samples["logS"] = joint_stats["logL_P"] - separate_stats["logL_P"]
     samples.set_label("logS", r"$\ln S$")
