@@ -96,6 +96,7 @@ autodoc_default_options = {
     'members': True,
     'undoc-members': True,
 }
+autodoc_use_legacy_class_based = True  # Sphinx 9.x: fall back to legacy (pre-9.0) class-based autodoc
 
 autosummary_generate = True
 
