@@ -813,7 +813,7 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.boxplot(ylabel='ylabel', ax=ax)
 
     fig, ax = plt.subplots()
-    mcmc_wdf.boxplot(vert=False, ax=ax)
+    mcmc_wdf.boxplot(orientation='horizontal', ax=ax)
 
     fig, ax = plt.subplots()
     mcmc_wdf.boxplot(fontsize=30, ax=ax)
