@@ -924,7 +924,7 @@ def test_multiindex(mcmc_wdf):
 
 
 def test_weight_passing(mcmc_wdf):
-    weights = mcmc_wdf.get_weights()
+    weights = mcmc_wdf.get_weights().copy()
     new_wdf = WeightedDataFrame(mcmc_wdf.copy(), weights=None)
     assert (new_wdf.get_weights() == mcmc_wdf.get_weights()).all()
 
