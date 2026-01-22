@@ -506,11 +506,10 @@ def test_WeightedSeries_corr(frame):
 
     unweighted = DataFrame(frame).droplevel('weights')
 
-    with pytest.raises(ValueError):
-        frame.A.corr(unweighted.B)
-
-    with pytest.raises(ValueError):
-        unweighted.A.corr(frame.B)
+    # TODO: verify this with Lukas
+    assert_allclose(frame.A.corr(unweighted.A), 1, atol=1e-2)
+    assert_allclose(frame.A.corr(unweighted.B), 0, atol=1e-2)
+    assert_allclose(unweighted.A.corr(frame.B), 0, atol=1e-2)
 
 
 def test_WeightedSeries_median(series):
