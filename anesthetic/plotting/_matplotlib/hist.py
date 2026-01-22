@@ -43,7 +43,7 @@ class HistPlot(_WeightedMPLPlot, _HistPlot):
             if self._bin_range is not None:
                 xmin, xmax = self._bin_range
                 self._bin_range = (np.log10(xmin), np.log10(xmax))
-        nd_values = data.infer_objects(copy=False)._get_numeric_data()
+        nd_values = data.infer_objects()._get_numeric_data()
         values = np.ravel(nd_values)
         weights = self.weights
         if weights is not None:

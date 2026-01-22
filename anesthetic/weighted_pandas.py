@@ -225,7 +225,7 @@ class _WeightedObject(object):
             names.insert(level, 'weights')
 
             index = MultiIndex.from_arrays(index, names=names)
-            result = result.set_axis(index, axis=axis, copy=False)
+            result = result.set_axis(index, axis=axis)
 
         if inplace:
             self._update_inplace(result)
@@ -290,12 +290,12 @@ class WeightedSeries(_WeightedObject, Series):
 
     def cov(self, other, *args, **kwargs):  # noqa: D102
 
-        this, other = self.align(other, join="inner", copy=False)
+        this, other = self.align(other, join="inner")
         if len(this) == 0:
             return np.nan
 
         weights = self.index.to_frame()['weights']
-        weights, _ = weights.align(other, join="inner", copy=False)
+        weights, _ = weights.align(other, join="inner")
 
         valid = notna(this) & notna(other)
         if not valid.all():
@@ -486,14 +486,14 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                                     axis=axis)
                 return self._constructor_sliced(answer)
 
-            left, right = self.align(other, join="inner", copy=False)
+            left, right = self.align(other, join="inner")
 
             if axis == 1:
                 left = left.T
                 right = right.T
 
             weights = left.index.to_frame()['weights']
-            weights, _ = weights.align(right, join="inner", copy=False)
+            weights, _ = weights.align(right, join="inner")
 
             # mask missing values
             left = left + right * 0
@@ -613,8 +613,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             data = np.repeat(self.to_numpy(), i, axis=axis)
             i = self.drop_weights(axis)._get_axis(axis).repeat(i)
             df = self._constructor(data=data)
-            df = df.set_axis(i, axis=axis, copy=False)
-            df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
+            df = df.set_axis(i, axis=axis)
+            df = df.set_axis(self._get_axis(1-axis), axis=1-axis)
             return df
         else:
             return self
