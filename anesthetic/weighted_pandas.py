@@ -127,7 +127,6 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 sort=self.sort,
                 group_keys=self.group_keys,
                 observed=self.observed,
-                mutated=self.mutated,
                 dropna=self.dropna,
             )
         elif ndim == 1:
