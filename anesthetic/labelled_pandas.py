@@ -137,8 +137,9 @@ class _LabelledObject(object):
                 labels_map = index.to_frame().droplevel(labs)[labs]
                 if fill:
                     replacement = labels_map.loc[labels_map == ''].index
-                    labels_map.loc[labels_map == ''] = replacement.astype(
-                        labels_map.loc[labels_map != ''].dtype)
+                    if len(replacement) > 0:
+                        labels_map.loc[labels_map == ''] = replacement.astype(
+                            labels_map.loc[labels_map != ''].dtype)
                 return labels_map
             else:
                 return index.to_series()
