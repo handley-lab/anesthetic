@@ -1642,7 +1642,7 @@ def test_fixed_width():
 
     mcolumns = MultiIndex.from_arrays([columns, labels])
     samples.columns = mcolumns
-    assert 'A really re...' in str(WeightedLabelledDataFrame(samples))
+    assert 'A really r...' in str(WeightedLabelledDataFrame(samples))
 
     mcolumns = MultiIndex.from_arrays([columns, np.random.rand(len(columns))])
     samples.columns = mcolumns
