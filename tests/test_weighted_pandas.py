@@ -189,14 +189,20 @@ def test_WeightedDataFrame_corrwith(frame):
 
     unweighted = DataFrame(frame).droplevel('weights')
 
-    with pytest.raises(ValueError):
-        frame.corrwith(unweighted.A)
+    # TODO: verify this with Lukas
+    correl = frame.corrwith(unweighted.A)
+    assert_allclose(correl['A'], 1, atol=1e-2)
+    assert_allclose(correl['B'], 0, atol=1e-2)
 
-    with pytest.raises(ValueError):
-        frame.corrwith(unweighted[['A', 'B']])
+    correl = frame.corrwith(unweighted[['A', 'B']])
+    assert_allclose(correl['A'], 1, atol=1e-2)
+    assert_allclose(correl['B'], 1, atol=1e-2)
+    assert np.isnan(correl['C'])
 
-    with pytest.raises(ValueError):
-        unweighted.corrwith(frame[['A', 'B']])
+    correl = unweighted.corrwith(frame[['A', 'B']])
+    assert_allclose(correl['A'], 1, atol=1e-2)
+    assert_allclose(correl['B'], 1, atol=1e-2)
+    assert np.isnan(correl['C'])
 
     correl_1 = unweighted[:5].corrwith(unweighted[:4], axis=1)
     correl_2 = frame[:5].corrwith(frame[:4], axis=1)
