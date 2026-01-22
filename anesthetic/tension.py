@@ -92,14 +92,14 @@ def tension_stats(joint, *separate):
 
     if "logZ" in joint_stats.drop_labels().columns:
         samples["logR"] = joint_stats["logZ"] - separate_stats["logZ"]
-        samples.set_label("logR", r"$\ln\mathcal{R}$")
+        samples.set_label("logR", r"$\ln R$")
 
     if "D_KL" in joint_stats.drop_labels().columns:
         samples["I"] = separate_stats["D_KL"] - joint_stats["D_KL"]
-        samples.set_label("I", r"$\mathcal{I}$")
+        samples.set_label("I", r"$\hat{I}$")
 
     samples["logS"] = joint_stats["logL_P"] - separate_stats["logL_P"]
-    samples.set_label("logS", r"$\ln\mathcal{S}$")
+    samples.set_label("logS", r"$\ln S$")
 
     samples["d_G"] = separate_stats["d_G"] - joint_stats["d_G"]
     samples.set_label("d_G", r"$d_\mathrm{G}$")
