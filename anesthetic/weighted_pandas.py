@@ -110,7 +110,7 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
 
     def get_weights(self):
         """Return the weights of the grouped samples."""
-        return super().get_weights().min(axis=1-self.axis)
+        return super().get_weights().min(axis=1)
 
     def _gotitem(self, key, ndim: int, subset=None):  # pragma: no cover
         if ndim == 2:
@@ -119,7 +119,6 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
             return WeightedDataFrameGroupBy(
                 subset,
                 self._grouper,
-                axis=self.axis,
                 level=self.level,
                 grouper=self._grouper,
                 exclusions=self.exclusions,
@@ -401,7 +400,6 @@ class WeightedSeries(_WeightedObject, Series):
         return WeightedSeriesGroupBy(
             obj=self,
             keys=by,
-            axis=axis,
             level=level,
             as_index=as_index,
             sort=sort,
@@ -672,7 +670,6 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         return WeightedDataFrameGroupBy(
             obj=self,
             keys=by,
-            axis=axis,
             level=level,
             as_index=as_index,
             sort=sort,
