@@ -813,7 +813,12 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.boxplot(ylabel='ylabel', ax=ax)
 
     fig, ax = plt.subplots()
-    mcmc_wdf.boxplot(orientation='horizontal', ax=ax)
+    import matplotlib
+    from packaging import version
+    if version.parse(matplotlib.__version__) >= version.parse('3.10.0'):
+        mcmc_wdf.boxplot(orientation='horizontal', ax=ax)
+    else:
+        mcmc_wdf.boxplot(vert=False, ax=ax)
 
     fig, ax = plt.subplots()
     mcmc_wdf.boxplot(fontsize=30, ax=ax)
