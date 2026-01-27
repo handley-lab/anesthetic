@@ -12,6 +12,7 @@ from pandas.plotting import scatter_matrix, bootstrap_plot
 from pandas.plotting._matplotlib.misc import (
     scatter_matrix as orig_scatter_matrix
 )
+from packaging import version
 
 
 @pytest.fixture(autouse=True)
@@ -190,19 +191,29 @@ def test_WeightedDataFrame_corrwith(frame):
     unweighted = DataFrame(frame).droplevel('weights')
 
     # TODO: verify this with Lukas
-    correl = frame.corrwith(unweighted.A)
-    assert_allclose(correl['A'], 1, atol=1e-2)
-    assert_allclose(correl['B'], 0, atol=1e-2)
+    if version.parse(pandas.__version__) >= version.parse('3.0.0'):
+        correl = frame.corrwith(unweighted.A)
+        assert_allclose(correl['A'], 1, atol=1e-2)
+        assert_allclose(correl['B'], 0, atol=1e-2)
 
-    correl = frame.corrwith(unweighted[['A', 'B']])
-    assert_allclose(correl['A'], 1, atol=1e-2)
-    assert_allclose(correl['B'], 1, atol=1e-2)
-    assert np.isnan(correl['C'])
+        correl = frame.corrwith(unweighted[['A', 'B']])
+        assert_allclose(correl['A'], 1, atol=1e-2)
+        assert_allclose(correl['B'], 1, atol=1e-2)
+        assert np.isnan(correl['C'])
 
-    correl = unweighted.corrwith(frame[['A', 'B']])
-    assert_allclose(correl['A'], 1, atol=1e-2)
-    assert_allclose(correl['B'], 1, atol=1e-2)
-    assert np.isnan(correl['C'])
+        correl = unweighted.corrwith(frame[['A', 'B']])
+        assert_allclose(correl['A'], 1, atol=1e-2)
+        assert_allclose(correl['B'], 1, atol=1e-2)
+        assert np.isnan(correl['C'])
+    else:
+        with pytest.raises(ValueError):
+            frame.corrwith(unweighted.A)
+
+        with pytest.raises(ValueError):
+            frame.corrwith(unweighted[['A', 'B']])
+
+        with pytest.raises(ValueError):
+            unweighted.corrwith(frame[['A', 'B']])
 
     correl_1 = unweighted[:5].corrwith(unweighted[:4], axis=1)
     correl_2 = frame[:5].corrwith(frame[:4], axis=1)
@@ -513,9 +524,16 @@ def test_WeightedSeries_corr(frame):
     unweighted = DataFrame(frame).droplevel('weights')
 
     # TODO: verify this with Lukas
-    assert_allclose(frame.A.corr(unweighted.A), 1, atol=1e-2)
-    assert_allclose(frame.A.corr(unweighted.B), 0, atol=1e-2)
-    assert_allclose(unweighted.A.corr(frame.B), 0, atol=1e-2)
+    if version.parse(pandas.__version__) >= version.parse('3.0.0'):
+        assert_allclose(frame.A.corr(unweighted.A), 1, atol=1e-2)
+        assert_allclose(frame.A.corr(unweighted.B), 0, atol=1e-2)
+        assert_allclose(unweighted.A.corr(frame.B), 0, atol=1e-2)
+    else:
+        with pytest.raises(ValueError):
+            frame.A.corr(unweighted.B)
+
+        with pytest.raises(ValueError):
+            unweighted.A.corr(frame.B)
 
 
 def test_WeightedSeries_median(series):
