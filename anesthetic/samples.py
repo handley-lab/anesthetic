@@ -1379,7 +1379,9 @@ class NestedSamples(Samples):
             samples.reset_index(drop=True, inplace=True)
             n = np.ones(len(self), int) * nlive
             n[-nlive:] = np.arange(nlive, 0, -1)
-            samples['nlive', nlive_label] = n
+            samples['nlive'] = n
+            if self.islabelled():
+                samples.set_label('nlive', nlive_label)
         else:
             if logL_birth is not None:
                 label = r'$\ln\mathcal{L}_\mathrm{birth}$'
