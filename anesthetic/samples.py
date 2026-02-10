@@ -640,6 +640,31 @@ class MCMCSamples(Samples):
             return Rminus1_cov
         return Rminus1_tot, Rminus1_cov
 
+    def compress(self, ncompress=True, axis=0):
+        """Reduce the number of samples by discarding low-weights.
+
+        Parameters
+        ----------
+        ncompress : int, str, default=True
+            Degree of compression.
+
+            * If ``True`` (default): reduce to the channel capacity
+              (theoretical optimum compression), equivalent to
+              ``ncompress='entropy'``.
+            * If ``> 0``: desired number of samples after compression.
+            * If ``<= 0``: compress so that all remaining weights are unity.
+            * If ``str``: determine number from the Huggins-Roy family of
+              effective samples in :func:`anesthetic.utils.neff`
+              with ``beta=ncompress``.
+
+        Returns
+        -------
+        Samples
+            Compressed samples, downcst from MCMCSamples since
+            MCMC-specific information is lost during compression.
+        """
+        return Samples(super().compress(ncompress, axis))
+
 
 class NestedSamples(Samples):
     """Storage and plotting tools for Nested Sampling samples.
@@ -1364,6 +1389,31 @@ class NestedSamples(Samples):
             self._update_inplace(samples)
         else:
             return samples.__finalize__(self, "recompute")
+
+    def compress(self, ncompress=True, axis=0):
+        """Reduce the number of samples by discarding low-weights.
+
+        Parameters
+        ----------
+        ncompress : int, str, default=True
+            Degree of compression.
+
+            * If ``True`` (default): reduce to the channel capacity
+              (theoretical optimum compression), equivalent to
+              ``ncompress='entropy'``.
+            * If ``> 0``: desired number of samples after compression.
+            * If ``<= 0``: compress so that all remaining weights are unity.
+            * If ``str``: determine number from the Huggins-Roy family of
+              effective samples in :func:`anesthetic.utils.neff`
+              with ``beta=ncompress``.
+
+        Returns
+        -------
+        Samples
+            Compressed samples, downcst from NestedSamples since
+            nested sampling-specific information is lost during compression.
+        """
+        return Samples(super().compress(ncompress, axis))
 
 
 def merge_nested_samples(runs):
