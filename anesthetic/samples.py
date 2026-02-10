@@ -660,7 +660,7 @@ class MCMCSamples(Samples):
         Returns
         -------
         Samples
-            Compressed samples, downcst from MCMCSamples since
+            Compressed samples, downcast from MCMCSamples since
             MCMC-specific information is lost during compression.
         """
         return Samples(super().compress(ncompress, axis))
@@ -1410,7 +1410,7 @@ class NestedSamples(Samples):
         Returns
         -------
         Samples
-            Compressed samples, downcst from NestedSamples since
+            Compressed samples, downcast from NestedSamples since
             nested sampling-specific information is lost during compression.
         """
         return Samples(super().compress(ncompress, axis))
