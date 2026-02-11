@@ -2092,14 +2092,19 @@ def test_compress_returns_samples(samples):
     assert type(compressed) is Samples
     assert not isinstance(compressed, (MCMCSamples, NestedSamples))
 
+
+@pytest.mark.parametrize('samples', (
+    read_chains("./tests/example_data/pc"),
+    read_chains("./tests/example_data/gd"),
+))
+@pytest.mark.parametrize('method', [
+              'mean', 'std', 'median', 'var', 'cov', 'quantile', 'sem'
+              ])  # higher-order statistics don't work well: kurt, skew, mad
+def test_compress(samples, method):
+    compressed = samples.compress()
     params = [c for c in samples.columns
               if c[0] not in ('logL', 'logL_birth', 'nlive',
                               'chain', 'logP', 'chi2')]
-
-    methods = ['mean', 'std', 'median', 'var', 'cov', 'quantile', 'sem']
-    # higher-order statistics don't work well: kurt, skew, mad
-    for method in methods:
-        compressed_stat = getattr(compressed[params], method)()
-        stat = getattr(samples[params], method)()
-        for p in params:
-            assert_allclose(compressed_stat[p], stat[p], atol=0.1)
+    compressed_stat = getattr(compressed[params], method)()
+    stat = getattr(samples[params], method)()
+    assert_allclose(compressed_stat, stat, atol=0.1)
