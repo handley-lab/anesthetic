@@ -2097,7 +2097,7 @@ def test_compress_returns_samples(samples):
                               'chain', 'logP', 'chi2')]
 
     methods = ['mean', 'std', 'median', 'var', 'cov', 'quantile', 'sem']
-    # ones which don't work: kurt, skew, mad
+    # higher-order statistics don't work well: kurt, skew, mad
     for method in methods:
         compressed_stat = getattr(compressed[params], method)()
         stat = getattr(samples[params], method)()
