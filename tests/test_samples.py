@@ -2096,9 +2096,10 @@ def test_compress_returns_samples(samples):
               if c[0] not in ('logL', 'logL_birth', 'nlive',
                               'chain', 'logP', 'chi2')]
 
-    compressed_mean = compressed[params].mean()
-    samples_mean = samples[params].mean()
-    samples_std = samples[params].std()
-    for p in params:
-        assert_allclose(compressed_mean[p], samples_mean[p],
-                        atol=3 * samples_std[p])
+    methods = ['mean', 'std', 'median', 'var', 'cov', 'quantile', 'sem']
+    # ones which don't work: kurt, skew, mad
+    for method in methods:
+        compressed_stat = getattr(compressed[params], method)()
+        stat = getattr(samples[params], method)()
+        for p in params:
+            assert_allclose(compressed_stat[p], stat[p], atol=1e-1)
