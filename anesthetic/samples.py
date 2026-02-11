@@ -471,7 +471,7 @@ class Samples(WeightedLabelledDataFrame):
         samples : :class:`Samples`
             Compressed samples (preserving input distribution). Downcast from
             :class:`MCMCSamples` or :class:`NestedSamples`, since MCMC- or
-            nested sampling-specific information is lost during compression.
+            nested-sampling-specific information is lost during compression.
         """
     )
 
