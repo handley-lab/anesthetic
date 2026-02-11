@@ -2097,14 +2097,23 @@ def test_compress_returns_samples(samples):
     read_chains("./tests/example_data/pc"),
     read_chains("./tests/example_data/gd"),
 ))
-@pytest.mark.parametrize('method', [
-              'mean', 'std', 'median', 'var', 'cov', 'quantile', 'sem'
-              ])  # higher-order statistics don't work well: kurt, skew, mad
-def test_compress(samples, method):
+@pytest.mark.parametrize('method, atol', [
+    ('mean', 0.01),
+    ('std', 0.01),
+    ('median', 0.1),
+    ('var', 0.01),
+    ('cov', 0.01),
+    ('quantile', 0.1),
+    ('sem', 0.01),
+    ('mad', 1.0),
+    ('kurt', 10.0),
+    ('skew', 1.0),
+])
+def test_compress(samples, method, atol):
     compressed = samples.compress()
     params = [c for c in samples.columns
               if c[0] not in ('logL', 'logL_birth', 'nlive',
                               'chain', 'logP', 'chi2')]
     compressed_stat = getattr(compressed[params], method)()
     stat = getattr(samples[params], method)()
-    assert_allclose(compressed_stat, stat, atol=0.1)
+    assert_allclose(compressed_stat, stat, atol=atol)
