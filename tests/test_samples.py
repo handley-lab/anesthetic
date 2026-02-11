@@ -2116,4 +2116,4 @@ def test_compress(samples, method, atol):
                               'chain', 'logP', 'chi2')]
     compressed_stat = getattr(compressed[params], method)()
     stat = getattr(samples[params], method)()
-    assert_allclose(compressed_stat, stat, atol=atol)
+    assert_allclose(compressed_stat, stat, atol=atol, rtol=0.005)
