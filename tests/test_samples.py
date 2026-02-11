@@ -2102,4 +2102,4 @@ def test_compress_returns_samples(samples):
         compressed_stat = getattr(compressed[params], method)()
         stat = getattr(samples[params], method)()
         for p in params:
-            assert_allclose(compressed_stat[p], stat[p], atol=1e-1)
+            assert_allclose(compressed_stat[p], stat[p], atol=0.1)
