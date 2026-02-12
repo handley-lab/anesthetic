@@ -605,10 +605,6 @@ def test_contour_plot_2d(contour_plot_2d):
         fig, ax = plt.subplots()
         contour_plot_2d(ax, data_x, data_y, levels=[0.68, 0.95])
 
-    # Check q
-    fig, ax = plt.subplots()
-    contour_plot_2d(ax, data_x, data_y, q=0)
-
     # Check unfilled
     cmap = basic_cmap('C2')
     fig, ax = plt.subplots()
@@ -671,6 +667,83 @@ def test_contour_plot_2d(contour_plot_2d):
         assert xmax == pytest.approx(1, abs=0.01)
         assert ymin == pytest.approx(0, abs=0.01)
         assert ymax == pytest.approx(1, abs=0.01)
+
+
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d, hist_plot_1d])
+def test_q_1d(plot_1d):
+    np.random.seed(42)
+    d = np.random.randn(1000)
+    fig, ax = plt.subplots()
+
+    # check that axis limits match data limits for single plot
+    p = plot_1d(ax, d, q=1)  # int input for q
+    p = p[1] if plot_1d == hist_plot_1d else p[0].get_data()[0]
+    assert ax.get_xlim() == pytest.approx((-1, 1), rel=0.1)
+    assert (p.min(), p.max()) == pytest.approx((-1, 1), rel=0.1)
+
+    # check that axis limits grow with new, larger plot
+    p = plot_1d(ax, d, q="2sigma")  # str input for q
+    p = p[1] if plot_1d == hist_plot_1d else p[0].get_data()[0]
+    assert ax.get_xlim() == pytest.approx((-2, 2), rel=0.15)
+    assert (p.min(), p.max()) == pytest.approx((-2, 2), rel=0.1)
+
+    # check that axis limits do not shrink with new, smaller plot
+    p = plot_1d(ax, d, q=(0.025, 0.84))  # tuple input for q
+    p = p[1] if plot_1d == hist_plot_1d else p[0].get_data()[0]
+    assert ax.get_xlim() == pytest.approx((-2, 2), rel=0.15)
+    assert (p.min(), p.max()) == pytest.approx((-2, 1), rel=0.1)
+
+
+@pytest.mark.parametrize('plot_2d', [kde_contour_plot_2d,
+                                     hist_plot_2d,
+                                     scatter_plot_2d])
+def test_q_2d(plot_2d):
+    np.random.seed(42)
+    d = np.random.randn(2, 1000)
+
+    def get_data_from_plot(plot_2d, p):
+        if plot_2d == kde_contour_plot_2d:
+            x, y = p[0].allsegs[0][0].T
+        elif plot_2d == hist_plot_2d:
+            x = p.get_coordinates()[0, :, 0]
+            y = p.get_coordinates()[:, 0, 1]
+        elif plot_2d == scatter_plot_2d:
+            x, y = p[0].get_xydata().T
+        return x, y
+
+    def expected_limits(plot_2d, x, y):
+        if plot_2d == scatter_plot_2d:
+            xpad = (x.max()-x.min()) * plt.rcParams['axes.xmargin']
+            ypad = (y.max()-y.min()) * plt.rcParams['axes.ymargin']
+            return (x.min()-xpad, x.max()+xpad), (y.min()-ypad, y.max()+ypad)
+        return (x.min(), x.max()), (y.min(), y.max())
+
+    fig, ax = plt.subplots()
+    # check that axis limits match data limits for single plot
+    p = plot_2d(ax, d[0], d[1], q=1)  # int input for q
+    x, y = get_data_from_plot(plot_2d, p)
+    xlim, ylim = expected_limits(plot_2d, x, y)
+    assert ax.get_xlim() == pytest.approx((-1, 1), rel=0.2)
+    assert ax.get_ylim() == pytest.approx((-1, 1), rel=0.2)
+    assert ax.get_xlim() == pytest.approx(xlim, rel=1e-15)
+    assert ax.get_ylim() == pytest.approx(ylim, rel=1e-15)
+
+    # check that axis limits grow with new, larger plot
+    p = plot_2d(ax, d[0], d[1], q="2sigma")  # str input for q
+    x, y = get_data_from_plot(plot_2d, p)
+    xlim, ylim = expected_limits(plot_2d, x, y)
+    assert ax.get_xlim() == pytest.approx((-2, 2), rel=0.2)
+    assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
+    assert ax.get_xlim() == pytest.approx(xlim, rel=1e-15)
+    assert ax.get_ylim() == pytest.approx(ylim, rel=1e-15)
+
+    # check that axis limits do not shrink with new, smaller plot
+    p = plot_2d(ax, d[0], d[1], q=(0.025, 0.84))  # tuple input for q
+    x, y = get_data_from_plot(plot_2d, p)
+    assert ax.get_xlim() == pytest.approx((-2, 2), rel=0.2)
+    assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
+    assert (x.min(), x.max()) == pytest.approx((-2, 1), rel=0.2)
+    assert (y.min(), y.max()) == pytest.approx((-2, 1), rel=0.2)
 
 
 def test_kde_plot_nplot():

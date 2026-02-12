@@ -96,6 +96,7 @@ autodoc_default_options = {
     'members': True,
     'undoc-members': True,
 }
+autodoc_use_legacy_class_based = True  # Sphinx 9.x: fall back to legacy (pre-9.0) class-based autodoc
 
 autosummary_generate = True
 
@@ -121,6 +122,32 @@ plot_include_source = True
 plot_html_show_source_link = False
 plot_html_show_formats = False
 plot_pre_code = "import numpy as np; from matplotlib import pyplot as plt; import pandas as pd"
+
+
+# -- Options for base-class crossrefs ----------------------------------------
+_PANDAS_BASE_REWRITE = {
+    "pandas.core.series.Series": "pandas.Series",
+    "pandas.core.frame.DataFrame": "pandas.DataFrame",
+}
+
+def _rewrite_pandas_bases(app, name, obj, _options, bases):
+    """
+    Replace pandas internal base-class paths with public API paths so
+    intersphinx can resolve them when :show-inheritance: is used.
+    """
+    for i, b in enumerate(list(bases)):
+        # Sphinx passes class objects or strings depending on context/version.
+        if isinstance(b, str):
+            fqname = b
+        else:
+            mod = getattr(b, "__module__", "")
+            qual = getattr(b, "__qualname__", getattr(b, "__name__", ""))
+            fqname = f"{mod}.{qual}" if mod and qual else ""
+
+        new = _PANDAS_BASE_REWRITE.get(fqname)
+        if new:
+            # Use ~ for short display text while keeping the correct target.
+            bases[i] = f":class:`~{new}`"
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -236,14 +263,18 @@ epub_exclude_files = ['search.html']
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-        'numpy':('https://numpy.org/doc/stable', None),
-        'scipy':('https://docs.scipy.org/doc/scipy', None),
-        'pandas':('https://pandas.pydata.org/pandas-docs/stable', None),
-        'matplotlib':('https://matplotlib.org/stable', None),
-        'getdist':('https://getdist.readthedocs.io/en/latest/', None)
-        }
+    'numpy':('https://numpy.org/doc/stable', None),
+    'scipy':('https://docs.scipy.org/doc/scipy', None),
+    'pandas':('https://pandas.pydata.org/pandas-docs/stable', None),
+    'matplotlib':('https://matplotlib.org/stable', None),
+    'getdist':('https://getdist.readthedocs.io/en/latest/', None),
+}
 
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+
+def setup(app):
+    app.connect("autodoc-process-bases", _rewrite_pandas_bases)
