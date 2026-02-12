@@ -45,7 +45,7 @@ def test_gui(root):
     plotter.type.buttons.set_active(1)
 
     plotter.beta.slider.set_val(0)
-    assert plotter.beta() == approx(0, 0, 1e-8)
+    assert plotter.beta() == approx(0, rel=0, abs=1e-8)
 
     plotter.beta.slider.set_val(samples.D_KL())
     assert plotter.beta() == approx(1)

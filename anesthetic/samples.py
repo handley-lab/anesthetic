@@ -1232,12 +1232,8 @@ class NestedSamples(Samples):
         logL_max = self.logL.max()
         logL_min = self.logL.min()
         logL_range = logL_max - logL_min
-
-        if logL_range > 0:
-            finfo = np.finfo(np.float64)
-            return finfo.eps / logL_range
-        else:
-            return 0.0
+        finfo = np.finfo(np.float64)
+        return 0 if not logL_range > 0 else finfo.eps / logL_range
 
     def live_points(self, logL=None):
         """Get the live points within a contour.
