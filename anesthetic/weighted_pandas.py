@@ -607,6 +607,9 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
               with ``beta=ncompress``.
 
         """
+        if (not self.isweighted(axis) and isinstance(ncompress, (bool, str))
+                or ncompress is False):
+            return self
         i = compress_weights(self.get_weights(axis), self._rand(axis),
                              ncompress)
         data = np.repeat(self.to_numpy(), i, axis=axis)
