@@ -991,7 +991,7 @@ class NestedSamples(Samples):
         logL = self.logL
         if np.isscalar(beta):
             if beta == 0:
-                betalogL = pandas.Series(np.zeros_like(logL), index=logL.index)
+                betalogL = logL._constructor(np.zeros_like(logL), index=logL.index)
             else:
                 betalogL = beta * logL
             betalogL.name = 'betalogL'
