@@ -2081,3 +2081,39 @@ def test_axes_limits_2d(kind, kwargs):
     assert 3 < xmax < 3.9
     assert -3.9 < ymin < -3
     assert 3 < ymax < 3.9
+
+
+@pytest.mark.parametrize('samples', (
+    read_chains("./tests/example_data/pc"),
+    read_chains("./tests/example_data/gd"),
+))
+def test_compress_returns_samples(samples):
+    compressed = samples.compress()
+    assert type(compressed) is Samples
+    assert not isinstance(compressed, (MCMCSamples, NestedSamples))
+
+
+@pytest.mark.parametrize('samples', (
+    read_chains("./tests/example_data/pc"),
+    read_chains("./tests/example_data/gd"),
+))
+@pytest.mark.parametrize('method, atol', [
+    ('mean', 0.01),
+    ('std', 0.01),
+    ('median', 0.1),
+    ('var', 0.01),
+    ('cov', 0.01),
+    ('quantile', 0.1),
+    ('sem', 0.01),
+    ('mad', 1.0),
+    ('kurt', 10.0),
+    ('skew', 1.0),
+])
+def test_compress(samples, method, atol):
+    compressed = samples.compress()
+    params = [c for c in samples.columns
+              if c[0] not in ('logL', 'logL_birth', 'nlive',
+                              'chain', 'logP', 'chi2')]
+    compressed_stat = getattr(compressed[params], method)()
+    stat = getattr(samples[params], method)()
+    assert_allclose(compressed_stat, stat, atol=atol, rtol=0.005)
