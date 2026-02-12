@@ -9,6 +9,7 @@ import scipy
 import pandas
 import copy
 import warnings
+import inspect
 from pandas import MultiIndex, Series
 from collections.abc import Sequence
 from anesthetic.utils import (compute_nlive, compute_insertion_indexes,
@@ -458,6 +459,21 @@ class Samples(WeightedLabelledDataFrame):
         import anesthetic.read.hdf
         return anesthetic.read.hdf.to_hdf(path_or_buf, key, self,
                                           *args, **kwargs)
+
+    def compress(self, ncompress=True, axis=0):  # noqa: D102
+        return Samples(super().compress(ncompress, axis))
+
+    compress.__doc__ = (
+        inspect.getdoc(WeightedLabelledDataFrame.compress) + "\n\n" +
+        """
+        Returns
+        -------
+        samples : :class:`Samples`
+            Compressed samples (preserving input distribution). Downcast from
+            :class:`MCMCSamples` or :class:`NestedSamples`, since MCMC- or
+            nested-sampling-specific information is lost during compression.
+        """
+    )
 
 
 class MCMCSamples(Samples):
