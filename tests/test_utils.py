@@ -15,10 +15,15 @@ from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
 
 
 def test_compress_weights():
+    # unweighted
     w = compress_weights(w=np.ones(10), u=None)
     assert_array_equal(w, np.ones(10))
     w = compress_weights(w=None, u=np.random.rand(10))
     assert_array_equal(w, np.ones(10))
+    w = compress_weights(w=np.ones(10), u=None, ncompress=5)
+    assert w.sum() == 5
+
+    # weighted
     r = np.random.rand(10)
     w = compress_weights(w=r, u=None, ncompress=False)
     assert_array_equal(w, r)
@@ -26,6 +31,31 @@ def test_compress_weights():
     # TODO Remove in 2.1
     with pytest.raises(ValueError):
         compress_weights(w=r, ncompress=-1)
+
+
+@pytest.mark.parametrize('ncompress, expected', [(1, 1), (5, 5)])
+def test_compress_weights_ncompress_int_exact_length(ncompress, expected):
+    w = np.arange(10)
+    u = np.linspace(0.1, 0.9, len(w))
+    W = compress_weights(w=w, u=u, ncompress=ncompress)
+    assert np.issubdtype(W.dtype, np.integer)
+    assert W.sum() == expected
+
+
+def test_compress_weights_remainder_zero():
+    w = np.ones(5)
+    W = compress_weights(w=w, u=None, ncompress=5)
+    assert_array_equal(W, np.ones(5, dtype=int))
+
+
+@pytest.mark.parametrize('ncompress', ['entropy', '2', 'inf'])
+def test_compress_weights_ncompress_string(ncompress):
+    w = np.arange(10)
+    u = np.linspace(0.1, 0.9, len(w))
+    W = compress_weights(w=w, u=u, ncompress=ncompress)
+    assert np.issubdtype(W.dtype, np.integer)
+    assert W.min() >= 0
+    assert W.sum() < len(w)
 
 
 def test_nest_level():
