@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import anesthetic.examples._matplotlib_agg  # noqa: F401
 from anesthetic import read_chains
 import pytest
+from pytest import approx
 from utils import skipif_no_h5py
 
 
@@ -44,12 +45,12 @@ def test_gui(root):
     plotter.type.buttons.set_active(1)
 
     plotter.beta.slider.set_val(0)
-    assert plotter.beta() == pytest.approx(0, 0, 1e-8)
+    assert plotter.beta() == approx(0, rel=0, abs=1e-8)
 
     plotter.beta.slider.set_val(samples.D_KL())
-    assert plotter.beta() == pytest.approx(1)
+    assert plotter.beta() == approx(1)
     plotter.beta.slider.set_val(1e2)
-    assert plotter.beta() == 1e10
+    assert plotter.beta() == approx(min(plotter.samples.beta_max(), 1e10))
     plotter.type.buttons.set_active(0)
 
     # Reload button
