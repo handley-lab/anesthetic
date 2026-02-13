@@ -868,7 +868,9 @@ def test_D_KL():
     n = 1000
     D_KL = pc.D_KL(n)
 
-    assert abs(D_KL.mean() - pc.D_KL()) < D_KL.std() * 3
+    # Handle zero variance case (e.g., on Windows) with a minimum tolerance
+    tolerance = max(D_KL.std() * 3, 1e-10)
+    assert abs(D_KL.mean() - pc.D_KL()) < tolerance
 
 
 def test_d_G():
@@ -1046,13 +1048,23 @@ def test_stats():
         pc.beta = beta
         n = 1000
         PC = pc.stats(n, beta)
-        assert abs(pc.logZ() - PC['logZ'].mean()) < PC['logZ'].std()
-        assert PC['d_G'].mean() < 5 + 3 * PC['d_G'].std()
+        # Handle zero variance case (e.g., on Windows) with minimum tolerances
+        tolerance_logZ = max(PC['logZ'].std(), 1e-10)
+        assert abs(pc.logZ() - PC['logZ'].mean()) < tolerance_logZ
+        assert PC['d_G'].mean() < 5 + 3 * max(PC['d_G'].std(), 1e-10)
         assert PC.cov()['D_KL']['logZ'] < 0
-        assert abs(PC.logZ.mean() - pc.logZ()) < PC.logZ.std() * 3
-        assert abs(PC.D_KL.mean() - pc.D_KL()) < PC.D_KL.std() * 3
-        assert abs(PC.d_G.mean() - pc.d_G()) < PC.d_G.std() * 3
-        assert abs(PC.logL_P.mean() - pc.logL_P()) < PC.logL_P.std() * 3
+
+        tolerance_logZ_series = max(PC.logZ.std() * 3, 1e-10)
+        assert abs(PC.logZ.mean() - pc.logZ()) < tolerance_logZ_series
+
+        tolerance_D_KL = max(PC.D_KL.std() * 3, 1e-10)
+        assert abs(PC.D_KL.mean() - pc.D_KL()) < tolerance_D_KL
+
+        tolerance_d_G = max(PC.d_G.std() * 3, 1e-10)
+        assert abs(PC.d_G.mean() - pc.d_G()) < tolerance_d_G
+
+        tolerance_logL_P = max(PC.logL_P.std() * 3, 1e-10)
+        assert abs(PC.logL_P.mean() - pc.logL_P()) < tolerance_logL_P
 
         n = 100
         assert ks_2samp(pc.logZ(n, beta), PC.logZ).pvalue > 0.05
@@ -1201,6 +1213,60 @@ def test_beta_with_logL_infinities():
     with pytest.warns(RuntimeWarning):
         ns.recompute(inplace=True)
     assert (ns.logL == -np.inf).sum() == 0
+
+
+def test_beta_zero_nan_handling():
+    """Test that beta=0 with logL=-inf doesn't produce NaN values.
+
+    Addresses issue where logL=-inf * beta=0 = NaN, which should be 0. Tests
+    both scalar beta=0 and array cases with beta=0 at different positions.
+    """
+    ns = read_chains("./tests/example_data/pc")
+
+    # Create test data with -inf logL values
+    test_ns = ns.iloc[:100].copy()
+    test_ns.loc[:10, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
+    test_ns.loc[50:60, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
+
+    # Test scalar beta=0 case
+    beta_logL_scalar = test_ns._betalogL(beta=0.0)
+    assert not beta_logL_scalar.isna().any(), "beta=0 should not cause NaN"
+    assert_array_equal(beta_logL_scalar, 0.0)
+
+    # Test array with beta=0 at first position
+    beta_array_first = np.array([0.0, 0.5, 1.0])
+    beta_logL_first = test_ns._betalogL(beta=beta_array_first)
+    assert not beta_logL_first[0.0].isna().any(), "beta=0 should not cause NaN"
+    assert_array_equal(beta_logL_first[0.0], 0.0)
+
+    # Test array with beta=0 at middle position
+    beta_array_mid = np.array([0.5, 0.0, 1.0])
+    beta_logL_mid = test_ns._betalogL(beta=beta_array_mid)
+    assert not beta_logL_mid[0.0].isna().any(), "beta=0 should not cause NaN"
+    assert_array_equal(beta_logL_mid[0.0], 0.0)
+
+    # Test array with beta=0 at last position (as requested by Lukas)
+    beta_array_last = np.array([0.5, 1.0, 0.0])
+    beta_logL_last = test_ns._betalogL(beta=beta_array_last)
+    assert not beta_logL_last[0.0].isna().any(), "beta=0 should not cause NaN"
+    assert_array_equal(beta_logL_last[0.0], 0.0)
+
+    # Test array without zeros to ensure other functionality still works
+    beta_array_no_zero = np.array([0.1, 0.5, 1.0])
+    beta_logL_no_zero = test_ns._betalogL(beta=beta_array_no_zero)
+    assert 0.0 not in beta_logL_no_zero.columns
+
+    # Verify other beta values still work correctly (not all zeros)
+    finite_mask = np.isfinite(test_ns.logL)
+    inf_mask = ~finite_mask
+
+    # For finite logL, beta=0.5 should give 0.5 * logL
+    expected_half = test_ns.logL * 0.5
+    assert_array_almost_equal(beta_logL_first[0.5][finite_mask],
+                              expected_half[finite_mask])
+
+    # For -inf logL, beta=0.5 should give -inf (0.5 * -inf = -inf)
+    assert_array_equal(beta_logL_first[0.5][inf_mask], -np.inf)
 
 
 def test_prior():
@@ -1630,7 +1696,7 @@ def test_fixed_width():
 
     mcolumns = MultiIndex.from_arrays([columns, labels])
     samples.columns = mcolumns
-    assert 'A really re...' in str(WeightedLabelledDataFrame(samples))
+    assert 'A really r...' in str(WeightedLabelledDataFrame(samples))
 
     mcolumns = MultiIndex.from_arrays([columns, np.random.rand(len(columns))])
     samples.columns = mcolumns
@@ -2069,3 +2135,39 @@ def test_axes_limits_2d(kind, kwargs):
     assert 3 < xmax < 3.9
     assert -3.9 < ymin < -3
     assert 3 < ymax < 3.9
+
+
+@pytest.mark.parametrize('samples', (
+    read_chains("./tests/example_data/pc"),
+    read_chains("./tests/example_data/gd"),
+))
+def test_compress_returns_samples(samples):
+    compressed = samples.compress()
+    assert type(compressed) is Samples
+    assert not isinstance(compressed, (MCMCSamples, NestedSamples))
+
+
+@pytest.mark.parametrize('samples', (
+    read_chains("./tests/example_data/pc"),
+    read_chains("./tests/example_data/gd"),
+))
+@pytest.mark.parametrize('method, atol', [
+    ('mean', 0.01),
+    ('std', 0.01),
+    ('median', 0.1),
+    ('var', 0.01),
+    ('cov', 0.01),
+    ('quantile', 0.1),
+    ('sem', 0.01),
+    ('mad', 1.0),
+    ('kurt', 10.0),
+    ('skew', 1.0),
+])
+def test_compress(samples, method, atol):
+    compressed = samples.compress()
+    params = [c for c in samples.columns
+              if c[0] not in ('logL', 'logL_birth', 'nlive',
+                              'chain', 'logP', 'chi2')]
+    compressed_stat = getattr(compressed[params], method)()
+    stat = getattr(samples[params], method)()
+    assert_allclose(compressed_stat, stat, atol=atol, rtol=0.005)

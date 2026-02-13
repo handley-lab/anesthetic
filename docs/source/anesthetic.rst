@@ -72,12 +72,22 @@ anesthetic.samples module
 .. automodule:: anesthetic.samples
    :members:
    :undoc-members:
+   :show-inheritance:
 
 
 anesthetic.scripts module
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: anesthetic.scripts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.tension module
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.tension
    :members:
    :undoc-members:
    :show-inheritance:
