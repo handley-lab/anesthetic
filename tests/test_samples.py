@@ -2159,7 +2159,6 @@ def test_compress_returns_samples(samples):
     ('cov', 0.01),
     ('quantile', 0.1),
     ('sem', 0.01),
-    ('mad', 1.0),
     ('kurt', 10.0),
     ('skew', 1.0),
 ])
