@@ -127,6 +127,7 @@ def test_WeightedDataFrame_std(frame):
     assert not std.isweighted()
     assert_array_equal(std.index, frame.columns)
     assert_allclose(std, (1./12)**0.5, atol=1e-2)
+    assert np.all(frame.std(ddof=0) != frame.std(ddof=1))
 
     std = frame.std(axis=1)
     assert isinstance(std, WeightedSeries)
@@ -151,10 +152,6 @@ def test_WeightedDataFrame_cov(frame):
     assert cov.isweighted(0) and cov.isweighted(1)
     assert_array_equal(cov.index, frame[:5].index)
     assert_array_equal(cov.columns, frame[:5].index)
-
-    with pytest.raises(NotImplementedError):
-        # kwargs not passed when weighted
-        frame.cov(ddof=1)
 
 
 def test_WeightedDataFrame_corr(frame):
@@ -246,6 +243,7 @@ def test_WeightedDataFrame_sem(frame):
     assert not sem.isweighted()
     assert_array_equal(sem.index, frame.columns)
     assert_allclose(sem, (1./12)**0.5/np.sqrt(frame.neff()), atol=1e-2)
+    assert np.all(frame.sem(ddof=0) != frame.sem(ddof=1))
 
     sem = frame.sem(axis=1)
     assert isinstance(sem, WeightedSeries)
@@ -261,7 +259,7 @@ def test_WeightedDataFrame_kurtosis(frame):
     assert isinstance(kurtosis, WeightedSeries)
     assert not kurtosis.isweighted()
     assert_array_equal(kurtosis.index, frame.columns)
-    assert_allclose(kurtosis, 9./5, atol=1e-2)
+    assert_allclose(kurtosis, -6/5, atol=1e-2)
     assert_array_equal(frame.kurtosis(), frame.kurt())
 
     kurtosis = frame.kurtosis(axis=1)
@@ -519,7 +517,7 @@ def test_WeightedSeries_sem(series):
 def test_WeightedSeries_kurtosis(series):
     kurtosis = series.kurtosis()
     assert isinstance(kurtosis, float)
-    assert_allclose(kurtosis, 9./5, atol=1e-2)
+    assert_allclose(kurtosis, -6/5, atol=1e-2)
     assert series.kurtosis() == series.kurt()
 
     series[0] = np.nan
@@ -602,42 +600,11 @@ def test_WeightedSeries_nan(series):
     assert np.isnan(series[:0].quantile())
 
 
-# ================================================================================
+# =============================================================================
 # Numerical Correctness Tests for NaN Handling
-# ================================================================================
+# =============================================================================
 
-def ground_truth_mean(data, weights):
-    """Calculate weighted mean correctly handling NaNs."""
-    data, weights = np.array(data), np.array(weights)
-    mask = ~np.isnan(data)
-    valid_data = data[mask]
-    valid_weights = weights[mask]
-    if valid_weights.sum() == 0:
-        return np.nan
-    return np.average(valid_data, weights=valid_weights)
-
-
-def ground_truth_var(data, weights):
-    """Calculate weighted variance correctly handling NaNs."""
-    data, weights = np.array(data), np.array(weights)
-    mask = ~np.isnan(data)
-    valid_data = data[mask]
-    valid_weights = weights[mask]
-    if valid_weights.sum() == 0:
-        return np.nan
-    mean = ground_truth_mean(data, weights)
-    if np.isnan(mean):
-        return np.nan
-    return np.average((valid_data - mean)**2, weights=valid_weights)
-
-
-def ground_truth_std(data, weights):
-    """Calculate weighted standard deviation correctly handling NaNs."""
-    var = ground_truth_var(data, weights)
-    return np.sqrt(var)
-
-
-@pytest.mark.parametrize("data, weights, expected_mean", [
+@pytest.mark.parametrize("data, weights, expected", [
     # Case 1: The original bug from Lukas's report
     ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4], 3.0),
     # Case 2: NaN at beginning
@@ -651,17 +618,10 @@ def ground_truth_std(data, weights):
     # Case 6: NaN with zero weight (should be same as excluding it)
     ([1.0, 2.0, np.nan], [0.5, 0.5, 0.0], 1.5),
 ])
-def test_weighted_mean_nan_correctness(data, weights, expected_mean):
+def test_weighted_series_mean_nan_correctness(data, weights, expected):
     """Test that mean(skipna=True) returns numerically correct results."""
-    series = WeightedSeries(data, weights=weights)
-    result = series.mean(skipna=True)
-
-    # Test against hand-calculated expected value
-    assert_allclose(result, expected_mean, rtol=1e-10)
-
-    # Test against ground truth function
-    ground_truth = ground_truth_mean(data, weights)
-    assert_allclose(result, ground_truth, rtol=1e-10)
+    result = WeightedSeries(data, weights=weights).mean(skipna=True)
+    assert_allclose(result, expected, rtol=1e-10)
 
 
 @pytest.mark.parametrize("data, weights", [
@@ -669,78 +629,86 @@ def test_weighted_mean_nan_correctness(data, weights, expected_mean):
     ([np.nan, 2.0, 3.0], [0.3, 0.3, 0.4]),
     ([1.0, np.nan], [0.6, 0.4]),
 ])
-def test_weighted_mean_skipna_false_returns_nan(data, weights):
+def test_weighted_series_mean_skipna_false_returns_nan(data, weights):
     """Test that mean(skipna=False) returns NaN when NaN present."""
-    series = WeightedSeries(data, weights=weights)
-    result = series.mean(skipna=False)
+    result = WeightedSeries(data, weights=weights).mean(skipna=False)
     assert np.isnan(result)
 
 
-@pytest.mark.parametrize("data, weights, expected_var", [
-    ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4], 1.4285714285714284),
-    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4], 0.6172839506172839),
-    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 1.0),
+@pytest.mark.parametrize("data, weights, ddof, expected", [
+    ([1.0, 2.0, np.nan, 4.0], [1, 1, 1, 3], 0, 1.6),
+    ([1.0, 2.0, np.nan, 4.0], [1, 1, 1, 3], 1, 2.0),
+    ([np.nan, 1.0, 2.0, 4.0], [1, 1, 1, 3], 0, 1.6),
+    ([np.nan, 1.0, 2.0, 4.0], [1, 1, 1, 3], 1, 2.0),
+    ([1.0, np.nan, 3.0, np.nan], [1, 1, 1, 1], 0, 1.0),
+    ([1.0, np.nan, 3.0, np.nan], [1, 1, 1, 1], 1, 2.0),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 0, 1.0),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 1, 2.0),
 ])
-def test_weighted_var_nan_correctness(data, weights, expected_var):
+def test_weighted_series_var_nan_correctness(data, weights, ddof, expected):
     """Test that var(skipna=True) returns numerically correct results."""
-    series = WeightedSeries(data, weights=weights)
-    result = series.var(skipna=True)
-
-    # Test against pre-calculated expected value
-    assert_allclose(result, expected_var, rtol=1e-10)
-
-    # Test against ground truth function
-    ground_truth = ground_truth_var(data, weights)
-    assert_allclose(result, ground_truth, rtol=1e-10)
+    result = WeightedSeries(data, weights=weights).var(skipna=True, ddof=ddof)
+    assert_allclose(result, expected, rtol=1e-10)
 
 
-@pytest.mark.parametrize("data, weights, expected_std", [
-    ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4], 1.1952286093343936),
-    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4], 0.7856742013183862),
-    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 1.0),
+@pytest.mark.parametrize("data, weights, ddof, expected", [
+    ([1.0, 2.0, np.nan, 4.0], [1, 1, 1, 3], 0, np.sqrt(1.6)),
+    ([1.0, 2.0, np.nan, 4.0], [1, 1, 1, 3], 1, np.sqrt(2.0)),
+    ([np.nan, 1.0, 2.0, 4.0], [1, 1, 1, 3], 0, np.sqrt(1.6)),
+    ([np.nan, 1.0, 2.0, 4.0], [1, 1, 1, 3], 1, np.sqrt(2.0)),
+    ([1.0, np.nan, 3.0, np.nan], [1, 1, 1, 1], 0, 1.0),
+    ([1.0, np.nan, 3.0, np.nan], [1, 1, 1, 1], 1, np.sqrt(2.0)),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 0, 1.0),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 1, np.sqrt(2.0)),
 ])
-def test_weighted_std_nan_correctness(data, weights, expected_std):
+def test_weighted_series_std_nan_correctness(data, weights, ddof, expected):
     """Test that std(skipna=True) returns numerically correct results."""
-    series = WeightedSeries(data, weights=weights)
-    result = series.std(skipna=True)
-
-    # Test against pre-calculated expected value
-    assert_allclose(result, expected_std, rtol=1e-10)
-
-    # Test against ground truth function
-    ground_truth = ground_truth_std(data, weights)
-    assert_allclose(result, ground_truth, rtol=1e-10)
+    result = WeightedSeries(data, weights=weights).std(skipna=True, ddof=ddof)
+    assert_allclose(result, expected, rtol=1e-10)
 
 
-def test_weighted_all_nan_returns_nan():
+def test_weighted_series_all_nan_returns_nan():
     """Test that all statistical methods return NaN for all-NaN data."""
-    data = [np.nan, np.nan, np.nan]
-    weights = [0.3, 0.3, 0.4]
+    data = [np.nan, np.nan, np.nan, np.nan, np.nan]
+    weights = [0.3, 0.3, 0.4, 0.5, 0.1]
     series = WeightedSeries(data, weights=weights)
 
     assert np.isnan(series.mean(skipna=True))
-    assert np.isnan(series.var(skipna=True))
+    assert np.isnan(series.var(skipna=True, ddof=0))
+    assert np.isnan(series.var(skipna=True, ddof=1))
     assert np.isnan(series.std(skipna=True))
+    assert np.isnan(series.sem(skipna=True))
+    assert np.isnan(series.skew(skipna=True))
+    assert np.isnan(series.kurt(skipna=True))
+    assert np.isnan(series.cov(series, ddof=0))
+    assert np.isnan(series.cov(series, ddof=1))
+    assert np.isnan(series.corr(series))
 
 
-def test_weighted_equivalence_to_manual_filtering():
+def test_weighted_series_equivalence_to_manual_filtering():
     """Test that skipna=True equals manual filtering of data and weights."""
     data = [1.0, np.nan, 3.0, np.nan, 5.0, 6.0]
     weights = [0.1, 0.2, 0.1, 0.3, 0.2, 0.1]
 
-    series = WeightedSeries(data, weights=weights)
+    s = WeightedSeries(data, weights=weights)
 
     # Manual filtering approach
     mask = ~np.isnan(data)
     filtered_data = np.array(data)[mask]
     filtered_weights = np.array(weights)[mask]
-
-    manual_series = WeightedSeries(filtered_data, weights=filtered_weights)
+    fs = WeightedSeries(filtered_data, weights=filtered_weights)
 
     # Results should be identical
-    assert_allclose(series.mean(skipna=True), manual_series.mean(), rtol=1e-10)
-    assert_allclose(series.var(skipna=True), manual_series.var(), rtol=1e-10)
-    assert_allclose(series.std(skipna=True), manual_series.std(), rtol=1e-10)
+    assert_allclose(s.mean(skipna=True), fs.mean(), rtol=1e-14)
+    assert_allclose(s.var(skipna=True, ddof=0), fs.var(ddof=0), rtol=1e-14)
+    assert_allclose(s.var(skipna=True, ddof=1), fs.var(ddof=1), rtol=1e-14)
+    assert_allclose(s.std(skipna=True), fs.std(), rtol=1e-14)
+    assert_allclose(s.sem(skipna=True), fs.sem(), rtol=1e-14)
+    assert_allclose(s.skew(skipna=True), fs.skew(), rtol=1e-14)
+    assert_allclose(s.kurt(skipna=True), fs.kurt(), rtol=1e-14)
+    assert_allclose(s.cov(s, ddof=0), fs.cov(fs, ddof=0), rtol=1e-14)
+    assert_allclose(s.cov(s, ddof=1), fs.cov(fs, ddof=1), rtol=1e-14)
+    assert_allclose(s.corr(s), fs.corr(fs), rtol=1e-14)
 
 
 def test_weighted_dataframe_nan_consistency():
@@ -752,13 +720,16 @@ def test_weighted_dataframe_nan_consistency():
     df_result = df.mean(skipna=True)
 
     for col in ['A', 'B', 'C']:
-        series_result = df[col].mean(skipna=True)
+        s = df[col]
+        assert isinstance(s, WeightedSeries)
+        series_result = s.mean(skipna=True)
         assert_allclose(df_result[col], series_result, rtol=1e-10)
 
 
 def test_weighted_dataframe_mean_ground_truth():
     """Test DataFrame mean with ground truth values."""
-    data = [[1.0, np.nan, 3.0], [4.0, 5.0, np.nan]]
+    data = [[1.0, np.nan, 3.0],
+            [4.0, 5.0, np.nan]]
     weights = [0.4, 0.6]
     expected_means = {'A': 2.8, 'B': 5.0, 'C': 3.0}
 
@@ -767,11 +738,6 @@ def test_weighted_dataframe_mean_ground_truth():
 
     for col, expected in expected_means.items():
         assert_allclose(result[col], expected, rtol=1e-10)
-
-        # Also test against ground truth function
-        col_data = df[col].values
-        ground_truth = ground_truth_mean(col_data, weights)
-        assert_allclose(result[col], ground_truth, rtol=1e-10)
 
 
 @pytest.fixture
@@ -798,6 +764,47 @@ def mcmc_df():
 def mcmc_wdf(mcmc_df):
     weights = mcmc_df.groupby(mcmc_df.columns.tolist(), sort=False).size()
     return WeightedDataFrame(mcmc_df.drop_duplicates(), weights=weights.values)
+
+
+def test_mcmc_stats(mcmc_df, mcmc_wdf):
+    df = mcmc_df
+    wdf = mcmc_wdf
+    assert_allclose(wdf.mean(), df.mean(), rtol=1e-14)
+    assert_allclose(wdf.var(ddof=0), df.var(ddof=0), rtol=1e-14)
+    assert_allclose(wdf.var(ddof=1), df.var(ddof=1), rtol=1e-14)
+    assert_allclose(wdf.std(ddof=0), df.std(ddof=0), rtol=1e-14)
+    assert_allclose(wdf.std(ddof=1), df.std(ddof=1), rtol=1e-14)
+    assert_allclose(wdf.sem(ddof=0), df.sem(ddof=0), rtol=1e-14)
+    assert_allclose(wdf.sem(ddof=1), df.sem(ddof=1), rtol=1e-14)
+    assert_allclose(wdf.skew(), df.skew(), rtol=1e-13)
+    assert_allclose(wdf.kurt(), df.kurt(), rtol=1e-14)
+    assert_allclose(wdf.cov(ddof=0), df.cov(ddof=0), rtol=1e-13)
+    assert_allclose(wdf.cov(ddof=1), df.cov(ddof=1), rtol=1e-13)
+    assert_allclose(np.diag(wdf.cov(ddof=0)), wdf.var(ddof=0), rtol=1e-14)
+    assert_allclose(np.diag(wdf.cov(ddof=1)), wdf.var(ddof=1), rtol=1e-14)
+    assert_allclose(wdf.corr(), df.corr(), rtol=1e-12)
+    assert_allclose(wdf.corrwith(wdf.x), df.corrwith(df.x), rtol=1e-14)
+
+
+def test_mcmc_series_stats(mcmc_df, mcmc_wdf):
+    sx = mcmc_df.loc[:, 'x']
+    sy = mcmc_df.loc[:, 'y']
+    wsx = mcmc_wdf.loc[:, 'x']
+    wsy = mcmc_wdf.loc[:, 'y']
+    assert_allclose(wsx.mean(), sx.mean(), rtol=1e-14)
+    assert_allclose(wsx.var(ddof=0), sx.var(ddof=0), rtol=1e-14)
+    assert_allclose(wsx.var(ddof=1), sx.var(ddof=1), rtol=1e-14)
+    assert_allclose(wsx.std(ddof=0), sx.std(ddof=0), rtol=1e-14)
+    assert_allclose(wsx.std(ddof=1), sx.std(ddof=1), rtol=1e-14)
+    assert_allclose(wsx.sem(ddof=0), sx.sem(ddof=0), rtol=1e-14)
+    assert_allclose(wsx.sem(ddof=1), sx.sem(ddof=1), rtol=1e-14)
+    assert_allclose(wsx.skew(), sx.skew(), rtol=1e-13)
+    assert_allclose(wsx.kurt(), sx.kurt(), rtol=1e-14)
+    assert_allclose(wsx.cov(wsy, ddof=0), sx.cov(sy, ddof=0), rtol=1e-14)
+    assert_allclose(wsx.cov(wsy, ddof=1), sx.cov(sy, ddof=1), rtol=1e-14)
+    assert_allclose(wsx.cov(wsx, ddof=0), sx.var(ddof=0), rtol=1e-14)
+    assert_allclose(wsx.cov(wsx, ddof=1), sx.var(ddof=1), rtol=1e-14)
+    assert_allclose(wsx.corr(wsy), sx.corr(sy), rtol=1e-14)
 
 
 @pytest.fixture
