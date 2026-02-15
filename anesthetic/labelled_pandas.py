@@ -71,10 +71,13 @@ def ac(funcs, *args):
 
     for s, l in results:
         if s is not None:
-            if hasattr(s, "name"):
+            if hasattr(s, "name") and l is not None:
                 try:
-                    if l[s.name]:
-                        s.name = l[s.name]
+                    if isinstance(l, pd.Series):
+                        if s.name in l.index:
+                            s.name = l.loc[s.name]
+                    else:
+                        s.name = l.get(s.name, s.name)
                 except (TypeError, KeyError):
                     pass
             return s
