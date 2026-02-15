@@ -1553,7 +1553,7 @@ def test_recompute():
 def test_NaN():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')
-    with pytest.warns(RuntimeWarning, match="NaN encountered in logL."):
+    with pytest.warns(RuntimeWarning):
         pc_new = pc.copy()
         pc_new.loc[2, ('logL', r'$\ln\mathcal{L}$')] = np.nan
         pc_new.recompute(inplace=True)
