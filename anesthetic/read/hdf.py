@@ -47,16 +47,21 @@ class HDFStore(_HDFStore):  # noqa: D101
 
 def to_hdf(path_or_buf, key, value, mode="a", complevel=None, complib=None,
            *args, **kwargs):  # noqa: D103
-
     store = HDFStore(path_or_buf, mode=mode, complevel=complevel,
                      complib=complib)
     store.__fspath__ = lambda: store
-    return _to_hdf(store, key, value, *args, **kwargs)
+    try:
+        return _to_hdf(store, key, value, *args, **kwargs)
+    finally:
+        store.close()
 
 
 def read_hdf(path_or_buf, *args, **kwargs):  # noqa: D103
     store = HDFStore(path_or_buf)
-    return _read_hdf(store, *args, **kwargs)
+    try:
+        return _read_hdf(store, *args, **kwargs)
+    finally:
+        store.close()
 
 
 to_hdf.__doc__ = _to_hdf.__doc__
