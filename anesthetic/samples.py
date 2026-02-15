@@ -966,7 +966,7 @@ class NestedSamples(Samples):
         logX = self.logX(nsamples)
         logXp = logX.shift(1, fill_value=0)
         logXm = logX.shift(-1, fill_value=-np.inf)
-        logdX = np.log(1 - np.exp(logXm-logXp)) + logXp - np.log(2)
+        logdX = np.log1p(-np.exp(logXm-logXp)) + logXp - np.log(2)
         logdX.name = 'logdX'
 
         return logdX
