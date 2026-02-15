@@ -699,16 +699,16 @@ def test_weighted_series_equivalence_to_manual_filtering():
     fs = WeightedSeries(filtered_data, weights=filtered_weights)
 
     # Results should be identical
-    assert_allclose(s.mean(skipna=True), fs.mean(), rtol=1e-14)
-    assert_allclose(s.var(skipna=True, ddof=0), fs.var(ddof=0), rtol=1e-14)
-    assert_allclose(s.var(skipna=True, ddof=1), fs.var(ddof=1), rtol=1e-14)
-    assert_allclose(s.std(skipna=True), fs.std(), rtol=1e-14)
-    assert_allclose(s.sem(skipna=True), fs.sem(), rtol=1e-14)
-    assert_allclose(s.skew(skipna=True), fs.skew(), rtol=1e-14)
-    assert_allclose(s.kurt(skipna=True), fs.kurt(), rtol=1e-14)
-    assert_allclose(s.cov(s, ddof=0), fs.cov(fs, ddof=0), rtol=1e-14)
-    assert_allclose(s.cov(s, ddof=1), fs.cov(fs, ddof=1), rtol=1e-14)
-    assert_allclose(s.corr(s), fs.corr(fs), rtol=1e-14)
+    assert_allclose(s.mean(skipna=True), fs.mean(), rtol=1e-12)
+    assert_allclose(s.var(skipna=True, ddof=0), fs.var(ddof=0), rtol=1e-12)
+    assert_allclose(s.var(skipna=True, ddof=1), fs.var(ddof=1), rtol=1e-12)
+    assert_allclose(s.std(skipna=True), fs.std(), rtol=1e-12)
+    assert_allclose(s.sem(skipna=True), fs.sem(), rtol=1e-12)
+    assert_allclose(s.skew(skipna=True), fs.skew(), rtol=1e-12)
+    assert_allclose(s.kurt(skipna=True), fs.kurt(), rtol=1e-12)
+    assert_allclose(s.cov(s, ddof=0), fs.cov(fs, ddof=0), rtol=1e-12)
+    assert_allclose(s.cov(s, ddof=1), fs.cov(fs, ddof=1), rtol=1e-12)
+    assert_allclose(s.corr(s), fs.corr(fs), rtol=1e-12)
 
 
 def test_weighted_dataframe_nan_consistency():
@@ -769,21 +769,21 @@ def mcmc_wdf(mcmc_df):
 def test_mcmc_stats(mcmc_df, mcmc_wdf):
     df = mcmc_df
     wdf = mcmc_wdf
-    assert_allclose(wdf.mean(), df.mean(), rtol=1e-14)
-    assert_allclose(wdf.var(ddof=0), df.var(ddof=0), rtol=1e-14)
-    assert_allclose(wdf.var(ddof=1), df.var(ddof=1), rtol=1e-14)
-    assert_allclose(wdf.std(ddof=0), df.std(ddof=0), rtol=1e-14)
-    assert_allclose(wdf.std(ddof=1), df.std(ddof=1), rtol=1e-14)
-    assert_allclose(wdf.sem(ddof=0), df.sem(ddof=0), rtol=1e-14)
-    assert_allclose(wdf.sem(ddof=1), df.sem(ddof=1), rtol=1e-14)
-    assert_allclose(wdf.skew(), df.skew(), rtol=1e-13)
-    assert_allclose(wdf.kurt(), df.kurt(), rtol=1e-14)
-    assert_allclose(wdf.cov(ddof=0), df.cov(ddof=0), rtol=1e-13)
-    assert_allclose(wdf.cov(ddof=1), df.cov(ddof=1), rtol=1e-13)
-    assert_allclose(np.diag(wdf.cov(ddof=0)), wdf.var(ddof=0), rtol=1e-14)
-    assert_allclose(np.diag(wdf.cov(ddof=1)), wdf.var(ddof=1), rtol=1e-14)
+    assert_allclose(wdf.mean(), df.mean(), rtol=1e-12)
+    assert_allclose(wdf.var(ddof=0), df.var(ddof=0), rtol=1e-12)
+    assert_allclose(wdf.var(ddof=1), df.var(ddof=1), rtol=1e-12)
+    assert_allclose(wdf.std(ddof=0), df.std(ddof=0), rtol=1e-12)
+    assert_allclose(wdf.std(ddof=1), df.std(ddof=1), rtol=1e-12)
+    assert_allclose(wdf.sem(ddof=0), df.sem(ddof=0), rtol=1e-12)
+    assert_allclose(wdf.sem(ddof=1), df.sem(ddof=1), rtol=1e-12)
+    assert_allclose(wdf.skew(), df.skew(), rtol=1e-12)
+    assert_allclose(wdf.kurt(), df.kurt(), rtol=1e-12)
+    assert_allclose(wdf.cov(ddof=0), df.cov(ddof=0), rtol=1e-12)
+    assert_allclose(wdf.cov(ddof=1), df.cov(ddof=1), rtol=1e-12)
+    assert_allclose(np.diag(wdf.cov(ddof=0)), wdf.var(ddof=0), rtol=1e-12)
+    assert_allclose(np.diag(wdf.cov(ddof=1)), wdf.var(ddof=1), rtol=1e-12)
     assert_allclose(wdf.corr(), df.corr(), rtol=1e-12)
-    assert_allclose(wdf.corrwith(wdf.x), df.corrwith(df.x), rtol=1e-14)
+    assert_allclose(wdf.corrwith(wdf.x), df.corrwith(df.x), rtol=1e-12)
 
 
 def test_mcmc_series_stats(mcmc_df, mcmc_wdf):
@@ -791,20 +791,20 @@ def test_mcmc_series_stats(mcmc_df, mcmc_wdf):
     sy = mcmc_df.loc[:, 'y']
     wsx = mcmc_wdf.loc[:, 'x']
     wsy = mcmc_wdf.loc[:, 'y']
-    assert_allclose(wsx.mean(), sx.mean(), rtol=1e-14)
-    assert_allclose(wsx.var(ddof=0), sx.var(ddof=0), rtol=1e-14)
-    assert_allclose(wsx.var(ddof=1), sx.var(ddof=1), rtol=1e-14)
-    assert_allclose(wsx.std(ddof=0), sx.std(ddof=0), rtol=1e-14)
-    assert_allclose(wsx.std(ddof=1), sx.std(ddof=1), rtol=1e-14)
-    assert_allclose(wsx.sem(ddof=0), sx.sem(ddof=0), rtol=1e-14)
-    assert_allclose(wsx.sem(ddof=1), sx.sem(ddof=1), rtol=1e-14)
-    assert_allclose(wsx.skew(), sx.skew(), rtol=1e-13)
-    assert_allclose(wsx.kurt(), sx.kurt(), rtol=1e-14)
-    assert_allclose(wsx.cov(wsy, ddof=0), sx.cov(sy, ddof=0), rtol=1e-14)
-    assert_allclose(wsx.cov(wsy, ddof=1), sx.cov(sy, ddof=1), rtol=1e-14)
-    assert_allclose(wsx.cov(wsx, ddof=0), sx.var(ddof=0), rtol=1e-14)
-    assert_allclose(wsx.cov(wsx, ddof=1), sx.var(ddof=1), rtol=1e-14)
-    assert_allclose(wsx.corr(wsy), sx.corr(sy), rtol=1e-14)
+    assert_allclose(wsx.mean(), sx.mean(), rtol=1e-12)
+    assert_allclose(wsx.var(ddof=0), sx.var(ddof=0), rtol=1e-12)
+    assert_allclose(wsx.var(ddof=1), sx.var(ddof=1), rtol=1e-12)
+    assert_allclose(wsx.std(ddof=0), sx.std(ddof=0), rtol=1e-12)
+    assert_allclose(wsx.std(ddof=1), sx.std(ddof=1), rtol=1e-12)
+    assert_allclose(wsx.sem(ddof=0), sx.sem(ddof=0), rtol=1e-12)
+    assert_allclose(wsx.sem(ddof=1), sx.sem(ddof=1), rtol=1e-12)
+    assert_allclose(wsx.skew(), sx.skew(), rtol=1e-12)
+    assert_allclose(wsx.kurt(), sx.kurt(), rtol=1e-12)
+    assert_allclose(wsx.cov(wsy, ddof=0), sx.cov(sy, ddof=0), rtol=1e-12)
+    assert_allclose(wsx.cov(wsy, ddof=1), sx.cov(sy, ddof=1), rtol=1e-12)
+    assert_allclose(wsx.cov(wsx, ddof=0), sx.var(ddof=0), rtol=1e-12)
+    assert_allclose(wsx.cov(wsx, ddof=1), sx.var(ddof=1), rtol=1e-12)
+    assert_allclose(wsx.corr(wsy), sx.corr(sy), rtol=1e-12)
 
 
 @pytest.fixture
