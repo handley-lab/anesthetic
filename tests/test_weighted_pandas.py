@@ -174,14 +174,14 @@ def test_WeightedDataFrame_corrwith(frame):
     assert isinstance(correl, WeightedSeries)
     assert not correl.isweighted()
     assert_array_equal(correl.index, frame.columns)
-    assert_allclose(correl, frame.corr()['A'], atol=1e-2)
+    assert_allclose(correl, frame.corr()['A'], rtol=1e-10, atol=1e-10)
 
     correl = frame.corrwith(frame[['A', 'B']])
     assert isinstance(correl, WeightedSeries)
     assert not correl.isweighted()
     assert_array_equal(correl.index, frame.columns)
-    assert_allclose(correl['A'], 1, atol=1e-2)
-    assert_allclose(correl['B'], 1, atol=1e-2)
+    assert_allclose(correl['A'], 1, rtol=1e-12, atol=1e-12)
+    assert_allclose(correl['B'], 1, rtol=1e-12, atol=1e-12)
     assert np.isnan(correl['C'])
 
     unweighted = DataFrame(frame).droplevel('weights')
@@ -195,15 +195,10 @@ def test_WeightedDataFrame_corrwith(frame):
     with pytest.raises(ValueError):
         unweighted.corrwith(frame[['A', 'B']])
 
-    # For uniform weights, weighted corrwith should match unweighted with
-    # ddof=0.
-    # Since pandas corrwith doesn't have ddof parameter, we expect them to be
-    # similar but not identical due to the different variance calculations
-    # (weighted uses population variance).
     correl_1 = unweighted[:5].corrwith(unweighted[:4], axis=1)
     correl_2 = frame[:5].corrwith(frame[:4], axis=1)
     # Allow for difference due to ddof=0 vs ddof=1 approach
-    assert_allclose(correl_1.values[:-1], correl_2.values[:-1], rtol=0.3)
+    assert_allclose(correl_1.values[:-1], correl_2.values[:-1], rtol=1e-12)
     assert np.isnan(correl_1.values[-1]) and np.isnan(correl_2.values[-1])
     assert correl_2.isweighted()
 
@@ -213,11 +208,11 @@ def test_WeightedDataFrame_corrwith(frame):
 
     correl_4 = frame.T.corrwith(frame.T, axis=1)
     correl_5 = unweighted.T.corrwith(unweighted.T, axis=1)
-    assert_allclose(correl_4, correl_5)
+    assert_allclose(correl_4, correl_5, rtol=1e-12)
 
     frame.set_weights(None, inplace=True)
     assert_allclose(frame.corrwith(frame), unweighted.corrwith(unweighted),
-                    rtol=1e-4)
+                    rtol=1e-12)
 
 
 def test_WeightedDataFrame_median(frame):
