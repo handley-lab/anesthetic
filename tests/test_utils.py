@@ -2,7 +2,7 @@ import warnings
 import numpy as np
 import pytest
 from scipy import special as sp
-from numpy.testing import assert_array_equal
+from numpy.testing import (assert_array_equal, assert_allclose)
 from anesthetic import read_chains
 from pytest import approx
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
@@ -11,7 +11,7 @@ from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
                               insertion_p_value, compress_weights,
-                              neff)
+                              credibility_interval, sample_cdf, neff)
 
 
 def test_compress_weights():
@@ -222,6 +222,52 @@ def test_p_values_from_sample():
 
     ks_results = insertion_p_value(ns.insertion[nlive:-nlive], nlive, batch=1)
     assert ks_results['p-value'] > 0.05
+
+
+def test_sample_cdf():
+    normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
+    CDF = sample_cdf(normal_samples, inverse=False)
+    assert_allclose(CDF(-np.inf), 0)
+    assert_allclose(CDF(-100), 0)
+    assert_allclose(CDF(2), 0.5, atol=0.1)
+
+
+@pytest.mark.parametrize('method', ['iso-pdf', 'equal-tailed',
+                                    'lower-limit', 'upper-limit'])
+@pytest.mark.parametrize('return_covariance', [True, False])
+def test_credibility_interval(method, return_covariance):
+    np.random.seed(0)
+    normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
+    ci = credibility_interval(
+        normal_samples,
+        level=0.84 if 'limit' in method else 0.68,
+        method=method,
+        return_covariance=return_covariance,
+    )
+    if return_covariance:
+        ci, cov = ci
+        assert np.ndim(cov) == 0 if 'limit' in method else 2
+        assert np.all(np.abs(cov) < 1e-4)
+        assert np.all(np.abs(cov) > 1e-8)
+    if method in ['iso-pdf', 'equal-tailed']:
+        lower, upper = ci
+    else:
+        upper = ci if 'upper' in method else 2.1
+        lower = ci if 'lower' in method else 1.9
+    assert_allclose(lower, 1.9, atol=0.02)
+    assert_allclose(upper, 2.1, atol=0.02)
+
+
+def test_credibility_interval_exceptions():
+    samples = read_chains('./tests/example_data/pc')
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, level=1.1)
+    with pytest.raises(ValueError):
+        credibility_interval(samples[['x0', 'x1']])
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, weights=[1, 2, 3])
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, method='foo')
 
 
 @pytest.mark.parametrize('beta', ['entropy', 'kish', 0.5, 1, 2, np.inf,
