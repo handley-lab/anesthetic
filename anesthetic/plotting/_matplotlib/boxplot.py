@@ -87,7 +87,8 @@ def boxplot(data, *args, **kwds):
                 ax.tick_params(axis="both", labelsize=fontsize)
 
             # GH 45465: x/y are flipped when "vert" changes
-            is_vertical = kwds.get("vert", True)
+            is_vertical = (kwds.get('orientation', 'vertical') == 'vertical'
+                           and kwds.get("vert", True))
             ticks = ax.get_xticks() if is_vertical else ax.get_yticks()
             if len(ticks) != len(keys):
                 i, remainder = divmod(len(ticks), len(keys))
