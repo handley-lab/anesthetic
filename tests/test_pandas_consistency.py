@@ -29,11 +29,18 @@ class TestPandasConsistency:
         ('sem', 1),
         ('skew', None),
         ('kurt', None),
+        ('cov', None),
+        ('corr', None),
     ])
     @pytest.mark.parametrize('skipna', [True, False])
     @pytest.mark.parametrize('weight_type', ['frequency', 'reliability'])
     def test_series_consistency(self, data, method, ddof, skipna, weight_type):
         """Test WeightedSeries consistency with pandas Series."""
+        if method in ['cov', 'corr'] and (np.isfinite(data).sum() <= 1 or
+                                          np.nanvar(data) == 0):
+            warnings.filterwarnings(action='ignore', category=RuntimeWarning)
+        else:
+            warnings.resetwarnings()
         ps = pd.Series(data)
         if weight_type == 'frequency':
             weights = np.ones_like(data, dtype=int)
@@ -41,20 +48,33 @@ class TestPandasConsistency:
         else:
             weights = np.ones_like(data, dtype=float) / len(data)
         ws = WeightedSeries(data, weights=weights)  # equally weighted
+        ds = ws.drop_weights()
+        assert ws.isweighted() is True
+        assert ds.isweighted() is False
 
         # Get results
         if ddof is not None:
             pandas_result = getattr(ps, method)(skipna=skipna, ddof=ddof)
             weight_result = getattr(ws, method)(skipna=skipna, ddof=ddof)
+            droppd_result = getattr(ds, method)(skipna=skipna, ddof=ddof)
+        elif method in ['cov', 'corr']:
+            pandas_result = getattr(ps, method)(ps)
+            weight_result = getattr(ws, method)(ws)
+            droppd_result = getattr(ds, method)(ds)
         else:
             pandas_result = getattr(ps, method)(skipna=skipna)
             weight_result = getattr(ws, method)(skipna=skipna)
+            droppd_result = getattr(ds, method)(skipna=skipna)
 
         # Check consistency
         assert np.isnan(weight_result) is np.isnan(pandas_result)
-        assert weight_result == pytest.approx(pandas_result, rel=1e-10,
+        assert np.isnan(droppd_result) is np.isnan(pandas_result)
+        assert weight_result == pytest.approx(pandas_result, rel=1e-12,
+                                              nan_ok=True)
+        assert droppd_result == pytest.approx(pandas_result, rel=1e-12,
                                               nan_ok=True)
         assert type(weight_result) is type(pandas_result)
+        assert type(droppd_result) is type(pandas_result)
 
     @pytest.mark.parametrize('data', [
         np.array([[1.0, 2.0, 3.0],
@@ -93,10 +113,9 @@ class TestPandasConsistency:
         ('sem', 1, True), ('sem', 1, False),
         # ('cov', 0, None),  # not testing because of pandas bug: issue #45814
         ('cov', 1, None),
-        ('skew', None, True),
-        ('skew', None, False),
-        ('kurt', None, True),
-        ('kurt', None, False),
+        ('corr', None, None),
+        ('skew', None, True), ('skew', None, False),
+        ('kurt', None, True), ('kurt', None, False),
     ])
     @pytest.mark.parametrize('axis', [0, 1])
     @pytest.mark.parametrize('weight_type', ['frequency', 'reliability'])
@@ -120,17 +139,24 @@ class TestPandasConsistency:
         wdf = WeightedDataFrame(data, columns=columns, weights=weights)
 
         # Get results
-        if skipna is None:
+        if skipna is None and ddof is None:
+            # for corr
+            pandas_result = getattr(pdf, method)()
+            weight_result = getattr(wdf, method)()
+        elif skipna is None:
+            # for cov
             pandas_result = getattr(pdf, method)(ddof=ddof)
             with pytest.raises(TypeError):
                 getattr(wdf, method)(ddof=ddof, skipna=True, axis=1)
             weight_result = getattr(wdf, method)(ddof=ddof)
         elif ddof is not None:
+            # for var, std, sem
             pandas_result = getattr(pdf, method)(skipna=skipna, axis=axis,
                                                  ddof=ddof)
             weight_result = getattr(wdf, method)(skipna=skipna, axis=axis,
                                                  ddof=ddof)
         else:
+            # for mean, skew, kurt
             pandas_result = getattr(pdf, method)(skipna=skipna, axis=axis)
             weight_result = getattr(wdf, method)(skipna=skipna, axis=axis)
 
