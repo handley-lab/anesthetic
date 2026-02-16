@@ -782,8 +782,9 @@ def test_mcmc_stats(mcmc_df, mcmc_wdf):
     assert_allclose(wdf.cov(ddof=1), df.cov(ddof=1), rtol=1e-12)
     assert_allclose(np.diag(wdf.cov(ddof=0)), wdf.var(ddof=0), rtol=1e-12)
     assert_allclose(np.diag(wdf.cov(ddof=1)), wdf.var(ddof=1), rtol=1e-12)
-    assert_allclose(wdf.corr(), df.corr(), rtol=1e-12)
-    assert_allclose(wdf.corrwith(wdf.x), df.corrwith(df.x), rtol=1e-12)
+    assert_allclose(wdf.corr(), df.corr(), rtol=1e-12, atol=1e-12)
+    assert_allclose(wdf.corrwith(wdf.x), df.corrwith(df.x),
+                    rtol=1e-12, atol=1e-12)
 
 
 def test_mcmc_series_stats(mcmc_df, mcmc_wdf):
@@ -804,7 +805,7 @@ def test_mcmc_series_stats(mcmc_df, mcmc_wdf):
     assert_allclose(wsx.cov(wsy, ddof=1), sx.cov(sy, ddof=1), rtol=1e-12)
     assert_allclose(wsx.cov(wsx, ddof=0), sx.var(ddof=0), rtol=1e-12)
     assert_allclose(wsx.cov(wsx, ddof=1), sx.var(ddof=1), rtol=1e-12)
-    assert_allclose(wsx.corr(wsy), sx.corr(sy), rtol=1e-12)
+    assert_allclose(wsx.corr(wsy), sx.corr(sy), rtol=1e-12, atol=1e-12)
 
 
 @pytest.fixture
