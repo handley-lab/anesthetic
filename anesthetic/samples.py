@@ -990,11 +990,18 @@ class NestedSamples(Samples):
             beta = self.beta
         logL = self.logL
         if np.isscalar(beta):
-            betalogL = beta * logL
+            if beta == 0:
+                betalogL = logL._constructor(np.zeros_like(logL),
+                                             index=logL.index)
+            else:
+                betalogL = beta * logL
             betalogL.name = 'betalogL'
         else:
-            betalogL = logL._constructor_expanddim(np.outer(self.logL, beta),
-                                                   self.index, columns=beta)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                betalogL = logL._constructor_expanddim(
+                    np.outer(self.logL, beta), self.index, columns=beta)
+                if 0.0 in betalogL.columns:
+                    betalogL.loc[:, 0.0] = 0.0
             betalogL.columns.name = 'beta'
         return betalogL
 
@@ -1187,6 +1194,47 @@ class NestedSamples(Samples):
         else:
             logL = float(self.logL[logL])
         return logL
+
+    def beta_max(self):
+        """Maximum numerically stable beta value.
+
+        Returns the beta value where the ratio between the maximum and
+        second-maximum likelihood weights equals the maximum representable
+        floating-point number. Beyond this beta, numerical precision is lost.
+
+        Returns
+        -------
+        beta_max : float
+            Maximum safe beta value based on floating-point precision
+        """
+        logL_sorted = np.sort(self.logL.values)[::-1]  # Descending order
+        logL_max = logL_sorted[0]
+        logL_next_max = logL_sorted[1] if len(logL_sorted) > 1 else logL_max
+
+        delta_logL = logL_max - logL_next_max
+        if delta_logL > 0:
+            finfo = np.finfo(np.float64)
+            return np.log(finfo.max) / delta_logL
+        else:
+            return np.inf
+
+    def beta_min(self):
+        """Minimum meaningful beta value.
+
+        Returns the beta value where likelihood weight differences become
+        comparable to machine precision. Below this beta, all weights are
+        effectively equal (uniform distribution).
+
+        Returns
+        -------
+        beta_min : float
+            Minimum meaningful beta value based on floating-point precision
+        """
+        logL_max = self.logL.max()
+        logL_min = self.logL.min()
+        logL_range = logL_max - logL_min
+        finfo = np.finfo(np.float64)
+        return 0 if not logL_range > 0 else finfo.eps / logL_range
 
     def live_points(self, logL=None):
         """Get the live points within a contour.

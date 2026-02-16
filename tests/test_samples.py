@@ -1215,6 +1215,60 @@ def test_beta_with_logL_infinities():
     assert (ns.logL == -np.inf).sum() == 0
 
 
+def test_beta_zero_nan_handling():
+    """Test that beta=0 with logL=-inf doesn't produce NaN values.
+
+    Addresses issue where logL=-inf * beta=0 = NaN, which should be 0. Tests
+    both scalar beta=0 and array cases with beta=0 at different positions.
+    """
+    ns = read_chains("./tests/example_data/pc")
+
+    # Create test data with -inf logL values
+    test_ns = ns.iloc[:100].copy()
+    test_ns.loc[:10, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
+    test_ns.loc[50:60, ('logL', r'$\ln\mathcal{L}$')] = -np.inf
+
+    # Test scalar beta=0 case
+    beta_logL_scalar = test_ns._betalogL(beta=0.0)
+    assert not beta_logL_scalar.isna().any(), "beta=0 should not cause NaN"
+    assert_array_equal(beta_logL_scalar, 0.0)
+
+    # Test array with beta=0 at first position
+    beta_array_first = np.array([0.0, 0.5, 1.0])
+    beta_logL_first = test_ns._betalogL(beta=beta_array_first)
+    assert not beta_logL_first[0.0].isna().any(), "beta=0 should not cause NaN"
+    assert_array_equal(beta_logL_first[0.0], 0.0)
+
+    # Test array with beta=0 at middle position
+    beta_array_mid = np.array([0.5, 0.0, 1.0])
+    beta_logL_mid = test_ns._betalogL(beta=beta_array_mid)
+    assert not beta_logL_mid[0.0].isna().any(), "beta=0 should not cause NaN"
+    assert_array_equal(beta_logL_mid[0.0], 0.0)
+
+    # Test array with beta=0 at last position (as requested by Lukas)
+    beta_array_last = np.array([0.5, 1.0, 0.0])
+    beta_logL_last = test_ns._betalogL(beta=beta_array_last)
+    assert not beta_logL_last[0.0].isna().any(), "beta=0 should not cause NaN"
+    assert_array_equal(beta_logL_last[0.0], 0.0)
+
+    # Test array without zeros to ensure other functionality still works
+    beta_array_no_zero = np.array([0.1, 0.5, 1.0])
+    beta_logL_no_zero = test_ns._betalogL(beta=beta_array_no_zero)
+    assert 0.0 not in beta_logL_no_zero.columns
+
+    # Verify other beta values still work correctly (not all zeros)
+    finite_mask = np.isfinite(test_ns.logL)
+    inf_mask = ~finite_mask
+
+    # For finite logL, beta=0.5 should give 0.5 * logL
+    expected_half = test_ns.logL * 0.5
+    assert_array_almost_equal(beta_logL_first[0.5][finite_mask],
+                              expected_half[finite_mask])
+
+    # For -inf logL, beta=0.5 should give -inf (0.5 * -inf = -inf)
+    assert_array_equal(beta_logL_first[0.5][inf_mask], -np.inf)
+
+
 def test_prior():
     ns = read_chains("./tests/example_data/pc")
     prior = ns.prior()
