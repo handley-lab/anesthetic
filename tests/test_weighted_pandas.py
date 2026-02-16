@@ -385,17 +385,39 @@ def test_WeightedDataFrame_neff(frame):
 
 
 def test_WeightedDataFrame_compress(frame):
+    # length tests
+    assert len(frame.compress(1000)) == 1000
     assert_allclose(frame.neff(), len(frame.compress()), rtol=1e-2)
-    for i in np.logspace(3, 5, 10):
-        assert_allclose(i, len(frame.compress(i)), rtol=1e-1)
+    assert_allclose(1000.0, len(frame.compress(1000.0)), rtol=1e-1)
     unit_weights = frame.compress('equal')
     assert len(np.unique(unit_weights.index)) == len(unit_weights)
+
+    # ensure reproducibility
     assert_array_equal(frame.compress(), frame.compress())
-    assert_array_equal(frame.compress(i), frame.compress(i))
+    assert_array_equal(frame.compress(1000), frame.compress(1000))
     assert_array_equal(frame.compress('equal'), frame.compress('equal'))
 
     assert_array_equal(frame.T.compress().T, frame)
     assert_array_equal(frame.T.compress(axis=1).T, frame.compress())
+
+
+@pytest.mark.parametrize('ncompress, expected', [(100, 100),
+                                                 (1000, 1000),
+                                                 (True, 1000),
+                                                 (False, 1000),
+                                                 ('equal', 1000)])
+def test_unweighted_compress(frame, ncompress, expected):
+    """Test compression works for unweighted `WeightedDataFrames`."""
+    # Create unweighted data
+    np.random.seed(42)
+    frame = frame[:1000].drop_weights()
+    assert not frame.isweighted()
+
+    # Test compression
+    compressed = frame.compress(ncompress)
+    assert not compressed.isweighted()
+    assert len(compressed) == expected
+    assert list(compressed.columns) == list(frame.columns)
 
 
 def test_WeightedDataFrame_nan(frame):
@@ -566,9 +588,9 @@ def test_WeightedSeries_neff(series):
 
 
 def test_WeightedSeries_compress(series):
+    assert len(series.compress(1000)) == 1000
     assert_allclose(series.neff(), len(series.compress()), rtol=1e-2)
-    for i in np.logspace(3, 5, 10):
-        assert_allclose(i, len(series.compress(i)), rtol=1e-1)
+    assert_allclose(1000.0, len(series.compress(1000.0)), rtol=1e-1)
     unit_weights = series.compress('equal')
     assert len(np.unique(unit_weights.index)) == len(unit_weights)
 

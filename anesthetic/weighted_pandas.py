@@ -178,7 +178,7 @@ class _WeightedObject(object):
         if self.isweighted(axis):
             return self._get_axis(axis).get_level_values('weights').to_numpy()
         else:
-            return np.ones_like(self._get_axis(axis))
+            return np.ones_like(self._get_axis(axis), dtype=int)
 
     def drop_weights(self, axis=0):
         """Drop weights."""
@@ -378,7 +378,7 @@ class WeightedSeries(_WeightedObject, Series):
 
         Parameters
         ----------
-        ncompress : int, str, default=True
+        ncompress : int, float, str, default=True
             Degree of compression.
 
             * If ``True`` (default): reduce to the channel capacity
@@ -583,7 +583,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
         Parameters
         ----------
-        ncompress : int, str, default=True
+        ncompress : int, float, str, default=True
             Degree of compression.
 
             * If ``True`` (default): reduce to the channel capacity
@@ -596,17 +596,17 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
               with ``beta=ncompress``.
 
         """
-        if self.isweighted(axis):
-            i = compress_weights(self.get_weights(axis), self._rand(axis),
-                                 ncompress)
-            data = np.repeat(self.to_numpy(), i, axis=axis)
-            i = self.drop_weights(axis)._get_axis(axis).repeat(i)
-            df = self._constructor(data=data)
-            df = df.set_axis(i, axis=axis, copy=False)
-            df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
-            return df
-        else:
+        if (not self.isweighted(axis) and isinstance(ncompress, (bool, str))
+                or ncompress is False):
             return self
+        i = compress_weights(self.get_weights(axis), self._rand(axis),
+                             ncompress)
+        data = np.repeat(self.to_numpy(), i, axis=axis)
+        i = self.drop_weights(axis)._get_axis(axis).repeat(i)
+        df = self._constructor(data=data)
+        df = df.set_axis(i, axis=axis, copy=False)
+        df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
+        return df
 
     def sample(self, *args, **kwargs):  # noqa: D102
         sig = signature(DataFrame.sample)
