@@ -6,6 +6,7 @@ from anesthetic.utils import neff
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgba
 from pandas.plotting import scatter_matrix, bootstrap_plot
@@ -858,7 +859,10 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.boxplot(ylabel='ylabel', ax=ax)
 
     fig, ax = plt.subplots()
-    mcmc_wdf.boxplot(vert=False, ax=ax)
+    if version.parse(matplotlib.__version__) >= version.parse('3.10.0'):
+        mcmc_wdf.boxplot(orientation='horizontal', ax=ax)
+    else:
+        mcmc_wdf.boxplot(vert=False, ax=ax)
 
     fig, ax = plt.subplots()
     mcmc_wdf.boxplot(fontsize=30, ax=ax)

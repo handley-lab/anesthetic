@@ -3,16 +3,17 @@
 import warnings
 from inspect import signature
 import numpy as np
+from numpy.ma import masked_array
 from pandas import Series, DataFrame, concat, MultiIndex
 from pandas.core.groupby import GroupBy, SeriesGroupBy, DataFrameGroupBy, ops
 from pandas._libs import lib
 from pandas._libs.lib import no_default
 from pandas.util._exceptions import find_stack_level
 from pandas.util import hash_pandas_object
-from numpy.ma import masked_array
-from anesthetic.utils import (compress_weights, neff, quantile,
-                              temporary_seed, adjust_docstrings)
 from pandas.core.dtypes.missing import notna
+from anesthetic.utils import (compress_weights, neff, quantile,
+                              temporary_seed, adjust_docstrings,
+                              credibility_interval)
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plotting import PlotAccessor
 import pandas as pd
@@ -371,6 +372,55 @@ class WeightedSeries(_WeightedObject, Series):
     def sample(self, *args, **kwargs):  # noqa: D102
         return super().sample(weights=self.get_weights(), *args, **kwargs)
 
+    def credibility_interval(self, level=0.68, method="iso-pdf",
+                             return_covariance=False, nsamples=12):
+        """Compute the credibility interval of the weighted samples.
+
+        Based on linear interpolation of the cumulative density function, thus
+        expect discretisation errors on the scale of distances between samples.
+
+        https://github.com/Stefan-Heimersheim/fastCI#readme
+
+        Parameters
+        ----------
+        level : float, default=0.68
+            Credibility level (probability, <1).
+        method : str, default='iso-pdf'
+            Which definition of interval to use:
+
+            * ``'iso-pdf'``: Calculate iso probability density interval with
+              the same probability density at each end. Also known as
+              waterline-interval or highest average posterior density interval.
+              This is only accurate if the distribution is sufficiently
+              uni-modal.
+            * ``'lower-limit'``/``'upper-limit'``: Lower/upper limit. One-sided
+              limits for which ``level`` fraction of the (equally weighted)
+              samples lie above/below the limit.
+            * ``'equal-tailed'``: Equal-tailed interval with the same fraction
+              of (equally weighted) samples below and above the interval
+              region.
+
+        return_covariance: bool, default=False
+            Return the covariance of the sampled limits, in addition to the
+            mean
+        nsamples : int, default=12
+            Number of CDF samples to improve `mean` and `std` estimate.
+
+        Returns
+        -------
+        limit(s) : float, array, or tuple of floats or arrays
+            Returns the credibility interval boundaries of the Series.
+            By default, returns the mean over ``nsamples`` samples, which is
+            either two numbers (``method='iso-pdf'``/``'equal-tailed'``) or
+            one number (``method='lower-limit'``/``'upper-limit'``). If
+            ``return_covariance=True``, returns a tuple (mean(s), covariance)
+            where covariance is the covariance over the sampled limits.
+        """
+        return credibility_interval(self, weights=self.get_weights(),
+                                    level=level, method=method,
+                                    return_covariance=return_covariance,
+                                    nsamples=nsamples)
+
     @property
     def _constructor(self):
         return WeightedSeries
@@ -624,6 +674,78 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                                   *args, **kwargs)
         else:
             return super().sample(*args, **kwargs)
+
+    def credibility_interval(self, level=0.68, method="iso-pdf",
+                             return_covariance=False, nsamples=12):
+        """Compute the credibility interval of the weighted samples.
+
+        Based on linear interpolation of the cumulative density function, thus
+        expect discretisation errors on the scale of distances between samples.
+
+        https://github.com/Stefan-Heimersheim/fastCI#readme
+
+        Parameters
+        ----------
+        level : float, default=0.68
+            Credibility level (probability, <1).
+        method : str, default='iso-pdf'
+            Which definition of interval to use:
+
+            * ``'iso-pdf'``: Calculate iso probability density interval with
+              the same probability density at each end. Also known as
+              waterline-interval or highest average posterior density interval.
+              This is only accurate if the distribution is sufficiently
+              uni-modal.
+            * ``'lower-limit'``/``'upper-limit'``: Lower/upper limit. One-sided
+              limits for which ``level`` fraction of the (equally weighted)
+              samples lie above/below the limit.
+            * ``'equal-tailed'``: Equal-tailed interval with the same fraction
+              of (equally weighted) samples below and above the interval
+              region.
+
+        return_covariance: bool, default=False
+            Return the covariance of the sampled limits, in addition to the
+            mean
+        nsamples : int, default=12
+            Number of CDF samples to improve `mean` and `std` estimate.
+
+        Returns
+        -------
+        limit(s) : float, array, or tuple of floats or arrays
+            Returns the credibility interval boundaries for each column.
+            By default, returns the mean over ``nsamples`` samples, which is
+            either two numbers (``method='iso-pdf'``/``'equal-tailed'``) or
+            one number (``method='lower-limit'``/``'upper-limit'``). If
+            ``return_covariance=True``, returns a tuple (means, covariances)
+            where covariances are the covariance over the sampled limits for
+            each column.
+        """
+        if 'lower' in method:
+            limits = ['lower']
+        elif 'upper' in method:
+            limits = ['upper']
+        else:
+            limits = ['lower', 'upper']
+        cis = [credibility_interval(self[col], weights=self.get_weights(),
+                                    level=level, method=method,
+                                    return_covariance=return_covariance,
+                                    nsamples=nsamples) for col in self.columns]
+        if return_covariance:
+            cis, covs = zip(*cis)
+            mulidx = MultiIndex.from_product([
+                self.columns.get_level_values(level=0),
+                limits
+            ])
+            ncol = len(self.columns)
+            nlim = len(limits)
+            covs = np.asarray(covs).reshape(nlim*ncol, nlim).T
+            covs = DataFrame(covs, index=limits, columns=mulidx)
+        cis = np.atleast_2d(cis) if 'limit' in method else np.asarray(cis).T
+        cis = DataFrame(data=cis, index=limits, columns=self.columns)
+        if return_covariance:
+            return cis, covs
+        else:
+            return cis
 
     @property
     def _constructor_sliced(self):
