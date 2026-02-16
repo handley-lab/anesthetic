@@ -362,11 +362,11 @@ class WeightedSeries(_WeightedObject, Series):
         V1 = w.sum()
         if np.issubdtype(w.dtype, np.integer) and V1 > 1:
             # frequency weights
-            N = np.ma.filled(V1, np.nan)
+            n = np.ma.filled(V1, np.nan)
         else:
             # reliability weights
-            N = np.ma.filled(V1**2 / (w**2).sum(), np.nan)
-        return np.sqrt(self.var(skipna=skipna, ddof=ddof, **kwargs) / N)
+            n = np.ma.filled(V1**2 / (w**2).sum(), np.nan)
+        return np.sqrt(self.var(skipna=skipna, ddof=ddof, **kwargs) / n)
 
     def quantile(self, q=0.5, interpolation='linear'):  # noqa: D102
         if self.get_weights().sum() == 0:
@@ -547,11 +547,11 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             V1 = w.sum(axis=axis)
             if np.issubdtype(w.dtype, np.integer) and np.all(V1 > 1):
                 # frequency weights
-                N = V1
+                n = V1
             else:
                 # reliability weights
-                N = V1**2 / (w**2).sum(axis=axis)
-            return np.sqrt(self.var(axis=axis, skipna=skipna, **kwargs) / N)
+                n = V1**2 / (w**2).sum(axis=axis)
+            return np.sqrt(self.var(axis=axis, skipna=skipna, **kwargs) / n)
         return self._weighted_stat(sem, axis, skipna, **kwargs)
 
     def quantile(self, q=0.5, axis=0, numeric_only=None,

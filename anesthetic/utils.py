@@ -155,9 +155,9 @@ def var_unbiased(a, w, axis=0, ddof=1):
     """Compute the unbiased variance from weighted samples.
 
     Uses the standard reliability-weight correction
-        var = S2 / (V1 - V2/V1)   (for ddof=1),
+        var = s2 / (v1 - v2/v1)   (for ddof=1),
     and supports the frequency-weight case by using
-        var = S2 / (V1 - ddof)    when w is integer and V1 > 1.
+        var = s2 / (v1 - ddof)    when w is integer and v1 > 1.
 
     Parameters
     ----------
@@ -179,17 +179,17 @@ def var_unbiased(a, w, axis=0, ddof=1):
 
     """
     mu = np.ma.filled(np.average(a, weights=w, axis=axis), np.nan)
-    V1 = np.ma.filled(w.sum(axis=axis), 0.0)
+    v1 = np.ma.filled(w.sum(axis=axis), 0.0)
     if np.issubdtype(w.dtype, np.integer):
-        V2 = V1
+        v2 = v1
     else:
         # ---- reliability weights branch ----
-        V2 = np.ma.filled((w ** 2).sum(axis=axis), 0.0)
-    S2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
+        v2 = np.ma.filled((w ** 2).sum(axis=axis), 0.0)
+    s2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
 
-    invalid = (V1 == 0) | (V1**2 - ddof*V2 == 0) | np.isnan(mu) | np.isnan(S2)
-    nans = np.full_like(V1, np.nan, dtype=float)
-    var = np.divide(V1 * S2, V1**2 - ddof*V2, out=nans.copy(), where=~invalid)
+    invalid = (v1 == 0) | (v1**2 - ddof*v2 == 0) | np.isnan(mu) | np.isnan(s2)
+    nans = np.full_like(v1, np.nan, dtype=float)
+    var = np.divide(v1 * s2, v1**2 - ddof*v2, out=nans.copy(), where=~invalid)
     return var if np.ndim(var) > 0 else np.float64(var)
 
 
@@ -282,24 +282,24 @@ def skew_unbiased(a, w, axis=0):
 
     """
     mu = np.ma.filled(np.average(a, weights=w, axis=axis), np.nan)
-    V1 = np.ma.filled(w.sum(axis=axis), 0.0)
-    V2 = np.ma.filled((w**2).sum(axis=axis), 0.0)
-    V3 = np.ma.filled((w**3).sum(axis=axis), 0.0)
-    S2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
-    S3 = np.ma.filled((w * (a - mu)**3).sum(axis=axis), 0.0)
+    v1 = np.ma.filled(w.sum(axis=axis), 0.0)
+    v2 = np.ma.filled((w**2).sum(axis=axis), 0.0)
+    v3 = np.ma.filled((w**3).sum(axis=axis), 0.0)
+    s2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
+    s3 = np.ma.filled((w * (a - mu)**3).sum(axis=axis), 0.0)
 
-    nans = np.full_like(V1, np.nan, dtype=float)
+    nans = np.full_like(v1, np.nan, dtype=float)
 
     # ---- frequency weights branch ----
     if np.issubdtype(w.dtype, np.integer):
-        N = V1
-        if np.all(N <= 2):
+        n = v1
+        if np.all(n <= 2):
             return np.nan
-        invalid = (N <= 2) | np.isnan(mu) | np.isnan(S2) | np.isnan(S3)
+        invalid = (n <= 2) | np.isnan(mu) | np.isnan(s2) | np.isnan(s3)
 
-        # pandas convention: zero variance (S2==0) => skew = 0
-        degenerate = (~invalid) & (S2 == 0)
-        skew = np.divide(N * (N-1)**0.5 * S3, (N-2) * S2**1.5,
+        # pandas convention: zero variance (s2==0) => skew = 0
+        degenerate = (~invalid) & (s2 == 0)
+        skew = np.divide(n * (n-1)**0.5 * s3, (n-2) * s2**1.5,
                          out=nans.copy(), where=(~invalid) & (~degenerate))
         skew = np.where(degenerate, 0.0, skew)
         return skew if np.ndim(skew) > 0 else np.float64(skew)
@@ -307,15 +307,15 @@ def skew_unbiased(a, w, axis=0):
     # ---- reliability weights branch (Rimoldini) ----
     if a.shape[axis] <= 2:
         return np.nan
-    invalid = ((V1 == 0) | (V1**2 - V2 == 0) | (V1**3 - 3*V1*V2 + 2*V3 == 0)
-               | np.isnan(mu) | np.isnan(S2) | np.isnan(S3))
-    K2 = np.divide(V1 * S2, V1**2 - V2, out=nans.copy(), where=~invalid)
-    K3 = np.divide(V1**2 * S3, V1**3 - 3*V1*V2 + 2*V3,
+    invalid = ((v1 == 0) | (v1**2 - v2 == 0) | (v1**3 - 3*v1*v2 + 2*v3 == 0)
+               | np.isnan(mu) | np.isnan(s2) | np.isnan(s3))
+    k2 = np.divide(v1 * s2, v1**2 - v2, out=nans.copy(), where=~invalid)
+    k3 = np.divide(v1**2 * s3, v1**3 - 3*v1*v2 + 2*v3,
                    out=nans.copy(), where=~invalid)
 
-    # pandas convention: zero variance (K2==0) => skew = 0
-    degenerate = (~invalid) & (K2 == 0)
-    skew = np.divide(K3, K2**1.5, out=nans.copy(),
+    # pandas convention: zero variance (k2==0) => skew = 0
+    degenerate = (~invalid) & (k2 == 0)
+    skew = np.divide(k3, k2**1.5, out=nans.copy(),
                      where=(~invalid) & (~degenerate))
     skew = np.where(degenerate, 0.0, skew)
     return skew if np.ndim(skew) > 0 else np.float64(skew)
@@ -345,25 +345,25 @@ def kurt_unbiased(a, w, axis=0):
 
     """
     mu = np.ma.filled(np.average(a, weights=w, axis=axis), np.nan)
-    V1 = np.ma.filled(w.sum(axis=axis), 0.0)
-    V2 = np.ma.filled((w**2).sum(axis=axis), 0.0)
-    V3 = np.ma.filled((w**3).sum(axis=axis), 0.0)
-    V4 = np.ma.filled((w**4).sum(axis=axis), 0.0)
-    S2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
-    S4 = np.ma.filled((w * (a - mu)**4).sum(axis=axis), 0.0)
+    v1 = np.ma.filled(w.sum(axis=axis), 0.0)
+    v2 = np.ma.filled((w**2).sum(axis=axis), 0.0)
+    v3 = np.ma.filled((w**3).sum(axis=axis), 0.0)
+    v4 = np.ma.filled((w**4).sum(axis=axis), 0.0)
+    s2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
+    s4 = np.ma.filled((w * (a - mu)**4).sum(axis=axis), 0.0)
 
-    nans = np.full_like(V1, np.nan, dtype=float)
+    nans = np.full_like(v1, np.nan, dtype=float)
 
     # ---- frequency weights branch ----
     if np.issubdtype(w.dtype, np.integer):
-        N = V1
-        if np.all(N <= 3):
+        n = v1
+        if np.all(n <= 3):
             return np.nan
-        invalid = (N <= 3) | np.isnan(mu) | np.isnan(S2) | np.isnan(S4)
+        invalid = (n <= 3) | np.isnan(mu) | np.isnan(s2) | np.isnan(s4)
 
-        # pandas convention: zero variance (S2==0) => kurt = 0
-        degenerate = (~invalid) & (S2 == 0)
-        kurt = np.divide((N+1)*N*(N-1)*S4-3*(N-1)**2*S2**2, (N-2)*(N-3)*S2**2,
+        # pandas convention: zero variance (s2==0) => kurt = 0
+        degenerate = (~invalid) & (s2 == 0)
+        kurt = np.divide((n+1)*n*(n-1)*s4-3*(n-1)**2*s2**2, (n-2)*(n-3)*s2**2,
                          out=nans.copy(), where=(~invalid) & (~degenerate))
         kurt = np.where(degenerate, 0.0, kurt)
         return kurt if np.ndim(kurt) > 0 else np.float64(kurt)
@@ -372,20 +372,20 @@ def kurt_unbiased(a, w, axis=0):
     if a.shape[axis] <= 3:
         return np.nan
 
-    den2 = V1**2-V2
-    den4 = (V1**2 - V2) * (V1**4 - 6*V1**2*V2 + 8*V1*V3 + 3*V2**2 - 6*V4)
-    num41 = V1 * (V1**4 - 4*V1*V3 + 3*V2**2)
-    num42 = 3 * (V1**4 - 2*V1**2*V2 + 4*V1*V3 - 3*V2**2)
+    den2 = v1**2-v2
+    den4 = (v1**2 - v2) * (v1**4 - 6*v1**2*v2 + 8*v1*v3 + 3*v2**2 - 6*v4)
+    num41 = v1 * (v1**4 - 4*v1*v3 + 3*v2**2)
+    num42 = 3 * (v1**4 - 2*v1**2*v2 + 4*v1*v3 - 3*v2**2)
 
-    invalid = ((V1 == 0) | (den2 == 0) | (den4 == 0)
-               | np.isnan(mu) | np.isnan(S2) | np.isnan(S4))
-    K2 = np.divide(V1 * S2, den2, out=nans.copy(), where=~invalid)
-    K4 = np.divide(num41*S4-num42*S2**2, den4, out=nans.copy(), where=~invalid)
+    invalid = ((v1 == 0) | (den2 == 0) | (den4 == 0)
+               | np.isnan(mu) | np.isnan(s2) | np.isnan(s4))
+    k2 = np.divide(v1 * s2, den2, out=nans.copy(), where=~invalid)
+    k4 = np.divide(num41*s4-num42*s2**2, den4, out=nans.copy(), where=~invalid)
 
-    # pandas convention: zero variance (K2==0) => kurt = 0
-    degenerate = (~invalid) & (K2 == 0)
-    invalid = invalid | (K2 == 0)
-    kurt = np.divide(K4, K2**2, out=nans.copy(), where=~invalid)
+    # pandas convention: zero variance (k2==0) => kurt = 0
+    degenerate = (~invalid) & (k2 == 0)
+    invalid = invalid | (k2 == 0)
+    kurt = np.divide(k4, k2**2, out=nans.copy(), where=~invalid)
     kurt = np.where(degenerate, 0.0, kurt)
     return kurt if np.ndim(kurt) > 0 else np.float64(kurt)
 
