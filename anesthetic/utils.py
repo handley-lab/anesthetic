@@ -3,6 +3,7 @@ import numpy as np
 import pandas
 from scipy import special
 from scipy.interpolate import interp1d
+from scipy.optimize import minimize_scalar
 from scipy.stats import kstwobign, entropy
 from matplotlib.tri import Triangulation
 import contextlib
@@ -397,6 +398,128 @@ def kurt_unbiased(a, w, axis=0):
     kurt = np.divide(k4, k2**2, out=nans.copy(), where=~invalid)
     kurt = np.where(degenerate, 0.0, kurt)
     return kurt if np.ndim(kurt) > 0 else np.float64(kurt)
+def sample_cdf(samples, inverse=False, interpolation='linear'):
+    """Sample the empirical cdf for a 1d array."""
+    samples = np.sort(samples)
+    ngaps = len(samples)-1
+    gaps = np.random.dirichlet(np.ones(ngaps))
+    cdf = np.array([0, *np.cumsum(gaps)])
+    # The last element should be one (up to floating point errors) because
+    # dirichlet sums to one. Set exactly to avoid interpolation errors.
+    cdf[-1] = 1
+    if inverse:
+        return interp1d(cdf, samples, kind=interpolation)
+    else:
+        return interp1d(samples, cdf, kind=interpolation,
+                        fill_value=(0, 1), bounds_error=False)
+
+
+def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
+                         return_covariance=False, nsamples=12):
+    """Compute the credibility interval of weighted samples.
+
+    Based on linear interpolation of the cumulative density function, thus
+    expect discretisation errors on the scale of distances between samples.
+
+    https://github.com/Stefan-Heimersheim/fastCI#readme
+
+    Parameters
+    ----------
+    samples : array
+        Samples to compute the credibility interval of.
+    weights : array, default=np.ones_like(samples)
+        Weights corresponding to samples.
+    level : float, default=0.68
+        Credibility level (probability, <1).
+    method : str, default='iso-pdf'
+        Which definition of interval to use:
+
+        * ``'iso-pdf'``: Calculate iso probability density interval with the
+          same probability density at each end. Also known as
+          waterline-interval or highest average posterior density interval.
+          This is only accurate if the distribution is sufficiently uni-modal.
+        * ``'lower-limit'``/``'upper-limit'``: Lower/upper limit. One-sided
+          limits for which ``level`` fraction of the (equally weighted) samples
+          lie above/below the limit.
+        * ``'equal-tailed'``: Equal-tailed interval with the same fraction of
+          (equally weighted) samples below and above the interval region.
+
+    return_covariance: bool, default=False
+        Return the covariance of the sampled limits, in addition to the mean
+    nsamples : int, default=12
+        Number of CDF samples to improve `mean` and `std` estimate.
+
+    Returns
+    -------
+    limit(s) : float, array, or tuple of floats or arrays
+        Returns the credibility interval boundari(es). By default,
+        returns the mean over ``nsamples`` samples, which is either
+        two numbers (``method='iso-pdf'``/``'equal-tailed'``) or one number
+        (``method='lower-limit'``/``'upper-limit'``). If
+        ``return_covariance=True``, returns a tuple (mean(s), covariance)
+        where covariance is the covariance over the sampled limits.
+    """
+    if level >= 1:
+        raise ValueError('level must be <1, got {0:.2f}'.format(level))
+    if len(np.shape(samples)) != 1:
+        raise ValueError('Support only 1D arrays for samples')
+    if weights is not None and np.shape(samples) != np.shape(weights):
+        raise ValueError('Shape of samples and weights differs')
+
+    # Convert to numpy to unify indexing
+    samples = np.array(samples.copy())
+    if weights is None:
+        weights = np.ones(len(samples))
+    else:
+        weights = np.array(weights.copy())
+
+    # Convert samples to unit weight not the case
+    if not np.all(np.logical_or(weights == 0, weights == 1)):
+        # compress_weights with ncompress='equal' assures weights \in 0,1
+        # Note that this must be done, we cannot handle weights != 1
+        # see this discussion for details:
+        # https://github.com/williamjameshandley/anesthetic/pull/188#issuecomment-1274980982
+        weights = compress_weights(weights, ncompress='equal')
+
+    indices = np.where(weights)[0]
+    x = samples[indices]
+
+    # Sample the confidence interval multiple times
+    # to get errorbars on confidence interval boundaries
+    ci_samples = []
+    for i in range(nsamples):
+        invCDF = sample_cdf(x, inverse=True)
+        if method == 'iso-pdf':
+            # Find smallest interval
+            def distance(Y, level=level):
+                return invCDF(Y+level)-invCDF(Y)
+            res = minimize_scalar(distance, bounds=(0, 1-level),
+                                  method="Bounded")
+            ci_samples.append(np.array([invCDF(res.x),
+                                        invCDF(res.x+level)]))
+        elif method == 'lower-limit':
+            # Get value from which we reach the desired level
+            ci_samples.append(invCDF(1-level))
+        elif method == 'upper-limit':
+            # Get value to which we reach the desired level
+            ci_samples.append(invCDF(level))
+        elif method == 'equal-tailed':
+            ci_samples.append(np.array([invCDF((1-level)/2),
+                                        invCDF((1+level)/2)]))
+        else:
+            raise ValueError("Method '{0:}' unknown".format(method))
+    ci_samples = np.array(ci_samples)
+    if np.shape(ci_samples) == (nsamples, ):
+        if return_covariance:
+            return np.mean(ci_samples), np.cov(ci_samples)
+        else:
+            return np.mean(ci_samples)
+    else:
+        if return_covariance:
+            return np.mean(ci_samples, axis=0), \
+                   np.cov(ci_samples, rowvar=False)
+        else:
+            return np.mean(ci_samples, axis=0)
 
 
 def mirror_1d(d, xmin=None, xmax=None):
