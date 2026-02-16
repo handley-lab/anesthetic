@@ -73,11 +73,8 @@ def ac(funcs, *args):
         if s is not None:
             if hasattr(s, "name") and l is not None:
                 try:
-                    if isinstance(l, pd.Series):
-                        if s.name in l.index:
-                            s.name = l.loc[s.name]
-                    else:
-                        s.name = l.get(s.name, s.name)
+                    if isinstance(l, pd.Series) and s.name in l.index:
+                        s.name = l.loc[s.name]
                 except (TypeError, KeyError):
                     pass
             return s
