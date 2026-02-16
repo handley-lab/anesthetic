@@ -248,9 +248,6 @@ class _WeightedObject(object):
             if hasattr(super(), method_name):
                 return getattr(super(), method_name)(axis=axis, skipna=skipna,
                                                      **kwargs)
-            else:
-                # Method doesn't exist in pandas - fall through to weighted
-                pass
 
         if self.get_weights(axis).sum() == 0:
             return self._constructor_sliced(np.nan,
@@ -321,24 +318,10 @@ class WeightedSeries(_WeightedObject, Series):
         return var_unbiased(np.ma.array(self, mask=na), w, **kwargs)
 
     def cov(self, other, ddof=1, **kwargs):  # noqa: D102
-        if kwargs:
-            raise NotImplementedError(
-                "The keywords %s are not implemented for the calculation "
-                "of the covariance with weighted samples." % kwargs
-            )
-
+        w = self.get_weights()
         x, y = self.align(other, join="inner", copy=False)
         if len(x) == 0:
             return np.nan
-
-        # Determine weights: require agreement if both are weighted
-        w = x.get_weights()
-        if hasattr(y, "isweighted") and y.isweighted():
-            wy = y.get_weights()
-            if not np.array_equal(w, wy):
-                raise ValueError("`WeightedSeries.cov` requires identical "
-                                 "weights on both inputs.")
-
         valid = x.notna() & y.notna()
         x = x[valid]
         y = y[valid]
@@ -351,8 +334,12 @@ class WeightedSeries(_WeightedObject, Series):
     def corr(self, other, **kwargs):  # noqa: D102
         if not self.isweighted():
             return super().corr(other, **kwargs)
+        if self.isna().all():
+            return np.nan
         norm = (self.std(skipna=True, ddof=1) *
                 other.std(skipna=True, ddof=1))
+        if norm == 0:
+            return np.float64(np.nan)
         return self.cov(other, ddof=1) / norm
 
     def kurt(self, skipna=True, **kwargs):  # noqa: D102
@@ -489,9 +476,9 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
     def corr(self, **kwargs):  # noqa: D102
         if not self.isweighted():
             return super().corr(**kwargs)
-        cov = self.cov(ddof=1)
-        diag = np.sqrt(np.diag(cov))
-        return cov.divide(diag, axis=1).divide(diag, axis=0)
+        corr = cov_unbiased(self, self.get_weights(), ddof=1, return_corr=True)
+        return self._constructor(corr, index=self.columns,
+                                 columns=self.columns)
 
     def corrwith(self, other, axis=0, drop=False, **kwargs):  # noqa: D102
         axis = self._get_axis_number(axis)

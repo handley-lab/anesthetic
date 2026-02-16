@@ -193,7 +193,7 @@ def var_unbiased(a, w, axis=0, ddof=1):
     return var if np.ndim(var) > 0 else np.float64(var)
 
 
-def cov_unbiased(a, w, ddof=1):
+def cov_unbiased(a, w, ddof=1, return_corr=False):
     """Compute the unbiased covariance from weighted samples.
 
     Parameters
@@ -220,11 +220,12 @@ def cov_unbiased(a, w, ddof=1):
         return np.full((a.shape[1], a.shape[1]), np.nan, dtype=float)
 
     # ---- fast path: no NaNs anywhere ----
-    if np.isfinite(a).all() and a.shape[0] >= 2 and a.shape[1] >= 2:
-        if np.issubdtype(w.dtype, np.integer):
-            return np.cov(a, rowvar=False, fweights=w, ddof=ddof)
-        else:
-            return np.cov(a, rowvar=False, aweights=w, ddof=ddof)
+    if not return_corr:
+        if np.isfinite(a).all() and a.shape[0] >= 2 and a.shape[1] >= 2:
+            if np.issubdtype(w.dtype, np.integer):
+                return np.cov(a, rowvar=False, fweights=w, ddof=ddof)
+            else:
+                return np.cov(a, rowvar=False, aweights=w, ddof=ddof)
 
     M = np.isfinite(a)           # shape (n, p)
     A = np.where(M, a, 0.0)      # shape (n, p)
@@ -244,7 +245,17 @@ def cov_unbiased(a, w, ddof=1):
     cov = np.full_like(S2, np.nan, dtype=float)
     cov = np.divide(V1 * S2 - S1.T * S1, V1**2 - ddof * V2,
                     out=cov.copy(), where=~invalid)
-    return cov
+    if not return_corr:
+        return cov
+    # pairwise variances on the SAME intersections
+    S2i = (w[:, None] * A * A).T @ M
+    nans = np.full_like(cov, np.nan, dtype=float)
+    var_i = np.divide(V1 * S2i - S1**2, V1**2 - 1 * V2,
+                      out=nans.copy(), where=~invalid)
+    invalid = invalid | (var_i * var_i.T <= 0)
+    corr = np.divide(cov, np.sqrt(var_i * var_i.T),
+                     out=nans.copy(), where=~invalid)
+    return corr
 
 
 def skew_unbiased(a, w, axis=0):
