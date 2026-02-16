@@ -2,11 +2,7 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
-<<<<<<< credibility-interval
 :Version: 2.12.0
-=======
-:Version: 2.11.8
->>>>>>> master
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
