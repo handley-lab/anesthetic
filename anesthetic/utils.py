@@ -131,8 +131,17 @@ def compress_weights(w, u=None, ncompress=True):
     W = w * ncompress / w.sum()
 
     fraction, integer = np.modf(W)
-    extra = (u < fraction).astype(int)
-    return (integer + extra).astype(int)
+    integer = integer.astype(int)
+    if is_int(ncompress):
+        remainder = ncompress - integer.sum()
+        mask = fraction > 0
+        race_time = np.full_like(fraction, np.inf)  # exp-race arrival time
+        race_time[mask] = -np.log(u[mask])/fraction[mask]
+        idx = np.argpartition(race_time, remainder-1)[:remainder]
+        extra = np.bincount(idx, minlength=len(integer))
+    else:
+        extra = (u < fraction).astype(int)
+    return integer + extra
 
 
 def quantile(a, q, w=None, interpolation='linear'):
@@ -435,7 +444,7 @@ def compute_nlive(death, birth):
                          index=b.index + len(b))
     b['n'] = +1
     d['n'] = -1
-    t = pandas.concat([b, d]).sort_values(['logL', 'n'])
+    t = pandas.concat([b, d]).sort_values(['logL', 'n'], na_position='first')
     n = t.n.cumsum()
     return (n[d.index]+1).to_numpy()
 

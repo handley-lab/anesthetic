@@ -179,7 +179,7 @@ class _WeightedObject(object):
         if self.isweighted(axis):
             return self._get_axis(axis).get_level_values('weights').to_numpy()
         else:
-            return np.ones_like(self._get_axis(axis))
+            return np.ones_like(self._get_axis(axis), dtype=int)
 
     def drop_weights(self, axis=0):
         """Drop weights."""
@@ -355,7 +355,7 @@ class WeightedSeries(_WeightedObject, Series):
 
         Parameters
         ----------
-        ncompress : int, str, default=True
+        ncompress : int, float, str, default=True
             Degree of compression.
 
             * If ``True`` (default): reduce to the channel capacity
@@ -644,7 +644,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
 
         Parameters
         ----------
-        ncompress : int, str, default=True
+        ncompress : int, float, str, default=True
             Degree of compression.
 
             * If ``True`` (default): reduce to the channel capacity
@@ -657,17 +657,17 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
               with ``beta=ncompress``.
 
         """
-        if self.isweighted(axis):
-            i = compress_weights(self.get_weights(axis), self._rand(axis),
-                                 ncompress)
-            data = np.repeat(self.to_numpy(), i, axis=axis)
-            i = self.drop_weights(axis)._get_axis(axis).repeat(i)
-            df = self._constructor(data=data)
-            df = df.set_axis(i, axis=axis, copy=False)
-            df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
-            return df
-        else:
+        if (not self.isweighted(axis) and isinstance(ncompress, (bool, str))
+                or ncompress is False):
             return self
+        i = compress_weights(self.get_weights(axis), self._rand(axis),
+                             ncompress)
+        data = np.repeat(self.to_numpy(), i, axis=axis)
+        i = self.drop_weights(axis)._get_axis(axis).repeat(i)
+        df = self._constructor(data=data)
+        df = df.set_axis(i, axis=axis, copy=False)
+        df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
+        return df
 
     def sample(self, *args, **kwargs):  # noqa: D102
         sig = signature(DataFrame.sample)
@@ -809,10 +809,11 @@ for cls in [WeightedDataFrame, WeightedSeries, WeightedGroupBy,
     adjust_docstrings(cls, r'\bDataFrame\b', 'WeightedDataFrame')
     adjust_docstrings(cls, r'\bDataFrames\b', 'WeightedDataFrames')
     adjust_docstrings(cls, r'\bSeries\b', 'WeightedSeries')
-    adjust_docstrings(cls, 'core', 'pandas.core')
-    adjust_docstrings(cls, 'pandas.core.window.Rolling.quantile',
-                           'pandas.core.window.rolling.Rolling.quantile')
     adjust_docstrings(cls, r'\bDataFrameGroupBy\b', 'WeightedDataFrameGroupBy')
     adjust_docstrings(cls, r'\bSeriesGroupBy\b', 'WeightedSeriesGroupBy')
+    adjust_docstrings(cls, 'core.window.ewm', 'pandas.api.typing')
+    adjust_docstrings(cls, 'core.window.expanding', 'pandas.api.typing')
+    adjust_docstrings(cls, 'core.window.rolling', 'pandas.api.typing')
+    adjust_docstrings(cls, 'core.window', 'pandas.api.typing')
 adjust_docstrings(WeightedDataFrame, 'resample', 'pandas.DataFrame.resample')
 adjust_docstrings(WeightedSeries,    'resample', 'pandas.Series.resample')

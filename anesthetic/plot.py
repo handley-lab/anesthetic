@@ -762,7 +762,7 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
                          logy=logy,
                          gridspec_kw=gridspec_kw,
                          subplot_spec=subplot_spec)
-    fig.align_labels()
+    fig.align_labels([a for a in axes.values.flatten() if isinstance(a, Axes)])
     return fig, axes
 
 
@@ -1278,8 +1278,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
 
-    kwargs.pop('q', None)
-
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data_x, q[0], weights)
@@ -1468,10 +1466,18 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None else cmap(0.68)))
 
-    kwargs.pop('q', None)
+    weights = kwargs.pop('weights', None)
+    q = kwargs.pop('q', 5)
+    q = quantile_plot_interval(q=q)
+    xmin = quantile(data_x, q[0], weights)
+    xmax = quantile(data_x, q[-1], weights)
+    ymin = quantile(data_y, q[0], weights)
+    ymax = quantile(data_y, q[-1], weights)
+    mask = ((data_x >= xmin) & (data_x <= xmax) &
+            (data_y >= ymin) & (data_y <= ymax))
 
-    points = ax.plot(data_x, data_y, 'o', color=color, markersize=markersize,
-                     *args, **kwargs)
+    points = ax.plot(data_x[mask], data_y[mask], 'o',
+                     color=color, markersize=markersize, *args, **kwargs)
     return points
 
 

@@ -17,6 +17,7 @@ from anesthetic.read.nestedfit import read_nestedfit
 from anesthetic.read.hdf import HDFStore, read_hdf
 from anesthetic.read.csv import read_csv
 from utils import pytables_mark_xfail, h5py_mark_xfail, getdist_mark_skip
+import io
 
 
 @pytest.fixture(autouse=True)
@@ -74,12 +75,12 @@ def test_read_cobayamcmc():
     ))
     assert_array_equal(mcmc.get_weights(), w)
     params = ['x0', 'x1', 'minuslogprior', 'minuslogprior__0', 'chi2',
-              'chi2__norm', 'logL', 'chain']
+              'chi2__norm', 'logP', 'logL', 'chain']
     assert_array_equal(mcmc.drop_labels().columns, params)
 
-    labels = ['$x_0$', '$x_1$', '', '', r'$\chi^2$',
-              r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
-              r'$n_\mathrm{chain}$']
+    labels = ['$x_0$', '$x_1$', r'$-\ln\pi$', r'$-\ln\pi_\mathrm{0}$',
+              r'$\chi^2$', r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{P}$',
+              r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
 
     if getdist_mark_skip.args[0]:
         labels[:6] = [''] * 6
@@ -98,10 +99,13 @@ def test_read_cobayamcmc():
     # compare directly with getdist
     if not getdist_mark_skip.args[0]:
         import getdist
-        mcmc_gd = getdist.loadMCSamples(
+        g = getdist.loadMCSamples(
             file_root="./tests/example_data/cb_single_chain"
         )
-        assert_array_almost_equal(mcmc.logL, mcmc_gd.loglikes, decimal=15)
+        # Note that GetDist's `loglikes` attribute actually corresponds to
+        # `minuslogposterior`. Hence, the following slightly confusing asserts.
+        assert_array_almost_equal(mcmc.logP, -g.loglikes, decimal=15)
+        assert_array_almost_equal(mcmc.logL, -g.getParams().chi2/2, decimal=15)
 
 
 def test_read_montepython():
@@ -262,6 +266,28 @@ def test_read_polychord():
     assert_array_equal(ns_single_live[cols], ns[cols])
 
 
+def test_read_blackjax():
+    np.random.seed(3)
+    bj = read_chains('./tests/example_data/bj')
+    assert isinstance(bj, NestedSamples)
+    params = ['x0', 'x1', 'x2', 'x3', 'x4', 'logL', 'logL_birth', 'nlive']
+    assert_array_equal(bj.drop_labels().columns, params)
+    labels = ['$x_0$',
+              '$x_1$',
+              '$x_2$',
+              '$x_3$',
+              '$x_4$',
+              r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{L}_\mathrm{birth}$',
+              r'$n_\mathrm{live}$']
+    assert_array_equal(bj.get_labels(), labels)
+    assert bj.nlive[0] == 125
+    assert np.isnan(bj.logL_birth[0])
+    bj.recompute()
+    assert bj.nlive[0] == 125
+    assert np.isnan(bj.logL_birth[0])
+
+
 @pytest.mark.parametrize('root', ['gd', 'cb'])
 def test_discard_burn_in(root):
     with pytest.raises(KeyError):
@@ -320,14 +346,14 @@ def test_read_csv(tmp_path, root):
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
 
-    samples_ = read_csv(filename)
-    samples_.root = samples.root
-    assert_frame_equal(samples, samples_)
-
     samples_ = read_chains(filename)
     samples_.root = samples.root
     assert_frame_equal(samples, samples_)
 
-    samples_ = read_chains(filename)
-    samples_.root = samples.root
-    assert_frame_equal(samples, samples_)
+    with open(filename, 'rb') as f:
+        csv_bytes = f.read()
+    bytesio_obj = io.BytesIO(csv_bytes)
+    samples_bytes = read_csv(bytesio_obj)
+    samples_bytes.root = samples.root
+    samples_bytes.label = samples.label
+    assert_frame_equal(samples, samples_bytes)
