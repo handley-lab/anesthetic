@@ -75,7 +75,10 @@ def test_build_samples():
 
     nlive = 50
     ns = NestedSamples(data=data, logL=logL, weights=weights, logL_birth=nlive)
+    assert len(ns) == nsamps
+    assert np.all(np.isfinite(ns.logL))
     assert 'nlive' in ns.columns
+    assert np.all(ns.nlive == 50)
 
     logL[:10] = -1e300
     weights[:10] = 0.
