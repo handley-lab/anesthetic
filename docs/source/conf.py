@@ -10,6 +10,8 @@
 
 import sys
 import os
+import packaging
+import pandas as pd
 sys.path.append(os.path.abspath('../../'))
 
 def get_version(short=False):
@@ -262,10 +264,11 @@ epub_exclude_files = ['search.html']
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
+pdv = packaging.version.parse(pd.__version__)
 intersphinx_mapping = {
     'numpy':('https://numpy.org/doc/stable', None),
     'scipy':('https://docs.scipy.org/doc/scipy', None),
-    'pandas':('https://pandas.pydata.org/pandas-docs/stable', None),
+    'pandas':(f'https://pandas.pydata.org/pandas-docs/version/{pdv.major}.{pdv.minor}/', None),
     'matplotlib':('https://matplotlib.org/stable', None),
     'getdist':('https://getdist.readthedocs.io/en/latest/', None),
 }

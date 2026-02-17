@@ -134,8 +134,9 @@ class _LabelledObject(object):
                 labels_map = index.to_frame().droplevel(labs)[labs]
                 if fill:
                     replacement = labels_map.loc[labels_map == ''].index
-                    labels_map.loc[labels_map == ''] = replacement.astype(
-                        labels_map.loc[labels_map != ''].dtype)
+                    if len(replacement) > 0:
+                        labels_map.loc[labels_map == ''] = replacement.astype(
+                            labels_map.loc[labels_map != ''].dtype)
                 return labels_map
             else:
                 return index.to_series()
@@ -210,7 +211,7 @@ class _LabelledObject(object):
 
             index.insert(level, labels)
             index = MultiIndex.from_arrays(index, names=names)
-            result = result.set_axis(index, axis=axis, copy=False)
+            result = result.set_axis(index, axis=axis)
 
         if inplace:
             self._update_inplace(result)
@@ -256,8 +257,8 @@ class LabelledDataFrame(_LabelledObject, DataFrame):
     def _constructor_sliced(self):
         return LabelledSeries
 
-    def transpose(self, copy=False):  # noqa: D102
-        result = super().transpose(copy=copy)
+    def transpose(self):  # noqa: D102
+        result = super().transpose()
         result._labels = result._labels[::-1]
         return result
 
