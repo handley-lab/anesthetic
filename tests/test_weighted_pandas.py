@@ -188,7 +188,6 @@ def test_WeightedDataFrame_corrwith(frame):
 
     unweighted = DataFrame(frame).droplevel('weights')
 
-    # TODO: verify this with Lukas
     if version.parse(pandas.__version__) >= version.parse('3.0.0'):
         correl = frame.corrwith(unweighted.A)
         assert_allclose(correl['A'], 1, atol=1e-2)
@@ -530,7 +529,6 @@ def test_WeightedSeries_corr(frame):
 
     unweighted = DataFrame(frame).droplevel('weights')
 
-    # TODO: verify this with Lukas
     if version.parse(pandas.__version__) >= version.parse('3.0.0'):
         assert_allclose(frame.A.corr(unweighted.A), 1, atol=1e-2)
         assert_allclose(frame.A.corr(unweighted.B), 0, atol=1e-2)
