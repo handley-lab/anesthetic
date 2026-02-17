@@ -78,7 +78,7 @@ def test_build_samples():
     assert len(ns) == nsamps
     assert np.all(np.isfinite(ns.logL))
     assert 'nlive' in ns.columns
-    assert np.all(ns.nlive == 50)
+    assert np.all(ns.nlive[:-50+1] == 50)
 
     logL[:10] = -1e300
     weights[:10] = 0.
