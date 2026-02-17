@@ -505,7 +505,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         def var(data, na, w, axis, skipna, **kwargs):
             if skipna:
                 data = np.ma.array(data, mask=na)
-            return var_unbiased(data, w, axis=axis, **kwargs)
+            return var_unbiased(data, w, axis=axis, ddof=kwargs.pop('ddof', 1))
         return self._weighted_stat(var, axis, skipna, **kwargs)
 
     def cov(self, ddof=1, **kwargs):  # noqa: D102
