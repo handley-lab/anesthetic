@@ -161,6 +161,245 @@ def quantile(a, q, w=None, interpolation='linear'):
     return quant
 
 
+def var_unbiased(a, w, axis=0, ddof=1):
+    """Compute the unbiased variance from weighted samples.
+
+    Uses the standard reliability-weight correction
+        var = s2 / (v1 - v2/v1)   (for ddof=1),
+    and supports the frequency-weight case by using
+        var = s2 / (v1 - ddof)    when w is integer and v1 > 1.
+
+    Parameters
+    ----------
+    a : np.array
+        Input samples.
+    w : np.array
+        Associated sample weights.
+        Integer -> frequency weights;
+        Float -> reliability weights.
+    axis : int
+        Axis along which to compute variance.
+    ddof : int, default=1
+        Delta degrees of freedom.
+
+    Returns
+    -------
+    var : float, np.array
+        Unbiased variance.
+
+    """
+    mu = np.ma.filled(np.average(a, weights=w, axis=axis), np.nan)
+    v1 = np.ma.filled(w.sum(axis=axis), 0.0)
+    if np.issubdtype(w.dtype, np.integer):
+        v2 = v1
+    else:
+        # ---- reliability weights branch ----
+        v2 = np.ma.filled((w ** 2).sum(axis=axis), 0.0)
+    s2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
+
+    invalid = (v1 == 0) | (v1**2 - ddof*v2 == 0) | np.isnan(mu) | np.isnan(s2)
+    nans = np.full_like(v1, np.nan, dtype=float)
+    var = np.divide(v1 * s2, v1**2 - ddof*v2, out=nans.copy(), where=~invalid)
+    return var if np.ndim(var) > 0 else np.float64(var)
+
+
+def cov_unbiased(a, w, ddof=1, return_corr=False):
+    """Compute the unbiased covariance from weighted samples.
+
+    Parameters
+    ----------
+    a : np.array, shape (n_samples, n_features)
+        Input samples in rows, features/parameters in columns.
+    w : np.array, shape (n_samples,)
+        Associated sample weights.
+        Integer -> frequency weights;
+        Float -> reliability weights.
+    ddof : int, default=1
+        Delta degrees of freedom.
+
+    Returns
+    -------
+    cov : ndarray, shape (n_features, n_features)
+        Unbiased covariance matrix.
+
+    """
+    a = np.atleast_2d(a)
+
+    # If all weights are zero, mimic pandas' "all NaN" behaviour upstream.
+    if w.sum() == 0:
+        return np.full((a.shape[1], a.shape[1]), np.nan, dtype=float)
+
+    # ---- fast path: no NaNs anywhere ----
+    if not return_corr:
+        if np.isfinite(a).all() and a.shape[0] >= 2 and a.shape[1] >= 2:
+            if np.issubdtype(w.dtype, np.integer):
+                return np.cov(a, rowvar=False, fweights=w, ddof=ddof)
+            else:
+                return np.cov(a, rowvar=False, aweights=w, ddof=ddof)
+
+    M = np.isfinite(a)           # shape (n, p)
+    A = np.where(M, a, 0.0)      # shape (n, p)
+    WA = (w[:, None] * A).T      # shape (n, p)
+    V1 = (w[:, None] * M).T @ M  # shape (p, p)
+    S1 = WA @ M                  # shape (p, p)
+    S2 = WA @ A                  # shape (p, p)
+
+    if np.issubdtype(w.dtype, np.integer):
+        # ---- frequency weights branch ----
+        V2 = V1
+    else:
+        # ---- reliability weights branch ----
+        V2 = ((w**2)[:, None] * M).T @ M  # shape (p, p)
+
+    invalid = (V1 == 0) | (V1**2 - ddof * V2 == 0)
+    cov = np.full_like(S2, np.nan, dtype=float)
+    cov = np.divide(V1 * S2 - S1.T * S1, V1**2 - ddof * V2,
+                    out=cov.copy(), where=~invalid)
+    if not return_corr:
+        return cov
+    # pairwise variances on the SAME intersections
+    S2i = (w[:, None] * A * A).T @ M
+    nans = np.full_like(cov, np.nan, dtype=float)
+    var_i = np.divide(V1 * S2i - S1**2, V1**2 - 1 * V2,
+                      out=nans.copy(), where=~invalid)
+    invalid = invalid | (var_i * var_i.T <= 0)
+    corr = np.divide(cov, np.sqrt(var_i * var_i.T),
+                     out=nans.copy(), where=~invalid)
+    return corr
+
+
+def skew_unbiased(a, w, axis=0):
+    """Compute the unbiased skewness from weighted samples.
+
+    Adapted from Lorenzo Rimoldini (2013):
+    https://arxiv.org/pdf/1304.6564
+
+    Parameters
+    ----------
+    a : np.array
+        Input samples.
+    w : np.array
+        Associated sample weights.
+        Integer -> frequency weights;
+        Float -> reliability weights.
+    axis : int
+        Axis along which to compute kurtosis.
+
+    Returns
+    -------
+    skew : float, np.array
+        Unbiased skewness (`G1`).
+
+    """
+    mu = np.ma.filled(np.average(a, weights=w, axis=axis), np.nan)
+    v1 = np.ma.filled(w.sum(axis=axis), 0.0)
+    v2 = np.ma.filled((w**2).sum(axis=axis), 0.0)
+    v3 = np.ma.filled((w**3).sum(axis=axis), 0.0)
+    s2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
+    s3 = np.ma.filled((w * (a - mu)**3).sum(axis=axis), 0.0)
+
+    nans = np.full_like(v1, np.nan, dtype=float)
+
+    # ---- frequency weights branch ----
+    if np.issubdtype(w.dtype, np.integer):
+        n = v1
+        if np.all(n <= 2):
+            return np.nan
+        invalid = (n <= 2) | np.isnan(mu) | np.isnan(s2) | np.isnan(s3)
+
+        # pandas convention: zero variance (s2==0) => skew = 0
+        degenerate = (~invalid) & (s2 == 0)
+        skew = np.divide(n * (n-1)**0.5 * s3, (n-2) * s2**1.5,
+                         out=nans.copy(), where=(~invalid) & (~degenerate))
+        skew = np.where(degenerate, 0.0, skew)
+        return skew if np.ndim(skew) > 0 else np.float64(skew)
+
+    # ---- reliability weights branch (Rimoldini) ----
+    if a.shape[axis] <= 2:
+        return np.nan
+    invalid = ((v1 == 0) | (v1**2 - v2 == 0) | (v1**3 - 3*v1*v2 + 2*v3 == 0)
+               | np.isnan(mu) | np.isnan(s2) | np.isnan(s3))
+    k2 = np.divide(v1 * s2, v1**2 - v2, out=nans.copy(), where=~invalid)
+    k3 = np.divide(v1**2 * s3, v1**3 - 3*v1*v2 + 2*v3,
+                   out=nans.copy(), where=~invalid)
+
+    # pandas convention: zero variance (k2==0) => skew = 0
+    degenerate = (~invalid) & (k2 == 0)
+    skew = np.divide(k3, k2**1.5, out=nans.copy(),
+                     where=(~invalid) & (~degenerate))
+    skew = np.where(degenerate, 0.0, skew)
+    return skew if np.ndim(skew) > 0 else np.float64(skew)
+
+
+def kurt_unbiased(a, w, axis=0):
+    """Compute the unbiased kurtosis from weighted samples.
+
+    Adapted from Lorenzo Rimoldini (2013):
+    https://arxiv.org/pdf/1304.6564
+
+    Parameters
+    ----------
+    a : np.array
+        Input samples.
+    w : np.array
+        Associated sample weights.
+        Integer -> frequency weights;
+        Float -> reliability weights.
+    axis : int
+        Axis along which to compute kurtosis.
+
+    Returns
+    -------
+    kurt : float, np.array
+        Unbiased kurtosis (`G2`).
+
+    """
+    mu = np.ma.filled(np.average(a, weights=w, axis=axis), np.nan)
+    v1 = np.ma.filled(w.sum(axis=axis), 0.0)
+    v2 = np.ma.filled((w**2).sum(axis=axis), 0.0)
+    v3 = np.ma.filled((w**3).sum(axis=axis), 0.0)
+    v4 = np.ma.filled((w**4).sum(axis=axis), 0.0)
+    s2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
+    s4 = np.ma.filled((w * (a - mu)**4).sum(axis=axis), 0.0)
+
+    nans = np.full_like(v1, np.nan, dtype=float)
+
+    # ---- frequency weights branch ----
+    if np.issubdtype(w.dtype, np.integer):
+        n = v1
+        if np.all(n <= 3):
+            return np.nan
+        invalid = (n <= 3) | np.isnan(mu) | np.isnan(s2) | np.isnan(s4)
+
+        # pandas convention: zero variance (s2==0) => kurt = 0
+        degenerate = (~invalid) & (s2 == 0)
+        kurt = np.divide((n+1)*n*(n-1)*s4-3*(n-1)**2*s2**2, (n-2)*(n-3)*s2**2,
+                         out=nans.copy(), where=(~invalid) & (~degenerate))
+        kurt = np.where(degenerate, 0.0, kurt)
+        return kurt if np.ndim(kurt) > 0 else np.float64(kurt)
+
+    # ---- reliability weights branch (Rimoldini) ----
+    if a.shape[axis] <= 3:
+        return np.nan
+
+    den2 = v1**2-v2
+    den4 = (v1**2 - v2) * (v1**4 - 6*v1**2*v2 + 8*v1*v3 + 3*v2**2 - 6*v4)
+    num41 = v1 * (v1**4 - 4*v1*v3 + 3*v2**2)
+    num42 = 3 * (v1**4 - 2*v1**2*v2 + 4*v1*v3 - 3*v2**2)
+
+    invalid = ((v1 == 0) | (den2 == 0) | (den4 == 0)
+               | np.isnan(mu) | np.isnan(s2) | np.isnan(s4))
+    k2 = np.divide(v1 * s2, den2, out=nans.copy(), where=~invalid)
+    k4 = np.divide(num41*s4-num42*s2**2, den4, out=nans.copy(), where=~invalid)
+
+    # pandas convention: zero variance (k2==0) => kurt = 0
+    degenerate = (~invalid) & (k2 == 0)
+    invalid = invalid | (k2 == 0)
+    kurt = np.divide(k4, k2**2, out=nans.copy(), where=~invalid)
+    kurt = np.where(degenerate, 0.0, kurt)
+    return kurt if np.ndim(kurt) > 0 else np.float64(kurt)
+
+
 def sample_cdf(samples, inverse=False, interpolation='linear'):
     """Sample the empirical cdf for a 1d array."""
     samples = np.sort(samples)
