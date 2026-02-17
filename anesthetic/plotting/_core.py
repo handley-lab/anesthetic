@@ -4,18 +4,20 @@ from matplotlib.axes import Axes  # TODO: remove this in version >= 2.1
 
 def _process_docstring(doc):
     i = doc.find('    ax')
+    j = doc.find("See Also")
     e = (
-        "    - 'hist_1d' : 1d histogram\n"
-        "    - 'kde_1d' : 1d Kernel Density Estimation plot\n"
-        "    - 'fastkde_1d' : 1d Kernel Density Estimation plot"
-        "                     with fastkde package\n"
-        "    - 'hist_2d' : 2d histogram (DataFrame only)\n"
-        "    - 'kde_2d' : 2d Kernel Density Estimation plot (DataFrame only)\n"
-        "    - 'fastkde_2d' : 2d Kernel Density Estimation plot"
-        "                     with fastkde package (DataFrame only)\n"
-        "    - 'scatter_2d' : 2d scatter plot (DataFrame only)\n"
+        "        - 'hist_1d' : 1d histogram\n"
+        "        - 'kde_1d' : 1d Kernel Density Estimation plot\n"
+        "        - 'fastkde_1d' : 1d Kernel Density Estimation plot"
+        "                         with fastkde package\n"
+        "        - 'hist_2d' : 2d histogram (DataFrame only)\n"
+        "        - 'kde_2d' : 2d Kernel Density Estimation plot"
+        "                     (DataFrame only)\n"
+        "        - 'fastkde_2d' : 2d Kernel Density Estimation plot"
+        "                         with fastkde package (DataFrame only)\n"
+        "        - 'scatter_2d' : 2d scatter plot (DataFrame only)\n"
         )
-    return doc[:i] + e + doc[i:]
+    return doc[:i] + e + doc[i:j]
 
 
 class PlotAccessor(_PlotAccessor):

@@ -110,7 +110,7 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
 
     def get_weights(self):
         """Return the weights of the grouped samples."""
-        return super().get_weights().min(axis=1-self.axis)
+        return super().get_weights().min(axis=1)
 
     def _gotitem(self, key, ndim: int, subset=None):  # pragma: no cover
         if ndim == 2:
@@ -119,7 +119,6 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
             return WeightedDataFrameGroupBy(
                 subset,
                 self._grouper,
-                axis=self.axis,
                 level=self.level,
                 grouper=self._grouper,
                 exclusions=self.exclusions,
@@ -128,7 +127,6 @@ class WeightedDataFrameGroupBy(WeightedGroupBy, DataFrameGroupBy):
                 sort=self.sort,
                 group_keys=self.group_keys,
                 observed=self.observed,
-                mutated=self.mutated,
                 dropna=self.dropna,
             )
         elif ndim == 1:
@@ -225,7 +223,7 @@ class _WeightedObject(object):
             names.insert(level, 'weights')
 
             index = MultiIndex.from_arrays(index, names=names)
-            result = result.set_axis(index, axis=axis, copy=False)
+            result = result.set_axis(index, axis=axis)
 
         if inplace:
             self._update_inplace(result)
@@ -319,7 +317,7 @@ class WeightedSeries(_WeightedObject, Series):
 
     def cov(self, other, ddof=1, **kwargs):  # noqa: D102
         w = self.get_weights()
-        x, y = self.align(other, join="inner", copy=False)
+        x, y = self.align(other, join="inner")
         if len(x) == 0:
             return np.nan
         valid = x.notna() & y.notna()
@@ -474,7 +472,6 @@ class WeightedSeries(_WeightedObject, Series):
         return WeightedSeriesGroupBy(
             obj=self,
             keys=by,
-            axis=axis,
             level=level,
             as_index=as_index,
             sort=sort,
@@ -508,7 +505,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         def var(data, na, w, axis, skipna, **kwargs):
             if skipna:
                 data = np.ma.array(data, mask=na)
-            return var_unbiased(data, w, axis=axis, **kwargs)
+            return var_unbiased(data, w, axis=axis, ddof=kwargs.pop('ddof', 1))
         return self._weighted_stat(var, axis, skipna, **kwargs)
 
     def cov(self, ddof=1, **kwargs):  # noqa: D102
@@ -539,14 +536,14 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
                                     axis=axis)
                 return self._constructor_sliced(answer)
 
-            left, right = self.align(other, join="inner", copy=False)
+            left, right = self.align(other, join="inner")
 
             if axis == 1:
                 left = left.T
                 right = right.T
 
             weights = left.index.to_frame()['weights']
-            weights, _ = weights.align(right, join="inner", copy=False)
+            weights, _ = weights.align(right, join="inner")
 
             # mask missing values
             left = left + right * 0
@@ -653,8 +650,8 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         data = np.repeat(self.to_numpy(), i, axis=axis)
         i = self.drop_weights(axis)._get_axis(axis).repeat(i)
         df = self._constructor(data=data)
-        df = df.set_axis(i, axis=axis, copy=False)
-        df = df.set_axis(self._get_axis(1-axis), axis=1-axis, copy=False)
+        df = df.set_axis(i, axis=axis)
+        df = df.set_axis(self._get_axis(1-axis), axis=1-axis)
         return df
 
     def sample(self, *args, **kwargs):  # noqa: D102
@@ -782,7 +779,6 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         return WeightedDataFrameGroupBy(
             obj=self,
             keys=by,
-            axis=axis,
             level=level,
             as_index=as_index,
             sort=sort,
