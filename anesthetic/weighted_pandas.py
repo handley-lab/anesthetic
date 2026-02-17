@@ -3,17 +3,16 @@
 import warnings
 from inspect import signature
 import numpy as np
-from numpy.ma import masked_array
 from pandas import Series, DataFrame, concat, MultiIndex
 from pandas.core.groupby import GroupBy, SeriesGroupBy, DataFrameGroupBy, ops
 from pandas._libs import lib
 from pandas._libs.lib import no_default
 from pandas.util._exceptions import find_stack_level
 from pandas.util import hash_pandas_object
-from pandas.core.dtypes.missing import notna
 from anesthetic.utils import (compress_weights, neff, quantile,
                               temporary_seed, adjust_docstrings,
-                              credibility_interval)
+                              var_unbiased, cov_unbiased, skew_unbiased,
+                              kurt_unbiased, credibility_interval)
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plotting import PlotAccessor
 import pandas as pd
@@ -55,29 +54,29 @@ class WeightedGroupBy(GroupBy):
                           (*args, **kwargs)).set_weights(self.get_weights())
         return result.__finalize__(self.obj, method="groupby")
 
-    def mean(self, *args, **kwargs):  # noqa: D102
-        return self._add_weights("mean", *args, **kwargs)
+    def mean(self, **kwargs):  # noqa: D102
+        return self._add_weights("mean", **kwargs)
 
-    def std(self, *args, **kwargs):  # noqa: D102
-        return self._add_weights("std", *args, **kwargs)
+    def std(self, **kwargs):  # noqa: D102
+        return self._add_weights("std", **kwargs)
 
-    def median(self, *args, **kwargs):  # noqa: D102
-        return self._add_weights("median", *args, **kwargs)
+    def median(self, **kwargs):  # noqa: D102
+        return self._add_weights("median", **kwargs)
 
-    def var(self, *args, **kwargs):  # noqa: D102
-        return self._add_weights("var", *args, **kwargs)
+    def var(self, **kwargs):  # noqa: D102
+        return self._add_weights("var", **kwargs)
 
-    def kurt(self, *args, **kwargs):  # noqa: D102
-        return self._add_weights("kurt", *args, **kwargs)
+    def kurt(self, **kwargs):  # noqa: D102
+        return self._add_weights("kurt", **kwargs)
 
-    def kurtosis(self, *args, **kwargs):  # noqa: D102
-        return self._add_weights("kurtosis", *args, **kwargs)
+    def kurtosis(self, **kwargs):  # noqa: D102
+        return self._add_weights("kurtosis", **kwargs)
 
-    def sem(self, *args, **kwargs):  # noqa: D102
-        return self._add_weights("sem", *args, **kwargs)
+    def sem(self, **kwargs):  # noqa: D102
+        return self._add_weights("sem", **kwargs)
 
-    def skew(self, *args, **kwargs):  # noqa: D102
-        return self._add_weights("skew", *args, **kwargs)
+    def skew(self, **kwargs):  # noqa: D102
+        return self._add_weights("skew", **kwargs)
 
     def quantile(self, *args, **kwargs):  # noqa: D102
         return self._add_weights("quantile", *args, **kwargs)
@@ -239,6 +238,35 @@ class _WeightedObject(object):
         with temporary_seed(int(seed)):
             return np.random.rand(self.shape[axis])
 
+    def _weighted_stat(self, func, axis=0, skipna=True, **kwargs):
+        """Compute weighted statistics using common pattern."""
+        if not self.isweighted(axis):
+            # Get the calling method name automatically
+            method_name = func.__name__
+
+            # Check if the method exists in pandas DataFrame
+            if hasattr(super(), method_name):
+                return getattr(super(), method_name)(axis=axis, skipna=skipna,
+                                                     **kwargs)
+
+        if self.get_weights(axis).sum() == 0:
+            return self._constructor_sliced(np.nan,
+                                            index=self._get_axis(1-axis))
+
+        na = self.isna() & skipna
+        weights = np.broadcast_to(
+            self.get_weights(axis)[..., None] if axis == 0 else
+            self.get_weights(axis)[None, ...],
+            self.shape
+        )
+        if skipna:
+            weights = np.ma.array(weights, mask=na)
+        result = np.ma.filled(
+            func(self, na=na, w=weights, axis=axis, skipna=skipna, **kwargs),
+            np.nan
+        )
+        return self._constructor_sliced(result, index=self._get_axis(1-axis))
+
     def reset_index(self, level=None, drop=False, inplace=False,
                     *args, **kwargs):
         """Reset the index, retaining weights."""
@@ -263,87 +291,82 @@ class WeightedSeries(_WeightedObject, Series):
     """Weighted version of :class:`pandas.Series`."""
 
     def mean(self, skipna=True):  # noqa: D102
+        na = self.isna() & skipna
+        weights = self.get_weights()
+        if skipna:
+            weights = np.ma.array(self.get_weights(), mask=na)
+        if weights.sum() == 0 or skipna and na.all():
+            return np.nan
+        return np.average(np.ma.array(self, mask=na), weights=weights)
+
+    def std(self, skipna=True, **kwargs):  # noqa: D102
+        return np.sqrt(self.var(skipna=skipna, **kwargs))
+
+    def kurtosis(self, **kwargs):  # noqa: D102
+        return self.kurt(**kwargs)
+
+    def median(self, **kwargs):  # noqa: D102
         if self.get_weights().sum() == 0:
             return np.nan
-        null = self.isnull() & skipna
-        return np.average(masked_array(self, null), weights=self.get_weights())
+        return self.quantile(**kwargs)
 
-    def std(self, *args, **kwargs):  # noqa: D102
-        return np.sqrt(self.var(*args, **kwargs))
+    def var(self, skipna=True, **kwargs):  # noqa: D102
+        na = self.isna() & skipna
+        w = np.ma.array(self.get_weights(), mask=na)
+        if na.all() or self.isna().any() and not skipna or w.sum() == 0:
+            return np.float64(np.nan)
+        return var_unbiased(np.ma.array(self, mask=na), w, **kwargs)
 
-    def kurtosis(self, *args, **kwargs):  # noqa: D102
-        return self.kurt(*args, **kwargs)
-
-    def median(self, *args, **kwargs):  # noqa: D102
-        if self.get_weights().sum() == 0:
+    def cov(self, other, ddof=1, **kwargs):  # noqa: D102
+        w = self.get_weights()
+        x, y = self.align(other, join="inner", copy=False)
+        if len(x) == 0:
             return np.nan
-        return self.quantile(*args, **kwargs)
-
-    def var(self, skipna=True):  # noqa: D102
-        if self.get_weights().sum() == 0:
+        valid = x.notna() & y.notna()
+        x = x[valid]
+        y = y[valid]
+        w = w[valid]
+        if len(x) == 0 or w.sum() == 0:
             return np.nan
-        null = self.isnull() & skipna
-        mean = self.mean(skipna=skipna)
-        if np.isnan(mean):
-            return mean
-        return np.average(masked_array((self-mean)**2, null),
-                          weights=self.get_weights())
+        X = np.column_stack((x.to_numpy(dtype=float), y.to_numpy(dtype=float)))
+        return cov_unbiased(X, w, ddof=ddof)[0, 1]
 
-    def cov(self, other, *args, **kwargs):  # noqa: D102
-
-        this, other = self.align(other, join="inner", copy=False)
-        if len(this) == 0:
+    def corr(self, other, **kwargs):  # noqa: D102
+        if not self.isweighted():
+            return super().corr(other, **kwargs)
+        if self.isna().all():
             return np.nan
+        norm = (self.std(skipna=True, ddof=1) *
+                other.std(skipna=True, ddof=1))
+        if norm == 0:
+            return np.float64(np.nan)
+        return self.cov(other, ddof=1) / norm
 
-        weights = self.index.to_frame()['weights']
-        weights, _ = weights.align(other, join="inner", copy=False)
+    def kurt(self, skipna=True, **kwargs):  # noqa: D102
+        if self.isna().all() or self.isna().any() and not skipna:
+            return np.nan if skipna or self.size == 1 else np.float64(np.nan)
+        na = self.isna() & skipna
+        w = np.ma.array(self.get_weights(), mask=na)
+        return kurt_unbiased(np.ma.array(self, mask=na), w)
 
-        valid = notna(this) & notna(other)
-        if not valid.all():
-            this = this[valid]
-            other = other[valid]
-            weights = weights[valid]
+    def skew(self, skipna=True, **kwargs):  # noqa: D102
+        if self.isna().all() or self.isna().any() and not skipna:
+            return np.nan if skipna or self.size == 1 else np.float64(np.nan)
+        na = self.isna() & skipna
+        w = np.ma.array(self.get_weights(), mask=na)
+        return skew_unbiased(np.ma.array(self, mask=na), w)
 
-        return np.cov(this, other, aweights=weights)[0, 1]
-
-    def corr(self, other, *args, **kwargs):  # noqa: D102
-        norm = self.std(skipna=True)*other.std(skipna=True)
-        return self.cov(other, *args, **kwargs)/norm
-
-    def kurt(self, skipna=True):  # noqa: D102
-        if self.get_weights().sum() == 0:
-            return np.nan
-        null = self.isnull() & skipna
-        mean = self.mean(skipna=skipna)
-        std = self.std(skipna=skipna)
-        if np.isnan(mean) or np.isnan(std):
-            return np.nan
-        return np.average(masked_array(((self-mean)/std)**4, null),
-                          weights=self.get_weights())
-
-    def skew(self, skipna=True):  # noqa: D102
-        if self.get_weights().sum() == 0:
-            return np.nan
-        null = self.isnull() & skipna
-        mean = self.mean(skipna=skipna)
-        std = self.std(skipna=skipna)
-        if np.isnan(mean) or np.isnan(std):
-            return np.nan
-        return np.average(masked_array(((self-mean)/std)**3, null),
-                          weights=self.get_weights())
-
-    def mad(self, skipna=True):  # noqa: D102
-        if self.get_weights().sum() == 0:
-            return np.nan
-        null = self.isnull() & skipna
-        mean = self.mean(skipna=skipna)
-        if np.isnan(mean):
-            return np.nan
-        return np.average(masked_array(abs(self-mean), null),
-                          weights=self.get_weights())
-
-    def sem(self, skipna=True):  # noqa: D102
-        return np.sqrt(self.var(skipna=skipna)/self.neff())
+    def sem(self, skipna=True, ddof=1, **kwargs):  # noqa: D102
+        na = self.isna() & skipna
+        w = np.ma.array(self.get_weights(), mask=na)
+        V1 = w.sum()
+        if np.issubdtype(w.dtype, np.integer) and V1 > 1:
+            # frequency weights
+            n = np.ma.filled(V1, np.nan)
+        else:
+            # reliability weights
+            n = np.ma.filled(V1**2 / (w**2).sum(), np.nan)
+        return np.sqrt(self.var(skipna=skipna, ddof=ddof, **kwargs) / n)
 
     def quantile(self, q=0.5, interpolation='linear'):  # noqa: D102
         if self.get_weights().sum() == 0:
@@ -464,75 +487,55 @@ class WeightedSeries(_WeightedObject, Series):
 class WeightedDataFrame(_WeightedObject, DataFrame):
     """Weighted version of :class:`pandas.DataFrame`."""
 
-    def mean(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        if self.isweighted(axis):
-            if self.get_weights(axis).sum() == 0:
-                return self._constructor_sliced(np.nan,
-                                                index=self._get_axis(1-axis))
-            null = self.isnull() & skipna
-            mean = np.average(masked_array(self, null),
-                              weights=self.get_weights(axis), axis=axis)
-            return self._constructor_sliced(mean, index=self._get_axis(1-axis))
-        else:
-            return super().mean(axis=axis, skipna=skipna, *args, **kwargs)
+    def mean(self, axis=0, skipna=True, **kwargs):  # noqa: D102
+        def mean(data, na, w, axis, skipna, **kwargs):
+            if skipna:
+                data = np.ma.array(data, mask=na)
+            return np.average(data, weights=w, axis=axis)
 
-    def std(self, *args, **kwargs):  # noqa: D102
-        return np.sqrt(self.var(*args, **kwargs))
+        return self._weighted_stat(mean, axis, skipna, **kwargs)
 
-    def kurtosis(self, *args, **kwargs):  # noqa: D102
-        return self.kurt(*args, **kwargs)
+    def std(self, axis=0, skipna=True, **kwargs):  # noqa: D102
+        return np.sqrt(self.var(axis=axis, skipna=skipna, **kwargs))
 
-    def median(self, *args, **kwargs):  # noqa: D102
-        return self.quantile(*args, **kwargs)
+    def kurtosis(self, **kwargs):  # noqa: D102
+        return self.kurt(**kwargs)
 
-    def var(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        if self.isweighted(axis):
-            if self.get_weights(axis).sum() == 0:
-                return self._constructor_sliced(np.nan,
-                                                index=self._get_axis(1-axis))
-            null = self.isnull() & skipna
-            mean = self.mean(axis=axis, skipna=skipna)
-            var = np.average(masked_array((self-mean)**2, null),
-                             weights=self.get_weights(axis), axis=axis)
-            return self._constructor_sliced(var, index=self._get_axis(1-axis))
-        else:
-            return super().var(axis=axis, skipna=skipna, *args, **kwargs)
+    def median(self, **kwargs):  # noqa: D102
+        return self.quantile(**kwargs)
 
-    def cov(self, *args, **kwargs):  # noqa: D102
-        if self.isweighted():
-            null = self.isnull()
-            mean = self.mean(skipna=True)
-            x = masked_array(self - mean, null)
-            cov = np.ma.dot(self.get_weights()*x.T, x) \
-                / self.get_weights().sum().T
-            if kwargs:
-                raise NotImplementedError("The keywords %s are not implemented"
-                                          "for the calculation of the"
-                                          "covariance with weighted samples."
-                                          % kwargs)
-            return self._constructor(cov, index=self.columns,
-                                     columns=self.columns)
-        else:
-            return super().cov(*args, **kwargs)
+    def var(self, axis=0, skipna=True, **kwargs):  # noqa: D102
+        def var(data, na, w, axis, skipna, **kwargs):
+            if skipna:
+                data = np.ma.array(data, mask=na)
+            return var_unbiased(data, w, axis=axis, **kwargs)
+        return self._weighted_stat(var, axis, skipna, **kwargs)
 
-    def corr(self, method="pearson", skipna=True,
-             *args, **kwargs):  # noqa: D102
-        if self.isweighted():
-            cov = self.cov()
-            diag = np.sqrt(np.diag(cov))
-            return cov.divide(diag, axis=1).divide(diag, axis=0)
-        else:
-            return super().corr(*args, **kwargs)
+    def cov(self, ddof=1, **kwargs):  # noqa: D102
+        if kwargs:
+            raise TypeError(f"WeightedDataFrame.cov() got unexpected keyword "
+                            f"arguments {kwargs}")
 
-    def corrwith(self, other, axis=0, drop=False, method="pearson",
-                 *args, **kwargs):  # noqa: D102
+        if not self.isweighted():
+            return super().cov(ddof=ddof)
+
+        cov = cov_unbiased(self, self.get_weights(), ddof=ddof)
+        return self._constructor(cov, index=self.columns, columns=self.columns)
+
+    def corr(self, **kwargs):  # noqa: D102
+        if not self.isweighted():
+            return super().corr(**kwargs)
+        corr = cov_unbiased(self, self.get_weights(), ddof=1, return_corr=True)
+        return self._constructor(corr, index=self.columns,
+                                 columns=self.columns)
+
+    def corrwith(self, other, axis=0, drop=False, **kwargs):  # noqa: D102
         axis = self._get_axis_number(axis)
         if not self.isweighted(axis):
-            return super().corrwith(other, drop=drop, axis=axis, method=method,
-                                    *args, **kwargs)
+            return super().corrwith(other, drop=drop, axis=axis, **kwargs)
         else:
             if isinstance(other, Series):
-                answer = self.apply(lambda x: other.corr(x, method=method),
+                answer = self.apply(lambda x: other.corr(x, **kwargs),
                                     axis=axis)
                 return self._constructor_sliced(answer)
 
@@ -553,67 +556,52 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             ldem = left - left.mean()
             rdem = right - right.mean()
 
+            ddof = kwargs.pop('ddof', 0)
             num = (ldem * rdem * weights.to_numpy()[:, None]).sum()
-            dom = weights.sum() * left.std() * right.std()
+            dom = weights.sum() * left.std(ddof=ddof) * right.std(ddof=ddof)
 
             correl = num / dom
 
             if not drop:
                 # Find non-matching labels along the given axis
                 result_index = self._get_axis(1-axis).union(
-                    other._get_axis(1-axis))
+                    other._get_axis(1-axis)
+                )
                 idx_diff = result_index.difference(correl.index)
 
                 if len(idx_diff) > 0:
-                    correl = concat([correl, Series([np.nan] * len(idx_diff),
-                                                    index=idx_diff)])
+                    correl = concat([
+                        correl,
+                        Series([np.nan] * len(idx_diff), index=idx_diff)
+                    ])
 
             return self._constructor_sliced(correl)
 
-    def kurt(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        if self.isweighted(axis):
-            if self.get_weights(axis).sum() == 0:
-                return self._constructor_sliced(np.nan,
-                                                index=self._get_axis(1-axis))
-            null = self.isnull() & skipna
-            mean = self.mean(axis=axis, skipna=skipna)
-            std = self.std(axis=axis, skipna=skipna)
-            kurt = np.average(masked_array(((self-mean)/std)**4, null),
-                              weights=self.get_weights(axis), axis=axis)
-            return self._constructor_sliced(kurt, index=self._get_axis(1-axis))
-        else:
-            return super().kurt(axis=axis, skipna=skipna, *args, **kwargs)
+    def kurt(self, axis=0, skipna=True, **kwargs):  # noqa: D102
+        def kurt(data, na, w, axis, skipna, **kwargs):
+            if skipna:
+                data = np.ma.array(data, mask=na)
+            return kurt_unbiased(data, w, axis=axis)
+        return self._weighted_stat(kurt, axis, skipna, **kwargs)
 
-    def skew(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        if self.isweighted(axis):
-            if self.get_weights(axis).sum() == 0:
-                return self._constructor_sliced(np.nan,
-                                                index=self._get_axis(1-axis))
-            null = self.isnull() & skipna
-            mean = self.mean(axis=axis, skipna=skipna)
-            std = self.std(axis=axis, skipna=skipna)
-            skew = np.average(masked_array(((self-mean)/std)**3, null),
-                              weights=self.get_weights(axis), axis=axis)
-            return self._constructor_sliced(skew, index=self._get_axis(1-axis))
-        else:
-            return super().skew(axis=axis, skipna=skipna, *args, **kwargs)
+    def skew(self, axis=0, skipna=True, **kwargs):  # noqa: D102
+        def skew(data, na, w, axis, skipna, **kwargs):
+            if skipna:
+                data = np.ma.array(data, mask=na)
+            return skew_unbiased(data, w, axis=axis)
+        return self._weighted_stat(skew, axis, skipna, **kwargs)
 
-    def mad(self, axis=0, skipna=True, *args, **kwargs):  # noqa: D102
-        if self.isweighted(axis):
-            if self.get_weights(axis).sum() == 0:
-                return self._constructor_sliced(np.nan,
-                                                index=self._get_axis(1-axis))
-            null = self.isnull() & skipna
-            mean = self.mean(axis=axis, skipna=skipna)
-            mad = np.average(masked_array(abs(self-mean), null),
-                             weights=self.get_weights(axis), axis=axis)
-            return self._constructor_sliced(mad, index=self._get_axis(1-axis))
-        else:
-            return super().var(axis=axis, skipna=skipna, *args, **kwargs)
-
-    def sem(self, axis=0, skipna=True):  # noqa: D102
-        n = self.neff(axis)
-        return np.sqrt(self.var(axis=axis, skipna=skipna)/n)
+    def sem(self, axis=0, skipna=True, **kwargs):  # noqa: D102
+        def sem(data, na, w, axis, skipna, **kwargs):
+            V1 = w.sum(axis=axis)
+            if np.issubdtype(w.dtype, np.integer) and np.all(V1 > 1):
+                # frequency weights
+                n = V1
+            else:
+                # reliability weights
+                n = V1**2 / (w**2).sum(axis=axis)
+            return np.sqrt(self.var(axis=axis, skipna=skipna, **kwargs) / n)
+        return self._weighted_stat(sem, axis, skipna, **kwargs)
 
     def quantile(self, q=0.5, axis=0, numeric_only=None,
                  interpolation='linear', method=None):  # noqa: D102
