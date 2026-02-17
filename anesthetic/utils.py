@@ -398,6 +398,8 @@ def kurt_unbiased(a, w, axis=0):
     kurt = np.divide(k4, k2**2, out=nans.copy(), where=~invalid)
     kurt = np.where(degenerate, 0.0, kurt)
     return kurt if np.ndim(kurt) > 0 else np.float64(kurt)
+
+
 def sample_cdf(samples, inverse=False, interpolation='linear'):
     """Sample the empirical cdf for a 1d array."""
     samples = np.sort(samples)

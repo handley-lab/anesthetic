@@ -3,24 +3,16 @@
 import warnings
 from inspect import signature
 import numpy as np
-from numpy.ma import masked_array
 from pandas import Series, DataFrame, concat, MultiIndex
 from pandas.core.groupby import GroupBy, SeriesGroupBy, DataFrameGroupBy, ops
 from pandas._libs import lib
 from pandas._libs.lib import no_default
 from pandas.util._exceptions import find_stack_level
 from pandas.util import hash_pandas_object
-<<<<<<< fix-weighted-stats-nan-handling
 from anesthetic.utils import (compress_weights, neff, quantile,
                               temporary_seed, adjust_docstrings,
                               var_unbiased, cov_unbiased, skew_unbiased,
-                              kurt_unbiased)
-=======
-from pandas.core.dtypes.missing import notna
-from anesthetic.utils import (compress_weights, neff, quantile,
-                              temporary_seed, adjust_docstrings,
-                              credibility_interval)
->>>>>>> master
+                              kurt_unbiased, credibility_interval)
 from pandas.core.accessor import CachedAccessor
 from anesthetic.plotting import PlotAccessor
 import pandas as pd

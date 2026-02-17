@@ -2,11 +2,7 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
-<<<<<<< fix-weighted-stats-nan-handling
-:Version: 2.11.9
-=======
-:Version: 2.12.0
->>>>>>> master
+:Version: 2.12.1
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
