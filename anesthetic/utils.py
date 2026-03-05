@@ -3,6 +3,7 @@ import numpy as np
 import pandas
 from scipy import special
 from scipy.interpolate import interp1d
+from scipy.optimize import minimize_scalar
 from scipy.stats import kstwobign, entropy
 from matplotlib.tri import Triangulation
 import contextlib
@@ -130,8 +131,17 @@ def compress_weights(w, u=None, ncompress=True):
     W = w * ncompress / w.sum()
 
     fraction, integer = np.modf(W)
-    extra = (u < fraction).astype(int)
-    return (integer + extra).astype(int)
+    integer = integer.astype(int)
+    if is_int(ncompress):
+        remainder = ncompress - integer.sum()
+        mask = fraction > 0
+        race_time = np.full_like(fraction, np.inf)  # exp-race arrival time
+        race_time[mask] = -np.log(u[mask])/fraction[mask]
+        idx = np.argpartition(race_time, remainder-1)[:remainder]
+        extra = np.bincount(idx, minlength=len(integer))
+    else:
+        extra = (u < fraction).astype(int)
+    return integer + extra
 
 
 def quantile(a, q, w=None, interpolation='linear'):
@@ -149,6 +159,369 @@ def quantile(a, q, w=None, interpolation='linear'):
     if isinstance(q, float):
         quant = float(quant)
     return quant
+
+
+def var_unbiased(a, w, axis=0, ddof=1):
+    """Compute the unbiased variance from weighted samples.
+
+    Uses the standard reliability-weight correction
+        var = s2 / (v1 - v2/v1)   (for ddof=1),
+    and supports the frequency-weight case by using
+        var = s2 / (v1 - ddof)    when w is integer and v1 > 1.
+
+    Parameters
+    ----------
+    a : np.array
+        Input samples.
+    w : np.array
+        Associated sample weights.
+        Integer -> frequency weights;
+        Float -> reliability weights.
+    axis : int
+        Axis along which to compute variance.
+    ddof : int, default=1
+        Delta degrees of freedom.
+
+    Returns
+    -------
+    var : float, np.array
+        Unbiased variance.
+
+    """
+    mu = np.ma.filled(np.average(a, weights=w, axis=axis), np.nan)
+    v1 = np.ma.filled(w.sum(axis=axis), 0.0)
+    if np.issubdtype(w.dtype, np.integer):
+        v2 = v1
+    else:
+        # ---- reliability weights branch ----
+        v2 = np.ma.filled((w ** 2).sum(axis=axis), 0.0)
+    s2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
+
+    invalid = (v1 == 0) | (v1**2 - ddof*v2 == 0) | np.isnan(mu) | np.isnan(s2)
+    nans = np.full_like(v1, np.nan, dtype=float)
+    var = np.divide(v1 * s2, v1**2 - ddof*v2, out=nans.copy(), where=~invalid)
+    return var if np.ndim(var) > 0 else np.float64(var)
+
+
+def cov_unbiased(a, w, ddof=1, return_corr=False):
+    """Compute the unbiased covariance from weighted samples.
+
+    Parameters
+    ----------
+    a : np.array, shape (n_samples, n_features)
+        Input samples in rows, features/parameters in columns.
+    w : np.array, shape (n_samples,)
+        Associated sample weights.
+        Integer -> frequency weights;
+        Float -> reliability weights.
+    ddof : int, default=1
+        Delta degrees of freedom.
+
+    Returns
+    -------
+    cov : ndarray, shape (n_features, n_features)
+        Unbiased covariance matrix.
+
+    """
+    a = np.atleast_2d(a)
+
+    # If all weights are zero, mimic pandas' "all NaN" behaviour upstream.
+    if w.sum() == 0:
+        return np.full((a.shape[1], a.shape[1]), np.nan, dtype=float)
+
+    # ---- fast path: no NaNs anywhere ----
+    if not return_corr:
+        if np.isfinite(a).all() and a.shape[0] >= 2 and a.shape[1] >= 2:
+            if np.issubdtype(w.dtype, np.integer):
+                return np.cov(a, rowvar=False, fweights=w, ddof=ddof)
+            else:
+                return np.cov(a, rowvar=False, aweights=w, ddof=ddof)
+
+    M = np.isfinite(a)           # shape (n, p)
+    A = np.where(M, a, 0.0)      # shape (n, p)
+    WA = (w[:, None] * A).T      # shape (n, p)
+    V1 = (w[:, None] * M).T @ M  # shape (p, p)
+    S1 = WA @ M                  # shape (p, p)
+    S2 = WA @ A                  # shape (p, p)
+
+    if np.issubdtype(w.dtype, np.integer):
+        # ---- frequency weights branch ----
+        V2 = V1
+    else:
+        # ---- reliability weights branch ----
+        V2 = ((w**2)[:, None] * M).T @ M  # shape (p, p)
+
+    invalid = (V1 == 0) | (V1**2 - ddof * V2 == 0)
+    cov = np.full_like(S2, np.nan, dtype=float)
+    cov = np.divide(V1 * S2 - S1.T * S1, V1**2 - ddof * V2,
+                    out=cov.copy(), where=~invalid)
+    if not return_corr:
+        return cov
+    # pairwise variances on the SAME intersections
+    S2i = (w[:, None] * A * A).T @ M
+    nans = np.full_like(cov, np.nan, dtype=float)
+    var_i = np.divide(V1 * S2i - S1**2, V1**2 - 1 * V2,
+                      out=nans.copy(), where=~invalid)
+    invalid = invalid | (var_i * var_i.T <= 0)
+    corr = np.divide(cov, np.sqrt(var_i * var_i.T),
+                     out=nans.copy(), where=~invalid)
+    return corr
+
+
+def skew_unbiased(a, w, axis=0):
+    """Compute the unbiased skewness from weighted samples.
+
+    Adapted from Lorenzo Rimoldini (2013):
+    https://arxiv.org/pdf/1304.6564
+
+    Parameters
+    ----------
+    a : np.array
+        Input samples.
+    w : np.array
+        Associated sample weights.
+        Integer -> frequency weights;
+        Float -> reliability weights.
+    axis : int
+        Axis along which to compute kurtosis.
+
+    Returns
+    -------
+    skew : float, np.array
+        Unbiased skewness (`G1`).
+
+    """
+    mu = np.ma.filled(np.average(a, weights=w, axis=axis), np.nan)
+    v1 = np.ma.filled(w.sum(axis=axis), 0.0)
+    v2 = np.ma.filled((w**2).sum(axis=axis), 0.0)
+    v3 = np.ma.filled((w**3).sum(axis=axis), 0.0)
+    s2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
+    s3 = np.ma.filled((w * (a - mu)**3).sum(axis=axis), 0.0)
+
+    nans = np.full_like(v1, np.nan, dtype=float)
+
+    # ---- frequency weights branch ----
+    if np.issubdtype(w.dtype, np.integer):
+        n = v1
+        if np.all(n <= 2):
+            return np.nan
+        invalid = (n <= 2) | np.isnan(mu) | np.isnan(s2) | np.isnan(s3)
+
+        # pandas convention: zero variance (s2==0) => skew = 0
+        degenerate = (~invalid) & (s2 == 0)
+        skew = np.divide(n * (n-1)**0.5 * s3, (n-2) * s2**1.5,
+                         out=nans.copy(), where=(~invalid) & (~degenerate))
+        skew = np.where(degenerate, 0.0, skew)
+        return skew if np.ndim(skew) > 0 else np.float64(skew)
+
+    # ---- reliability weights branch (Rimoldini) ----
+    if a.shape[axis] <= 2:
+        return np.nan
+    invalid = ((v1 == 0) | (v1**2 - v2 == 0) | (v1**3 - 3*v1*v2 + 2*v3 == 0)
+               | np.isnan(mu) | np.isnan(s2) | np.isnan(s3))
+    k2 = np.divide(v1 * s2, v1**2 - v2, out=nans.copy(), where=~invalid)
+    k3 = np.divide(v1**2 * s3, v1**3 - 3*v1*v2 + 2*v3,
+                   out=nans.copy(), where=~invalid)
+
+    # pandas convention: zero variance (k2==0) => skew = 0
+    degenerate = (~invalid) & (k2 == 0)
+    skew = np.divide(k3, k2**1.5, out=nans.copy(),
+                     where=(~invalid) & (~degenerate))
+    skew = np.where(degenerate, 0.0, skew)
+    return skew if np.ndim(skew) > 0 else np.float64(skew)
+
+
+def kurt_unbiased(a, w, axis=0):
+    """Compute the unbiased kurtosis from weighted samples.
+
+    Adapted from Lorenzo Rimoldini (2013):
+    https://arxiv.org/pdf/1304.6564
+
+    Parameters
+    ----------
+    a : np.array
+        Input samples.
+    w : np.array
+        Associated sample weights.
+        Integer -> frequency weights;
+        Float -> reliability weights.
+    axis : int
+        Axis along which to compute kurtosis.
+
+    Returns
+    -------
+    kurt : float, np.array
+        Unbiased kurtosis (`G2`).
+
+    """
+    mu = np.ma.filled(np.average(a, weights=w, axis=axis), np.nan)
+    v1 = np.ma.filled(w.sum(axis=axis), 0.0)
+    v2 = np.ma.filled((w**2).sum(axis=axis), 0.0)
+    v3 = np.ma.filled((w**3).sum(axis=axis), 0.0)
+    v4 = np.ma.filled((w**4).sum(axis=axis), 0.0)
+    s2 = np.ma.filled((w * (a - mu)**2).sum(axis=axis), 0.0)
+    s4 = np.ma.filled((w * (a - mu)**4).sum(axis=axis), 0.0)
+
+    nans = np.full_like(v1, np.nan, dtype=float)
+
+    # ---- frequency weights branch ----
+    if np.issubdtype(w.dtype, np.integer):
+        n = v1
+        if np.all(n <= 3):
+            return np.nan
+        invalid = (n <= 3) | np.isnan(mu) | np.isnan(s2) | np.isnan(s4)
+
+        # pandas convention: zero variance (s2==0) => kurt = 0
+        degenerate = (~invalid) & (s2 == 0)
+        kurt = np.divide((n+1)*n*(n-1)*s4-3*(n-1)**2*s2**2, (n-2)*(n-3)*s2**2,
+                         out=nans.copy(), where=(~invalid) & (~degenerate))
+        kurt = np.where(degenerate, 0.0, kurt)
+        return kurt if np.ndim(kurt) > 0 else np.float64(kurt)
+
+    # ---- reliability weights branch (Rimoldini) ----
+    if a.shape[axis] <= 3:
+        return np.nan
+
+    den2 = v1**2-v2
+    den4 = (v1**2 - v2) * (v1**4 - 6*v1**2*v2 + 8*v1*v3 + 3*v2**2 - 6*v4)
+    num41 = v1 * (v1**4 - 4*v1*v3 + 3*v2**2)
+    num42 = 3 * (v1**4 - 2*v1**2*v2 + 4*v1*v3 - 3*v2**2)
+
+    invalid = ((v1 == 0) | (den2 == 0) | (den4 == 0)
+               | np.isnan(mu) | np.isnan(s2) | np.isnan(s4))
+    k2 = np.divide(v1 * s2, den2, out=nans.copy(), where=~invalid)
+    k4 = np.divide(num41*s4-num42*s2**2, den4, out=nans.copy(), where=~invalid)
+
+    # pandas convention: zero variance (k2==0) => kurt = 0
+    degenerate = (~invalid) & (k2 == 0)
+    invalid = invalid | (k2 == 0)
+    kurt = np.divide(k4, k2**2, out=nans.copy(), where=~invalid)
+    kurt = np.where(degenerate, 0.0, kurt)
+    return kurt if np.ndim(kurt) > 0 else np.float64(kurt)
+
+
+def sample_cdf(samples, inverse=False, interpolation='linear'):
+    """Sample the empirical cdf for a 1d array."""
+    samples = np.sort(samples)
+    ngaps = len(samples)-1
+    gaps = np.random.dirichlet(np.ones(ngaps))
+    cdf = np.array([0, *np.cumsum(gaps)])
+    # The last element should be one (up to floating point errors) because
+    # dirichlet sums to one. Set exactly to avoid interpolation errors.
+    cdf[-1] = 1
+    if inverse:
+        return interp1d(cdf, samples, kind=interpolation)
+    else:
+        return interp1d(samples, cdf, kind=interpolation,
+                        fill_value=(0, 1), bounds_error=False)
+
+
+def credibility_interval(samples, weights=None, level=0.68, method="iso-pdf",
+                         return_covariance=False, nsamples=12):
+    """Compute the credibility interval of weighted samples.
+
+    Based on linear interpolation of the cumulative density function, thus
+    expect discretisation errors on the scale of distances between samples.
+
+    https://github.com/Stefan-Heimersheim/fastCI#readme
+
+    Parameters
+    ----------
+    samples : array
+        Samples to compute the credibility interval of.
+    weights : array, default=np.ones_like(samples)
+        Weights corresponding to samples.
+    level : float, default=0.68
+        Credibility level (probability, <1).
+    method : str, default='iso-pdf'
+        Which definition of interval to use:
+
+        * ``'iso-pdf'``: Calculate iso probability density interval with the
+          same probability density at each end. Also known as
+          waterline-interval or highest average posterior density interval.
+          This is only accurate if the distribution is sufficiently uni-modal.
+        * ``'lower-limit'``/``'upper-limit'``: Lower/upper limit. One-sided
+          limits for which ``level`` fraction of the (equally weighted) samples
+          lie above/below the limit.
+        * ``'equal-tailed'``: Equal-tailed interval with the same fraction of
+          (equally weighted) samples below and above the interval region.
+
+    return_covariance: bool, default=False
+        Return the covariance of the sampled limits, in addition to the mean
+    nsamples : int, default=12
+        Number of CDF samples to improve `mean` and `std` estimate.
+
+    Returns
+    -------
+    limit(s) : float, array, or tuple of floats or arrays
+        Returns the credibility interval boundari(es). By default,
+        returns the mean over ``nsamples`` samples, which is either
+        two numbers (``method='iso-pdf'``/``'equal-tailed'``) or one number
+        (``method='lower-limit'``/``'upper-limit'``). If
+        ``return_covariance=True``, returns a tuple (mean(s), covariance)
+        where covariance is the covariance over the sampled limits.
+    """
+    if level >= 1:
+        raise ValueError('level must be <1, got {0:.2f}'.format(level))
+    if len(np.shape(samples)) != 1:
+        raise ValueError('Support only 1D arrays for samples')
+    if weights is not None and np.shape(samples) != np.shape(weights):
+        raise ValueError('Shape of samples and weights differs')
+
+    # Convert to numpy to unify indexing
+    samples = np.array(samples.copy())
+    if weights is None:
+        weights = np.ones(len(samples))
+    else:
+        weights = np.array(weights.copy())
+
+    # Convert samples to unit weight not the case
+    if not np.all(np.logical_or(weights == 0, weights == 1)):
+        # compress_weights with ncompress='equal' assures weights \in 0,1
+        # Note that this must be done, we cannot handle weights != 1
+        # see this discussion for details:
+        # https://github.com/williamjameshandley/anesthetic/pull/188#issuecomment-1274980982
+        weights = compress_weights(weights, ncompress='equal')
+
+    indices = np.where(weights)[0]
+    x = samples[indices]
+
+    # Sample the confidence interval multiple times
+    # to get errorbars on confidence interval boundaries
+    ci_samples = []
+    for i in range(nsamples):
+        invCDF = sample_cdf(x, inverse=True)
+        if method == 'iso-pdf':
+            # Find smallest interval
+            def distance(Y, level=level):
+                return invCDF(Y+level)-invCDF(Y)
+            res = minimize_scalar(distance, bounds=(0, 1-level),
+                                  method="Bounded")
+            ci_samples.append(np.array([invCDF(res.x),
+                                        invCDF(res.x+level)]))
+        elif method == 'lower-limit':
+            # Get value from which we reach the desired level
+            ci_samples.append(invCDF(1-level))
+        elif method == 'upper-limit':
+            # Get value to which we reach the desired level
+            ci_samples.append(invCDF(level))
+        elif method == 'equal-tailed':
+            ci_samples.append(np.array([invCDF((1-level)/2),
+                                        invCDF((1+level)/2)]))
+        else:
+            raise ValueError("Method '{0:}' unknown".format(method))
+    ci_samples = np.array(ci_samples)
+    if np.shape(ci_samples) == (nsamples, ):
+        if return_covariance:
+            return np.mean(ci_samples), np.cov(ci_samples)
+        else:
+            return np.mean(ci_samples)
+    else:
+        if return_covariance:
+            return np.mean(ci_samples, axis=0), \
+                   np.cov(ci_samples, rowvar=False)
+        else:
+            return np.mean(ci_samples, axis=0)
 
 
 def mirror_1d(d, xmin=None, xmax=None):
@@ -226,6 +599,72 @@ def histogram(a, **kwargs):
     return xpath, ypath
 
 
+def histogram_bin_edges(samples, weights, bins='fd', range=None, beta='equal'):
+    """Compute a good number of bins dynamically from weighted samples.
+
+    Parameters
+    ----------
+    samples : array_like
+        Input data.
+
+    weights : array-like
+        Array of sample weights.
+
+    bins : str, default='fd'
+        String defining the rule used to automatically compute a good number
+        of bins for the weighted samples:
+
+            * 'fd'    : Freedman--Diaconis rule (modified for weighted data)
+            * 'scott' : Scott's rule (modified for weighted data)
+            * 'sqrt'  : Square root estimator (modified for weighted data)
+
+    range : (float, float), optional
+        The lower and upper range of the bins. If not provided, range is simply
+        ``(a.min(), a.max())``. Values outside the range are ignored. The first
+        element of the range must be less than or equal to the second.
+
+    beta : float, default='equal'
+        The value of beta>0 used to calculate the number of effective
+        samples via :func:`neff`.
+
+    Returns
+    -------
+    bin_edges : array of dtype float
+        The edges to pass to :func:`numpy.histogram`.
+
+    """
+    if weights is None:
+        weights = np.ones_like(samples)
+    if range is None:
+        minimum = np.min(samples)
+        maximum = np.max(samples)
+        data_range = maximum - minimum
+    else:
+        minimum = range[0]
+        maximum = range[1]
+        data_range = maximum - minimum
+        data_mask = (samples >= minimum) & (samples <= maximum)
+        samples = samples[data_mask]
+        weights = weights[data_mask]
+    w = weights / np.sum(weights)
+    N_eff = neff(w=w, beta=beta)
+    if bins == 'fd':  # Freedman--Diaconis rule
+        q1, q3 = quantile(samples, [1/4, 3/4], w=w)
+        bin_width = 2 * (q3 - q1) * N_eff**(-1/3)
+    elif bins == 'scott':  # Scott's rule
+        weighted_mean = np.average(samples, weights=w)
+        weighted_var = np.average((samples - weighted_mean)**2, weights=w)
+        weighted_std = np.sqrt(weighted_var)
+        bin_width = (24 * np.pi**0.5 / N_eff)**(1/3) * weighted_std
+    elif bins == 'sqrt':  # Square root estimator
+        samples_eff, _ = sample_compression_1d(samples, w=w, ncompress=N_eff)
+        data_range_eff = np.max(samples_eff) - np.min(samples_eff)
+        bin_width = data_range_eff / np.sqrt(N_eff)
+    nbins = int(np.ceil(data_range / bin_width))
+    bin_edges = np.linspace(minimum, maximum, nbins+1)
+    return bin_edges
+
+
 def compute_nlive(death, birth):
     """Compute number of live points from birth and death contours.
 
@@ -244,7 +683,7 @@ def compute_nlive(death, birth):
                          index=b.index + len(b))
     b['n'] = +1
     d['n'] = -1
-    t = pandas.concat([b, d]).sort_values(['logL', 'n'])
+    t = pandas.concat([b, d]).sort_values(['logL', 'n'], na_position='first')
     n = t.n.cumsum()
     return (n[d.index]+1).to_numpy()
 
@@ -390,7 +829,11 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     if w is None:
         w = pandas.Series(index=x.index, data=np.ones_like(x))
 
-    if isinstance(n, str):
+    if n is False:
+        n = len(x)
+    elif n is True or isinstance(n, str):
+        if n is True:
+            n = 'entropy'
         n = int(neff(w, beta=n))
 
     # Select samples for triangulation
@@ -602,6 +1045,10 @@ def adjust_docstrings(obj, pattern, repl, *args, **kwargs):
         for key, val in obj.__dict__.items():
             doc = inspect.getdoc(val)
             if doc is not None:
+                i = doc.find("See Also")
+                j = doc.find("Examples")
+                if i != -1:
+                    doc = doc[:i] if j == -1 else doc[:i] + doc[j:]
                 newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
                 try:
                     obj.__dict__[key].__doc__ = newdoc
@@ -610,5 +1057,9 @@ def adjust_docstrings(obj, pattern, repl, *args, **kwargs):
     else:
         doc = inspect.getdoc(obj)
         if doc is not None:
+            i = doc.find("See Also")
+            j = doc.find("Examples")
+            if i != -1:
+                doc = doc[:i] if j == -1 else doc[:i] + doc[j:]
             newdoc = re.sub(pattern, repl, doc, *args, **kwargs)
             obj.__doc__ = newdoc

@@ -1,12 +1,13 @@
+import matplotlib.pyplot as plt
 from anesthetic.scripts import gui
 from bin.utils import unit_incremented
 import pytest
-import pandas._testing as tm
 
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    tm.close()
+    yield
+    plt.close("all")
 
 
 def test_gui():

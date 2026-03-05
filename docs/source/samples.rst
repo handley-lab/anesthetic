@@ -162,6 +162,11 @@ Gelman--Rubin ``R-1`` statistic using the
 
     Rminus1_old = mcmc_samples.Gelman_Rubin()
     Rminus1_new = mcmc_burnout.Gelman_Rubin()
+    Rminus1_par = mcmc_burnout.Gelman_Rubin(per_param='par')
+
+You can get the convergence per parameter by passing the keyword
+``per_param='par'``. By passing ``per_param='cov'`` you will even get the
+covariant part of the convergence of pairs of parameters.
 
 The following plot shows how ``remove_burn_in`` gets rid of burn-in samples.
 Note the stark difference in the Gelman--Rubin statistic, as listed in the
@@ -173,6 +178,13 @@ legend, depending on whether burn-in samples were removed or not.
     mcmc_samples.plot_2d(axes, alpha=0.7, label="Before burn-in removal, $R-1=%.3f$" % Rminus1_old)
     mcmc_burnout.plot_2d(axes, alpha=0.7, label="After burn-in removal,  $R-1=%.3f$" % Rminus1_new)
     axes.iloc[-1, 0].legend(bbox_to_anchor=(len(axes)/2, len(axes)), loc='lower center')
+
+.. note::
+    Unless you specify which parameters to compute the Gelman--Rubin statistic
+    for (by passing the keyword ``params``), anesthetic will use _all_
+    parameters in the data frame except those containing 'prior', 'chi2', or
+    'logL' in their name. So if you for example want to exclude derived
+    parameters, you should pass ``params`` directly.
 
 
 |

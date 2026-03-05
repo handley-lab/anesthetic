@@ -9,7 +9,6 @@ import pandas.plotting._core
 import pandas.plotting._misc
 from anesthetic._format import _DataFrameFormatter
 from anesthetic._version import __version__  # noqa: F401
-
 # TODO: remove this when conda pandas version catches up
 from packaging.version import parse
 assert parse(pandas.__version__) >= parse('2.0.0')
@@ -50,3 +49,4 @@ make_1d_axes = anesthetic.plot.make_1d_axes
 
 read_hdf = anesthetic.read.hdf.read_hdf
 read_chains = anesthetic.read.chain.read_chains
+read_csv = anesthetic.read.csv.read_csv

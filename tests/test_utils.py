@@ -2,7 +2,7 @@ import warnings
 import numpy as np
 import pytest
 from scipy import special as sp
-from numpy.testing import assert_array_equal
+from numpy.testing import (assert_array_equal, assert_allclose)
 from anesthetic import read_chains
 from pytest import approx
 from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
@@ -11,21 +11,53 @@ from anesthetic.utils import (nest_level, compute_nlive, unique, is_int,
                               logsumexp, sample_compression_1d,
                               triangular_sample_compression_2d,
                               insertion_p_value, compress_weights,
-                              neff)
+                              credibility_interval, sample_cdf, neff)
 
 
 def test_compress_weights():
+    # unweighted
     w = compress_weights(w=np.ones(10), u=None)
     assert_array_equal(w, np.ones(10))
     w = compress_weights(w=None, u=np.random.rand(10))
     assert_array_equal(w, np.ones(10))
+    w = compress_weights(w=np.ones(10), u=None, ncompress=5)
+    assert w.sum() == 5
+
+    # weighted
     r = np.random.rand(10)
     w = compress_weights(w=r, u=None, ncompress=False)
     assert_array_equal(w, r)
+    w = compress_weights(w=r, u=None, ncompress='equal')
+    assert np.all(np.logical_or(w == 0, w == 1))
 
     # TODO Remove in 2.1
     with pytest.raises(ValueError):
         compress_weights(w=r, ncompress=-1)
+
+
+@pytest.mark.parametrize('ncompress, expected', [(1, 1), (5, 5)])
+def test_compress_weights_ncompress_int_exact_length(ncompress, expected):
+    w = np.arange(10)
+    u = np.linspace(0.1, 0.9, len(w))
+    W = compress_weights(w=w, u=u, ncompress=ncompress)
+    assert np.issubdtype(W.dtype, np.integer)
+    assert W.sum() == expected
+
+
+def test_compress_weights_remainder_zero():
+    w = np.ones(5)
+    W = compress_weights(w=w, u=None, ncompress=5)
+    assert_array_equal(W, np.ones(5, dtype=int))
+
+
+@pytest.mark.parametrize('ncompress', ['entropy', '2', 'inf'])
+def test_compress_weights_ncompress_string(ncompress):
+    w = np.arange(10)
+    u = np.linspace(0.1, 0.9, len(w))
+    W = compress_weights(w=w, u=u, ncompress=ncompress)
+    assert np.issubdtype(W.dtype, np.integer)
+    assert W.min() >= 0
+    assert W.sum() < len(w)
 
 
 def test_nest_level():
@@ -88,12 +120,18 @@ def test_triangular_sample_compression_2d():
     cov = np.identity(2)
     tri, W = triangular_sample_compression_2d(x, y, cov, w)
     assert len(W) == 1000
-    assert np.isclose(sum(W), sum(w), rtol=1e-1)
+    assert sum(W) == pytest.approx(sum(w), rel=1e-1)
+    tri, W = triangular_sample_compression_2d(x, y, cov, w, n=False)
+    assert len(W) == n
+    assert sum(W) == pytest.approx(sum(w))
+    tri, W = triangular_sample_compression_2d(x, y, cov, w, n=True)  # entropy
+    assert n/2 < len(W) < n
+    assert sum(W) == pytest.approx(sum(w), rel=1e-3)
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n='inf')
-    assert n/10 < len(W) < n
-    assert np.isclose(sum(W), sum(w), rtol=1e-1)
+    assert len(W) == pytest.approx(n/2, rel=1e-1)
+    assert sum(W) == pytest.approx(sum(w), rel=1e-2)
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n=10000)
-    assert n == len(W)
+    assert len(W) == n
     assert sum(W) == pytest.approx(sum(w))
 
 
@@ -184,6 +222,52 @@ def test_p_values_from_sample():
 
     ks_results = insertion_p_value(ns.insertion[nlive:-nlive], nlive, batch=1)
     assert ks_results['p-value'] > 0.05
+
+
+def test_sample_cdf():
+    normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
+    CDF = sample_cdf(normal_samples, inverse=False)
+    assert_allclose(CDF(-np.inf), 0)
+    assert_allclose(CDF(-100), 0)
+    assert_allclose(CDF(2), 0.5, atol=0.1)
+
+
+@pytest.mark.parametrize('method', ['iso-pdf', 'equal-tailed',
+                                    'lower-limit', 'upper-limit'])
+@pytest.mark.parametrize('return_covariance', [True, False])
+def test_credibility_interval(method, return_covariance):
+    np.random.seed(0)
+    normal_samples = np.random.normal(loc=2, scale=0.1, size=10000)
+    ci = credibility_interval(
+        normal_samples,
+        level=0.84 if 'limit' in method else 0.68,
+        method=method,
+        return_covariance=return_covariance,
+    )
+    if return_covariance:
+        ci, cov = ci
+        assert np.ndim(cov) == 0 if 'limit' in method else 2
+        assert np.all(np.abs(cov) < 1e-4)
+        assert np.all(np.abs(cov) > 1e-8)
+    if method in ['iso-pdf', 'equal-tailed']:
+        lower, upper = ci
+    else:
+        upper = ci if 'upper' in method else 2.1
+        lower = ci if 'lower' in method else 1.9
+    assert_allclose(lower, 1.9, atol=0.02)
+    assert_allclose(upper, 2.1, atol=0.02)
+
+
+def test_credibility_interval_exceptions():
+    samples = read_chains('./tests/example_data/pc')
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, level=1.1)
+    with pytest.raises(ValueError):
+        credibility_interval(samples[['x0', 'x1']])
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, weights=[1, 2, 3])
+    with pytest.raises(ValueError):
+        credibility_interval(samples.x0, method='foo')
 
 
 @pytest.mark.parametrize('beta', ['entropy', 'kish', 0.5, 1, 2, np.inf,

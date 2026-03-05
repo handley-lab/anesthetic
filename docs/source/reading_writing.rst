@@ -5,14 +5,15 @@ Reading and writing
 
 .. _reading chains:
 
-Reading chain files from PolyChord, MultiNest, UltraNest, CosmoMC, or Cobaya
-============================================================================
+Reading chain files from PolyChord, MultiNest, UltraNest, NestedFit, CosmoMC, or Cobaya
+=======================================================================================
 
 If you have finished nested sampling or MCMC runs from one of:
 
 * `PolyChord <https://polychord.io>`_: https://github.com/PolyChord/PolyChordLite
 * MultiNest: https://github.com/farhanferoz/MultiNest
 * `UltraNest <https://johannesbuchner.github.io/UltraNest/index.html>`_: https://github.com/JohannesBuchner/UltraNest
+* NestedFit: https://github.com/martinit18/nested_fit 
 * `CosmoMC <https://cosmologist.info/cosmomc/readme.html>`_: https://github.com/cmbant/CosmoMC
 * `Cobaya <https://cobaya.readthedocs.io>`_: https://github.com/CobayaSampler/cobaya
 
@@ -37,6 +38,14 @@ out the examples listed here.
       
       from anesthetic import read_chains
       samples = read_chains("anesthetic/tests/example_data/un")
+
+* NestedFit samples, which will be an instance of the
+  :class:`anesthetic.samples.NestedSamples` class:
+
+  ::
+      
+      from anesthetic import read_chains
+      samples = read_chains("anesthetic/tests/example_data/nf")
 
 * Cobaya samples, which will be an instance of the
   :class:`anesthetic.samples.MCMCSamples` class:

@@ -5,6 +5,26 @@ from pandas.core.indexing import (_LocIndexer as _LocIndexer_,
 import numpy as np
 from functools import cmp_to_key
 from pandas.errors import IndexingError
+import pandas as pd
+
+
+def read_csv(filename, *args, **kwargs):
+    """Read a CSV file into a ``LabelledDataFrame``."""
+    df = pd.read_csv(filename, index_col=[0, 1], header=[0, 1],
+                     *args, **kwargs)
+    ldf = LabelledDataFrame(df)
+    if ldf.islabelled(0) and ldf.islabelled(1):
+        return ldf
+    df = pd.read_csv(filename, index_col=[0, 1], *args, **kwargs)
+    ldf = LabelledDataFrame(df)
+    if ldf.islabelled(0):
+        return ldf
+    df = pd.read_csv(filename, index_col=0, header=[0, 1], *args, **kwargs)
+    ldf = LabelledDataFrame(df)
+    if ldf.islabelled(1):
+        return ldf
+    df = pd.read_csv(filename, index_col=0, *args, **kwargs)
+    return LabelledDataFrame(df)
 
 
 def ac(funcs, *args):
@@ -51,12 +71,9 @@ def ac(funcs, *args):
 
     for s, l in results:
         if s is not None:
-            if hasattr(s, "name"):
-                try:
-                    if l[s.name]:
-                        s.name = l[s.name]
-                except (TypeError, KeyError):
-                    pass
+            if hasattr(s, "name") and l is not None:
+                if isinstance(l, pd.Series) and s.name in l.index:
+                    s.name = l.loc[s.name]
             return s
     raise errors[-1]
 
@@ -117,7 +134,9 @@ class _LabelledObject(object):
                 labels_map = index.to_frame().droplevel(labs)[labs]
                 if fill:
                     replacement = labels_map.loc[labels_map == ''].index
-                    labels_map.loc[labels_map == ''] = replacement
+                    if len(replacement) > 0:
+                        labels_map.loc[labels_map == ''] = replacement.astype(
+                            labels_map.loc[labels_map != ''].dtype)
                 return labels_map
             else:
                 return index.to_series()
@@ -192,7 +211,7 @@ class _LabelledObject(object):
 
             index.insert(level, labels)
             index = MultiIndex.from_arrays(index, names=names)
-            result = result.set_axis(index, axis=axis, copy=False)
+            result = result.set_axis(index, axis=axis)
 
         if inplace:
             self._update_inplace(result)
@@ -238,8 +257,8 @@ class LabelledDataFrame(_LabelledObject, DataFrame):
     def _constructor_sliced(self):
         return LabelledSeries
 
-    def transpose(self, copy=False):  # noqa: D102
-        result = super().transpose(copy=copy)
+    def transpose(self):  # noqa: D102
+        result = super().transpose()
         result._labels = result._labels[::-1]
         return result
 

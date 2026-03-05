@@ -1,4 +1,5 @@
 # flake8: noqa
+from pandas.api.types import is_float_dtype
 from pandas.core.indexes.multi import sparsify_labels
 from pandas.io.formats.format import (
     DataFrameFormatter as DataFrameFormatter,
@@ -12,12 +13,12 @@ class _DataFrameFormatter(DataFrameFormatter):
     def _get_formatted_column_labels(self, frame):
         columns = frame.columns
         if isinstance(columns, MultiIndex):
-            fmt_columns = columns.format(sparsify=False, adjoin=False)
-            fmt_columns = list(zip(*fmt_columns))
+            fmt_columns = [tuple(str(c) for c in column) for column in columns]
             dtypes = self.frame.dtypes._values
 
             # if we have a Float level, they don't use leading space at all
-            restrict_formatting = any(level.is_floating for level in columns.levels)
+            restrict_formatting = any(is_float_dtype(level.dtype)
+                                      for level in columns.levels)
             need_leadsp = dict(zip(fmt_columns, map(is_numeric_dtype, dtypes)))
 
             def space_format(x, y):
@@ -37,7 +38,7 @@ class _DataFrameFormatter(DataFrameFormatter):
             str_columns = [list(x) for x in zip(*str_columns)]
             str_columns = [_make_fixed_width(x) for x in str_columns]
         else:
-            fmt_columns = columns.format()
+            fmt_columns = [str(x) for x in columns]
             dtypes = self.frame.dtypes
             need_leadsp = dict(zip(fmt_columns, map(is_numeric_dtype, dtypes)))
             str_columns = [

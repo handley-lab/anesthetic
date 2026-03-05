@@ -13,3 +13,5 @@ plikHM_TTTEEE_lowl_lowE_lensing_NS/
 *~
 .pytest_cache/*
 .coverage
+
+.DS_Store

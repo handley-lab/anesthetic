@@ -4,14 +4,23 @@ on:
     branches:
       - master
 jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.step1.outputs.v }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get version number
+        id: step1 
+        run: echo "v=$(grep ':Version:' README.rst | awk '{print $2}')" >> $GITHUB_OUTPUT
+
   git-tag-and-release:
     runs-on: ubuntu-latest
+    needs: get-version
     steps:
-      - uses: actions/checkout@v3
-      - name: Get version number
-        run: |
-          VERSION="$(grep ':Version:' README.rst | awk '{print $2}')"
-          echo "DIST_VERSION=v${VERSION}" >> $GITHUB_ENV
+      - uses: actions/checkout@v4
+      - name: set version number
+        run: echo "DIST_VERSION=v${{ needs.get-version.outputs.version }}" >> $GITHUB_ENV
       - name: Create Tag
         uses: actions/github-script@v6
         with:
@@ -34,11 +43,11 @@ jobs:
   pypi-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.8
+          python-version: 3.11
       - name: Install pypa/build
         run: python -m pip install build --user
       - name: Build a binary wheel and a source tarball
@@ -48,32 +57,35 @@ jobs:
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
-  aur-release:
-    needs: pypi-release
+  pypi-public:
+    needs: 
+      - get-version
+      - pypi-release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v4
+      - name: Wait for PyPi
+        uses: nev7n/wait_for_response@v1
         with:
-          python-version: 3.8
+          url: "https://files.pythonhosted.org/packages/source/a/anesthetic/anesthetic-${{ needs.get-version.outputs.version }}.tar.gz"
+          responseCode: 200
+          timeout: 600000
+          interval: 10000
+
+  aur-release:
+    needs: pypi-public
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install tomli
       - name: Generate PKGBUILD
         run: python ./bin/gen_PKGBUILD.py > ./PKGBUILD
-      - name: Get version number
-        run: |
-          VERSION="$(cat ./PKGBUILD | grep pkgver= | awk -F= '{print $2}')"
-          echo "DIST_VERSION=${VERSION}" >> $GITHUB_ENV
-      - name: Wait for PyPi
-        uses: nev7n/wait_for_response@v1
-        with:
-          url: "https://files.pythonhosted.org/packages/source/a/anesthetic/anesthetic-${{ env.DIST_VERSION }}.tar.gz"
-          responseCode: 200
-          timeout: 600000
-          interval: 10000
       - name: Publish AUR package
         uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
         with:
@@ -83,3 +95,74 @@ jobs:
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+
+  conda-release:
+    needs: pypi-public
+    name: Build and deploy to conda
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conda environment creation and activation
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.11
+          auto-update-conda: false
+          auto-activate-base: false
+          show-channel-urls: true
+      - name: install dependencies
+        shell: bash -el {0}
+        run: conda install grayskull conda-build anaconda-client
+      - name: Generate meta.yaml from grayskull
+        shell: bash -el {0}
+        run: grayskull pypi --strict-conda-forge anesthetic
+      - name: Build and upload the conda packages
+        uses: uibcdf/action-build-and-upload-conda-packages@v1.2.0
+        with:
+          meta_yaml_dir: anesthetic
+          python-version: 3.11
+          user: handley-lab
+          label: 'main'
+          token: ${{ secrets.ANACONDA_TOKEN }} # Replace with the right name of your secret
+
+  conda-build:
+    needs: 
+      - conda-release
+      - get-version
+    name: test installation from conda
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conda environment creation and activation
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.11
+          auto-update-conda: false
+          auto-activate-base: false
+          show-channel-urls: true
+      - name: install from conda
+        shell: bash -el {0}
+        run: conda install -c handley-lab anesthetic
+      - name: get install version
+        shell: bash -el {0}
+        run: echo "install_version=$(python -c 'import anesthetic; print(anesthetic.__version__)')" >> $GITHUB_ENV
+      - name: fail if versions not matching
+        if: ${{ env.install_version != needs.get-version.outputs.version }}
+        run: exit 1
+
+  pypi-build:
+    needs: 
+      - pypi-public
+      - get-version
+    name: test installation from pypi
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install from pypi
+        run: pip install anesthetic
+      - name: get install version
+        run: echo "install_version=$(python -c 'import anesthetic; print(anesthetic.__version__)')" >> $GITHUB_ENV
+      - name: fail if versions not matching
+        if: ${{ env.install_version != needs.get-version.outputs.version }}
+        run: exit 1

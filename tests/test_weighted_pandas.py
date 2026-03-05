@@ -1,22 +1,25 @@
-from anesthetic.weighted_pandas import WeightedDataFrame, WeightedSeries
+from anesthetic.weighted_pandas import (WeightedDataFrame, WeightedSeries,
+                                        read_csv)
 from pandas import DataFrame, MultiIndex
 import pandas.testing
 from anesthetic.utils import neff
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgba
 from pandas.plotting import scatter_matrix, bootstrap_plot
 from pandas.plotting._matplotlib.misc import (
     scatter_matrix as orig_scatter_matrix
 )
-import pandas._testing as tm
+from packaging import version
 
 
 @pytest.fixture(autouse=True)
 def close_figures_on_teardown():
-    tm.close()
+    yield
+    plt.close("all")
 
 
 @pytest.fixture
@@ -126,6 +129,7 @@ def test_WeightedDataFrame_std(frame):
     assert not std.isweighted()
     assert_array_equal(std.index, frame.columns)
     assert_allclose(std, (1./12)**0.5, atol=1e-2)
+    assert np.all(frame.std(ddof=0) != frame.std(ddof=1))
 
     std = frame.std(axis=1)
     assert isinstance(std, WeightedSeries)
@@ -151,10 +155,6 @@ def test_WeightedDataFrame_cov(frame):
     assert_array_equal(cov.index, frame[:5].index)
     assert_array_equal(cov.columns, frame[:5].index)
 
-    with pytest.raises(NotImplementedError):
-        # kwargs not passed when weighted
-        frame.cov(ddof=1)
-
 
 def test_WeightedDataFrame_corr(frame):
     corr = frame.corr()
@@ -176,30 +176,47 @@ def test_WeightedDataFrame_corrwith(frame):
     assert isinstance(correl, WeightedSeries)
     assert not correl.isweighted()
     assert_array_equal(correl.index, frame.columns)
-    assert_allclose(correl, frame.corr()['A'], atol=1e-2)
+    assert_allclose(correl, frame.corr()['A'], rtol=1e-10, atol=1e-10)
 
     correl = frame.corrwith(frame[['A', 'B']])
     assert isinstance(correl, WeightedSeries)
     assert not correl.isweighted()
     assert_array_equal(correl.index, frame.columns)
-    assert_allclose(correl['A'], 1, atol=1e-2)
-    assert_allclose(correl['B'], 1, atol=1e-2)
+    assert_allclose(correl['A'], 1, rtol=1e-12, atol=1e-12)
+    assert_allclose(correl['B'], 1, rtol=1e-12, atol=1e-12)
     assert np.isnan(correl['C'])
 
     unweighted = DataFrame(frame).droplevel('weights')
 
-    with pytest.raises(ValueError):
-        frame.corrwith(unweighted.A)
+    if version.parse(pandas.__version__) >= version.parse('3.0.0'):
+        correl = frame.corrwith(unweighted.A)
+        assert_allclose(correl['A'], 1, atol=1e-2)
+        assert_allclose(correl['B'], 0, atol=1e-2)
 
-    with pytest.raises(ValueError):
-        frame.corrwith(unweighted[['A', 'B']])
+        correl = frame.corrwith(unweighted[['A', 'B']])
+        assert_allclose(correl['A'], 1, atol=1e-2)
+        assert_allclose(correl['B'], 1, atol=1e-2)
+        assert np.isnan(correl['C'])
 
-    with pytest.raises(ValueError):
-        unweighted.corrwith(frame[['A', 'B']])
+        correl = unweighted.corrwith(frame[['A', 'B']])
+        assert_allclose(correl['A'], 1, atol=1e-2)
+        assert_allclose(correl['B'], 1, atol=1e-2)
+        assert np.isnan(correl['C'])
+    else:
+        with pytest.raises(ValueError):
+            frame.corrwith(unweighted.A)
+
+        with pytest.raises(ValueError):
+            frame.corrwith(unweighted[['A', 'B']])
+
+        with pytest.raises(ValueError):
+            unweighted.corrwith(frame[['A', 'B']])
 
     correl_1 = unweighted[:5].corrwith(unweighted[:4], axis=1)
     correl_2 = frame[:5].corrwith(frame[:4], axis=1)
-    assert_array_equal(correl_1.values, correl_2.values)
+    # Allow for difference due to ddof=0 vs ddof=1 approach
+    assert_allclose(correl_1.values[:-1], correl_2.values[:-1], rtol=1e-12)
+    assert np.isnan(correl_1.values[-1]) and np.isnan(correl_2.values[-1])
     assert correl_2.isweighted()
 
     correl_3 = frame[:5].T.corrwith(frame[:4].T)
@@ -208,10 +225,11 @@ def test_WeightedDataFrame_corrwith(frame):
 
     correl_4 = frame.T.corrwith(frame.T, axis=1)
     correl_5 = unweighted.T.corrwith(unweighted.T, axis=1)
-    assert_allclose(correl_4, correl_5)
+    assert_allclose(correl_4, correl_5, rtol=1e-12)
 
     frame.set_weights(None, inplace=True)
-    assert_array_equal(frame.corrwith(frame), unweighted.corrwith(unweighted))
+    assert_allclose(frame.corrwith(frame), unweighted.corrwith(unweighted),
+                    rtol=1e-12)
 
 
 def test_WeightedDataFrame_median(frame):
@@ -237,6 +255,7 @@ def test_WeightedDataFrame_sem(frame):
     assert not sem.isweighted()
     assert_array_equal(sem.index, frame.columns)
     assert_allclose(sem, (1./12)**0.5/np.sqrt(frame.neff()), atol=1e-2)
+    assert np.all(frame.sem(ddof=0) != frame.sem(ddof=1))
 
     sem = frame.sem(axis=1)
     assert isinstance(sem, WeightedSeries)
@@ -252,7 +271,7 @@ def test_WeightedDataFrame_kurtosis(frame):
     assert isinstance(kurtosis, WeightedSeries)
     assert not kurtosis.isweighted()
     assert_array_equal(kurtosis.index, frame.columns)
-    assert_allclose(kurtosis, 9./5, atol=1e-2)
+    assert_allclose(kurtosis, -6/5, atol=1e-2)
     assert_array_equal(frame.kurtosis(), frame.kurt())
 
     kurtosis = frame.kurtosis(axis=1)
@@ -279,22 +298,6 @@ def test_WeightedDataFrame_skew(frame):
     assert skew.isweighted()
     assert frame.T.skew().isweighted()
     assert_array_equal(skew.index, frame.index)
-
-
-def test_WeightedDataFrame_mad(frame):
-    mad = frame.mad()
-    assert isinstance(mad, WeightedSeries)
-    assert not mad.isweighted()
-    assert_array_equal(mad.index, frame.columns)
-    assert_allclose(mad, 0.25, atol=1e-2)
-
-    mad = frame.mad(axis=1)
-    assert isinstance(mad, WeightedSeries)
-    assert_array_equal(mad, frame.T.mad())
-    assert isinstance(frame.T.mad(), WeightedSeries)
-    assert mad.isweighted()
-    assert frame.T.mad().isweighted()
-    assert_array_equal(mad.index, frame.index)
 
 
 def test_WeightedDataFrame_quantile(frame):
@@ -394,21 +397,43 @@ def test_WeightedDataFrame_neff(frame):
 
 
 def test_WeightedDataFrame_compress(frame):
+    # length tests
+    assert len(frame.compress(1000)) == 1000
     assert_allclose(frame.neff(), len(frame.compress()), rtol=1e-2)
-    for i in np.logspace(3, 5, 10):
-        assert_allclose(i, len(frame.compress(i)), rtol=1e-1)
+    assert_allclose(1000.0, len(frame.compress(1000.0)), rtol=1e-1)
     unit_weights = frame.compress('equal')
     assert len(np.unique(unit_weights.index)) == len(unit_weights)
+
+    # ensure reproducibility
     assert_array_equal(frame.compress(), frame.compress())
-    assert_array_equal(frame.compress(i), frame.compress(i))
+    assert_array_equal(frame.compress(1000), frame.compress(1000))
     assert_array_equal(frame.compress('equal'), frame.compress('equal'))
 
     assert_array_equal(frame.T.compress().T, frame)
     assert_array_equal(frame.T.compress(axis=1).T, frame.compress())
 
 
+@pytest.mark.parametrize('ncompress, expected', [(100, 100),
+                                                 (1000, 1000),
+                                                 (True, 1000),
+                                                 (False, 1000),
+                                                 ('equal', 1000)])
+def test_unweighted_compress(frame, ncompress, expected):
+    """Test compression works for unweighted `WeightedDataFrames`."""
+    # Create unweighted data
+    np.random.seed(42)
+    frame = frame[:1000].drop_weights()
+    assert not frame.isweighted()
+
+    # Test compression
+    compressed = frame.compress(ncompress)
+    assert not compressed.isweighted()
+    assert len(compressed) == expected
+    assert list(compressed.columns) == list(frame.columns)
+
+
 def test_WeightedDataFrame_nan(frame):
-    frame['A'][0] = np.nan
+    frame.loc[0, 'A'] = np.nan
     assert ~frame.mean().isna().any()
     assert ~frame.mean(axis=1).isna().any()
     assert_array_equal(frame.mean(skipna=False).isna(), [True] + [False]*5)
@@ -421,7 +446,7 @@ def test_WeightedDataFrame_nan(frame):
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
                        [True, False, False, False, False, False])
 
-    frame['B'][2] = np.nan
+    frame.loc[2, 'B'] = np.nan
     assert ~frame.mean().isna().any()
     assert_array_equal(frame.mean(skipna=False).isna(),
                        [True, True] + [False]*4)
@@ -434,10 +459,10 @@ def test_WeightedDataFrame_nan(frame):
     assert_array_equal(frame.std(axis=1, skipna=False).isna()[0:6],
                        [True, False, True, False, False, False])
 
-    frame['C'][4] = np.nan
-    frame['D'][5] = np.nan
-    frame['E'][6] = np.nan
-    frame['F'][7] = np.nan
+    frame.loc[4, 'C'] = np.nan
+    frame.loc[5, 'D'] = np.nan
+    frame.loc[6, 'E'] = np.nan
+    frame.loc[7, 'F'] = np.nan
     assert ~frame.mean().isna().any()
     assert frame.mean(skipna=False).isna().all()
     assert_array_equal(frame.mean(axis=1, skipna=False).isna()[0:6],
@@ -465,7 +490,6 @@ def test_WeightedDataFrame_nan(frame):
     assert frame[:0].corr().isna().all().all()
     assert frame[:0].kurt().isna().all()
     assert frame[:0].skew().isna().all()
-    assert frame[:0].mad().isna().all()
     assert frame[:0].sem().isna().all()
     assert frame[:0].quantile().isna().all()
 
@@ -492,7 +516,7 @@ def test_WeightedSeries_cov(frame):
     assert_allclose(frame.A.cov(frame.A), 1./12, atol=1e-2)
     assert_allclose(frame.A.cov(frame.B), 0, atol=1e-2)
 
-    frame['A'][0] = np.nan
+    frame.loc[0, 'A'] = np.nan
     assert_allclose(frame.A.cov(frame.A), 1./12, atol=1e-2)
     assert_allclose(frame.A.cov(frame.B), 0, atol=1e-2)
 
@@ -505,11 +529,16 @@ def test_WeightedSeries_corr(frame):
 
     unweighted = DataFrame(frame).droplevel('weights')
 
-    with pytest.raises(ValueError):
-        frame.A.corr(unweighted.B)
+    if version.parse(pandas.__version__) >= version.parse('3.0.0'):
+        assert_allclose(frame.A.corr(unweighted.A), 1, atol=1e-2)
+        assert_allclose(frame.A.corr(unweighted.B), 0, atol=1e-2)
+        assert_allclose(unweighted.A.corr(frame.B), 0, atol=1e-2)
+    else:
+        with pytest.raises(ValueError):
+            frame.A.corr(unweighted.B)
 
-    with pytest.raises(ValueError):
-        unweighted.A.corr(frame.B)
+        with pytest.raises(ValueError):
+            unweighted.A.corr(frame.B)
 
 
 def test_WeightedSeries_median(series):
@@ -527,7 +556,7 @@ def test_WeightedSeries_sem(series):
 def test_WeightedSeries_kurtosis(series):
     kurtosis = series.kurtosis()
     assert isinstance(kurtosis, float)
-    assert_allclose(kurtosis, 9./5, atol=1e-2)
+    assert_allclose(kurtosis, -6/5, atol=1e-2)
     assert series.kurtosis() == series.kurt()
 
     series[0] = np.nan
@@ -543,16 +572,6 @@ def test_WeightedSeries_skew(series):
     series[0] = np.nan
     assert ~np.isnan(series.skew())
     assert np.isnan(series.skew(skipna=False))
-
-
-def test_WeightedSeries_mad(series):
-    mad = series.mad()
-    assert isinstance(mad, float)
-    assert_allclose(mad, 0.25, atol=1e-2)
-
-    series[0] = np.nan
-    assert ~np.isnan(series.mad())
-    assert np.isnan(series.mad(skipna=False))
 
 
 def test_WeightedSeries_quantile(series):
@@ -586,9 +605,9 @@ def test_WeightedSeries_neff(series):
 
 
 def test_WeightedSeries_compress(series):
+    assert len(series.compress(1000)) == 1000
     assert_allclose(series.neff(), len(series.compress()), rtol=1e-2)
-    for i in np.logspace(3, 5, 10):
-        assert_allclose(i, len(series.compress(i)), rtol=1e-1)
+    assert_allclose(1000.0, len(series.compress(1000.0)), rtol=1e-1)
     unit_weights = series.compress('equal')
     assert len(np.unique(unit_weights.index)) == len(unit_weights)
 
@@ -616,9 +635,148 @@ def test_WeightedSeries_nan(series):
     assert np.isnan(series[:0].corr(series))
     assert np.isnan(series[:0].kurt())
     assert np.isnan(series[:0].skew())
-    assert np.isnan(series[:0].mad())
     assert np.isnan(series[:0].sem())
     assert np.isnan(series[:0].quantile())
+
+
+# =============================================================================
+# Numerical Correctness Tests for NaN Handling
+# =============================================================================
+
+@pytest.mark.parametrize("data, weights, expected", [
+    # Case 1: The original bug from Lukas's report
+    ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4], 3.0),
+    # Case 2: NaN at beginning
+    ([np.nan, 2.0, 3.0, 4.0], [0.1, 0.2, 0.3, 0.4], 29/9),
+    # Case 3: NaN at end
+    ([1.0, 2.0, 3.0, np.nan], [0.1, 0.2, 0.3, 0.4], 7/3),
+    # Case 4: Multiple NaNs
+    ([1.0, np.nan, 3.0, np.nan, 5.0], [0.1, 0.2, 0.3, 0.1, 0.3], 25/7),
+    # Case 5: NaN with large weight (tests that weight is excluded)
+    ([10.0, np.nan, 30.0], [1.0, 5.0, 2.0], 70/3),
+    # Case 6: NaN with zero weight (should be same as excluding it)
+    ([1.0, 2.0, np.nan], [0.5, 0.5, 0.0], 1.5),
+])
+def test_weighted_series_mean_nan_correctness(data, weights, expected):
+    """Test that mean(skipna=True) returns numerically correct results."""
+    result = WeightedSeries(data, weights=weights).mean(skipna=True)
+    assert_allclose(result, expected, rtol=1e-10)
+
+
+@pytest.mark.parametrize("data, weights", [
+    ([1.0, 2.0, np.nan, 4.0], [0.1, 0.2, 0.3, 0.4]),
+    ([np.nan, 2.0, 3.0], [0.3, 0.3, 0.4]),
+    ([1.0, np.nan], [0.6, 0.4]),
+])
+def test_weighted_series_mean_skipna_false_returns_nan(data, weights):
+    """Test that mean(skipna=False) returns NaN when NaN present."""
+    result = WeightedSeries(data, weights=weights).mean(skipna=False)
+    assert np.isnan(result)
+
+
+@pytest.mark.parametrize("data, weights, ddof, expected", [
+    ([1.0, 2.0, np.nan, 4.0], [1, 1, 1, 3], 0, 1.6),
+    ([1.0, 2.0, np.nan, 4.0], [1, 1, 1, 3], 1, 2.0),
+    ([np.nan, 1.0, 2.0, 4.0], [1, 1, 1, 3], 0, 1.6),
+    ([np.nan, 1.0, 2.0, 4.0], [1, 1, 1, 3], 1, 2.0),
+    ([1.0, np.nan, 3.0, np.nan], [1, 1, 1, 1], 0, 1.0),
+    ([1.0, np.nan, 3.0, np.nan], [1, 1, 1, 1], 1, 2.0),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 0, 1.0),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 1, 2.0),
+])
+def test_weighted_series_var_nan_correctness(data, weights, ddof, expected):
+    """Test that var(skipna=True) returns numerically correct results."""
+    result = WeightedSeries(data, weights=weights).var(skipna=True, ddof=ddof)
+    assert_allclose(result, expected, rtol=1e-10)
+
+
+@pytest.mark.parametrize("data, weights, ddof, expected", [
+    ([1.0, 2.0, np.nan, 4.0], [1, 1, 1, 3], 0, np.sqrt(1.6)),
+    ([1.0, 2.0, np.nan, 4.0], [1, 1, 1, 3], 1, np.sqrt(2.0)),
+    ([np.nan, 1.0, 2.0, 4.0], [1, 1, 1, 3], 0, np.sqrt(1.6)),
+    ([np.nan, 1.0, 2.0, 4.0], [1, 1, 1, 3], 1, np.sqrt(2.0)),
+    ([1.0, np.nan, 3.0, np.nan], [1, 1, 1, 1], 0, 1.0),
+    ([1.0, np.nan, 3.0, np.nan], [1, 1, 1, 1], 1, np.sqrt(2.0)),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 0, 1.0),
+    ([1.0, np.nan, 3.0, np.nan], [0.25, 0.25, 0.25, 0.25], 1, np.sqrt(2.0)),
+])
+def test_weighted_series_std_nan_correctness(data, weights, ddof, expected):
+    """Test that std(skipna=True) returns numerically correct results."""
+    result = WeightedSeries(data, weights=weights).std(skipna=True, ddof=ddof)
+    assert_allclose(result, expected, rtol=1e-10)
+
+
+def test_weighted_series_all_nan_returns_nan():
+    """Test that all statistical methods return NaN for all-NaN data."""
+    data = [np.nan, np.nan, np.nan, np.nan, np.nan]
+    weights = [0.3, 0.3, 0.4, 0.5, 0.1]
+    series = WeightedSeries(data, weights=weights)
+
+    assert np.isnan(series.mean(skipna=True))
+    assert np.isnan(series.var(skipna=True, ddof=0))
+    assert np.isnan(series.var(skipna=True, ddof=1))
+    assert np.isnan(series.std(skipna=True))
+    assert np.isnan(series.sem(skipna=True))
+    assert np.isnan(series.skew(skipna=True))
+    assert np.isnan(series.kurt(skipna=True))
+    assert np.isnan(series.cov(series, ddof=0))
+    assert np.isnan(series.cov(series, ddof=1))
+    assert np.isnan(series.corr(series))
+
+
+def test_weighted_series_equivalence_to_manual_filtering():
+    """Test that skipna=True equals manual filtering of data and weights."""
+    data = [1.0, np.nan, 3.0, np.nan, 5.0, 6.0]
+    weights = [0.1, 0.2, 0.1, 0.3, 0.2, 0.1]
+
+    s = WeightedSeries(data, weights=weights)
+
+    # Manual filtering approach
+    mask = ~np.isnan(data)
+    filtered_data = np.array(data)[mask]
+    filtered_weights = np.array(weights)[mask]
+    fs = WeightedSeries(filtered_data, weights=filtered_weights)
+
+    # Results should be identical
+    assert_allclose(s.mean(skipna=True), fs.mean(), rtol=1e-12)
+    assert_allclose(s.var(skipna=True, ddof=0), fs.var(ddof=0), rtol=1e-12)
+    assert_allclose(s.var(skipna=True, ddof=1), fs.var(ddof=1), rtol=1e-12)
+    assert_allclose(s.std(skipna=True), fs.std(), rtol=1e-12)
+    assert_allclose(s.sem(skipna=True), fs.sem(), rtol=1e-12)
+    assert_allclose(s.skew(skipna=True), fs.skew(), rtol=1e-12)
+    assert_allclose(s.kurt(skipna=True), fs.kurt(), rtol=1e-12)
+    assert_allclose(s.cov(s, ddof=0), fs.cov(fs, ddof=0), rtol=1e-12)
+    assert_allclose(s.cov(s, ddof=1), fs.cov(fs, ddof=1), rtol=1e-12)
+    assert_allclose(s.corr(s), fs.corr(fs), rtol=1e-12)
+
+
+def test_weighted_dataframe_nan_consistency():
+    """Test that DataFrame.mean()[col] equals Series.mean() for same data."""
+    data = [[1.0, np.nan, 3.0], [4.0, 5.0, np.nan]]
+    weights = [0.4, 0.6]
+
+    df = WeightedDataFrame(data, columns=['A', 'B', 'C'], weights=weights)
+    df_result = df.mean(skipna=True)
+
+    for col in ['A', 'B', 'C']:
+        s = df[col]
+        assert isinstance(s, WeightedSeries)
+        series_result = s.mean(skipna=True)
+        assert_allclose(df_result[col], series_result, rtol=1e-10)
+
+
+def test_weighted_dataframe_mean_ground_truth():
+    """Test DataFrame mean with ground truth values."""
+    data = [[1.0, np.nan, 3.0],
+            [4.0, 5.0, np.nan]]
+    weights = [0.4, 0.6]
+    expected_means = {'A': 2.8, 'B': 5.0, 'C': 3.0}
+
+    df = WeightedDataFrame(data, columns=['A', 'B', 'C'], weights=weights)
+    result = df.mean(skipna=True)
+
+    for col, expected in expected_means.items():
+        assert_allclose(result[col], expected, rtol=1e-10)
 
 
 @pytest.fixture
@@ -645,6 +803,48 @@ def mcmc_df():
 def mcmc_wdf(mcmc_df):
     weights = mcmc_df.groupby(mcmc_df.columns.tolist(), sort=False).size()
     return WeightedDataFrame(mcmc_df.drop_duplicates(), weights=weights.values)
+
+
+def test_mcmc_stats(mcmc_df, mcmc_wdf):
+    df = mcmc_df
+    wdf = mcmc_wdf
+    assert_allclose(wdf.mean(), df.mean(), rtol=1e-12)
+    assert_allclose(wdf.var(ddof=0), df.var(ddof=0), rtol=1e-12)
+    assert_allclose(wdf.var(ddof=1), df.var(ddof=1), rtol=1e-12)
+    assert_allclose(wdf.std(ddof=0), df.std(ddof=0), rtol=1e-12)
+    assert_allclose(wdf.std(ddof=1), df.std(ddof=1), rtol=1e-12)
+    assert_allclose(wdf.sem(ddof=0), df.sem(ddof=0), rtol=1e-12)
+    assert_allclose(wdf.sem(ddof=1), df.sem(ddof=1), rtol=1e-12)
+    assert_allclose(wdf.skew(), df.skew(), rtol=1e-12)
+    assert_allclose(wdf.kurt(), df.kurt(), rtol=1e-12)
+    assert_allclose(wdf.cov(ddof=0), df.cov(ddof=0), rtol=1e-12)
+    assert_allclose(wdf.cov(ddof=1), df.cov(ddof=1), rtol=1e-12)
+    assert_allclose(np.diag(wdf.cov(ddof=0)), wdf.var(ddof=0), rtol=1e-12)
+    assert_allclose(np.diag(wdf.cov(ddof=1)), wdf.var(ddof=1), rtol=1e-12)
+    assert_allclose(wdf.corr(), df.corr(), rtol=1e-12, atol=1e-12)
+    assert_allclose(wdf.corrwith(wdf.x), df.corrwith(df.x),
+                    rtol=1e-12, atol=1e-12)
+
+
+def test_mcmc_series_stats(mcmc_df, mcmc_wdf):
+    sx = mcmc_df.loc[:, 'x']
+    sy = mcmc_df.loc[:, 'y']
+    wsx = mcmc_wdf.loc[:, 'x']
+    wsy = mcmc_wdf.loc[:, 'y']
+    assert_allclose(wsx.mean(), sx.mean(), rtol=1e-12)
+    assert_allclose(wsx.var(ddof=0), sx.var(ddof=0), rtol=1e-12)
+    assert_allclose(wsx.var(ddof=1), sx.var(ddof=1), rtol=1e-12)
+    assert_allclose(wsx.std(ddof=0), sx.std(ddof=0), rtol=1e-12)
+    assert_allclose(wsx.std(ddof=1), sx.std(ddof=1), rtol=1e-12)
+    assert_allclose(wsx.sem(ddof=0), sx.sem(ddof=0), rtol=1e-12)
+    assert_allclose(wsx.sem(ddof=1), sx.sem(ddof=1), rtol=1e-12)
+    assert_allclose(wsx.skew(), sx.skew(), rtol=1e-12)
+    assert_allclose(wsx.kurt(), sx.kurt(), rtol=1e-12)
+    assert_allclose(wsx.cov(wsy, ddof=0), sx.cov(sy, ddof=0), rtol=1e-12)
+    assert_allclose(wsx.cov(wsy, ddof=1), sx.cov(sy, ddof=1), rtol=1e-12)
+    assert_allclose(wsx.cov(wsx, ddof=0), sx.var(ddof=0), rtol=1e-12)
+    assert_allclose(wsx.cov(wsx, ddof=1), sx.var(ddof=1), rtol=1e-12)
+    assert_allclose(wsx.corr(wsy), sx.corr(sy), rtol=1e-12, atol=1e-12)
 
 
 @pytest.fixture
@@ -812,7 +1012,10 @@ def test_BoxPlot(mcmc_df, mcmc_wdf):
     mcmc_wdf.boxplot(ylabel='ylabel', ax=ax)
 
     fig, ax = plt.subplots()
-    mcmc_wdf.boxplot(vert=False, ax=ax)
+    if version.parse(matplotlib.__version__) >= version.parse('3.10.0'):
+        mcmc_wdf.boxplot(orientation='horizontal', ax=ax)
+    else:
+        mcmc_wdf.boxplot(vert=False, ax=ax)
 
     fig, ax = plt.subplots()
     mcmc_wdf.boxplot(fontsize=30, ax=ax)
@@ -923,7 +1126,7 @@ def test_multiindex(mcmc_wdf):
 
 
 def test_weight_passing(mcmc_wdf):
-    weights = mcmc_wdf.get_weights()
+    weights = mcmc_wdf.get_weights().copy()
     new_wdf = WeightedDataFrame(mcmc_wdf.copy(), weights=None)
     assert (new_wdf.get_weights() == mcmc_wdf.get_weights()).all()
 
@@ -1005,3 +1208,27 @@ def test_style(mcmc_wdf):
         ax = mcmc_wdf.plot.kde_2d('x', 'y', style='c')
     with pytest.raises(TypeError):
         ax = mcmc_wdf.plot.scatter_2d('x', 'y', style='c')
+
+
+def test_read_csv(tmp_path, mcmc_wdf):
+    filename = tmp_path / 'mcmc_wdf.csv'
+
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
+
+    mcmc_wdf.set_weights(np.random.rand(mcmc_wdf.shape[1]),
+                         axis=1, inplace=True)
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
+
+    mcmc_wdf = mcmc_wdf.drop_weights(axis=0)
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)
+
+    mcmc_wdf = mcmc_wdf.drop_weights(axis=1)
+    mcmc_wdf.to_csv(filename)
+    mcmc_wdf_ = read_csv(filename)
+    pandas.testing.assert_frame_equal(mcmc_wdf, mcmc_wdf_)

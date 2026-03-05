@@ -84,6 +84,15 @@ anesthetic.scripts module
    :show-inheritance:
 
 
+anesthetic.tension module
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.tension
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 anesthetic.testing module
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -97,6 +106,15 @@ anesthetic.utils module
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: anesthetic.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+anesthetic.weighted\_labelled\_pandas module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: anesthetic.weighted_labelled_pandas
    :members:
    :undoc-members:
    :show-inheritance:
