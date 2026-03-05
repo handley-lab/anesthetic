@@ -2198,8 +2198,10 @@ def test_compress_returns_samples(samples):
     ('kurt', 10.0),
     ('skew', 1.0),
 ])
-def test_compress(samples, method, atol):
-    compressed = samples.compress()
+@pytest.mark.parametrize('ncompress', [False, True, '2', 1000])
+@pytest.mark.parametrize('weighted', [False, True])
+def test_compress(samples, method, atol, ncompress, weighted):
+    compressed = samples.compress(ncompress=ncompress, weighted=weighted)
     params = [c for c in samples.columns
               if c[0] not in ('logL', 'logL_birth', 'nlive',
                               'chain', 'logP', 'chi2')]

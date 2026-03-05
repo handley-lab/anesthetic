@@ -371,7 +371,7 @@ class WeightedSeries(_WeightedObject, Series):
             return np.nan
         return quantile(self.to_numpy(), q, self.get_weights(), interpolation)
 
-    def compress(self, ncompress=True):
+    def compress(self, ncompress=True, weighted=False):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
@@ -389,8 +389,15 @@ class WeightedSeries(_WeightedObject, Series):
               with ``beta=ncompress``.
 
         """
-        i = compress_weights(self.get_weights(), self._rand(), ncompress)
-        return self.repeat(i)
+        if (not self.isweighted() and isinstance(ncompress, (bool, str))
+                or ncompress is False):
+            return self
+        w = compress_weights(self.get_weights(), self._rand(), ncompress)
+        if weighted:
+            mask = w > 0
+            return self.drop_weights()[mask].set_weights(w[mask])
+        else:
+            return self.drop_weights().repeat(w)
 
     def sample(self, *args, **kwargs):  # noqa: D102
         return super().sample(weights=self.get_weights(), *args, **kwargs)
@@ -624,7 +631,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
                                     interpolation=interpolation, method=method)
 
-    def compress(self, ncompress=True, axis=0):
+    def compress(self, ncompress=True, axis=0, weighted=False):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
@@ -645,14 +652,16 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
         if (not self.isweighted(axis) and isinstance(ncompress, (bool, str))
                 or ncompress is False):
             return self
-        i = compress_weights(self.get_weights(axis), self._rand(axis),
+        w = compress_weights(self.get_weights(axis), self._rand(axis),
                              ncompress)
-        data = np.repeat(self.to_numpy(), i, axis=axis)
-        i = self.drop_weights(axis)._get_axis(axis).repeat(i)
-        df = self._constructor(data=data)
-        df = df.set_axis(i, axis=axis)
-        df = df.set_axis(self._get_axis(1-axis), axis=1-axis)
-        return df
+        df = self.drop_weights(axis)
+        if weighted:
+            indices = np.flatnonzero(w > 0)
+            df = df.take(indices, axis=axis)
+            return df.set_weights(w[indices], axis=axis)
+        else:
+            indices = np.repeat(np.arange(df.shape[axis]), w)
+            return df.take(indices, axis=axis)
 
     def sample(self, *args, **kwargs):  # noqa: D102
         sig = signature(DataFrame.sample)
