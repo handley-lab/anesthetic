@@ -79,10 +79,7 @@ def read_getdist(root, *args, **kwargs):
     samples.root = root
     samples.label = kwargs['label']
 
-    all_same_chain = np.all(samples.chain == samples.chain.iloc[0])
-    if all_same_chain or samples.chain.isna().all():
-        samples.drop(columns='chain', inplace=True, level=0)
-    elif samples.islabelled():
+    if samples.islabelled():
         samples.set_label('chain', r'$n_\mathrm{chain}$')
 
     return samples
