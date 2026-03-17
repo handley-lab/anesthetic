@@ -40,16 +40,16 @@ def test_read_getdist():
     labels = ['$x_0$', '$x_1$', '$x_2$', '$x_3$', '$x_4$',
               r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
     assert_array_equal(mcmc.get_labels(), labels)
+    mcmc = mcmc.remove_burn_in(0.5)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
     mcmc = read_getdist('./tests/example_data/gd_single')
     w = np.loadtxt("./tests/example_data/gd_single.txt", usecols=0)
     assert_array_equal(mcmc.get_weights(), w)
-    params.remove('chain')
     assert_array_equal(mcmc.drop_labels().columns, params)
-    labels.remove(r'$n_\mathrm{chain}$')
     assert_array_equal(mcmc.get_labels(), labels)
+    mcmc = mcmc.remove_burn_in(0.5)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
