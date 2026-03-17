@@ -388,6 +388,11 @@ class WeightedSeries(_WeightedObject, Series):
               effective samples in :func:`anesthetic.utils.neff`
               with ``beta=ncompress``.
 
+        weighted : bool, default=False
+            If False (default), return an unweighted object with potentially
+            repeated samples.
+            If True, return a weighted object with non-zero compressed weights.
+
         """
         if (not self.isweighted() and isinstance(ncompress, (bool, str))
                 or ncompress is False):
@@ -647,6 +652,11 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             * If ``str``: determine number from the Huggins-Roy family of
               effective samples in :func:`anesthetic.utils.neff`
               with ``beta=ncompress``.
+
+        weighted : bool, default=False
+            If False (default), return an unweighted object with potentially
+            repeated samples.
+            If True, return a weighted object with non-zero compressed weights.
 
         """
         if (not self.isweighted(axis) and isinstance(ncompress, (bool, str))
