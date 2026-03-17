@@ -4,6 +4,7 @@ from pandas import DataFrame, MultiIndex
 import pandas.testing
 from anesthetic.utils import neff
 import pytest
+from pytest import approx
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 import matplotlib
@@ -84,6 +85,11 @@ def frame():
     assert_array_equal(frame.columns, cols)
     assert_array_equal(frame.index.get_level_values('weights'), weights)
     return frame
+
+
+@pytest.fixture(params=["frame", "series"])
+def samples(request, frame, series):
+    return frame if request.param == "frame" else series
 
 
 def test_WeightedDataFrame_key(frame):
@@ -396,19 +402,73 @@ def test_WeightedDataFrame_neff(frame):
         assert frame.neff(beta=beta) == neff(frame.get_weights(), beta=beta)
 
 
-def test_WeightedDataFrame_compress(frame):
-    # length tests
-    assert len(frame.compress(1000)) == 1000
-    assert_allclose(frame.neff(), len(frame.compress()), rtol=1e-2)
-    assert_allclose(1000.0, len(frame.compress(1000.0)), rtol=1e-1)
-    unit_weights = frame.compress('equal')
-    assert len(np.unique(unit_weights.index)) == len(unit_weights)
+@pytest.mark.parametrize('weighted', [False, True])
+def test_weighted_compress(samples, weighted):
+    no_comp = samples.compress(ncompress=False, weighted=weighted)
+    equally = samples.compress(ncompress='equal', weighted=weighted)
+    entropy = samples.compress(ncompress='entropy', weighted=weighted)
+    small_i = samples.compress(ncompress=1000, weighted=weighted)  # small int
+    large_i = samples.compress(ncompress=80000, weighted=weighted)  # large int
+    small_f = samples.compress(ncompress=1e3, weighted=weighted)  # small float
+    large_f = samples.compress(ncompress=8e4, weighted=weighted)  # large float
+
+    # no compression if ncompress is False
+    assert no_comp.isweighted()
+    assert_array_equal(no_comp, samples)
+    assert_array_equal(no_comp.get_weights(), samples.get_weights())
+
+    if weighted:
+        # weighted after compression
+        assert equally.isweighted()
+        assert entropy.isweighted()
+        assert small_i.isweighted()
+        assert large_i.isweighted()
+        assert small_f.isweighted()
+        assert large_f.isweighted()
+        # uniform weights for small samples
+        assert_allclose(equally.get_weights(), 1)
+        assert_allclose(small_i.get_weights(), 1)
+        assert_allclose(small_f.get_weights(), 1)
+        # length tests
+        assert entropy.get_weights().sum() == approx(samples.neff(), abs=200)
+        assert small_i.get_weights().sum() == 1000  # exact for integers
+        assert large_i.get_weights().sum() == 80000  # exact for integers
+        assert small_f.get_weights().sum() == approx(1e3, abs=100)
+        assert large_f.get_weights().sum() == approx(8e4, abs=200)
+        assert len(np.unique(entropy.index)) == len(entropy) < len(samples)
+        assert len(np.unique(large_i.index)) == len(large_i) < len(samples)
+        assert len(np.unique(large_f.index)) == len(large_f) < len(samples)
+    else:
+        # unweighted after compression
+        assert not equally.isweighted()
+        assert not entropy.isweighted()
+        assert not small_i.isweighted()
+        assert not large_i.isweighted()
+        assert not small_f.isweighted()
+        assert not large_f.isweighted()
+        # length tests
+        assert len(entropy) == approx(samples.neff(), abs=200)
+        assert len(small_i) == 1000  # exact for integers
+        assert len(large_i) == 80000  # exact for integers
+        assert len(small_f) == approx(1e3, abs=100)  # approximate for float
+        assert len(large_f) == approx(8e4, abs=200)  # approximate for float
+        assert len(np.unique(entropy.index)) < len(entropy) < len(samples)
+        assert len(np.unique(large_i.index)) < len(large_i) < len(samples)
+        assert len(np.unique(large_f.index)) < len(large_f) < len(samples)
+    assert len(np.unique(equally.index)) == len(equally) < len(entropy)
+    assert len(np.unique(small_i.index)) == len(small_i) < len(large_i)
+    assert len(np.unique(small_f.index)) == len(small_f) < len(large_f)
 
     # ensure reproducibility
-    assert_array_equal(frame.compress(), frame.compress())
-    assert_array_equal(frame.compress(1000), frame.compress(1000))
-    assert_array_equal(frame.compress('equal'), frame.compress('equal'))
+    assert_array_equal(samples.compress(weighted=weighted),
+                       samples.compress(weighted=weighted))
+    assert_array_equal(samples.compress(1000, weighted=weighted),
+                       samples.compress(1000, weighted=weighted))
+    assert_array_equal(samples.compress('equal', weighted=weighted),
+                       samples.compress('equal', weighted=weighted))
 
+
+def test_WeightedDataFrame_compress(frame):
     assert_array_equal(frame.T.compress().T, frame)
     assert_array_equal(frame.T.compress(axis=1).T, frame.compress())
 
@@ -418,18 +478,21 @@ def test_WeightedDataFrame_compress(frame):
                                                  (True, 1000),
                                                  (False, 1000),
                                                  ('equal', 1000)])
-def test_unweighted_compress(frame, ncompress, expected):
+def test_unweighted_compress(samples, ncompress, expected):
     """Test compression works for unweighted `WeightedDataFrames`."""
     # Create unweighted data
     np.random.seed(42)
-    frame = frame[:1000].drop_weights()
-    assert not frame.isweighted()
+    samples = samples[:1000].drop_weights()
+    assert not samples.isweighted()
 
     # Test compression
-    compressed = frame.compress(ncompress)
+    compressed = samples.compress(ncompress)
     assert not compressed.isweighted()
     assert len(compressed) == expected
-    assert list(compressed.columns) == list(frame.columns)
+    if isinstance(samples, DataFrame):
+        assert list(compressed.columns) == list(samples.columns)
+    else:
+        assert compressed.name == samples.name
 
 
 def test_WeightedDataFrame_nan(frame):
@@ -602,14 +665,6 @@ def test_WeightedSeries_neff(series):
     assert isinstance(neff, float)
     assert neff < len(series)
     assert neff > len(series) * np.exp(-0.25)
-
-
-def test_WeightedSeries_compress(series):
-    assert len(series.compress(1000)) == 1000
-    assert_allclose(series.neff(), len(series.compress()), rtol=1e-2)
-    assert_allclose(1000.0, len(series.compress(1000.0)), rtol=1e-1)
-    unit_weights = series.compress('equal')
-    assert len(np.unique(unit_weights.index)) == len(unit_weights)
 
 
 def test_WeightedSeries_nan(series):
