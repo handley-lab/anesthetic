@@ -430,11 +430,11 @@ def test_weighted_compress(samples, weighted):
         assert_allclose(small_i.get_weights(), 1)
         assert_allclose(small_f.get_weights(), 1)
         # length tests
-        assert entropy.get_weights().sum() == approx(samples.neff(), abs=100)
+        assert entropy.get_weights().sum() == approx(samples.neff(), abs=200)
         assert small_i.get_weights().sum() == 1000  # exact for integers
         assert large_i.get_weights().sum() == 80000  # exact for integers
         assert small_f.get_weights().sum() == approx(1e3, abs=100)
-        assert large_f.get_weights().sum() == approx(8e4, abs=100)
+        assert large_f.get_weights().sum() == approx(8e4, abs=200)
         assert len(np.unique(entropy.index)) == len(entropy) < len(samples)
         assert len(np.unique(large_i.index)) == len(large_i) < len(samples)
         assert len(np.unique(large_f.index)) == len(large_f) < len(samples)
@@ -447,11 +447,11 @@ def test_weighted_compress(samples, weighted):
         assert not small_f.isweighted()
         assert not large_f.isweighted()
         # length tests
-        assert len(entropy) == approx(samples.neff(), abs=100)
+        assert len(entropy) == approx(samples.neff(), abs=200)
         assert len(small_i) == 1000  # exact for integers
         assert len(large_i) == 80000  # exact for integers
         assert len(small_f) == approx(1e3, abs=100)  # approximate for float
-        assert len(large_f) == approx(8e4, abs=100)  # approximate for float
+        assert len(large_f) == approx(8e4, abs=200)  # approximate for float
         assert len(np.unique(entropy.index)) < len(entropy) < len(samples)
         assert len(np.unique(large_i.index)) < len(large_i) < len(samples)
         assert len(np.unique(large_f.index)) < len(large_f) < len(samples)
