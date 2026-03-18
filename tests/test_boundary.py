@@ -1,3 +1,4 @@
+import pytest
 from numpy.ma.testutils import assert_array_equal
 
 import anesthetic.examples._matplotlib_agg  # noqa: F401
@@ -23,6 +24,8 @@ def test_boundary_correction_1d():
     pn, = kde_plot_1d(ax, d, weights=w, order=-1, **kwargs)  # no correction
     p0, = kde_plot_1d(ax, d, weights=w, order=+0, **kwargs)  # order 0
     p1, = kde_plot_1d(ax, d, weights=w, order=+1, **kwargs)  # order 1
+    with pytest.raises(ValueError):
+        kde_plot_1d(ax, d, weights=w, order=2, **kwargs)  # order 2 n.a.
 
     assert np.all(pn.get_ydata() >= 0)
     assert np.all(p0.get_ydata() >= 0)
