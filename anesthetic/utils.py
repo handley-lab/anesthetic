@@ -837,7 +837,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
         n = int(neff(w, beta=n))
 
     # Select samples for triangulation
-    if (w != 0).sum() < n:
+    if (w != 0).sum() <= n:
         i = x.index
     else:
         i = np.random.choice(x.index, size=n, replace=False, p=w/w.sum())
