@@ -460,8 +460,8 @@ class Samples(WeightedLabelledDataFrame):
         return anesthetic.read.hdf.to_hdf(path_or_buf, key, self,
                                           *args, **kwargs)
 
-    def compress(self, ncompress=True, axis=0):  # noqa: D102
-        return Samples(super().compress(ncompress, axis))
+    def compress(self, ncompress=True, axis=0, weighted=True):  # noqa: D102
+        return Samples(super().compress(ncompress, axis, weighted))
 
     compress.__doc__ = (
         inspect.getdoc(WeightedLabelledDataFrame.compress) + "\n\n" +
