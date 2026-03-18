@@ -27,8 +27,7 @@ from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
                               match_contour_to_contourf, histogram_bin_edges)
-from anesthetic.boundary import (boundary_correction_gaussian,
-                                 boundary_correction_gaussian_2d)
+from anesthetic.boundary import boundary_correction_1d, boundary_correction_2d
 
 
 class AxesSeries(Series):
@@ -971,8 +970,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
     kde.set_bandwidth(bw_method=kde.factor * bw_scale)
 
-    p = boundary_correction_gaussian(kde, x, kde.covariance, order=order,
-                                     xmin=data.min(), xmax=data.max())
+    p = boundary_correction_1d(kde, x, kde.covariance, order=order,
+                               xmin=data.min(), xmax=data.max())
     p /= p.max()
     if version.parse(np.__version__) >= version.parse("2.0.0"):
         trapezoid = np.trapezoid
@@ -1306,9 +1305,9 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
     kde.set_bandwidth(bw_method=kde.factor * bw_scale)
 
-    P = boundary_correction_gaussian_2d(kde, X, Y, kde.covariance, order=order,
-                                        xmin=data_x.min(), xmax=data_x.max(),
-                                        ymin=data_y.min(), ymax=data_y.max())
+    P = boundary_correction_2d(kde, X, Y, kde.covariance, order=order,
+                               xmin=data_x.min(), xmax=data_x.max(),
+                               ymin=data_y.min(), ymax=data_y.max())
 
     levels = iso_probability_contours(P, contours=levels)
     if ax.get_xaxis().get_scale() == 'log':

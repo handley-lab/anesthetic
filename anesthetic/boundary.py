@@ -138,7 +138,7 @@ def _corrected_density(f, f_prime, a0, a1, a2, order):
     return p
 
 
-def boundary_correction_gaussian(kde, x, cov, xmin=None, xmax=None, order=1):
+def boundary_correction_1d(kde, x, cov, order=1, xmin=None, xmax=None):
     r"""Boundary correction for a 1D Gaussian KDE.
 
     Parameters
@@ -181,9 +181,8 @@ def boundary_correction_gaussian(kde, x, cov, xmin=None, xmax=None, order=1):
     return p
 
 
-def boundary_correction_gaussian_2d(kde, X, Y, cov,
-                                    xmin=None, xmax=None,
-                                    ymin=None, ymax=None, order=1):
+def boundary_correction_2d(kde, X, Y, cov, order=1,
+                           xmin=None, xmax=None, ymin=None, ymax=None):
     r"""Separable boundary correction for a 2D Gaussian KDE.
 
     Applies the 1D boundary correction independently per axis as a
