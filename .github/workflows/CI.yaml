@@ -165,6 +165,10 @@ jobs:
 
   minimum-dependencies:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        extras: [true, false]
+
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python 3.10
@@ -180,6 +184,10 @@ jobs:
         run: eval "python -m pip install $(./bin/min_dependencies.py)"
       - name: Install anesthetic
         run: python -m pip install -e ".[test]"
+
+      - name: Install extra dependencies
+        if: ${{ matrix.extras }}
+        run: python -m pip install -e ".[all]"
 
       - name: Test with pytest
         run: python -m pytest --cov=anesthetic tests
