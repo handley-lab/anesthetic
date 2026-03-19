@@ -8,8 +8,6 @@ Statistics and Computing, 3, 135-146.
 import numpy as np
 from scipy.stats import norm, multivariate_normal
 
-gaussian = norm(loc=0, scale=1)
-
 
 def _truncated_moments(x, bw, xmin=None, xmax=None):
     r"""Compute truncated Gaussian kernel moments a_0, a_1, a_2.
@@ -37,6 +35,8 @@ def _truncated_moments(x, bw, xmin=None, xmax=None):
         Zeroth, first, and second truncated kernel moments.
 
     """
+    gaussian = norm(loc=0, scale=1)
+
     a0 = np.ones_like(x, dtype=float)
     a1 = np.zeros_like(x, dtype=float)
     a2 = np.ones_like(x, dtype=float)
