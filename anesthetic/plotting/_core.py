@@ -1,5 +1,12 @@
 from pandas.plotting import PlotAccessor as _PlotAccessor
 from matplotlib.axes import Axes  # TODO: remove this in version >= 2.1
+from anesthetic.plot import (hist_plot_1d,
+                             kde_plot_1d,
+                             fastkde_plot_1d,
+                             kde_contour_plot_2d,
+                             fastkde_contour_plot_2d,
+                             hist_plot_2d,
+                             scatter_plot_2d)
 
 
 def _process_docstring(doc):
@@ -30,33 +37,44 @@ class PlotAccessor(_PlotAccessor):
         + ("hist_2d", "kde_2d", "fastkde_2d", "scatter_2d")
     _all_kinds = _common_kinds + _series_kinds + _dataframe_kinds
 
-    def hist_1d(self, **kwargs):
-        """Histogram plot: See :func:`anesthetic.plot.hist_plot_1d`."""
+    _see_also = """
+    See Also
+    --------
+    :func:`anesthetic.plot.%s`
+    """
+
+    def hist_1d(self, **kwargs):  # noqa: D102
         return self(kind="hist_1d", **kwargs)
+    hist_1d.__doc__ = hist_plot_1d.__doc__ + _see_also % "hist_plot_1d"
 
-    def kde_1d(self, **kwargs):
-        """KDE plot: See :func:`anesthetic.plot.kde_plot_1d`."""
+    def kde_1d(self, **kwargs):  # noqa: D102
         return self(kind="kde_1d", **kwargs)
+    kde_1d.__doc__ = kde_plot_1d.__doc__ + _see_also % "kde_plot_1d"
 
-    def fastkde_1d(self, **kwargs):
-        """KDE plot: See :func:`anesthetic.plot.fastkde_plot_1d`."""
+    def fastkde_1d(self, **kwargs):  # noqa: D102
         return self(kind="fastkde_1d", **kwargs)
+    fastkde_1d.__doc__ = (fastkde_plot_1d.__doc__
+                          + _see_also % "fastkde_plot_1d")
 
-    def kde_2d(self, x, y, **kwargs):
-        """KDE plot: See :func:`anesthetic.plot.kde_contour_plot_2d`."""
+    def kde_2d(self, x, y, **kwargs):  # noqa: D102
         return self(kind="kde_2d", x=x, y=y, **kwargs)
+    kde_2d.__doc__ = (kde_contour_plot_2d.__doc__
+                      + _see_also % "kde_contour_plot_2d")
 
-    def fastkde_2d(self, x, y, **kwargs):
-        """KDE plot: See :func:`anesthetic.plot.fastkde_contour_plot_2d`."""
+    def fastkde_2d(self, x, y, **kwargs):  # noqa: D102
         return self(kind="fastkde_2d", x=x, y=y, **kwargs)
+    fastkde_2d.__doc__ = (fastkde_contour_plot_2d.__doc__
+                          + _see_also % "fastkde_contour_plot_2d")
 
-    def hist_2d(self, x, y, **kwargs):
-        """Histogram plot: See :func:`anesthetic.plot.hist_plot_2d`."""
+    def hist_2d(self, x, y, **kwargs):  # noqa: D102
         return self(kind="hist_2d", x=x, y=y, **kwargs)
+    hist_2d.__doc__ = (hist_plot_2d.__doc__
+                       + _see_also % "hist_plot_2d")
 
-    def scatter_2d(self, x, y, **kwargs):
-        """Scatter plot: See :func:`anesthetic.plot.scatter_plot_2d`."""
+    def scatter_2d(self, x, y, **kwargs):  # noqa: D102
         return self(kind="scatter_2d", x=x, y=y, **kwargs)
+    scatter_2d.__doc__ = (scatter_plot_2d.__doc__
+                          + _see_also % "scatter_plot_2d")
 
     # TODO: remove this in version >= 2.1
     def __call__(self, *args, **kwargs):
