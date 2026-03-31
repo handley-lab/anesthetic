@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.stats import gaussian_kde
-from anesthetic.plot import kde_plot_1d
+from anesthetic.plot import kde_plot_1d, kde_contour_plot_2d
 from anesthetic.boundary import boundary_correction_2d
 
 
@@ -75,3 +75,32 @@ def test_boundary_correction_2d():
     assert residual_1.max() < residual_0.max()
     assert residual_1.mean() < residual_n.mean()
     assert residual_1.mean() < residual_0.mean()
+
+
+def test_bw_scale_1d():
+    "Larger bw_scale means more smoothing which flattens the peak."
+    np.random.seed(43)
+    d = np.random.standard_normal(1000)
+    fig, ax = plt.subplots()
+    kwargs = dict(q=0, density=True)
+    narrow, = kde_plot_1d(ax, d, bw_scale=0.5, **kwargs)
+    default, = kde_plot_1d(ax, d, bw_scale=1.0, **kwargs)
+    wide, = kde_plot_1d(ax, d, bw_scale=1.5, **kwargs)
+
+    assert narrow.get_ydata().max() > default.get_ydata().max()
+    assert default.get_ydata().max() > wide.get_ydata().max()
+
+
+def test_bw_scale_2d():
+    "Larger bw_scale means more smoothing which flattens the peak in 2D."
+    np.random.seed(43)
+    d = np.random.standard_normal((1000, 2))
+    kwargs = dict(q=0, facecolor=True)
+    peaks = []
+    for scale in [0.5, 1.0, 2.0]:
+        fig, ax = plt.subplots()
+        contf, cont = kde_contour_plot_2d(ax, d[:, 0], d[:, 1],
+                                          bw_scale=scale, **kwargs)
+        peaks.append(contf.norm.vmax)
+
+    assert peaks[0] > peaks[1] > peaks[2]
