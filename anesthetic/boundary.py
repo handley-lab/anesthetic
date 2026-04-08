@@ -10,15 +10,19 @@ from scipy.stats import norm, multivariate_normal
 
 
 def _truncated_moments(x, bw, xmin=None, xmax=None):
-    r"""Compute truncated Gaussian kernel moments a_0, a_1, a_2.
+    r"""Compute truncated Gaussian kernel moments `a0`, `a1`, `a2`.
 
-    For a standard Gaussian kernel K(u), the j-th moment truncated to the
-    domain [xmin, xmax] is:
+    For a standard Gaussian kernel `K(u)` with `u = (x-s)/bw`, the j-th
+    truncated moment is computed by subtracting the tails that fall outside
+    the support `[xmin, xmax]` from the full-line integral:
 
     .. math::
-        a_j(x) = \int_{-q_{lo}}^{q_{hi}} u^j K(u) du
+        a_j(x) = \int_{-\infty}^{\infty} u^j K(u) du
+               - \int_{q_{lo}}^{\infty} u^j K(u) du
+               - \int_{-\infty}^{-q_{hi}} u^j K(u) du
 
-    where q_lo = (x - xmin)/bw and q_hi = (xmax - x)/bw.
+    where `q_lo = (x-xmin)/bw` and `q_hi = (xmax-x)/bw`. The second and third
+    terms are only subtracted when `xmin` and `xmax` are set, respectively.
 
     Parameters
     ----------
@@ -43,16 +47,16 @@ def _truncated_moments(x, bw, xmin=None, xmax=None):
 
     if xmin is not None:
         q_lo = (x - xmin) / bw
-        # Subtract the lower tail: integral from -inf to -q_lo
+        # Subtract: int_{q_lo}^{inf} u^j K(u) du
         a0 -= gaussian.cdf(-q_lo)
-        a1 -= gaussian.pdf(q_lo)
+        a1 -= gaussian.pdf(-q_lo)
         a2 -= gaussian.cdf(-q_lo) + q_lo * gaussian.pdf(q_lo)
 
     if xmax is not None:
         q_hi = (xmax - x) / bw
-        # Subtract the upper tail: integral from q_hi to inf
+        # Subtract: int_{-inf}^{-q_hi} u^j K(u) du
         a0 -= gaussian.cdf(-q_hi)
-        a1 += gaussian.pdf(q_hi)
+        a1 += gaussian.pdf(-q_hi)
         a2 -= gaussian.cdf(-q_hi) + q_hi * gaussian.pdf(q_hi)
 
     return a0, a1, a2
@@ -61,11 +65,11 @@ def _truncated_moments(x, bw, xmin=None, xmax=None):
 def _kde_eval(kde, x, cov):
     r"""Evaluate KDE and per-axis gradient-weighted KDEs in a single pass.
 
-    For a KDE with kernel K and samples {s_i} with weights {w_i}, computes:
+    For a KDE with kernel K and samples `s_i` with weights `w_i`, computes:
 
     .. math::
-        f(x)    &= \sum_i w_i \, K(x - s_i) \\
-        f'_k(x) &= \sum_i w_i \, \frac{x_k - s_{i,k}}{h_k} \, K(x - s_i)
+        f(x)    &= \sum_i w_i K(x - s_i) \\
+        f'_k(x) &= \sum_i w_i \frac{x_k - s_{i,k}}{h_k} K(x - s_i)
 
     Parameters
     ----------
