@@ -125,7 +125,9 @@ def _corrected_density(f, f_prime, a0, a1, a2, order):
     Returns
     -------
     p : np.array
-        Corrected density (non-negative).
+        Corrected density, clamped to non-negative values. The linear
+        correction (order 1) can produce negative values near boundaries
+        (Jones 1993, p. 142); these are truncated to zero.
 
     """
     p = np.zeros_like(f)
@@ -139,6 +141,7 @@ def _corrected_density(f, f_prime, a0, a1, a2, order):
     else:
         raise ValueError(f"order must be 0 or 1, got {order}")
 
+    np.maximum(p, 0, out=p)
     return p
 
 
