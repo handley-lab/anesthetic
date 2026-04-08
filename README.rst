@@ -2,7 +2,11 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
+<<<<<<< upgrade_boundary_correction
 :Version: 2.14.0
+=======
+:Version: 2.13.6
+>>>>>>> master
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
