@@ -18,8 +18,8 @@ anesthetic: nested sampling post-processing
 .. image:: https://badge.fury.io/py/anesthetic.svg
    :target: https://badge.fury.io/py/anesthetic
    :alt: PyPi location
-.. image:: https://anaconda.org/handley-lab/anesthetic/badges/version.svg
-   :target: https://anaconda.org/handley-lab/anesthetic
+.. image:: https://anaconda.org/conda-forge/anesthetic/badges/version.svg
+   :target: https://anaconda.org/conda-forge/anesthetic
    :alt: Conda location
 .. image:: https://zenodo.org/badge/175663535.svg
    :target: https://zenodo.org/badge/latestdoi/175663535
