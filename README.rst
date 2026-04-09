@@ -6,8 +6,8 @@ anesthetic: nested sampling post-processing
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
-.. image:: https://github.com/handley-lab/anesthetic/workflows/CI/badge.svg?branch=master
-   :target: https://github.com/handley-lab/anesthetic/actions?query=workflow%3ACI+branch%3Amaster
+.. image:: https://github.com/handley-lab/anesthetic/actions/workflows/CI.yaml/badge.svg?branch=master
+   :target: https://github.com/handley-lab/anesthetic/actions/workflows/CI.yaml
    :alt: Build Status
 .. image:: https://codecov.io/gh/handley-lab/anesthetic/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/handley-lab/anesthetic
