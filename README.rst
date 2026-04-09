@@ -79,7 +79,7 @@ via conda
 
 .. code:: bash
 
-    conda install -c handley-lab anesthetic
+    conda install conda-forge::anesthetic
 
 or from the github repository
 
