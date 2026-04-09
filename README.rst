@@ -2,12 +2,12 @@
 anesthetic: nested sampling post-processing
 ===========================================
 :Authors: Will Handley and Lukas Hergt
-:Version: 2.14.0
+:Version: 2.14.1
 :Homepage: https://github.com/handley-lab/anesthetic
 :Documentation: http://anesthetic.readthedocs.io/
 
-.. image:: https://github.com/handley-lab/anesthetic/workflows/CI/badge.svg?branch=master
-   :target: https://github.com/handley-lab/anesthetic/actions?query=workflow%3ACI+branch%3Amaster
+.. image:: https://github.com/handley-lab/anesthetic/actions/workflows/CI.yaml/badge.svg?branch=master
+   :target: https://github.com/handley-lab/anesthetic/actions/workflows/CI.yaml
    :alt: Build Status
 .. image:: https://codecov.io/gh/handley-lab/anesthetic/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/handley-lab/anesthetic
@@ -18,8 +18,8 @@ anesthetic: nested sampling post-processing
 .. image:: https://badge.fury.io/py/anesthetic.svg
    :target: https://badge.fury.io/py/anesthetic
    :alt: PyPi location
-.. image:: https://anaconda.org/handley-lab/anesthetic/badges/version.svg
-   :target: https://anaconda.org/handley-lab/anesthetic
+.. image:: https://anaconda.org/conda-forge/anesthetic/badges/version.svg
+   :target: https://anaconda.org/conda-forge/anesthetic
    :alt: Conda location
 .. image:: https://zenodo.org/badge/175663535.svg
    :target: https://zenodo.org/badge/latestdoi/175663535
@@ -79,7 +79,7 @@ via conda
 
 .. code:: bash
 
-    conda install -c handley-lab anesthetic
+    conda install conda-forge::anesthetic
 
 or from the github repository
 
