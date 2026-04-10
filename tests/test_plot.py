@@ -703,7 +703,12 @@ def test_q_2d(plot_2d):
 
     def get_data_from_plot(plot_2d, p):
         if plot_2d == kde_contour_plot_2d:
-            x, y = p[0].allsegs[0][0].T
+            # p[0].allsegs[i] is the list of polygon outlines drawn at
+            # contourf level i; each outline is an (N, 2) vertex array.
+            # Flatten the polygons within each level, skipping empty levels.
+            level_polygons = [np.concatenate(polygons)
+                              for polygons in p[0].allsegs if polygons]
+            x, y = np.concatenate(level_polygons).T
         elif plot_2d == hist_plot_2d:
             x = p.get_coordinates()[0, :, 0]
             y = p.get_coordinates()[:, 0, 1]
