@@ -739,7 +739,7 @@ def iso_probability_contours(pdf, contours=[0.95, 0.68]):
     m = np.cumsum(p)
     m /= m[-1]
     interp = interp1d([0]+list(m), [0]+list(p))
-    c = list(interp(contours))+[max(p)]
+    c = list(interp(contours))
 
     return c
 
@@ -764,7 +764,7 @@ def iso_probability_contours_from_samples(pdf, contours=[0.95, 0.68],
     m = np.cumsum(weights[i])
     m /= m[-1]
     interp = interp1d([0]+list(m), [0]+list(pdf[i]))
-    c = list(interp(contours))+[max(pdf)]
+    c = list(interp(contours))
 
     return c
 

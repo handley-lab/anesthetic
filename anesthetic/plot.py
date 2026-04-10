@@ -26,6 +26,7 @@ from anesthetic.utils import nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
                               triangular_sample_compression_2d,
                               iso_probability_contours,
+                              iso_probability_contours_from_samples,
                               match_contour_to_contourf, histogram_bin_edges)
 from anesthetic.boundary import boundary_correction_1d, boundary_correction_2d
 
@@ -852,12 +853,12 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
             facecolor = color
-        c = iso_probability_contours(p[i], contours=levels)
+        levels = iso_probability_contours(p[i], contours=levels)
         cmap = basic_cmap(facecolor)
         fill = []
-        for j in range(len(c)-1):
-            fill.append(ax.fill_between(x[i], p[i], where=p[i] >= c[j],
-                        color=cmap(c[j]), edgecolor=edgecolor))
+        for level in levels:
+            fill.append(ax.fill_between(x[i], p[i], where=p[i] >= level,
+                        color=cmap(level), edgecolor=edgecolor))
 
         return ans, fill
 
@@ -985,12 +986,12 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
             facecolor = color
-        c = iso_probability_contours(p, contours=levels)
+        levels = iso_probability_contours(p, contours=levels)
         cmap = basic_cmap(facecolor)
         fill = []
-        for j in range(len(c)-1):
-            fill.append(ax.fill_between(x, p, where=p >= c[j],
-                        color=cmap(c[j]), edgecolor=edgecolor))
+        for level in levels:
+            fill.append(ax.fill_between(x, p, where=p >= level,
+                        color=cmap(level), edgecolor=edgecolor))
 
         ans = ans, fill
 
@@ -1168,7 +1169,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     except ImportError:
         raise ImportError("You need to install fastkde to use fastkde")
 
-    levels = iso_probability_contours(pdf, contours=levels)
+    levels = iso_probability_contours(pdf, contours=levels) + [pdf.max()]
 
     i = (pdf >= levels[0]*0.5).any(axis=0)
     j = (pdf >= levels[0]*0.5).any(axis=1)
@@ -1305,11 +1306,23 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
     kde.set_bandwidth(bw_method=kde.factor * bw_scale)
 
-    P = boundary_correction_2d(kde, X, Y, kde.covariance, order=order,
-                               xmin=data_x.min(), xmax=data_x.max(),
-                               ymin=data_y.min(), ymax=data_y.max())
-
-    levels = iso_probability_contours(P, contours=levels)
+    boundary_kwargs = dict(order=order,
+                           xmin=data_x.min(), xmax=data_x.max(),
+                           ymin=data_y.min(), ymax=data_y.max())
+    # Density on the meshgrid, used for drawing the contours.
+    P_plot = boundary_correction_2d(kde, X, Y, kde.covariance,
+                                    **boundary_kwargs)
+    # Density at sample vertices, used for computing iso-probability levels
+    # independently of the plotting window; a grid-based estimator would shift
+    # contours as ``q`` narrows the window.
+    P_samples = boundary_correction_2d(kde,
+                                       np.asarray(tri.x), np.asarray(tri.y),
+                                       kde.covariance, **boundary_kwargs)
+    levels = iso_probability_contours_from_samples(P_samples,
+                                                   contours=levels,
+                                                   weights=np.asarray(w))
+    vmax = max(P_plot.max(), P_samples.max())
+    levels = levels + [vmax]
     if ax.get_xaxis().get_scale() == 'log':
         X = 10**X
     if ax.get_yaxis().get_scale() == 'log':
@@ -1317,8 +1330,9 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
-        contf = ax.contourf(X, Y, P, levels=levels, cmap=cmap, zorder=zorder,
-                            vmin=0, vmax=P.max(), *args, **kwargs)
+        contf = ax.contourf(X, Y, P_plot, levels=levels, cmap=cmap,
+                            zorder=zorder, vmin=0, vmax=vmax,
+                            *args, **kwargs)
         contf.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                                    fc=cmap(0.999), ec=cmap(0.32)))
@@ -1333,8 +1347,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                           ec=edgecolor if cmap is None else cmap(0.32))
         )
 
-    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=P.max())
-    cont = ax.contour(X, Y, P, levels=levels, zorder=zorder,
+    vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=vmax)
+    cont = ax.contour(X, Y, P_plot, levels=levels, zorder=zorder,
                       vmin=vmin, vmax=vmax, linewidths=linewidths,
                       colors=edgecolor, cmap=cmap, *args, **kwargs)
 
@@ -1403,7 +1417,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     pdf, x, y = np.histogram2d(data_x, data_y, bins, rge,
                                density, weights)
     if levels is not None:
-        levels = iso_probability_contours(pdf, levels)
+        levels = iso_probability_contours(pdf, levels) + [pdf.max()]
         pdf = np.digitize(pdf, levels, right=True)
         pdf = np.array(levels)[pdf]
         pdf = np.ma.masked_array(pdf, pdf < levels[1])
