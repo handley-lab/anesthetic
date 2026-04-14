@@ -970,7 +970,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
     kde.set_bandwidth(bw_method=kde.factor * bw_scale)
 
-    p = boundary_correction_1d(kde, x, kde.covariance, order=order,
+    p = boundary_correction_1d(kde, x, order=order,
                                xmin=data.min(), xmax=data.max())
     p /= p.max()
     if version.parse(np.__version__) >= version.parse("2.0.0"):
@@ -1305,7 +1305,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
     kde.set_bandwidth(bw_method=kde.factor * bw_scale)
 
-    P = boundary_correction_2d(kde, X, Y, kde.covariance, order=order,
+    P = boundary_correction_2d(kde, X, Y, order=order,
                                xmin=data_x.min(), xmax=data_x.max(),
                                ymin=data_y.min(), ymax=data_y.max())
 
