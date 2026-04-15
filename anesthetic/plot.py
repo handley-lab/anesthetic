@@ -1299,6 +1299,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
     X, Y = np.mgrid[xmin:xmax:1j*np.sqrt(nplot), ymin:ymax:1j*np.sqrt(nplot)]
+    x_grid, y_grid = X.ravel(), Y.ravel()
 
     cov = np.cov(data_x, data_y, aweights=weights)
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
@@ -1306,22 +1307,27 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
     kde.set_bandwidth(bw_method=kde.factor * bw_scale)
 
+    # Evaluate boundary-corrected KDE on grid + sample vertices in one pass.
+    # Grid values are used for plotting; sample values for computing
+    # iso-probability levels independently of the plotting window.
+    # Subsample vertices for level computation to avoid O(n_samples^2) cost.
+    n_samp = min(len(tri.x), max(2000, int(20 / (1 - max(levels)))))
+    idx = np.random.choice(len(tri.x), n_samp, replace=False)
+    x_samp, y_samp, w_samp = tri.x[idx], tri.y[idx], w[idx]
+
+    x_all = np.concatenate([x_grid, x_samp])
+    y_all = np.concatenate([y_grid, y_samp])
     boundary_kwargs = dict(order=order,
                            xmin=data_x.min(), xmax=data_x.max(),
                            ymin=data_y.min(), ymax=data_y.max())
-    # Density on the meshgrid, used for drawing the contours.
-    P_plot = boundary_correction_2d(kde, X, Y, kde.covariance,
-                                    **boundary_kwargs)
-    # Density at sample vertices, used for computing iso-probability levels
-    # independently of the plotting window; a grid-based estimator would shift
-    # contours as ``q`` narrows the window.
-    P_samples = boundary_correction_2d(kde,
-                                       np.asarray(tri.x), np.asarray(tri.y),
-                                       kde.covariance, **boundary_kwargs)
-    levels = iso_probability_contours_from_samples(P_samples,
+    P_all = boundary_correction_2d(kde, x_all, y_all,
+                                   kde.covariance, **boundary_kwargs)
+    P_plot = P_all[:-n_samp].reshape(X.shape)
+    P_samp = P_all[-n_samp:]
+    levels = iso_probability_contours_from_samples(P_samp,
                                                    contours=levels,
-                                                   weights=np.asarray(w))
-    vmax = max(P_plot.max(), P_samples.max())
+                                                   weights=w_samp)
+    vmax = max(P_plot.max(), P_samp.max())
     levels = levels + [vmax]
     if ax.get_xaxis().get_scale() == 'log':
         X = 10**X
