@@ -20,6 +20,9 @@ import numpy as np
 from scipy.stats import multivariate_normal, norm
 from scipy.stats._stats import gaussian_kernel_estimate
 
+_DTYPE_SPEC = {4: 'float', 8: 'double', 12: 'long double',
+               16: 'long double'}
+
 
 def _truncated_moments(x, cov, x_limits):
     r"""Compute truncated Gaussian kernel moments.
@@ -180,8 +183,7 @@ def _kde_eval(kde, x):
 
     """
     output_dtype = np.common_type(kde.covariance, x)
-    spec_dict = {4: 'float', 8: 'double', 12: 'long double', 16: 'long double'}
-    spec = spec_dict[np.dtype(output_dtype).itemsize]
+    spec = _DTYPE_SPEC[np.dtype(output_dtype).itemsize]
 
     # Pack the KDE weights and first raw moments into one Cython call.
     # (N, d+1)
@@ -258,16 +260,16 @@ def _corrected_density(f, m1, a0, a1, A2, order):
     mask &= np.isfinite(determinant) & (determinant > 0)
 
     if np.any(mask):
+        # Solve A2 x = [m1, a1] in one batched call.
+        rhs = np.stack([m1[mask], a1[mask]], axis=-1)  # (M', d, 2)
+        sol = np.linalg.solve(A2[mask], rhs)  # (M', d, 2)
         A2m1 = np.zeros_like(m1)  # (M, d)
         A2a1 = np.zeros_like(a1)  # (M, d)
+        A2m1[mask] = sol[..., 0]
+        A2a1[mask] = sol[..., 1]
 
-        # Solves for A2^{-1} m1 and A2^{-1} a1 on valid points only.
-        A2m1[mask] = np.linalg.solve(A2[mask], m1[mask][..., None])[..., 0]
-        A2a1[mask] = np.linalg.solve(A2[mask], a1[mask][..., None])[..., 0]
-
-        # Local-linear correction:
-        # `p = (f - a1^T A2^{-1} m1) / (a0 - a1^T A2^{-1} a1)`.
-        # Reduces to `p = (a2 f - a1 m1) / (a0 a2 - a1^2)` in 1D
+        # p = (f - a1^T A2^{-1} m1) / (a0 - a1^T A2^{-1} a1)
+        # Reduces to (a2 f - a1 m1) / (a0 a2 - a1^2) in 1D.
         numerator = f - np.einsum('mi,mi->m', a1, A2m1)  # (M,)
         denominator = a0 - np.einsum('mi,mi->m', a1, A2a1)  # (M,)
 
@@ -369,9 +371,9 @@ def boundary_correction_2d(kde, X, Y, order=1,
                           np.inf if ymax is None else ymax]], dtype=float)
 
     # Evaluate the raw KDE, truncated moments, and corrected density.
-    _x = np.column_stack([x, y])  # (M, d)
-    f, m1 = _kde_eval(kde, _x)
-    a0, a1, A2 = _truncated_moments(_x, kde.covariance, x_limits)
+    coords = np.column_stack([x, y])  # (M, d)
+    f, m1 = _kde_eval(kde, coords)
+    a0, a1, A2 = _truncated_moments(coords, kde.covariance, x_limits)
     p = _corrected_density(f, m1, a0, a1, A2, order)
 
     if xmin is not None:
