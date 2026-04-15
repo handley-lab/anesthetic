@@ -98,11 +98,11 @@ def _kde_eval(kde, x):
     weighted_fields = np.empty((kde.n, kde.d + 1), dtype=output_dtype)
     weighted_fields[:, 0] = kde.weights
     weighted_fields[:, 1:] = kde.weights[:, None] * kde.dataset.T
-    estimate = gaussian_kernel_estimate[spec](kde.dataset.T,
-                                              weighted_fields,
-                                              x.T,
-                                              kde.cho_cov,
-                                              output_dtype)
+    estimate = gaussian_kernel_estimate[spec](points=kde.dataset.T,
+                                              values=weighted_fields,
+                                              xi=x.T,
+                                              cho_cov=kde.cho_cov,
+                                              dtype=output_dtype)
     f = estimate[:, 0]  # (M,)
     bw = np.sqrt(np.diag(kde.covariance))[:, None]  # (d, 1)
     moment1 = (x * f[None, :] - estimate[:, 1:].T) / bw  # (d, M)
