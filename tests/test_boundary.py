@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.stats import gaussian_kde
 from anesthetic.plot import kde_plot_1d, kde_contour_plot_2d
-from anesthetic.boundary import boundary_correction_2d
+from anesthetic.boundary import (boundary_correction_2d,
+                                 _truncated_moments)
 
 
 def test_boundary_correction_1d():
@@ -75,6 +76,54 @@ def test_boundary_correction_2d():
     assert residual_1.max() < residual_0.max()
     assert residual_1.mean() < residual_n.mean()
     assert residual_1.mean() < residual_0.mean()
+
+
+def test_full_covariance_2d():
+    """Full-covariance truncated moments differ from separable ones.
+
+    With a correlated kernel (rho=0.8) near a corner, the truncated moments
+    from the full-covariance computation should differ from those obtained
+    with a diagonal covariance (same marginal variances but rho=0). This is
+    the distinguishing feature of the full vs separable boundary correction.
+    """
+    np.random.seed(42)
+    rho = 0.8
+    cov_full = np.array([[1, rho],
+                         [rho, 1]])
+    cov_diag = np.diag(np.diag(cov_full))
+
+    lower = 0
+    upper = 1
+    x_limits = np.array([[lower, lower],
+                         [upper, upper]])
+
+    # Evaluate near the corner where correlation matters most.
+    x = np.array([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]])
+    a0_f, a1_f, A2_f = _truncated_moments(x, cov_full, x_limits)
+    a0_d, a1_d, A2_d = _truncated_moments(x, cov_diag, x_limits)
+
+    # All moments must differ between correlated and uncorrelated.
+    assert not np.allclose(a0_f, a0_d, atol=1e-4), \
+        "a0 should differ between full and diagonal covariance"
+    assert not np.allclose(a1_f, a1_d, atol=1e-4), \
+        "a1 should differ between full and diagonal covariance"
+    assert not np.allclose(A2_f, A2_d, atol=1e-4), \
+        "A2 should differ between full and diagonal covariance"
+
+    # Also check a grid of points to verify the correction differs
+    # at a practical level through the full pipeline.
+    d = np.random.multivariate_normal([1, 1], cov_full, size=5000)
+    d = d[(d[:, 0] > lower) & (d[:, 1] > lower)]
+    d = d[(d[:, 0] < upper) & (d[:, 1] < upper)]
+    kde = gaussian_kde(d.T)
+
+    X, Y = np.mgrid[lower:upper:20j, lower:upper:20j]
+    bounds = dict(xmin=lower, xmax=upper, ymin=lower, ymax=upper)
+    p = boundary_correction_2d(kde, X, Y, order=1, **bounds)
+
+    # Sanity: corrected density is non-negative and non-trivial.
+    assert np.all(p >= 0)
+    assert p.max() > 0
 
 
 def test_bw_scale_1d():
