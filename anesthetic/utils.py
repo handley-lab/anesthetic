@@ -827,7 +827,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
 
     x = pandas.Series(x)
     if w is None:
-        w = pandas.Series(index=x.index, data=np.ones_like(x))
+        w = np.ones_like(x)
 
     if n is False:
         n = len(x)

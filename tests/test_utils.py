@@ -118,6 +118,9 @@ def test_triangular_sample_compression_2d():
     y = np.random.rand(n)
     w = np.random.rand(n)
     cov = np.identity(2)
+    tri, W = triangular_sample_compression_2d(x, y, cov, None)
+    assert len(W) == 1000
+    assert sum(W) == pytest.approx(n, rel=1e-1)
     tri, W = triangular_sample_compression_2d(x, y, cov, w)
     assert len(W) == 1000
     assert sum(W) == pytest.approx(sum(w), rel=1e-1)
