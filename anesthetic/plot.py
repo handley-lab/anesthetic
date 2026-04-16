@@ -1327,8 +1327,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     # plot window.
     x_all = np.concatenate([x_grid.ravel(), tri.x[i_samp]])
     y_all = np.concatenate([y_grid.ravel(), tri.y[i_samp]])
-    P_all = boundary_correction_2d(kde, x_all, y_all,
-                                   kde.covariance, order=order,
+    P_all = boundary_correction_2d(kde, x_all, y_all, order=order,
                                    xmin=data_x.min(), xmax=data_x.max(),
                                    ymin=data_y.min(), ymax=data_y.max())
 
