@@ -23,12 +23,14 @@ from matplotlib.ticker import MaxNLocator, AutoMinorLocator, LogLocator
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.transforms import Affine2D
 from anesthetic.utils import nest_level
-from anesthetic.utils import (sample_compression_1d, quantile,
+from anesthetic.utils import (sample_compression_1d, quantile, neff,
                               triangular_sample_compression_2d,
+                              scaled_triangulation,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
                               match_contour_to_contourf, histogram_bin_edges)
 from anesthetic.boundary import boundary_correction_1d, boundary_correction_2d
+from matplotlib.tri import Triangulation
 
 
 class AxesSeries(Series):
@@ -1267,7 +1269,9 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            edgecolor=['ec']))
 
     weights = kwargs.pop('weights', None)
-    if weights is not None:
+    if weights is None:
+        weights = np.ones(len(data_x))
+    else:
         data_x = data_x[weights != 0]
         data_y = data_y[weights != 0]
         weights = weights[weights != 0]
@@ -1276,14 +1280,16 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if ax.get_yaxis().get_scale() == 'log':
         data_y = np.log10(data_y)
 
-    ncompress = kwargs.pop('ncompress', 'equal')
+    levels = kwargs.pop('levels', [0.95, 0.68])
     nplot = kwargs.pop('nplot_2d', 1000)
+    n_samp = max(nplot // 2, 1000, int(20 / (1 - max(levels))))
+    ncompress = kwargs.pop('ncompress',
+                           max(n_samp, int(neff(weights, beta='equal'))))
     bw_method = kwargs.pop('bw_method', None)
     bw_scale = kwargs.pop('bw_scale', 1)
     order = kwargs.pop('order', 1)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
-    levels = kwargs.pop('levels', [0.95, 0.68])
 
     color = kwargs.pop('color', ax._get_lines.get_next_color())
     facecolor = kwargs.pop('facecolor', True)
@@ -1298,47 +1304,62 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = quantile(data_x, q[-1], weights)
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
-    X, Y = np.mgrid[xmin:xmax:1j*np.sqrt(nplot), ymin:ymax:1j*np.sqrt(nplot)]
-    x_grid, y_grid = X.ravel(), Y.ravel()
-
     cov = np.cov(data_x, data_y, aweights=weights)
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
                                               weights, ncompress)
     kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
     kde.set_bandwidth(bw_method=kde.factor * bw_scale)
 
-    # Evaluate boundary-corrected KDE on grid + sample vertices in one pass.
-    # Grid values are used for plotting; sample values for computing
-    # iso-probability levels independently of the plotting window.
-    # Subsample vertices for level computation to avoid O(n_samples^2) cost.
-    n_samp = min(len(tri.x), max(1000, int(20 / (1 - max(levels)))))
-    idx = np.random.choice(len(tri.x), n_samp, replace=False)
-    x_samp, y_samp, w_samp = tri.x[idx], tri.y[idx], w[idx]
+    # Subsample compressed vertices for iso-probability level computation
+    # and as data-driven plot vertices for tricontour.
+    n_samp = min(len(tri.x), n_samp)
+    i_samp = np.random.choice(len(tri.x), n_samp, replace=False)
+    w_samp = w[i_samp]
 
-    x_all = np.concatenate([x_grid, x_samp])
-    y_all = np.concatenate([y_grid, y_samp])
-    boundary_kwargs = dict(order=order,
-                           xmin=data_x.min(), xmax=data_x.max(),
-                           ymin=data_y.min(), ymax=data_y.max())
+    # Rectangular grid for edge coverage (~half the plotting budget).
+    n_grid = int(np.sqrt(nplot // 2))
+    x_grid, y_grid = np.meshgrid(np.linspace(xmin, xmax, n_grid),
+                                 np.linspace(ymin, ymax, n_grid))
+
+    # Concatenate grid + compressed-sample vertices and evaluate in one pass.
+    # The compressed samples also serve as data-driven plot vertices (via
+    # tricontour) and provide iso-probability levels independent of the
+    # plot window.
+    x_all = np.concatenate([x_grid.ravel(), tri.x[i_samp]])
+    y_all = np.concatenate([y_grid.ravel(), tri.y[i_samp]])
     P_all = boundary_correction_2d(kde, x_all, y_all,
-                                   kde.covariance, **boundary_kwargs)
-    P_plot = P_all[:-n_samp].reshape(X.shape)
+                                   kde.covariance, order=order,
+                                   xmin=data_x.min(), xmax=data_x.max(),
+                                   ymin=data_y.min(), ymax=data_y.max())
+
+    # Split: level computation uses the compressed-sample tail.
     P_samp = P_all[-n_samp:]
     levels = iso_probability_contours_from_samples(P_samp,
                                                    contours=levels,
                                                    weights=w_samp)
+
+    # Plotting uses everything inside the plot window.
+    in_plot = ((x_all >= xmin) & (x_all <= xmax) &
+               (y_all >= ymin) & (y_all <= ymax))
+    x_plot, y_plot, P_plot = x_all[in_plot], y_all[in_plot], P_all[in_plot]
     vmax = max(P_plot.max(), P_samp.max())
     levels = levels + [vmax]
+
+    # Delaunay triangulation in whitened kernel space so triangles are
+    # well-shaped w.r.t. the correlation structure.
+    tri_plot = scaled_triangulation(x_plot, y_plot, kde.covariance)
+    x, y = tri_plot.x, tri_plot.y
     if ax.get_xaxis().get_scale() == 'log':
-        X = 10**X
+        x = 10**x
     if ax.get_yaxis().get_scale() == 'log':
-        Y = 10**Y
+        y = 10**y
+    tri_plot = Triangulation(x, y, tri_plot.triangles)
 
     if facecolor not in [None, 'None', 'none']:
         linewidths = kwargs.pop('linewidths', 0.5)
-        contf = ax.contourf(X, Y, P_plot, levels=levels, cmap=cmap,
-                            zorder=zorder, vmin=0, vmax=vmax,
-                            *args, **kwargs)
+        contf = ax.tricontourf(tri_plot, P_plot, levels=levels, cmap=cmap,
+                               zorder=zorder, vmin=0, vmax=vmax,
+                               *args, **kwargs)
         contf.set_cmap(cmap)
         ax.add_patch(plt.Rectangle((0, 0), 0, 0, lw=2, label=label,
                                    fc=cmap(0.999), ec=cmap(0.32)))
@@ -1354,9 +1375,9 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         )
 
     vmin, vmax = match_contour_to_contourf(levels, vmin=0, vmax=vmax)
-    cont = ax.contour(X, Y, P_plot, levels=levels, zorder=zorder,
-                      vmin=vmin, vmax=vmax, linewidths=linewidths,
-                      colors=edgecolor, cmap=cmap, *args, **kwargs)
+    cont = ax.tricontour(tri_plot, P_plot, levels=levels, zorder=zorder,
+                         vmin=vmin, vmax=vmax, linewidths=linewidths,
+                         colors=edgecolor, cmap=cmap, *args, **kwargs)
 
     return contf, cont
 
