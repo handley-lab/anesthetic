@@ -7,8 +7,37 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.stats import gaussian_kde
 from anesthetic.plot import kde_plot_1d, kde_contour_plot_2d
-from anesthetic.boundary import (boundary_correction_2d,
-                                 _truncated_moments)
+from anesthetic.boundary import (boundary_correction_2d, _truncated_moments,
+                                 _bvn_cdf)
+
+
+def test_boundary_errors():
+    # _bvn_cdf: all-nonfinite early-return path.
+    x = np.array([np.inf, -np.inf])
+    y = np.array([-np.inf, np.inf])
+    cdf = _bvn_cdf(x, y, rho=0.5)
+    assert_array_equal(cdf, [0, 0])
+
+    # _truncated_moments: unsupported dimensionality (d != 1, 2).
+    x = np.random.randn(10, 3)
+    cov = np.eye(3)
+    x_limits = np.array([[-1, -1, -1], [1, 1, 1]])
+    with pytest.raises(NotImplementedError, match="only 1D and 2D"):
+        _truncated_moments(x, cov, x_limits)
+
+    # _truncated_moments: cov shape mismatch.
+    x = np.random.randn(10, 2)
+    cov = np.eye(3)
+    x_limits = np.array([[-1, -1], [1, 1]])
+    with pytest.raises(ValueError, match="cov must have shape"):
+        _truncated_moments(x, cov, x_limits)
+
+    # _truncated_moments: x_limits shape mismatch.
+    x = np.random.randn(10, 2)
+    cov = np.eye(2)
+    x_limits = np.array([[-1, -1, -1], [1, 1, 1]])
+    with pytest.raises(ValueError, match="x_limits must have shape"):
+        _truncated_moments(x, cov, x_limits)
 
 
 def test_boundary_correction_1d():
