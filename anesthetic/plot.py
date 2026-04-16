@@ -1311,7 +1311,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     # Grid values are used for plotting; sample values for computing
     # iso-probability levels independently of the plotting window.
     # Subsample vertices for level computation to avoid O(n_samples^2) cost.
-    n_samp = min(len(tri.x), max(2000, int(20 / (1 - max(levels)))))
+    n_samp = min(len(tri.x), max(1000, int(20 / (1 - max(levels)))))
     idx = np.random.choice(len(tri.x), n_samp, replace=False)
     x_samp, y_samp, w_samp = tri.x[idx], tri.y[idx], w[idx]
 
