@@ -6,7 +6,8 @@ Statistics and Computing, 3, 135-146.
 """
 
 import numpy as np
-from scipy.stats import norm, multivariate_normal
+from scipy.stats import norm
+from scipy.stats._stats import gaussian_kernel_estimate
 
 
 def _truncated_moments(x, bw, xmin=None, xmax=None):
@@ -28,7 +29,7 @@ def _truncated_moments(x, bw, xmin=None, xmax=None):
     ----------
     x : np.array
         Evaluation points.
-    bw : float
+    bw : float | np.floating
         Bandwidth.
     xmin, xmax : float, optional
         Lower/upper prior bounds.
@@ -62,14 +63,14 @@ def _truncated_moments(x, bw, xmin=None, xmax=None):
     return a0, a1, a2
 
 
-def _kde_eval(kde, x, cov):
-    r"""Evaluate KDE and per-axis gradient-weighted KDEs in a single pass.
+def _kde_eval(kde, x):
+    r"""Evaluate KDE and first bw-scaled moment per-axis in a single pass.
 
     For a KDE with kernel K and samples `s_i` with weights `w_i`, computes:
 
     .. math::
-        f(x)    &= \sum_i w_i K(x - s_i) \\
-        f'_k(x) &= \sum_i w_i \frac{x_k - s_{i,k}}{h_k} K(x - s_i)
+        f(x)       = m_{0,k}(x) &= \sum_i w_i K(x - s_i) \\
+        -f_k'(x/h) = m_{1,k}(x) &= \sum_i w_i \frac{x_k-s_{i,k}}{h_k} K(x-s_i)
 
     Parameters
     ----------
@@ -77,34 +78,41 @@ def _kde_eval(kde, x, cov):
         Fitted KDE object (1D or 2D).
     x : np.array
         Evaluation coordinates, shape (d, M).
-    cov : np.array
-        Kernel covariance matrix, shape (d, d).
 
     Returns
     -------
     f : np.array
         KDE density, shape (M,).
-    f_prime : tuple of np.array
-        Gradient-weighted densities per axis, each shape (M,).
+        Equivalently the zeroth bandwidth-scaled kernel moment.
+    moment1 : np.array
+        First bandwidth-scaled kernel moment per axis, shape (d, M).
+        Equivalently, the negative KDE gradient in bandwidth-scaled
+        coordinates, moment1_k = -∂f / ∂(x_k / h_k).
 
     """
-    bw = np.sqrt(np.diag(cov))
-    d = x.shape[0]
-    data = kde.dataset  # (d, N)
-    weights = kde.weights  # (N,)
+    # some type info needed for Cython
+    output_dtype = np.common_type(kde.covariance, x)
+    spec_dict = {4: 'float', 8: 'double', 12: 'long double', 16: 'long double'}
+    spec = spec_dict[np.dtype(output_dtype).itemsize]
 
-    diff = x[:, :, None] - data[:, None, :]  # (d, M, N)
+    weighted_fields = np.empty((kde.n, kde.d + 1), dtype=output_dtype)
+    weighted_fields[:, 0] = kde.weights
+    weighted_fields[:, 1:] = kde.weights[:, None] * kde.dataset.T
+    estimate = gaussian_kernel_estimate[spec](
+        points=kde.dataset.T,
+        values=weighted_fields,
+        xi=x.T,
+        cho_cov=kde.cho_cov,
+        dtype=output_dtype
+    )
+    f = estimate[:, 0]  # (M,)
+    bw = np.sqrt(np.diag(kde.covariance))[:, None]  # (d, 1)
+    moment1 = (x * f[None, :] - estimate[:, 1:].T) / bw  # (d, M)
 
-    mvn = multivariate_normal(mean=np.zeros(d), cov=cov, allow_singular=True)
-    kernel = mvn.pdf(diff.T)  # (N, M)
-    wk = weights[:, None] * kernel  # (N, M)
-
-    f = wk.sum(axis=0)
-    f_prime = tuple((wk * diff[ax].T / bw[ax]).sum(axis=0) for ax in range(d))
-    return f, f_prime
+    return f, moment1
 
 
-def _corrected_density(f, f_prime, a0, a1, a2, order):
+def _corrected_density(f, moment1, a0, a1, a2, order):
     """Compute boundary-corrected density from KDE and truncated moments.
 
     Implements renormalization (order 0) and linear boundary correction
@@ -114,9 +122,11 @@ def _corrected_density(f, f_prime, a0, a1, a2, order):
     Parameters
     ----------
     f : np.array
-        Uncorrected KDE density.
-    f_prime : np.array
-        Gradient-weighted KDE density.
+        Uncorrected KDE density, shape (M,).
+    moment1 : np.array
+        First bandwidth-scaled kernel moment per axis, shape (d, M).
+        Equivalently, the negative KDE gradient in bandwidth-scaled
+        coordinates, moment1_k = -∂f / ∂(x_k / h_k).
     a0, a1, a2 : np.array
         Truncated kernel moments.
     order : int
@@ -137,7 +147,7 @@ def _corrected_density(f, f_prime, a0, a1, a2, order):
     elif order == 1:
         denominator = a0 * a2 - a1**2
         mask = denominator > 0
-        p[mask] = (a2 * f - a1 * f_prime)[mask] / denominator[mask]
+        p[mask] = (a2 * f - a1 * moment1)[mask] / denominator[mask]
     else:
         raise ValueError(f"order must be 0 or 1, got {order}")
 
@@ -145,7 +155,7 @@ def _corrected_density(f, f_prime, a0, a1, a2, order):
     return p
 
 
-def boundary_correction_1d(kde, x, cov, order=1, xmin=None, xmax=None):
+def boundary_correction_1d(kde, x, order=1, xmin=None, xmax=None):
     r"""Boundary correction for a 1D Gaussian KDE.
 
     Parameters
@@ -154,8 +164,6 @@ def boundary_correction_1d(kde, x, cov, order=1, xmin=None, xmax=None):
         Fitted 1D KDE object.
     x : np.array
         Evaluation points.
-    cov : np.array
-        Kernel covariance matrix, shape (1, 1).
     xmin, xmax : float, optional
         Lower/upper bounds.
     order : int, default=1
@@ -174,11 +182,11 @@ def boundary_correction_1d(kde, x, cov, order=1, xmin=None, xmax=None):
     if xmin is None and xmax is None or order < 0:
         return kde(x)
 
-    bw = np.sqrt(np.diag(cov))
-    f, (f_prime,) = _kde_eval(kde, x[None, :], cov)
+    bw = np.sqrt(kde.covariance[0, 0])
+    f, (moment1,) = _kde_eval(kde, x[None, :])
     a0, a1, a2 = _truncated_moments(x, bw, xmin, xmax)
 
-    p = _corrected_density(f, f_prime, a0, a1, a2, order)
+    p = _corrected_density(f, moment1, a0, a1, a2, order)
 
     if xmin is not None:
         p[x < xmin] = 0
@@ -188,7 +196,7 @@ def boundary_correction_1d(kde, x, cov, order=1, xmin=None, xmax=None):
     return p
 
 
-def boundary_correction_2d(kde, X, Y, cov, order=1,
+def boundary_correction_2d(kde, X, Y, order=1,
                            xmin=None, xmax=None, ymin=None, ymax=None):
     r"""Separable boundary correction for a 2D Gaussian KDE.
 
@@ -201,8 +209,6 @@ def boundary_correction_2d(kde, X, Y, cov, order=1,
         Fitted 2D KDE object.
     X, Y : np.array
         2D evaluation grids (from np.mgrid).
-    cov : np.array
-        Kernel covariance matrix, shape (2, 2).
     xmin, xmax, ymin, ymax : float, optional
         Bounds per axis.
     order : int, default=1
@@ -227,17 +233,18 @@ def boundary_correction_2d(kde, X, Y, cov, order=1,
     if not has_x_bounds and not has_y_bounds or order < 0:
         return kde([x, y]).reshape(X.shape)
 
-    bw = np.sqrt(np.diag(cov))
-    f, (f_x, f_y) = _kde_eval(kde, np.vstack([x, y]), cov)
+    bw_x = np.sqrt(kde.covariance[0, 0])
+    bw_y = np.sqrt(kde.covariance[1, 1])
+    f, (moment1_x, moment1_y) = _kde_eval(kde, np.vstack([x, y]))
 
     p = np.ones_like(f)
-    for has_bounds, bw_ax, f_ax, coords, lo, hi in [
-            (has_x_bounds, bw[0], f_x, x, xmin, xmax),
-            (has_y_bounds, bw[1], f_y, y, ymin, ymax)
+    for has_bounds, bw_ax, moment1_ax, coords, lo, hi in [
+            (has_x_bounds, bw_x, moment1_x, x, xmin, xmax),
+            (has_y_bounds, bw_y, moment1_y, y, ymin, ymax)
     ]:
         if has_bounds:
             a0, a1, a2 = _truncated_moments(coords, bw_ax, lo, hi)
-            p *= _corrected_density(f, f_ax, a0, a1, a2, order)
+            p *= _corrected_density(f, moment1_ax, a0, a1, a2, order)
 
     # The product of two corrected 1d densities `p_x * p_y` double counts the
     # base density `f` --> Divide product by `f`:
