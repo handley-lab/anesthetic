@@ -1320,8 +1320,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     boundary_kwargs = dict(order=order,
                            xmin=data_x.min(), xmax=data_x.max(),
                            ymin=data_y.min(), ymax=data_y.max())
-    p_all = boundary_correction_2d(kde, x_all, y_all,
-                                   kde.covariance, **boundary_kwargs)
+    p_all = boundary_correction_2d(kde, x_all, y_all, **boundary_kwargs)
     P_plot = p_all[:-n_samp].reshape(X.shape)
     p_samp = p_all[-n_samp:]
     levels = iso_probability_contours_from_samples(p_samp,
