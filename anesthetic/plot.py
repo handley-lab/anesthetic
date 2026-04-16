@@ -1320,14 +1320,14 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     boundary_kwargs = dict(order=order,
                            xmin=data_x.min(), xmax=data_x.max(),
                            ymin=data_y.min(), ymax=data_y.max())
-    P_all = boundary_correction_2d(kde, x_all, y_all,
+    p_all = boundary_correction_2d(kde, x_all, y_all,
                                    kde.covariance, **boundary_kwargs)
-    P_plot = P_all[:-n_samp].reshape(X.shape)
-    P_samp = P_all[-n_samp:]
-    levels = iso_probability_contours_from_samples(P_samp,
+    P_plot = p_all[:-n_samp].reshape(X.shape)
+    p_samp = p_all[-n_samp:]
+    levels = iso_probability_contours_from_samples(p_samp,
                                                    contours=levels,
                                                    weights=w_samp)
-    vmax = max(P_plot.max(), P_samp.max())
+    vmax = max(P_plot.max(), p_samp.max())
     levels = levels + [vmax]
     if ax.get_xaxis().get_scale() == 'log':
         X = 10**X
