@@ -118,21 +118,23 @@ def test_triangular_sample_compression_2d():
     y = np.random.rand(n)
     w = np.random.rand(n)
     cov = np.identity(2)
+    # Hull vertices count toward the requested ``n`` budget, so ``len(W)``
+    # equals ``n`` exactly and mass is preserved (no overflow to drop).
     tri, W = triangular_sample_compression_2d(x, y, cov, None)
     assert len(W) == 1000
-    assert sum(W) == pytest.approx(n, rel=1e-1)
+    assert sum(W) == pytest.approx(n)
     tri, W = triangular_sample_compression_2d(x, y, cov, w)
     assert len(W) == 1000
-    assert sum(W) == pytest.approx(sum(w), rel=1e-1)
+    assert sum(W) == pytest.approx(sum(w))
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n=False)
     assert len(W) == n
     assert sum(W) == pytest.approx(sum(w))
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n=True)  # entropy
     assert n/2 < len(W) < n
-    assert sum(W) == pytest.approx(sum(w), rel=1e-3)
+    assert sum(W) == pytest.approx(sum(w))
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n='inf')
     assert len(W) == pytest.approx(n/2, rel=1e-1)
-    assert sum(W) == pytest.approx(sum(w), rel=1e-2)
+    assert sum(W) == pytest.approx(sum(w))
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n=10000)
     assert len(W) == n
     assert sum(W) == pytest.approx(sum(w))

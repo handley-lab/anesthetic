@@ -4,6 +4,7 @@ import pandas
 from scipy import special
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
+from scipy.spatial import ConvexHull, QhullError
 from scipy.stats import kstwobign, entropy
 from matplotlib.tri import Triangulation
 import contextlib
@@ -836,24 +837,54 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
             n = 'entropy'
         n = int(neff(w, beta=n))
 
-    # Select samples for triangulation
+    # Early exit if no compression is needed: all samples are vertices of the
+    # triangulation, and each vertex inherits its own weight.
     if (w != 0).sum() <= n:
-        i = x.index
-    else:
-        i = np.random.choice(x.index, size=n, replace=False, p=w/w.sum())
+        return scaled_triangulation(x, y, cov), np.asarray(w, dtype=float)
 
-    # Generate triangulation
+    # Always include the convex hull so we do not loose any probability mass.
+    try:
+        i_hull = ConvexHull(np.column_stack([x, y])).vertices
+    except QhullError:
+        # Collinear input: hull degenerates to the two principal-axis extremes.
+        pc = np.linalg.eigh(cov)[1][:, -1]
+        s = np.column_stack([x, y]) @ pc
+        i_hull = np.array([s.argmin(), s.argmax()])
+
+    # Fill what remains of ``n`` budget with weight-proportional inner samples.
+    n_inner = max(n - len(i_hull), 0)
+    i_inner = np.setdiff1d(x.index, i_hull, assume_unique=True)
+    if (w[i_inner] != 0).sum() <= n_inner:
+        return scaled_triangulation(x, y, cov), np.asarray(w, dtype=float)
+    p = w[i_inner] / w[i_inner].sum()
+    i_inner = np.random.choice(i_inner, size=n_inner, replace=False, p=p)
+    i = np.concatenate([i_hull, i_inner])
+
+    # Triangulate the chosen vertices.
     tri = scaled_triangulation(x[i], y[i], cov)
 
-    # For each point find corresponding triangles
+    # For each sample point find its enclosing triangle.
     trifinder = tri.get_trifinder()
     j = trifinder(x, y)
-    k = tri.triangles[j[j != -1]]
+    k = tri.triangles[j]  # (N, 3) vertex indices per enclosing triangle
 
-    # Compute mass in each triangle, and add it to each corner
-    w_ = np.zeros(len(i))
-    for i in range(3):
-        np.add.at(w_, k[:, i], w[j != -1]/3)
+    # Barycentric coords lam = (lam_A, lam_B, lam_C) of each input P w.r.t.
+    # its enclosing triangle (A, B, C): P = sum(lam_v * V), sum(lam_v) = 1.
+    ax, bx, cx = tri.x[k[:, 0]], tri.x[k[:, 1]], tri.x[k[:, 2]]
+    ay, by, cy = tri.y[k[:, 0]], tri.y[k[:, 1]], tri.y[k[:, 2]]
+    e1x, e1y = bx - ax, by - ay  # edge B - A
+    e2x, e2y = cx - ax, cy - ay  # edge C - A
+    epx, epy = x - ax, y - ay    # offset P - A
+    denom = e1x * e2y - e1y * e2x            # 2 * signed area (A,B,C)
+    lam_B = (epx * e2y - epy * e2x) / denom  # area ratio of (A,P,C)
+    lam_C = (e1x * epy - e1y * epx) / denom  # area ratio of (A,B,P)
+    lam_A = 1 - lam_B - lam_C
+
+    # Scatter each sample's weight onto the three corners of its triangle.
+    # Distributing weight by lam preserves the local first moment.
+    w_ = np.zeros(len(tri.x))
+    for vi, lam in zip(range(3), (lam_A, lam_B, lam_C)):
+        np.add.at(w_, k[:, vi], w * lam)
 
     return tri, w_
 
