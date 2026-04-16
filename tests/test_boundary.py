@@ -57,9 +57,9 @@ def test_boundary_correction_2d():
     truth /= truth.max()
 
     bounds = dict(xmin=lo, xmax=hi, ymin=lo, ymax=hi)
-    pn = boundary_correction_2d(kde, X, Y, kde.covariance, order=-1, **bounds)
-    p0 = boundary_correction_2d(kde, X, Y, kde.covariance, order=+0, **bounds)
-    p1 = boundary_correction_2d(kde, X, Y, kde.covariance, order=+1, **bounds)
+    pn = boundary_correction_2d(kde, X, Y, order=-1, **bounds)
+    p0 = boundary_correction_2d(kde, X, Y, order=+0, **bounds)
+    p1 = boundary_correction_2d(kde, X, Y, order=+1, **bounds)
     pn /= pn.max()
     p0 /= p0.max()
     p1 /= p1.max()
