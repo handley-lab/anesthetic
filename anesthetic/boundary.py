@@ -17,11 +17,57 @@ https://www.researchgate.net/publication/345555871_Modified_density_estimation
 """
 
 import numpy as np
-from scipy.stats import multivariate_normal, norm
+from scipy.special import ndtr
+from scipy.stats import norm
 from scipy.stats._stats import gaussian_kernel_estimate
 
-_DTYPE_SPEC = {4: 'float', 8: 'double', 12: 'long double',
-               16: 'long double'}
+_DTYPE_SPEC = {4: 'float', 8: 'double', 12: 'long double', 16: 'long double'}
+
+# Pre-compute 20-point Gauss-Legendre nodes and weights for _bvn_cdf.
+_GL_NODES, _GL_WEIGHTS = np.polynomial.legendre.leggauss(20)
+
+
+def _bvn_cdf(x, y, rho):
+    r"""Vectorized bivariate standard-normal CDF.
+
+    Computes `P(X < x, Y < y)` where `(X, Y)` follow a standard bivariate
+    normal distribution with correlation `rho`, using the Drezner (1978)
+    integral representation with 20-point Gauss-Legendre quadrature.
+
+    Parameters
+    ----------
+    x, y : np.array
+        Evaluation coordinates (arbitrary but matching shape).
+    rho : float
+        Correlation coefficient, ``-1 < rho < 1``.
+
+    Returns
+    -------
+    cdf : np.array
+        Bivariate normal CDF values, same shape as `x` and `y`.
+
+    """
+    cdf = np.empty_like(x)
+
+    # infinities block
+    fin = np.isfinite(x) & np.isfinite(y)
+    cdf[~fin] = ndtr(x[~fin]) * ndtr(y[~fin])
+    if not np.any(fin):
+        return cdf
+
+    # finite block
+    xf = x[fin]
+    yf = y[fin]
+    theta = np.arcsin(rho)
+    t = theta / 2 * (_GL_NODES + 1)
+    w = theta / 2 * _GL_WEIGHTS
+    sin_t = np.sin(t)
+    cos2_t = np.cos(t)**2
+    X = xf[:, None]
+    Y = yf[:, None]
+    arg = np.exp(-(X**2 + Y**2 - 2 * X * Y * sin_t) / (2 * cos2_t))
+    cdf[fin] = (ndtr(xf) * ndtr(yf) + np.sum(arg * w, axis=-1) / (2 * np.pi))
+    return cdf
 
 
 def _truncated_moments(x, cov, x_limits):
@@ -82,8 +128,7 @@ def _truncated_moments(x, cov, x_limits):
     # Split covariance into per-axis scales and a correlation matrix.
     sigma = np.sqrt(np.diag(cov))  # (d,)
     corr = cov / np.outer(sigma, sigma)  # (d, d)
-    gaussian_1dim = norm(loc=0, scale=1)
-    gaussian_ddim = multivariate_normal(mean=np.zeros(d), cov=corr)
+    gaussian = norm(loc=0, scale=1)
 
     # Lower/upper bounds in bandwidth-scaled coordinates.
     # (M, 2, d)
@@ -103,8 +148,13 @@ def _truncated_moments(x, cov, x_limits):
         signs = np.multiply.outer(signs, [-1, +1])  # *(2,)*d
 
     # Multivariate CDF and marginal PDF at each corner.
-    cdf = gaussian_ddim.cdf(u_corner)  # (M, *(2,)*d)
-    pdf = gaussian_1dim.pdf(u_corner)  # (M, *(2,)*d, d)
+    if d == 1:
+        cdf = gaussian.cdf(u_corner[..., 0])  # (M, 2)
+    else:
+        rho = np.clip(corr[0, 1], -1 + eps, 1 - eps)
+        s = np.sqrt(1 - rho**2)
+        cdf = _bvn_cdf(u_corner[..., 0], u_corner[..., 1], rho)  # (M, 2, 2)
+    pdf = gaussian.pdf(u_corner)  # (M, *(2,)*d, d)
 
     # Corner contributions to the gradient and Hessian of a0.
     # grad_i = phi(u_i) * Phi(u_{-i} | u_i).
@@ -120,19 +170,17 @@ def _truncated_moments(x, cov, x_limits):
         # skipped and grad_i = phi(u_i).
         if d == 2:
             j = 1 - i
-            rho_ij = np.clip(corr[i, j], -1 + eps, 1 - eps)
-            s_ij = np.sqrt(1 - rho_ij**2)
             uj = u_corner[..., j]
-            v = (uj - rho_ij * ui) / s_ij
+            v = (uj - rho * ui) / s
             v = np.where(np.isposinf(uj), +np.inf, v)
             v = np.where(np.isneginf(uj), -np.inf, v)
             inf_i_fin_j = inf_i & np.isfinite(uj)
-            if rho_ij == 0:
-                v = np.where(inf_i_fin_j, uj / s_ij, v)
+            if rho == 0:
+                v = np.where(inf_i_fin_j, uj / s, v)
             else:
-                v = np.where(inf_i_fin_j, -np.sign(rho_ij) * ui, v)
-            grad[..., i] *= gaussian_1dim.cdf(v)
-            hess[..., i, j] = pdf[..., i] * gaussian_1dim.pdf(v) / s_ij
+                v = np.where(inf_i_fin_j, -np.sign(rho) * ui, v)
+            grad[..., i] *= gaussian.cdf(v)
+            hess[..., i, j] = pdf[..., i] * gaussian.pdf(v) / s
             corr_hess += corr[i, j] * hess[..., i, j]
         hess[..., i, i] = np.where(inf_i, 0, -ui * grad[..., i]) - corr_hess
 
