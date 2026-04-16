@@ -703,7 +703,12 @@ def test_q_2d(plot_2d):
 
     def get_data_from_plot(plot_2d, p):
         if plot_2d == kde_contour_plot_2d:
-            x, y = p[0].allsegs[0][0].T
+            # p[0].allsegs[i] is the list of polygon outlines drawn at
+            # contourf level i; each outline is an (N, 2) vertex array.
+            # Flatten the polygons within each level, skipping empty levels.
+            level_polygons = [np.concatenate(polygons)
+                              for polygons in p[0].allsegs if polygons]
+            x, y = np.concatenate(level_polygons).T
         elif plot_2d == hist_plot_2d:
             x = p.get_coordinates()[0, :, 0]
             y = p.get_coordinates()[:, 0, 1]
@@ -744,6 +749,25 @@ def test_q_2d(plot_2d):
     assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
     assert (x.min(), x.max()) == pytest.approx((-2, 1), rel=0.2)
     assert (y.min(), y.max()) == pytest.approx((-2, 1), rel=0.2)
+
+
+def test_q_invariant_levels():
+    """Contour levels must not depend on the plotting window set by `q`.
+
+    Regression test for a bug where ``iso_probability_contours`` was
+    computed from the KDE on the plotting meshgrid, so narrowing ``q``
+    re-ranked the visible mass and shifted the contours (see PR #431).
+    """
+    np.random.seed(42)
+    x, y = np.random.randn(2, 500)
+
+    fig, ax = plt.subplots()
+    fill_q5, line_q5 = kde_contour_plot_2d(ax, x, y, q=5)
+    fill_q1, line_q1 = kde_contour_plot_2d(ax, x, y, q=1)
+    # The interior iso-probability levels should match bit-identically;
+    # only the top value (``vmax``) depends on the plotting window.
+    assert_array_equal(fill_q5.levels[:-1], fill_q1.levels[:-1])
+    assert_array_equal(line_q5.levels[:-1], line_q1.levels[:-1])
 
 
 def test_kde_plot_nplot():
