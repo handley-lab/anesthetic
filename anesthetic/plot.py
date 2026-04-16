@@ -973,7 +973,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
     kde.set_bandwidth(bw_method=kde.factor * bw_scale)
 
-    p = boundary_correction_1d(kde, x, kde.covariance, order=order,
+    p = boundary_correction_1d(kde, x, order=order,
                                xmin=data.min(), xmax=data.max())
     p /= p.max()
     if version.parse(np.__version__) >= version.parse("2.0.0"):
