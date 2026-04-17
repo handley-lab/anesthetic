@@ -854,8 +854,6 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     # Fill what remains of ``n`` budget with weight-proportional inner samples.
     n_inner = max(n - len(i_hull), 0)
     i_inner = np.setdiff1d(x.index, i_hull, assume_unique=True)
-    if (w[i_inner] != 0).sum() <= n_inner:
-        return scaled_triangulation(x, y, cov), np.asarray(w, dtype=float)
     p = w[i_inner] / w[i_inner].sum()
     i_inner = np.random.choice(i_inner, size=n_inner, replace=False, p=p)
     i = np.concatenate([i_hull, i_inner])
