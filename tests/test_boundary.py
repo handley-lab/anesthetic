@@ -48,7 +48,7 @@ def test_boundary_correction_1d():
     x = np.linspace(d.min(), d.max(), 301)
     truth = stats.norm.pdf(x) / stats.norm.pdf(x).max()
 
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     t, = ax.plot(x, truth)
     kwargs = dict(bw_method=0.25, q=0, nplot_1d=x.size)
     pn, = kde_plot_1d(ax, d, weights=w, order=-1, **kwargs)  # no correction
@@ -211,7 +211,7 @@ def test_bw_scale_1d():
     "Larger bw_scale means more smoothing which flattens the peak."
     np.random.seed(43)
     d = np.random.standard_normal(1000)
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     kwargs = dict(q=0, density=True)
     narrow, = kde_plot_1d(ax, d, bw_scale=0.5, **kwargs)
     default, = kde_plot_1d(ax, d, bw_scale=1.0, **kwargs)
@@ -228,9 +228,9 @@ def test_bw_scale_2d():
     kwargs = dict(q=0, facecolor=True)
     peaks = []
     for scale in [0.5, 1.0, 2.0]:
-        fig, ax = plt.subplots()
-        contf, cont = kde_contour_plot_2d(ax, d[:, 0], d[:, 1],
-                                          bw_scale=scale, **kwargs)
+        _, ax = plt.subplots()
+        contf, _ = kde_contour_plot_2d(ax, d[:, 0], d[:, 1],
+                                       bw_scale=scale, **kwargs)
         peaks.append(contf.norm.vmax)
 
     assert peaks[0] > peaks[1] > peaks[2]
