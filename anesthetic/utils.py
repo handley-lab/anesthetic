@@ -4,7 +4,7 @@ import pandas
 from scipy import special
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
-from scipy.spatial import ConvexHull, QhullError
+from scipy.spatial import ConvexHull
 from scipy.stats import kstwobign, entropy
 from matplotlib.tri import Triangulation
 import contextlib
@@ -842,16 +842,9 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     if (w != 0).sum() <= n:
         return scaled_triangulation(x, y, cov), np.asarray(w, dtype=float)
 
-    # Always include the convex hull so we do not loose any probability mass.
-    try:
-        i_hull = ConvexHull(np.column_stack([x, y])).vertices
-    except QhullError:
-        # Collinear input: hull degenerates to the two principal-axis extremes.
-        pc = np.linalg.eigh(cov)[1][:, -1]
-        s = np.column_stack([x, y]) @ pc
-        i_hull = np.array([s.argmin(), s.argmax()])
-
-    # Fill what remains of ``n`` budget with weight-proportional inner samples.
+    # Hull vertices are always kept so we do not lose probability mass.
+    # They count toward the n budget; the rest is filled with interior samples.
+    i_hull = ConvexHull(np.column_stack([x, y])).vertices
     n_inner = max(n - len(i_hull), 0)
     i_inner = np.setdiff1d(x.index, i_hull, assume_unique=True)
     p = w[i_inner] / w[i_inner].sum()

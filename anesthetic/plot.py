@@ -317,6 +317,10 @@ class AxesDataFrame(DataFrame):
                     axes[x][y].xaxis.set_major_locator(
                         MaxNLocator(3, prune='both'))
                     axes[x][y].xaxis.set_minor_locator(AutoMinorLocator(1))
+                    if axes[x][y] is not None:
+                        axes[x][y].name = (x, y)
+                        axes[x][y].xaxis.name = x
+                        axes[x][y].yaxis.name = y
         return axes
 
     @staticmethod
@@ -1298,13 +1302,32 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
 
+    # Regularise degenerate input (collinear or constant data) by injecting
+    # small noise so that the covariance is positive-definite for Cholesky
+    # decomposition in scaled_triangulation and gaussian_kde.
+    cov = np.cov(data_x, data_y, aweights=weights)
+    (var_x, rho_xy), (rho_yx, var_y) = cov
+    if var_x <= 0 or var_y <= 0 or var_x * var_y - rho_xy * rho_yx <= 0:
+        noise_x = _noise_scale(var_x, ax, 'x')
+        noise_y = _noise_scale(var_y, ax, 'y')
+        data_x = data_x.copy() + noise_x * np.random.normal(size=data_x)
+        data_y = data_y.copy() + noise_y * np.random.normal(size=data_y)
+        cov = np.cov(data_x, data_y, aweights=weights)
+
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data_x, q[0], weights)
     xmax = quantile(data_x, q[-1], weights)
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
-    cov = np.cov(data_x, data_y, aweights=weights)
+
+    # Rectangular grid for edge coverage (~half the plotting budget).
+    n_grid = int(np.sqrt(nplot // 2))
+    x_grid, y_grid = np.meshgrid(np.linspace(xmin, xmax, n_grid),
+                                 np.linspace(ymin, ymax, n_grid))
+
+    # Compress samples via barycentric weight redistribution onto a
+    # triangulated subset, then build the KDE on the compressed vertices.
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
                                               weights, ncompress)
     kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
@@ -1315,11 +1338,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     n_samp = min(len(tri.x), n_samp)
     i_samp = np.random.choice(len(tri.x), n_samp, replace=False)
     w_samp = w[i_samp]
-
-    # Rectangular grid for edge coverage (~half the plotting budget).
-    n_grid = int(np.sqrt(nplot // 2))
-    x_grid, y_grid = np.meshgrid(np.linspace(xmin, xmax, n_grid),
-                                 np.linspace(ymin, ymax, n_grid))
 
     # Concatenate grid + compressed-sample vertices and evaluate in one pass.
     # The compressed samples also serve as data-driven plot vertices (via
@@ -1591,3 +1609,31 @@ def set_colors(c, fc, ec, cmap):
         elif cmap is None:
             cmap = basic_cmap(fc)
     return fc, ec, cmap
+
+
+def _noise_scale(var, ax, axis):
+    """Return a noise standard deviation to regularise a degenerate axis.
+
+    If the variance is non-zero, returns 1 % of the standard deviation.
+    If the variance is zero, derives a scale from axis limits (``viewLim``
+    when explicitly set via ``set_xlim``/``set_ylim``, or ``dataLim`` when
+    prior data has been plotted). Raises ``ValueError`` if neither is
+    available.
+    """
+    if var > 0:
+        return np.sqrt(var) * 1e-2
+    if axis == 'x':
+        has_limits = not ax.get_autoscalex_on()
+        interval = ax.viewLim.intervalx if has_limits else ax.dataLim.intervalx
+        name = ax.xaxis.name
+    else:
+        has_limits = not ax.get_autoscaley_on()
+        interval = ax.viewLim.intervaly if has_limits else ax.dataLim.intervaly
+        name = ax.yaxis.name
+    if np.isfinite(interval).all():
+        return (interval[1] - interval[0]) * 1e-3
+    raise ValueError(
+        f"Cannot plot KDE contours: the {name} variable has zero variance "
+        f"and no axis limits are set. Call ax.set_{axis}lim(...) before "
+        f"plotting to define the display range."
+    )
