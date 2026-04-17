@@ -19,9 +19,8 @@ https://www.researchgate.net/publication/345555871_Modified_density_estimation
 import numpy as np
 from scipy.special import ndtr
 from scipy.stats import norm
+from scipy.stats._kde import _get_output_dtype
 from scipy.stats._stats import gaussian_kernel_estimate
-
-_DTYPE_SPEC = {4: 'float', 8: 'double', 12: 'long double', 16: 'long double'}
 
 # Pre-compute 20-point Gauss-Legendre nodes and weights for _bvn_cdf.
 _GL_NODES, _GL_WEIGHTS = np.polynomial.legendre.leggauss(20)
@@ -230,8 +229,7 @@ def _kde_eval(kde, x):
         bandwidth-scaled coordinates.
 
     """
-    output_dtype = np.common_type(kde.covariance, x)
-    spec = _DTYPE_SPEC[np.dtype(output_dtype).itemsize]
+    output_dtype, spec = _get_output_dtype(kde.covariance, x)
 
     # Pack the KDE weights and first raw moments into one Cython call.
     # (N, d+1)
