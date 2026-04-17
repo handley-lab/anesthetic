@@ -1310,8 +1310,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if var_x <= 0 or var_y <= 0 or var_x * var_y - rho_xy * rho_yx <= 0:
         noise_x = _noise_scale(var_x, ax, 'x')
         noise_y = _noise_scale(var_y, ax, 'y')
-        data_x = data_x.copy() + noise_x * np.random.normal(size=data_x)
-        data_y = data_y.copy() + noise_y * np.random.normal(size=data_y)
+        data_x = data_x.copy() + noise_x * np.random.normal(size=data_x.size)
+        data_y = data_y.copy() + noise_y * np.random.normal(size=data_y.size)
         cov = np.cov(data_x, data_y, aweights=weights)
 
     q = kwargs.pop('q', 5)
@@ -1625,15 +1625,15 @@ def _noise_scale(var, ax, axis):
     if axis == 'x':
         has_limits = not ax.get_autoscalex_on()
         interval = ax.viewLim.intervalx if has_limits else ax.dataLim.intervalx
-        name = ax.xaxis.name
+        name = ax.xaxis.axis_name
     else:
         has_limits = not ax.get_autoscaley_on()
         interval = ax.viewLim.intervaly if has_limits else ax.dataLim.intervaly
-        name = ax.yaxis.name
+        name = ax.yaxis.axis_name
     if np.isfinite(interval).all():
         return (interval[1] - interval[0]) * 1e-3
     raise ValueError(
-        f"Cannot plot KDE contours: the {name} variable has zero variance "
-        f"and no axis limits are set. Call ax.set_{axis}lim(...) before "
-        f"plotting to define the display range."
+        f"Cannot plot KDE contours: the {name}-axis variable has zero "
+        f"variance and no axis limits are set. Call ax.set_{axis}lim(...) "
+        f"before plotting to define the display range."
     )
