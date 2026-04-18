@@ -966,6 +966,9 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
     x = np.linspace(xmin, xmax, nplot)
+    for edge, direction in [(data.min(), -np.inf), (data.max(), np.inf)]:
+        if xmin <= edge <= xmax:
+            x = np.union1d(x, [np.nextafter(edge, direction)])
 
     data_compressed, w = sample_compression_1d(data, weights, ncompress)
     kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
@@ -1298,7 +1301,17 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = quantile(data_x, q[-1], weights)
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
-    X, Y = np.mgrid[xmin:xmax:1j*np.sqrt(nplot), ymin:ymax:1j*np.sqrt(nplot)]
+
+    n_grid = int(np.sqrt(nplot))
+    x = np.linspace(xmin, xmax, n_grid)
+    y = np.linspace(ymin, ymax, n_grid)
+    for edge, direction in [(data_x.min(), -np.inf), (data_x.max(), np.inf)]:
+        if xmin <= edge <= xmax:
+            x = np.union1d(x, [np.nextafter(edge, direction)])
+    for edge, direction in [(data_y.min(), -np.inf), (data_y.max(), np.inf)]:
+        if ymin <= edge <= ymax:
+            y = np.union1d(y, [np.nextafter(edge, direction)])
+    X, Y = np.meshgrid(x, y)
     x_grid, y_grid = X.ravel(), Y.ravel()
 
     cov = np.cov(data_x, data_y, aweights=weights)

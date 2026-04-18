@@ -15,12 +15,15 @@ def test_boundary_correction_1d():
     np.random.seed(42)
     d = np.random.uniform(low=-1, high=2, size=10000)
     w = stats.norm.pdf(d)
-    x = np.linspace(d.min(), d.max(), 301)
+    num = 301
+    x = np.linspace(d.min(), d.max(), num)
+    x = np.union1d(x, [np.nextafter(x[0], -np.inf),
+                       np.nextafter(x[-1], np.inf)])
     truth = stats.norm.pdf(x) / stats.norm.pdf(x).max()
 
     fig, ax = plt.subplots()
     t, = ax.plot(x, truth)
-    kwargs = dict(bw_method=0.25, q=0, nplot_1d=x.size)
+    kwargs = dict(bw_method=0.25, q=0, nplot_1d=num)
     pn, = kde_plot_1d(ax, d, weights=w, order=-1, **kwargs)  # no correction
     p0, = kde_plot_1d(ax, d, weights=w, order=+0, **kwargs)  # order 0
     p1, = kde_plot_1d(ax, d, weights=w, order=+1, **kwargs)  # order 1
@@ -35,9 +38,9 @@ def test_boundary_correction_1d():
     assert_array_equal(p0.get_xdata(), t.get_xdata())
     assert_array_equal(p1.get_xdata(), t.get_xdata())
 
-    residual_n = np.abs(pn.get_ydata() / t.get_ydata() - 1)
-    residual_0 = np.abs(p0.get_ydata() / t.get_ydata() - 1)
-    residual_1 = np.abs(p1.get_ydata() / t.get_ydata() - 1)
+    residual_n = np.abs(pn.get_ydata()[1:-1] / t.get_ydata()[1:-1] - 1)
+    residual_0 = np.abs(p0.get_ydata()[1:-1] / t.get_ydata()[1:-1] - 1)
+    residual_1 = np.abs(p1.get_ydata()[1:-1] / t.get_ydata()[1:-1] - 1)
 
     assert residual_1.max() < residual_0.max() < residual_n.max() < 0.5
     assert residual_1.mean() < residual_0.mean() < residual_n.mean() < 0.1
