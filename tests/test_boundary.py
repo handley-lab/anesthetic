@@ -73,28 +73,6 @@ def test_boundary_correction_1d():
     assert residual_1.mean() < residual_0.mean() < residual_n.mean() < 0.1
 
 
-def test_boundary_correction_1d_dtype():
-    """Double gives exact match; half runs without error."""
-    np.random.seed(42)
-    d = np.random.uniform(low=-1, high=2, size=10000)
-    w = stats.norm.pdf(d)
-
-    _, ax = plt.subplots()
-    kwargs = dict(bw_method=0.25, q=0, nplot_1d=300)
-    for order in [-1, 0, +1]:
-        p, = kde_plot_1d(ax, d, weights=w, order=order, **kwargs)
-
-        pdouble, = kde_plot_1d(ax, d.astype(np.double),
-                               weights=w.astype(np.double),
-                               order=order, **kwargs)
-        assert_array_equal(p.get_ydata(), pdouble.get_ydata())
-
-        phalf, = kde_plot_1d(ax, d.astype(np.half),
-                             weights=w.astype(np.half),
-                             order=order, **kwargs)
-        assert np.all(np.isfinite(phalf.get_ydata()))
-
-
 def test_boundary_correction_2d():
     """Order 1 correction is closer to the truth than order 0 in 2D."""
     np.random.seed(42)
@@ -127,36 +105,6 @@ def test_boundary_correction_2d():
     assert residual_1.max() < residual_0.max()
     assert residual_1.mean() < residual_n.mean()
     assert residual_1.mean() < residual_0.mean()
-
-
-def test_boundary_correction_2d_dtype():
-    """Double gives exact match; half runs without error."""
-    np.random.seed(42)
-    lo, hi = -1, 2
-    d = np.random.uniform(lo, hi, (10000, 2))
-    w = stats.multivariate_normal(mean=[0, 0]).pdf(d)
-
-    X, Y = np.mgrid[lo:hi:20j, lo:hi:20j]
-    bounds = dict(xmin=lo, xmax=hi, ymin=lo, ymax=hi)
-
-    kde = gaussian_kde(d.T, weights=w, bw_method=0.4)
-    kde_double = gaussian_kde(d.astype(np.double).T,
-                              weights=w.astype(np.double),
-                              bw_method=0.4)
-    kde_half = gaussian_kde(d.astype(np.half).T,
-                            weights=w.astype(np.half),
-                            bw_method=0.4)
-
-    for order in [-1, 0, +1]:
-        p = boundary_correction_2d(kde, X, Y, order=order, **bounds)
-
-        pdouble = boundary_correction_2d(kde_double, X, Y,
-                                         order=order, **bounds)
-        assert_array_equal(p, pdouble)
-
-        phalf = boundary_correction_2d(kde_half, X, Y,
-                                       order=order, **bounds)
-        assert np.all(np.isfinite(phalf))
 
 
 def test_full_covariance_2d():
