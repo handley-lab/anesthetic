@@ -4,6 +4,7 @@ import pandas
 from scipy import special
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
+from scipy.spatial import ConvexHull
 from scipy.stats import kstwobign, entropy
 from matplotlib.tri import Triangulation
 import contextlib
@@ -827,7 +828,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
 
     x = pandas.Series(x)
     if w is None:
-        w = pandas.Series(index=x.index, data=np.ones_like(x))
+        w = np.ones_like(x)
 
     if n is False:
         n = len(x)
@@ -836,24 +837,39 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
             n = 'entropy'
         n = int(neff(w, beta=n))
 
-    # Select samples for triangulation
+    # If no compression is needed, each vertex keeps its own weight.
     if (w != 0).sum() <= n:
-        i = x.index
-    else:
-        i = np.random.choice(x.index, size=n, replace=False, p=w/w.sum())
+        return scaled_triangulation(x, y, cov), np.asarray(w, dtype=float)
 
-    # Generate triangulation
+    # Keep convex hull vertices so no probability mass is lost.
+    i_hull = ConvexHull(np.column_stack([x, y])).vertices
+    n_inner = max(n - len(i_hull), 0)
+    i_inner = np.setdiff1d(x.index, i_hull, assume_unique=True)
+    p = w[i_inner] / w[i_inner].sum()
+    i_inner = np.random.choice(i_inner, size=n_inner, replace=False, p=p)
+    i = np.concatenate([i_hull, i_inner])
+
+    # Triangulate the chosen vertices.
     tri = scaled_triangulation(x[i], y[i], cov)
 
-    # For each point find corresponding triangles
+    # For each point find corresponding triangles.
     trifinder = tri.get_trifinder()
     j = trifinder(x, y)
-    k = tri.triangles[j[j != -1]]
+    k = tri.triangles[j]
 
-    # Compute mass in each triangle, and add it to each corner
-    w_ = np.zeros(len(i))
-    for i in range(3):
-        np.add.at(w_, k[:, i], w[j != -1]/3)
+    # Barycentric redistribution preserves total mass and local first moments.
+    ax, bx, cx = tri.x[k[:, 0]], tri.x[k[:, 1]], tri.x[k[:, 2]]
+    ay, by, cy = tri.y[k[:, 0]], tri.y[k[:, 1]], tri.y[k[:, 2]]
+    e1x, e1y = bx - ax, by - ay  # edge B - A
+    e2x, e2y = cx - ax, cy - ay  # edge C - A
+    epx, epy = x - ax, y - ay    # offset P - A
+    denom = e1x * e2y - e1y * e2x
+    lam_b = (epx * e2y - epy * e2x) / denom
+    lam_c = (e1x * epy - e1y * epx) / denom
+    lam_a = 1 - lam_b - lam_c
+    w_ = np.zeros(len(tri.x))
+    for vi, lam in zip(range(3), (lam_a, lam_b, lam_c)):
+        np.add.at(w_, k[:, vi], w * lam)
 
     return tri, w_
 
