@@ -1292,16 +1292,23 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
 
+    # Regularise degenerate input (collinear or constant data) by injecting
+    # small noise so that the covariance is positive-definite for Cholesky
+    # decomposition in scaled_triangulation and gaussian_kde.
+    cov = np.cov(data_x, data_y, aweights=weights)
+    (var_x, rho_xy), (rho_yx, var_y) = cov
+    if var_x <= 0 or var_y <= 0 or var_x * var_y - rho_xy * rho_yx <= 0:
+        evals, evecs = np.linalg.eigh(cov)
+        noise = np.sqrt(evals[1]) * 1e-3 * np.random.normal(size=data_x.size)
+        data_x = data_x.copy() + noise * evecs[0, 0]
+        data_y = data_y.copy() + noise * evecs[1, 0]
+        cov = np.cov(data_x, data_y, aweights=weights)
+
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
-    xmin = quantile(data_x, q[0], weights)
-    xmax = quantile(data_x, q[-1], weights)
-    ymin = quantile(data_y, q[0], weights)
-    ymax = quantile(data_y, q[-1], weights)
-    X, Y = np.mgrid[xmin:xmax:1j*np.sqrt(nplot), ymin:ymax:1j*np.sqrt(nplot)]
+    X, Y = _covariance_aligned_grid(data_x, data_y, weights, cov, q, nplot)
     x_grid, y_grid = X.ravel(), Y.ravel()
 
-    cov = np.cov(data_x, data_y, aweights=weights)
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
                                               weights, ncompress)
     kde = gaussian_kde([tri.x, tri.y], weights=w, bw_method=bw_method)
@@ -1311,7 +1318,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     # Grid values are used for plotting; sample values for computing
     # iso-probability levels independently of the plotting window.
     # Subsample vertices for level computation to avoid O(n_samples^2) cost.
-    n_samp = min(len(tri.x), max(1000, int(20 / (1 - max(levels)))))
+    n_samp = min(len(tri.x), max(1000, int(100 / (1 - max(levels)))))
     idx = np.random.choice(len(tri.x), n_samp, replace=False)
     x_samp, y_samp, w_samp = tri.x[idx], tri.y[idx], w[idx]
 
@@ -1570,3 +1577,18 @@ def set_colors(c, fc, ec, cmap):
         elif cmap is None:
             cmap = basic_cmap(fc)
     return fc, ec, cmap
+
+
+def _covariance_aligned_grid(data_x, data_y, weights, cov, q, nplot):
+    """Return a structured plot grid in covariance-aligned coordinates."""
+    L = np.linalg.cholesky(cov)
+    u, v = np.linalg.solve(L, [data_x, data_y])
+    umin = quantile(u, q[0], weights)
+    umax = quantile(u, q[-1], weights)
+    vmin = quantile(v, q[0], weights)
+    vmax = quantile(v, q[-1], weights)
+    n_grid = int(np.sqrt(nplot))
+    U, V = np.meshgrid(np.linspace(umin, umax, n_grid),
+                       np.linspace(vmin, vmax, n_grid))
+    X, Y = L.dot([U.ravel(), V.ravel()])
+    return X.reshape(U.shape), Y.reshape(V.shape)
