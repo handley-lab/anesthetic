@@ -1318,7 +1318,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
     ngrid = int(np.sqrt(nplot))
-    if cov_xy * cov_yx > 0 and corr > 0.99:
+    if corr > 0.99:
         eig = eig if eig is not None else np.linalg.eigh(cov)
         X, Y = _covariance_aligned_grid(data_x, data_y, eig, ngrid,
                                         xmin, xmax, ymin, ymax)
