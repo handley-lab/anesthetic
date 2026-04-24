@@ -1296,17 +1296,33 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     # small noise so that the covariance is positive-definite for Cholesky
     # decomposition in scaled_triangulation and gaussian_kde.
     cov = np.cov(data_x, data_y, aweights=weights)
+    eig = np.linalg.eigh(cov)
     (var_x, rho_xy), (rho_yx, var_y) = cov
-    if var_x <= 0 or var_y <= 0 or var_x * var_y - rho_xy * rho_yx <= 0:
-        evals, evecs = np.linalg.eigh(cov)
-        noise = np.sqrt(evals[1]) * 1e-3 * np.random.normal(size=data_x.size)
+    eps = np.finfo(float).eps
+    if var_x <= eps or var_y <= eps or var_x * var_y - rho_xy * rho_yx <= eps:
+        evals, evecs = eig
+        noise = np.sqrt(evals[0]) * 1e-3
+        noise += np.sqrt(evals[1]) * 1e-3 if abs(rho_xy) > eps else 0
+        noise += _plot_window(ax, 'x') * 1e-3 if var_x <= eps else 0
+        noise += _plot_window(ax, 'y') * 1e-3 if var_y <= eps else 0
+        noise = noise * np.random.normal(size=data_x.size)
         data_x = data_x.copy() + noise * evecs[0, 0]
         data_y = data_y.copy() + noise * evecs[1, 0]
         cov = np.cov(data_x, data_y, aweights=weights)
 
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
-    X, Y = _covariance_aligned_grid(data_x, data_y, weights, cov, q, nplot)
+    xmin = quantile(data_x, q[0], weights)
+    xmax = quantile(data_x, q[-1], weights)
+    ymin = quantile(data_y, q[0], weights)
+    ymax = quantile(data_y, q[-1], weights)
+    ngrid = int(np.sqrt(nplot))
+    if abs(rho_xy) > eps and rho_xy * rho_yx / (var_x * var_y) > 0.99:
+        X, Y = _covariance_aligned_grid(data_x, data_y, eig, ngrid,
+                                        xmin, xmax, ymin, ymax)
+    else:
+        X, Y = np.meshgrid(np.linspace(xmin, xmax, ngrid),
+                           np.linspace(ymin, ymax, ngrid))
     x_grid, y_grid = X.ravel(), Y.ravel()
 
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
@@ -1579,16 +1595,74 @@ def set_colors(c, fc, ec, cmap):
     return fc, ec, cmap
 
 
-def _covariance_aligned_grid(data_x, data_y, weights, cov, q, nplot):
-    """Return a structured plot grid in covariance-aligned coordinates."""
-    L = np.linalg.cholesky(cov)
-    u, v = np.linalg.solve(L, [data_x, data_y])
-    umin = quantile(u, q[0], weights)
-    umax = quantile(u, q[-1], weights)
-    vmin = quantile(v, q[0], weights)
-    vmax = quantile(v, q[-1], weights)
-    n_grid = int(np.sqrt(nplot))
-    U, V = np.meshgrid(np.linspace(umin, umax, n_grid),
-                       np.linspace(vmin, vmax, n_grid))
-    X, Y = L.dot([U.ravel(), V.ravel()])
-    return X.reshape(U.shape), Y.reshape(V.shape)
+def _plot_window(ax, axis):
+    """Return the displayed width or height of an axis.
+
+    Uses axis limits from ``viewLim`` when explicitly set via
+    ``set_xlim``/``set_ylim``, or from ``dataLim`` when prior data has been
+    plotted. Raises ``ValueError`` if neither is available.
+    """
+    if axis == 'x':
+        has_limits = not ax.get_autoscalex_on()
+        interval = ax.viewLim.intervalx if has_limits else ax.dataLim.intervalx
+        z = ax.get_xlabel() if ax.get_xlabel() else ax.xaxis.axis_name
+    else:
+        has_limits = not ax.get_autoscaley_on()
+        interval = ax.viewLim.intervaly if has_limits else ax.dataLim.intervaly
+        z = ax.get_ylabel() if ax.get_ylabel() else ax.yaxis.axis_name
+    if np.isfinite(interval).all():
+        return (interval[1] - interval[0])
+    if ax.__class__.__name__ == 'OffDiagonalAxes':
+        axes_name = f"axes['{ax.get_xlabel()}']['{ax.get_ylabel()}']"
+    else:
+        axes_name = "ax"
+    raise ValueError(
+        f"Cannot plot KDE contours: the `{z}` variable has zero variance "
+        f"and no axis limits are set. Call {axes_name}.set_{axis}lim(...) "
+        f"before plotting to define the display range."
+    )
+
+
+def _covariance_aligned_grid(data_x, data_y, eig, ngrid,
+                             xmin, xmax, ymin, ymax):
+    """Return a principal-axis grid clipped to the axis-aligned plot window."""
+    _, evecs = eig
+    u_vec = evecs[:, 0]  # minor axis
+    v_vec = evecs[:, 1]  # major axis
+    u = u_vec[0] * data_x + u_vec[1] * data_y
+    xy_corners = np.array([[xmin, ymin],
+                           [xmin, ymax],
+                           [xmax, ymin],
+                           [xmax, ymax]])
+    uv_corners = xy_corners @ evecs
+    umin_corner = uv_corners[:, 0].min()
+    umax_corner = uv_corners[:, 0].max()
+    umin = max(umin_corner, u.min())
+    umax = min(umax_corner, u.max())
+    vmin = uv_corners[:, 1].min()
+    vmax = uv_corners[:, 1].max()
+    u_grid = np.linspace(umin, umax, ngrid)
+    rows = []
+    for ui in u_grid:
+        if ui == umin_corner:
+            vi = uv_corners[np.argmin(uv_corners[:, 0]), 1]
+            rows.append((vi, vi, ui))
+            continue
+        if ui == umax_corner:
+            vi = uv_corners[np.argmax(uv_corners[:, 0]), 1]
+            rows.append((vi, vi, ui))
+            continue
+        vlo = vmin
+        vhi = vmax
+        for vj, uj, zmin, zmax in [(v_vec[0], u_vec[0]*ui, xmin, xmax),
+                                   (v_vec[1], u_vec[1]*ui, ymin, ymax)]:
+            a = (zmin - uj) / vj
+            b = (zmax - uj) / vj
+            vlo = max(vlo, min(a, b))
+            vhi = min(vhi, max(a, b))
+        rows.append((vlo, vhi, ui))
+    U = np.array([np.full(ngrid, ui) for _, _, ui in rows])
+    V = np.array([np.linspace(vlo, vhi, ngrid) for vlo, vhi, _ in rows])
+    X = u_vec[0] * U + v_vec[0] * V
+    Y = u_vec[1] * U + v_vec[1] * V
+    return X, Y
