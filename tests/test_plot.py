@@ -832,15 +832,17 @@ def test_kde_contour_plot_2d_degenerate():
     np.random.seed(42)
     x = np.random.normal(size=1000)
 
-    # Collinear input (y = x): contours narrow perpendicular to the diagonal.
+    # Collinear input (y = 5x): contours narrow perpendicular to the diagonal.
+    f = 5
+    norm = np.hypot(1, f)
     fig, ax = plt.subplots()
-    contf, cont = kde_contour_plot_2d(ax, x, x.copy())
+    contf, cont = kde_contour_plot_2d(ax, x, f*x.copy())
     assert isinstance(contf, ContourSet)
     vertices = _contour_vertices(contf)
-    perp = (vertices[:, 0] - vertices[:, 1]) / np.sqrt(2)
-    para = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
-    assert np.ptp(perp) < 0.1
-    assert np.ptp(para) > 4.0
+    perp = (f * vertices[:, 0] - vertices[:, 1]) / norm
+    para = (vertices[:, 0] + f * vertices[:, 1]) / norm
+    assert np.ptp(perp) < 0.1 * norm / np.sqrt(2)
+    assert np.ptp(para) > 4.0 * norm / np.sqrt(2)
 
     # Collinear input (y = -x): contours narrow perpendicular to the diagonal.
     fig, ax = plt.subplots()

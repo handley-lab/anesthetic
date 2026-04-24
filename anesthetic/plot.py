@@ -1296,15 +1296,16 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     # small noise so that the covariance is positive-definite for Cholesky
     # decomposition in scaled_triangulation and gaussian_kde.
     cov = np.cov(data_x, data_y, aweights=weights)
-    eig = np.linalg.eigh(cov)
-    (var_x, rho_xy), (rho_yx, var_y) = cov
-    eps = np.finfo(float).eps
-    if var_x <= eps or var_y <= eps or var_x * var_y - rho_xy * rho_yx <= eps:
+    (var_x, cov_xy), (cov_yx, var_y) = cov
+    corr = 0 if var_x <= 0 or var_y <= 0 else abs(cov_xy)/np.sqrt(var_x*var_y)
+    eig = None
+    if var_x <= 0 or var_y <= 0 or corr > 1 - np.sqrt(np.finfo(float).eps):
+        eig = np.linalg.eigh(cov)
         evals, evecs = eig
-        noise = np.sqrt(evals[0]) * 1e-3
-        noise += np.sqrt(evals[1]) * 1e-3 if abs(rho_xy) > eps else 0
-        noise += _plot_window(ax, 'x') * 1e-3 if var_x <= eps else 0
-        noise += _plot_window(ax, 'y') * 1e-3 if var_y <= eps else 0
+        noise = np.sqrt(max(0, evals[0])) * 1e-3
+        noise += np.sqrt(max(0, evals[1])) * 1e-3 if abs(cov_xy) > 0 else 0
+        noise += _plot_window(ax, 'x') * 1e-3 if var_x <= 0 else 0
+        noise += _plot_window(ax, 'y') * 1e-3 if var_y <= 0 else 0
         noise = noise * np.random.normal(size=data_x.size)
         data_x = data_x.copy() + noise * evecs[0, 0]
         data_y = data_y.copy() + noise * evecs[1, 0]
@@ -1317,7 +1318,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
     ngrid = int(np.sqrt(nplot))
-    if abs(rho_xy) > eps and rho_xy * rho_yx / (var_x * var_y) > 0.99:
+    if cov_xy * cov_yx > 0 and corr > 0.99:
+        eig = eig if eig is not None else np.linalg.eigh(cov)
         X, Y = _covariance_aligned_grid(data_x, data_y, eig, ngrid,
                                         xmin, xmax, ymin, ymax)
     else:
