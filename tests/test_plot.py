@@ -10,8 +10,10 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d, quantile_plot_interval,
-                             basic_cmap, AxesSeries, AxesDataFrame)
-from numpy.testing import assert_array_equal
+                             basic_cmap, _plot_window,
+                             AxesSeries, AxesDataFrame)
+from anesthetic.examples.perfect_ns import correlated_gaussian
+from numpy.testing import assert_array_equal, assert_allclose
 
 from matplotlib.axes import SubplotBase
 from matplotlib.contour import ContourSet
@@ -818,6 +820,123 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
         color1 = ax1.collections[len(levels)-1].get_facecolor()
         color2 = ax2.collections[len(levels)-1].get_edgecolor()
         assert_array_equal(color1, color2)
+
+
+def _contour_vertices(contf):
+    """Extract all contour vertices from a ContourSet."""
+    polygons = [np.concatenate(p) for p in contf.allsegs if p]
+    return np.concatenate(polygons)
+
+
+def test_kde_contour_plot_2d_degenerate():
+    np.random.seed(42)
+    x = np.random.normal(size=1000)
+
+    # Collinear input (y = x): contours narrow perpendicular to the diagonal.
+    fig, ax = plt.subplots()
+    contf, cont = kde_contour_plot_2d(ax, x, x.copy())
+    assert isinstance(contf, ContourSet)
+    vertices = _contour_vertices(contf)
+    perp = (vertices[:, 0] - vertices[:, 1]) / np.sqrt(2)
+    para = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
+    assert np.ptp(perp) < 0.1
+    assert np.ptp(para) > 4.0
+
+    # Collinear input (y = -x): contours narrow perpendicular to the diagonal.
+    fig, ax = plt.subplots()
+    contf, cont = kde_contour_plot_2d(ax, x, -x.copy())
+    assert isinstance(contf, ContourSet)
+    vertices = _contour_vertices(contf)
+    perp = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
+    para = (vertices[:, 0] - vertices[:, 1]) / np.sqrt(2)
+    assert np.ptp(perp) < 0.1
+    assert np.ptp(para) > 4.0
+
+    # Constant y, viewLim set via set_ylim: thin horizontal band at y=0.5.
+    fig, ax = plt.subplots()
+    ax.set_xlim(-3, 3)
+    ax.set_ylim(-1, 2)
+    contf, cont = kde_contour_plot_2d(ax, x, np.full_like(x, 0.5))
+    assert isinstance(contf, ContourSet)
+    vertices = _contour_vertices(contf)
+    assert_allclose(vertices[:, 1], 0.5, atol=0.01)
+    assert np.mean(vertices[:, 1]) == pytest.approx(0.5, abs=0.001)
+    assert np.ptp(vertices[:, 1]) < 0.1
+    assert np.ptp(vertices[:, 0]) > 4.0
+
+    # Constant x, dataLim set by prior plot: thin vertical band at x=0.5.
+    fig, ax = plt.subplots()
+    ax.plot([-1, 2], [-3, 3], alpha=0)
+    contf, cont = kde_contour_plot_2d(ax, np.full_like(x, 0.5), x)
+    assert isinstance(contf, ContourSet)
+    vertices = _contour_vertices(contf)
+    assert_allclose(vertices[:, 0], 0.5, atol=0.01)
+    assert np.mean(vertices[:, 0]) == pytest.approx(0.5, abs=0.001)
+    assert np.ptp(vertices[:, 0]) < 0.1
+    assert np.ptp(vertices[:, 1]) > 4.0
+
+    # Constant y, no limits: should raise ValueError.
+    fig, ax = plt.subplots()
+    with pytest.raises(ValueError, match="`y` variable has zero variance"):
+        kde_contour_plot_2d(ax, x, np.full_like(x, 0.5))
+    fig, axes = make_2d_axes(['a', 'b'], diagonal=False, upper=False)
+    with pytest.raises(ValueError, match="`b` variable has zero variance"):
+        kde_contour_plot_2d(axes['a']['b'], x, np.full_like(x, 0.5))
+
+    # Constant x, no limits: should raise ValueError.
+    fig, ax = plt.subplots()
+    with pytest.raises(ValueError, match="`x` variable has zero variance"):
+        kde_contour_plot_2d(ax, np.full_like(x, 0.5), x)
+    fig, axes = make_2d_axes(['a', 'b'], diagonal=False, upper=False)
+    with pytest.raises(ValueError, match="`a` variable has zero variance"):
+        kde_contour_plot_2d(axes['a']['b'], np.full_like(x, 0.5), x)
+
+    # Highly correlated input (y ~ x) with window-spanning low-weight samples.
+    np.random.seed(42)
+    sigma = 0.4
+    rho = 0.9999
+    cov = sigma**2 * np.array([[1.0, rho], [rho, 1.0]])
+    s = correlated_gaussian(100, mean=[0.1, 0.0], cov=cov, columns=['a', 'b'])
+    fig, ax = plt.subplots()
+    contf, cont = kde_contour_plot_2d(ax, s.a, s.b, weights=s.get_weights())
+    assert isinstance(contf, ContourSet)
+    vertices = _contour_vertices(contf)
+    assert vertices.size > 0
+    perp = (vertices[:, 0] - vertices[:, 1]) / np.sqrt(2)
+    para = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
+    assert np.ptp(perp) < 0.1
+    assert np.ptp(para) > 0.7
+
+
+def test_plot_window():
+    np.random.seed(42)
+
+    # viewLim set via set_xlim and set_ylim.
+    fig, ax = plt.subplots()
+    ax.set_xlim(-5, 5)
+    ax.set_ylim(0, 4)
+    assert _plot_window(ax, 'x') == pytest.approx(10)
+    assert _plot_window(ax, 'y') == pytest.approx(4)
+
+    # dataLim set by prior plot.
+    fig, ax = plt.subplots()
+    ax.plot([0, 10], [0, 1])
+    assert _plot_window(ax, 'x') == pytest.approx(10)
+    assert _plot_window(ax, 'y') == pytest.approx(1)
+
+    # fresh mpl axis, no limits: raises ValueError.
+    fig, ax = plt.subplots()
+    with pytest.raises(ValueError, match=r"ax\.set_xlim"):
+        _plot_window(ax, 'x')
+    with pytest.raises(ValueError, match=r"ax\.set_ylim"):
+        _plot_window(ax, 'y')
+
+    # fresh anesthetic axis, no limits: raises ValueError.
+    fig, axes = make_2d_axes(['a', 'b'], diagonal=False, upper=False)
+    with pytest.raises(ValueError, match=r"axes\['a'\]\['b'\]\.set_xlim"):
+        _plot_window(axes['a']['b'], 'x')
+    with pytest.raises(ValueError, match=r"axes\['a'\]\['b'\]\.set_ylim"):
+        _plot_window(axes['a']['b'], 'y')
 
 
 def test_scatter_plot_2d():
