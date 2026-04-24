@@ -828,7 +828,18 @@ def _contour_vertices(contf):
     return np.concatenate(polygons)
 
 
-def test_kde_contour_plot_2d_degenerate():
+def _pow10(*x, scale):
+    """Exponentiate log-axis test data to displayed coordinates."""
+    return tuple(10.0**np.asarray(_) if scale == 'log' else _ for _ in x)
+
+
+def _log10(x, scale):
+    """Log-transform displayed coordinates back to test coordinates."""
+    return np.log10(x) if scale == 'log' else x
+
+
+@pytest.mark.parametrize('scale', ['linear', 'log'])
+def test_kde_contour_plot_2d_degenerate(scale):
     np.random.seed(42)
     x = np.random.normal(size=1000)
 
@@ -836,9 +847,11 @@ def test_kde_contour_plot_2d_degenerate():
     f = 5
     norm = np.hypot(1, f)
     fig, ax = plt.subplots()
-    contf, cont = kde_contour_plot_2d(ax, x, f*x.copy())
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    contf, _ = kde_contour_plot_2d(ax, *_pow10(x, f*x.copy(), scale=scale))
     assert isinstance(contf, ContourSet)
-    vertices = _contour_vertices(contf)
+    vertices = _log10(_contour_vertices(contf), scale)
     perp = (f * vertices[:, 0] - vertices[:, 1]) / norm
     para = (vertices[:, 0] + f * vertices[:, 1]) / norm
     assert np.ptp(perp) < 0.1 * norm / np.sqrt(2)
@@ -846,9 +859,11 @@ def test_kde_contour_plot_2d_degenerate():
 
     # Collinear input (y = -x): contours narrow perpendicular to the diagonal.
     fig, ax = plt.subplots()
-    contf, cont = kde_contour_plot_2d(ax, x, -x.copy())
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    contf, _ = kde_contour_plot_2d(ax, *_pow10(x, -x.copy(), scale=scale))
     assert isinstance(contf, ContourSet)
-    vertices = _contour_vertices(contf)
+    vertices = _log10(_contour_vertices(contf), scale)
     perp = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
     para = (vertices[:, 0] - vertices[:, 1]) / np.sqrt(2)
     assert np.ptp(perp) < 0.1
@@ -856,11 +871,15 @@ def test_kde_contour_plot_2d_degenerate():
 
     # Constant y, viewLim set via set_ylim: thin horizontal band at y=0.5.
     fig, ax = plt.subplots()
-    ax.set_xlim(-3, 3)
-    ax.set_ylim(-1, 2)
-    contf, cont = kde_contour_plot_2d(ax, x, np.full_like(x, 0.5))
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.set_xlim(*_pow10((-3, 3), scale=scale))
+    ax.set_ylim(*_pow10((-1, 2), scale=scale))
+    contf, _ = kde_contour_plot_2d(
+        ax, *_pow10(x, np.full_like(x, 0.5), scale=scale)
+    )
     assert isinstance(contf, ContourSet)
-    vertices = _contour_vertices(contf)
+    vertices = _log10(_contour_vertices(contf), scale)
     assert_allclose(vertices[:, 1], 0.5, atol=0.01)
     assert np.mean(vertices[:, 1]) == pytest.approx(0.5, abs=0.001)
     assert np.ptp(vertices[:, 1]) < 0.1
@@ -868,10 +887,14 @@ def test_kde_contour_plot_2d_degenerate():
 
     # Constant x, dataLim set by prior plot: thin vertical band at x=0.5.
     fig, ax = plt.subplots()
-    ax.plot([-1, 2], [-3, 3], alpha=0)
-    contf, cont = kde_contour_plot_2d(ax, np.full_like(x, 0.5), x)
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.plot(*_pow10([-1, 2], [-3, 3], scale=scale), alpha=0)
+    contf, _ = kde_contour_plot_2d(
+        ax, *_pow10(np.full_like(x, 0.5), x, scale=scale)
+    )
     assert isinstance(contf, ContourSet)
-    vertices = _contour_vertices(contf)
+    vertices = _log10(_contour_vertices(contf), scale)
     assert_allclose(vertices[:, 0], 0.5, atol=0.01)
     assert np.mean(vertices[:, 0]) == pytest.approx(0.5, abs=0.001)
     assert np.ptp(vertices[:, 0]) < 0.1
@@ -879,19 +902,31 @@ def test_kde_contour_plot_2d_degenerate():
 
     # Constant y, no limits: should raise ValueError.
     fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
     with pytest.raises(ValueError, match="`y` variable has zero variance"):
-        kde_contour_plot_2d(ax, x, np.full_like(x, 0.5))
+        kde_contour_plot_2d(ax, *_pow10(x, np.full_like(x, 0.5), scale=scale))
     fig, axes = make_2d_axes(['a', 'b'], diagonal=False, upper=False)
+    axes['a']['b'].set_xscale(scale)
+    axes['a']['b'].set_yscale(scale)
     with pytest.raises(ValueError, match="`b` variable has zero variance"):
-        kde_contour_plot_2d(axes['a']['b'], x, np.full_like(x, 0.5))
+        kde_contour_plot_2d(
+            axes['a']['b'], *_pow10(x, np.full_like(x, 0.5), scale=scale)
+        )
 
     # Constant x, no limits: should raise ValueError.
     fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
     with pytest.raises(ValueError, match="`x` variable has zero variance"):
-        kde_contour_plot_2d(ax, np.full_like(x, 0.5), x)
+        kde_contour_plot_2d(ax, *_pow10(np.full_like(x, 0.5), x, scale=scale))
     fig, axes = make_2d_axes(['a', 'b'], diagonal=False, upper=False)
+    axes['a']['b'].set_xscale(scale)
+    axes['a']['b'].set_yscale(scale)
     with pytest.raises(ValueError, match="`a` variable has zero variance"):
-        kde_contour_plot_2d(axes['a']['b'], np.full_like(x, 0.5), x)
+        kde_contour_plot_2d(
+            axes['a']['b'], *_pow10(np.full_like(x, 0.5), x, scale=scale)
+        )
 
     # Highly correlated input (y ~ x) with window-spanning low-weight samples.
     np.random.seed(42)
@@ -900,9 +935,13 @@ def test_kde_contour_plot_2d_degenerate():
     cov = sigma**2 * np.array([[1.0, rho], [rho, 1.0]])
     s = correlated_gaussian(100, mean=[0.1, 0.0], cov=cov, columns=['a', 'b'])
     fig, ax = plt.subplots()
-    contf, cont = kde_contour_plot_2d(ax, s.a, s.b, weights=s.get_weights())
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    contf, _ = kde_contour_plot_2d(
+        ax, *_pow10(s.a, s.b, scale=scale), weights=s.get_weights()
+    )
     assert isinstance(contf, ContourSet)
-    vertices = _contour_vertices(contf)
+    vertices = _log10(_contour_vertices(contf), scale)
     assert vertices.size > 0
     perp = (vertices[:, 0] - vertices[:, 1]) / np.sqrt(2)
     para = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
@@ -910,24 +949,31 @@ def test_kde_contour_plot_2d_degenerate():
     assert np.ptp(para) > 0.7
 
 
-def test_plot_window():
+@pytest.mark.parametrize('scale', ['linear', 'log'])
+def test_plot_window(scale):
     np.random.seed(42)
 
     # viewLim set via set_xlim and set_ylim.
     fig, ax = plt.subplots()
-    ax.set_xlim(-5, 5)
-    ax.set_ylim(0, 4)
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.set_xlim(*_pow10((-5, 5), scale=scale))
+    ax.set_ylim(*_pow10((0, 4), scale=scale))
     assert _plot_window(ax, 'x') == pytest.approx(10)
     assert _plot_window(ax, 'y') == pytest.approx(4)
 
     # dataLim set by prior plot.
     fig, ax = plt.subplots()
-    ax.plot([0, 10], [0, 1])
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.plot(*_pow10([0, 10], [0, 1], scale=scale))
     assert _plot_window(ax, 'x') == pytest.approx(10)
     assert _plot_window(ax, 'y') == pytest.approx(1)
 
     # fresh mpl axis, no limits: raises ValueError.
     fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
     with pytest.raises(ValueError, match=r"ax\.set_xlim"):
         _plot_window(ax, 'x')
     with pytest.raises(ValueError, match=r"ax\.set_ylim"):
@@ -935,6 +981,8 @@ def test_plot_window():
 
     # fresh anesthetic axis, no limits: raises ValueError.
     fig, axes = make_2d_axes(['a', 'b'], diagonal=False, upper=False)
+    axes['a']['b'].set_xscale(scale)
+    axes['a']['b'].set_yscale(scale)
     with pytest.raises(ValueError, match=r"axes\['a'\]\['b'\]\.set_xlim"):
         _plot_window(axes['a']['b'], 'x')
     with pytest.raises(ValueError, match=r"axes\['a'\]\['b'\]\.set_ylim"):
