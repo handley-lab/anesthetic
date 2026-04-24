@@ -1254,6 +1254,20 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         :class:`scipy.stats.gaussian_kde`. A value greater 1 will smooth more,
         a value smaller 1 will smooth less.
 
+    grid_angle : float or (float, float), optional
+        Manual orientation of the plotting grid, in degrees measured
+        counter-clockwise from the +x axis. If set, forces use of the
+        basis-aligned grid regardless of the measured correlation.
+
+        * ``None`` (default): grid axes are derived from the eigenvectors of
+          the sample covariance when the correlation is high, else the grid is
+          axis-aligned.
+        * ``float``: direction of the major grid axis. The minor grid
+          axis is placed perpendicular to it.
+        * ``(major, minor)``: both grid axis directions specified explicitly.
+          If the two are not perpendicular, grid cells become parallelograms
+          rather than rectangles.
+
     Returns
     -------
     c : :class:`matplotlib.contour.QuadContourSet`
@@ -1278,6 +1292,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     ncompress = kwargs.pop('ncompress', 'equal')
     nplot = kwargs.pop('nplot_2d', 1000)
+    grid_angle = kwargs.pop('grid_angle', None)
     bw_method = kwargs.pop('bw_method', None)
     bw_scale = kwargs.pop('bw_scale', 1)
     order = kwargs.pop('order', 1)
@@ -1318,10 +1333,12 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
     ngrid = int(np.sqrt(nplot))
-    if corr > 0.99:
-        eig = eig if eig is not None else np.linalg.eigh(cov)
-        X, Y = _covariance_aligned_grid(data_x, data_y, eig, ngrid,
-                                        xmin, xmax, ymin, ymax)
+    if corr > 0.99 or grid_angle is not None:
+        if grid_angle is None and eig is None:
+            eig = np.linalg.eigh(cov)
+        X, Y = _basis_aligned_grid(data_x, data_y, eig, ngrid,
+                                   xmin, xmax, ymin, ymax,
+                                   grid_angle=grid_angle)
     else:
         X, Y = np.meshgrid(np.linspace(xmin, xmax, ngrid),
                            np.linspace(ymin, ymax, ngrid))
@@ -1629,18 +1646,48 @@ def _plot_window(ax, axis):
     )
 
 
-def _covariance_aligned_grid(data_x, data_y, eig, ngrid,
-                             xmin, xmax, ymin, ymax):
-    """Return a principal-axis grid clipped to the axis-aligned plot window."""
-    _, evecs = eig
-    u_vec = evecs[:, 0]  # minor axis
-    v_vec = evecs[:, 1]  # major axis
-    u = u_vec[0] * data_x + u_vec[1] * data_y
+def _basis_aligned_grid(data_x, data_y, eig, ngrid,
+                        xmin, xmax, ymin, ymax, grid_angle=None):
+    """Return a basis-aligned grid clipped to the axis-aligned plot window.
+
+    By default the minor and major grid directions are the eigenvectors
+    of the sample covariance (ascending eigenvalues). If ``grid_angle``
+    is provided, it overrides the covariance-derived axes: a scalar sets
+    the major axis direction (minor is placed perpendicular), a pair
+    ``(major, minor)`` sets both explicitly. Angles are in degrees
+    counter-clockwise from the +x axis. When the two axes are not
+    perpendicular the grid cells are parallelograms.
+    """
+    if grid_angle is None:
+        _, evecs = eig
+        u_vec = evecs[:, 0].copy()  # minor axis
+        v_vec = evecs[:, 1].copy()  # major axis
+    else:
+        if np.ndim(grid_angle) == 0:
+            major, minor = grid_angle, grid_angle + 90.0
+        else:
+            major, minor = grid_angle
+        v_vec = np.array([np.cos(np.deg2rad(major)),
+                          np.sin(np.deg2rad(major))])
+        u_vec = np.array([np.cos(np.deg2rad(minor)),
+                          np.sin(np.deg2rad(minor))])
+        if abs(u_vec[0] * v_vec[1] - u_vec[1] * v_vec[0]) < 1e-10:
+            raise ValueError(f"grid_angle major ({major}) and minor ({minor}) "
+                             f"axes are (near-)parallel; cannot build a grid.")
+
+    # Snap near-zero components (e.g. cos(90°) ≈ 6e-17) to zero so
+    # axis-aligned basis vectors are exact.
+    v_vec[np.abs(v_vec) < 1e-12] = 0.0
+    u_vec[np.abs(u_vec) < 1e-12] = 0.0
+
+    M = np.column_stack([u_vec, v_vec])
+    uv_data = np.linalg.solve(M, np.vstack([data_x, data_y]))
+    u = uv_data[0]
     xy_corners = np.array([[xmin, ymin],
                            [xmin, ymax],
                            [xmax, ymin],
                            [xmax, ymax]])
-    uv_corners = xy_corners @ evecs
+    uv_corners = np.linalg.solve(M, xy_corners.T).T
     umin_corner = uv_corners[:, 0].min()
     umax_corner = uv_corners[:, 0].max()
     umin = max(umin_corner, u.min())
@@ -1650,18 +1697,12 @@ def _covariance_aligned_grid(data_x, data_y, eig, ngrid,
     u_grid = np.linspace(umin, umax, ngrid)
     rows = []
     for ui in u_grid:
-        if ui == umin_corner:
-            vi = uv_corners[np.argmin(uv_corners[:, 0]), 1]
-            rows.append((vi, vi, ui))
-            continue
-        if ui == umax_corner:
-            vi = uv_corners[np.argmax(uv_corners[:, 0]), 1]
-            rows.append((vi, vi, ui))
-            continue
         vlo = vmin
         vhi = vmax
         for vj, uj, zmin, zmax in [(v_vec[0], u_vec[0]*ui, xmin, xmax),
                                    (v_vec[1], u_vec[1]*ui, ymin, ymax)]:
+            if vj == 0:
+                continue
             a = (zmin - uj) / vj
             b = (zmax - uj) / vj
             vlo = max(vlo, min(a, b))
