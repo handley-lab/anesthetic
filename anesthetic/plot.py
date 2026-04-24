@@ -1607,12 +1607,16 @@ def _plot_window(ax, axis):
     if axis == 'x':
         has_limits = not ax.get_autoscalex_on()
         interval = ax.viewLim.intervalx if has_limits else ax.dataLim.intervalx
+        scale = ax.get_xscale()
         z = ax.get_xlabel() if ax.get_xlabel() else ax.xaxis.axis_name
     else:
         has_limits = not ax.get_autoscaley_on()
         interval = ax.viewLim.intervaly if has_limits else ax.dataLim.intervaly
+        scale = ax.get_yscale()
         z = ax.get_ylabel() if ax.get_ylabel() else ax.yaxis.axis_name
     if np.isfinite(interval).all():
+        if scale == 'log':
+            interval = np.log10(interval)
         return (interval[1] - interval[0])
     if ax.__class__.__name__ == 'OffDiagonalAxes':
         axes_name = f"axes['{ax.get_xlabel()}']['{ax.get_ylabel()}']"
