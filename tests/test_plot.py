@@ -882,7 +882,7 @@ def test_kde_contour_plot_2d_degenerate(scale):
     assert isinstance(contf, ContourSet)
     vertices = _log10(_contour_vertices(contf), scale)
     assert_allclose(vertices[:, 1], 0.5, atol=0.01)
-    assert np.mean(vertices[:, 1]) == pytest.approx(0.5, abs=0.001)
+    assert np.mean(vertices[:, 1]) == approx(0.5, abs=0.001)
     assert np.ptp(vertices[:, 1]) < 0.1
     assert np.ptp(vertices[:, 0]) > 4.0
 
@@ -897,7 +897,7 @@ def test_kde_contour_plot_2d_degenerate(scale):
     assert isinstance(contf, ContourSet)
     vertices = _log10(_contour_vertices(contf), scale)
     assert_allclose(vertices[:, 0], 0.5, atol=0.01)
-    assert np.mean(vertices[:, 0]) == pytest.approx(0.5, abs=0.001)
+    assert np.mean(vertices[:, 0]) == approx(0.5, abs=0.001)
     assert np.ptp(vertices[:, 0]) < 0.1
     assert np.ptp(vertices[:, 1]) > 4.0
 
@@ -1024,16 +1024,16 @@ def test_plot_window(scale):
     ax.set_yscale(scale)
     ax.set_xlim(*_pow10((-5, 5), scale=scale))
     ax.set_ylim(*_pow10((0, 4), scale=scale))
-    assert _plot_window(ax, 'x') == pytest.approx(10)
-    assert _plot_window(ax, 'y') == pytest.approx(4)
+    assert _plot_window(ax, 'x') == approx(10)
+    assert _plot_window(ax, 'y') == approx(4)
 
     # dataLim set by prior plot.
     fig, ax = plt.subplots()
     ax.set_xscale(scale)
     ax.set_yscale(scale)
     ax.plot(*_pow10([0, 10], [0, 1], scale=scale))
-    assert _plot_window(ax, 'x') == pytest.approx(10)
-    assert _plot_window(ax, 'y') == pytest.approx(1)
+    assert _plot_window(ax, 'x') == approx(10)
+    assert _plot_window(ax, 'y') == approx(1)
 
     # fresh mpl axis, no limits: raises ValueError.
     fig, ax = plt.subplots()
