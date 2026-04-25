@@ -2,6 +2,7 @@ import anesthetic.examples._matplotlib_agg  # noqa: F401
 from packaging import version
 from warnings import catch_warnings, filterwarnings
 import pytest
+from pytest import approx
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -10,7 +11,7 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d, quantile_plot_interval,
-                             basic_cmap, _plot_window,
+                             basic_cmap, _plot_window, _basis_aligned_grid,
                              AxesSeries, AxesDataFrame)
 from anesthetic.examples.perfect_ns import correlated_gaussian
 from numpy.testing import assert_array_equal, assert_allclose
@@ -947,6 +948,70 @@ def test_kde_contour_plot_2d_degenerate(scale):
     para = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
     assert np.ptp(perp) < 0.1
     assert np.ptp(para) > 0.7
+
+
+@pytest.mark.parametrize('axis_aligned,rotated,parallel',
+                         [(None, 45, (0, 180)),
+                          (0, (45, 0), (0, 1e-10))])
+def test_kde_contour_plot_2d_grid_angle(axis_aligned, rotated, parallel):
+    # Masking to x - y > 0 creates a hard density edge along y = x.
+    np.random.seed(42)
+    x = np.random.normal(size=2000)
+    y = np.random.normal(size=2000)
+    mask = (x - y) > 0
+    x, y = x[mask], y[mask]
+
+    # The default axis-aligned grid leaks across the edge by about a bandwidth.
+    fig, ax = plt.subplots()
+    contf_def, _ = kde_contour_plot_2d(ax, x, y, grid_angle=axis_aligned)
+    v_def = _contour_vertices(contf_def)
+    assert (v_def[:, 0] - v_def[:, 1]).min() < -0.1
+
+    # Aligned grid_angle confines contour vertices to the x - y > 0 half-plane.
+    fig, ax = plt.subplots()
+    contf_ang, _ = kde_contour_plot_2d(ax, x, y, grid_angle=rotated)
+    v_ang = _contour_vertices(contf_ang)
+    assert (v_ang[:, 0] - v_ang[:, 1]).min() == approx((x-y).min(), abs=1e-14)
+    assert (v_ang[:, 0] - v_ang[:, 1]).min() >= 0
+
+    # (Near-)parallel angles raise an error.
+    with pytest.raises(ValueError,
+                       match=fr"grid_angle major \({parallel[0]}\) and minor "
+                             fr"\({parallel[1]}\) axes are \(near-\)parallel"):
+        kde_contour_plot_2d(ax, x, y, grid_angle=parallel)
+
+
+@pytest.mark.parametrize('grid_angle', [0, 90, 180, (0, 90), (90, 180)])
+def test_kde_contour_plot_2d_grid_angle_axis_aligned(grid_angle):
+    # Axis-aligned angles zero out one basis-vector component.
+    # Must run without divide-by-zero warnings.
+    np.random.seed(42)
+    x = np.random.normal(size=500)
+    y = np.random.normal(size=500) + 0.3 * x
+    fig, ax = plt.subplots()
+    with catch_warnings():
+        filterwarnings('error', category=RuntimeWarning)
+        contf, _ = kde_contour_plot_2d(ax, x, y, grid_angle=grid_angle)
+    assert isinstance(contf, ContourSet)
+
+
+@pytest.mark.parametrize('grid_angle', [0, 90])
+def test_basis_aligned_grid_axis_aligned_rows_span_edges(grid_angle):
+    # Axis-aligned angles share rectangle corner u-values; the first
+    # and last grid rows must span the full edge, not collapse.
+    np.random.seed(42)
+    data_x = np.random.normal(size=200)
+    data_y = np.random.normal(size=200)
+    X, Y = _basis_aligned_grid(data_x, data_y, eig=None, ngrid=10,
+                               xmin=-5.0, xmax=5.0, ymin=-5.0, ymax=5.0,
+                               grid_angle=grid_angle)
+    span, const = (X, Y) if grid_angle == 0 else (Y, X)
+    assert span[0].min() == approx(-5.0)
+    assert span[0].max() == approx(5.0)
+    assert const[0].min() == approx(const[0].max())
+    assert span[-1].min() == approx(-5.0)
+    assert span[-1].max() == approx(5.0)
+    assert const[-1].min() == approx(const[-1].max())
 
 
 @pytest.mark.parametrize('scale', ['linear', 'log'])
