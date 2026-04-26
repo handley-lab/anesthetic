@@ -1680,6 +1680,16 @@ def _basis_aligned_grid(data_x, data_y, eig, ngrid,
     v_vec[np.abs(v_vec) < 1e-12] = 0.0
     u_vec[np.abs(u_vec) < 1e-12] = 0.0
 
+    # Eigenvectors are sign-degenerate, and angles that differ by 180 degrees
+    # describe the same grid axis. Point v towards +x, or towards +y when it
+    # is vertical, so the grid orientation is reproducible.
+    if v_vec[0] < 0 or (v_vec[0] == 0 and v_vec[1] < 0):
+        v_vec *= -1
+    # The minor/u axis is sign-degenerate as well. Point u to the left of v,
+    # matching the scalar grid_angle convention where minor = major + 90 deg.
+    if v_vec[0] * u_vec[1] - v_vec[1] * u_vec[0] < 0:
+        u_vec *= -1
+
     M = np.column_stack([u_vec, v_vec])
     uv_data = np.linalg.solve(M, np.vstack([data_x, data_y]))
     u = uv_data[0]
@@ -1695,21 +1705,19 @@ def _basis_aligned_grid(data_x, data_y, eig, ngrid,
     vmin = uv_corners[:, 1].min()
     vmax = uv_corners[:, 1].max()
     u_grid = np.linspace(umin, umax, ngrid)
-    rows = []
-    for ui in u_grid:
-        vlo = vmin
-        vhi = vmax
-        for vj, uj, zmin, zmax in [(v_vec[0], u_vec[0]*ui, xmin, xmax),
-                                   (v_vec[1], u_vec[1]*ui, ymin, ymax)]:
-            if vj == 0:
-                continue
-            a = (zmin - uj) / vj
-            b = (zmax - uj) / vj
-            vlo = max(vlo, min(a, b))
-            vhi = min(vhi, max(a, b))
-        rows.append((vlo, vhi, ui))
-    U = np.array([np.full(ngrid, ui) for _, _, ui in rows])
-    V = np.array([np.linspace(vlo, vhi, ngrid) for vlo, vhi, _ in rows])
+    vlos = np.full_like(u_grid, vmin)
+    vhis = np.full_like(u_grid, vmax)
+    for uj, vj, zmin, zmax in [(u_vec[0], v_vec[0], xmin, xmax),
+                               (u_vec[1], v_vec[1], ymin, ymax)]:
+        if vj == 0:
+            continue
+        a = (zmin - uj * u_grid) / vj
+        b = (zmax - uj * u_grid) / vj
+        vlos = np.maximum(vlos, np.minimum(a, b))
+        vhis = np.minimum(vhis, np.maximum(a, b))
+    V = np.array([np.linspace(vlo, vhi, ngrid)
+                  for vlo, vhi in zip(vlos, vhis)])
+    U = np.broadcast_to(u_grid[:, None], V.shape)
     X = u_vec[0] * U + v_vec[0] * V
     Y = u_vec[1] * U + v_vec[1] * V
     return X, Y
