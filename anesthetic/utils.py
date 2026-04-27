@@ -854,6 +854,11 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     # For each point find corresponding triangles.
     trifinder = tri.get_trifinder()
     j = trifinder(x, y)
+    if np.any(j < 0):
+        i = np.union1d(i, np.flatnonzero(j < 0))
+        tri = scaled_triangulation(x[i], y[i], cov)
+        trifinder = tri.get_trifinder()
+        j = trifinder(x, y)
     k = tri.triangles[j]
 
     # Barycentric redistribution preserves total mass and local first moments.
