@@ -966,6 +966,9 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
     x = np.linspace(xmin, xmax, nplot)
+    for edge, direction in [(data.min(), -np.inf), (data.max(), np.inf)]:
+        if xmin <= edge <= xmax:
+            x = np.union1d(x, [np.nextafter(edge, direction)])
 
     data_compressed, w = sample_compression_1d(data, weights, ncompress)
     kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
@@ -1333,18 +1336,26 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
     ngrid = int(np.sqrt(nplot))
-    n_kwargs = {}
     if corr > 0.99 or grid_angle is not None:
         if grid_angle is None and eig is None:
             eig = np.linalg.eigh(cov)
         X, Y, n_vec, n_min, n_max = _basis_aligned_grid(
-            data_x, data_y, eig, ngrid,
-            xmin, xmax, ymin, ymax,
-            grid_angle=grid_angle)
+            data_x, data_y, eig, ngrid, xmin, xmax, ymin, ymax, grid_angle
+        )
         n_kwargs = dict(n_vec=n_vec, nmin=n_min, nmax=n_max)
     else:
-        X, Y = np.meshgrid(np.linspace(xmin, xmax, ngrid),
-                           np.linspace(ymin, ymax, ngrid))
+        x = np.linspace(xmin, xmax, ngrid)
+        y = np.linspace(ymin, ymax, ngrid)
+        for edge, direction in [(data_x.min(), -np.inf),
+                                (data_x.max(), np.inf)]:
+            if xmin <= edge <= xmax:
+                x = np.union1d(x, [np.nextafter(edge, direction)])
+        for edge, direction in [(data_y.min(), -np.inf),
+                                (data_y.max(), np.inf)]:
+            if ymin <= edge <= ymax:
+                y = np.union1d(y, [np.nextafter(edge, direction)])
+        X, Y = np.meshgrid(x, y)
+        n_kwargs = {}
     x_grid, y_grid = X.ravel(), Y.ravel()
 
     tri, w = triangular_sample_compression_2d(data_x, data_y, cov,
@@ -1719,6 +1730,14 @@ def _basis_aligned_grid(data_x, data_y, eig, ngrid,
     # onto this normal so `boundary_correction_2d` can apply a
     # separable Jones-style 1D correction along the rotated direction.
     n_proj = n_vec[0] * data_x + n_vec[1] * data_y
+    # Add one row just outside the data's u extents so density can be
+    # forced to zero there, giving cleanly closed contours along rotated edges.
+    n_scale = max(1, abs(n_proj.min()), abs(n_proj.max()))
+    u_step = 16 * np.finfo(u_grid.dtype).eps * n_scale / (n_vec @ u_vec)
+    extra_edges = [edge + direction * u_step
+                   for edge, direction in [(u.min(), -1), (u.max(), +1)]
+                   if umin <= edge <= umax]
+    u_grid = np.union1d(u_grid, extra_edges)
     vlos = np.full_like(u_grid, vmin)
     vhis = np.full_like(u_grid, vmax)
     for uj, vj, zmin, zmax in [(u_vec[0], v_vec[0], xmin, xmax),
@@ -1742,5 +1761,13 @@ def _basis_aligned_grid(data_x, data_y, eig, ngrid,
         atol = 8 * np.finfo(Z.dtype).eps * max(1, abs(zmin), abs(zmax))
         Z[np.isclose(Z, zmin, rtol=0, atol=atol)] = zmin
         Z[np.isclose(Z, zmax, rtol=0, atol=atol)] = zmax
+
+    # Exand the grid at the boundaries for cleanly closed contours.
+    X = np.column_stack([np.nextafter(X[:, 0], X[:, 0] - v_vec[0]),
+                         X,
+                         np.nextafter(X[:, -1], X[:, -1] + v_vec[0])])
+    Y = np.column_stack([np.nextafter(Y[:, 0], Y[:, 0] - v_vec[1]),
+                         Y,
+                         np.nextafter(Y[:, -1], Y[:, -1] + v_vec[1])])
 
     return X, Y, n_vec, n_proj.min(), n_proj.max()
