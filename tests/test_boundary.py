@@ -185,3 +185,33 @@ def test_bw_scale_2d():
         peaks.append(contf.norm.vmax)
 
     assert peaks[0] > peaks[1] > peaks[2]
+
+
+def test_boundary_projection_snapping():
+    """Verify that points within atol of a rotated boundary are snapped."""
+    np.random.seed(42)
+    num = 100
+    x = np.random.randn(num)
+    y = np.random.randn(num)
+    mask = y < x
+    x = x[mask]
+    y = y[mask]
+    kde = gaussian_kde([x, y])
+
+    # Define a rotated boundary at n=0.
+    n_vec = np.array([1, -1]) / np.sqrt(2)
+    nmin = 0.0
+
+    # Evaluate point that is slightly below 0 (outside) but within atol.
+    # Point should be snapped and treated as being AT the boundary, i.e. p > 0.
+    eps = np.finfo(float).eps
+    X = np.array([[-eps]])
+    Y = np.array([[0.0]])
+    p = boundary_correction_2d(kde, X, Y, n_vec=n_vec, nmin=nmin, order=0)
+    assert p[0, 0] > 0
+
+    # Also verify that a point far outside IS zeroed.
+    X = np.array([[-8 * eps]])
+    Y = np.array([[+8 * eps]])
+    p = boundary_correction_2d(kde, X, Y, n_vec=n_vec, nmin=nmin, order=0)
+    assert p[0, 0] == 0
