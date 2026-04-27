@@ -1763,11 +1763,13 @@ def _basis_aligned_grid(data_x, data_y, eig, ngrid,
         Z[np.isclose(Z, zmax, rtol=0, atol=atol)] = zmax
 
     # Exand the grid at the boundaries for cleanly closed contours.
-    X = np.column_stack([np.nextafter(X[:, 0], X[:, 0] - v_vec[0]),
-                         X,
-                         np.nextafter(X[:, -1], X[:, -1] + v_vec[0])])
-    Y = np.column_stack([np.nextafter(Y[:, 0], Y[:, 0] - v_vec[1]),
-                         Y,
-                         np.nextafter(Y[:, -1], Y[:, -1] + v_vec[1])])
+    if xmin <= data_x.min() or ((ymin <= data_y.min() and v_vec[1] >= 0) or
+                                (ymax >= data_y.max() and v_vec[1] <= 0)):
+        X = np.column_stack([np.nextafter(X[:, 0], X[:, 0] - v_vec[0]), X])
+        Y = np.column_stack([np.nextafter(Y[:, 0], Y[:, 0] - v_vec[1]), Y])
+    if xmax >= data_x.max() or ((ymax >= data_y.max() and v_vec[1] >= 0) or
+                                (ymin <= data_y.min() and v_vec[1] <= 0)):
+        X = np.column_stack([X, np.nextafter(X[:, -1], X[:, -1] + v_vec[0])])
+        Y = np.column_stack([Y, np.nextafter(Y[:, -1], Y[:, -1] + v_vec[1])])
 
     return X, Y, n_vec, n_proj.min(), n_proj.max()

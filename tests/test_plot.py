@@ -1044,9 +1044,9 @@ def test_basis_aligned_grid_u_edges_add_outside_rows_only():
                                                   xmin=-5.0, xmax=5.0,
                                                   ymin=-5.0, ymax=5.0,
                                                   grid_angle=45)
-    # No outside-u rows, only outside-v columns.
-    assert X.shape == (ngrid, ngrid + 2)
-    assert Y.shape == (ngrid, ngrid + 2)
+    # No outside-u rows, and no outside-v columns (since we are clipping).
+    assert X.shape == (ngrid, ngrid)
+    assert Y.shape == (ngrid, ngrid)
     n = n_vec[0] * X + n_vec[1] * Y
     atol = 8 * np.finfo(n.dtype).eps * max(1, abs(nmin), abs(nmax))
     assert (n >= nmin - atol).all()
