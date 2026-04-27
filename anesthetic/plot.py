@@ -1706,8 +1706,6 @@ def _basis_aligned_grid(data_x, data_y, eig, ngrid,
     # Use the same deterministic orientation for n, the normal to v. It points
     # to the same side of v as u, so increasing u also increases n.
     n_vec = np.array([-v_vec[1], v_vec[0]])
-    if n_vec @ u_vec < 0:
-        n_vec *= -1
 
     M = np.column_stack([u_vec, v_vec])
     uv_data = np.linalg.solve(M, np.vstack([data_x, data_y]))
