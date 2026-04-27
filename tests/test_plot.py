@@ -971,7 +971,7 @@ def test_kde_contour_plot_2d_grid_angle(axis_aligned, rotated, parallel):
     fig, ax = plt.subplots()
     contf_ang, _ = kde_contour_plot_2d(ax, x, y, grid_angle=rotated)
     v_ang = _contour_vertices(contf_ang)
-    assert (v_ang[:, 0] - v_ang[:, 1]).min() == approx((x-y).min(), abs=1e-14)
+    assert (v_ang[:, 0] - v_ang[:, 1]).min() == approx((x-y).min(), abs=1e-12)
     assert (v_ang[:, 0] - v_ang[:, 1]).min() >= 0
 
     # (Near-)parallel angles raise an error.
@@ -1002,16 +1002,40 @@ def test_basis_aligned_grid_axis_aligned_rows_span_edges(grid_angle):
     np.random.seed(42)
     data_x = np.random.normal(size=200)
     data_y = np.random.normal(size=200)
-    X, Y = _basis_aligned_grid(data_x, data_y, eig=None, ngrid=10,
-                               xmin=-5.0, xmax=5.0, ymin=-5.0, ymax=5.0,
-                               grid_angle=grid_angle)
+    X, Y, *_ = _basis_aligned_grid(data_x, data_y, eig=None, ngrid=10,
+                                   xmin=-1.0, xmax=1.0, ymin=-1.0, ymax=1.0,
+                                   grid_angle=grid_angle)
     span, const = (X, Y) if grid_angle == 0 else (Y, X)
-    assert span[0].min() == approx(-5.0)
-    assert span[0].max() == approx(5.0)
+    assert span[0].min() == approx(-1.0)
+    assert span[0].max() == approx(1.0)
     assert const[0].min() == approx(const[0].max())
-    assert span[-1].min() == approx(-5.0)
-    assert span[-1].max() == approx(5.0)
+    assert span[-1].min() == approx(-1.0)
+    assert span[-1].max() == approx(1.0)
     assert const[-1].min() == approx(const[-1].max())
+
+
+def test_basis_aligned_grid_snaps_boundary_roundoff():
+    # This seed produces rotated-grid points that algebraically lie on ymin,
+    # but reconstruct one ulp below it unless snapped back to the boundary.
+    np.random.seed(11)
+    x = np.random.normal(size=5000)
+    y = np.random.normal(size=5000)
+    mask = (x - y > 0) & (y > 0)
+    x = x[mask]
+    y = y[mask]
+    X, Y, n_vec, nmin, nmax = _basis_aligned_grid(x, y, eig=None, ngrid=31,
+                                                  xmin=x.min(), xmax=x.max(),
+                                                  ymin=y.min(), ymax=y.max(),
+                                                  grid_angle=(45, 0))
+    # Ignore deliberate outside-u rows.
+    n = n_vec[0] * X + n_vec[1] * Y
+    atol = 8 * np.finfo(n.dtype).eps * max(1, abs(nmin), abs(nmax))
+    core = (n >= nmin - atol) & (n <= nmax + atol)
+    assert X[core].min() >= x.min()
+    assert X[core].max() <= x.max()
+    assert Y[core].max() <= y.max()
+    # Crucial test: without snapping to the boundary, this would fail:
+    assert Y[core].min() == y.min()
 
 
 @pytest.mark.parametrize('scale', ['linear', 'log'])

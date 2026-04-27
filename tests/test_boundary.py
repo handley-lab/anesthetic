@@ -45,12 +45,13 @@ def test_boundary_correction_1d():
     np.random.seed(42)
     d = np.random.uniform(low=-1, high=2, size=10000)
     w = stats.norm.pdf(d)
-    x = np.linspace(d.min(), d.max(), 301)
+    num = 301
+    x = np.linspace(d.min(), d.max(), num)
     truth = stats.norm.pdf(x) / stats.norm.pdf(x).max()
 
     _, ax = plt.subplots()
     t, = ax.plot(x, truth)
-    kwargs = dict(bw_method=0.25, q=0, nplot_1d=x.size)
+    kwargs = dict(bw_method=0.25, q=0, nplot_1d=num)
     pn, = kde_plot_1d(ax, d, weights=w, order=-1, **kwargs)  # no correction
     p0, = kde_plot_1d(ax, d, weights=w, order=+0, **kwargs)  # order 0
     p1, = kde_plot_1d(ax, d, weights=w, order=+1, **kwargs)  # order 1

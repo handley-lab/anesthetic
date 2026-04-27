@@ -1333,12 +1333,15 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
     ngrid = int(np.sqrt(nplot))
+    n_kwargs = {}
     if corr > 0.99 or grid_angle is not None:
         if grid_angle is None and eig is None:
             eig = np.linalg.eigh(cov)
-        X, Y = _basis_aligned_grid(data_x, data_y, eig, ngrid,
-                                   xmin, xmax, ymin, ymax,
-                                   grid_angle=grid_angle)
+        X, Y, n_vec, n_min, n_max = _basis_aligned_grid(
+            data_x, data_y, eig, ngrid,
+            xmin, xmax, ymin, ymax,
+            grid_angle=grid_angle)
+        n_kwargs = dict(n_vec=n_vec, nmin=n_min, nmax=n_max)
     else:
         X, Y = np.meshgrid(np.linspace(xmin, xmax, ngrid),
                            np.linspace(ymin, ymax, ngrid))
@@ -1359,10 +1362,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     x_all = np.concatenate([x_grid, x_samp])
     y_all = np.concatenate([y_grid, y_samp])
-    boundary_kwargs = dict(order=order,
-                           xmin=data_x.min(), xmax=data_x.max(),
-                           ymin=data_y.min(), ymax=data_y.max())
-    p_all = boundary_correction_2d(kde, x_all, y_all, **boundary_kwargs)
+    p_all = boundary_correction_2d(kde, x_all, y_all, order=order,
+                                   xmin=data_x.min(), xmax=data_x.max(),
+                                   ymin=data_y.min(), ymax=data_y.max(),
+                                   **n_kwargs)
     P_plot = p_all[:-n_samp].reshape(X.shape)
     p_samp = p_all[-n_samp:]
     levels = iso_probability_contours_from_samples(p_samp,
@@ -1689,6 +1692,11 @@ def _basis_aligned_grid(data_x, data_y, eig, ngrid,
     # matching the scalar grid_angle convention where minor = major + 90 deg.
     if v_vec[0] * u_vec[1] - v_vec[1] * u_vec[0] < 0:
         u_vec *= -1
+    # Use the same deterministic orientation for n, the normal to v. It points
+    # to the same side of v as u, so increasing u also increases n.
+    n_vec = np.array([-v_vec[1], v_vec[0]])
+    if n_vec @ u_vec < 0:
+        n_vec *= -1
 
     M = np.column_stack([u_vec, v_vec])
     uv_data = np.linalg.solve(M, np.vstack([data_x, data_y]))
@@ -1705,6 +1713,12 @@ def _basis_aligned_grid(data_x, data_y, eig, ngrid,
     vmin = uv_corners[:, 1].min()
     vmax = uv_corners[:, 1].max()
     u_grid = np.linspace(umin, umax, ngrid)
+    # Unit normal to v_vec gives a true axis perpendicular to the rotated
+    # rows. For orthonormal bases this coincides with u_vec; for sheared
+    # bases (e.g. grid_angle=(45, 0)) they differ. Project the data
+    # onto this normal so `boundary_correction_2d` can apply a
+    # separable Jones-style 1D correction along the rotated direction.
+    n_proj = n_vec[0] * data_x + n_vec[1] * data_y
     vlos = np.full_like(u_grid, vmin)
     vhis = np.full_like(u_grid, vmax)
     for uj, vj, zmin, zmax in [(u_vec[0], v_vec[0], xmin, xmax),
@@ -1715,9 +1729,18 @@ def _basis_aligned_grid(data_x, data_y, eig, ngrid,
         b = (zmax - uj * u_grid) / vj
         vlos = np.maximum(vlos, np.minimum(a, b))
         vhis = np.minimum(vhis, np.maximum(a, b))
+
     V = np.array([np.linspace(vlo, vhi, ngrid)
                   for vlo, vhi in zip(vlos, vhis)])
     U = np.broadcast_to(u_grid[:, None], V.shape)
     X = u_vec[0] * U + v_vec[0] * V
     Y = u_vec[1] * U + v_vec[1] * V
-    return X, Y
+
+    # Reconstructing X/Y from U/V can move algebraic boundary points by one
+    # ulp; snap the core grid back to the precise bounds.
+    for Z, zmin, zmax in [(X, xmin, xmax), (Y, ymin, ymax)]:
+        atol = 8 * np.finfo(Z.dtype).eps * max(1, abs(zmin), abs(zmax))
+        Z[np.isclose(Z, zmin, rtol=0, atol=atol)] = zmin
+        Z[np.isclose(Z, zmax, rtol=0, atol=atol)] = zmax
+
+    return X, Y, n_vec, n_proj.min(), n_proj.max()
