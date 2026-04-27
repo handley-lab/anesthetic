@@ -923,9 +923,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         :class:`scipy.stats.gaussian_kde`. A value greater 1 will smooth more,
         a value smaller 1 will smooth less.
 
-    beta : int, float, default = 1
-        The value of beta used to calculate the number of effective samples
-
     Returns
     -------
     lines : :class:`matplotlib.lines.Line2D`
@@ -1298,7 +1295,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     grid_angle = kwargs.pop('grid_angle', None)
     bw_method = kwargs.pop('bw_method', None)
     bw_scale = kwargs.pop('bw_scale', 1)
-    order = kwargs.pop('order', 1)
+    order = kwargs.pop('order', None)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
     levels = kwargs.pop('levels', [0.95, 0.68])
