@@ -1651,8 +1651,8 @@ def _plot_window(ax, axis):
     raise ValueError(
         f"Cannot plot KDE contours: the {axis}-axis variable has zero "
         f"variance and no axis limits are set. Call `ax.set_{axis}lim(...)` "
-        f"on the " f"corresponding axis before (and not again after!) "
-        f"plotting to define the display range."
+        f"on the corresponding axis before (and not again after!) plotting to "
+        f"define the display range."
     )
 
 
