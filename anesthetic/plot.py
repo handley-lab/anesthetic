@@ -958,6 +958,10 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     else:
         edgecolor = color
 
+    if np.var(data) <= 0:
+        noise = _plot_window(ax, 'x') * 1e-5
+        data = data.copy() + noise * np.random.normal(size=data.size)
+
     q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data, q[0], weights)
@@ -1636,24 +1640,19 @@ def _plot_window(ax, axis):
         has_limits = not ax.get_autoscalex_on()
         interval = ax.viewLim.intervalx if has_limits else ax.dataLim.intervalx
         scale = ax.get_xscale()
-        z = ax.get_xlabel() if ax.get_xlabel() else ax.xaxis.axis_name
     else:
         has_limits = not ax.get_autoscaley_on()
         interval = ax.viewLim.intervaly if has_limits else ax.dataLim.intervaly
         scale = ax.get_yscale()
-        z = ax.get_ylabel() if ax.get_ylabel() else ax.yaxis.axis_name
     if np.isfinite(interval).all():
         if scale == 'log':
             interval = np.log10(interval)
         return (interval[1] - interval[0])
-    if ax.__class__.__name__ == 'OffDiagonalAxes':
-        axes_name = f"axes['{ax.get_xlabel()}']['{ax.get_ylabel()}']"
-    else:
-        axes_name = "ax"
     raise ValueError(
-        f"Cannot plot KDE contours: the `{z}` variable has zero variance "
-        f"and no axis limits are set. Call {axes_name}.set_{axis}lim(...) "
-        f"before (and not again after!) plotting to define the display range."
+        f"Cannot plot KDE contours: the {axis}-axis variable has zero "
+        f"variance and no axis limits are set. Call `ax.set_{axis}lim(...)` "
+        f"on the " f"corresponding axis before (and not again after!) "
+        f"plotting to define the display range."
     )
 
 

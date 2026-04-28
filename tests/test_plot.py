@@ -905,12 +905,13 @@ def test_kde_contour_plot_2d_degenerate(scale):
     fig, ax = plt.subplots()
     ax.set_xscale(scale)
     ax.set_yscale(scale)
-    with pytest.raises(ValueError, match="`y` variable has zero variance"):
+    with pytest.raises(ValueError, match="y-axis variable has zero variance"):
         kde_contour_plot_2d(ax, *_pow10(x, np.full_like(x, 0.5), scale=scale))
-    fig, axes = make_2d_axes(['a', 'b'], diagonal=False, upper=False)
+    fig, axes = make_2d_axes(['a', 'b'], labels=dict(a='$a$', b='$b$'),
+                             diagonal=False, upper=False)
     axes['a']['b'].set_xscale(scale)
     axes['a']['b'].set_yscale(scale)
-    with pytest.raises(ValueError, match="`b` variable has zero variance"):
+    with pytest.raises(ValueError, match="y-axis variable has zero variance"):
         kde_contour_plot_2d(
             axes['a']['b'], *_pow10(x, np.full_like(x, 0.5), scale=scale)
         )
@@ -919,12 +920,13 @@ def test_kde_contour_plot_2d_degenerate(scale):
     fig, ax = plt.subplots()
     ax.set_xscale(scale)
     ax.set_yscale(scale)
-    with pytest.raises(ValueError, match="`x` variable has zero variance"):
+    with pytest.raises(ValueError, match="x-axis variable has zero variance"):
         kde_contour_plot_2d(ax, *_pow10(np.full_like(x, 0.5), x, scale=scale))
-    fig, axes = make_2d_axes(['a', 'b'], diagonal=False, upper=False)
+    fig, axes = make_2d_axes(['a', 'b'], labels=dict(a='$a$', b='$b$'),
+                             diagonal=False, upper=False)
     axes['a']['b'].set_xscale(scale)
     axes['a']['b'].set_yscale(scale)
-    with pytest.raises(ValueError, match="`a` variable has zero variance"):
+    with pytest.raises(ValueError, match="x-axis variable has zero variance"):
         kde_contour_plot_2d(
             axes['a']['b'], *_pow10(np.full_like(x, 0.5), x, scale=scale)
         )
@@ -948,6 +950,44 @@ def test_kde_contour_plot_2d_degenerate(scale):
     para = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
     assert np.ptp(perp) < 0.1
     assert np.ptp(para) > 0.7
+
+
+@pytest.mark.parametrize('scale', ['linear', 'log'])
+def test_kde_plot_1d_degenerate(scale):
+    np.random.seed(42)
+
+    # Constant input, xlim set via set_xlim: thin spike at x=0.5.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_xlim(*_pow10((-3, 3), scale=scale))  # plot window width 6
+    line, = kde_plot_1d(ax, *_pow10(np.ones(100), scale=scale))
+    assert isinstance(line, Line2D)
+    xdata = _log10(line.get_xdata(), scale)
+    assert xdata.min() == approx(1, abs=6 * 1e-5 * 10)
+    assert xdata.max() == approx(1, abs=6 * 1e-5 * 10)
+    assert np.ptp(xdata) < 6 * 1e-5 * 10 * 2
+
+    # Constant input, dataLim set by prior plot: thin spike at x=0.5.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.plot(*_pow10([-3, 3], [0, 0], scale=scale))  # plot window width 6
+    line, = kde_plot_1d(ax, *_pow10(np.ones(100), scale=scale))
+    assert isinstance(line, Line2D)
+    xdata = _log10(line.get_xdata(), scale)
+    assert xdata.min() == approx(1, abs=6 * 1e-5 * 10)
+    assert xdata.max() == approx(1, abs=6 * 1e-5 * 10)
+    assert np.ptp(xdata) < 6 * 1e-5 * 10 * 2
+
+    # Constant input, no limits: should raise ValueError.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    with pytest.raises(ValueError, match="x-axis variable has zero variance"):
+        kde_plot_1d(ax, *_pow10(np.ones(10), scale=scale))
+
+    fig, axes = make_2d_axes(['a', 'b'], labels=dict(a='$a$', b='$b$'))
+    axes['a']['a'].set_xscale(scale)
+    with pytest.raises(ValueError, match="x-axis variable has zero variance"):
+        kde_plot_1d(axes['a']['a'], *_pow10(np.ones(10), scale=scale))
 
 
 @pytest.mark.parametrize('axis_aligned,rotated,parallel',
@@ -975,9 +1015,11 @@ def test_kde_contour_plot_2d_grid_angle(axis_aligned, rotated, parallel):
     assert (v_ang[:, 0] - v_ang[:, 1]).min() >= 0
 
     # (Near-)parallel angles raise an error.
-    with pytest.raises(ValueError,
-                       match=fr"grid_angle major \({parallel[0]}\) and minor "
-                             fr"\({parallel[1]}\) axes are \(near-\)parallel"):
+    with pytest.raises(
+            ValueError,
+            match=fr"grid_angle major \({parallel[0]}\) and minor "
+                  fr"\({parallel[1]}\) axes are \(near-\)parallel"
+    ):
         kde_contour_plot_2d(ax, x, y, grid_angle=parallel)
 
 
@@ -1142,15 +1184,6 @@ def test_plot_window(scale):
         _plot_window(ax, 'x')
     with pytest.raises(ValueError, match=r"ax\.set_ylim"):
         _plot_window(ax, 'y')
-
-    # fresh anesthetic axis, no limits: raises ValueError.
-    fig, axes = make_2d_axes(['a', 'b'], diagonal=False, upper=False)
-    axes['a']['b'].set_xscale(scale)
-    axes['a']['b'].set_yscale(scale)
-    with pytest.raises(ValueError, match=r"axes\['a'\]\['b'\]\.set_xlim"):
-        _plot_window(axes['a']['b'], 'x')
-    with pytest.raises(ValueError, match=r"axes\['a'\]\['b'\]\.set_ylim"):
-        _plot_window(axes['a']['b'], 'y')
 
 
 def test_scatter_plot_2d():
