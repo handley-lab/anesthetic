@@ -2,6 +2,7 @@ import anesthetic.examples._matplotlib_agg  # noqa: F401
 from packaging import version
 from warnings import catch_warnings, filterwarnings
 import pytest
+from pytest import approx
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -10,8 +11,10 @@ from anesthetic.plot import (make_1d_axes, make_2d_axes, kde_plot_1d,
                              fastkde_plot_1d, hist_plot_1d, hist_plot_2d,
                              fastkde_contour_plot_2d, kde_contour_plot_2d,
                              scatter_plot_2d, quantile_plot_interval,
-                             basic_cmap, AxesSeries, AxesDataFrame)
-from numpy.testing import assert_array_equal
+                             basic_cmap, _plot_window, _basis_aligned_grid,
+                             AxesSeries, AxesDataFrame)
+from anesthetic.examples.perfect_ns import correlated_gaussian
+from numpy.testing import assert_array_equal, assert_allclose
 
 from matplotlib.axes import SubplotBase
 from matplotlib.contour import ContourSet
@@ -820,6 +823,369 @@ def test_contour_plot_2d_levels(contour_plot_2d, levels):
         assert_array_equal(color1, color2)
 
 
+def _contour_vertices(contf):
+    """Extract all contour vertices from a ContourSet."""
+    polygons = [np.concatenate(p) for p in contf.allsegs if p]
+    return np.concatenate(polygons)
+
+
+def _pow10(*x, scale):
+    """Exponentiate log-axis test data to displayed coordinates."""
+    return tuple(10.0**np.asarray(_) if scale == 'log' else _ for _ in x)
+
+
+def _log10(x, scale):
+    """Log-transform displayed coordinates back to test coordinates."""
+    return np.log10(x) if scale == 'log' else x
+
+
+@pytest.mark.parametrize('scale', ['linear', 'log'])
+def test_kde_contour_plot_2d_degenerate(scale):
+    np.random.seed(42)
+    x = np.random.normal(size=1000)
+
+    # Collinear input (y = 5x): contours narrow perpendicular to the diagonal.
+    f = 5
+    norm = np.hypot(1, f)
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    contf, _ = kde_contour_plot_2d(ax, *_pow10(x, f*x.copy(), scale=scale))
+    assert isinstance(contf, ContourSet)
+    vertices = _log10(_contour_vertices(contf), scale)
+    perp = (f * vertices[:, 0] - vertices[:, 1]) / norm
+    para = (vertices[:, 0] + f * vertices[:, 1]) / norm
+    assert np.ptp(perp) < 0.1 * norm / np.sqrt(2)
+    assert np.ptp(para) > 4.0 * norm / np.sqrt(2)
+
+    # Collinear input (y = -x): contours narrow perpendicular to the diagonal.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    contf, _ = kde_contour_plot_2d(ax, *_pow10(x, -x.copy(), scale=scale))
+    assert isinstance(contf, ContourSet)
+    vertices = _log10(_contour_vertices(contf), scale)
+    perp = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
+    para = (vertices[:, 0] - vertices[:, 1]) / np.sqrt(2)
+    assert np.ptp(perp) < 0.1
+    assert np.ptp(para) > 4.0
+
+    # Constant y, viewLim set via set_ylim: thin horizontal band at y=0.5.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.set_xlim(*_pow10((-3, 3), scale=scale))
+    ax.set_ylim(*_pow10((-1, 2), scale=scale))
+    contf, _ = kde_contour_plot_2d(
+        ax, *_pow10(x, np.full_like(x, 0.5), scale=scale)
+    )
+    assert isinstance(contf, ContourSet)
+    vertices = _log10(_contour_vertices(contf), scale)
+    assert_allclose(vertices[:, 1], 0.5, atol=0.01)
+    assert np.mean(vertices[:, 1]) == approx(0.5, abs=0.001)
+    assert np.ptp(vertices[:, 1]) < 0.1
+    assert np.ptp(vertices[:, 0]) > 4.0
+
+    # Constant x, dataLim set by prior plot: thin vertical band at x=0.5.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.plot(*_pow10([-1, 2], [-3, 3], scale=scale), alpha=0)
+    contf, _ = kde_contour_plot_2d(
+        ax, *_pow10(np.full_like(x, 0.5), x, scale=scale)
+    )
+    assert isinstance(contf, ContourSet)
+    vertices = _log10(_contour_vertices(contf), scale)
+    assert_allclose(vertices[:, 0], 0.5, atol=0.01)
+    assert np.mean(vertices[:, 0]) == approx(0.5, abs=0.001)
+    assert np.ptp(vertices[:, 0]) < 0.1
+    assert np.ptp(vertices[:, 1]) > 4.0
+
+    # Constant y, no limits: should raise ValueError.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    with pytest.raises(ValueError, match="y-axis variable has zero variance"):
+        kde_contour_plot_2d(ax, *_pow10(x, np.full_like(x, 0.5), scale=scale))
+    fig, axes = make_2d_axes(['a', 'b'], labels=dict(a='$a$', b='$b$'),
+                             diagonal=False, upper=False)
+    axes['a']['b'].set_xscale(scale)
+    axes['a']['b'].set_yscale(scale)
+    with pytest.raises(ValueError, match="y-axis variable has zero variance"):
+        kde_contour_plot_2d(
+            axes['a']['b'], *_pow10(x, np.full_like(x, 0.5), scale=scale)
+        )
+
+    # Constant x, no limits: should raise ValueError.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    with pytest.raises(ValueError, match="x-axis variable has zero variance"):
+        kde_contour_plot_2d(ax, *_pow10(np.full_like(x, 0.5), x, scale=scale))
+    fig, axes = make_2d_axes(['a', 'b'], labels=dict(a='$a$', b='$b$'),
+                             diagonal=False, upper=False)
+    axes['a']['b'].set_xscale(scale)
+    axes['a']['b'].set_yscale(scale)
+    with pytest.raises(ValueError, match="x-axis variable has zero variance"):
+        kde_contour_plot_2d(
+            axes['a']['b'], *_pow10(np.full_like(x, 0.5), x, scale=scale)
+        )
+
+    # Highly correlated input (y ~ x) with window-spanning low-weight samples.
+    np.random.seed(42)
+    sigma = 0.4
+    rho = 0.9999
+    cov = sigma**2 * np.array([[1.0, rho], [rho, 1.0]])
+    s = correlated_gaussian(100, mean=[0.1, 0.0], cov=cov, columns=['a', 'b'])
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    contf, _ = kde_contour_plot_2d(
+        ax, *_pow10(s.a, s.b, scale=scale), weights=s.get_weights()
+    )
+    assert isinstance(contf, ContourSet)
+    vertices = _log10(_contour_vertices(contf), scale)
+    assert vertices.size > 0
+    perp = (vertices[:, 0] - vertices[:, 1]) / np.sqrt(2)
+    para = (vertices[:, 0] + vertices[:, 1]) / np.sqrt(2)
+    assert np.ptp(perp) < 0.1
+    assert np.ptp(para) > 0.7
+
+
+@pytest.mark.parametrize('scale', ['linear', 'log'])
+def test_kde_plot_1d_degenerate(scale):
+    np.random.seed(42)
+
+    # Constant input, xlim set via set_xlim: thin spike at x=0.5.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_xlim(*_pow10((-3, 3), scale=scale))  # plot window width 6
+    line, = kde_plot_1d(ax, *_pow10(np.ones(100), scale=scale))
+    assert isinstance(line, Line2D)
+    xdata = _log10(line.get_xdata(), scale)
+    assert xdata.min() == approx(1, abs=6 * 1e-5 * 10)
+    assert xdata.max() == approx(1, abs=6 * 1e-5 * 10)
+    assert np.ptp(xdata) < 6 * 1e-5 * 10 * 2
+
+    # Constant input, dataLim set by prior plot: thin spike at x=0.5.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.plot(*_pow10([-3, 3], [0, 0], scale=scale))  # plot window width 6
+    line, = kde_plot_1d(ax, *_pow10(np.ones(100), scale=scale))
+    assert isinstance(line, Line2D)
+    xdata = _log10(line.get_xdata(), scale)
+    assert xdata.min() == approx(1, abs=6 * 1e-5 * 10)
+    assert xdata.max() == approx(1, abs=6 * 1e-5 * 10)
+    assert np.ptp(xdata) < 6 * 1e-5 * 10 * 2
+
+    # Constant input, no limits: should raise ValueError.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    with pytest.raises(ValueError, match="x-axis variable has zero variance"):
+        kde_plot_1d(ax, *_pow10(np.ones(10), scale=scale))
+
+    fig, axes = make_2d_axes(['a', 'b'], labels=dict(a='$a$', b='$b$'))
+    axes['a']['a'].set_xscale(scale)
+    with pytest.raises(ValueError, match="x-axis variable has zero variance"):
+        kde_plot_1d(axes['a']['a'], *_pow10(np.ones(10), scale=scale))
+
+
+@pytest.mark.parametrize('axis_aligned,rotated,parallel',
+                         [(None, 45, (0, 180)),
+                          (0, (45, 0), (0, 1e-10))])
+def test_kde_contour_plot_2d_grid_angle(axis_aligned, rotated, parallel):
+    # Masking to x - y > 0 creates a hard density edge along y = x.
+    np.random.seed(42)
+    x = np.random.normal(size=2000)
+    y = np.random.normal(size=2000)
+    mask = (x - y) > 0
+    x, y = x[mask], y[mask]
+
+    # The default axis-aligned grid leaks across the edge by about a bandwidth.
+    fig, ax = plt.subplots()
+    contf_def, _ = kde_contour_plot_2d(ax, x, y, grid_angle=axis_aligned)
+    v_def = _contour_vertices(contf_def)
+    assert (v_def[:, 0] - v_def[:, 1]).min() < -0.1
+
+    # Aligned grid_angle confines contour vertices to the x - y > 0 half-plane.
+    fig, ax = plt.subplots()
+    contf_ang, _ = kde_contour_plot_2d(ax, x, y, grid_angle=rotated)
+    v_ang = _contour_vertices(contf_ang)
+    assert (v_ang[:, 0] - v_ang[:, 1]).min() == approx((x-y).min(), abs=1e-12)
+    assert (v_ang[:, 0] - v_ang[:, 1]).min() >= 0
+
+    # (Near-)parallel angles raise an error.
+    with pytest.raises(
+            ValueError,
+            match=fr"grid_angle major \({parallel[0]}\) and minor "
+                  fr"\({parallel[1]}\) axes are \(near-\)parallel"
+    ):
+        kde_contour_plot_2d(ax, x, y, grid_angle=parallel)
+
+
+@pytest.mark.parametrize('grid_angle', [0, 90, 180, (0, 90), (90, 180)])
+def test_kde_contour_plot_2d_grid_angle_axis_aligned(grid_angle):
+    # Axis-aligned angles zero out one basis-vector component.
+    # Must run without divide-by-zero warnings.
+    np.random.seed(42)
+    x = np.random.normal(size=500)
+    y = np.random.normal(size=500) + 0.3 * x
+    fig, ax = plt.subplots()
+    with catch_warnings():
+        filterwarnings('error', category=RuntimeWarning)
+        contf, _ = kde_contour_plot_2d(ax, x, y, grid_angle=grid_angle)
+    assert isinstance(contf, ContourSet)
+
+
+@pytest.mark.parametrize('grid_angle', [0, 90])
+def test_basis_aligned_grid_axis_aligned_rows_span_edges(grid_angle):
+    # Axis-aligned angles share rectangle corner u-values; the first
+    # and last grid rows must span the full edge, not collapse.
+    np.random.seed(42)
+    data_x = np.random.normal(size=200)
+    data_y = np.random.normal(size=200)
+    X, Y, *_ = _basis_aligned_grid(data_x, data_y, eig=None, ngrid=10,
+                                   xmin=-1.0, xmax=1.0, ymin=-1.0, ymax=1.0,
+                                   grid_angle=grid_angle)
+    span, const = (X, Y) if grid_angle == 0 else (Y, X)
+    assert span[0].min() == approx(-1.0)
+    assert span[0].max() == approx(1.0)
+    assert const[0].min() == approx(const[0].max())
+    assert span[-1].min() == approx(-1.0)
+    assert span[-1].max() == approx(1.0)
+    assert const[-1].min() == approx(const[-1].max())
+
+
+def test_basis_aligned_grid_u_edges_add_outside_rows_only():
+    np.random.seed(42)
+    x = np.linspace(-5, 5, 200)
+    y = x + 0.1 * np.random.normal(size=200)
+    ngrid = 10
+
+    # A narrow diagonal cloud has finite u support inside the square plot box.
+    X, Y, n_vec, nmin, nmax = _basis_aligned_grid(x, y, eig=None, ngrid=ngrid,
+                                                  xmin=-5.0, xmax=5.0,
+                                                  ymin=-5.0, ymax=5.0,
+                                                  grid_angle=45)
+    # The two outside-u rows are zeroed by the n-boundary correction.
+    assert X.shape == (ngrid + 2, ngrid + 2)
+    assert Y.shape == (ngrid + 2, ngrid + 2)
+    n = n_vec[0] * X + n_vec[1] * Y
+    atol = 8 * np.finfo(n.dtype).eps * max(1, abs(nmin), abs(nmax))
+    assert (n[0] < nmin).all()
+    assert (n[-1] > nmax).all()
+    assert (n[1:-1] >= nmin - atol).all()
+    assert (n[1:-1] <= nmax + atol).all()
+
+    # Wider square support extends beyond the plot-box u extrema, so no u rows
+    # are added. The two v-extension columns are still present.
+    x, y = np.meshgrid(np.linspace(-6, 6, 12+1), np.linspace(-6, 6, 12+1))
+    x = x.ravel()
+    y = y.ravel()
+    X, Y, n_vec, nmin, nmax = _basis_aligned_grid(x, y, eig=None, ngrid=ngrid,
+                                                  xmin=-5.0, xmax=5.0,
+                                                  ymin=-5.0, ymax=5.0,
+                                                  grid_angle=45)
+    # No outside-u rows, and no outside-v columns (since we are clipping).
+    assert X.shape == (ngrid, ngrid)
+    assert Y.shape == (ngrid, ngrid)
+    n = n_vec[0] * X + n_vec[1] * Y
+    atol = 8 * np.finfo(n.dtype).eps * max(1, abs(nmin), abs(nmax))
+    assert (n >= nmin - atol).all()
+    assert (n <= nmax + atol).all()
+
+
+def test_basis_aligned_grid_v_edges_add_outside_columns_only():
+    # The y > 0 cut creates an axis-aligned support edge in a rotated grid.
+    np.random.seed(42)
+    x = np.random.normal(size=500)
+    y = np.random.normal(size=500)
+    mask = (x - y > 0) & (y > 0)
+    x = x[mask]
+    y = y[mask]
+    ngrid = 10
+    X, Y, n_vec, nmin, nmax = _basis_aligned_grid(x, y, eig=None, ngrid=ngrid,
+                                                  xmin=x.min(), xmax=x.max(),
+                                                  ymin=y.min(), ymax=y.max(),
+                                                  grid_angle=(45, 0))
+    assert X.shape == (ngrid + 2, ngrid + 2)
+    assert Y.shape == (ngrid + 2, ngrid + 2)
+    n = n_vec[0] * X + n_vec[1] * Y
+    atol = 8 * np.finfo(n.dtype).eps * max(1, abs(nmin), abs(nmax))
+    outside_n = (n < nmin - atol) | (n > nmax + atol)
+    assert outside_n.sum() == 2 * (ngrid + 2)
+
+    # Core v-columns stay inside the x/y support after boundary snapping.
+    core = (slice(None), slice(1, -1))
+    assert X[core].min() >= x.min()
+    assert X[core].max() <= x.max()
+    assert Y[core].min() >= y.min()
+    assert Y[core].max() <= y.max()
+
+    # The first/last v-columns are x/y extensions. Ignore rows already masked
+    # as outside-u support, so this assertion tests only v-column extensions.
+    outside = ((X < x.min()) | (X > x.max()) | (Y < y.min()) | (Y > y.max()))
+    assert outside[:, 0][~outside_n[:, 0]].all()
+    assert outside[:, -1][~outside_n[:, -1]].all()
+
+
+def test_basis_aligned_grid_snaps_boundary_roundoff():
+    # This seed produces rotated-grid points that algebraically lie on ymin,
+    # but reconstruct one ulp below it unless snapped back to the boundary.
+    np.random.seed(11)
+    x = np.random.normal(size=5000)
+    y = np.random.normal(size=5000)
+    mask = (x - y > 0) & (y > 0)
+    x = x[mask]
+    y = y[mask]
+    X, Y, n_vec, nmin, nmax = _basis_aligned_grid(x, y, eig=None, ngrid=31,
+                                                  xmin=x.min(), xmax=x.max(),
+                                                  ymin=y.min(), ymax=y.max(),
+                                                  grid_angle=(45, 0))
+    # Ignore deliberate outside-u rows and outside-v columns.
+    n = n_vec[0] * X + n_vec[1] * Y
+    atol = 8 * np.finfo(n.dtype).eps * max(1, abs(nmin), abs(nmax))
+    core = (n >= nmin - atol) & (n <= nmax + atol)
+    core[:, 0] = False
+    core[:, -1] = False
+    assert X[core].min() >= x.min()
+    assert X[core].max() <= x.max()
+    assert Y[core].max() <= y.max()
+    # Crucial test: without snapping to the boundary, this would fail:
+    assert Y[core].min() == y.min()
+
+
+@pytest.mark.parametrize('scale', ['linear', 'log'])
+def test_plot_window(scale):
+    np.random.seed(42)
+
+    # viewLim set via set_xlim and set_ylim.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.set_xlim(*_pow10((-5, 5), scale=scale))
+    ax.set_ylim(*_pow10((0, 4), scale=scale))
+    assert _plot_window(ax, 'x') == approx(10)
+    assert _plot_window(ax, 'y') == approx(4)
+
+    # dataLim set by prior plot.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.plot(*_pow10([0, 10], [0, 1], scale=scale))
+    assert _plot_window(ax, 'x') == approx(10)
+    assert _plot_window(ax, 'y') == approx(1)
+
+    # fresh mpl axis, no limits: raises ValueError.
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    with pytest.raises(ValueError, match=r"ax\.set_xlim"):
+        _plot_window(ax, 'x')
+    with pytest.raises(ValueError, match=r"ax\.set_ylim"):
+        _plot_window(ax, 'y')
+
+
 def test_scatter_plot_2d():
     fig, ax = plt.subplots()
     np.random.seed(2)
@@ -963,7 +1329,7 @@ def test_logscale_2d(plot_2d):
     p = plot_2d(ax, x, logy)
     if 'kde' in plot_2d.__name__:
         if version.parse(matplotlib.__version__) >= version.parse('3.8.0'):
-            xmax, ymax = p[0].get_paths()[1].vertices[0].T
+            xmax, ymax = p[0].get_paths()[1].vertices.T
         else:
             xmax, ymax = p[0].allsegs[1][0].T
         xmax = np.mean(np.log10(xmax))

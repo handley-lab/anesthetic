@@ -373,12 +373,16 @@ def boundary_correction_1d(kde, x, order=1, xmin=None, xmax=None):
     return p
 
 
-def boundary_correction_2d(kde, X, Y, order=1,
-                           xmin=None, xmax=None, ymin=None, ymax=None):
+def boundary_correction_2d(kde, X, Y, order=None,
+                           xmin=None, xmax=None, ymin=None, ymax=None,
+                           n_vec=None, nmin=None, nmax=None):
     r"""Boundary correction for a 2D Gaussian KDE.
 
     Applies renormalisation (order 0) or the full non-separable linear
-    correction (order 1) using the full kernel covariance matrix.
+    correction (order 1) using the full kernel covariance matrix on the
+    axis-aligned ``[xmin, xmax] x [ymin, ymax]`` rectangle. Optionally
+    multiplies in a separable Jones-style 1D correction for an additional
+    half-plane bounded by ``nmin <= n_vec . (x, y) <= nmax``.
 
     Parameters
     ----------
@@ -387,13 +391,24 @@ def boundary_correction_2d(kde, X, Y, order=1,
     X, Y : np.array
         2D evaluation grids (from np.mgrid).
     xmin, xmax, ymin, ymax : float, optional
-        Bounds per axis.
-    order : int, default=1
+        Axis-aligned bounds.
+    order : int
         Boundary correction order.
 
         * < 0: no correction --- return raw KDE estimate.
         * 0: renormalisation --- O(h) bias.
         * 1: linear correction --- O(h²) bias.
+
+        Default: ``order=1`` for x, y correction, ``order=0`` for n correction.
+
+    n_vec : np.array, shape (2,), optional
+        Direction vector ``[n_x, n_y]`` defining a rotated coordinate
+        ``n = n_vec . (x, y)``. Combined with ``nmin``/``nmax`` to add a
+        separable 1D correction along that direction. Skipped if absent
+        or already covered by an active ``x`` / ``y`` bound when
+        ``n_vec`` is axis-aligned.
+    nmin, nmax : float, optional
+        Lower / upper bounds on ``n_vec . (x, y)``.
 
     Returns
     -------
@@ -403,24 +418,72 @@ def boundary_correction_2d(kde, X, Y, order=1,
     """
     x = X.ravel()
     y = Y.ravel()
+    order_n = 0 if order is None else order
+    order = 1 if order is None else order
 
     has_x_bounds = xmin is not None or xmax is not None
     has_y_bounds = ymin is not None or ymax is not None
+    has_n_bounds = n_vec is not None and (nmin is not None or nmax is not None)
 
-    if not has_x_bounds and not has_y_bounds or order < 0:
+    # Skip the n-correction when its direction duplicates an active x/y bound.
+    if has_n_bounds:
+        norm = np.linalg.norm(n_vec)
+        n_vec = n_vec / norm
+        nmin = None if nmin is None else nmin / norm
+        nmax = None if nmax is None else nmax / norm
+        if np.allclose(np.abs(n_vec), [1, 0], atol=1e-10) and has_x_bounds:
+            has_n_bounds = False
+        elif np.allclose(np.abs(n_vec), [0, 1], atol=1e-10) and has_y_bounds:
+            has_n_bounds = False
+
+    if (not has_x_bounds and not has_y_bounds and not has_n_bounds
+            or order < 0):
         return kde([x, y]).reshape(X.shape)
 
-    # (2, d)
-    x_limits = np.array([[-np.inf if xmin is None else xmin,
-                          -np.inf if ymin is None else ymin],
-                         [np.inf if xmax is None else xmax,
-                          np.inf if ymax is None else ymax]], dtype=float)
-
-    # Evaluate the raw KDE, truncated moments, and corrected density.
+    # Evaluate the raw KDE and first moment once; reused by all corrections.
     coords = np.column_stack([x, y])  # (M, d)
     f, m1 = _kde_eval(kde, coords)
-    a0, a1, A2 = _truncated_moments(coords, kde.covariance, x_limits)
-    p = _corrected_density(f, m1, a0, a1, A2, order)
+
+    # Axis-aligned x/y correction over the rectangle.
+    if has_x_bounds or has_y_bounds:
+        xy_limits = np.array([[-np.inf if xmin is None else xmin,
+                               -np.inf if ymin is None else ymin],
+                              [+np.inf if xmax is None else xmax,
+                               +np.inf if ymax is None else ymax]])
+        a0, a1, A2 = _truncated_moments(coords, kde.covariance, xy_limits)
+        p = _corrected_density(f, m1, a0, a1, A2, order)
+    else:
+        p = f.copy()
+
+    # Separable 1D correction along n_vec (Jones 1993, Eq. 3.4) reusing f, m1.
+    if has_n_bounds:
+        sigma_xy = np.sqrt(np.diag(kde.covariance))  # (d,)
+        sigma_n = np.sqrt(n_vec @ kde.covariance @ n_vec)
+        m1_n = (m1 * sigma_xy) @ n_vec / sigma_n  # (M,)
+        coords_n = coords @ n_vec  # (M,)
+        # Projection can put algebraic boundary points one ulp outside.
+        for edge in [nmin, nmax]:
+            if edge is not None:
+                atol = 8 * np.finfo(coords_n.dtype).eps * max(1, abs(edge))
+                coords_n[np.isclose(coords_n, edge, rtol=0, atol=atol)] = edge
+        n_limits = np.array([[-np.inf if nmin is None else nmin],
+                             [+np.inf if nmax is None else nmax]])
+        a0_n, a1_n, A2_n = _truncated_moments(coords_n[:, None],
+                                              np.array([[sigma_n**2]]),
+                                              n_limits)
+        p_n = _corrected_density(f, m1_n[:, None], a0_n, a1_n, A2_n, order_n)
+
+        # Combine separably: p <- p_xy * p_n / f. Guard against f == 0.
+        ratio = np.zeros_like(f)
+        valid = (f > 0) & np.isfinite(f) & np.isfinite(p_n)
+        np.divide(p_n, f, out=ratio, where=valid)
+        p = np.where(valid, p * ratio, 0.0)
+        np.maximum(p, 0, out=p)
+
+        if nmin is not None:
+            p[coords_n < nmin] = 0
+        if nmax is not None:
+            p[coords_n > nmax] = 0
 
     if xmin is not None:
         p[x < xmin] = 0
