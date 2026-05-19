@@ -54,7 +54,7 @@ CI runs on push and PR to `master`, and on a nightly schedule (`0 0 * * *`) (`.g
 - `pip`: Python 3.10–3.14 on ubuntu, with and without `[all]` extras; plus macOS/Windows on 3.11.
 - `conda`: same Python matrix on conda-forge.
 - `minimum-dependencies` / `latest-dependencies`: pinned floors and unpinned ceilings — keep `pyproject.toml` bounds (`requires-python = ">=3.10"`, the authoritative source) honest.
-- `check-for-new-versions`: nightly cron check via `bin/check_up_to_date.py`.
+- `check-for-new-versions`: runs `bin/check_up_to_date.py` as part of every CI invocation (the whole workflow runs on push, PR, and nightly schedule — the nightly run is the main use of this job).
 
 ## Code style
 
