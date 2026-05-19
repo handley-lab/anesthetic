@@ -10,7 +10,7 @@ Guidance for Claude Code working in this repository. See `README.rst` for user-f
 
 - `anesthetic/` — package
   - `samples.py` — `Samples`, `MCMCSamples`, `NestedSamples`, `merge_nested_samples`, plus the stats methods `stats`, `logZ`, `D_KL`, `d_G`, `logL_P`, and the internals `logX`, `logdX`, `logw`, `_betalogL` (see roughly lines 781–1165). Large (~1500 lines); the heart of the library.
-  - `weighted_pandas.py`, `labelled_pandas.py`, `weighted_labelled_pandas.py` — DataFrame/Series subclass machinery (weights, tex labels, optional MultiIndex columns). Touch with care: pandas internals leak through.
+  - `weighted_pandas.py`, `labelled_pandas.py`, `weighted_labelled_pandas.py` — DataFrame/Series subclass machinery (weights, labels (often TeX), optional MultiIndex columns). Touch with care: pandas internals leak through.
   - `plot.py` — `make_1d_axes`, `make_2d_axes`, `AxesSeries`, `AxesDataFrame`, plot kinds. The local-linear boundary correction lives in `boundary.py` (used by the scipy `gaussian_kde` paths here).
   - `plotting/_matplotlib/` — the registered pandas plotting backend. `plotting/_core.py` defines the `PlotAccessor` and the `_common_kinds` / `_series_kinds` / `_dataframe_kinds` lists that gate `kind=` strings.
   - `kde.py` — fastKDE wrapper with reflection-based boundary handling (`mirror_1d`, `mirror_2d`). `boundary.py` — local-linear boundary correction for scipy KDE.
@@ -27,7 +27,7 @@ Install in editable mode with test extras:
 
     python -m pip install -e ".[test,all]"
 
-Run the standard checks (mirrors `bin/run_tests` and CI in `.github/workflows/CI.yaml`):
+Run the standard checks (roughly matches `bin/run_tests`; CI itself runs `flake8 anesthetic tests` — see `.github/workflows/CI.yaml`):
 
     python -m flake8 anesthetic anesthetic/gui tests
     python -m pydocstyle --convention=numpy anesthetic
@@ -44,12 +44,12 @@ Regenerate autodoc RSTs (only when adding modules):
 
     sphinx-apidoc -fM -t docs/templates/ -o docs/source/ anesthetic/
 
-Pre-commit hooks (`.pre-commit-config.yaml`) run flake8 over `anesthetic/` + `tests/` and pydocstyle over `anesthetic/`. Install with `pre-commit install`.
+Pre-commit hooks (`.pre-commit-config.yaml`) run flake8 on changed Python files under `anesthetic/` and `tests/`, and pydocstyle on changed Python files under `anesthetic/`. Install with `pre-commit install`.
 
 ## CI matrix (what your PR must pass)
 
-CI runs on push and PR to `master` (`.github/workflows/CI.yaml`):
-- `lint`: flake8 (`anesthetic tests`) + pydocstyle (`--convention=numpy anesthetic`), plus a grep step that flags `tests/test*.py` files using `matplotlib` without a `close_figures_on_teardown` fixture.
+CI runs on push and PR to `master`, and on a nightly schedule (`0 0 * * *`) (`.github/workflows/CI.yaml`):
+- `lint`: flake8 (`anesthetic tests`) + pydocstyle (`--convention=numpy anesthetic`), plus a grep step intended to flag `tests/test*.py` files using `matplotlib` without a `close_figures_on_teardown` fixture — but the bash conditional in `CI.yaml:28` is malformed (`-ne 0]`, no space before `]`), so the check is a silent no-op. Add the fixture anyway.
 - `sphinx`: `make html SPHINXOPTS="-W --keep-going -n"` — warnings are errors.
 - `pip`: Python 3.10–3.14 on ubuntu, with and without `[all]` extras; plus macOS/Windows on 3.11.
 - `conda`: same Python matrix on conda-forge.
@@ -65,7 +65,7 @@ CI runs on push and PR to `master` (`.github/workflows/CI.yaml`):
 
 ## Testing conventions
 
-- Most test modules that touch matplotlib define a `close_figures_on_teardown` fixture and CI greps for it. The existing examples (`tests/test_plot.py:28`, `tests/test_reader.py:23`, `tests/test_samples.py:27`) use the default *function* scope with `autouse=True`; copy that pattern. There is one historical exception (`tests/test_boundary.py`) that the lint step does not currently fail on — do not rely on this, add the fixture for new files.
+- Most test modules that touch matplotlib define a `close_figures_on_teardown` fixture. CI intends to grep for it, but the conditional in `CI.yaml:28` is malformed (`-ne 0]`) so the check is currently a silent no-op — don't rely on CI to catch a missing fixture. The existing examples (`tests/test_plot.py:28`, `tests/test_reader.py:23`, `tests/test_samples.py:27`) use the default *function* scope with `autouse=True`; copy that pattern. `tests/test_boundary.py` is a historical exception; add the fixture for any new test file regardless.
 - Optional-dependency tests use the skip/xfail helpers in `tests/utils.py` (`skipif_no_astropy`, `skipif_no_fastkde`, `skipif_no_getdist`, `skipif_no_h5py`, `pytables_mark_*`). The `skipif_no_*` helpers skip parametrized cases; the `*_mark_xfail` variants mark whole tests as expected-fail. Pick whichever matches the nearby usage rather than bare `pytest.importorskip`.
 - Example chain fixtures live under `tests/example_data/` (PolyChord `pc`, `pc_250`, GetDist, MultiNest, etc.). Prefer these over generating synthetic data.
 - `anesthetic.testing.assert_frame_equal` extends pandas' version to check `_metadata` round-trips; use it whenever comparing `Samples`-family frames.
@@ -80,7 +80,7 @@ CI runs on push and PR to `master` (`.github/workflows/CI.yaml`):
 
 ## Common pitfalls
 
-- Don't import matplotlib at module top-level in new test files without the teardown fixture — the lint job is meant to catch this.
+- Don't import matplotlib at module top-level in new test files without the teardown fixture — the lint job is meant to catch this but currently doesn't (see "Testing conventions" above).
 - The plotting backend override in `__init__.py` runs unconditionally on import (and also patches `pandas.io.formats.format.DataFrameFormatter`); if a test stubs `pandas.options.plotting.backend`, restore it.
 - Column access may be two-level: when labels (often TeX) are present, `samples['x0']` works but the column is really `('x0', '$x_0$')`. When iterating columns, use `samples.columns.get_level_values(0)`.
 - Weights are stored as a pandas Index level (`weights`), not as a column. Use `samples.get_weights()` / `.set_weights()` rather than poking at the index.
@@ -90,4 +90,4 @@ CI runs on push and PR to `master` (`.github/workflows/CI.yaml`):
 
 ## Release / version
 
-Version lives in `anesthetic/_version.py` (single source, picked up by `pyproject.toml` via `tool.setuptools.dynamic`). `bin/bump_version.py` handles release bumps; `.github/workflows/version.yaml` enforces version increments on PRs touching the package.
+The package version is read from `anesthetic/_version.py` (picked up by `pyproject.toml` via `tool.setuptools.dynamic`). The `:Version:` line in `README.rst` must stay in sync — `bin/check_version.py` enforces this, and `.github/workflows/version.yaml` runs it on PRs to `master`. Use `bin/bump_version.py` for release bumps; it updates both files.
