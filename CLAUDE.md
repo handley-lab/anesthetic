@@ -4,17 +4,17 @@ Guidance for Claude Code working in this repository. See `README.rst` for user-f
 
 ## Project overview
 
-`anesthetic` is a post-processing library for nested sampling (and MCMC) chains. Its central design choice is that samples *are* `pandas.DataFrame`s: the public `Samples`, `MCMCSamples`, and `NestedSamples` classes subclass a `WeightedLabelledDataFrame`, which composes weighted-row support and a 2-level `(name, tex_label)` `MultiIndex` on columns. The matplotlib plotting backend is monkey-patched at import time (see `anesthetic/__init__.py`) so that `pandas` plotting routes through `anesthetic.plotting._matplotlib`. Statistics (`logZ`, `D_KL`, `d_G`, `logL_P`) and tension metrics are computed on these frames; plotting (`plot_1d`, `plot_2d`, `make_2d_axes`) uses weighted KDE/histogram/scatter kinds.
+`anesthetic` is a post-processing library for nested sampling (and MCMC) chains. Its central design choice is that samples *are* `pandas.DataFrame`s: the public `Samples`, `MCMCSamples`, and `NestedSamples` classes subclass a `WeightedLabelledDataFrame`, which composes weighted-row support and a labelled-column machinery. When tex labels are supplied, columns become a 2-level `(name, tex_label)` `MultiIndex`; otherwise they remain a plain Index (see `WeightedLabelledDataFrame.__init__` in `weighted_labelled_pandas.py`). The matplotlib plotting backend is monkey-patched at import time (`anesthetic/__init__.py`) so that `pandas` plotting routes through `anesthetic.plotting._matplotlib`; the same module also swaps in a custom `DataFrameFormatter` and sets `pandas.options.display.max_colwidth = 14`.
 
 ## Repo layout
 
 - `anesthetic/` — package
-  - `samples.py` — `Samples`, `MCMCSamples`, `NestedSamples`, `merge_nested_samples`, `stats`, `logZ`, `D_KL`. Large (~1500 lines); the heart of the library.
-  - `weighted_pandas.py`, `labelled_pandas.py`, `weighted_labelled_pandas.py` — DataFrame/Series subclass machinery (weights, tex labels, MultiIndex columns). Touch with care: pandas internals leak through.
-  - `plot.py` — `make_1d_axes`, `make_2d_axes`, `AxesSeries`, `AxesDataFrame`, plot kinds.
-  - `plotting/_matplotlib/` — the registered pandas plotting backend.
-  - `kde.py`, `boundary.py` — weighted KDE with boundary correction (recent active area; see commits 64f2b59, 021a03d, fa5bb4e).
-  - `read/` — chain readers: `polychord`, `multinest`, `ultranest`, `nestedfit`, `cobaya`, `getdist`, `csv`, `hdf`. `read_chains(root)` auto-detects format.
+  - `samples.py` — `Samples`, `MCMCSamples`, `NestedSamples`, `merge_nested_samples`, plus the stats methods `stats`, `logZ`, `D_KL`, `d_G`, `logL_P`, and the internals `logX`, `logdX`, `logw`, `_betalogL` (see roughly lines 781–1165). Large (~1500 lines); the heart of the library.
+  - `weighted_pandas.py`, `labelled_pandas.py`, `weighted_labelled_pandas.py` — DataFrame/Series subclass machinery (weights, tex labels, optional MultiIndex columns). Touch with care: pandas internals leak through.
+  - `plot.py` — `make_1d_axes`, `make_2d_axes`, `AxesSeries`, `AxesDataFrame`, plot kinds. The local-linear boundary correction lives in `boundary.py` (used by the scipy `gaussian_kde` paths here).
+  - `plotting/_matplotlib/` — the registered pandas plotting backend. `plotting/_core.py` defines the `PlotAccessor` and the `_common_kinds` / `_series_kinds` / `_dataframe_kinds` lists that gate `kind=` strings.
+  - `kde.py` — fastKDE wrapper with reflection-based boundary handling (`mirror_1d`, `mirror_2d`). `boundary.py` — local-linear boundary correction for scipy KDE.
+  - `read/` — chain readers: `polychord`, `multinest`, `ultranest`, `nestedfit`, `cobaya`, `getdist`, `csv`. `read_chains(root)` auto-detects between these. HDF5 round-trip is a separate top-level `read_hdf` / `to_hdf` pair (`anesthetic/read/hdf.py`), not part of the auto-detect chain.
   - `gui/` — interactive matplotlib widget for replaying nested runs (entry point `anesthetic` script).
   - `tension.py`, `convert.py`, `utils.py`, `testing.py`, `examples/perfect_ns.py`.
 - `tests/` — pytest suite, `tests/example_data/` has small PolyChord/MultiNest/etc. fixtures used throughout.
@@ -29,7 +29,7 @@ Install in editable mode with test extras:
 
 Run the standard checks (mirrors `bin/run_tests` and CI in `.github/workflows/CI.yaml`):
 
-    python -m flake8 anesthetic tests
+    python -m flake8 anesthetic anesthetic/gui tests
     python -m pydocstyle --convention=numpy anesthetic
     python -m pytest
 
@@ -44,28 +44,28 @@ Regenerate autodoc RSTs (only when adding modules):
 
     sphinx-apidoc -fM -t docs/templates/ -o docs/source/ anesthetic/
 
-Pre-commit hooks (`.pre-commit-config.yaml`) run flake8 + pydocstyle. Install with `pre-commit install`.
+Pre-commit hooks (`.pre-commit-config.yaml`) run flake8 over `anesthetic/` + `tests/` and pydocstyle over `anesthetic/`. Install with `pre-commit install`.
 
 ## CI matrix (what your PR must pass)
 
 CI runs on push and PR to `master` (`.github/workflows/CI.yaml`):
-- `lint`: flake8 + pydocstyle, plus a grep check that every test file using `matplotlib` defines a `close_figures_on_teardown` fixture (see below).
+- `lint`: flake8 (`anesthetic tests`) + pydocstyle (`--convention=numpy anesthetic`), plus a grep step that flags `tests/test*.py` files using `matplotlib` without a `close_figures_on_teardown` fixture.
 - `sphinx`: `make html SPHINXOPTS="-W --keep-going -n"` — warnings are errors.
 - `pip`: Python 3.10–3.14 on ubuntu, with and without `[all]` extras; plus macOS/Windows on 3.11.
 - `conda`: same Python matrix on conda-forge.
-- `minimum-dependencies` / `latest-dependencies`: pinned floors and unpinned ceilings — keep `pyproject.toml` bounds honest.
+- `minimum-dependencies` / `latest-dependencies`: pinned floors and unpinned ceilings — keep `pyproject.toml` bounds (`requires-python = ">=3.10"`, the authoritative source) honest.
 - `check-for-new-versions`: nightly cron check via `bin/check_up_to_date.py`.
 
 ## Code style
 
 - numpy-style docstrings, enforced by `pydocstyle --convention=numpy` over `anesthetic/` (not tests).
 - flake8 default config (no project-level overrides); applies to `anesthetic/` and `tests/`.
-- Public API surface is exported from `anesthetic/__init__.py` — keep it stable; deprecations raise informative `ValueError`s (see `Samples.__init__` `root=` handling) rather than silent fallthrough.
+- Public API surface is exported from `anesthetic/__init__.py` — keep it stable. Legacy/removed behaviour signals itself with a mix of `ValueError` (e.g. `Samples.__init__` `root=`), `KeyError` (e.g. `read_chains(..., burn_in=...)`), `NotImplementedError` (legacy methods around `samples.py:447-456, 770-779, 942-947, 1096-1132`), and `warnings.warn` (e.g. `samples.py:161-173, 329-343`). Match the nearby pattern rather than picking one uniformly.
 - Subclass-friendly pandas patterns: preserve `_metadata`, return the correct subclass from operations. Look at `weighted_pandas.py` for the idioms; `tests/test_pandas_consistency.py` enforces them.
 
 ## Testing conventions
 
-- Every test module that touches matplotlib must define and use a module-scoped `close_figures_on_teardown` fixture (CI greps for it). Copy the pattern from `tests/test_plot.py`.
+- Most test modules that touch matplotlib define a `close_figures_on_teardown` fixture and CI greps for it. The existing examples (`tests/test_plot.py:28`, `tests/test_reader.py:23`, `tests/test_samples.py:27`) use the default *function* scope with `autouse=True`; copy that pattern. There is one historical exception (`tests/test_boundary.py`) that the lint step does not currently fail on — do not rely on this, add the fixture for new files.
 - Optional-dependency tests use the skip/xfail helpers in `tests/utils.py` (`skipif_no_astropy`, `skipif_no_fastkde`, `skipif_no_getdist`, `skipif_no_h5py`, `pytables_mark_*`). Use these instead of bare `pytest.importorskip` so the matrix without `[all]` extras runs the xfail branch.
 - Example chain fixtures live under `tests/example_data/` (PolyChord `pc`, `pc_250`, GetDist, MultiNest, etc.). Prefer these over generating synthetic data.
 - `anesthetic.testing.assert_frame_equal` extends pandas' version to check `_metadata` round-trips; use it whenever comparing `Samples`-family frames.
@@ -73,18 +73,19 @@ CI runs on push and PR to `master` (`.github/workflows/CI.yaml`):
 
 ## Where to look for X
 
-- New plot kind: register in `anesthetic/plotting/_matplotlib/` and add docstring/tests in `tests/test_plot.py`. KDE boundary handling is in `kde.py` + `boundary.py`.
-- New chain reader: add `anesthetic/read/<format>.py` exposing `read_<format>(root, ...)`, wire it into `anesthetic/read/chain.py`'s auto-detection, add a tiny fixture under `tests/example_data/<format>/`, and extend `tests/test_reader.py`.
-- Stats/evidence/tension changes: `samples.py` (`stats`, `logZ`, `D_KL`, `_priors_pred`) and `tension.py`. Validate against `perfect_ns` analytics in `tests/test_samples.py`.
+- New plot kind: register it in `anesthetic/plotting/_matplotlib/` *and* extend the `_common_kinds` / `_series_kinds` / `_dataframe_kinds` lists plus the accessor methods on `PlotAccessor` in `anesthetic/plotting/_core.py` (~lines 30–77). Add docstring/tests in `tests/test_plot.py`. KDE itself is in `kde.py` (fastKDE + reflection) and `boundary.py` (local-linear correction for scipy KDE).
+- New chain reader: add `anesthetic/read/<format>.py` exposing `read_<format>(root, ...)`, wire it into the `readers` list in `anesthetic/read/chain.py` — *order matters*, the first reader whose `FileNotFoundError`/`IOError` does not fire wins, so a permissive new reader can shadow later ones. Add a tiny fixture under `tests/example_data/<format>/`, and extend `tests/test_reader.py`.
+- Stats/evidence/tension changes: `samples.py` (`stats`, `logZ`, `D_KL`, `d_G`, `logL_P`, plus `logX` / `logdX` / `logw` / `_betalogL`) and `tension.py`. Validate against `perfect_ns` analytics in `tests/test_samples.py`.
 - Pandas-subclass plumbing bugs: `weighted_pandas.py` / `labelled_pandas.py` / `weighted_labelled_pandas.py`, then `tests/test_pandas_consistency.py`.
 
 ## Common pitfalls
 
-- Don't import matplotlib at module top-level in new test files without the teardown fixture — CI will fail in the lint job, not pytest.
-- The plotting backend override in `__init__.py` runs unconditionally on import; if a test stubs `pandas.options.plotting.backend`, restore it.
-- Column access is two-level: `samples['x0']` works, but the column is really `('x0', '$x_0$')`. When iterating columns, use `samples.columns.get_level_values(0)`.
+- Don't import matplotlib at module top-level in new test files without the teardown fixture — the lint job is meant to catch this.
+- The plotting backend override in `__init__.py` runs unconditionally on import (and also patches `pandas.io.formats.format.DataFrameFormatter`); if a test stubs `pandas.options.plotting.backend`, restore it.
+- Column access may be two-level: when tex labels are present, `samples['x0']` works but the column is really `('x0', '$x_0$')`. When iterating columns, use `samples.columns.get_level_values(0)`.
 - Weights are stored as a pandas Index level (`weights`), not as a column. Use `samples.get_weights()` / `.set_weights()` rather than poking at the index.
-- `read_chains(root)` takes a *root* (no extension) — auto-detection probes for sibling files.
+- `read_chains(root)` normally takes a *root* (no extension) and probes for sibling files; the CSV reader is the exception — it accepts a `.csv` path explicitly (see `anesthetic/read/csv.py`).
+- HDF5 round-trip needs `anesthetic.read_hdf` (which restores `_metadata`), not `pandas.read_hdf`.
 - Minimum-deps CI is strict; if you bump a dependency, update both the floor in `pyproject.toml` and verify `bin/min_dependencies.py` resolves.
 
 ## Release / version
