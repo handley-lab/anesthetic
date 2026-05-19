@@ -67,6 +67,9 @@ def _compress_weights(kwargs, data):
 
 
 class _CompressedMPLPlot(MPLPlot):
+
+    _default_rot = None
+
     def __init__(self, data, *args, **kwargs):
         data = _compress_weights(kwargs, data)
         super().__init__(data, *args, **kwargs)

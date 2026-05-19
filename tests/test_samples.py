@@ -219,6 +219,23 @@ def test_plot_2d_kinds_multiple_calls():
                            'upper': 'scatter_2d'})
 
 
+@pytest.mark.parametrize('kind', ['kde', 'hist', 'scatter',
+                                  skipif_no_fastkde('fastkde')])
+def test_plot_2d_tick_label_rotation(kind):
+    np.random.seed(42)
+    samples = Samples(data=np.random.randn(100, 2), columns=['x', 'y'])
+    fig, axes = make_2d_axes(['x', 'y'], upper=False)
+    samples.plot_2d(axes, kind=kind)
+    for _, row in axes.iterrows():
+        for _, ax in row.items():
+            if ax is None:
+                continue
+            for axis in (ax.xaxis, ax.yaxis):
+                for lbl in axis.get_majorticklabels():
+                    if lbl.get_text():
+                        assert lbl.get_rotation() == 45
+
+
 def test_root_and_label():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')
