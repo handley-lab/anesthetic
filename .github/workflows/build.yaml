@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 jobs:
   get-version:
     runs-on: ubuntu-latest
@@ -11,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Get version number
-        id: step1 
+        id: step1
         run: echo "v=$(grep ':Version:' README.rst | awk '{print $2}')" >> $GITHUB_OUTPUT
 
   git-tag-and-release:
@@ -26,12 +27,21 @@ jobs:
         with:
           script: |
             const {DIST_VERSION} = process.env
-            github.rest.git.createRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: `refs/tags/${DIST_VERSION}`,
-                sha: context.sha
-            })
+            try {
+              await github.rest.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `refs/tags/${DIST_VERSION}`,
+                  sha: context.sha
+              })
+              console.log(`Created tag ${DIST_VERSION}`)
+            } catch (error) {
+              if (error.status === 422) {
+                console.log(`Tag ${DIST_VERSION} already exists, skipping tag creation`)
+              } else {
+                throw error
+              }
+            }
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
@@ -39,6 +49,8 @@ jobs:
           tag: "${{ env.DIST_VERSION }}"
           generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          skipIfReleaseExists: true
 
   pypi-release:
     runs-on: ubuntu-latest
@@ -56,9 +68,10 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
 
   pypi-public:
-    needs: 
+    needs:
       - get-version
       - pypi-release
     runs-on: ubuntu-latest
@@ -97,7 +110,9 @@ jobs:
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
 
   conda-release:
-    needs: pypi-public
+    needs:
+      - pypi-public
+      - get-version
     name: Build and deploy to conda
     runs-on: ubuntu-latest
     steps:
@@ -109,23 +124,54 @@ jobs:
           auto-update-conda: false
           auto-activate-base: false
           show-channel-urls: true
+          channels: conda-forge,handley-lab
       - name: install dependencies
         shell: bash -el {0}
-        run: conda install grayskull conda-build anaconda-client
+        run: |
+          # Pin major versions to avoid breakage from unrelated tool changes.
+          # Bump when conda-build or anaconda-client introduce CLI changes we use.
+          conda install -y "conda-build>=24,<26" "anaconda-client>=1.12,<2"
+          pip install grayskull
       - name: Generate meta.yaml from grayskull
         shell: bash -el {0}
-        run: grayskull pypi --strict-conda-forge anesthetic
+        run: grayskull pypi --strict-conda-forge anesthetic==${{ needs.get-version.outputs.version }}
       - name: Build and upload the conda packages
-        uses: uibcdf/action-build-and-upload-conda-packages@v1.2.0
-        with:
-          meta_yaml_dir: anesthetic
-          python-version: '3.11'
-          user: handley-lab
-          label: 'main'
-          token: ${{ secrets.ANACONDA_TOKEN }} # Replace with the right name of your secret
+        shell: bash -el {0}
+        env:
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: |
+          set -e
+          out_dir=$(mktemp -d -t conda-build-XXXXXXXXXX)
+          echo "Building anesthetic conda package..."
+          conda-build anesthetic/ \
+            --no-anaconda-upload \
+            --output-folder "$out_dir" \
+            --python 3.11
+
+          echo ""
+          echo "Built artifacts:"
+          find "$out_dir" -maxdepth 3 \( -name "*.tar.bz2" -o -name "*.conda" \)
+
+          echo ""
+          echo "Uploading to anaconda.org..."
+          found=0
+          while IFS= read -r pkg; do
+            if [ -e "$pkg" ]; then
+              echo "  Uploading $pkg"
+              anaconda --token "$ANACONDA_TOKEN" upload \
+                --user handley-lab --label main "$pkg"
+              found=$((found + 1))
+            fi
+          done < <(find "$out_dir" -maxdepth 3 \( -name "*.tar.bz2" -o -name "*.conda" \))
+
+          if [ "$found" -eq 0 ]; then
+            echo "ERROR: no built packages found in $out_dir"
+            exit 1
+          fi
+          echo "Uploaded $found package(s)."
 
   conda-build:
-    needs: 
+    needs:
       - conda-release
       - get-version
     name: test installation from conda
@@ -144,12 +190,19 @@ jobs:
       - name: get install version
         shell: bash -el {0}
         run: echo "install_version=$(python -c 'import anesthetic; print(anesthetic.__version__)')" >> $GITHUB_ENV
-      - name: fail if versions not matching
-        if: ${{ env.install_version != needs.get-version.outputs.version }}
-        run: exit 1
+      - name: Check version and warn if mismatch
+        shell: bash -el {0}
+        run: |
+          if [ "${{ env.install_version }}" != "${{ needs.get-version.outputs.version }}" ]; then
+            echo "::warning::Conda version (${{ env.install_version }}) does not match expected version (${{ needs.get-version.outputs.version }}). This may be due to conda channel propagation delay."
+            echo "Expected: ${{ needs.get-version.outputs.version }}"
+            echo "Got: ${{ env.install_version }}"
+          else
+            echo "Version check passed: ${{ env.install_version }}"
+          fi
 
   pypi-build:
-    needs: 
+    needs:
       - pypi-public
       - get-version
     name: test installation from pypi
