@@ -96,58 +96,6 @@ jobs:
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
 
-  conda-release:
-    needs: pypi-public
-    name: Build and deploy to conda
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Conda environment creation and activation
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          python-version: '3.11'
-          auto-update-conda: false
-          auto-activate-base: false
-          show-channel-urls: true
-      - name: install dependencies
-        shell: bash -el {0}
-        run: conda install grayskull conda-build anaconda-client
-      - name: Generate meta.yaml from grayskull
-        shell: bash -el {0}
-        run: grayskull pypi --strict-conda-forge anesthetic
-      - name: Build and upload the conda packages
-        uses: uibcdf/action-build-and-upload-conda-packages@v1.2.0
-        with:
-          meta_yaml_dir: anesthetic
-          python-version: '3.11'
-          user: handley-lab
-          label: 'main'
-          token: ${{ secrets.ANACONDA_TOKEN }} # Replace with the right name of your secret
-
-  conda-build:
-    needs: 
-      - conda-release
-      - get-version
-    name: test installation from conda
-    runs-on: ubuntu-latest
-    steps:
-      - name: Conda environment creation and activation
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          python-version: '3.11'
-          auto-update-conda: false
-          auto-activate-base: false
-          show-channel-urls: true
-      - name: install from conda
-        shell: bash -el {0}
-        run: conda install -c handley-lab anesthetic
-      - name: get install version
-        shell: bash -el {0}
-        run: echo "install_version=$(python -c 'import anesthetic; print(anesthetic.__version__)')" >> $GITHUB_ENV
-      - name: fail if versions not matching
-        if: ${{ env.install_version != needs.get-version.outputs.version }}
-        run: exit 1
-
   pypi-build:
     needs: 
       - pypi-public
