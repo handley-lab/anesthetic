@@ -787,6 +787,25 @@ def test_kde_plot_nplot():
     kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
 
 
+def test_kde_plot_1d_pad():
+    np.random.seed(0)
+    data = np.random.uniform(size=1000)
+
+    # pad=True: curve pinned to zero just outside the data extremes
+    fig, ax = plt.subplots()
+    line, = kde_plot_1d(ax, data, q=0, pad=True)
+    y = line.get_ydata()
+    assert y[0] == 0
+    assert y[-1] == 0
+
+    # pad=False: no zero-pinning, uniform plateau extends to the edges
+    fig, ax = plt.subplots()
+    line, = kde_plot_1d(ax, data, q=0, pad=False)
+    y = line.get_ydata()
+    assert y[0] > 0.5
+    assert y[-1] > 0.5
+
+
 @pytest.mark.parametrize('contour_plot_2d',
                          [kde_contour_plot_2d,
                           skipif_no_fastkde(fastkde_contour_plot_2d)])
