@@ -848,33 +848,43 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     i_inner = np.random.choice(i_inner, size=n_inner, replace=False, p=p)
     i = np.concatenate([i_hull, i_inner])
 
-    # Triangulate the chosen vertices.
-    tri = scaled_triangulation(x[i], y[i], cov)
+    # Triangulate the chosen vertices in whitened coords: matplotlib's
+    # Delaunay and trifinder are numerically fragile when the original (x, y)
+    # cloud is very tight or near-collinear, but in whitened space the
+    # covariance is identity so the triangulation is well-conditioned.
+    L = np.linalg.cholesky(cov)
+    Linv = np.linalg.inv(L)
+    xw, yw = Linv @ np.vstack([x, y])
+    tri_w = Triangulation(xw[i], yw[i])
 
     # For each point find corresponding triangles.
-    trifinder = tri.get_trifinder()
-    j = trifinder(x, y)
+    trifinder = tri_w.get_trifinder()
+    j = trifinder(xw, yw)
     if np.any(j < 0):
         i = np.union1d(i, np.flatnonzero(j < 0))
-        tri = scaled_triangulation(x[i], y[i], cov)
-        trifinder = tri.get_trifinder()
-        j = trifinder(x, y)
-    k = tri.triangles[j]
+        xw_i, yw_i = Linv @ np.vstack([x[i], y[i]])
+        tri_w = Triangulation(xw_i, yw_i)
+        trifinder = tri_w.get_trifinder()
+        j = trifinder(xw, yw)
+    k = tri_w.triangles[j]
 
     # Barycentric redistribution preserves total mass and local first moments.
-    ax, bx, cx = tri.x[k[:, 0]], tri.x[k[:, 1]], tri.x[k[:, 2]]
-    ay, by, cy = tri.y[k[:, 0]], tri.y[k[:, 1]], tri.y[k[:, 2]]
+    # Barycentric coords are affine-invariant, so computing them in whitened
+    # coords gives the same lambdas as in original coords.
+    ax, bx, cx = tri_w.x[k[:, 0]], tri_w.x[k[:, 1]], tri_w.x[k[:, 2]]
+    ay, by, cy = tri_w.y[k[:, 0]], tri_w.y[k[:, 1]], tri_w.y[k[:, 2]]
     e1x, e1y = bx - ax, by - ay  # edge B - A
     e2x, e2y = cx - ax, cy - ay  # edge C - A
-    epx, epy = x - ax, y - ay    # offset P - A
+    epx, epy = xw - ax, yw - ay  # offset P - A
     denom = e1x * e2y - e1y * e2x
     lam_b = (epx * e2y - epy * e2x) / denom
     lam_c = (e1x * epy - e1y * epx) / denom
     lam_a = 1 - lam_b - lam_c
-    w_ = np.zeros(len(tri.x))
+    w_ = np.zeros(len(tri_w.x))
     for vi, lam in zip(range(3), (lam_a, lam_b, lam_c)):
         np.add.at(w_, k[:, vi], w * lam)
 
+    tri = Triangulation(x[i], y[i], tri_w.triangles)
     return tri, w_
 
 
