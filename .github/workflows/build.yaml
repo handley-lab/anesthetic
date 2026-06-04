@@ -87,7 +87,7 @@ jobs:
       - name: Generate PKGBUILD
         run: python ./bin/gen_PKGBUILD.py > ./PKGBUILD
       - name: Publish AUR package
-        uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.3
         with:
           pkgname: python-anesthetic
           pkgbuild: ./PKGBUILD
