@@ -181,7 +181,7 @@ def _truncated_moments(x, cov, x_limits):
             grad[..., i] *= gaussian.cdf(v)
             hess[..., i, j] = pdf[..., i] * gaussian.pdf(v) / s
             corr_hess += corr[i, j] * hess[..., i, j]
-        hess[..., i, i] = np.where(inf_i, 0, -ui * grad[..., i]) - corr_hess
+        hess[..., i, i] = np.where(inf_i, 0.0, ui) * grad[..., i] - corr_hess
 
     # Signed corner sums give a0 and its derivatives.
     axes = tuple(range(1, d + 1))  # corner axes
