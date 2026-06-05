@@ -770,29 +770,6 @@ def iso_probability_contours_from_samples(pdf, contours=[0.95, 0.68],
     return c
 
 
-def scaled_triangulation(x, y, cov):
-    """Triangulation scaled by a covariance matrix.
-
-    Parameters
-    ----------
-    x, y : array-like
-        x and y coordinates of samples
-
-    cov : array-like, 2d
-        Covariance matrix for scaling
-
-    Returns
-    -------
-    :class:`matplotlib.tri.Triangulation`
-        Triangulation with the appropriate scaling
-    """
-    L = np.linalg.cholesky(cov)
-    Linv = np.linalg.inv(L)
-    x_, y_ = Linv.dot([x, y])
-    tri = Triangulation(x_, y_)
-    return Triangulation(x, y, tri.triangles)
-
-
 def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     """Histogram a 2D set of weighted samples via triangulation.
 
@@ -836,9 +813,18 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
             n = 'entropy'
         n = int(neff(w, beta=n))
 
+    # Work in whitened coords:
+    # matplotlib's Delaunay and trifinder are numerically fragile when the
+    # original (x, y) cloud is near-collinear, but in whitened space the
+    # covariance is identity so the triangulation is well-conditioned.
+    L = np.linalg.cholesky(cov)
+    Linv = np.linalg.inv(L)
+    x_, y_ = Linv @ np.vstack([x, y])
+
     # If no compression is needed, each vertex keeps its own weight.
     if (w != 0).sum() <= n:
-        return scaled_triangulation(x, y, cov), np.asarray(w, dtype=float)
+        tri = Triangulation(x_, y_)
+        return Triangulation(x, y, tri.triangles), np.asarray(w, dtype=float)
 
     # Keep convex hull vertices so no probability mass is lost.
     i_hull = ConvexHull(np.column_stack([x, y])).vertices
@@ -847,44 +833,36 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     p = w[i_inner] / w[i_inner].sum()
     i_inner = np.random.choice(i_inner, size=n_inner, replace=False, p=p)
     i = np.concatenate([i_hull, i_inner])
-
-    # Triangulate the chosen vertices in whitened coords: matplotlib's
-    # Delaunay and trifinder are numerically fragile when the original (x, y)
-    # cloud is very tight or near-collinear, but in whitened space the
-    # covariance is identity so the triangulation is well-conditioned.
-    L = np.linalg.cholesky(cov)
-    Linv = np.linalg.inv(L)
-    xw, yw = Linv @ np.vstack([x, y])
-    tri_w = Triangulation(xw[i], yw[i])
+    tri = Triangulation(x_[i], y_[i])
 
     # For each point find corresponding triangles.
-    trifinder = tri_w.get_trifinder()
-    j = np.asarray(trifinder(xw, yw))
+    trifinder = tri.get_trifinder()
+    j = np.asarray(trifinder(x_, y_))
     if np.any(j < 0):
         i = np.union1d(i, np.flatnonzero(j < 0))
         xw_i, yw_i = Linv @ np.vstack([x[i], y[i]])
-        tri_w = Triangulation(xw_i, yw_i)
-        trifinder = tri_w.get_trifinder()
-        j = np.asarray(trifinder(xw, yw))
-    k = tri_w.triangles[j]
+        tri = Triangulation(xw_i, yw_i)
+        trifinder = tri.get_trifinder()
+        j = np.asarray(trifinder(x_, y_))
+    k = tri.triangles[j]
 
     # Barycentric redistribution preserves total mass and local first moments.
     # Barycentric coords are affine-invariant, so computing them in whitened
     # coords gives the same lambdas as in original coords.
-    ax, bx, cx = tri_w.x[k[:, 0]], tri_w.x[k[:, 1]], tri_w.x[k[:, 2]]
-    ay, by, cy = tri_w.y[k[:, 0]], tri_w.y[k[:, 1]], tri_w.y[k[:, 2]]
+    ax, bx, cx = tri.x[k[:, 0]], tri.x[k[:, 1]], tri.x[k[:, 2]]
+    ay, by, cy = tri.y[k[:, 0]], tri.y[k[:, 1]], tri.y[k[:, 2]]
     e1x, e1y = bx - ax, by - ay  # edge B - A
     e2x, e2y = cx - ax, cy - ay  # edge C - A
-    epx, epy = xw - ax, yw - ay  # offset P - A
+    epx, epy = x_ - ax, y_ - ay  # offset P - A
     denom = e1x * e2y - e1y * e2x
     lam_b = (epx * e2y - epy * e2x) / denom
     lam_c = (e1x * epy - e1y * epx) / denom
     lam_a = 1 - lam_b - lam_c
-    w_ = np.zeros(len(tri_w.x))
+    w_ = np.zeros(len(tri.x))
     for vi, lam in zip(range(3), (lam_a, lam_b, lam_c)):
         np.add.at(w_, k[:, vi], w * lam)
 
-    tri = Triangulation(x[i], y[i], tri_w.triangles)
+    tri = Triangulation(x[i], y[i], tri.triangles)
     return tri, w_
 
 
