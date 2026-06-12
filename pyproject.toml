@@ -70,6 +70,7 @@ getdist = ["getdist"]
 hdf5 = ["tables"]
 all = ["anesthetic[ultranest]", "anesthetic[astropy]", "anesthetic[fastkde]",
        "anesthetic[getdist]", "anesthetic[hdf5]"]
+dev = ["anesthetic[all]", "anesthetic[docs]", "anesthetic[test]"]
 
 [project.scripts]
 anesthetic = "anesthetic.scripts:gui"
