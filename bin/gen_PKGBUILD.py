@@ -1,10 +1,12 @@
 import tomli
+from utils import readme_version
 
 with open("pyproject.toml", 'rb') as f:
     pyproject = tomli.load(f)
 
 description = pyproject["project"]["description"]
-version = open('anesthetic/_version.py','r').readlines()[0].split("=")[1].strip().strip("'")
+with open("README.rst") as f:
+    version = readme_version(f)
 url = pyproject["project"]["urls"]["Homepage"]
 pyproject["project"]["dependencies"]
 rel=1
