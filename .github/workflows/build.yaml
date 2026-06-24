@@ -41,9 +41,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   pypi-release:
+    needs: [get-version, git-tag-and-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.get-version.outputs.version }}
+          fetch-depth: 0
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
