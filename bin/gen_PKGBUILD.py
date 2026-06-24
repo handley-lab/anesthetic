@@ -9,7 +9,7 @@ with open("README.rst") as f:
     version = readme_version(f)
 url = pyproject["project"]["urls"]["Homepage"]
 pyproject["project"]["dependencies"]
-rel=1
+rel = 1
 
 
 PKGBUILD = """# Maintainer: Will Handley <wh260@cam.ac.uk> (aur.archlinux.org/account/wjhandley)
