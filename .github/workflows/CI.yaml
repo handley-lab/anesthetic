@@ -110,6 +110,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # so setuptools_scm can find the tags
       - name: Set up Python ${{ matrix.python-version }}
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -133,6 +135,7 @@ jobs:
         run: |
           conda install pytest pytest-cov
           conda install $(python bin/dependencies.py)
+          python -m pip install -e . --no-deps  # generate _version.py
 
       - name: Test with pytest
         shell: bash -l {0}
