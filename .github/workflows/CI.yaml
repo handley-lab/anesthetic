@@ -133,7 +133,7 @@ jobs:
       - name: Install dependencies
         shell: bash -l {0}
         run: |
-          conda install pytest pytest-cov
+          conda install pytest pytest-cov pip
           conda install $(python bin/dependencies.py)
           python -m pip install -e . --no-deps  # generate _version.py
 
