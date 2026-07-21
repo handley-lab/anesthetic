@@ -476,6 +476,36 @@ class Samples(WeightedLabelledDataFrame):
     )
 
 
+def _compute_burn_in(burn_in, chain_lengths):
+    """Compute the number of leading rows to remove from each chain."""
+    nchains = len(chain_lengths)
+    if isinstance(burn_in, (int, float)):
+        ndrop = np.full(nchains, burn_in)
+    elif isinstance(burn_in, (list, tuple, np.ndarray)) \
+            and len(burn_in) == nchains:
+        ndrop = np.array(burn_in)
+    else:
+        raise ValueError("`burn_in` has to be a scalar or an array of "
+                         "length matching the number of chains "
+                         "`nchains=%d`. However, you provided "
+                         "`burn_in=%s`" % (nchains, burn_in))
+    if np.all(np.abs(ndrop) < 1):
+        ndrop = ndrop * chain_lengths
+    ndrop = ndrop.astype(int)
+    return np.where(ndrop < 0,
+                    np.maximum(chain_lengths + ndrop, 0),
+                    np.minimum(ndrop, chain_lengths))
+
+
+def _thin_weights(weights, thin):
+    """Thin integer frequency weights without expanding the samples."""
+    if not isinstance(thin, (int, np.integer)) or thin < 1:
+        raise ValueError("`thin` must be a positive integer.")
+    end = np.cumsum(weights)
+    start = end - weights
+    return (end - 1) // thin - (start - 1) // thin
+
+
 class MCMCSamples(Samples):
     """Storage and plotting tools for MCMC samples.
 
@@ -537,27 +567,44 @@ class MCMCSamples(Samples):
         """
         chains = self.groupby(('chain', '$n_\\mathrm{chain}$'), sort=False,
                               group_keys=False)
-        nchains = chains.ngroups
-        if isinstance(burn_in, (int, float)):
-            ndrop = np.full(nchains, burn_in)
-        elif isinstance(burn_in, (list, tuple, np.ndarray)) \
-                and len(burn_in) == nchains:
-            ndrop = np.array(burn_in)
-        else:
-            raise ValueError("`burn_in` has to be a scalar or an array of "
-                             "length matching the number of chains "
-                             "`nchains=%d`. However, you provided "
-                             "`burn_in=%s`" % (nchains, burn_in))
-        if np.all(np.abs(ndrop) < 1):
-            nsamples = chains.count().iloc[:, 0].to_numpy()
-            ndrop = ndrop * nsamples
-        ndrop = ndrop.astype(int)
-        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1]),
+        chain_lengths = chains.count().iloc[:, 0]
+        ndrop = dict(zip(
+            chain_lengths.index,
+            _compute_burn_in(burn_in, chain_lengths.to_numpy())
+        ))
+        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name]),
                                       include_groups=False).index,
                          inplace=inplace)
         if reset_index:
             data = data.reset_index(drop=True, inplace=inplace)
         return data
+
+    def thin(self, thin, inplace=False):
+        """Thin each MCMC chain, accounting for integer frequency weights.
+
+        Parameters
+        ----------
+        thin : int
+            Keep every ``thin``-th sample in the expanded MCMC chains
+            represented by the integer weights.
+
+        inplace : bool, default=False
+            Indicates whether to modify the existing array or return a copy.
+
+        """
+        weights = self.get_weights()
+        selected_weights = np.empty_like(weights)
+        chains = self.groupby(('chain', '$n_\\mathrm{chain}$'), sort=False)
+        for index in chains.indices.values():
+            selected_weights[index] = _thin_weights(weights[index], thin)
+
+        mask = selected_weights > 0
+        samples = self[mask]
+        samples.set_weights(selected_weights[mask], inplace=True)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples
 
     def Gelman_Rubin(self, params=None, per_param=False):
         """Gelman--Rubin convergence statistic of multiple MCMC chains.

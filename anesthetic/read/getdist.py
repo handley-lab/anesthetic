@@ -69,7 +69,7 @@ def read_getdist(root, *args, **kwargs):
         mcmc = MCMCSamples(data=data, columns=columns,
                            weights=weights.flatten(), logL=-minuslogL,
                            labels=labels, *args, **kwargs)
-        mcmc['chain'] = int(i) if i else np.nan
+        mcmc['chain'] = int(i or 0)
         samples.append(mcmc)
 
     samples = concat(samples)
