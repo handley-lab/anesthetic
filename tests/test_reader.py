@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
 from anesthetic.testing import assert_frame_equal
 from anesthetic import MCMCSamples, NestedSamples
-from anesthetic import read_chains
+from anesthetic import read_chains, read_parameters
 from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya
@@ -24,6 +24,32 @@ import io
 def close_figures_on_teardown():
     yield
     plt.close("all")
+
+
+@pytest.mark.parametrize('root', ['gd', 'pc', 'mn'])
+def test_read_parameters_getdist(root):
+    parameters = read_parameters(Path('./tests/example_data') / root)
+    assert parameters == ['x0', 'x1', 'x2', 'x3', 'x4']
+
+
+def test_read_parameters_cobaya():
+    parameters = read_parameters('./tests/example_data/cb')
+    assert parameters == ['x0', 'x1', 'minuslogprior', 'minuslogprior__0',
+                          'chi2', 'chi2__norm']
+
+
+def test_read_parameters_fail():
+    with pytest.raises(FileNotFoundError):
+        read_parameters('./tests/example_data/foo')
+
+
+def test_read_parameters_falls_back_to_getdist_for_numeric_header(tmp_path):
+    root = tmp_path / 'chain'
+    # GetDist accepts <root>.1.txt as well as <root>_1.txt, which overlaps
+    # Cobaya's naming convention. Its numeric first row is not a Cobaya header.
+    root.with_suffix('.1.txt').write_text('1 2 3 4\n')
+    root.with_suffix('.paramnames').write_text('x0 x_0\nx1 x_1\n')
+    assert read_parameters(root) == ['x0', 'x1']
 
 
 def test_read_getdist():

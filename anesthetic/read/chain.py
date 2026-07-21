@@ -1,11 +1,48 @@
 """Read MCMCSamples or NestedSamples from any chains."""
 from anesthetic.read.polychord import read_polychord
-from anesthetic.read.getdist import read_getdist
-from anesthetic.read.cobaya import read_cobaya
+from anesthetic.read.getdist import (
+    read_getdist, read_paramnames as read_getdist_paramnames
+)
+from anesthetic.read.cobaya import (
+    read_cobaya, read_paramnames as read_cobaya_paramnames
+)
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 from anesthetic.read.nestedfit import read_nestedfit
 from anesthetic.read.csv import read_csv
+
+
+def read_parameters(root):
+    """Read parameter names without loading samples into memory.
+
+    Parameter discovery is supported for Cobaya chain headers and GetDist
+    ``.paramnames`` files. The latter also covers formats such as PolyChord
+    and MultiNest that use GetDist parameter metadata.
+
+    Parameters
+    ----------
+    root : str, pathlib.Path
+        Root name for reading chain metadata.
+
+    Returns
+    -------
+    list of str
+        Parameter names in file order, excluding sampler bookkeeping columns.
+
+    """
+    root = str(root)
+    errors = []
+    readers = [read_cobaya_paramnames, read_getdist_paramnames]
+    for read in readers:
+        try:
+            parameters, _ = read(root)
+            if parameters is not None:
+                return parameters
+        except (FileNotFoundError, IOError) as error:
+            errors.append(str(read) + ": " + str(error))
+
+    errors = ["Could not find any compatible parameter metadata:"] + errors
+    raise FileNotFoundError('\n'.join(errors))
 
 
 def read_chains(root, *args, **kwargs):

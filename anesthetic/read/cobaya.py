@@ -24,8 +24,11 @@ def read_paramnames(root):
     will be used as handles in the pandas array.
     """
     with open(root + ".1.txt") as f:
-        header = f.readline()[1:]
-        paramnames = header.split()[2:]
+        header = f.readline().lstrip()
+        fields = header[1:].split() if header.startswith('#') else []
+        if fields[:2] != ['weight', 'minuslogpost']:
+            raise IOError(root + ".1.txt has no Cobaya chain header.")
+        paramnames = fields[2:]
         try:
             from getdist.cobaya_interface import cobaya_params_file
             from getdist.paramnames import ParamNames
