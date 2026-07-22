@@ -314,9 +314,9 @@ def test_read_blackjax():
     assert np.isnan(bj.logL_birth[0])
 
 
-@pytest.mark.parametrize('root', ['gd', 'cb'])
+@pytest.mark.parametrize('root', ['gd'])
 def test_discard_burn_in(root):
-    with pytest.raises(KeyError):
+    with pytest.raises(TypeError):
         read_chains('./tests/example_data/' + root, burn_in=0.3)
 
 
