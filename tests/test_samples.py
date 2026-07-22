@@ -721,6 +721,31 @@ def test_mcmc_stats():
         mcmc.remove_burn_in(burn_in=[1, 2, 3])
 
 
+@pytest.mark.parametrize('burn_in', [None, 0.1, 1/3, 0.5])
+@pytest.mark.parametrize('thin', [None, 2, 3, 10])
+def test_mcmc_remove_burn_in_and_thin_by_chain(burn_in, thin):
+    mcmc = read_chains('./tests/example_data/cb').drop_labels()
+
+    # burn in
+    chain_lengths = mcmc.groupby('chain', sort=False).size().to_numpy()
+    mcmc = mcmc.remove_burn_in(burn_in)
+    burn_in = 0 if burn_in is None else burn_in
+    expected_lengths = chain_lengths - (burn_in * chain_lengths).astype(int)
+    realised_lengths = mcmc.groupby('chain', sort=False).size().to_numpy()
+    assert_array_equal(realised_lengths, expected_lengths)
+
+    # thinning
+    chain_weights = np.array([chain.get_weights().sum()
+                              for _, chain in mcmc.groupby('chain')])
+    assert np.all(mcmc.get_weights() > 0)  # all weights are positive
+    mcmc = mcmc.thin(thin)
+    thin = 1 if thin is None else thin  # only valid if all weights positive
+    expected_weights = np.ceil(chain_weights / thin)
+    realised_weights = np.array([chain.get_weights().sum()
+                                 for _, chain in mcmc.groupby('chain')])
+    assert_array_equal(realised_weights, expected_weights)
+
+
 def test_logX():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')

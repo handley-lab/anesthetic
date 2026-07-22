@@ -549,9 +549,10 @@ class MCMCSamples(Samples):
 
         Parameters
         ----------
-        burn_in : int or float or array_like
+        burn_in : int, float, array-like, or None
             Fraction or number of samples to remove or keep:
 
+            * ``if burn_in is None``: remove no samples
             * ``if 0 < burn_in < 1``: remove first fraction of samples
             * ``elif 1 < burn_in``: remove first number of samples
             * ``elif -1 < burn_in < 0``: keep last fraction of samples
@@ -565,9 +566,13 @@ class MCMCSamples(Samples):
             Indicates whether to modify the existing array or return a copy.
 
         """
-        chains = self.groupby(('chain', '$n_\\mathrm{chain}$'), sort=False,
-                              group_keys=False)
-        chain_lengths = chains.count().iloc[:, 0]
+        if burn_in is None:
+            if reset_index:
+                return self.reset_index(drop=True, inplace=inplace)
+            return None if inplace else self.copy()
+
+        chains = self.groupby(self['chain'], sort=False, group_keys=False)
+        chain_lengths = chains.size()
         ndrop = dict(zip(
             chain_lengths.index,
             _compute_burn_in(burn_in, chain_lengths.to_numpy())
@@ -584,17 +589,21 @@ class MCMCSamples(Samples):
 
         Parameters
         ----------
-        thin : int
+        thin : int or None
             Keep every ``thin``-th sample in the expanded MCMC chains
-            represented by the integer weights.
+            represented by the integer weights. ``None`` leaves the samples
+            unthinned.
 
         inplace : bool, default=False
             Indicates whether to modify the existing array or return a copy.
 
         """
+        if thin is None:
+            return None if inplace else self.copy()
+
         weights = self.get_weights()
         selected_weights = np.empty_like(weights)
-        chains = self.groupby(('chain', '$n_\\mathrm{chain}$'), sort=False)
+        chains = self.groupby(self['chain'], sort=False)
         for index in chains.indices.values():
             selected_weights[index] = _thin_weights(weights[index], thin)
 
