@@ -65,6 +65,16 @@ out the examples listed here.
       from anesthetic import read_chains
       samples = read_chains("anesthetic/tests/example_data/cb").remove_burn_in(burn_in=0.1)
 
+  Pass parameter names to ``columns`` to avoid loading unneeded columns into
+  memory. Lists of integer positions and slices index the names returned by
+  :func:`anesthetic.read.chain.read_parameters`. Weights, ``chi2``, and the
+  generated ``logP``, ``logL``, and ``chain`` columns are included
+  automatically:
+
+  ::
+
+      samples = read_chains("anesthetic/tests/example_data/cb", columns=["x0", "x1"])
+
 
 .. _passing data:
 

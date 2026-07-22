@@ -3,6 +3,7 @@ from itertools import compress, islice
 import os
 import re
 import numpy as np
+from anesthetic.read._utils import normalise_columns
 from anesthetic.samples import MCMCSamples, _compute_burn_in, _thin_weights
 
 
@@ -45,7 +46,7 @@ def read_paramnames(root):
             return paramnames, {}
 
 
-def read_cobaya(root, *args, burn_in=None, thin=None, **kwargs):
+def read_cobaya(root, *args, columns=None, burn_in=None, thin=None, **kwargs):
     """Read Cobaya yaml files.
 
     Note that in order to optimally read chains from Cobaya you need to have
@@ -56,6 +57,16 @@ def read_cobaya(root, *args, burn_in=None, thin=None, **kwargs):
     root : str
         root name for reading files in Cobaya format, i.e. the files
         ``<root>.*.txt`` and ``<root>.updated.yaml``.
+
+    columns : list[str], list[int], or slice, optional
+        Optionally select which parameter columns to load from the chain files.
+        This is useful when you do not want to load a large number of nuisance
+        parameters into memory. Integer positions and slices index the
+        parameter names returned by
+        :func:`anesthetic.read.chain.read_parameters`, not the leading weight
+        and minus-log-posterior columns in the chain file. Weights and the
+        ``chi2``, ``logP``, ``logL``, and ``chain`` columns are always
+        included.
 
     burn_in : int, float or array-like, optional
         Number or fraction of stored rows to remove from each chain before
@@ -82,10 +93,20 @@ def read_cobaya(root, *args, burn_in=None, thin=None, **kwargs):
         raise FileNotFoundError(dirname + '/' + regex + " not found.")
     chain_files.sort(key=lambda chain_file: int(chain_file[0]))
 
-    columns, labels = read_paramnames(root)
-    columns = kwargs.pop('columns', columns)
+    parameters, labels = read_paramnames(root)
+    column_indices, columns = normalise_columns(columns, parameters)
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
+
+    if column_indices is None:
+        usecols = None
+    else:
+        chi2_index = parameters.index('chi2')
+        if not any(index == chi2_index and column == 'chi2'
+                   for index, column in zip(column_indices, columns)):
+            column_indices = column_indices + [chi2_index]
+            columns = columns + ['chi2']
+        usecols = [0, 1] + [index + 2 for index in column_indices]
 
     chain_lengths = np.array([_count_samples(file)
                               for _, file in chain_files])
@@ -117,13 +138,14 @@ def read_cobaya(root, *args, burn_in=None, thin=None, **kwargs):
             chain_files, ndrop, selected_lengths)):
         stop = start + selected
         if thin is None:
-            chain_data = np.loadtxt(chain_file, skiprows=skip+1, ndmin=2)
+            chain_data = np.loadtxt(chain_file, skiprows=skip+1,
+                                    usecols=usecols, ndmin=2)
             weights[start:stop] = chain_data[:, 0]
         else:
             mask = selected_weights[j] > 0
             with open(chain_file) as file:
                 lines = compress(islice(file, skip+1, None), mask)
-                chain_data = np.loadtxt(lines, ndmin=2)
+                chain_data = np.loadtxt(lines, usecols=usecols, ndmin=2)
             weights[start:stop] = selected_weights[j][mask]
         minuslogP[start:stop] = chain_data[:, 1]
         data[start:stop] = chain_data[:, 2:]

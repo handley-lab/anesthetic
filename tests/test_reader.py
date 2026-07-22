@@ -134,6 +134,49 @@ def test_read_cobayamcmc():
         assert_array_almost_equal(mcmc.logL, -g.getParams().chi2/2, decimal=15)
 
 
+@pytest.mark.parametrize(('columns', 'parameters'), [
+    ('x0', ['x0']),                    # scalar name
+    (0, ['x0']),                       # scalar index
+    (np.int64(0), ['x0']),             # scalar numpy index
+    (['x1', 'x0'], ['x1', 'x0']),      # reordered names
+    ([1, 0], ['x1', 'x0']),            # reordered indices
+    (np.int32([1, 0]), ['x1', 'x0']),  # reordered numpy indices
+    (['x0', 'x0'], ['x0', 'x0']),      # repeated names
+    ([0, 0], ['x0', 'x0']),            # repeated indices
+    (slice(0, 2), ['x0', 'x1']),       # slice
+    (['chi2'], ['chi2']),              # explicitly selected chi2
+    ([-5], ['x1']),                    # negative index
+    ([], []),                          # empty selection
+])
+def test_read_cobaya_columns(columns, parameters):
+    root = './tests/example_data/cb'
+    if 'chi2' not in parameters:
+        parameters = parameters + ['chi2']
+    expected = read_chains(root)[parameters + ['logP', 'logL', 'chain']]
+    selected = read_chains(root, columns=columns)
+    assert_frame_equal(selected, expected)
+
+
+def test_read_cobaya_columns_with_burn_in_and_thin():
+    root = './tests/example_data/cb'
+    params = ['x0', 'chi2', 'logP', 'logL', 'chain']
+    expected = read_chains(root, burn_in=0.5, thin=2)[params]
+    selected = read_chains(root, burn_in=0.5, thin=2, columns=['x0'])
+    assert_frame_equal(selected, expected)
+
+
+@pytest.mark.parametrize(('columns', 'error'), [
+    (['x0', 'missing'], KeyError),      # unknown name
+    ([0, 10], IndexError),              # out-of-range index
+    ([True, False, False], TypeError),  # boolean input
+    (1.5, TypeError),                   # unsupported scalar
+    ([0, 'x1'], TypeError),             # mixed selector types
+])
+def test_read_cobaya_columns_invalid(columns, error):
+    with pytest.raises(error):
+        read_cobaya('./tests/example_data/cb', columns=columns)
+
+
 def test_read_montepython():
     np.random.seed(3)
     root = './tests/example_data/mp/2019-01-24_200000_'

@@ -67,8 +67,16 @@ def read_chains(root, *args, **kwargs):
     root : str, pathlib.Path
         root name for reading files
 
+    columns : list[str], list[int], or slice, optional
+        For Cobaya chains, optionally select which parameter columns to load
+        from the chain files. This is useful when you do not want to load a
+        large number of nuisance parameters into memory. Integer positions and
+        slices index the parameter names returned by :func:`read_parameters`.
+        Weights and the ``chi2``, ``logP``, ``logL``, and ``chain`` columns are
+        always included.
+
     *args, **kwargs:
-        Passed onto ``NestedSamples`` or ``MCMCSamples``. Check their
+        Passed on to ``NestedSamples`` or ``MCMCSamples``. Check their
         docstrings for more information.
 
     Returns
