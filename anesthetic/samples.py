@@ -506,6 +506,16 @@ def _thin_weights(weights, thin):
     return (end - 1) // thin - (start - 1) // thin
 
 
+def _compress_consecutive_duplicates(data, weights):
+    """Find consecutive duplicate rows and sum their weights."""
+    if len(data) < 2:
+        return np.arange(len(data)), weights.copy()
+
+    duplicate = np.all(data[1:] == data[:-1], axis=1)
+    indices = np.flatnonzero(np.r_[True, ~duplicate])
+    return indices, np.add.reduceat(weights, indices)
+
+
 class MCMCSamples(Samples):
     """Storage and plotting tools for MCMC samples.
 
@@ -610,6 +620,36 @@ class MCMCSamples(Samples):
         mask = selected_weights > 0
         samples = self[mask]
         samples.set_weights(selected_weights[mask], inplace=True)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples
+
+    def compress_consecutive_duplicates(self, inplace=False):
+        """Merge consecutive duplicate rows by summing their weights.
+
+        Oversampling nuisance parameters can leave selected parameters of
+        interest unchanged across consecutive samples. After selecting these
+        parameters, this method merges the repeated rows. Rows are compared
+        across all columns in the current samples. Retain the ``chain`` column
+        to prevent merging rows from different chains.
+
+        Parameters
+        ----------
+        inplace : bool, default=False
+            Indicates whether to modify the existing array or return a copy.
+
+        Returns
+        -------
+        MCMCSamples or None
+            Compressed samples, or ``None`` if ``inplace=True``.
+
+        """
+        indices, weights = _compress_consecutive_duplicates(
+            self.to_numpy(), self.get_weights()
+        )
+        samples = self.iloc[indices]
+        samples.set_weights(weights, inplace=True)
         if inplace:
             self._update_inplace(samples)
         else:

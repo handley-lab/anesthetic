@@ -746,6 +746,25 @@ def test_mcmc_remove_burn_in_and_thin_by_chain(burn_in, thin):
     assert_array_equal(realised_weights, expected_weights)
 
 
+def test_mcmc_compress_consecutive_duplicates():
+    samples = MCMCSamples(
+        data=[[0, 1], [0, 1], [1, 2], [0, 1], [0, 1]],
+        columns=['p0', 'p1'], weights=[1, 2, 3, 4, 5],
+        labels=['$p_0$', '$p_1$']
+    )
+    compressed = samples.compress_consecutive_duplicates()
+
+    assert len(samples) == 5
+    assert len(compressed) == 3
+    assert_array_equal(compressed.to_numpy(), [[0, 1], [1, 2], [0, 1]])
+    assert_array_equal(compressed.get_weights(), [3, 3, 9])
+    assert_array_equal(compressed.get_labels(), ['$p_0$', '$p_1$'])
+
+    returned = samples.compress_consecutive_duplicates(inplace=True)
+    assert returned is None
+    assert_frame_equal(samples, compressed)
+
+
 def test_logX():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')
