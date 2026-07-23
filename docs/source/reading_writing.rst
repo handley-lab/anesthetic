@@ -67,13 +67,33 @@ out the examples listed here.
 
   Pass parameter names to ``columns`` to avoid loading unneeded columns into
   memory. Lists of integer positions and slices index the names returned by
-  :func:`anesthetic.read.chain.read_parameters`. Weights, ``chi2``, and the
-  generated ``logP``, ``logL``, and ``chain`` columns are included
-  automatically:
+  :func:`anesthetic.read.chain.read_parameters`. By default, weights,
+  ``chi2``, ``logP``, and the generated ``logL`` and ``chain`` columns are
+  included automatically:
 
   ::
 
       samples = read_chains("anesthetic/tests/example_data/cb", columns=["x0", "x1"])
+
+  MCMC samplers may oversample nuisance parameters, leaving the selected
+  parameters of interest unchanged across consecutive samples. After selecting
+  only those parameters, the repeated rows can be merged by summing their
+  weights. Burn-in removal and thinning happen before this compression,
+  separately for each chain. In this mode only the selected columns and
+  ``chain`` are returned, while weights are retained:
+
+  ::
+
+      samples = read_chains(
+          "anesthetic/tests/example_data/cb",
+          columns=["x0", "x1"],
+          burn_in=0.1,
+          thin=2,
+          compress_consecutive_duplicates=True,
+      )
+
+  Compression is performed after loading each selected chain file, so peak
+  memory still includes one uncompressed selected chain.
 
 
 .. _passing data:

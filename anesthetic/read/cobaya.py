@@ -4,7 +4,8 @@ import os
 import re
 import numpy as np
 from anesthetic.read._utils import normalise_columns
-from anesthetic.samples import MCMCSamples, _compute_burn_in, _thin_weights
+from anesthetic.samples import (MCMCSamples, _compute_burn_in, _thin_weights,
+                                _compress_consecutive_duplicates)
 
 
 def _count_samples(filename):
@@ -46,7 +47,8 @@ def read_paramnames(root):
             return paramnames, {}
 
 
-def read_cobaya(root, *args, columns=None, burn_in=None, thin=None, **kwargs):
+def read_cobaya(root, *args, columns=None, burn_in=None, thin=None,
+                compress_consecutive_duplicates=False, **kwargs):
     """Read Cobaya yaml files.
 
     Note that in order to optimally read chains from Cobaya you need to have
@@ -64,8 +66,7 @@ def read_cobaya(root, *args, columns=None, burn_in=None, thin=None, **kwargs):
         parameters into memory. Integer positions and slices index the
         parameter names returned by
         :func:`anesthetic.read.chain.read_parameters`, not the leading weight
-        and minus-log-posterior columns in the chain file. Weights and the
-        ``chi2``, ``logP``, ``logL``, and ``chain`` columns are always
+        and minus-log-posterior columns in the chain file. Weights are always
         included.
 
     burn_in : int, float or array-like, optional
@@ -76,6 +77,15 @@ def read_cobaya(root, *args, columns=None, burn_in=None, thin=None, **kwargs):
     thin : int, optional
         Keep every ``thin``-th sample in the expanded MCMC chain represented
         by the integer weights.
+
+    compress_consecutive_duplicates : bool, default=False
+        Oversampling nuisance parameters can leave the selected parameters of
+        interest unchanged across consecutive samples. Merge these repeated
+        rows by summing their weights. Compression happens separately for each
+        chain, after burn-in removal and thinning. If ``False``, ``chi2`` is
+        loaded and ``logP`` and ``logL`` are calculated in addition to the
+        selected columns. If ``True``, only the selected columns and ``chain``
+        are returned.
 
     Returns
     -------
@@ -98,9 +108,14 @@ def read_cobaya(root, *args, columns=None, burn_in=None, thin=None, **kwargs):
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
-    if column_indices is None:
+    if column_indices is None and compress_consecutive_duplicates:
+        usecols = [0] + list(range(2, len(parameters) + 2))
+    elif column_indices is None:
         usecols = None
+    elif compress_consecutive_duplicates:
+        usecols = [0] + [index + 2 for index in column_indices]
     else:
+        # need to include `chi2` for `logL` computation
         chi2_index = parameters.index('chi2')
         if not any(index == chi2_index and column == 'chi2'
                    for index, column in zip(column_indices, columns)):
@@ -116,6 +131,7 @@ def read_cobaya(root, *args, columns=None, burn_in=None, thin=None, **kwargs):
         ndrop = _compute_burn_in(burn_in, chain_lengths)
     selected_lengths = chain_lengths - ndrop
     selected_weights = []
+    # Pre-compute thinned weights to determine the required allocation size.
     if thin is not None:
         for j, ((_, chain_file), skip, selected) in enumerate(zip(
                 chain_files, ndrop, selected_lengths)):
@@ -127,6 +143,7 @@ def read_cobaya(root, *args, columns=None, burn_in=None, thin=None, **kwargs):
             ))
             selected_lengths[j] = np.count_nonzero(selected_weights[-1])
 
+    # Preallocate for all post-thinning rows; compression may use fewer rows.
     nsamples = sum(selected_lengths)
     data = np.empty((nsamples, len(columns)))
     weights = np.empty(nsamples, dtype=int)
@@ -136,28 +153,54 @@ def read_cobaya(root, *args, columns=None, burn_in=None, thin=None, **kwargs):
     start = 0
     for j, ((i, chain_file), skip, selected) in enumerate(zip(
             chain_files, ndrop, selected_lengths)):
+        if selected == 0:
+            continue
+
         stop = start + selected
         if thin is None:
+            # Fast path: load each chain in a single pass.
             chain_data = np.loadtxt(chain_file, skiprows=skip+1,
                                     usecols=usecols, ndmin=2)
             weights[start:stop] = chain_data[:, 0]
         else:
+            # Load only the rows retained by the preceding weights-only pass.
             mask = selected_weights[j] > 0
             with open(chain_file) as file:
                 lines = compress(islice(file, skip+1, None), mask)
                 chain_data = np.loadtxt(lines, usecols=usecols, ndmin=2)
             weights[start:stop] = selected_weights[j][mask]
-        minuslogP[start:stop] = chain_data[:, 1]
-        data[start:stop] = chain_data[:, 2:]
-        chains[start:stop] = int(i) if i else np.nan
+
+        if compress_consecutive_duplicates:
+            indices, compressed_weights = (
+                _compress_consecutive_duplicates(
+                    chain_data[:, 1:], weights[start:stop]
+                )
+            )
+            compressed_data = chain_data[indices, 1:]
+            stop = start + len(compressed_data)
+            data[start:stop] = compressed_data
+            weights[start:stop] = compressed_weights
+        else:
+            minuslogP[start:stop] = chain_data[:, 1]
+            data[start:stop] = chain_data[:, 2:]
+
+        chains[start:stop] = int(i)
         start = stop
+
+    # Remove rows left unused by compression.
+    if start < nsamples:
+        data.resize((start, len(columns)))
+        weights.resize(start)
+        minuslogP.resize(start)
+        chains.resize(start)
 
     samples = MCMCSamples(data=data, columns=columns, weights=weights,
                           labels=labels, *args, **kwargs)
-    samples['logP'] = -minuslogP
-    samples.set_label('logP', '$\\ln\\mathcal{P}$')
-    samples['logL'] = -samples['chi2'] / 2
-    samples.set_label('logL', '$\\ln\\mathcal{L}$')
+    if not compress_consecutive_duplicates:
+        samples['logP'] = -minuslogP
+        samples.set_label('logP', '$\\ln\\mathcal{P}$')
+        samples['logL'] = -samples['chi2'] / 2
+        samples.set_label('logL', '$\\ln\\mathcal{L}$')
     samples['chain'] = chains
     samples.set_label('chain', r'$n_\mathrm{chain}$')
     samples.root = root

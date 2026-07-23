@@ -26,6 +26,24 @@ def close_figures_on_teardown():
     plt.close("all")
 
 
+@pytest.fixture
+def cobaya_duplicates_root(tmp_path):
+    root = tmp_path / 'duplicates'
+    root.with_suffix('.1.txt').write_text(
+        '# weight    minuslogpost    p0    p1    n0    n1    chi2\n'
+        '       2              10     0     0     0    10      20\n'
+        '       3              11     0     0     1    11      22\n'
+        '       1              12     1     1     2    12      24\n'
+        '       4              13     0     0     3    13      26\n'
+    )
+    root.with_suffix('.2.txt').write_text(
+        '# weight    minuslogpost    p0    p1    n0    n1    chi2\n'
+        '       5              10     0     0     4    14      20\n'
+        '       1              11     0     0     5    15      22\n'
+    )
+    return str(root)
+
+
 @pytest.mark.parametrize('root', ['gd', 'pc', 'mn'])
 def test_read_parameters_getdist(root):
     parameters = read_parameters(Path('./tests/example_data') / root)
@@ -175,6 +193,70 @@ def test_read_cobaya_columns_with_burn_in_and_thin():
 def test_read_cobaya_columns_invalid(columns, error):
     with pytest.raises(error):
         read_cobaya('./tests/example_data/cb', columns=columns)
+
+
+def test_read_cobaya_compress_consecutive_duplicates(cobaya_duplicates_root):
+    samples = read_chains(cobaya_duplicates_root, columns=['p0', 'p1'],
+                          compress_consecutive_duplicates=True)
+    assert_array_equal(samples.drop_labels().columns, ['p0', 'p1', 'chain'])
+    assert_array_equal(samples[['p0', 'p1']], [[0, 0], [1, 1], [0, 0], [0, 0]])
+    assert_array_equal(samples.chain, [1, 1, 1, 2])
+    assert_array_equal(samples.get_weights(), [5, 1, 4, 6])
+
+
+def test_read_cobaya_compress_all_and_no_columns(cobaya_duplicates_root):
+    all_columns = read_cobaya(cobaya_duplicates_root,
+                              compress_consecutive_duplicates=True)
+    assert_array_equal(all_columns.drop_labels().columns,
+                       ['p0', 'p1', 'n0', 'n1', 'chi2', 'chain'])
+    assert len(all_columns) == 6
+    assert 'logP' not in all_columns
+    assert 'logL' not in all_columns
+
+    no_columns = read_cobaya(cobaya_duplicates_root, columns=[],
+                             compress_consecutive_duplicates=True)
+    assert_array_equal(no_columns.drop_labels().columns, ['chain'])
+    assert_array_equal(no_columns.chain, [1, 2])
+    assert_array_equal(no_columns.get_weights(), [10, 6])
+
+
+def test_read_cobaya_compress_after_burn_in_and_thin(cobaya_duplicates_root):
+    samples = read_cobaya(cobaya_duplicates_root, columns=['p0', 'p1'],
+                          burn_in=[1, 0], thin=2,
+                          compress_consecutive_duplicates=True)
+    # Thinning removes the intervening (p0, p1)=(1, 1) row before compression.
+    assert_array_equal(samples[['p0', 'p1']], [[0, 0], [0, 0]])
+    assert_array_equal(samples.chain, [1, 2])
+    assert_array_equal(samples.get_weights(), [4, 3])
+
+
+@pytest.mark.parametrize(('compress_duplicates', 'weights'),
+                         [(False, [5, 1]),
+                          (True, [6])])
+def test_read_cobaya_empty_chain_after_burn_in(cobaya_duplicates_root,
+                                               compress_duplicates, weights):
+    samples = read_cobaya(cobaya_duplicates_root,
+                          columns=['p0', 'p1'],
+                          burn_in=[4, 0],
+                          compress_consecutive_duplicates=compress_duplicates)
+    # Burn-in removes every stored row from the first chain.
+    assert_array_equal(samples.chain, np.full(len(weights), 2))
+    assert_array_equal(samples.get_weights(), weights)
+
+
+def test_read_cobaya_compressed_and_uncompressed_thinning_match(
+        cobaya_duplicates_root
+):
+    # uncompressed
+    u = read_cobaya(cobaya_duplicates_root, columns=['p0', 'p1']).thin(2)
+    u = u[['p0', 'p1', 'chain']]
+    # compressed
+    c = read_cobaya(cobaya_duplicates_root, columns=['p0', 'p1'],
+                    compress_consecutive_duplicates=True).thin(2)
+    # Expand frequency weights before comparison:
+    u = np.repeat(u.to_numpy(), u.get_weights(), axis=0)
+    c = np.repeat(c.to_numpy(), c.get_weights(), axis=0)
+    assert_array_equal(c, u)
 
 
 def test_read_montepython():

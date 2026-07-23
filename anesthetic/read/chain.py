@@ -72,8 +72,16 @@ def read_chains(root, *args, **kwargs):
         from the chain files. This is useful when you do not want to load a
         large number of nuisance parameters into memory. Integer positions and
         slices index the parameter names returned by :func:`read_parameters`.
-        Weights and the ``chi2``, ``logP``, ``logL``, and ``chain`` columns are
-        always included.
+
+    compress_consecutive_duplicates : bool, default=False
+        For Cobaya chains, oversampling nuisance parameters can leave the
+        selected parameters of interest unchanged across consecutive samples.
+        Merge these repeated rows by summing their weights. This happens after
+        read-time burn-in removal and thinning, and separately for each chain.
+        If ``False``, ``chi2`` is loaded and ``logP`` and ``logL`` are
+        calculated in addition to the selected columns. If ``True``, only the
+        selected columns and ``chain`` are returned. Weights are always
+        retained.
 
     *args, **kwargs:
         Passed on to ``NestedSamples`` or ``MCMCSamples``. Check their
