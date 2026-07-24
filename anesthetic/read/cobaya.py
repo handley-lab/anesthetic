@@ -199,7 +199,7 @@ def read_cobaya(root, *args, columns=None, burn_in=None, thin=None,
     if not compress_consecutive_duplicates:
         samples['logP'] = -minuslogP
         samples.set_label('logP', '$\\ln\\mathcal{P}$')
-        samples['logL'] = -samples['chi2'] / 2
+        samples['logL'] = -data[:, columns.index('chi2')] / 2
         samples.set_label('logL', '$\\ln\\mathcal{L}$')
     samples['chain'] = chains
     samples.set_label('chain', r'$n_\mathrm{chain}$')
