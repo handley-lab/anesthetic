@@ -10,7 +10,7 @@ from anesthetic import MCMCSamples, NestedSamples
 from anesthetic import read_chains, read_parameters
 from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
-from anesthetic.read.cobaya import read_cobaya
+from anesthetic.read.cobaya import read_cobaya, _count_samples
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 from anesthetic.read.nestedfit import read_nestedfit
@@ -54,6 +54,20 @@ def test_read_parameters_cobaya():
     parameters = read_parameters('./tests/example_data/cb')
     assert parameters == ['x0', 'x1', 'minuslogprior', 'minuslogprior__0',
                           'chi2', 'chi2__norm']
+
+
+@pytest.mark.parametrize(('content', 'expected'), [
+    ('# header\n', 0),                     # no samples
+    ('# a b\n  1 2\n  3 4\n  5 6\n', 3),   # fixed-width rows
+    ('# a b\n  1 2\n  3 4\n  5 6', 3),     # missing final \n
+    ('# header\n1 2\n3 4 5\n6 7\n', 3),    # variable-width rows
+    ('# header\n1 2\n3 4 5\n6 7', 3),      # missing final \n
+    ('# a b\n  1 2\n\n# note\n  5 6', 2),  # blank and comment rows
+])
+def test_count_cobaya_samples(tmp_path, content, expected):
+    chain = tmp_path / 'chain.txt'
+    chain.write_text(content)
+    assert _count_samples(chain) == expected
 
 
 def test_read_parameters_fail():
