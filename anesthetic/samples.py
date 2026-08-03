@@ -767,6 +767,61 @@ class NestedSamples(Samples):
         """Re-weight samples at infinite temperature to get prior samples."""
         return self.set_beta(beta=0, inplace=inplace)
 
+    @staticmethod
+    def _compute_logZ_and_weights(logw):
+        """Compute log-evidence and normalised weights.
+
+        A shifted copy of ``logw`` is reused throughout the computation to
+        avoid allocating separate shifted log-weights and weights.
+        """
+        logw = np.asarray(logw, dtype=float)
+        logw_max = np.max(logw, axis=0)
+        finite = np.isfinite(logw_max)
+
+        with np.errstate(invalid='ignore', divide='ignore'):
+            w = logw - logw_max
+            np.exp(w, out=w)
+            norm = np.sum(w, axis=0)
+            logZ = logw_max + np.log(norm)
+            np.divide(w, norm, out=w, where=finite)
+
+        logZ = np.where(finite, logZ, logw_max)
+        if logZ.ndim == 0:
+            logZ = logZ.item()
+        return logZ, w
+
+    def _compute_DKL_dG(self, logZ, w, beta=None, compute_dG=False):
+        """Compute Kullback--Leibler divergence and optional dimensionality."""
+        betalogL = self._betalogL(beta).to_numpy()
+        finite = np.isfinite(betalogL)
+
+        # Matching w's layout avoids reordering either full matrix in einsum.
+        s = np.empty_like(w)
+
+        if betalogL.ndim == 1:
+            if w.ndim == 1:
+                np.subtract(betalogL, logZ, out=s)
+            else:
+                np.subtract(betalogL[:, None], logZ, out=s)
+            s[~finite] = 0
+        else:
+            nbeta = betalogL.shape[1]
+            s = s.reshape(len(self), nbeta, -1)
+            logZ = np.asarray(logZ).reshape(nbeta, -1)
+            np.subtract(betalogL[:, :, None], logZ, out=s)
+            s[~finite, :] = 0
+            s = s.reshape(w.shape)
+
+        D_KL = np.einsum('i...,i...->...', s, w)
+        if not compute_dG:
+            return D_KL, None
+
+        # Reuse s for the centred squared log-likelihood needed by d_G.
+        s -= D_KL
+        np.square(s, out=s)
+        d_G = np.einsum('i...,i...->...', s, w)*2
+        return D_KL, d_G
+
     # TODO: remove this in version >= 2.1
     def ns_output(self, *args, **kwargs):
         # noqa: disable=D102
@@ -867,21 +922,21 @@ class NestedSamples(Samples):
                                                dtype=float)
         else:
             samples = Samples(index=logw.columns, columns=self.columns[:0])
-        samples['logZ'] = self.logZ(logw)
+
+        logZ, w = self._compute_logZ_and_weights(logw)
+        del logw  # free it before the next full-size matrix is allocated
+        samples['logZ'] = logZ
         samples.set_label('logZ', r'$\ln\mathcal{Z}$')
-        w = np.exp(logw-samples['logZ'])
 
-        betalogL = self._betalogL(beta)
-        S = (logw*0).add(betalogL, axis=0) - samples.logZ
-
-        samples['D_KL'] = (S*w).sum()
+        D_KL, d_G = self._compute_DKL_dG(logZ, w, beta, compute_dG=True)
+        samples['D_KL'] = D_KL
         samples.set_label('D_KL', r'$\mathcal{D}_\mathrm{KL}$')
 
         samples['logL_P'] = samples['logZ'] + samples['D_KL']
         samples.set_label('logL_P',
                           r'$\langle\ln\mathcal{L}\rangle_\mathcal{P}$')
 
-        samples['d_G'] = ((S-samples.D_KL)**2*w).sum()*2
+        samples['d_G'] = d_G
         samples.set_label('d_G', r'$d_\mathrm{G}$')
 
         samples.label = self.label
@@ -1147,7 +1202,7 @@ class NestedSamples(Samples):
             product of beta and range(nsamples)
         """
         logw = self.logw(nsamples, beta)
-        logZ = logsumexp(logw, axis=0)
+        logZ, _ = self._compute_logZ_and_weights(logw)
         if np.isscalar(logZ):
             return logZ
         else:
@@ -1170,16 +1225,15 @@ class NestedSamples(Samples):
     def D_KL(self, nsamples=None, beta=None):
         """Kullback--Leibler divergence."""
         logw = self.logw(nsamples, beta)
-        logZ = self.logZ(logw, beta)
-        betalogL = self._betalogL(beta)
-        S = (logw*0).add(betalogL, axis=0) - logZ
-        w = np.exp(logw-logZ)
-        D_KL = (S*w).sum()
+        logZ, w = self._compute_logZ_and_weights(logw)
+        columns = logw.columns if logw.ndim > 1 else None
+        del logw  # free it before the next full-size matrix is allocated
+        D_KL, _ = self._compute_DKL_dG(logZ, w, beta)
         if np.isscalar(D_KL):
             return D_KL
         else:
             return self._constructor_sliced(D_KL, name='D_KL',
-                                            index=logw.columns).squeeze()
+                                            index=columns).squeeze()
 
     D_KL.__doc__ += _logZ_function_shape
 
@@ -1197,33 +1251,31 @@ class NestedSamples(Samples):
     def d_G(self, nsamples=None, beta=None):
         """Bayesian model dimensionality."""
         logw = self.logw(nsamples, beta)
-        logZ = self.logZ(logw, beta)
-        betalogL = self._betalogL(beta)
-        S = (logw*0).add(betalogL, axis=0) - logZ
-        w = np.exp(logw-logZ)
-        D_KL = (S*w).sum()
-        d_G = ((S-D_KL)**2*w).sum()*2
+        logZ, w = self._compute_logZ_and_weights(logw)
+        columns = logw.columns if logw.ndim > 1 else None
+        del logw  # free it before the next full-size matrix is allocated
+        _, d_G = self._compute_DKL_dG(logZ, w, beta, compute_dG=True)
         if np.isscalar(d_G):
             return d_G
         else:
             return self._constructor_sliced(d_G, name='d_G',
-                                            index=logw.columns).squeeze()
+                                            index=columns).squeeze()
 
     d_G.__doc__ += _logZ_function_shape
 
     def logL_P(self, nsamples=None, beta=None):
         """Posterior averaged loglikelihood."""
         logw = self.logw(nsamples, beta)
-        logZ = self.logZ(logw, beta)
-        betalogL = self._betalogL(beta)
-        betalogL = (logw*0).add(betalogL, axis=0)
-        w = np.exp(logw-logZ)
-        logL_P = (betalogL*w).sum()
+        logZ, w = self._compute_logZ_and_weights(logw)
+        columns = logw.columns if logw.ndim > 1 else None
+        del logw  # free it before the next full-size matrix is allocated
+        D_KL, _ = self._compute_DKL_dG(logZ, w, beta)
+        logL_P = logZ + D_KL
         if np.isscalar(logL_P):
             return logL_P
         else:
             return self._constructor_sliced(logL_P, name='logL_P',
-                                            index=logw.columns).squeeze()
+                                            index=columns).squeeze()
 
     logL_P.__doc__ += _logZ_function_shape
 

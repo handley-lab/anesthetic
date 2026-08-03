@@ -887,6 +887,25 @@ def test_logZ():
     assert abs(logZ.mean() - pc.logZ()) < logZ.std() * 3
 
 
+def test_compute_logZ_and_weights():
+    logw = np.array([
+        [0.0, -np.inf, 1000.0],
+        [np.log(2), 0.0, 1000.0],
+    ])
+    expected_logw = logw.copy()
+    expected_logZ = np.array([np.log(3), 0.0, 1000 + np.log(2)])
+    expected_weights = np.array([
+        [1/3, 0.0, 0.5],
+        [2/3, 1.0, 0.5],
+    ])
+
+    logZ, weights = NestedSamples._compute_logZ_and_weights(logw)
+
+    assert_array_equal(logw, expected_logw)
+    assert_allclose(logZ, expected_logZ)
+    assert_allclose(weights, expected_weights)
+
+
 def test_D_KL():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')
