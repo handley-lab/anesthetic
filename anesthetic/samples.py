@@ -929,13 +929,19 @@ class NestedSamples(Samples):
         """
         if nsamples is None:
             t = np.log(self.nlive/(self.nlive+1))
+            logX = t.cumsum()
         else:
-            r = np.log(np.random.rand(len(self), nsamples))
-            w = self.get_weights()
-            r = self.nlive._constructor_expanddim(r, self.index, weights=w)
-            t = r.divide(self.nlive, axis=0)
-            t.columns.name = 'samples'
-        logX = t.cumsum()
+            # Reuse only one single (npoints, nsamples) matrix throughout: r.
+            # pandas division and cumsum would keep 3 matrices simultaneously.
+            r = np.random.rand(len(self), nsamples)
+            np.log(r, out=r)
+            r /= self.nlive.to_numpy()[:, None]
+            np.cumsum(r, axis=0, out=r)
+            logX = self.nlive._constructor_expanddim(
+                r, self.index, weights=self.get_weights(),
+                copy=False,  # don't copy, use existing r buffer passed as data
+            )
+            logX.columns.name = 'samples'
         logX.name = 'logX'
         return logX
 
@@ -964,9 +970,45 @@ class NestedSamples(Samples):
             WeightedDataFrame like self, columns range(nsamples)
         """
         logX = self.logX(nsamples)
-        logXp = logX.shift(1, fill_value=0)
-        logXm = logX.shift(-1, fill_value=-np.inf)
-        logdX = np.log1p(-np.exp(logXm-logXp)) + logXp - np.log(2)
+        # One (len(self), nsamples) matrix is M=16GB at 200'000 x 10'000.
+        if nsamples is None:
+            # This block would work for any `nsamples` but would result in at
+            # least 5 simultaneous matrices of size M, exploding memory cost.
+            # Therefore, we here only treat the cheaper `nsamples=None` case.
+            logXp = logX.shift(1, fill_value=0)
+            logXm = logX.shift(-1, fill_value=-np.inf)
+            logdX = np.log1p(-np.exp(logXm-logXp)) + logXp - np.log(2)
+        else:
+            # This block keeps only a maximum of 2 matrices with size M.
+            # Only logX and logdX count towards memory in the following.
+            _logX = logX.to_numpy()       # view of logX, no allocation
+            logdX = np.empty_like(_logX)  # new matrix of size M
+            log2 = np.log(2)
+
+            if len(logX) == 1:
+                # For one single point: dX[0] = (1 - 0) / 2.
+                logdX.fill(-log2)
+            else:
+                # Before the first point X=1; after the last point X=0.
+                np.exp(_logX[1], out=logdX[0])
+                np.negative(logdX[0], out=logdX[0])
+                np.log1p(logdX[0], out=logdX[0])
+                logdX[0] -= log2              # dX[0]  = (1  - X[1]) / 2
+                logdX[-1] = _logX[-2] - log2  # dX[-1] = (X[-2] - 0) / 2
+            if len(logX) > 2:
+                # Inner shells have dX[i] = (X[i-1] - X[i+1]) / 2.
+                _logdX = logdX[1:-1]  # view of logdX, no allocation
+                np.subtract(_logX[2:], _logX[:-2], out=_logdX)
+                np.exp(_logdX, out=_logdX)       # X[i+1] / X[i-1]
+                np.negative(_logdX, out=_logdX)  # - X[i+1] / X[i-1]
+                np.log1p(_logdX, out=_logdX)     # log(1 - X[i+1] / X[i-1])
+                _logdX += _logX[:-2]             # log(X[i-1] - X[i+1])
+                _logdX -= log2                   # log((X[i-1] - X[i+1]) / 2)
+
+            logdX = logX._constructor(
+                logdX, index=logX.index, columns=logX.columns,
+                copy=False,  # don't copy, use logdX buffer passed as data
+            )
         logdX.name = 'logdX'
 
         return logdX
@@ -1039,21 +1081,42 @@ class NestedSamples(Samples):
         if np.ndim(nsamples) > 0:
             return nsamples
 
-        logdX = self.logdX(nsamples)
-        betalogL = self._betalogL(beta)
+        logdX = self.logdX(nsamples)     # (npoints,) or (npoints, nsamples)
+        betalogL = self._betalogL(beta)  # (npoints,) or (npoints, nbeta)
 
         if logdX.ndim == 1 and betalogL.ndim == 1:
-            logw = logdX + betalogL
-        elif logdX.ndim > 1 and betalogL.ndim == 1:
-            logw = logdX.add(betalogL, axis=0)
-        elif logdX.ndim == 1 and betalogL.ndim > 1:
-            logw = betalogL.add(logdX, axis=0)
+            return logdX + betalogL
+        elif logdX.ndim == 1:
+            return betalogL.add(logdX, axis=0)
+
+        _logdX = logdX.to_numpy()        # view of logdX, no allocation
+        _betalogL = betalogL.to_numpy()  # view of betalogL, no allocation
+
+        if betalogL.ndim == 1:  # betalogL is just a vector of size (npoints,)
+            # At most 2 (npoints, nsamples) matrices coexist: logdX and logw.
+            logw = np.empty_like(_logdX)
+            np.add(_logdX, _betalogL[:, None], out=logw)
+            columns = logdX.columns
         else:
-            cols = MultiIndex.from_product([betalogL.columns, logdX.columns])
-            logdX = logdX.reindex(columns=cols, level='samples')
-            betalogL = betalogL.reindex(columns=cols, level='beta')
-            logw = betalogL+logdX
-        return logw
+            # At most 3 big matrices coexist: logdX (npoints, nsamples),
+            # betalogL (npoints, nbeta), and logw (npoints, nbeta, nsamples).
+            npoints = len(self)
+            nbeta = betalogL.shape[1]
+            nsamples = logdX.shape[1]
+            logw = np.empty((npoints, nbeta, nsamples), dtype=_logdX.dtype)
+
+            # Pandas would expand both inputs to (npoints, nbeta, nsamples)
+            # leaving two expanded inputs plus the output live simultaneously.
+            # NumPy broadcasting creates only the full-size output.
+            np.add(_logdX[:, None, :], _betalogL[:, :, None], out=logw)
+            logw = logw.reshape(npoints, nbeta * nsamples)
+            columns = MultiIndex.from_product([betalogL.columns,
+                                               logdX.columns])
+
+        return logdX._constructor(
+            logw, index=logdX.index, columns=columns,
+            copy=False,  # don't copy, use existing logw buffer passed as data
+        )
 
     def logZ(self, nsamples=None, beta=None):
         """Log-Evidence.
