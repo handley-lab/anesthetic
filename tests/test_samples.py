@@ -138,8 +138,16 @@ def test_manual_columns():
     assert_array_equal(ns.drop_labels().columns, old_params + ns_params)
 
     new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
-    mcmc = read_chains('./tests/example_data/gd', columns=new_params)
-    ns = read_chains('./tests/example_data/pc', columns=new_params)
+    renames = dict(zip(old_params, new_params))
+    mcmc = read_chains('./tests/example_data/gd', renames=renames)
+    ns = read_chains('./tests/example_data/pc', renames=renames)
+    assert_array_equal(mcmc.drop_labels().columns, new_params + mcmc_params)
+    assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
+
+    with pytest.warns(FutureWarning, match="renames"):
+        mcmc = read_chains('./tests/example_data/gd', columns=new_params)
+    with pytest.warns(FutureWarning, match="renames"):
+        ns = read_chains('./tests/example_data/pc', columns=new_params)
     assert_array_equal(mcmc.drop_labels().columns, new_params + mcmc_params)
     assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
 

@@ -12,7 +12,7 @@ def read_nestedfit_paramnames(root):
     return read_getdist_paramnames(root_getdist)
 
 
-def read_nestedfit(root, *args, columns=None, **kwargs):
+def read_nestedfit(root, *args, columns=None, renames=None, **kwargs):
     """Read Nested_fit chain files.
 
     Parameters
@@ -27,6 +27,9 @@ def read_nestedfit(root, *args, columns=None, **kwargs):
         parameters into memory. Integer positions and slices index parameter
         fields only, not sampler bookkeeping fields such as ``logL``.
 
+    renames : dict, optional
+        Mapping from parameter names to new names.
+
     *args, **kwargs
         Passed on to ``NestedSamples``. Check its docstring for more
         information.
@@ -39,7 +42,7 @@ def read_nestedfit(root, *args, columns=None, **kwargs):
     dead_file = os.path.join(root, 'nf_output_points.txt')
     birth_file = os.path.join(root, 'nf_output_diag.dat')
     parameters, _ = read_nestedfit_paramnames(root)
-    indices, columns = _norm_columns(columns, parameters)
+    indices, columns, renames = _norm_columns(columns, parameters, renames)
     usecols = None if indices is None else [0, 1] + [i+2 for i in indices]
 
     data_dead = np.loadtxt(dead_file, usecols=usecols, ndmin=2)
@@ -48,6 +51,7 @@ def read_nestedfit(root, *args, columns=None, **kwargs):
     # Nested_fit does not provide separate parameter labels.
     labels = kwargs.pop('labels', columns)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
+    columns = [renames.get(column, column) for column in columns]
 
     return NestedSamples(data=data, columns=columns,
                          logL=logL, logL_birth=logL_birth,

@@ -78,7 +78,7 @@ def read_cobaya_paramnames(root):
         return paramnames, labels
 
 
-def read_cobaya(root, *args, columns=None, burn_in=None,
+def read_cobaya(root, *args, columns=None, renames=None, burn_in=None,
                 thin=None, compress_repeats=False, **kwargs):
     """Read Cobaya chain files.
 
@@ -96,6 +96,9 @@ def read_cobaya(root, *args, columns=None, burn_in=None,
         This is useful when you do not want to load a large number of nuisance
         parameters into memory. Integer positions and slices index parameter
         fields only, not sampler bookkeeping fields such as ``logL``.
+
+    renames : dict, optional
+        Mapping from parameter names to new names.
 
     burn_in : int, float or array-like, optional
         Number or fraction of stored rows to remove from each chain before
@@ -138,13 +141,14 @@ def read_cobaya(root, *args, columns=None, burn_in=None,
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
-    data, columns, weights, minuslogP, chains = _read_mcmc_chains(
+    data, columns, weights, minuslogP, chains, renames = _read_mcmc_chains(
         chain_files, parameters, columns, _count_samples,
         header_rows=1, burn_in=burn_in, thin=thin,
-        compress_repeats=compress_repeats
+        compress_repeats=compress_repeats, renames=renames
     )
 
     logL = None if compress_repeats else -data[:, columns.index('chi2')] / 2
+    columns = [renames.get(column, column) for column in columns]
     samples = MCMCSamples(data=data, columns=columns, weights=weights,
                           logL=logL, labels=labels, *args, **kwargs)
     if not compress_repeats:

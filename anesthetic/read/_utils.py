@@ -1,11 +1,12 @@
 """Utilities shared by chain readers."""
 from itertools import compress, islice
+import warnings
 import numpy as np
 from anesthetic.samples import (_compute_burn_in, _thin_weights,
                                 _compress_repeats)
 
 
-def _norm_columns(columns, parameters):
+def _norm_columns(columns, parameters, renames=None):
     """Normalise a column selector to parameter positions and names.
 
     Parameters
@@ -15,6 +16,8 @@ def _norm_columns(columns, parameters):
     parameters : list[str] or list[int]
         Available parameter names in file order.
         (Integer range as fallback.)
+    renames : dict, optional
+        Mapping from parameter names to new names.
 
     Returns
     -------
@@ -23,6 +26,8 @@ def _norm_columns(columns, parameters):
         should be loaded.
     columns : list[str] or list[int]
         Names to use for the selected parameters.
+    renames : dict
+        Mapping from parameter names to new names.
 
     Raises
     ------
@@ -35,9 +40,10 @@ def _norm_columns(columns, parameters):
 
     """
     nparams = len(parameters)
+    renames = {} if renames is None else dict(renames)
 
     if columns is None:
-        return None, list(parameters)
+        return None, list(parameters), renames
 
     if np.isscalar(columns):
         columns = [columns]
@@ -50,6 +56,16 @@ def _norm_columns(columns, parameters):
         try:
             indices = [parameters.index(c) for c in columns]
         except ValueError as error:
+            if len(columns) == nparams:
+                warnings.warn(
+                    "Using `columns` to rename parameters is deprecated. "
+                    "Use the `renames` keyword argument instead.",
+                    FutureWarning,
+                    stacklevel=3,
+                )
+                inferred = dict(zip(parameters, columns))
+                inferred.update(renames)
+                return None, list(parameters), inferred
             missing = next(c for c in columns if c not in parameters)
             raise KeyError(f"unknown parameter {missing!r}") from error
     # list[int]
@@ -60,7 +76,7 @@ def _norm_columns(columns, parameters):
         raise TypeError("`columns` must be a slice, a list of parameter "
                         "names, or a list of integer indices.")
 
-    return indices, [parameters[i] for i in indices]
+    return indices, [parameters[i] for i in indices], renames
 
 
 def _infer_weight_dtype(weights):
@@ -72,10 +88,10 @@ def _infer_weight_dtype(weights):
 
 def _read_mcmc_chains(chain_files, parameters, columns, count_samples,
                       header_rows=0, burn_in=None, thin=None,
-                      compress_repeats=False):
+                      compress_repeats=False, renames=None):
     """Load selected columns from one or more weighted MCMC chain files."""
     nparams = len(parameters)
-    indices, columns = _norm_columns(columns, parameters)
+    indices, columns, renames = _norm_columns(columns, parameters, renames)
 
     if indices is None and compress_repeats:
         usecols = [0] + list(range(2, nparams + 2))
@@ -161,4 +177,5 @@ def _read_mcmc_chains(chain_files, parameters, columns, count_samples,
         minuslog.resize(start)
         chains.resize(start)
 
-    return data, columns, _infer_weight_dtype(weights), minuslog, chains
+    return (data, columns, _infer_weight_dtype(weights), minuslog, chains,
+            renames)

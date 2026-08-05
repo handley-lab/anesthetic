@@ -66,6 +66,9 @@ def read_chains(root, *args, **kwargs):
         parameters into memory. Integer positions and slices index parameter
         fields only, not sampler bookkeeping fields such as ``logL``.
 
+    renames : dict, optional
+        Mapping from parameter names to new names.
+
     burn_in : int, float or array-like, optional
         For Cobaya and GetDist MCMC chains:
         Number or fraction of stored rows to remove from each chain before

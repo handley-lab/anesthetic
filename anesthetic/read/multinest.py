@@ -6,7 +6,7 @@ from anesthetic.read.getdist import read_getdist_paramnames
 from anesthetic.samples import NestedSamples
 
 
-def read_multinest(root, *args, columns=None, **kwargs):
+def read_multinest(root, *args, columns=None, renames=None, **kwargs):
     """Read MultiNest chain files.
 
     Parameters
@@ -22,6 +22,9 @@ def read_multinest(root, *args, columns=None, **kwargs):
         This is useful when you do not want to load a large number of nuisance
         parameters into memory. Integer positions and slices index parameter
         fields only, not sampler bookkeeping fields such as ``logL``.
+
+    renames : dict, optional
+        Mapping from parameter names to new names.
 
     *args, **kwargs
         Passed on to ``NestedSamples``. Check its docstring for more
@@ -41,7 +44,7 @@ def read_multinest(root, *args, columns=None, **kwargs):
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
-    indices, columns = _norm_columns(columns, parameters)
+    indices, columns, renames = _norm_columns(columns, parameters, renames)
     indices = list(range(len(parameters))) if indices is None else indices
 
     if os.path.exists(dead_birth_file):
@@ -78,6 +81,7 @@ def read_multinest(root, *args, columns=None, **kwargs):
         data = np.concatenate((data, live_data[i]), axis=0)
         logL = np.concatenate((logL, live_logL[i]))
 
+    columns = [renames.get(column, column) for column in columns]
     return NestedSamples(data=data, columns=columns,
                          logL=logL, logL_birth=logL_birth,
                          labels=labels, *args, **kwargs)

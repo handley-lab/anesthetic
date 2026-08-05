@@ -6,7 +6,7 @@ from anesthetic.read.getdist import read_getdist_paramnames
 from anesthetic.samples import NestedSamples
 
 
-def read_polychord(root, *args, columns=None, **kwargs):
+def read_polychord(root, *args, columns=None, renames=None, **kwargs):
     """Read PolyChord chain files.
 
     Parameters
@@ -20,6 +20,9 @@ def read_polychord(root, *args, columns=None, **kwargs):
         This is useful when you do not want to load a large number of nuisance
         parameters into memory. Integer positions and slices index parameter
         fields only, not sampler bookkeeping fields such as ``logL``.
+
+    renames : dict, optional
+        Mapping from parameter names to new names.
 
     *args, **kwargs
         Passed on to ``NestedSamples``. Check its docstring for more
@@ -38,7 +41,7 @@ def read_polychord(root, *args, columns=None, **kwargs):
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
-    indices, columns = _norm_columns(columns, parameters)
+    indices, columns, renames = _norm_columns(columns, parameters, renames)
     usecols = None if indices is None else indices + [-2, -1]
 
     data = np.loadtxt(dead_birth_file, usecols=usecols, ndmin=2)
@@ -52,6 +55,7 @@ def read_polychord(root, *args, columns=None, **kwargs):
     except IOError:
         pass
     data, logL, logL_birth = np.split(data, [-2, -1], axis=1)
+    columns = [renames.get(column, column) for column in columns]
 
     return NestedSamples(data=data, columns=columns,
                          logL=logL, logL_birth=logL_birth,

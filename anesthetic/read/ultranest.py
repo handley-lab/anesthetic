@@ -12,7 +12,7 @@ def read_ultranest_paramnames(root):
     return parameters, {}
 
 
-def read_ultranest(root, *args, columns=None, **kwargs):
+def read_ultranest(root, *args, columns=None, renames=None, **kwargs):
     """Read UltraNest files.
 
     Parameters
@@ -27,6 +27,9 @@ def read_ultranest(root, *args, columns=None, **kwargs):
         parameters into memory. Integer positions and slices index parameter
         fields only, not sampler bookkeeping fields such as ``logL``.
 
+    renames : dict, optional
+        Mapping from parameter names to new names.
+
     *args, **kwargs
         Passed on to ``NestedSamples``. Check its docstring for more
         information.
@@ -38,7 +41,7 @@ def read_ultranest(root, *args, columns=None, **kwargs):
     """
     parameters, _ = read_ultranest_paramnames(root)
     num_params = len(parameters)
-    indices, columns = _norm_columns(columns, parameters)
+    indices, columns, renames = _norm_columns(columns, parameters, renames)
 
     filepath = os.path.join(root, 'results', 'points.hdf5')
     try:
@@ -59,6 +62,7 @@ def read_ultranest(root, *args, columns=None, **kwargs):
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
     labels = kwargs.pop('labels', columns)
     data = samples
+    columns = [renames.get(column, column) for column in columns]
 
     return NestedSamples(data=data, logL=logL, logL_birth=logL_birth,
                          columns=columns, labels=labels, *args, **kwargs)
