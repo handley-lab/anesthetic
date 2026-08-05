@@ -501,6 +501,8 @@ def _thin_weights(weights, thin):
     """Thin integer frequency weights without expanding the samples."""
     if not isinstance(thin, (int, np.integer)) or thin < 1:
         raise ValueError("`thin` must be a positive integer.")
+    if not np.all(weights == np.floor(weights)):
+        raise ValueError("Thinning requires integer frequency weights.")
     end = np.cumsum(weights)
     start = end - weights
     return (end - 1) // thin - (start - 1) // thin
@@ -590,11 +592,15 @@ class MCMCSamples(Samples):
         data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name]),
                                       include_groups=False).index,
                          inplace=inplace)
+        if inplace:
+            if reset_index:
+                self.reset_index(drop=True, inplace=True)
+            return None
         if reset_index:
-            data = data.reset_index(drop=True, inplace=inplace)
+            data.reset_index(drop=True, inplace=True)
         return data
 
-    def thin(self, thin, inplace=False):
+    def thin(self, thin, reset_index=False, inplace=False):
         """Thin each MCMC chain, accounting for integer frequency weights.
 
         Parameters
@@ -604,11 +610,16 @@ class MCMCSamples(Samples):
             represented by the integer weights. ``None`` leaves the samples
             unthinned.
 
+        reset_index : bool, default=False
+            Whether to reset the index counter to start at zero or not.
+
         inplace : bool, default=False
             Indicates whether to modify the existing array or return a copy.
 
         """
         if thin is None:
+            if reset_index:
+                return self.reset_index(drop=True, inplace=inplace)
             return None if inplace else self.copy()
 
         weights = self.get_weights()
@@ -620,6 +631,8 @@ class MCMCSamples(Samples):
         mask = selected_weights > 0
         samples = self[mask]
         samples.set_weights(selected_weights[mask], inplace=True)
+        if reset_index:
+            samples.reset_index(drop=True, inplace=True)
         if inplace:
             self._update_inplace(samples)
         else:
