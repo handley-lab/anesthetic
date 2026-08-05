@@ -3,8 +3,15 @@ import os
 import re
 import warnings
 import numpy as np
+from anesthetic.read._utils import _read_mcmc_chains
 from anesthetic.samples import MCMCSamples
-from pandas import concat
+
+
+def _count_samples(filename):
+    """Count samples in a GetDist chain file."""
+    with open(filename) as file:
+        return sum(bool(line.strip()) and not line.lstrip().startswith('#')
+                   for line in file)
 
 
 def read_getdist_paramnames(root):
@@ -79,8 +86,43 @@ def read_getdist_paramnames(root):
     return list(range(nparams)), {}
 
 
-def read_getdist(root, *args, **kwargs):
-    """Read <root>_1.txt in GetDist format.
+def read_getdist(root, *args, columns=None, burn_in=None,
+                 thin=None, compress_repeats=False, **kwargs):
+    """Read GetDist chain files.
+
+    Parameters
+    ----------
+    root : str
+        Root name for reading files in GetDist format, i.e. the chain files
+        and optional ``<root>.paramnames`` file.
+
+    columns : list[str], list[int], or slice, optional
+        Optionally select which parameter columns to load from the chain files.
+        This is useful when you do not want to load a large number of nuisance
+        parameters into memory. Integer positions and slices index parameter
+        fields only, not sampler bookkeeping fields such as ``logL``.
+
+    burn_in : int, float or array-like, optional
+        Number or fraction of stored rows to remove from each chain before
+        loading samples into memory. Uses the same semantics as
+        :meth:`anesthetic.samples.MCMCSamples.remove_burn_in`.
+
+    thin : int, optional
+        Keep every ``thin``-th sample in the expanded MCMC chain represented
+        by the frequency weights.
+
+    compress_repeats : bool, default=False
+        Oversampling nuisance parameters can leave the selected parameters of
+        interest unchanged across consecutive samples. Merge these repeated
+        rows by summing their weights. Compression happens separately for each
+        chain, after burn-in removal and thinning. If ``False``, likelihood
+        bookkeeping fields such as ``logL`` are returned in addition to the
+        selected columns. If ``True``, only the selected columns and ``chain``
+        are returned. Weights are always retained.
+
+    *args, **kwargs
+        Passed on to ``MCMCSamples``. Check its docstring for more
+        information.
 
     Returns
     -------
@@ -89,36 +131,31 @@ def read_getdist(root, *args, **kwargs):
     """
     dirname, basename = os.path.split(root)
     files = os.listdir(os.path.dirname(root))
-    regex = re.escape(basename) + r'((_|.)([0-9]+)|)\.txt'
+    regex = re.escape(basename) + r'(?:(?:_|\.)([0-9]+))?\.txt$'
     matches = [re.match(regex, f) for f in files]
-    chains_files = [(m.group(3), os.path.join(dirname, m.group(0)))
-                    for m in matches if m]
-    if not chains_files:
+    chain_files = [(m.group(1), os.path.join(dirname, m.group(0)))
+                   for m in matches if m]
+    if not chain_files:
         raise FileNotFoundError(dirname + '/' + regex + " not found.")
+    chain_files.sort(key=lambda chain_file: int(chain_file[0] or 0))
 
-    columns, labels = read_getdist_paramnames(root)
-    columns = kwargs.pop('columns', columns)
+    parameters, labels = read_getdist_paramnames(root)
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
-    samples = []
-    for i, chains_file in chains_files:
-        data = np.loadtxt(chains_file)
-        weights, minuslogL, data = np.split(data, [1, 2], axis=1)
-        mcmc = MCMCSamples(data=data, columns=columns,
-                           weights=weights.flatten(), logL=-minuslogL,
-                           labels=labels, *args, **kwargs)
-        mcmc['chain'] = int(i or 0)
-        samples.append(mcmc)
+    data, columns, weights, minuslogL, chains = _read_mcmc_chains(
+        chain_files, parameters, columns, _count_samples,
+        header_rows=0, burn_in=burn_in, thin=thin,
+        compress_repeats=compress_repeats
+    )
 
-    samples = concat(samples)
-    samples.index.names = ['index', 'weights']
-    samples.sort_values(by=['chain', 'index'], inplace=True)
-    samples.reset_index(inplace=True, drop=True)
-    samples.root = root
-    samples.label = kwargs['label']
-
+    logL = None if compress_repeats else -minuslogL
+    samples = MCMCSamples(data=data, columns=columns, weights=weights,
+                          logL=logL, labels=labels, *args, **kwargs)
+    samples['chain'] = chains
     if samples.islabelled():
         samples.set_label('chain', r'$n_\mathrm{chain}$')
+    samples.root = root
+    samples.label = kwargs['label']
 
     return samples

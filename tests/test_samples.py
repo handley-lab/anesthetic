@@ -824,13 +824,14 @@ def test_mcmc_thin():
         noninteger.thin(thin)
 
 
-def test_mcmc_compress_consecutive_duplicates():
+def test_mcmc_compress_repeats():
     samples = MCMCSamples(
         data=[[0, 1], [0, 1], [1, 2], [0, 1], [0, 1]],
-        columns=['p0', 'p1'], weights=[1, 2, 3, 4, 5],
-        labels=['$p_0$', '$p_1$']
+        weights=[1, 2, 3, 4, 5],
+        columns=['p0', 'p1'],
+        labels=['$p_0$', '$p_1$'],
     )
-    compressed = samples.compress_consecutive_duplicates()
+    compressed = samples.compress_repeats()
 
     assert len(samples) == 5
     assert len(compressed) == 3
@@ -838,7 +839,7 @@ def test_mcmc_compress_consecutive_duplicates():
     assert_array_equal(compressed.get_weights(), [3, 3, 9])
     assert_array_equal(compressed.get_labels(), ['$p_0$', '$p_1$'])
 
-    returned = samples.compress_consecutive_duplicates(inplace=True)
+    returned = samples.compress_repeats(inplace=True)
     assert returned is None
     assert_frame_equal(samples, compressed)
 

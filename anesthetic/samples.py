@@ -508,8 +508,8 @@ def _thin_weights(weights, thin):
     return (end - 1) // thin - (start - 1) // thin
 
 
-def _compress_consecutive_duplicates(data, weights):
-    """Find consecutive duplicate rows and sum their weights."""
+def _compress_repeats(data, weights):
+    """Find consecutive repeated rows and sum their weights."""
     if len(data) < 2:
         return np.arange(len(data)), weights.copy()
 
@@ -638,7 +638,7 @@ class MCMCSamples(Samples):
         else:
             return samples
 
-    def compress_consecutive_duplicates(self, inplace=False):
+    def compress_repeats(self, inplace=False):
         """Merge consecutive duplicate rows by summing their weights.
 
         Oversampling nuisance parameters can leave selected parameters of
@@ -658,9 +658,8 @@ class MCMCSamples(Samples):
             Compressed samples, or ``None`` if ``inplace=True``.
 
         """
-        indices, weights = _compress_consecutive_duplicates(
-            self.to_numpy(), self.get_weights()
-        )
+        indices, weights = _compress_repeats(self.to_numpy(),
+                                             self.get_weights())
         samples = self.iloc[indices]
         samples.set_weights(weights, inplace=True)
         if inplace:

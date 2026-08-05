@@ -26,20 +26,36 @@ def close_figures_on_teardown():
     plt.close("all")
 
 
-@pytest.fixture
-def cobaya_duplicates_root(tmp_path):
-    root = tmp_path / 'duplicates'
-    root.with_suffix('.1.txt').write_text(
-        '# weight    minuslogpost    p0    p1    n0    n1    chi2\n'
-        '       2              10     0     0     0    10      20\n'
-        '       3              11     0     0     1    11      22\n'
-        '       1              12     1     1     2    12      24\n'
-        '       4              13     0     0     3    13      26\n'
+@pytest.fixture(params=['cobaya', 'getdist'])
+def repeats_root(tmp_path, request):
+    root = tmp_path / 'repeats'
+    if request.param == 'cobaya':
+        header = '# weight    minuslogpost    p0    p1    n0    n1    chi2\n'
+        chain_files = [root.with_suffix(f'.{i}.txt') for i in [1, 2]]
+    else:
+        root.with_suffix('.paramnames').write_text(
+            'p0      p_0\n'
+            'p1      p_1\n'
+            'n0      n_0\n'
+            'n1      n_1\n'
+            'chi2    \\chi^2\n'
+        )
+        header = ''
+        chain_files = [Path(str(root) + f'_{i}.txt') for i in [1, 2]]
+
+    chain_files[0].write_text(
+        header + (
+            '       2              10     0     0     0    10      20\n'
+            '       3              11     0     0     1    11      22\n'
+            '       1              12     1     1     2    12      24\n'
+            '       4              13     0     0     3    13      26\n'
+        )
     )
-    root.with_suffix('.2.txt').write_text(
-        '# weight    minuslogpost    p0    p1    n0    n1    chi2\n'
-        '       5              10     0     0     4    14      20\n'
-        '       1              11     0     0     5    15      22\n'
+    chain_files[1].write_text(
+        header + (
+            '       5              10     0     0     4    14      20\n'
+            '       1              11     0     0     5    15      22\n'
+        )
     )
     return str(root)
 
@@ -126,6 +142,23 @@ def test_read_getdist():
     assert_array_equal(mcmc.get_labels(), labels)
 
 
+@pytest.mark.parametrize(('weights', 'dtype'), [
+    ([1, 2], np.integer),     # integer multiplicities
+    ([1, 0.5], np.floating),  # importance weights
+])
+def test_read_getdist_weight_dtype(tmp_path, weights, dtype):
+    root = tmp_path / 'chain'
+    root.with_suffix('.paramnames').write_text('x0 x_0\n')
+    root.with_suffix('.txt').write_text(
+        ''.join(f'{weight}  0  0\n' for weight in weights)
+    )
+    samples = read_getdist(str(root))
+    assert np.issubdtype(samples.get_weights().dtype, dtype)
+    if np.issubdtype(dtype, np.floating):
+        with pytest.raises(ValueError, match="integer frequency weights"):
+            samples.thin(2)
+
+
 def test_read_cobayamcmc():
     np.random.seed(3)
     mcmc = read_cobaya('./tests/example_data/cb')
@@ -136,12 +169,12 @@ def test_read_cobayamcmc():
     ))
     assert_array_equal(mcmc.get_weights(), w)
     params = ['x0', 'x1', 'minuslogprior', 'minuslogprior__0', 'chi2',
-              'chi2__norm', 'logP', 'logL', 'chain']
+              'chi2__norm', 'logL', 'logP', 'chain']
     assert_array_equal(mcmc.drop_labels().columns, params)
 
     labels = ['$x_0$', '$x_1$', r'$-\ln\pi$', r'$-\ln\pi_\mathrm{0}$',
-              r'$\chi^2$', r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{P}$',
-              r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
+              r'$\chi^2$', r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{P}$', r'$n_\mathrm{chain}$']
 
     if getdist_mark_skip.args[0]:
         labels[:6] = [''] * 6
@@ -167,37 +200,6 @@ def test_read_cobayamcmc():
         assert_array_almost_equal(mcmc.logL, -g.getParams().chi2/2, decimal=15)
 
 
-@pytest.mark.parametrize(('columns', 'parameters'), [
-    ('x0', ['x0']),                    # scalar name
-    (0, ['x0']),                       # scalar index
-    (np.int64(0), ['x0']),             # scalar numpy index
-    (['x1', 'x0'], ['x1', 'x0']),      # reordered names
-    ([1, 0], ['x1', 'x0']),            # reordered indices
-    (np.int32([1, 0]), ['x1', 'x0']),  # reordered numpy indices
-    (['x0', 'x0'], ['x0', 'x0']),      # repeated names
-    ([0, 0], ['x0', 'x0']),            # repeated indices
-    (slice(0, 2), ['x0', 'x1']),       # slice
-    (['chi2'], ['chi2']),              # explicitly selected chi2
-    ([-5], ['x1']),                    # negative index
-    ([], []),                          # empty selection
-])
-def test_read_cobaya_columns(columns, parameters):
-    root = './tests/example_data/cb'
-    if 'chi2' not in parameters:
-        parameters = parameters + ['chi2']
-    expected = read_chains(root)[parameters + ['logP', 'logL', 'chain']]
-    selected = read_chains(root, columns=columns)
-    assert_frame_equal(selected, expected)
-
-
-def test_read_cobaya_columns_with_burn_in_and_thin():
-    root = './tests/example_data/cb'
-    params = ['x0', 'chi2', 'logP', 'logL', 'chain']
-    expected = read_chains(root, burn_in=0.5, thin=2)[params]
-    selected = read_chains(root, burn_in=0.5, thin=2, columns=['x0'])
-    assert_frame_equal(selected, expected)
-
-
 @pytest.mark.parametrize(('content', 'expected'), [
     ('# header\n', 0),                     # no samples
     ('# a b\n  1 2\n  3 4\n  5 6\n', 3),   # fixed-width rows
@@ -213,76 +215,76 @@ def test_count_cobaya_samples(tmp_path, content, expected):
     assert _count_samples(chain) == expected
 
 
-@pytest.mark.parametrize(('columns', 'error'), [
-    (['x0', 'missing'], KeyError),      # unknown name
-    ([0, 10], IndexError),              # out-of-range index
-    ([True, False, False], TypeError),  # boolean input
-    (1.5, TypeError),                   # unsupported scalar
-    ([0, 'x1'], TypeError),             # mixed selector types
+@pytest.mark.parametrize(('root', 'bookkeeping'), [
+    ('cb', ['chi2', 'logL', 'logP', 'chain']),
+    ('gd', ['logL', 'chain']),
 ])
-def test_read_cobaya_columns_invalid(columns, error):
-    with pytest.raises(error):
-        read_cobaya('./tests/example_data/cb', columns=columns)
+@pytest.mark.parametrize('burn_in', [[500, 1000], 0.5])
+@pytest.mark.parametrize('compress_repeats', [False, True])
+def test_read_columns_burnin_thin_compress(root, bookkeeping, burn_in,
+                                           compress_repeats):
+    root = f'./tests/example_data/{root}'
+    columns = ['x0', 'x1'] + (['chain'] if compress_repeats else bookkeeping)
+    expected = read_chains(root)[columns].remove_burn_in(burn_in).thin(10)
+    expected = expected.compress_repeats() if compress_repeats else expected
+    expected.reset_index(drop=True, inplace=True)
+
+    selected = read_chains(root, columns=['x0', 'x1'], thin=10,
+                           burn_in=burn_in, compress_repeats=compress_repeats)
+
+    assert_frame_equal(selected, expected)
 
 
-def test_read_cobaya_compress_consecutive_duplicates(cobaya_duplicates_root):
-    samples = read_chains(cobaya_duplicates_root, columns=['p0', 'p1'],
-                          compress_consecutive_duplicates=True)
-    assert_array_equal(samples.drop_labels().columns, ['p0', 'p1', 'chain'])
-    assert_array_equal(samples[['p0', 'p1']], [[0, 0], [1, 1], [0, 0], [0, 0]])
-    assert_array_equal(samples.chain, [1, 1, 1, 2])
-    assert_array_equal(samples.get_weights(), [5, 1, 4, 6])
+def test_read_mcmc_compress_repeats(repeats_root):
+    mc = read_chains(repeats_root, columns=['p0', 'p1'], compress_repeats=True)
+    assert_array_equal(mc.drop_labels().columns, ['p0', 'p1', 'chain'])
+    assert_array_equal(mc[['p0', 'p1']], [[0, 0], [1, 1], [0, 0], [0, 0]])
+    assert_array_equal(mc.chain, [1, 1, 1, 2])
+    assert_array_equal(mc.get_weights(), [5, 1, 4, 6])
 
 
-def test_read_cobaya_compress_all_and_no_columns(cobaya_duplicates_root):
-    all_columns = read_cobaya(cobaya_duplicates_root,
-                              compress_consecutive_duplicates=True)
+def test_read_mcmc_compress_all_and_no_columns(repeats_root):
+    all_columns = read_chains(repeats_root, compress_repeats=True)
     assert_array_equal(all_columns.drop_labels().columns,
                        ['p0', 'p1', 'n0', 'n1', 'chi2', 'chain'])
     assert len(all_columns) == 6
     assert 'logP' not in all_columns
     assert 'logL' not in all_columns
 
-    no_columns = read_cobaya(cobaya_duplicates_root, columns=[],
-                             compress_consecutive_duplicates=True)
+    no_columns = read_chains(repeats_root, columns=[], compress_repeats=True)
     assert_array_equal(no_columns.drop_labels().columns, ['chain'])
     assert_array_equal(no_columns.chain, [1, 2])
     assert_array_equal(no_columns.get_weights(), [10, 6])
 
 
-def test_read_cobaya_compress_after_burn_in_and_thin(cobaya_duplicates_root):
-    samples = read_cobaya(cobaya_duplicates_root, columns=['p0', 'p1'],
-                          burn_in=[1, 0], thin=2,
-                          compress_consecutive_duplicates=True)
+def test_read_mcmc_columns_burnin_thin_compress(repeats_root):
+    mc = read_chains(repeats_root, columns=['p0', 'p1'],
+                     burn_in=[1, 0], thin=2, compress_repeats=True)
     # Thinning removes the intervening (p0, p1)=(1, 1) row before compression.
-    assert_array_equal(samples[['p0', 'p1']], [[0, 0], [0, 0]])
-    assert_array_equal(samples.chain, [1, 2])
-    assert_array_equal(samples.get_weights(), [4, 3])
+    assert_array_equal(mc[['p0', 'p1']], [[0, 0], [0, 0]])
+    assert_array_equal(mc.chain, [1, 2])
+    assert_array_equal(mc.get_weights(), [4, 3])
 
 
-@pytest.mark.parametrize(('compress_duplicates', 'weights'),
+@pytest.mark.parametrize(('compress_repeats', 'weights'),
                          [(False, [5, 1]),
                           (True, [6])])
-def test_read_cobaya_empty_chain_after_burn_in(cobaya_duplicates_root,
-                                               compress_duplicates, weights):
-    samples = read_cobaya(cobaya_duplicates_root,
-                          columns=['p0', 'p1'],
-                          burn_in=[4, 0],
-                          compress_consecutive_duplicates=compress_duplicates)
+def test_read_mcmc_empty_chain_after_burn_in(repeats_root, compress_repeats,
+                                             weights):
+    mc = read_chains(repeats_root, columns=['p0', 'p1'], burn_in=[4, 0],
+                     compress_repeats=compress_repeats)
     # Burn-in removes every stored row from the first chain.
-    assert_array_equal(samples.chain, np.full(len(weights), 2))
-    assert_array_equal(samples.get_weights(), weights)
+    assert_array_equal(mc.chain, np.full(len(weights), 2))
+    assert_array_equal(mc.get_weights(), weights)
 
 
-def test_read_cobaya_compressed_and_uncompressed_thinning_match(
-        cobaya_duplicates_root
-):
+def test_read_mcmc_compressed_and_uncompressed_thinning_match(repeats_root):
     # uncompressed
-    u = read_cobaya(cobaya_duplicates_root, columns=['p0', 'p1']).thin(2)
+    u = read_chains(repeats_root, columns=['p0', 'p1']).thin(2)
     u = u[['p0', 'p1', 'chain']]
     # compressed
-    c = read_cobaya(cobaya_duplicates_root, columns=['p0', 'p1'],
-                    compress_consecutive_duplicates=True).thin(2)
+    c = read_chains(repeats_root, columns=['p0', 'p1'],
+                    compress_repeats=True).thin(2)
     # Expand frequency weights before comparison:
     u = np.repeat(u.to_numpy(), u.get_weights(), axis=0)
     c = np.repeat(c.to_numpy(), c.get_weights(), axis=0)
@@ -469,10 +471,67 @@ def test_read_blackjax():
     assert np.isnan(bj.logL_birth[0])
 
 
-@pytest.mark.parametrize('root', ['gd'])
-def test_discard_burn_in(root):
-    with pytest.raises(TypeError):
-        read_chains('./tests/example_data/' + root, burn_in=0.3)
+@pytest.mark.parametrize(('root', 'bookkeeping'), [
+    ('cb', ['chi2', 'logL', 'logP', 'chain']),
+    ('gd', ['logL', 'chain']),
+])
+@pytest.mark.parametrize(('columns', 'parameters'), [
+    ('x0', ['x0']),                    # scalar name
+    (0, ['x0']),                       # scalar index
+    (np.int64(0), ['x0']),             # scalar numpy index
+    (['x0', 'x1'], ['x0', 'x1']),      # names
+    ([0, 1], ['x0', 'x1']),            # indices
+    (np.int32([0, 1]), ['x0', 'x1']),  # numpy indices
+    (slice(0, 2), ['x0', 'x1']),       # slice
+    ([], []),                          # empty selection
+])
+def test_read_columns(root, bookkeeping, columns, parameters):
+    root = f'./tests/example_data/{root}'
+    expected = read_chains(root)[parameters + bookkeeping]
+    selected = read_chains(root, columns=columns)
+    assert_frame_equal(selected, expected)
+
+
+@pytest.mark.parametrize(('root', 'bookkeeping'), [
+    ('cb', ['chi2', 'logL', 'logP', 'chain']),
+    ('gd', ['logL', 'chain']),
+])
+@pytest.mark.parametrize(('columns', 'parameters'), [
+    (['x1', 'x0'], ['x1', 'x0']),      # reordered names
+    ([1, 0], ['x1', 'x0']),            # reordered indices
+    (np.int32([1, 0]), ['x1', 'x0']),  # reordered numpy indices
+    (['x0', 'x0'], ['x0', 'x0']),      # repeated names
+    ([0, 0], ['x0', 'x0']),            # repeated indices
+])
+def test_read_columns_reordered_repeated(root, bookkeeping, columns,
+                                         parameters):
+    root = f'./tests/example_data/{root}'
+    expected = read_chains(root)[parameters + bookkeeping]
+    selected = read_chains(root, columns=columns)
+    assert_frame_equal(selected, expected)
+
+
+@pytest.mark.parametrize('root', ['cb', 'gd'])
+@pytest.mark.parametrize('columns', [[-4], [-3, 1, -2], slice(-4, -2)])
+def test_read_columns_negative_indexing(root, columns):
+    root = f'./tests/example_data/{root}'
+    parameters, _ = read_paramnames(root)
+    parameters = np.asarray(parameters)[columns]
+    expected = read_chains(root, columns=parameters)
+    selected = read_chains(root, columns=columns)
+    assert_frame_equal(selected, expected)
+
+
+@pytest.mark.parametrize(('columns', 'error'), [
+    (['x0', 'missing'], KeyError),      # unknown name
+    ([0, 10], IndexError),              # out-of-range index
+    ([True, False, False], TypeError),  # boolean input
+    (1.5, TypeError),                   # unsupported scalar
+    ([0, 'x1'], TypeError),             # mixed selector types
+])
+def test_read_columns_invalid(columns, error):
+    with pytest.raises(error):
+        read_chains('./tests/example_data/cb', columns=columns)
 
 
 @pytest.mark.parametrize('read', [read_chains, read_paramnames])
