@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
 from anesthetic.testing import assert_frame_equal
 from anesthetic import MCMCSamples, NestedSamples
-from anesthetic import read_chains, read_parameters
+from anesthetic import read_chains, read_paramnames
 from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
 from anesthetic.read.cobaya import read_cobaya, _count_samples
@@ -44,44 +44,44 @@ def cobaya_duplicates_root(tmp_path):
     return str(root)
 
 
-@pytest.mark.parametrize('root', ['gd', 'pc', 'mn'])
-def test_read_parameters_getdist(root):
-    parameters = read_parameters(Path('./tests/example_data') / root)
-    assert parameters == ['x0', 'x1', 'x2', 'x3', 'x4']
-
-
-def test_read_parameters_cobaya():
-    parameters = read_parameters('./tests/example_data/cb')
-    assert parameters == ['x0', 'x1', 'minuslogprior', 'minuslogprior__0',
-                          'chi2', 'chi2__norm']
-
-
-@pytest.mark.parametrize(('content', 'expected'), [
-    ('# header\n', 0),                     # no samples
-    ('# a b\n  1 2\n  3 4\n  5 6\n', 3),   # fixed-width rows
-    ('# a b\n  1 2\n  3 4\n  5 6', 3),     # missing final \n
-    ('# header\n1 2\n3 4 5\n6 7\n', 3),    # variable-width rows
-    ('# header\n1 2\n3 4 5\n6 7', 3),      # missing final \n
-    ('# a b\n  1 2\n\n# note\n  5 6', 2),  # blank and comment rows
+@pytest.mark.parametrize(('root', 'expected'), [
+    ('cb', ['x0', 'x1', 'minuslogprior', 'minuslogprior__0',
+            'chi2', 'chi2__norm']),
+    ('gd', ['x0', 'x1', 'x2', 'x3', 'x4']),
+    ('pc', ['x0', 'x1', 'x2', 'x3', 'x4']),
+    ('mn', ['x0', 'x1', 'x2', 'x3', 'x4']),
+    ('nf', ['x0', 'x1', 'amp', 'sigma']),
+    ('un', ['x0', 'x1', 'x2', 'x3']),
 ])
-def test_count_cobaya_samples(tmp_path, content, expected):
-    chain = tmp_path / 'chain.txt'
-    chain.write_text(content)
-    assert _count_samples(chain) == expected
+def test_read_paramnames(root, expected):
+    parameters, _ = read_paramnames(f'./tests/example_data/{root}')
+    assert parameters == expected
 
 
-def test_read_parameters_fail():
-    with pytest.raises(FileNotFoundError):
-        read_parameters('./tests/example_data/foo')
-
-
-def test_read_parameters_falls_back_to_getdist_for_numeric_header(tmp_path):
+@pytest.mark.parametrize(('suffix', 'nbookkeeping'), [
+    ('.txt', 2),             # getdist
+    ('_1.txt', 2),           # getdist
+    ('.1.txt', 2),           # getdist
+    ('_dead-birth.txt', 2),  # polychord
+    ('dead-birth.txt', 4),   # multinest
+    ('ev.dat', 3),           # multinest
+])
+def test_read_paramnames_metadata(tmp_path, suffix, nbookkeeping):
     root = tmp_path / 'chain'
-    # GetDist accepts <root>.1.txt as well as <root>_1.txt, which overlaps
-    # Cobaya's naming convention. Its numeric first row is not a Cobaya header.
-    root.with_suffix('.1.txt').write_text('1 2 3 4\n')
+    chain_file = Path(f'{root}{suffix}')
+    chain_file.write_text('1 2' + nbookkeeping * ' 1' + '\n')
+
+    # without metadata
+    with pytest.warns(UserWarning, match='Using integer parameter names'):
+        parameters, labels = read_paramnames(root)
+    assert parameters == [0, 1]
+    assert labels == {}
+
+    # with metadata
     root.with_suffix('.paramnames').write_text('x0 x_0\nx1 x_1\n')
-    assert read_parameters(root) == ['x0', 'x1']
+    parameters, labels = read_paramnames(root)
+    assert parameters == ['x0', 'x1']
+    assert labels == {'x0': '$x_0$', 'x1': '$x_1$'}
 
 
 def test_read_getdist():
@@ -115,7 +115,8 @@ def test_read_getdist():
 
     os.rename('./tests/example_data/gd.paramnames',
               './tests/example_data/gd.paramnames_')
-    mcmc = read_getdist('./tests/example_data/gd')
+    with pytest.warns(UserWarning, match="Using integer parameter names"):
+        mcmc = read_getdist('./tests/example_data/gd')
     os.rename('./tests/example_data/gd.paramnames_',
               './tests/example_data/gd.paramnames')
 
@@ -195,6 +196,21 @@ def test_read_cobaya_columns_with_burn_in_and_thin():
     expected = read_chains(root, burn_in=0.5, thin=2)[params]
     selected = read_chains(root, burn_in=0.5, thin=2, columns=['x0'])
     assert_frame_equal(selected, expected)
+
+
+@pytest.mark.parametrize(('content', 'expected'), [
+    ('# header\n', 0),                     # no samples
+    ('# a b\n  1 2\n  3 4\n  5 6\n', 3),   # fixed-width rows
+    ('# a b\n  1 2\n  3 4\n  5 6', 3),     # missing final \n
+    ('# header\n1 2\n3 4 5\n6 7\n', 3),    # variable-width rows
+    ('# header\n1 2\n3 4 5\n6 7', 3),      # missing final \n
+    ('# a b\n  1 2\n\n# note\n  5 6', 2),  # blank and comment rows
+    ('# header\n1 2\n300 400\n', 2),       # fixed-size total, unequal rows
+])
+def test_count_cobaya_samples(tmp_path, content, expected):
+    chain = tmp_path / 'chain.txt'
+    chain.write_text(content)
+    assert _count_samples(chain) == expected
 
 
 @pytest.mark.parametrize(('columns', 'error'), [
@@ -356,29 +372,29 @@ def test_read_multinest():
 def test_read_ultranest():
     np.random.seed(3)
     ns = read_ultranest('./tests/example_data/un')
-    params = ['a', 'b', 'c', 'd', 'logL', 'logL_birth', 'nlive']
+    params = ['x0', 'x1', 'x2', 'x3', 'logL', 'logL_birth', 'nlive']
     assert_array_equal(ns.drop_labels().columns, params)
-    labels = ['a',
-              'b',
-              'c',
-              'd',
+    labels = ['x0',
+              'x1',
+              'x2',
+              'x3',
               r'$\ln\mathcal{L}$',
               r'$\ln\mathcal{L}_\mathrm{birth}$',
               r'$n_\mathrm{live}$']
     assert_array_equal(ns.get_labels(), labels)
 
     assert isinstance(ns, NestedSamples)
-    ns.plot_2d(['a', 'b', 'c', 'd'])
-    ns.plot_1d(['a', 'b', 'c', 'd'])
+    ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
 def test_read_nestedfit():
     np.random.seed(3)
     ns = read_nestedfit('./tests/example_data/nf')
-    params = ['bg', 'x0', 'amp', 'sigma', 'logL', 'logL_birth', 'nlive']
+    params = ['x0', 'x1', 'amp', 'sigma', 'logL', 'logL_birth', 'nlive']
     assert_array_equal(ns.drop_labels().columns, params)
-    labels = ['bg',
-              'x0',
+    labels = ['x0',
+              'x1',
               'amp',
               'sigma',
               r'$\ln\mathcal{L}$',
@@ -387,8 +403,8 @@ def test_read_nestedfit():
     assert_array_equal(ns.get_labels(), labels)
 
     assert isinstance(ns, NestedSamples)
-    ns.plot_2d(['bg', 'x0', 'amp', 'sigma'])
-    ns.plot_1d(['bg', 'x0', 'amp', 'sigma'])
+    ns.plot_2d(['x0', 'x1', 'amp', 'sigma'])
+    ns.plot_1d(['x0', 'x1', 'amp', 'sigma'])
 
 
 def test_read_polychord():
@@ -459,9 +475,10 @@ def test_discard_burn_in(root):
         read_chains('./tests/example_data/' + root, burn_in=0.3)
 
 
-def test_read_fail():
+@pytest.mark.parametrize('read', [read_chains, read_paramnames])
+def test_read_fail(read):
     with pytest.raises(FileNotFoundError):
-        read_chains('./tests/example_data/foo')
+        read('./tests/example_data/foo')
 
 
 def test_regex_escape():

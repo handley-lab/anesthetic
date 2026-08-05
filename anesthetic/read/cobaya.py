@@ -36,15 +36,28 @@ def _count_samples(filename):
                    for line in file)
 
 
-def read_paramnames(root):
-    """Read header of ``<root>.1.txt`` to infer the paramnames.
+def read_cobaya_paramnames(root):
+    r"""Read parameter names and labels from a Cobaya chain header.
 
-    This is the data file of the first chain. It should have as many
-    columns as there are parameters (sampled and derived) plus an
+    ``<root>.1.txt`` is the data file of the first chain. It should have as
+    many columns as there are parameters (sampled and derived) plus an
     additional two corresponding to the weights (first column) and the
-    log-posterior (second column). The first line should start with a # and
-    should list the parameter names corresponding to the columns. These
-    will be used as handles in the pandas array.
+    minus-log-posterior (second column). The first line should start with a
+    ``#`` and should list the parameter names corresponding to the columns.
+    These will be used as handles in the pandas array.
+
+    Parameters
+    ----------
+    root : str
+        Root name for reading Cobaya chain metadata.
+
+    Returns
+    -------
+    parameters : list of str
+        Parameter names in file order, excluding sampler bookkeeping fields.
+    labels : dict
+        Mapping from parameter names to axis labels.
+
     """
     with open(root + ".1.txt") as f:
         header = f.readline().lstrip()
@@ -55,17 +68,17 @@ def read_paramnames(root):
         try:
             from getdist.cobaya_interface import cobaya_params_file
             from getdist.paramnames import ParamNames
-            params = ParamNames(cobaya_params_file(root))
-            labels = {p.name: '$' + p.label + '$' for p in params.names}
-            for p in paramnames:
-                if p == 'minuslogprior':
-                    labels.update({p: '$-\\ln\\pi$'})
-                elif 'minuslogprior_' in p:
-                    sub = p.split('_', maxsplit=1)[-1].lstrip('_')
-                    labels.update({p: f'$-\\ln\\pi_\\mathrm{{{sub}}}$'})
-            return paramnames, labels
         except ImportError:
             return paramnames, {}
+        params = ParamNames(cobaya_params_file(root))
+        labels = {p.name: '$' + p.label + '$' for p in params.names}
+        for p in paramnames:
+            if p == 'minuslogprior':
+                labels.update({p: '$-\\ln\\pi$'})
+            elif 'minuslogprior_' in p:
+                sub = p.split('_', maxsplit=1)[-1].lstrip('_')
+                labels.update({p: f'$-\\ln\\pi_\\mathrm{{{sub}}}$'})
+        return paramnames, labels
 
 
 def read_cobaya(root, *args, columns=None, burn_in=None, thin=None,
@@ -124,7 +137,7 @@ def read_cobaya(root, *args, columns=None, burn_in=None, thin=None,
         raise FileNotFoundError(dirname + '/' + regex + " not found.")
     chain_files.sort(key=lambda chain_file: int(chain_file[0]))
 
-    parameters, labels = read_paramnames(root)
+    parameters, labels = read_cobaya_paramnames(root)
     column_indices, columns = normalise_columns(columns, parameters)
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))

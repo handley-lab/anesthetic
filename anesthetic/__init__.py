@@ -49,5 +49,5 @@ make_1d_axes = anesthetic.plot.make_1d_axes
 
 read_hdf = anesthetic.read.hdf.read_hdf
 read_chains = anesthetic.read.chain.read_chains
-read_parameters = anesthetic.read.chain.read_parameters
+read_paramnames = anesthetic.read.chain.read_paramnames
 read_csv = anesthetic.read.csv.read_csv

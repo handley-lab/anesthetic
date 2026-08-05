@@ -20,7 +20,7 @@ def transform(x):
     return x * 20 - 10
 
 
-paramnames = ['a', 'b', 'c', 'd']
+paramnames = ['x0', 'x1', 'x2', 'x3']
 
 sampler = ReactiveNestedSampler(
     paramnames, loglike, transform=transform,

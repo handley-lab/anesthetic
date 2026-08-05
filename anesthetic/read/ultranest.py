@@ -4,6 +4,13 @@ import json
 from anesthetic.samples import NestedSamples
 
 
+def read_ultranest_paramnames(root):
+    """Read parameter names and labels for UltraNest chains."""
+    with open(os.path.join(root, 'info', 'results.json')) as infofile:
+        parameters = json.load(infofile)['paramnames']
+    return parameters, {}
+
+
 def read_ultranest(root, *args, **kwargs):
     """Read UltraNest files.
 

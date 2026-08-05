@@ -1,7 +1,7 @@
 """Read NestedSamples from PolyChord chains."""
 import os
 import numpy as np
-from anesthetic.read.getdist import read_paramnames
+from anesthetic.read.getdist import read_getdist_paramnames
 from anesthetic.samples import NestedSamples
 
 
@@ -29,7 +29,7 @@ def read_polychord(root, *args, **kwargs):
     except IOError:
         pass
     data, logL, logL_birth = np.split(data, [-2, -1], axis=1)
-    columns, labels = read_paramnames(root)
+    columns, labels = read_getdist_paramnames(root)
 
     columns = kwargs.pop('columns', columns)
     labels = kwargs.pop('labels', labels)

@@ -1,23 +1,15 @@
 """Read MCMCSamples or NestedSamples from any chains."""
 from anesthetic.read.polychord import read_polychord
-from anesthetic.read.getdist import (
-    read_getdist, read_paramnames as read_getdist_paramnames
-)
-from anesthetic.read.cobaya import (
-    read_cobaya, read_paramnames as read_cobaya_paramnames
-)
+from anesthetic.read.getdist import read_getdist, read_getdist_paramnames
+from anesthetic.read.cobaya import read_cobaya, read_cobaya_paramnames
 from anesthetic.read.multinest import read_multinest
-from anesthetic.read.ultranest import read_ultranest
-from anesthetic.read.nestedfit import read_nestedfit
+from anesthetic.read.ultranest import read_ultranest, read_ultranest_paramnames
+from anesthetic.read.nestedfit import read_nestedfit, read_nestedfit_paramnames
 from anesthetic.read.csv import read_csv
 
 
-def read_parameters(root):
-    """Read parameter names without loading samples into memory.
-
-    Parameter discovery is supported for Cobaya chain headers and GetDist
-    ``.paramnames`` files. The latter also covers formats such as PolyChord
-    and MultiNest that use GetDist parameter metadata.
+def read_paramnames(root):
+    """Read parameter names and labels without loading full chains.
 
     Parameters
     ----------
@@ -26,18 +18,19 @@ def read_parameters(root):
 
     Returns
     -------
-    list of str
-        Parameter names in file order, excluding sampler bookkeeping columns.
+    parameters : list of str
+        Parameter names in file order, excluding sampler bookkeeping fields.
+    labels : dict
+        Mapping from parameter names to axis labels.
 
     """
     root = str(root)
     errors = []
-    readers = [read_cobaya_paramnames, read_getdist_paramnames]
+    readers = [read_cobaya_paramnames, read_getdist_paramnames,
+               read_nestedfit_paramnames, read_ultranest_paramnames]
     for read in readers:
         try:
-            parameters, _ = read(root)
-            if parameters is not None:
-                return parameters
+            return read(root)
         except (FileNotFoundError, IOError) as error:
             errors.append(str(read) + ": " + str(error))
 

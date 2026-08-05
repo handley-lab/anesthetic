@@ -1,19 +1,20 @@
 """Read MCMCSamples from GetDist chains."""
 import os
 import re
+import warnings
 import numpy as np
 from anesthetic.samples import MCMCSamples
 from pandas import concat
 
 
-def read_paramnames(root):
-    r"""Read ``<root>.paramnames`` in GetDist format.
+def read_getdist_paramnames(root):
+    r"""Read parameter names and labels for GetDist-compatible chains.
 
-    This file should contain one or two columns. The first column indicates
-    a reference name for the sample, used as labels in the pandas array.
-    The second optional column should include the equivalent axis label,
-    possibly in tex, with the understanding that it will be surrounded by
-    dollar signs, for example
+    ``<root>.paramnames`` should contain one or two columns.
+    The first column gives the parameter name used as a column name in the
+    pandas array. The second optional column gives the corresponding axis
+    label, possibly in TeX, with the understanding that it will be surrounded
+    by dollar signs, for example
 
     ``<root>.paramnames``:
     ::
@@ -21,6 +22,18 @@ def read_paramnames(root):
         a1     a_1
         a2     a_2
         omega  \omega
+
+    Parameters
+    ----------
+    root : str
+        Root name for reading GetDist-compatible chain metadata.
+
+    Returns
+    -------
+    parameters : list of str
+        Parameter names in file order, excluding sampler bookkeeping fields.
+    labels : dict
+        Mapping from parameter names to axis labels.
 
     """
     try:
@@ -36,7 +49,34 @@ def read_paramnames(root):
                     labels[paramname] = f"${line[1]}$"
             return paramnames, labels
     except IOError:
-        return None, {}
+        pass
+
+    if os.path.exists(root + '.txt'):
+        chain_file = root + '.txt'
+        nbookkeeping = 2
+    elif os.path.exists(root + '_1.txt'):
+        chain_file = root + '_1.txt'
+        nbookkeeping = 2
+    elif os.path.exists(root + '.1.txt'):
+        chain_file = root + '.1.txt'
+        nbookkeeping = 2
+    elif os.path.exists(root + '_dead-birth.txt'):
+        chain_file = root + '_dead-birth.txt'
+        nbookkeeping = 2
+    elif os.path.exists(root + 'dead-birth.txt'):
+        chain_file = root + 'dead-birth.txt'
+        nbookkeeping = 4
+    elif os.path.exists(root + 'ev.dat'):
+        chain_file = root + 'ev.dat'
+        nbookkeeping = 3
+    else:
+        raise FileNotFoundError(f"No parameter metadata or supported chain "
+                                f"file found for {root}.")
+
+    nparams = np.loadtxt(chain_file, max_rows=1, ndmin=1).size - nbookkeeping
+    warnings.warn(f"{paramnames_file} not found. Using integer parameter "
+                  f"names inferred from {chain_file}.")
+    return list(range(nparams)), {}
 
 
 def read_getdist(root, *args, **kwargs):
@@ -48,7 +88,6 @@ def read_getdist(root, *args, **kwargs):
 
     """
     dirname, basename = os.path.split(root)
-
     files = os.listdir(os.path.dirname(root))
     regex = re.escape(basename) + r'((_|.)([0-9]+)|)\.txt'
     matches = [re.match(regex, f) for f in files]
@@ -57,7 +96,7 @@ def read_getdist(root, *args, **kwargs):
     if not chains_files:
         raise FileNotFoundError(dirname + '/' + regex + " not found.")
 
-    columns, labels = read_paramnames(root)
+    columns, labels = read_getdist_paramnames(root)
     columns = kwargs.pop('columns', columns)
     labels = kwargs.pop('labels', labels)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))

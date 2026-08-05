@@ -1,8 +1,14 @@
-"""Read NestedSamples from Nested_Fit chains."""
+"""Read NestedSamples from Nested_fit chains."""
 import os
 import numpy as np
-from anesthetic.read.getdist import read_paramnames
+from anesthetic.read.getdist import read_getdist_paramnames
 from anesthetic.samples import NestedSamples
+
+
+def read_nestedfit_paramnames(root):
+    """Read parameter names and labels for Nested_fit chains."""
+    root_getdist = os.path.join(root, 'nf_output_points')
+    return read_getdist_paramnames(root_getdist)
 
 
 def read_nestedfit(root, *args, **kwargs):
@@ -22,12 +28,10 @@ def read_nestedfit(root, *args, **kwargs):
     data_birth = np.loadtxt(birth_file)
     weight, logL, data = np.split(data_dead, [1, 2], axis=1)
     logL_birth = data_birth[:, 0]
-    root_getdist = os.path.join(root, 'nf_output_points')
-    columns, labels = read_paramnames(root_getdist)
-    # No specific labeling is implemented in nested_fit
-    labels = columns
+    columns, _ = read_nestedfit_paramnames(root)
     columns = kwargs.pop('columns', columns)
-    labels = kwargs.pop('labels', labels)
+    # Nested_fit does not provide separate parameter labels.
+    labels = kwargs.pop('labels', columns)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
     return NestedSamples(data=data, columns=columns,
