@@ -52,31 +52,42 @@ def read_chains(root, *args, **kwargs):
         * anything `GetDist <https://github.com/cmbant/getdist>`_ compatible,
         * files produced using ``DataFrame.to_csv()`` from anesthetic.
 
-    Note that in order to optimally read chains from Cobaya you need to have
-    `GetDist <https://getdist.readthedocs.io/en/latest/>`__ installed.
+    When installed, `GetDist <https://getdist.readthedocs.io/en/latest/>`__
+    is used to read parameter labels from Cobaya's YAML metadata.
 
     Parameters
     ----------
     root : str, pathlib.Path
-        root name for reading files
+        Root name for reading chain files.
 
     columns : list[str], list[int], or slice, optional
-        For Cobaya chains, optionally select which parameter columns to load
-        from the chain files. This is useful when you do not want to load a
-        large number of nuisance parameters into memory. Integer positions and
-        slices index the parameter names returned by :func:`read_parameters`.
+        Optionally select which parameter columns to load from the chain files.
+        This is useful when you do not want to load a large number of nuisance
+        parameters into memory. Integer positions and slices index parameter
+        fields only, not sampler bookkeeping fields such as ``logL``.
 
-    compress_consecutive_duplicates : bool, default=False
-        For Cobaya chains, oversampling nuisance parameters can leave the
-        selected parameters of interest unchanged across consecutive samples.
-        Merge these repeated rows by summing their weights. This happens after
-        read-time burn-in removal and thinning, and separately for each chain.
-        If ``False``, ``chi2`` is loaded and ``logP`` and ``logL`` are
-        calculated in addition to the selected columns. If ``True``, only the
-        selected columns and ``chain`` are returned. Weights are always
-        retained.
+    burn_in : int, float or array-like, optional
+        For Cobaya and GetDist MCMC chains:
+        Number or fraction of stored rows to remove from each chain before
+        loading samples into memory. Uses the same semantics as
+        :meth:`anesthetic.samples.MCMCSamples.remove_burn_in`.
 
-    *args, **kwargs:
+    thin : int, optional
+        For Cobaya and GetDist MCMC chains:
+        Keep every ``thin``-th sample in the expanded MCMC chain represented
+        by the frequency weights.
+
+    compress_repeats : bool, default=False
+        For Cobaya and GetDist MCMC chains:
+        Oversampling nuisance parameters can leave the selected parameters of
+        interest unchanged across consecutive samples. Merge these repeated
+        rows by summing their weights. Compression happens separately for each
+        chain, after burn-in removal and thinning. If ``False``, likelihood
+        bookkeeping fields such as ``logL`` are returned in addition to the
+        selected columns. If ``True``, only the selected columns and ``chain``
+        are returned. Weights are always retained.
+
+    *args, **kwargs
         Passed on to ``NestedSamples`` or ``MCMCSamples``. Check their
         docstrings for more information.
 

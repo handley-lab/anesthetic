@@ -1,6 +1,7 @@
 """Read NestedSamples from Nested_fit chains."""
 import os
 import numpy as np
+from anesthetic.read._utils import _norm_columns
 from anesthetic.read.getdist import read_getdist_paramnames
 from anesthetic.samples import NestedSamples
 
@@ -11,25 +12,39 @@ def read_nestedfit_paramnames(root):
     return read_getdist_paramnames(root_getdist)
 
 
-def read_nestedfit(root, *args, **kwargs):
-    """Read Nested_Fit chain files.
+def read_nestedfit(root, *args, columns=None, **kwargs):
+    """Read Nested_fit chain files.
 
     Parameters
     ----------
     root : str
-        root specify the directory only, no specific roots,
-        The files read files are ``nf_output_points.txt``
-        and ``nf_output_diag.txt``.
+        Root directory containing ``nf_output_points.txt`` and
+        ``nf_output_diag.dat``.
+
+    columns : list[str], list[int], or slice, optional
+        Optionally select which parameter columns to load from the chain files.
+        This is useful when you do not want to load a large number of nuisance
+        parameters into memory. Integer positions and slices index parameter
+        fields only, not sampler bookkeeping fields such as ``logL``.
+
+    *args, **kwargs
+        Passed on to ``NestedSamples``. Check its docstring for more
+        information.
+
+    Returns
+    -------
+    :class:`anesthetic.samples.NestedSamples`
 
     """
     dead_file = os.path.join(root, 'nf_output_points.txt')
     birth_file = os.path.join(root, 'nf_output_diag.dat')
-    data_dead = np.loadtxt(dead_file)
-    data_birth = np.loadtxt(birth_file)
+    parameters, _ = read_nestedfit_paramnames(root)
+    indices, columns = _norm_columns(columns, parameters)
+    usecols = None if indices is None else [0, 1] + [i+2 for i in indices]
+
+    data_dead = np.loadtxt(dead_file, usecols=usecols, ndmin=2)
     weight, logL, data = np.split(data_dead, [1, 2], axis=1)
-    logL_birth = data_birth[:, 0]
-    columns, _ = read_nestedfit_paramnames(root)
-    columns = kwargs.pop('columns', columns)
+    logL_birth = np.loadtxt(birth_file, usecols=0, ndmin=1)
     # Nested_fit does not provide separate parameter labels.
     labels = kwargs.pop('labels', columns)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))

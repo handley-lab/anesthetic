@@ -471,9 +471,25 @@ def test_read_blackjax():
     assert np.isnan(bj.logL_birth[0])
 
 
+@pytest.mark.parametrize('root', [
+    'gd', 'pc', 'mn', 'cb', 'nf',
+    pytest.param('un', marks=h5py_mark_xfail),
+])
+def test_read_labels(root):
+    root = f'./tests/example_data/{root}'
+    assert read_chains(root).islabelled()
+    assert not read_chains(root, labels=None).islabelled()
+
+
 @pytest.mark.parametrize(('root', 'bookkeeping'), [
     ('cb', ['chi2', 'logL', 'logP', 'chain']),
     ('gd', ['logL', 'chain']),
+    ('pc', ['logL', 'logL_birth', 'nlive']),
+    ('mn', ['logL', 'logL_birth', 'nlive']),
+    ('mn_old', ['logL', 'nlive']),
+    ('nf', ['logL', 'logL_birth', 'nlive']),
+    pytest.param('un', ['logL', 'logL_birth', 'nlive'],
+                 marks=h5py_mark_xfail),
 ])
 @pytest.mark.parametrize(('columns', 'parameters'), [
     ('x0', ['x0']),                    # scalar name
@@ -495,6 +511,10 @@ def test_read_columns(root, bookkeeping, columns, parameters):
 @pytest.mark.parametrize(('root', 'bookkeeping'), [
     ('cb', ['chi2', 'logL', 'logP', 'chain']),
     ('gd', ['logL', 'chain']),
+    ('pc', ['logL', 'logL_birth', 'nlive']),
+    ('mn', ['logL', 'logL_birth', 'nlive']),
+    ('mn_old', ['logL', 'nlive']),
+    ('nf', ['logL', 'logL_birth', 'nlive']),
 ])
 @pytest.mark.parametrize(('columns', 'parameters'), [
     (['x1', 'x0'], ['x1', 'x0']),      # reordered names
@@ -511,7 +531,7 @@ def test_read_columns_reordered_repeated(root, bookkeeping, columns,
     assert_frame_equal(selected, expected)
 
 
-@pytest.mark.parametrize('root', ['cb', 'gd'])
+@pytest.mark.parametrize('root', ['cb', 'gd', 'pc', 'mn', 'mn_old', 'nf'])
 @pytest.mark.parametrize('columns', [[-4], [-3, 1, -2], slice(-4, -2)])
 def test_read_columns_negative_indexing(root, columns):
     root = f'./tests/example_data/{root}'
