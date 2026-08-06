@@ -924,9 +924,6 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         :class:`scipy.stats.gaussian_kde`. A value greater 1 will smooth more,
         a value smaller 1 will smooth less.
 
-    beta : int, float, default = 1
-        The value of beta used to calculate the number of effective samples
-
     Returns
     -------
     lines : :class:`matplotlib.lines.Line2D`
@@ -1028,6 +1025,9 @@ def hist_plot_1d(ax, data, *args, **kwargs):
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: quantile range, e.g. (0.16, 0.84)
+
+    beta : int, float, default = 1
+        The value of beta used to calculate the number of effective samples
 
     Returns
     -------
