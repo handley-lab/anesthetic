@@ -10,6 +10,7 @@ to create a set of axes and legend proxies.
 
 """
 from packaging import version
+from warnings import warn
 import numpy as np
 from pandas import Series, DataFrame
 import matplotlib.pyplot as plt
@@ -896,8 +897,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
           effective samples in :func:`anesthetic.utils.neff`
           with ``beta=ncompress``.
 
-    nplot_1d : int, default=100
-        Number of plotting points to use.
+    ngrid_kde : int, default=200
+        Number of grid points where the KDE is being evaluated.
 
     levels : list
         Values at which to draw iso-probability lines.
@@ -940,7 +941,11 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         data = np.log10(data)
 
     ncompress = kwargs.pop('ncompress', False)
+    if 'nplot_1d' in kwargs:
+        warn(FutureWarning('`nplot_1d` is deprecated, use `ngrid_kde` '
+                           'instead.'))
     nplot = kwargs.pop('nplot_1d', 100)
+    ngrid = kwargs.pop('ngrid_kde', nplot)
     bw_method = kwargs.pop('bw_method', None)
     bw_scale = kwargs.pop('bw_scale', 1)
     order = kwargs.pop('order', 1)
@@ -963,7 +968,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     q = quantile_plot_interval(q=q)
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
-    x = np.linspace(xmin, xmax, nplot)
+    x = np.linspace(xmin, xmax, ngrid)
 
     data_compressed, w = sample_compression_1d(data, weights, ncompress)
     kde = gaussian_kde(data_compressed, weights=w, bw_method=bw_method)
@@ -1248,8 +1253,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
           effective samples in :func:`anesthetic.utils.neff`
           with ``beta=ncompress``.
 
-    nplot_2d : int, default=1000
-        Number of plotting points to use.
+    ngrid_kde : int, default=1000
+        Number of grid points where the KDE is being evaluated.
 
     bw_method : str, scalar or callable, optional
         Forwarded to :class:`scipy.stats.gaussian_kde`.
@@ -1283,7 +1288,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     ncompress = len(data_x) if weights is None else neff(weights, beta='equal')
     ncompress = kwargs.pop('ncompress', min(10000, int(ncompress)))
+    if 'nplot_2d' in kwargs:
+        warn(FutureWarning('`nplot_2d` is deprecated, use `ngrid_kde` '
+                           'instead.'))
     nplot = kwargs.pop('nplot_2d', 1000)
+    ngrid = kwargs.pop('ngrid_kde', nplot)
     bw_method = kwargs.pop('bw_method', None)
     bw_scale = kwargs.pop('bw_scale', 1)
     order = kwargs.pop('order', 1)
@@ -1304,7 +1313,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     xmax = quantile(data_x, q[-1], weights)
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
-    X, Y = np.mgrid[xmin:xmax:1j*np.sqrt(nplot), ymin:ymax:1j*np.sqrt(nplot)]
+    X, Y = np.mgrid[xmin:xmax:1j*np.sqrt(ngrid), ymin:ymax:1j*np.sqrt(ngrid)]
     x_grid, y_grid = X.ravel(), Y.ravel()
 
     cov = np.cov(data_x, data_y, aweights=weights)
