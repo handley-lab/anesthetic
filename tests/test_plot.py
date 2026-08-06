@@ -770,18 +770,22 @@ def test_q_invariant_levels():
     assert_array_equal(line_q5.levels[:-1], line_q1.levels[:-1])
 
 
-def test_kde_plot_nplot():
+def test_kde_plot_ngrid():
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(1000)
-    line, = kde_plot_1d(ax, data, ncompress=1000, nplot_1d=200)
+    with pytest.warns(FutureWarning):
+        kde_plot_1d(ax, data, ncompress=1000, nplot_1d=200)
+    line, = kde_plot_1d(ax, data, ncompress=1000, ngrid_kde=200)
     assert line.get_xdata().size == 200
 
     fig, ax = plt.subplots()
     np.random.seed(0)
     data_x = np.random.randn(1000)
     data_y = np.random.randn(1000)
-    kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
+    with pytest.warns(FutureWarning):
+        kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
+    kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, ngrid_kde=900)
 
 
 @pytest.mark.parametrize('contour_plot_2d',
