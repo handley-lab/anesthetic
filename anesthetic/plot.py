@@ -24,7 +24,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.transforms import Affine2D
 from anesthetic.utils import nest_level
 from anesthetic.utils import (sample_compression_1d, quantile,
-                              triangular_sample_compression_2d,
+                              triangular_sample_compression_2d, neff,
                               iso_probability_contours,
                               iso_probability_contours_from_samples,
                               match_contour_to_contourf, histogram_bin_edges)
@@ -885,7 +885,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         Sample weights.
 
     ncompress : int, str, default=False
-        Degree of compression.
+        Degree of sample compression determining the number of points where
+        the KDE is being constructed.
 
         * If ``False``: no compression.
         * If ``True``: compresses to the channel capacity, equivalent to
@@ -1039,6 +1040,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     **kwargs : :meth:`matplotlib.axes.Axes.hist` properties
 
     """
+    kwargs.pop('ncompress')
     kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
     bins = kwargs.pop('bins', 'fd')
@@ -1233,7 +1235,10 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Default: [0.95, 0.68]
 
     ncompress : int, str, default='equal'
-        Degree of compression.
+        Degree of sample compression determining the number of points where
+        the KDE is being constructed (not evaluated --> see `ngrid_kde`).
+        By default this is determined from the number of equally
+        weighted samples (ncompress='equal') but does not exceed 10000.
 
         * If ``int``: desired number of samples after compression.
         * If ``False``: no compression.
@@ -1276,7 +1281,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if ax.get_yaxis().get_scale() == 'log':
         data_y = np.log10(data_y)
 
-    ncompress = kwargs.pop('ncompress', 'equal')
+    ncompress = len(data_x) if weights is None else neff(weights, beta='equal')
+    ncompress = kwargs.pop('ncompress', min(10000, int(ncompress)))
     nplot = kwargs.pop('nplot_2d', 1000)
     bw_method = kwargs.pop('bw_method', None)
     bw_scale = kwargs.pop('bw_scale', 1)
@@ -1460,7 +1466,10 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
         x and y coordinates of uniformly weighted samples to plot.
 
     ncompress : int, str, default='equal'
-        Degree of compression.
+        Degree of sample compression determining the number of points being
+        plotted.
+        By default this is determined from the number of equally
+        weighted samples (ncompress='equal') but does not exceed 1000.
 
         * If ``int``: desired number of samples after compression.
         * If ``False``: no compression.
