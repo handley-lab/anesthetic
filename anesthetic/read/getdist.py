@@ -37,14 +37,14 @@ def read_getdist_paramnames(root):
 
     Returns
     -------
-    parameters : list of str
+    parameters : list[str] or list[int]
         Parameter names in file order, excluding sampler bookkeeping fields.
     labels : dict
         Mapping from parameter names to axis labels.
 
     """
+    paramnames_file = root + '.paramnames'
     try:
-        paramnames_file = root + '.paramnames'
         with open(paramnames_file, 'r', encoding='utf-8-sig') as f:
             paramnames = []
             labels = {}

@@ -18,7 +18,7 @@ def read_paramnames(root):
 
     Returns
     -------
-    parameters : list of str
+    parameters : list[str] or list[int]
         Parameter names in file order, excluding sampler bookkeeping fields.
     labels : dict
         Mapping from parameter names to axis labels.
