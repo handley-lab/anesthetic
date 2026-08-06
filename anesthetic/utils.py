@@ -136,7 +136,8 @@ def compress_weights(w, u=None, ncompress=True):
         remainder = ncompress - integer.sum()
         mask = fraction > 0
         race_time = np.full_like(fraction, np.inf)  # exp-race arrival time
-        race_time[mask] = -np.log(u[mask])/fraction[mask]
+        # log of actual race time to prevent overflow, but log is monotonic
+        race_time[mask] = np.log(-np.log(u[mask])) - np.log(fraction[mask])
         idx = np.argpartition(race_time, remainder-1)[:remainder]
         extra = np.bincount(idx, minlength=len(integer))
     else:
