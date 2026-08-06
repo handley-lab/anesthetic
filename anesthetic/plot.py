@@ -885,7 +885,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     weights : np.array, optional
         Sample weights.
 
-    ncompress : int, str, default=False
+    ncompress : int, str, or bool, default=False
         Degree of sample compression determining the number of points where
         the KDE is being constructed.
 
@@ -1045,7 +1045,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     **kwargs : :meth:`matplotlib.axes.Axes.hist` properties
 
     """
-    kwargs.pop('ncompress')
+    kwargs.pop('ncompress', None)
     kwargs = normalize_kwargs(kwargs)
     weights = kwargs.pop('weights', None)
     bins = kwargs.pop('bins', 'fd')
@@ -1239,11 +1239,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         Has to be ordered from outermost to innermost contour.
         Default: [0.95, 0.68]
 
-    ncompress : int, str, default='equal'
+    ncompress : int, str, or bool, default='equal'
         Degree of sample compression determining the number of points where
-        the KDE is being constructed (not evaluated --> see `ngrid_kde`).
+        the KDE is being constructed (not evaluated --> see ``ngrid_kde``).
         By default this is determined from the number of equally
-        weighted samples (ncompress='equal') but does not exceed 10000.
+        weighted samples (``ncompress='equal'``) but does not exceed 10000.
 
         * If ``int``: desired number of samples after compression.
         * If ``False``: no compression.
@@ -1474,11 +1474,11 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
     data_x, data_y : np.array
         x and y coordinates of uniformly weighted samples to plot.
 
-    ncompress : int, str, default='equal'
+    ncompress : int, str, or bool, default='equal'
         Degree of sample compression determining the number of points being
         plotted.
         By default this is determined from the number of equally
-        weighted samples (ncompress='equal') but does not exceed 1000.
+        weighted samples (``ncompress='equal'``) but does not exceed 1000.
 
         * If ``int``: desired number of samples after compression.
         * If ``False``: no compression.
