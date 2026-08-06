@@ -172,10 +172,11 @@ def _read_mcmc_chains(chain_files, parameters, columns, count_samples,
 
     # Remove rows left unused by compression.
     if start < nrows:
-        data.resize((start, len(columns)))
-        weights.resize(start)
-        minuslog.resize(start)
-        chains.resize(start)
+        # refcheck=False needed for python 3.10
+        data.resize((start, len(columns)), refcheck=False)
+        weights.resize(start, refcheck=False)
+        minuslog.resize(start, refcheck=False)
+        chains.resize(start, refcheck=False)
 
     return (data, columns, _infer_weight_dtype(weights), minuslog, chains,
             renames)
