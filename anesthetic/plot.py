@@ -910,7 +910,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
         * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
-        * ``tuple``: quantile range, e.g. (0.16, 0.84)
+        * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
 
     facecolor : bool or string, default=False
         If set to True then the 1d plot will be shaded with the value of the
