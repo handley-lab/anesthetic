@@ -832,6 +832,7 @@ def test_scatter_plot_2d():
     lines, = scatter_plot_2d(ax, data_x, data_y)
     assert isinstance(lines, Line2D)
 
+    # colors
     fig, ax = plt.subplots()
     points, = scatter_plot_2d(ax, data_x, data_y, color='C0', lw=1)
     assert (points.get_color() == 'C0')
@@ -841,6 +842,12 @@ def test_scatter_plot_2d():
     assert (points.get_color() == 'C0')
     assert (points.get_markerfacecolor() == 'C1')
     assert (points.get_markeredgecolor() == 'C2')
+
+    # fc=mfc and ec=mec aliases for better combination with other kinds
+    with pytest.raises(TypeError):
+        scatter_plot_2d(ax, data_x, data_y, ec='C1', mec='C2')
+    with pytest.raises(TypeError):
+        scatter_plot_2d(ax, data_x, data_y, fc='C1', mfc='C2')
 
     # Check that q is ignored
     fig, ax = plt.subplots()
