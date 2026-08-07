@@ -1140,6 +1140,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kwargs = normalize_kwargs(kwargs, dict(linewidths=['linewidth', 'lw'],
                                            linestyles=['linestyle', 'ls'],
                                            color=['c'],
+                                           cmap=['colormap'],
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
 
@@ -1273,6 +1274,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     kwargs = normalize_kwargs(kwargs, dict(linewidths=['linewidth', 'lw'],
                                            linestyles=['linestyle', 'ls'],
                                            color=['c'],
+                                           cmap=['colormap'],
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
 
@@ -1500,9 +1502,11 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
         alias_mapping=dict(lw=['linewidth', 'linewidths'],
                            ls=['linestyle', 'linestyles'],
                            color=['c'],
-                           mfc=['fc', 'facecolor'],
-                           mec=['ec', 'edgecolor'],
-                           cmap=['colormap']),
+                           cmap=['colormap'],
+                           mfc=['fc', 'facecolor', 'markerfacecolor'],
+                           mec=['ec', 'edgecolor', 'markeredgecolor'],
+                           markeredgewidth=['mew'],
+                           markersize=['ms']),
         drop=['ls', 'lw']
     )
     kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
@@ -1554,20 +1558,33 @@ def normalize_kwargs(kwargs, alias_mapping=None, drop=None):
     """Normalize kwarg inputs.
 
     Works the same way as :func:`matplotlib.cbook.normalize_kwargs`, but
-    additionally allows to drop kwargs.
+    additionally allows custom alias mappings and dropping kwargs.
     """
     drop = [] if drop is None else drop
     if alias_mapping is None:
-        alias_mapping = dict(linewidth=['lw'],
-                             linestyle=['ls'],
+        alias_mapping = dict(linewidth=['lw', 'linewidths'],
+                             linestyle=['ls', 'linestyles'],
                              color=['c'],
-                             facecolor=['fc'],
-                             edgecolor=['ec'],
-                             cmap=['colormap'])
-    kwargs = cbook.normalize_kwargs(kwargs, alias_mapping=alias_mapping)
-    for key in set(drop) & set(kwargs.keys()):
-        kwargs.pop(key)
-    return kwargs
+                             facecolor=['fc', 'facecolors'],
+                             edgecolor=['ec', 'edgecolors'],
+                             cmap=['colormap'],
+                             markerfacecolor=['mfc'],
+                             markeredgecolor=['mec'],
+                             markeredgewidth=['mew'])
+    alias_to_prop = {alias: prop for prop, aliases in alias_mapping.items()
+                     for alias in aliases}
+    normalized = {}
+    canonical_to_seen = {}
+    for key, value in kwargs.items():
+        canonical = alias_to_prop.get(key, key)
+        if canonical in canonical_to_seen:
+            raise TypeError(f"Got both {canonical_to_seen[canonical]!r} and "
+                            f"{key!r}, " "which are aliases of one another")
+        canonical_to_seen[canonical] = key
+        normalized[canonical] = value
+    for key in set(drop) & set(normalized):
+        normalized.pop(key)
+    return normalized
 
 
 def set_colors(c, fc, ec, cmap):
