@@ -203,6 +203,32 @@ def test_plot_2d_kinds():
         ns.plot_2d(params, kind='eggs')
 
 
+def test_plot_2d_scatter_ncompress():
+    # ensure sensible defaults for both weighted and unweighted data
+    s = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x1']
+
+    # weighted: compress to equally weighted samples
+    fig, axes = make_2d_axes(params, upper=False, diagonal=False)
+    axes = s.plot_2d(axes, kind='scatter', q=0)
+    xydata = axes.iloc[0, 0].get_children()[0].get_xydata()
+    assert len(xydata) == int(s.neff(beta='equal'))
+
+    # unweighted: maximum of 1000 scatter points
+    s = s.drop_weights()
+    fig, axes = make_2d_axes(params, upper=False, diagonal=False)
+    axes = s.plot_2d(axes, kind='scatter', q=0)
+    xydata = axes.iloc[0, 0].get_children()[0].get_xydata()
+    assert len(xydata) == 1000
+
+    # unweighted: all scatter points below 1000
+    s = s.compress(ncompress=200)
+    fig, axes = make_2d_axes(params, upper=False, diagonal=False)
+    axes = s.plot_2d(axes, kind='scatter', q=0)
+    xydata = axes.iloc[0, 0].get_children()[0].get_xydata()
+    assert len(xydata) == 200
+
+
 def test_plot_2d_kinds_multiple_calls():
     np.random.seed(3)
     ns = read_chains('./tests/example_data/pc')

@@ -63,7 +63,7 @@ class _WeightedMPLPlot(MPLPlot):
 def _compress_weights(kwargs, data):
     if isinstance(data, _WeightedObject):
         if data.isweighted():
-            ncompress = neff(data.get_weights(), beta='equal')
+            ncompress = int(neff(data.get_weights(), beta='equal'))
             ncompress = kwargs.pop('ncompress', min(1000, ncompress))
         else:
             ncompress = kwargs.pop('ncompress', min(1000, len(data)))

@@ -844,7 +844,8 @@ def test_scatter_plot_2d():
 
     # Check that q is ignored
     fig, ax = plt.subplots()
-    scatter_plot_2d(ax, data_x, data_y, q=0)
+    p = scatter_plot_2d(ax, data_x, data_y, q=0)
+    assert len(p[0].get_xydata()) == 100
 
 
 def test_make_axes_logscale():
