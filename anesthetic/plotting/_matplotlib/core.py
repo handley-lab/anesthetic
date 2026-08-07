@@ -64,9 +64,9 @@ def _compress_weights(kwargs, data):
     if isinstance(data, _WeightedObject):
         if data.isweighted():
             ncompress = int(neff(data.get_weights(), beta='equal'))
-            ncompress = kwargs.pop('ncompress', min(1000, ncompress))
         else:
-            ncompress = kwargs.pop('ncompress', min(1000, len(data)))
+            ncompress = len(data)
+        ncompress = kwargs.pop('ncompress', min(1000, ncompress))
         return data.compress(ncompress)
     else:
         return data
