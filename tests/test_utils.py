@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 import pytest
 from scipy import special as sp
+from scipy.spatial import ConvexHull
 from numpy.testing import (assert_array_equal, assert_allclose)
 from anesthetic import read_chains
 from pytest import approx
@@ -118,21 +119,60 @@ def test_triangular_sample_compression_2d():
     y = np.random.rand(n)
     w = np.random.rand(n)
     cov = np.identity(2)
+    tri, W = triangular_sample_compression_2d(x, y, cov, None)
+    assert len(W) == 1000
+    assert sum(W) == approx(n, rel=1e-14)
     tri, W = triangular_sample_compression_2d(x, y, cov, w)
     assert len(W) == 1000
-    assert sum(W) == pytest.approx(sum(w), rel=1e-1)
+    assert sum(W) == approx(sum(w), rel=1e-14)
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n=False)
     assert len(W) == n
-    assert sum(W) == pytest.approx(sum(w))
+    assert sum(W) == approx(sum(w), rel=1e-14)
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n=True)  # entropy
     assert n/2 < len(W) < n
-    assert sum(W) == pytest.approx(sum(w), rel=1e-3)
+    assert sum(W) == approx(sum(w), rel=1e-14)
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n='inf')
-    assert len(W) == pytest.approx(n/2, rel=1e-1)
-    assert sum(W) == pytest.approx(sum(w), rel=1e-2)
+    assert len(W) == approx(n/2, rel=1e-1)
+    assert sum(W) == approx(sum(w), rel=1e-14)
     tri, W = triangular_sample_compression_2d(x, y, cov, w, n=10000)
     assert len(W) == n
-    assert sum(W) == pytest.approx(sum(w))
+    assert sum(W) == approx(sum(w), rel=1e-14)
+
+
+def test_triangular_sample_compression_2d_retriangulate():
+    # Dataset known to trigger re-triangulation due to numerical precision
+    # differences between `ConvexHull` and `Triangulation.get_trifinder`.
+    # The data is nearly collinear (high negative correlation) so the scaled
+    # triangulation has very thin triangles, making `trifinder` fragile.
+    # Three interior points at machine-epsilon distance from different hull
+    # edges increase the chance that at least one triggers j<0 on any platform.
+    x = np.array([
+        0.963503384885994, 0.963503150900029, 0.963503061245431,
+        0.963503961899544, 0.963502018551754, 0.96350193347797,
+        0.963504894819475, 0.96350146654318, 0.963500284866466,
+        0.963500010757046,
+        # interior points at machine-epsilon distance from hull edges
+        0.963503380133156,     # ~2e-16 from edge 1-0
+        0.963503956129408423,  # ~2e-17 from edge 3-0
+        0.963500283495918874,  # ~2e-18 from edge 8-9
+    ])
+    y = np.array([
+        0.00383119232978469, 0.00383124043089176, 0.00383125886154424,
+        0.00383107371275365, 0.00383147321494960, 0.00383149070440749,
+        0.00383088193551402, 0.00383158669736725, 0.00383182963283048,
+        0.00383188598672533,
+        0.00383119330683777,
+        0.003831074898923960,
+        0.003831829914599955,
+    ])
+    cov = np.array([[3.2950564925744617e-06, -7.036390165774016e-07],
+                    [-7.036390165774016e-07, 1.5033900475204585e-07]])
+    n_hull = len(ConvexHull(np.column_stack([x, y])).vertices)
+    assert n_hull == 10
+    tri, w = triangular_sample_compression_2d(x, y, cov, n=3)
+    # At least one interior point must have triggered j<0 and been re-added.
+    assert n_hull < len(tri.x) <= len(x)
+    assert w.sum() == approx(len(x), rel=1e-14)
 
 
 def test_sample_compression_1d():
