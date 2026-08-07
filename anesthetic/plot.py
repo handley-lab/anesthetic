@@ -925,10 +925,10 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     clip_to_zero : bool, default=True
         If True, force the curve to zero just outside ``data.min()`` and
-        ``data.max()`` (whenever they fall inside ``[xmin, xmax]``), closing
-        the curve cleanly at the edges of support. If False, the curve is
-        sampled only on the regular grid and may end mid-air at the data
-        limits.
+        ``data.max()`` (whenever they fall inside the plotting ranges
+        ``xlim = (xmin, xmax)``), closing it cleanly at the support edges.
+        If False, the curve is sampled only on the regular grid and may end
+        mid-air at the data limits.
 
     Returns
     -------
