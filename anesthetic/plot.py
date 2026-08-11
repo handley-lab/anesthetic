@@ -1066,7 +1066,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     bins = kwargs.pop('bins', 'fd')
     histtype = kwargs.pop('histtype', 'bar')
     density = kwargs.get('density', False)
-    beta = kwargs.pop('beta', 'equal'),
+    beta = kwargs.pop('beta', 'equal')
 
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
