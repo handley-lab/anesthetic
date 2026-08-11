@@ -951,8 +951,8 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     if 'nplot_1d' in kwargs:
         warn(FutureWarning('`nplot_1d` is deprecated, use `ngrid_kde` '
                            'instead.'))
-    nplot = kwargs.pop('nplot_1d', 100)
-    ngrid = kwargs.pop('ngrid_kde', nplot)
+    nplot = kwargs.pop('nplot_1d', 200)
+    ngrid_kde = kwargs.pop('ngrid_kde', nplot)
     bw_method = kwargs.pop('bw_method', None)
     bw_scale = kwargs.pop('bw_scale', 1)
     order = kwargs.pop('order', 1)
@@ -979,7 +979,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     q = quantile_plot_interval(q=q)
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
-    x = np.linspace(xmin, xmax, ngrid)
+    x = np.linspace(xmin, xmax, ngrid_kde)
     if kwargs.pop('clip_to_zero', True):
         for edge, direction in [(data.min(), -np.inf), (data.max(), np.inf)]:
             if xmin <= edge <= xmax:
