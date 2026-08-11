@@ -1066,6 +1066,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     bins = kwargs.pop('bins', 'fd')
     histtype = kwargs.pop('histtype', 'bar')
     density = kwargs.get('density', False)
+    beta = kwargs.pop('beta', 'equal'),
 
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
@@ -1093,7 +1094,7 @@ def hist_plot_1d(ax, data, *args, **kwargs):
             bins = histogram_bin_edges(data,
                                        weights=weights,
                                        bins=bins,
-                                       beta=kwargs.pop('beta', 'equal'),
+                                       beta=beta,
                                        range=range)
         if ax.get_xaxis().get_scale() == 'log':
             bins = 10 ** bins
