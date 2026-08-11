@@ -801,7 +801,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
 
     facecolor : bool or string, default=False
         If set to True then the 1d plot will be shaded with the value of the
-        ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
+        ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' etc.
         to define the color of the shading directly.
 
     Returns
@@ -914,7 +914,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     facecolor : bool or string, default=False
         If set to True then the 1d plot will be shaded with the value of the
-        ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' ect.
+        ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' etc.
         to define the color of the shading directly.
 
     bw_method : str, scalar or callable, optional
