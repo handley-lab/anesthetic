@@ -7,10 +7,10 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import matplotlib.pyplot as plt
 from anesthetic.testing import assert_frame_equal
 from anesthetic import MCMCSamples, NestedSamples
-from anesthetic import read_chains
+from anesthetic import read_chains, read_paramnames
 from anesthetic.read.polychord import read_polychord
 from anesthetic.read.getdist import read_getdist
-from anesthetic.read.cobaya import read_cobaya
+from anesthetic.read.cobaya import read_cobaya, _count_samples
 from anesthetic.read.multinest import read_multinest
 from anesthetic.read.ultranest import read_ultranest
 from anesthetic.read.nestedfit import read_nestedfit
@@ -24,6 +24,80 @@ import io
 def close_figures_on_teardown():
     yield
     plt.close("all")
+
+
+@pytest.fixture(params=['cobaya', 'getdist'])
+def repeats_root(tmp_path, request):
+    root = tmp_path / 'repeats'
+    if request.param == 'cobaya':
+        header = '# weight    minuslogpost    p0    p1    n0    n1    chi2\n'
+        chain_files = [root.with_suffix(f'.{i}.txt') for i in [1, 2]]
+    else:
+        root.with_suffix('.paramnames').write_text(
+            'p0      p_0\n'
+            'p1      p_1\n'
+            'n0      n_0\n'
+            'n1      n_1\n'
+            'chi2    \\chi^2\n'
+        )
+        header = ''
+        chain_files = [Path(str(root) + f'_{i}.txt') for i in [1, 2]]
+
+    chain_files[0].write_text(
+        header + (
+            '       2              10     0     0     0    10      20\n'
+            '       3              11     0     0     1    11      22\n'
+            '       1              12     1     1     2    12      24\n'
+            '       4              13     0     0     3    13      26\n'
+        )
+    )
+    chain_files[1].write_text(
+        header + (
+            '       5              10     0     0     4    14      20\n'
+            '       1              11     0     0     5    15      22\n'
+        )
+    )
+    return str(root)
+
+
+@pytest.mark.parametrize(('root', 'expected'), [
+    ('cb', ['x0', 'x1', 'minuslogprior', 'minuslogprior__0',
+            'chi2', 'chi2__norm']),
+    ('gd', ['x0', 'x1', 'x2', 'x3', 'x4']),
+    ('pc', ['x0', 'x1', 'x2', 'x3', 'x4']),
+    ('mn', ['x0', 'x1', 'x2', 'x3', 'x4']),
+    ('nf', ['x0', 'x1', 'amp', 'sigma']),
+    ('un', ['x0', 'x1', 'x2', 'x3']),
+])
+def test_read_paramnames(root, expected):
+    parameters, _ = read_paramnames(f'./tests/example_data/{root}')
+    assert parameters == expected
+
+
+@pytest.mark.parametrize(('suffix', 'nbookkeeping'), [
+    ('.txt', 2),             # getdist
+    ('_1.txt', 2),           # getdist
+    ('.1.txt', 2),           # getdist
+    ('_dead-birth.txt', 2),  # polychord
+    ('dead-birth.txt', 4),   # multinest
+    ('ev.dat', 3),           # multinest
+])
+def test_read_paramnames_metadata(tmp_path, suffix, nbookkeeping):
+    root = tmp_path / 'chain'
+    chain_file = Path(f'{root}{suffix}')
+    chain_file.write_text('1 2' + nbookkeeping * ' 1' + '\n')
+
+    # without metadata
+    with pytest.warns(UserWarning, match='Using integer parameter names'):
+        parameters, labels = read_paramnames(root)
+    assert parameters == [0, 1]
+    assert labels == {}
+
+    # with metadata
+    root.with_suffix('.paramnames').write_text('x0 x_0\nx1 x_1\n')
+    parameters, labels = read_paramnames(root)
+    assert parameters == ['x0', 'x1']
+    assert labels == {'x0': '$x_0$', 'x1': '$x_1$'}
 
 
 def test_read_getdist():
@@ -47,15 +121,18 @@ def test_read_getdist():
     mcmc = read_getdist('./tests/example_data/gd_single')
     w = np.loadtxt("./tests/example_data/gd_single.txt", usecols=0)
     assert_array_equal(mcmc.get_weights(), w)
+    assert_array_equal(mcmc.chain, 0)
     assert_array_equal(mcmc.drop_labels().columns, params)
     assert_array_equal(mcmc.get_labels(), labels)
     mcmc = mcmc.remove_burn_in(0.5)
+    assert_array_equal(mcmc.chain, 0)
     mcmc.plot_2d(['x0', 'x1', 'x2', 'x3'])
     mcmc.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
     os.rename('./tests/example_data/gd.paramnames',
               './tests/example_data/gd.paramnames_')
-    mcmc = read_getdist('./tests/example_data/gd')
+    with pytest.warns(UserWarning, match="Using integer parameter names"):
+        mcmc = read_getdist('./tests/example_data/gd')
     os.rename('./tests/example_data/gd.paramnames_',
               './tests/example_data/gd.paramnames')
 
@@ -63,6 +140,23 @@ def test_read_getdist():
     assert all(mcmc.drop_labels().columns == params)
     labels = ['', '', '', '', '', r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
     assert_array_equal(mcmc.get_labels(), labels)
+
+
+@pytest.mark.parametrize(('weights', 'dtype'), [
+    ([1, 2], np.integer),     # integer multiplicities
+    ([1, 0.5], np.floating),  # importance weights
+])
+def test_read_getdist_weight_dtype(tmp_path, weights, dtype):
+    root = tmp_path / 'chain'
+    root.with_suffix('.paramnames').write_text('x0 x_0\n')
+    root.with_suffix('.txt').write_text(
+        ''.join(f'{weight}  0  0\n' for weight in weights)
+    )
+    samples = read_getdist(str(root))
+    assert np.issubdtype(samples.get_weights().dtype, dtype)
+    if np.issubdtype(dtype, np.floating):
+        with pytest.raises(ValueError, match="integer frequency weights"):
+            samples.thin(2)
 
 
 def test_read_cobayamcmc():
@@ -75,12 +169,12 @@ def test_read_cobayamcmc():
     ))
     assert_array_equal(mcmc.get_weights(), w)
     params = ['x0', 'x1', 'minuslogprior', 'minuslogprior__0', 'chi2',
-              'chi2__norm', 'logP', 'logL', 'chain']
+              'chi2__norm', 'logL', 'logP', 'chain']
     assert_array_equal(mcmc.drop_labels().columns, params)
 
     labels = ['$x_0$', '$x_1$', r'$-\ln\pi$', r'$-\ln\pi_\mathrm{0}$',
-              r'$\chi^2$', r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{P}$',
-              r'$\ln\mathcal{L}$', r'$n_\mathrm{chain}$']
+              r'$\chi^2$', r'$\chi^2_\mathrm{norm}$', r'$\ln\mathcal{L}$',
+              r'$\ln\mathcal{P}$', r'$n_\mathrm{chain}$']
 
     if getdist_mark_skip.args[0]:
         labels[:6] = [''] * 6
@@ -92,9 +186,7 @@ def test_read_cobayamcmc():
 
     # single chain file
     mcmc = read_cobaya('./tests/example_data/cb_single_chain')
-    params.remove('chain')
     assert_array_equal(mcmc.drop_labels().columns, params)
-    labels.remove(r'$n_\mathrm{chain}$')
     assert_array_equal(mcmc.get_labels(), labels)
     # compare directly with getdist
     if not getdist_mark_skip.args[0]:
@@ -106,6 +198,97 @@ def test_read_cobayamcmc():
         # `minuslogposterior`. Hence, the following slightly confusing asserts.
         assert_array_almost_equal(mcmc.logP, -g.loglikes, decimal=15)
         assert_array_almost_equal(mcmc.logL, -g.getParams().chi2/2, decimal=15)
+
+
+@pytest.mark.parametrize(('content', 'expected'), [
+    ('# header\n', 0),                     # no samples
+    ('# a b\n  1 2\n  3 4\n  5 6\n', 3),   # fixed-width rows
+    ('# a b\n  1 2\n  3 4\n  5 6', 3),     # missing final \n
+    ('# header\n1 2\n3 4 5\n6 7\n', 3),    # variable-width rows
+    ('# header\n1 2\n3 4 5\n6 7', 3),      # missing final \n
+    ('# a b\n  1 2\n\n# note\n  5 6', 2),  # blank and comment rows
+    ('# header\n1 2\n300 400\n', 2),       # fixed-size total, unequal rows
+])
+def test_count_cobaya_samples(tmp_path, content, expected):
+    chain = tmp_path / 'chain.txt'
+    chain.write_text(content)
+    assert _count_samples(chain) == expected
+
+
+@pytest.mark.parametrize(('root', 'bookkeeping'), [
+    ('cb', ['chi2', 'logL', 'logP', 'chain']),
+    ('gd', ['logL', 'chain']),
+])
+@pytest.mark.parametrize('burn_in', [[500, 1000], 0.5])
+@pytest.mark.parametrize('compress_repeats', [False, True])
+def test_read_columns_burnin_thin_compress(root, bookkeeping, burn_in,
+                                           compress_repeats):
+    root = f'./tests/example_data/{root}'
+    columns = ['x0', 'x1'] + (['chain'] if compress_repeats else bookkeeping)
+    expected = read_chains(root)[columns].remove_burn_in(burn_in).thin(10)
+    expected = expected.compress_repeats() if compress_repeats else expected
+    expected.reset_index(drop=True, inplace=True)
+
+    selected = read_chains(root, columns=['x0', 'x1'], thin=10,
+                           burn_in=burn_in, compress_repeats=compress_repeats)
+
+    assert_frame_equal(selected, expected)
+
+
+def test_read_mcmc_compress_repeats(repeats_root):
+    mc = read_chains(repeats_root, columns=['p0', 'p1'], compress_repeats=True)
+    assert_array_equal(mc.drop_labels().columns, ['p0', 'p1', 'chain'])
+    assert_array_equal(mc[['p0', 'p1']], [[0, 0], [1, 1], [0, 0], [0, 0]])
+    assert_array_equal(mc.chain, [1, 1, 1, 2])
+    assert_array_equal(mc.get_weights(), [5, 1, 4, 6])
+
+
+def test_read_mcmc_compress_all_and_no_columns(repeats_root):
+    all_columns = read_chains(repeats_root, compress_repeats=True)
+    assert_array_equal(all_columns.drop_labels().columns,
+                       ['p0', 'p1', 'n0', 'n1', 'chi2', 'chain'])
+    assert len(all_columns) == 6
+    assert 'logP' not in all_columns
+    assert 'logL' not in all_columns
+
+    no_columns = read_chains(repeats_root, columns=[], compress_repeats=True)
+    assert_array_equal(no_columns.drop_labels().columns, ['chain'])
+    assert_array_equal(no_columns.chain, [1, 2])
+    assert_array_equal(no_columns.get_weights(), [10, 6])
+
+
+def test_read_mcmc_columns_burnin_thin_compress(repeats_root):
+    mc = read_chains(repeats_root, columns=['p0', 'p1'],
+                     burn_in=[1, 0], thin=2, compress_repeats=True)
+    # Thinning removes the intervening (p0, p1)=(1, 1) row before compression.
+    assert_array_equal(mc[['p0', 'p1']], [[0, 0], [0, 0]])
+    assert_array_equal(mc.chain, [1, 2])
+    assert_array_equal(mc.get_weights(), [4, 3])
+
+
+@pytest.mark.parametrize(('compress_repeats', 'weights'),
+                         [(False, [5, 1]),
+                          (True, [6])])
+def test_read_mcmc_empty_chain_after_burn_in(repeats_root, compress_repeats,
+                                             weights):
+    mc = read_chains(repeats_root, columns=['p0', 'p1'], burn_in=[4, 0],
+                     compress_repeats=compress_repeats)
+    # Burn-in removes every stored row from the first chain.
+    assert_array_equal(mc.chain, np.full(len(weights), 2))
+    assert_array_equal(mc.get_weights(), weights)
+
+
+def test_read_mcmc_compressed_and_uncompressed_thinning_match(repeats_root):
+    # uncompressed
+    u = read_chains(repeats_root, columns=['p0', 'p1']).thin(2)
+    u = u[['p0', 'p1', 'chain']]
+    # compressed
+    c = read_chains(repeats_root, columns=['p0', 'p1'],
+                    compress_repeats=True).thin(2)
+    # Expand frequency weights before comparison:
+    u = np.repeat(u.to_numpy(), u.get_weights(), axis=0)
+    c = np.repeat(c.to_numpy(), c.get_weights(), axis=0)
+    assert_array_equal(c, u)
 
 
 def test_read_montepython():
@@ -191,29 +374,29 @@ def test_read_multinest():
 def test_read_ultranest():
     np.random.seed(3)
     ns = read_ultranest('./tests/example_data/un')
-    params = ['a', 'b', 'c', 'd', 'logL', 'logL_birth', 'nlive']
+    params = ['x0', 'x1', 'x2', 'x3', 'logL', 'logL_birth', 'nlive']
     assert_array_equal(ns.drop_labels().columns, params)
-    labels = ['a',
-              'b',
-              'c',
-              'd',
+    labels = ['x0',
+              'x1',
+              'x2',
+              'x3',
               r'$\ln\mathcal{L}$',
               r'$\ln\mathcal{L}_\mathrm{birth}$',
               r'$n_\mathrm{live}$']
     assert_array_equal(ns.get_labels(), labels)
 
     assert isinstance(ns, NestedSamples)
-    ns.plot_2d(['a', 'b', 'c', 'd'])
-    ns.plot_1d(['a', 'b', 'c', 'd'])
+    ns.plot_2d(['x0', 'x1', 'x2', 'x3'])
+    ns.plot_1d(['x0', 'x1', 'x2', 'x3'])
 
 
 def test_read_nestedfit():
     np.random.seed(3)
     ns = read_nestedfit('./tests/example_data/nf')
-    params = ['bg', 'x0', 'amp', 'sigma', 'logL', 'logL_birth', 'nlive']
+    params = ['x0', 'x1', 'amp', 'sigma', 'logL', 'logL_birth', 'nlive']
     assert_array_equal(ns.drop_labels().columns, params)
-    labels = ['bg',
-              'x0',
+    labels = ['x0',
+              'x1',
               'amp',
               'sigma',
               r'$\ln\mathcal{L}$',
@@ -222,8 +405,8 @@ def test_read_nestedfit():
     assert_array_equal(ns.get_labels(), labels)
 
     assert isinstance(ns, NestedSamples)
-    ns.plot_2d(['bg', 'x0', 'amp', 'sigma'])
-    ns.plot_1d(['bg', 'x0', 'amp', 'sigma'])
+    ns.plot_2d(['x0', 'x1', 'amp', 'sigma'])
+    ns.plot_1d(['x0', 'x1', 'amp', 'sigma'])
 
 
 def test_read_polychord():
@@ -288,15 +471,93 @@ def test_read_blackjax():
     assert np.isnan(bj.logL_birth[0])
 
 
-@pytest.mark.parametrize('root', ['gd', 'cb'])
-def test_discard_burn_in(root):
-    with pytest.raises(KeyError):
-        read_chains('./tests/example_data/' + root, burn_in=0.3)
+@pytest.mark.parametrize('root', [
+    'gd', 'pc', 'mn', 'cb', 'nf',
+    pytest.param('un', marks=h5py_mark_xfail),
+])
+def test_read_labels(root):
+    root = f'./tests/example_data/{root}'
+    assert read_chains(root).islabelled()
+    assert not read_chains(root, labels=None).islabelled()
 
 
-def test_read_fail():
+@pytest.mark.parametrize(('root', 'bookkeeping'), [
+    ('cb', ['chi2', 'logL', 'logP', 'chain']),
+    ('gd', ['logL', 'chain']),
+    ('pc', ['logL', 'logL_birth', 'nlive']),
+    ('mn', ['logL', 'logL_birth', 'nlive']),
+    ('mn_old', ['logL', 'nlive']),
+    ('nf', ['logL', 'logL_birth', 'nlive']),
+    pytest.param('un', ['logL', 'logL_birth', 'nlive'],
+                 marks=h5py_mark_xfail),
+])
+@pytest.mark.parametrize(('columns', 'parameters'), [
+    ('x0', ['x0']),                    # scalar name
+    (0, ['x0']),                       # scalar index
+    (np.int64(0), ['x0']),             # scalar numpy index
+    (['x0', 'x1'], ['x0', 'x1']),      # names
+    ([0, 1], ['x0', 'x1']),            # indices
+    (np.int32([0, 1]), ['x0', 'x1']),  # numpy indices
+    (slice(0, 2), ['x0', 'x1']),       # slice
+    ([], []),                          # empty selection
+])
+def test_read_columns(root, bookkeeping, columns, parameters):
+    root = f'./tests/example_data/{root}'
+    expected = read_chains(root)[parameters + bookkeeping]
+    selected = read_chains(root, columns=columns)
+    assert_frame_equal(selected, expected)
+
+
+@pytest.mark.parametrize(('root', 'bookkeeping'), [
+    ('cb', ['chi2', 'logL', 'logP', 'chain']),
+    ('gd', ['logL', 'chain']),
+    ('pc', ['logL', 'logL_birth', 'nlive']),
+    ('mn', ['logL', 'logL_birth', 'nlive']),
+    ('mn_old', ['logL', 'nlive']),
+    ('nf', ['logL', 'logL_birth', 'nlive']),
+])
+@pytest.mark.parametrize(('columns', 'parameters'), [
+    (['x1', 'x0'], ['x1', 'x0']),      # reordered names
+    ([1, 0], ['x1', 'x0']),            # reordered indices
+    (np.int32([1, 0]), ['x1', 'x0']),  # reordered numpy indices
+    (['x0', 'x0'], ['x0', 'x0']),      # repeated names
+    ([0, 0], ['x0', 'x0']),            # repeated indices
+])
+def test_read_columns_reordered_repeated(root, bookkeeping, columns,
+                                         parameters):
+    root = f'./tests/example_data/{root}'
+    expected = read_chains(root)[parameters + bookkeeping]
+    selected = read_chains(root, columns=columns)
+    assert_frame_equal(selected, expected)
+
+
+@pytest.mark.parametrize('root', ['cb', 'gd', 'pc', 'mn', 'mn_old', 'nf'])
+@pytest.mark.parametrize('columns', [[-4], [-3, 1, -2], slice(-4, -2)])
+def test_read_columns_negative_indexing(root, columns):
+    root = f'./tests/example_data/{root}'
+    parameters, _ = read_paramnames(root)
+    parameters = np.asarray(parameters)[columns]
+    expected = read_chains(root, columns=parameters)
+    selected = read_chains(root, columns=columns)
+    assert_frame_equal(selected, expected)
+
+
+@pytest.mark.parametrize(('columns', 'error'), [
+    (['x0', 'missing'], KeyError),      # unknown name
+    ([0, 10], IndexError),              # out-of-range index
+    ([True, False, False], TypeError),  # boolean input
+    (1.5, TypeError),                   # unsupported scalar
+    ([0, 'x1'], TypeError),             # mixed selector types
+])
+def test_read_columns_invalid(columns, error):
+    with pytest.raises(error):
+        read_chains('./tests/example_data/cb', columns=columns)
+
+
+@pytest.mark.parametrize('read', [read_chains, read_paramnames])
+def test_read_fail(read):
     with pytest.raises(FileNotFoundError):
-        read_chains('./tests/example_data/foo')
+        read('./tests/example_data/foo')
 
 
 def test_regex_escape():

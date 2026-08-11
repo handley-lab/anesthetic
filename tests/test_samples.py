@@ -138,8 +138,16 @@ def test_manual_columns():
     assert_array_equal(ns.drop_labels().columns, old_params + ns_params)
 
     new_params = ['y0', 'y1', 'y2', 'y3', 'y4']
-    mcmc = read_chains('./tests/example_data/gd', columns=new_params)
-    ns = read_chains('./tests/example_data/pc', columns=new_params)
+    renames = dict(zip(old_params, new_params))
+    mcmc = read_chains('./tests/example_data/gd', renames=renames)
+    ns = read_chains('./tests/example_data/pc', renames=renames)
+    assert_array_equal(mcmc.drop_labels().columns, new_params + mcmc_params)
+    assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
+
+    with pytest.warns(FutureWarning, match="renames"):
+        mcmc = read_chains('./tests/example_data/gd', columns=new_params)
+    with pytest.warns(FutureWarning, match="renames"):
+        ns = read_chains('./tests/example_data/pc', columns=new_params)
     assert_array_equal(mcmc.drop_labels().columns, new_params + mcmc_params)
     assert_array_equal(ns.drop_labels().columns, new_params + ns_params)
 
@@ -719,6 +727,129 @@ def test_mcmc_stats():
 
     with pytest.raises(ValueError):
         mcmc.remove_burn_in(burn_in=[1, 2, 3])
+
+
+@pytest.mark.parametrize('burn_in', [None, 0.1, 1/3, 0.5])
+@pytest.mark.parametrize('thin', [None, 2, 3, 10])
+def test_mcmc_remove_burn_in_and_thin_by_chain(burn_in, thin):
+    mcmc = read_chains('./tests/example_data/cb').drop_labels()
+
+    # burn in
+    chain_lengths = mcmc.groupby('chain', sort=False).size().to_numpy()
+    mcmc = mcmc.remove_burn_in(burn_in)
+    burn_in = 0 if burn_in is None else burn_in
+    expected_lengths = chain_lengths - (burn_in * chain_lengths).astype(int)
+    realised_lengths = mcmc.groupby('chain', sort=False).size().to_numpy()
+    assert_array_equal(realised_lengths, expected_lengths)
+
+    # thinning
+    chain_weights = np.array([chain.get_weights().sum()
+                              for _, chain in mcmc.groupby('chain')])
+    assert np.all(mcmc.get_weights() > 0)  # all weights are positive
+    mcmc = mcmc.thin(thin)
+    thin = 1 if thin is None else thin  # only valid if all weights positive
+    expected_weights = np.ceil(chain_weights / thin)
+    realised_weights = np.array([chain.get_weights().sum()
+                                 for _, chain in mcmc.groupby('chain')])
+    assert_array_equal(realised_weights, expected_weights)
+
+
+def test_mcmc_remove_burn_in():
+    samples = MCMCSamples(
+        data=[[0, 1], [1, 1], [2, 2]],
+        weights=[1, 1, 3],
+        columns=['p0', 'chain'],
+        index=[3, 4, 5],
+    )
+    assert_frame_equal(samples.remove_burn_in(None), samples)
+    unchanged = samples.remove_burn_in(None, reset_index=True)
+    assert_frame_equal(unchanged, samples.reset_index(drop=True))
+
+    burn_in = [1, 0]
+
+    # inplace=False, reset_index=False
+    burned = samples.remove_burn_in(burn_in)
+    assert_array_equal(burned[['p0', 'chain']], [[1, 1], [2, 2]])
+    assert_array_equal(burned.get_weights(), [1, 3])
+    assert_array_equal(burned.index.get_level_values(0), [4, 5])
+
+    # inplace=True, reset_index=False
+    inplace = samples.copy()
+    returned = inplace.remove_burn_in(burn_in, inplace=True)
+    assert returned is None
+    assert_frame_equal(inplace, burned)
+
+    # inplace=False, reset_index=True
+    reset = samples.remove_burn_in(burn_in, reset_index=True)
+    assert_frame_equal(reset, burned.reset_index(drop=True))
+
+    # inplace=True, reset_index=True
+    returned = samples.remove_burn_in(burn_in, reset_index=True, inplace=True)
+    assert returned is None
+    assert_frame_equal(samples, reset)
+
+
+def test_mcmc_thin():
+    samples = MCMCSamples(
+        data=[[0, 1], [1, 1], [2, 2]],
+        weights=[1, 1, 3],
+        columns=['p0', 'chain'],
+        index=[3, 4, 5],
+    )
+    assert_frame_equal(samples.thin(None), samples)
+    unchanged = samples.thin(None, reset_index=True)
+    assert_frame_equal(unchanged, samples.reset_index(drop=True))
+
+    thin = 2
+
+    # inplace=False, reset_index=False
+    thinned = samples.thin(thin)
+    assert_array_equal(thinned[['p0', 'chain']], [[0, 1], [2, 2]])
+    assert_array_equal(thinned.get_weights(), [1, 2])
+    assert_array_equal(thinned.index.get_level_values(0), [3, 5])
+
+    # inplace=True, reset_index=False
+    inplace = samples.copy()
+    returned = inplace.thin(thin, inplace=True)
+    assert returned is None
+    assert_frame_equal(inplace, thinned)
+
+    # inplace=False, reset_index=True
+    reset = samples.thin(thin, reset_index=True)
+    assert_frame_equal(reset, thinned.reset_index(drop=True))
+
+    # inplace=True, reset_index=True
+    returned = samples.thin(thin, reset_index=True, inplace=True)
+    assert returned is None
+    assert_frame_equal(samples, reset)
+
+    with pytest.raises(ValueError, match="positive integer"):
+        samples.thin(0)
+    with pytest.raises(ValueError, match="positive integer"):
+        samples.thin(2.5)
+    noninteger = samples.set_weights([1, 1.5])
+    with pytest.raises(ValueError, match="integer frequency weights"):
+        noninteger.thin(thin)
+
+
+def test_mcmc_compress_repeats():
+    samples = MCMCSamples(
+        data=[[0, 1], [0, 1], [1, 2], [0, 1], [0, 1]],
+        weights=[1, 2, 3, 4, 5],
+        columns=['p0', 'p1'],
+        labels=['$p_0$', '$p_1$'],
+    )
+    compressed = samples.compress_repeats()
+
+    assert len(samples) == 5
+    assert len(compressed) == 3
+    assert_array_equal(compressed.to_numpy(), [[0, 1], [1, 2], [0, 1]])
+    assert_array_equal(compressed.get_weights(), [3, 3, 9])
+    assert_array_equal(compressed.get_labels(), ['$p_0$', '$p_1$'])
+
+    returned = samples.compress_repeats(inplace=True)
+    assert returned is None
+    assert_frame_equal(samples, compressed)
 
 
 def test_logX():

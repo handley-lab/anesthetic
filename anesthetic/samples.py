@@ -476,6 +476,48 @@ class Samples(WeightedLabelledDataFrame):
     )
 
 
+def _compute_burn_in(burn_in, chain_lengths):
+    """Compute the number of leading rows to remove from each chain."""
+    nchains = len(chain_lengths)
+    if isinstance(burn_in, (int, float)):
+        ndrop = np.full(nchains, burn_in)
+    elif isinstance(burn_in, (list, tuple, np.ndarray)) \
+            and len(burn_in) == nchains:
+        ndrop = np.array(burn_in)
+    else:
+        raise ValueError("`burn_in` has to be a scalar or an array of "
+                         "length matching the number of chains "
+                         "`nchains=%d`. However, you provided "
+                         "`burn_in=%s`" % (nchains, burn_in))
+    if np.all(np.abs(ndrop) < 1):
+        ndrop = ndrop * chain_lengths
+    ndrop = ndrop.astype(int)
+    return np.where(ndrop < 0,
+                    np.maximum(chain_lengths + ndrop, 0),
+                    np.minimum(ndrop, chain_lengths))
+
+
+def _thin_weights(weights, thin):
+    """Thin integer frequency weights without expanding the samples."""
+    if not isinstance(thin, (int, np.integer)) or thin < 1:
+        raise ValueError("`thin` must be a positive integer.")
+    if not np.all(weights == np.floor(weights)):
+        raise ValueError("Thinning requires integer frequency weights.")
+    end = np.cumsum(weights)
+    start = end - weights
+    return (end - 1) // thin - (start - 1) // thin
+
+
+def _compress_repeats(data, weights):
+    """Find consecutive repeated rows and sum their weights."""
+    if len(data) < 2:
+        return np.arange(len(data)), weights.copy()
+
+    duplicate = np.all(data[1:] == data[:-1], axis=1)
+    indices = np.flatnonzero(np.r_[True, ~duplicate])
+    return indices, np.add.reduceat(weights, indices)
+
+
 class MCMCSamples(Samples):
     """Storage and plotting tools for MCMC samples.
 
@@ -519,9 +561,10 @@ class MCMCSamples(Samples):
 
         Parameters
         ----------
-        burn_in : int or float or array_like
+        burn_in : int, float, array-like, or None
             Fraction or number of samples to remove or keep:
 
+            * ``if burn_in is None``: remove no samples
             * ``if 0 < burn_in < 1``: remove first fraction of samples
             * ``elif 1 < burn_in``: remove first number of samples
             * ``elif -1 < burn_in < 0``: keep last fraction of samples
@@ -535,29 +578,94 @@ class MCMCSamples(Samples):
             Indicates whether to modify the existing array or return a copy.
 
         """
-        chains = self.groupby(('chain', '$n_\\mathrm{chain}$'), sort=False,
-                              group_keys=False)
-        nchains = chains.ngroups
-        if isinstance(burn_in, (int, float)):
-            ndrop = np.full(nchains, burn_in)
-        elif isinstance(burn_in, (list, tuple, np.ndarray)) \
-                and len(burn_in) == nchains:
-            ndrop = np.array(burn_in)
-        else:
-            raise ValueError("`burn_in` has to be a scalar or an array of "
-                             "length matching the number of chains "
-                             "`nchains=%d`. However, you provided "
-                             "`burn_in=%s`" % (nchains, burn_in))
-        if np.all(np.abs(ndrop) < 1):
-            nsamples = chains.count().iloc[:, 0].to_numpy()
-            ndrop = ndrop * nsamples
-        ndrop = ndrop.astype(int)
-        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name-1]),
+        if burn_in is None:
+            if reset_index:
+                return self.reset_index(drop=True, inplace=inplace)
+            return None if inplace else self.copy()
+
+        chains = self.groupby(self['chain'], sort=False, group_keys=False)
+        chain_lengths = chains.size()
+        ndrop = dict(zip(
+            chain_lengths.index,
+            _compute_burn_in(burn_in, chain_lengths.to_numpy())
+        ))
+        data = self.drop(chains.apply(lambda g: g.head(ndrop[g.name]),
                                       include_groups=False).index,
                          inplace=inplace)
+        if inplace:
+            if reset_index:
+                self.reset_index(drop=True, inplace=True)
+            return None
         if reset_index:
-            data = data.reset_index(drop=True, inplace=inplace)
+            data.reset_index(drop=True, inplace=True)
         return data
+
+    def thin(self, thin, reset_index=False, inplace=False):
+        """Thin each MCMC chain, accounting for integer frequency weights.
+
+        Parameters
+        ----------
+        thin : int or None
+            Keep every ``thin``-th sample in the expanded MCMC chains
+            represented by the integer weights. ``None`` leaves the samples
+            unthinned.
+
+        reset_index : bool, default=False
+            Whether to reset the index counter to start at zero or not.
+
+        inplace : bool, default=False
+            Indicates whether to modify the existing array or return a copy.
+
+        """
+        if thin is None:
+            if reset_index:
+                return self.reset_index(drop=True, inplace=inplace)
+            return None if inplace else self.copy()
+
+        weights = self.get_weights()
+        selected_weights = np.empty_like(weights)
+        chains = self.groupby(self['chain'], sort=False)
+        for index in chains.indices.values():
+            selected_weights[index] = _thin_weights(weights[index], thin)
+
+        mask = selected_weights > 0
+        samples = self[mask]
+        samples.set_weights(selected_weights[mask], inplace=True)
+        if reset_index:
+            samples.reset_index(drop=True, inplace=True)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples
+
+    def compress_repeats(self, inplace=False):
+        """Merge consecutive duplicate rows by summing their weights.
+
+        Oversampling nuisance parameters can leave selected parameters of
+        interest unchanged across consecutive samples. After selecting these
+        parameters, this method merges the repeated rows. Rows are compared
+        across all columns in the current samples. Retain the ``chain`` column
+        to prevent merging rows from different chains.
+
+        Parameters
+        ----------
+        inplace : bool, default=False
+            Indicates whether to modify the existing array or return a copy.
+
+        Returns
+        -------
+        MCMCSamples or None
+            Compressed samples, or ``None`` if ``inplace=True``.
+
+        """
+        indices, weights = _compress_repeats(self.to_numpy(),
+                                             self.get_weights())
+        samples = self.iloc[indices]
+        samples.set_weights(weights, inplace=True)
+        if inplace:
+            self._update_inplace(samples)
+        else:
+            return samples
 
     def Gelman_Rubin(self, params=None, per_param=False):
         """Gelman--Rubin convergence statistic of multiple MCMC chains.
