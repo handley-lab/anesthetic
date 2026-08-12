@@ -198,6 +198,8 @@ class Hist1dPlot(HistPlot):
         bins,
         **kwds,
     ):
+        # ncompress not valid for histograms
+        kwds.pop('ncompress', None)
         if column_num == 0:
             cls._initialize_stacker(ax, stacking_id, len(bins) - 1)
 

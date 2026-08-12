@@ -768,7 +768,8 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
     return fig, axes
 
 
-def fastkde_plot_1d(ax, data, *args, **kwargs):
+def fastkde_plot_1d(ax, data, *args, xmin=None, xmax=None,
+                    levels=(0.95, 0.68), density=False, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
@@ -789,7 +790,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     levels : list
         Values at which to draw iso-probability lines.
         Optional,
-        Default: [0.95, 0.68]
+        Default: (0.95, 0.68)
 
     q : int or float or tuple, default=5
         Quantile to determine the data range to be plotted.
@@ -814,10 +815,6 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     kwargs = normalize_kwargs(kwargs)
     if ax.get_xaxis().get_scale() == 'log':
         data = np.log10(data)
-    xmin = kwargs.pop('xmin', None)
-    xmax = kwargs.pop('xmax', None)
-    levels = kwargs.pop('levels', [0.95, 0.68])
-    density = kwargs.pop('density', False)
 
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
@@ -849,7 +846,7 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     area = trapezoid(x=x[i], y=p[i]) if density else 1
     if ax.get_xaxis().get_scale() == 'log':
         x = 10**x
-    ans = ax.plot(x[i], p[i]/area, color=color, *args, **kwargs)
+    ans = ax.plot(x[i], p[i]/area, *args, color=color, **kwargs)
 
     if facecolor and facecolor not in [None, 'None', 'none']:
         if facecolor is True:
@@ -866,7 +863,9 @@ def fastkde_plot_1d(ax, data, *args, **kwargs):
     return ans
 
 
-def kde_plot_1d(ax, data, *args, **kwargs):
+def kde_plot_1d(ax, data, weights=None, *args, ncompress=False, ngrid_kde=200,
+                bw_method=None, bw_scale=1, order=1, levels=(0.95, 0.68),
+                density=False, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
@@ -902,7 +901,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     levels : list
         Values at which to draw iso-probability lines.
-        Default: [0.95, 0.68]
+        Default: (0.95, 0.68)
 
     q : int or float or tuple, default=5
         Quantile to determine the data range to be plotted.
@@ -940,24 +939,16 @@ def kde_plot_1d(ax, data, *args, **kwargs):
 
     """
     kwargs = normalize_kwargs(kwargs)
-    weights = kwargs.pop('weights', None)
     if weights is not None:
         data = data[weights != 0]
         weights = weights[weights != 0]
     if ax.get_xaxis().get_scale() == 'log':
         data = np.log10(data)
 
-    ncompress = kwargs.pop('ncompress', False)
     if 'nplot_1d' in kwargs:
         warn(FutureWarning('`nplot_1d` is deprecated, use `ngrid_kde` '
                            'instead.'))
-    nplot = kwargs.pop('nplot_1d', 200)
-    ngrid_kde = kwargs.pop('ngrid_kde', nplot)
-    bw_method = kwargs.pop('bw_method', None)
-    bw_scale = kwargs.pop('bw_scale', 1)
-    order = kwargs.pop('order', 1)
-    levels = kwargs.pop('levels', [0.95, 0.68])
-    density = kwargs.pop('density', False)
+    ngrid_kde = kwargs.pop('nplot_1d', ngrid_kde)
 
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
@@ -1021,7 +1012,7 @@ def kde_plot_1d(ax, data, *args, **kwargs):
     return ans
 
 
-def hist_plot_1d(ax, data, *args, **kwargs):
+def hist_plot_1d(ax, data, weights=None, *args, q=5, beta='equal', **kwargs):
     """Plot a 1d histogram.
 
     This functions is a wrapper around :meth:`matplotlib.axes.Axes.hist`. All
@@ -1060,20 +1051,16 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     **kwargs : :meth:`matplotlib.axes.Axes.hist` properties
 
     """
-    kwargs.pop('ncompress', None)
     kwargs = normalize_kwargs(kwargs)
-    weights = kwargs.pop('weights', None)
     bins = kwargs.pop('bins', 'fd')
     histtype = kwargs.pop('histtype', 'bar')
     density = kwargs.get('density', False)
-    beta = kwargs.pop('beta', 'equal')
 
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None
                                  else plt.get_cmap(cmap)(0.68)))
 
-    q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     if ax.get_xaxis().get_scale() == 'log':
         data = np.log10(data)
@@ -1122,7 +1109,9 @@ def hist_plot_1d(ax, data, *args, **kwargs):
     return h, edges, bars
 
 
-def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
+def fastkde_contour_plot_2d(ax, data_x, data_y, *args, q=None,
+                            xmin=None, xmax=None, ymin=None, ymax=None,
+                            levels=(0.95, 0.68), **kwargs):
     """Plot a 2d marginalised distribution as contours.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.contour`,
@@ -1142,7 +1131,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     levels : list
         Amount of mass within each iso-probability contour.
         Has to be ordered from outermost to innermost contour.
-        Default: [0.95, 0.68]
+        Default: (0.95, 0.68)
 
     xmin, xmax, ymin, ymax : float, default=None
         The lower/upper prior bounds in x/y coordinates.
@@ -1160,10 +1149,6 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
 
-    xmin = kwargs.pop('xmin', None)
-    xmax = kwargs.pop('xmax', None)
-    ymin = kwargs.pop('ymin', None)
-    ymax = kwargs.pop('ymax', None)
     if ax.get_xaxis().get_scale() == 'log':
         data_x = np.log10(data_x)
         xmin = None if xmin is None else np.log10(xmin)
@@ -1174,7 +1159,6 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         ymax = None if ymax is None else np.log10(ymax)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
-    levels = kwargs.pop('levels', [0.95, 0.68])
 
     color = kwargs.pop('color', ax._get_lines.get_next_color())
     facecolor = kwargs.pop('facecolor', True)
@@ -1182,8 +1166,6 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     cmap = kwargs.pop('cmap', None)
     facecolor, edgecolor, cmap = set_colors(c=color, fc=facecolor,
                                             ec=edgecolor, cmap=cmap)
-
-    kwargs.pop('q', None)
 
     try:
         from anesthetic.kde import fastkde_2d
@@ -1230,7 +1212,10 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     return contf, cont
 
 
-def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
+def kde_contour_plot_2d(ax, data_x, data_y, weights=None, *args, q=5,
+                        levels=(0.95, 0.68), ncompress=None, ngrid_kde=1000,
+                        grid_angle=None, bw_method=None, bw_scale=1,
+                        order=None, **kwargs):
     """Plot a 2d marginalised distribution as contours.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.contour`
@@ -1254,13 +1239,14 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     levels : list, optional
         Amount of mass within each iso-probability contour.
         Has to be ordered from outermost to innermost contour.
-        Default: [0.95, 0.68]
+        Default: (0.95, 0.68)
 
-    ncompress : int, str, or bool, default='equal'
+    ncompress : int, str, or bool, optional
         Degree of sample compression determining the number of points where
         the KDE is being constructed (not evaluated --> see ``ngrid_kde``).
-        By default this is determined from the number of equally
-        weighted samples (``ncompress='equal'``) but does not exceed 10000.
+        By default (``ncompress=None``) this is determined from the number of
+        equally weighted samples (as for ``ncompress='equal'``) but does not
+        exceed 10000.
 
         * If ``int``: desired number of samples after compression.
         * If ``False``: no compression.
@@ -1308,7 +1294,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
 
-    weights = kwargs.pop('weights', None)
     if weights is not None:
         data_x = data_x[weights != 0]
         data_y = data_y[weights != 0]
@@ -1318,20 +1303,15 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     if ax.get_yaxis().get_scale() == 'log':
         data_y = np.log10(data_y)
 
-    ncompress = len(data_x) if weights is None else neff(weights, beta='equal')
-    ncompress = kwargs.pop('ncompress', min(10000, int(ncompress)))
+    if ncompress is None:
+        neq = len(data_x) if weights is None else neff(weights, beta='equal')
+        ncompress = min(10000, int(neq))
     if 'nplot_2d' in kwargs:
         warn(FutureWarning('`nplot_2d` is deprecated, use `ngrid_kde` '
                            'instead.'))
-    nplot = kwargs.pop('nplot_2d', 1000)
-    ngrid_kde = kwargs.pop('ngrid_kde', nplot)
-    grid_angle = kwargs.pop('grid_angle', None)
-    bw_method = kwargs.pop('bw_method', None)
-    bw_scale = kwargs.pop('bw_scale', 1)
-    order = kwargs.pop('order', None)
+    ngrid_kde = kwargs.pop('nplot_2d', ngrid_kde)
     label = kwargs.pop('label', None)
     zorder = kwargs.pop('zorder', 1)
-    levels = kwargs.pop('levels', [0.95, 0.68])
 
     color = kwargs.pop('color', ax._get_lines.get_next_color())
     facecolor = kwargs.pop('facecolor', True)
@@ -1359,7 +1339,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
         data_y = data_y.copy() + noise * evecs[1, 0]
         cov = np.cov(data_x, data_y, aweights=weights)
 
-    q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data_x, q[0], weights)
     xmax = quantile(data_x, q[-1], weights)
@@ -1446,7 +1425,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, *args, **kwargs):
     return contf, cont
 
 
-def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
+def hist_plot_2d(ax, data_x, data_y, weights=None, *args, q=5, vmin=0,
+                 levels=None, **kwargs):
     """Plot a 2d marginalised distribution as a histogram.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.hist2d`.
@@ -1480,7 +1460,6 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     """
     kwargs = normalize_kwargs(kwargs)
-    weights = kwargs.pop('weights', None)
     if ax.get_xaxis().get_scale() == 'log':
         data_x = np.log10(data_x)
     if ax.get_yaxis().get_scale() == 'log':
@@ -1488,24 +1467,22 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
 
     vmin = kwargs.pop('vmin', 0)
     label = kwargs.pop('label', None)
-    levels = kwargs.pop('levels', None)
 
     color = kwargs.pop('color', ax._get_lines.get_next_color())
     cmap = kwargs.pop('cmap', basic_cmap(color))
 
-    q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data_x, q[0], weights)
     xmax = quantile(data_x, q[-1], weights)
     ymin = quantile(data_y, q[0], weights)
     ymax = quantile(data_y, q[-1], weights)
-    rge = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
+    range = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
     bins = kwargs.pop('bins', 10)
     density = kwargs.pop('density', False)
     cmin = kwargs.pop('cmin', None)
     cmax = kwargs.pop('cmax', None)
-    pdf, x, y = np.histogram2d(data_x, data_y, bins, rge,
+    pdf, x, y = np.histogram2d(data_x, data_y, bins, range,
                                density, weights)
     if levels is not None:
         levels = iso_probability_contours(pdf, levels) + [pdf.max()]
@@ -1530,7 +1507,7 @@ def hist_plot_2d(ax, data_x, data_y, *args, **kwargs):
     return image
 
 
-def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
+def scatter_plot_2d(ax, data_x, data_y, *args, q=5, **kwargs):
     """Plot samples from a 2d marginalised distribution.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`,
@@ -1586,7 +1563,6 @@ def scatter_plot_2d(ax, data_x, data_y, *args, **kwargs):
                                  if cmap is None else cmap(0.68)))
 
     weights = kwargs.pop('weights', None)
-    q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data_x, q[0], weights)
     xmax = quantile(data_x, q[-1], weights)
