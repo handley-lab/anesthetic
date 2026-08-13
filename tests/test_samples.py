@@ -769,6 +769,32 @@ def test_logdX():
     assert (abs(logdX.mean(axis=1) - pc.logdX()) < logdX.std(axis=1) * 3).all()
 
 
+@pytest.mark.parametrize('npoints', [1, 2, 3])
+def test_logdX_small_runs(npoints):
+    seed = 42
+    nsamples = 3
+    samples = NestedSamples({
+        'logL': np.arange(npoints, dtype=float),
+        'nlive': np.ones(npoints),
+    })
+
+    np.random.seed(seed)
+    X = np.random.rand(npoints, nsamples).cumprod(axis=0)
+    logdX_expected = np.empty_like(X)
+    if npoints == 1:
+        logdX_expected.fill(-np.log(2))
+    elif npoints == 2:
+        logdX_expected[0] = np.log((1 - X[1]) / 2)
+        logdX_expected[1] = np.log((X[0] - 0) / 2)
+    else:
+        logdX_expected[0] = np.log((1 - X[1]) / 2)
+        logdX_expected[1] = np.log((X[0] - X[2]) / 2)
+        logdX_expected[2] = np.log((X[1] - 0) / 2)
+
+    np.random.seed(seed)
+    assert_allclose(samples.logdX(nsamples), logdX_expected)
+
+
 def test_logbetaL():
     np.random.seed(3)
     pc = read_chains('./tests/example_data/pc')
@@ -859,6 +885,25 @@ def test_logZ():
     logZ = pc.logZ(n)
 
     assert abs(logZ.mean() - pc.logZ()) < logZ.std() * 3
+
+
+def test_compute_logZ_and_weights():
+    logw = np.array([
+        [0.0, -np.inf, 1000.0],
+        [np.log(2), 0.0, 1000.0],
+    ])
+    expected_logw = logw.copy()
+    expected_logZ = np.array([np.log(3), 0.0, 1000 + np.log(2)])
+    expected_weights = np.array([
+        [1/3, 0.0, 0.5],
+        [2/3, 1.0, 0.5],
+    ])
+
+    logZ, weights = NestedSamples._compute_logZ_and_weights(logw)
+
+    assert_array_equal(logw, expected_logw)
+    assert_allclose(logZ, expected_logZ)
+    assert_allclose(weights, expected_weights)
 
 
 def test_D_KL():

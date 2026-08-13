@@ -4,6 +4,7 @@ import pandas
 from scipy import special
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
+from scipy.spatial import ConvexHull
 from scipy.stats import kstwobign, entropy
 from matplotlib.tri import Triangulation
 import contextlib
@@ -769,29 +770,6 @@ def iso_probability_contours_from_samples(pdf, contours=[0.95, 0.68],
     return c
 
 
-def scaled_triangulation(x, y, cov):
-    """Triangulation scaled by a covariance matrix.
-
-    Parameters
-    ----------
-    x, y : array-like
-        x and y coordinates of samples
-
-    cov : array-like, 2d
-        Covariance matrix for scaling
-
-    Returns
-    -------
-    :class:`matplotlib.tri.Triangulation`
-        Triangulation with the appropriate scaling
-    """
-    L = np.linalg.cholesky(cov)
-    Linv = np.linalg.inv(L)
-    x_, y_ = Linv.dot([x, y])
-    tri = Triangulation(x_, y_)
-    return Triangulation(x, y, tri.triangles)
-
-
 def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     """Histogram a 2D set of weighted samples via triangulation.
 
@@ -806,7 +784,7 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     cov : array-like, 2d
         Covariance matrix for scaling
 
-    w : :class:`pandas.Series`, optional
+    w : np.array, optional
         weights of samples
 
     n : int, default=1000
@@ -825,9 +803,8 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
     x = np.array(x)
     y = np.array(y)
 
-    x = pandas.Series(x)
     if w is None:
-        w = pandas.Series(index=x.index, data=np.ones_like(x))
+        w = np.ones_like(x)
 
     if n is False:
         n = len(x)
@@ -836,25 +813,56 @@ def triangular_sample_compression_2d(x, y, cov, w=None, n=1000):
             n = 'entropy'
         n = int(neff(w, beta=n))
 
-    # Select samples for triangulation
+    # Work in whitened coords:
+    # matplotlib's Delaunay and trifinder are numerically fragile when the
+    # original (x, y) cloud is near-collinear, but in whitened space the
+    # covariance is identity so the triangulation is well-conditioned.
+    L = np.linalg.cholesky(cov)
+    Linv = np.linalg.inv(L)
+    x_, y_ = Linv @ np.vstack([x, y])
+
+    # If no compression is needed, each vertex keeps its own weight.
     if (w != 0).sum() <= n:
-        i = x.index
-    else:
-        i = np.random.choice(x.index, size=n, replace=False, p=w/w.sum())
+        tri = Triangulation(x_, y_)
+        return Triangulation(x, y, tri.triangles), np.asarray(w, dtype=float)
 
-    # Generate triangulation
-    tri = scaled_triangulation(x[i], y[i], cov)
+    # Keep convex hull vertices so no probability mass is lost.
+    i_hull = ConvexHull(np.column_stack([x, y])).vertices
+    n_inner = max(n - len(i_hull), 0)
+    i_inner = np.setdiff1d(np.arange(w.size), i_hull, assume_unique=True)
+    p = w[i_inner] / w[i_inner].sum()
+    i_inner = np.random.choice(i_inner, size=n_inner, replace=False, p=p)
+    i = np.concatenate([i_hull, i_inner])
+    tri = Triangulation(x_[i], y_[i])
 
-    # For each point find corresponding triangles
+    # For each point find corresponding triangles.
     trifinder = tri.get_trifinder()
-    j = trifinder(x, y)
-    k = tri.triangles[j[j != -1]]
+    j = trifinder(x_, y_)
+    if np.any(j < 0):
+        i = np.union1d(i, np.flatnonzero(j < 0))
+        xw_i, yw_i = Linv @ np.vstack([x[i], y[i]])
+        tri = Triangulation(xw_i, yw_i)
+        trifinder = tri.get_trifinder()
+        j = trifinder(x_, y_)
+    k = tri.triangles[j]
 
-    # Compute mass in each triangle, and add it to each corner
-    w_ = np.zeros(len(i))
-    for i in range(3):
-        np.add.at(w_, k[:, i], w[j != -1]/3)
+    # Barycentric redistribution preserves total mass and local first moments.
+    # Barycentric coords are affine-invariant, so computing them in whitened
+    # coords gives the same lambdas as in original coords.
+    ax, bx, cx = tri.x[k[:, 0]], tri.x[k[:, 1]], tri.x[k[:, 2]]
+    ay, by, cy = tri.y[k[:, 0]], tri.y[k[:, 1]], tri.y[k[:, 2]]
+    e1x, e1y = bx - ax, by - ay  # edge B - A
+    e2x, e2y = cx - ax, cy - ay  # edge C - A
+    epx, epy = x_ - ax, y_ - ay  # offset P - A
+    denom = e1x * e2y - e1y * e2x
+    lam_b = (epx * e2y - epy * e2x) / denom
+    lam_c = (e1x * epy - e1y * epx) / denom
+    lam_a = 1 - lam_b - lam_c
+    w_ = np.zeros(len(tri.x))
+    for vi, lam in zip(range(3), (lam_a, lam_b, lam_c)):
+        np.add.at(w_, k[:, vi], w * lam)
 
+    tri = Triangulation(x[i], y[i], tri.triangles)
     return tri, w_
 
 
