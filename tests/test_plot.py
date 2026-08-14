@@ -697,15 +697,18 @@ def test_q_1d(plot_1d):
     assert (p.min(), p.max()) == pytest.approx((-2, 1), rel=0.1)
 
 
-@pytest.mark.parametrize('plot_2d', [kde_contour_plot_2d,
-                                     hist_plot_2d,
-                                     scatter_plot_2d])
+@pytest.mark.parametrize('plot_2d', [
+    kde_contour_plot_2d,
+    skipif_no_fastkde(fastkde_contour_plot_2d),
+    hist_plot_2d,
+    scatter_plot_2d
+])
 def test_q_2d(plot_2d):
     np.random.seed(42)
     d = np.random.randn(2, 1000)
 
     def get_data_from_plot(plot_2d, p):
-        if plot_2d == kde_contour_plot_2d:
+        if plot_2d in [kde_contour_plot_2d, fastkde_contour_plot_2d]:
             # p[0].allsegs[i] is the list of polygon outlines drawn at
             # contourf level i; each outline is an (N, 2) vertex array.
             # Flatten the polygons within each level, skipping empty levels.
@@ -754,7 +757,11 @@ def test_q_2d(plot_2d):
     assert (y.min(), y.max()) == pytest.approx((-2, 1), rel=0.2)
 
 
-def test_q_invariant_levels():
+@pytest.mark.parametrize('contour_plot_2d', [
+    kde_contour_plot_2d,
+    skipif_no_fastkde(fastkde_contour_plot_2d)
+])
+def test_q_invariant_levels(contour_plot_2d):
     """Contour levels must not depend on the plotting window set by `q`.
 
     Regression test for a bug where ``iso_probability_contours`` was
@@ -765,8 +772,8 @@ def test_q_invariant_levels():
     x, y = np.random.randn(2, 500)
 
     fig, ax = plt.subplots()
-    fill_q5, line_q5 = kde_contour_plot_2d(ax, x, y, q=5)
-    fill_q1, line_q1 = kde_contour_plot_2d(ax, x, y, q=1)
+    fill_q5, line_q5 = contour_plot_2d(ax, x, y, q=5)
+    fill_q1, line_q1 = contour_plot_2d(ax, x, y, q=1)
     # The interior iso-probability levels should match bit-identically;
     # only the top value (``vmax``) depends on the plotting window.
     assert_array_equal(fill_q5.levels[:-1], fill_q1.levels[:-1])

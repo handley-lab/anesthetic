@@ -1152,9 +1152,8 @@ def hist_plot_1d(ax, data, weights=None, *args, q=5, density=False,
     return h, edges, bars
 
 
-# FIXME: Fix `q`, which is currently ignored by `fastkde_contour_plot_2d`.
 def fastkde_contour_plot_2d(ax, data_x, data_y, *args,
-                            q=None, levels=(0.95, 0.68),
+                            q=5, levels=(0.95, 0.68),
                             xmin=None, xmax=None, ymin=None, ymax=None,
                             **kwargs):
     """Plot a 2d marginalised distribution as contours.
@@ -1241,10 +1240,13 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args,
     except ImportError:
         raise ImportError("You need to install fastkde to use fastkde")
 
-    levels = iso_probability_contours(pdf, contours=levels) + [pdf.max()]
+    q = quantile_plot_interval(q=q)
+    pdf_x = pdf.sum(axis=0)
+    pdf_y = pdf.sum(axis=1)
+    i = ((x > quantile(x, q[0], pdf_x)) & (x < quantile(x, q[-1], pdf_x)))
+    j = ((y > quantile(y, q[0], pdf_y)) & (y < quantile(y, q[-1], pdf_y)))
 
-    i = (pdf >= levels[0]*0.5).any(axis=0)
-    j = (pdf >= levels[0]*0.5).any(axis=1)
+    levels = iso_probability_contours(pdf, contours=levels) + [pdf.max()]
 
     if ax.get_xaxis().get_scale() == 'log':
         x = 10**x
