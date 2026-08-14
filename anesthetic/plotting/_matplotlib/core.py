@@ -61,6 +61,7 @@ class _WeightedMPLPlot(MPLPlot):
 
 
 def _compress_weights(kwargs, data):
+    # FIXME: this ncompress business does not work well for fastkde.
     if isinstance(data, _WeightedObject):
         if data.isweighted():
             ncompress = int(neff(data.get_weights(), beta='equal'))

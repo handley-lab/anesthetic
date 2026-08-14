@@ -768,8 +768,8 @@ def make_2d_axes(params, labels=None, lower=True, diagonal=True, upper=True,
     return fig, axes
 
 
-def fastkde_plot_1d(ax, data, *args, xmin=None, xmax=None,
-                    levels=(0.95, 0.68), density=False, **kwargs):
+def fastkde_plot_1d(ax, data, *args, q=5, density=False, levels=(0.95, 0.68),
+                    xmin=None, xmax=None, **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
@@ -781,29 +781,36 @@ def fastkde_plot_1d(ax, data, *args, xmin=None, xmax=None,
     ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data : np.array
+    data : array-like
         Uniformly weighted samples to generate kernel density estimator.
 
-    xmin, xmax : float, default=None
-        lower/upper prior bound
-
-    levels : list
-        Values at which to draw iso-probability lines.
-        Optional,
-        Default: (0.95, 0.68)
-
-    q : int or float or tuple, default=5
+    q : int, float, or tuple, default=5
         Quantile to determine the data range to be plotted.
 
         * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
-        * ``tuple``: quantile range, e.g. (0.16, 0.84)
+        * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
 
-    facecolor : bool or string, default=False
+    density : bool, default=False
+
+        * If ``False``, normalise such that the maximum peaks at 1.
+        * If ``True``, normalise such that the area integrates to 1.
+
+    levels : array-like, default=(0.95, 0.68)
+        Values at which to draw iso-probability lines.
+
+    xmin, xmax : float, optional
+        Lower/upper prior bound.
+
+    Other Parameters
+    ----------------
+    facecolor : bool or :data:`matplotlib.typing.ColorType`, default=False
         If set to True then the 1d plot will be shaded with the value of the
-        ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' etc.
+        ``color`` kwarg. Set to a color type such as 'blue', 'k', 'C1' etc.
         to define the color of the shading directly.
+
+    **kwargs : :meth:`matplotlib.axes.Axes.plot` properties
 
     Returns
     -------
@@ -813,6 +820,7 @@ def fastkde_plot_1d(ax, data, *args, xmin=None, xmax=None,
 
     """
     kwargs = normalize_kwargs(kwargs)
+    data = np.asarray(data)
     if ax.get_xaxis().get_scale() == 'log':
         data = np.log10(data)
 
@@ -828,7 +836,6 @@ def fastkde_plot_1d(ax, data, *args, xmin=None, xmax=None,
     else:
         edgecolor = color
 
-    q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
 
     try:
@@ -863,9 +870,10 @@ def fastkde_plot_1d(ax, data, *args, xmin=None, xmax=None,
     return ans
 
 
-def kde_plot_1d(ax, data, weights=None, *args, ncompress=False, ngrid_kde=200,
-                bw_method=None, bw_scale=1, order=1, levels=(0.95, 0.68),
-                density=False, **kwargs):
+def kde_plot_1d(ax, data, weights=None, *args, q=5, density=False,
+                levels=(0.95, 0.68), ncompress=False, ngrid_kde=200,
+                bw_method=None, bw_scale=1, order=1, clip_to_zero=True,
+                **kwargs):
     """Plot a 1d marginalised distribution.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.plot`, with
@@ -878,32 +886,13 @@ def kde_plot_1d(ax, data, weights=None, *args, ncompress=False, ngrid_kde=200,
     ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data : np.array
+    data : array-like
         Samples to generate kernel density estimator.
 
-    weights : np.array, optional
-        Sample weights.
+    weights : array-like, optional
+        Sample weights, same shape as ``data``.
 
-    ncompress : int, str, or bool, default=False
-        Degree of sample compression determining the number of points where
-        the KDE is being constructed.
-
-        * If ``False``: no compression.
-        * If ``True``: compresses to the channel capacity, equivalent to
-          ``ncompress='entropy'``.
-        * If ``int``: desired number of samples after compression.
-        * If ``str``: determine number from the Huggins-Roy family of
-          effective samples in :func:`anesthetic.utils.neff`
-          with ``beta=ncompress``.
-
-    ngrid_kde : int, default=200
-        Number of grid points where the KDE is being evaluated.
-
-    levels : list
-        Values at which to draw iso-probability lines.
-        Default: (0.95, 0.68)
-
-    q : int or float or tuple, default=5
+    q : int, float, or tuple, default=5
         Quantile to determine the data range to be plotted.
 
         * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
@@ -911,10 +900,28 @@ def kde_plot_1d(ax, data, weights=None, *args, ncompress=False, ngrid_kde=200,
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
 
-    facecolor : bool or string, default=False
-        If set to True then the 1d plot will be shaded with the value of the
-        ``color`` kwarg. Set to a string such as 'blue', 'k', 'r', 'C1' etc.
-        to define the color of the shading directly.
+    density : bool, default=False
+
+        * If ``False``, normalise such that the maximum peaks at 1.
+        * If ``True``, normalise such that the area integrates to 1.
+
+    levels : array-like, default=(0.95, 0.68)
+        Values at which to draw iso-probability lines.
+
+    ncompress : int, bool, or str, default=False
+        Degree of sample compression determining the number of points where
+        the KDE is being constructed.
+
+        * If ``int``: desired number of samples after compression.
+        * If ``False``: no compression.
+        * If ``True``: compresses to the channel capacity, equivalent to
+          ``ncompress='entropy'``.
+        * If ``str``: determine number from the Huggins-Roy family of
+          effective samples in :func:`anesthetic.utils.neff`
+          with ``beta=ncompress``.
+
+    ngrid_kde : int, default=200
+        Number of grid points where the KDE is being evaluated.
 
     bw_method : str, scalar or callable, optional
         Forwarded to :class:`scipy.stats.gaussian_kde`.
@@ -924,12 +931,24 @@ def kde_plot_1d(ax, data, weights=None, *args, ncompress=False, ngrid_kde=200,
         :class:`scipy.stats.gaussian_kde`. A value greater 1 will smooth more,
         a value smaller 1 will smooth less.
 
+    order : int, default=1
+        Boundary correction order, one of {-1, 0, 1}.
+
     clip_to_zero : bool, default=True
         If True, force the curve to zero just outside ``data.min()`` and
         ``data.max()`` (whenever they fall inside the plotting ranges
         ``xlim = (xmin, xmax)``), closing it cleanly at the support edges.
         If False, the curve is sampled only on the regular grid and may end
         mid-air at the data limits.
+
+    Other Parameters
+    ----------------
+    facecolor : bool or :data:`matplotlib.typing.ColorType`, default=False
+        If set to True then the 1d plot will be shaded with the value of the
+        ``color`` kwarg. Set to a color type such as 'blue', 'k', 'C1' etc.
+        to define the color of the shading directly.
+
+    **kwargs : :meth:`matplotlib.axes.Axes.plot` properties
 
     Returns
     -------
@@ -939,6 +958,8 @@ def kde_plot_1d(ax, data, weights=None, *args, ncompress=False, ngrid_kde=200,
 
     """
     kwargs = normalize_kwargs(kwargs)
+    data = np.asarray(data)
+    weights = None if weights is None else np.asarray(weights)
     if weights is not None:
         data = data[weights != 0]
         weights = weights[weights != 0]
@@ -966,12 +987,11 @@ def kde_plot_1d(ax, data, weights=None, *args, ncompress=False, ngrid_kde=200,
         noise = _plot_window(ax, 'x') * 1e-5
         data = data.copy() + noise * np.random.normal(size=data.size)
 
-    q = kwargs.pop('q', 5)
     q = quantile_plot_interval(q=q)
     xmin = quantile(data, q[0], weights)
     xmax = quantile(data, q[-1], weights)
     x = np.linspace(xmin, xmax, ngrid_kde)
-    if kwargs.pop('clip_to_zero', True):
+    if clip_to_zero:
         for edge, direction in [(data.min(), -np.inf), (data.max(), np.inf)]:
             if xmin <= edge <= xmax:
                 x = np.union1d(x, [np.nextafter(edge, direction)])
@@ -1012,10 +1032,11 @@ def kde_plot_1d(ax, data, weights=None, *args, ncompress=False, ngrid_kde=200,
     return ans
 
 
-def hist_plot_1d(ax, data, weights=None, *args, q=5, beta='equal', **kwargs):
+def hist_plot_1d(ax, data, weights=None, *args, q=5, density=False,
+                 bins='fd', beta='equal', **kwargs):
     """Plot a 1d histogram.
 
-    This functions is a wrapper around :meth:`matplotlib.axes.Axes.hist`. All
+    This functions as a wrapper around :meth:`matplotlib.axes.Axes.hist`. All
     remaining keyword arguments are passed onwards.
 
     Parameters
@@ -1023,22 +1044,48 @@ def hist_plot_1d(ax, data, weights=None, *args, q=5, beta='equal', **kwargs):
     ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data : np.array
-        Samples to generate histogram from
+    data : array-like
+        Samples to generate histogram from.
 
-    weights : np.array, optional
-        Sample weights.
+    weights : array-like, optional
+        Sample weights, same shape as ``data``.
 
-    q : int or float or tuple, default=5
+    q : int, float, or tuple, default=5
         Quantile to determine the data range to be plotted.
 
         * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
-        * ``tuple``: quantile range, e.g. (0.16, 0.84)
+        * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
 
-    beta : int, float, default = 1
+    density : bool, default=False
+
+        * If ``False``, normalise such that the maximum peaks at 1.
+        * If ``True``, normalise such that the area integrates to 1.
+
+    bins : int, str, or array-like, default='fd'
+        If ``bins`` is an integer, it defines the number of equal-width bins in
+        the range.
+
+        If ``bins`` is a sequence, it defines the bin edges, including the left
+        edge of the first bin and the right edge of the last bin; in this case,
+        ``bins`` may be unequally spaced.
+
+        If ``bins`` is a string, it is one of the following binning strategies
+        for automatic bin computation of weighted samples:
+
+        * 'fd'    : Freedman--Diaconis rule (modified for weighted data)
+        * 'scott' : Scott's rule (modified for weighted data)
+        * 'sqrt'  : Square root estimator (modified for weighted data)
+
+    beta : int, float, or str, default='equal'
         The value of beta used to calculate the number of effective samples
+        (Huggins-Roy) for automatic bin computation using
+        :func:`anesthetic.utils.neff`.
+
+    Other Parameters
+    ----------------
+    **kwargs : :meth:`matplotlib.axes.Axes.hist` properties
 
     Returns
     -------
@@ -1046,15 +1093,11 @@ def hist_plot_1d(ax, data, weights=None, *args, q=5, beta='equal', **kwargs):
         Silent list of individual patches used to create the histogram
         or list of such list if multiple input datasets.
 
-    Other Parameters
-    ----------------
-    **kwargs : :meth:`matplotlib.axes.Axes.hist` properties
-
     """
     kwargs = normalize_kwargs(kwargs)
-    bins = kwargs.pop('bins', 'fd')
-    histtype = kwargs.pop('histtype', 'bar')
-    density = kwargs.get('density', False)
+    data = np.asarray(data)
+    weights = None if weights is None else np.asarray(weights)
+    histtype = kwargs.get('histtype', 'bar')
 
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
@@ -1094,7 +1137,7 @@ def hist_plot_1d(ax, data, weights=None, *args, q=5, beta='equal', **kwargs):
                          "similar 'fd', 'scott', or 'sqrt' from now on.")
     else:
         h, edges, bars = ax.hist(data, weights=weights, bins=bins,
-                                 range=range, histtype=histtype,
+                                 range=range, density=density,
                                  color=color, *args, **kwargs)
 
     if histtype == 'bar' and not density:
@@ -1109,9 +1152,11 @@ def hist_plot_1d(ax, data, weights=None, *args, q=5, beta='equal', **kwargs):
     return h, edges, bars
 
 
-def fastkde_contour_plot_2d(ax, data_x, data_y, *args, q=None,
+# FIXME: Fix `q`, which is currently ignored by `fastkde_contour_plot_2d`.
+def fastkde_contour_plot_2d(ax, data_x, data_y, *args,
+                            q=None, levels=(0.95, 0.68),
                             xmin=None, xmax=None, ymin=None, ymax=None,
-                            levels=(0.95, 0.68), **kwargs):
+                            **kwargs):
     """Plot a 2d marginalised distribution as contours.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.contour`,
@@ -1124,17 +1169,36 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, q=None,
     ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data_x, data_y : np.array
+    data_x, data_y : array-like
         The x and y coordinates of uniformly weighted samples to generate
         kernel density estimator.
 
-    levels : list
-        Amount of mass within each iso-probability contour.
-        Has to be ordered from outermost to innermost contour.
-        Default: (0.95, 0.68)
+    q : int, float, or tuple, default=5
+        Quantile to determine the data range to be plotted.
 
-    xmin, xmax, ymin, ymax : float, default=None
+        * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
+        * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
+        * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
+        * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+
+    levels : array-like, default=(0.95, 0.68)
+        List of probability masses enclosed by iso-probability contours.
+        Has to be ordered from outermost to innermost contour.
+
+    xmin, xmax, ymin, ymax : float, optional
         The lower/upper prior bounds in x/y coordinates.
+
+    Other Parameters
+    ----------------
+    edgecolor, facecolor : :data:`matplotlib.typing.ColorType`, optional
+        Can be used instead of ``color`` kwarg. Set ``facecolor='none'`` or the
+        alias ``fc='none'`` to achieve unfilled contours. The defaults are
+        filled contours with both ``edgecolor`` and ``facecolor`` inferred from
+        ``color``.
+
+    **kwargs
+        Properties passed on to :meth:`matplotlib.axes.Axes.contour` and
+        :meth:`matplotlib.axes.Axes.contourf`.
 
     Returns
     -------
@@ -1149,6 +1213,8 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args, q=None,
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
 
+    data_x = np.asarray(data_x)
+    data_y = np.asarray(data_y)
     if ax.get_xaxis().get_scale() == 'log':
         data_x = np.log10(data_x)
         xmin = None if xmin is None else np.log10(xmin)
@@ -1229,24 +1295,30 @@ def kde_contour_plot_2d(ax, data_x, data_y, weights=None, *args, q=5,
     ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data_x, data_y : np.array
-        The x and y coordinates of uniformly weighted samples to generate
-        kernel density estimator.
+    data_x, data_y : array-like
+        The x and y coordinates of samples to generate kernel density
+        estimator.
 
-    weights : np.array, optional
-        Sample weights.
+    weights : array-like, optional
+        Sample weights, same shape as ``data_x`` and ``data_y``.
 
-    levels : list, optional
-        Amount of mass within each iso-probability contour.
+    q : int, float, or tuple, default=5
+        Quantile to determine the data range to be plotted.
+
+        * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
+        * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
+        * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
+        * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+
+    levels : array-like, default=(0.95, 0.68)
+        List of probability masses enclosed by iso-probability contours.
         Has to be ordered from outermost to innermost contour.
-        Default: (0.95, 0.68)
 
-    ncompress : int, str, or bool, optional
+    ncompress : int, bool, or str, optional
         Degree of sample compression determining the number of points where
         the KDE is being constructed (not evaluated --> see ``ngrid_kde``).
-        By default (``ncompress=None``) this is determined from the number of
-        equally weighted samples (as for ``ncompress='equal'``) but does not
-        exceed 10000.
+        If not provided, this is determined from the effective number of
+        equally weighted samples but does not exceed 10000.
 
         * If ``int``: desired number of samples after compression.
         * If ``False``: no compression.
@@ -1258,14 +1330,6 @@ def kde_contour_plot_2d(ax, data_x, data_y, weights=None, *args, q=5,
 
     ngrid_kde : int, default=1000
         Number of grid points where the KDE is being evaluated.
-
-    bw_method : str, scalar or callable, optional
-        Forwarded to :class:`scipy.stats.gaussian_kde`.
-
-    bw_scale : float, default=1
-        Scales the bandwidth relative to the automatically computed one by
-        :class:`scipy.stats.gaussian_kde`. A value greater 1 will smooth more,
-        a value smaller 1 will smooth less.
 
     grid_angle : float or (float, float), optional
         Manual orientation of the plotting grid, in degrees measured
@@ -1281,6 +1345,29 @@ def kde_contour_plot_2d(ax, data_x, data_y, weights=None, *args, q=5,
           If the two are not perpendicular, grid cells become parallelograms
           rather than rectangles.
 
+    bw_method : str, scalar or callable, optional
+        Forwarded to :class:`scipy.stats.gaussian_kde`.
+
+    bw_scale : float, default=1
+        Scales the bandwidth relative to the automatically computed one by
+        :class:`scipy.stats.gaussian_kde`. A value greater 1 will smooth more,
+        a value smaller 1 will smooth less.
+
+    order : int, default=1
+        Boundary correction order, one of {-1, 0, 1}.
+
+    Other Parameters
+    ----------------
+    edgecolor, facecolor : :data:`matplotlib.typing.ColorType`, optional
+        Can be used instead of ``color`` kwarg. Set ``facecolor='none'`` or the
+        alias ``fc='none'`` to achieve unfilled contours. The defaults are
+        filled contours with both ``edgecolor`` and ``facecolor`` inferred from
+        ``color``.
+
+    **kwargs
+        Properties passed on to :meth:`matplotlib.axes.Axes.contour` and
+        :meth:`matplotlib.axes.Axes.contourf`.
+
     Returns
     -------
     c : :class:`matplotlib.contour.QuadContourSet`
@@ -1294,6 +1381,9 @@ def kde_contour_plot_2d(ax, data_x, data_y, weights=None, *args, q=5,
                                            facecolor=['fc'],
                                            edgecolor=['ec']))
 
+    data_x = np.asarray(data_x)
+    data_y = np.asarray(data_y)
+    weights = None if weights is None else np.asarray(weights)
     if weights is not None:
         data_x = data_x[weights != 0]
         data_y = data_y[weights != 0]
@@ -1425,8 +1515,8 @@ def kde_contour_plot_2d(ax, data_x, data_y, weights=None, *args, q=5,
     return contf, cont
 
 
-def hist_plot_2d(ax, data_x, data_y, weights=None, *args, q=5, vmin=0,
-                 levels=None, **kwargs):
+def hist_plot_2d(ax, data_x, data_y, weights=None, *args, q=5, density=False,
+                 levels=None, bins=10, cmin=None, cmax=None, **kwargs):
     """Plot a 2d marginalised distribution as a histogram.
 
     This functions as a wrapper around :meth:`matplotlib.axes.Axes.hist2d`.
@@ -1436,22 +1526,51 @@ def hist_plot_2d(ax, data_x, data_y, weights=None, *args, q=5, vmin=0,
     ax : :class:`matplotlib.axes.Axes`
         Axis object to plot on.
 
-    data_x, data_y : np.array
-        The x and y coordinates of uniformly weighted samples to generate a
-        two-dimensional histogram.
+    data_x, data_y : array-like
+        The x and y coordinates of samples to generate a two-dimensional
+        histogram.
 
-    levels : list, default=None
-        Shade iso-probability contours containing these levels of probability
-        mass. If None defaults to usual :meth:`matplotlib.axes.Axes.hist2d`
-        colouring.
+    weights : array-like, optional
+        Sample weights, same shape as ``data_x`` and ``data_y``.
 
-    q : int or float or tuple, default=5
+    q : int, float, or tuple, default=5
         Quantile to determine the data range to be plotted.
 
         * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
-        * ``tuple``: quantile range, e.g. (0.16, 0.84)
+        * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+
+    density : bool, default=False
+
+        * If ``False``, fill each bin with its weighted bin count.
+        * If ``True``, fill each bin with its probability density function.
+
+    levels : array-like, optional
+        List of probability masses enclosed by iso-probability contours.
+        Has to be ordered from outermost to innermost contour.
+        If provided, the histogram bins are shaded uniformly in bands defined
+        by the contours, and those outside the outermost contour are masked.
+        If not provided, use the usual :meth:`matplotlib.axes.Axes.hist2d`
+        colouring.
+
+    bins : int or array-like, default=10
+        The bin specification:
+
+        * If int, the number of bins for the two dimensions.
+        * If [int, int], the number of bins in each dimension.
+        * If array-like, the bin edges for the two dimensions.
+        * If [array, array], the bin edges in each dimension.
+        * A combination [int, array] or [array, int], where int is the number
+          of bins and array is the bin edges.
+
+    cmin, cmax : float, optional
+        If ``levels`` is provided, mask bins with values below/above these
+        limits.
+
+    Other Parameters
+    ----------------
+    **kwargs : :meth:`matplotlib.axes.Axes.pcolormesh` properties
 
     Returns
     -------
@@ -1460,6 +1579,9 @@ def hist_plot_2d(ax, data_x, data_y, weights=None, *args, q=5, vmin=0,
 
     """
     kwargs = normalize_kwargs(kwargs)
+    data_x = np.asarray(data_x)
+    data_y = np.asarray(data_y)
+    weights = None if weights is None else np.asarray(weights)
     if ax.get_xaxis().get_scale() == 'log':
         data_x = np.log10(data_x)
     if ax.get_yaxis().get_scale() == 'log':
@@ -1478,10 +1600,6 @@ def hist_plot_2d(ax, data_x, data_y, weights=None, *args, q=5, vmin=0,
     ymax = quantile(data_y, q[-1], weights)
     range = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
-    bins = kwargs.pop('bins', 10)
-    density = kwargs.pop('density', False)
-    cmin = kwargs.pop('cmin', None)
-    cmax = kwargs.pop('cmax', None)
     pdf, x, y = np.histogram2d(data_x, data_y, bins, range,
                                density, weights)
     if levels is not None:
@@ -1519,22 +1637,20 @@ def scatter_plot_2d(ax, data_x, data_y, *args, q=5, **kwargs):
     ax : :class:`matplotlib.axes.Axes`
         axis object to plot on
 
-    data_x, data_y : np.array
+    data_x, data_y : array-like
         x and y coordinates of uniformly weighted samples to plot.
 
-    ncompress : int, str, or bool, default='equal'
-        Degree of sample compression determining the number of points being
-        plotted.
-        By default this is determined from the number of equally
-        weighted samples (``ncompress='equal'``) but does not exceed 1000.
+    q : int, float, or tuple, default=5
+        Quantile to determine the data range to be plotted.
 
-        * If ``int``: desired number of samples after compression.
-        * If ``False``: no compression.
-        * If ``True``: compresses to the channel capacity, equivalent to
-          ``ncompress='entropy'``.
-        * If ``str``: determine number from the Huggins-Roy family of
-          effective samples in :func:`anesthetic.utils.neff`
-          with ``beta=ncompress``.
+        * ``0``: full data range, i.e. ``q=0`` --> quantile range (0, 1)
+        * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
+        * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
+        * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+
+    Other Parameters
+    ----------------
+    **kwargs : :meth:`matplotlib.axes.Axes.plot` properties
 
     Returns
     -------
@@ -1543,6 +1659,9 @@ def scatter_plot_2d(ax, data_x, data_y, *args, q=5, **kwargs):
         :meth:`matplotlib.axes.Axes.plot` command).
 
     """
+    if 'weights' in kwargs:
+        raise ValueError('Must not pass `weights` to scatter plots, please '
+                         'compress first, e.g. with `utils.compress_weights`.')
     kwargs = normalize_kwargs(
         kwargs,
         alias_mapping=dict(lw=['linewidth', 'linewidths'],
@@ -1556,18 +1675,19 @@ def scatter_plot_2d(ax, data_x, data_y, *args, q=5, **kwargs):
         drop=['ls', 'lw']
     )
     kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
+    data_x = np.asarray(data_x)
+    data_y = np.asarray(data_y)
 
     markersize = kwargs.pop('markersize', 1)
     cmap = kwargs.pop('cmap', None)
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None else cmap(0.68)))
 
-    weights = kwargs.pop('weights', None)
     q = quantile_plot_interval(q=q)
-    xmin = quantile(data_x, q[0], weights)
-    xmax = quantile(data_x, q[-1], weights)
-    ymin = quantile(data_y, q[0], weights)
-    ymax = quantile(data_y, q[-1], weights)
+    xmin = quantile(data_x, q[0])
+    xmax = quantile(data_x, q[-1])
+    ymin = quantile(data_y, q[0])
+    ymax = quantile(data_y, q[-1])
     mask = ((data_x >= xmin) & (data_x <= xmax) &
             (data_y >= ymin) & (data_y <= ymax))
 
