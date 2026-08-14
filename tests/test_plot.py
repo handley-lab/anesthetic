@@ -1224,6 +1224,10 @@ def test_scatter_plot_2d():
     lines, = scatter_plot_2d(ax, data_x, data_y)
     assert isinstance(lines, Line2D)
 
+    # do not pass weights
+    with pytest.raises(ValueError, match='Must not pass `weights`'):
+        scatter_plot_2d(ax, data_x, data_y, weights=np.ones_like(data_x))
+
     # colors
     fig, ax = plt.subplots()
     points, = scatter_plot_2d(ax, data_x, data_y, color='C0', lw=1)
