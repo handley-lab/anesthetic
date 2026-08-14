@@ -2263,12 +2263,23 @@ def test_credibility_interval():
 
 @pytest.mark.parametrize('samples', (
     read_chains("./tests/example_data/pc"),
-    read_chains("./tests/example_data/gd"),
+    read_chains("./tests/example_data/cb"),
 ))
-def test_compress_returns_samples(samples):
-    compressed = samples.compress()
-    assert type(compressed) is Samples
-    assert not isinstance(compressed, (MCMCSamples, NestedSamples))
+@pytest.mark.parametrize('ncompress', [False, True])
+@pytest.mark.parametrize('weighted', [False, True])
+def test_compress_returns_samples(samples, ncompress, weighted):
+    if not ncompress and not weighted and isinstance(samples, NestedSamples):
+        with pytest.raises(ValueError, match='Requesting no compression'):
+            samples.compress(ncompress=ncompress, weighted=weighted)
+    else:
+        compressed = samples.compress(ncompress=ncompress, weighted=weighted)
+        assert compressed.isweighted() == weighted
+        if ncompress is False:
+            assert type(compressed) is type(samples)
+            assert isinstance(compressed, (MCMCSamples, NestedSamples))
+        else:
+            assert type(compressed) is Samples
+            assert not isinstance(compressed, (MCMCSamples, NestedSamples))
 
 
 @pytest.mark.parametrize('samples', (

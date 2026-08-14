@@ -189,7 +189,7 @@ class _WeightedObject(object):
 
         Parameters
         ----------
-        weights : 1d array-like
+        weights : array-like
             The sample weights to put in an index.
 
         axis : int (0,1), default=0
@@ -268,10 +268,11 @@ class _WeightedObject(object):
     def reset_index(self, level=None, drop=False, inplace=False,
                     *args, **kwargs):
         """Reset the index, retaining weights."""
-        weights = self.get_weights()
         answer = super().reset_index(level=level, drop=drop,
                                      inplace=False, *args, **kwargs)
-        answer.set_weights(weights, inplace=True)
+        if self.isweighted():
+            weights = self.get_weights()
+            answer.set_weights(weights, inplace=True)
         if inplace:
             self._update_inplace(answer)
         else:
@@ -371,33 +372,48 @@ class WeightedSeries(_WeightedObject, Series):
             return np.nan
         return quantile(self.to_numpy(), q, self.get_weights(), interpolation)
 
-    def compress(self, ncompress=True, weighted=False):
+    def compress(self, ncompress=True, weighted=True):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
         ----------
-        ncompress : int, float, str, default=True
+        ncompress : bool, int, float, or str, default=True
             Degree of compression.
 
+            * If ``False``: no compression.
+              With ``weighted=False``, integer frequency weights are expanded
+              exactly; ``ncompress=False, weighted=False`` is not supported
+              for reliability weights.
             * If ``True`` (default): reduce to the channel capacity
               (theoretical optimum compression), equivalent to
               ``ncompress='entropy'``.
             * If ``> 0``: desired number of samples after compression.
-            * If ``<= 0``: compress so that all remaining weights are unity.
             * If ``str``: determine number from the Huggins-Roy family of
               effective samples in :func:`anesthetic.utils.neff`
               with ``beta=ncompress``.
 
-        weighted : bool, default=False
-            If False (default), return an unweighted object with potentially
-            repeated samples.
-            If True, return a weighted object with non-zero compressed weights.
+        weighted : bool, default=True
+
+            * If ``True`` (default), return a weighted object with non-zero
+              compressed weights.
+            * If ``False``, return an unweighted object with potentially
+              repeated samples.
 
         """
-        if (not self.isweighted() and isinstance(ncompress, (bool, str))
-                or ncompress is False):
+        w = self.get_weights()
+        if ncompress is False:
+            if self.isweighted() == weighted:
+                return self
+            if not weighted and not np.issubdtype(w.dtype, np.integer):
+                raise ValueError(
+                    'Requesting no compression (`ncompress=False`) together '
+                    'with unweighted output (`weighted=False`) is not '
+                    'supported for reliability-weighted samples.'
+                )
+        elif (isinstance(ncompress, (bool, str)) and not self.isweighted()
+              and not weighted):
             return self
-        w = compress_weights(self.get_weights(), self._rand(), ncompress)
+        w = compress_weights(w, self._rand(), ncompress)
         if weighted:
             mask = w > 0
             return self.drop_weights()[mask].set_weights(w[mask])
@@ -636,34 +652,48 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
                                     interpolation=interpolation, method=method)
 
-    def compress(self, ncompress=True, axis=0, weighted=False):
+    def compress(self, ncompress=True, axis=0, weighted=True):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
         ----------
-        ncompress : int, float, str, default=True
+        ncompress : bool, int, float, or str, default=True
             Degree of compression.
 
+            * If ``False``: no compression.
+              With ``weighted=False``, integer frequency weights are expanded
+              exactly; ``ncompress=False, weighted=False`` is not supported
+              for reliability weights.
             * If ``True`` (default): reduce to the channel capacity
               (theoretical optimum compression), equivalent to
               ``ncompress='entropy'``.
             * If ``> 0``: desired number of samples after compression.
-            * If ``<= 0``: compress so that all remaining weights are unity.
             * If ``str``: determine number from the Huggins-Roy family of
               effective samples in :func:`anesthetic.utils.neff`
               with ``beta=ncompress``.
 
-        weighted : bool, default=False
-            If False (default), return an unweighted object with potentially
-            repeated samples.
-            If True, return a weighted object with non-zero compressed weights.
+        weighted : bool, default=True
+
+            * If ``True`` (default), return a weighted object with non-zero
+              compressed weights.
+            * If ``False``, return an unweighted object with potentially
+              repeated samples.
 
         """
-        if (not self.isweighted(axis) and isinstance(ncompress, (bool, str))
-                or ncompress is False):
+        w = self.get_weights(axis)
+        if ncompress is False:
+            if self.isweighted(axis) == weighted:
+                return self
+            if not weighted and not np.issubdtype(w.dtype, np.integer):
+                raise ValueError(
+                    'Requesting no compression (`ncompress=False`) together '
+                    'with unweighted output (`weighted=False`) is not '
+                    'supported for reliability-weighted samples.'
+                )
+        elif (isinstance(ncompress, (bool, str)) and not self.isweighted(axis)
+              and not weighted):
             return self
-        w = compress_weights(self.get_weights(axis), self._rand(axis),
-                             ncompress)
+        w = compress_weights(w, self._rand(axis), ncompress)
         df = self.drop_weights(axis)
         if weighted:
             indices = np.flatnonzero(w > 0)

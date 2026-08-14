@@ -570,7 +570,10 @@ class Samples(WeightedLabelledDataFrame):
                                           *args, **kwargs)
 
     def compress(self, ncompress=True, axis=0, weighted=True):  # noqa: D102
-        return Samples(super().compress(ncompress, axis, weighted))
+        compressed = super().compress(ncompress, axis=axis, weighted=weighted)
+        if ncompress is False:
+            return compressed
+        return Samples(compressed)
 
     compress.__doc__ = (
         inspect.getdoc(WeightedLabelledDataFrame.compress) + "\n\n" +
@@ -581,6 +584,8 @@ class Samples(WeightedLabelledDataFrame):
             Compressed samples (preserving input distribution). Downcast from
             :class:`MCMCSamples` or :class:`NestedSamples`, since MCMC- or
             nested-sampling-specific information is lost during compression.
+            Exception: With ``ncompress=False``, the original sample type is
+            retained because no information is lost.
         """
     )
 

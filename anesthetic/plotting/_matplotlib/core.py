@@ -68,7 +68,7 @@ def _compress_weights(kwargs, data):
         else:
             ncompress = len(data)
         ncompress = kwargs.pop('ncompress', min(1000, ncompress))
-        return data.compress(ncompress)
+        return data.compress(ncompress, weighted=False)
     else:
         return data
 
