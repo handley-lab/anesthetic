@@ -60,14 +60,15 @@ class _WeightedMPLPlot(MPLPlot):
             return super()._get_xticks()
 
 
-def _compress_weights(kwargs, data):
-    # FIXME: this ncompress business does not work well for fastkde.
+def _compress_weights(kwargs, data, ncompress_max=1000):
     if isinstance(data, _WeightedObject):
         if data.isweighted():
             ncompress = int(neff(data.get_weights(), beta='equal'))
         else:
             ncompress = len(data)
-        ncompress = kwargs.pop('ncompress', min(1000, ncompress))
+        if ncompress_max is not None:
+            ncompress = min(ncompress_max, ncompress)
+        ncompress = kwargs.pop('ncompress', ncompress)
         return data.compress(ncompress, weighted=False)
     else:
         return data
@@ -76,9 +77,10 @@ def _compress_weights(kwargs, data):
 class _CompressedMPLPlot(MPLPlot):
 
     _default_rot = None
+    _default_ncompress_max = 1000
 
     def __init__(self, data, *args, **kwargs):
-        data = _compress_weights(kwargs, data)
+        data = _compress_weights(kwargs, data, self._default_ncompress_max)
         super().__init__(data, *args, **kwargs)
 
 

@@ -139,7 +139,7 @@ class Samples(WeightedLabelledDataFrame):
             * If ``False``, normalise such that the maximum peaks at 1.
             * If ``True``, normalise such that the area integrates to 1.
 
-        ncompress : int, bool, or str, default=False
+        ncompress : int, bool, or str, optional
             Degree of sample compression determining the number of points
             where the KDE is being constructed. Does not apply to histograms.
 
@@ -150,6 +150,11 @@ class Samples(WeightedLabelledDataFrame):
             * If ``str``: determine number from the Huggins-Roy family of
               effective samples in :func:`anesthetic.utils.neff`
               with ``beta=ncompress``.
+
+            Defaults:
+
+            * ``kde_1d``: ``False``.
+            * ``fastkde_1d``: ``'equal'``.
 
         label : str, optional
             Legend label added to each axis.
@@ -342,9 +347,11 @@ class Samples(WeightedLabelledDataFrame):
 
             Defaults:
 
-            * ``kde_1d``: ``False``
-            * ``kde_2d``: ``'equal'``, but does not exceed 10000.
-            * ``scatter_2d``: ``'equal'``, but does not exceed 1000.
+            * ``fastkde_1d``: ``'equal'``.
+            * ``kde_1d``: ``False``.
+            * ``fastkde_2d``: ``'equal'``.
+            * ``kde_2d``: ``'equal'``, but does not exceed 10000 by default.
+            * ``scatter_2d``: ``'equal'``, but does not exceed 1000 by default.
 
         label : str, optional
             Legend label added to each axis.

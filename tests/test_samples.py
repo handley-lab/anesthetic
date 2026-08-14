@@ -14,6 +14,8 @@ from anesthetic import (
     read_chains
 )
 from anesthetic.samples import merge_nested_samples, merge_samples_weighted
+from anesthetic.plotting._matplotlib.core import ScatterPlot2d
+from anesthetic.plotting._matplotlib.hist import FastKde1dPlot, FastKde2dPlot
 from anesthetic.weighted_labelled_pandas import (WeightedLabelledSeries,
                                                  WeightedLabelledDataFrame)
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
@@ -227,6 +229,24 @@ def test_plot_2d_scatter_ncompress():
     axes = s.plot_2d(axes, kind='scatter', q=0)
     xydata = axes.iloc[0, 0].get_children()[0].get_xydata()
     assert len(xydata) == 200
+
+
+def test_compressed_plot_default_ncompress_max():
+    n = 2000
+    samples = np.random.rand(n, 2)
+    samples = Samples(samples, columns=['x', 'y'],
+                      weights=np.tile([1, 2], n//2))
+    ncompress = int(samples.neff(beta='equal'))
+    assert ncompress > 1000
+
+    p = ScatterPlot2d(samples, 'x', 'y')
+    assert len(p.data) == 1000
+
+    p = FastKde1dPlot(samples.x)
+    assert len(p.data) == ncompress
+
+    p = FastKde2dPlot(samples, 'x', 'y')
+    assert len(p.data) == ncompress
 
 
 def test_plot_2d_kinds_multiple_calls():
