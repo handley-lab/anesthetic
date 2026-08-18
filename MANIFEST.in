@@ -1,0 +1,4 @@
+global-exclude *
+include README.rst LICENSE pyproject.toml setup.cfg
+recursive-include anesthetic *.py
+recursive-include tests *.py
