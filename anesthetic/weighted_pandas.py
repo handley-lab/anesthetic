@@ -372,7 +372,7 @@ class WeightedSeries(_WeightedObject, Series):
             return np.nan
         return quantile(self.to_numpy(), q, self.get_weights(), interpolation)
 
-    def compress(self, ncompress=True, weighted=True):
+    def compress(self, ncompress=True, weighted=None):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
@@ -392,14 +392,18 @@ class WeightedSeries(_WeightedObject, Series):
               effective samples in :func:`anesthetic.utils.neff`
               with ``beta=ncompress``.
 
-        weighted : bool, default=True
+        weighted : bool, optional
 
-            * If ``True`` (default), return a weighted object with non-zero
-              compressed weights.
+            * If ``True``, return a weighted object with non-zero compressed
+              weights.
             * If ``False``, return an unweighted object with potentially
               repeated samples.
 
+            Default: returns a weighted object for weighted input and
+            an unweighted object for unweighted input.
+
         """
+        weighted = self.isweighted() if weighted is None else weighted
         w = self.get_weights()
         if ncompress is False:
             if self.isweighted() == weighted:
@@ -652,7 +656,7 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
             return super().quantile(q=q, axis=axis, numeric_only=numeric_only,
                                     interpolation=interpolation, method=method)
 
-    def compress(self, ncompress=True, axis=0, weighted=True):
+    def compress(self, ncompress=True, axis=0, weighted=None):
         """Reduce the number of samples by discarding low-weights.
 
         Parameters
@@ -672,14 +676,18 @@ class WeightedDataFrame(_WeightedObject, DataFrame):
               effective samples in :func:`anesthetic.utils.neff`
               with ``beta=ncompress``.
 
-        weighted : bool, default=True
+        weighted : bool, optional
 
-            * If ``True`` (default), return a weighted object with non-zero
-              compressed weights.
+            * If ``True``, return a weighted object with non-zero compressed
+              weights.
             * If ``False``, return an unweighted object with potentially
               repeated samples.
 
+            Default: returns a weighted object for weighted input and
+            an unweighted object for unweighted input.
+
         """
+        weighted = self.isweighted(axis) if weighted is None else weighted
         w = self.get_weights(axis)
         if ncompress is False:
             if self.isweighted(axis) == weighted:
