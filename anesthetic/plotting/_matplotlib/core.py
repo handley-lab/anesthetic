@@ -13,6 +13,7 @@ from pandas.plotting._matplotlib.core import (ScatterPlot as _ScatterPlot,
                                               MPLPlot, PlanePlot)
 from pandas.plotting._matplotlib.groupby import create_iter_data_given_by
 from pandas.io.formats.printing import pprint_thing
+from anesthetic.utils import neff
 from anesthetic.weighted_pandas import _WeightedObject
 from anesthetic.plot import scatter_plot_2d
 
@@ -59,9 +60,16 @@ class _WeightedMPLPlot(MPLPlot):
             return super()._get_xticks()
 
 
-def _compress_weights(kwargs, data):
+def _compress_weights(kwargs, data, ncompress_max=1000):
     if isinstance(data, _WeightedObject):
-        return data.compress(kwargs.pop('ncompress', 'equal'))
+        if data.isweighted():
+            ncompress = int(neff(data.get_weights(), beta='equal'))
+        else:
+            ncompress = len(data)
+        if ncompress_max is not None:
+            ncompress = min(ncompress_max, ncompress)
+        ncompress = kwargs.pop('ncompress', ncompress)
+        return data.compress(ncompress, weighted=False)
     else:
         return data
 
@@ -69,9 +77,10 @@ def _compress_weights(kwargs, data):
 class _CompressedMPLPlot(MPLPlot):
 
     _default_rot = None
+    _default_ncompress_max = 1000
 
     def __init__(self, data, *args, **kwargs):
-        data = _compress_weights(kwargs, data)
+        data = _compress_weights(kwargs, data, self._default_ncompress_max)
         super().__init__(data, *args, **kwargs)
 
 

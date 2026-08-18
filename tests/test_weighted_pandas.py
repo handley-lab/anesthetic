@@ -404,18 +404,22 @@ def test_WeightedDataFrame_neff(frame):
 
 @pytest.mark.parametrize('weighted', [False, True])
 def test_weighted_compress(samples, weighted):
-    no_comp = samples.compress(ncompress=False, weighted=weighted)
+    # no compression if ncompress is False
+    if weighted:
+        no_comp = samples.compress(ncompress=False, weighted=True)
+        assert no_comp.isweighted()
+        assert_array_equal(no_comp, samples)
+        assert_array_equal(no_comp.get_weights(), samples.get_weights())
+    else:
+        with pytest.raises(ValueError, match='Requesting no compression'):
+            samples.compress(ncompress=False, weighted=False)
+
     equally = samples.compress(ncompress='equal', weighted=weighted)
     entropy = samples.compress(ncompress='entropy', weighted=weighted)
     small_i = samples.compress(ncompress=1000, weighted=weighted)  # small int
     large_i = samples.compress(ncompress=80000, weighted=weighted)  # large int
     small_f = samples.compress(ncompress=1e3, weighted=weighted)  # small float
     large_f = samples.compress(ncompress=8e4, weighted=weighted)  # large float
-
-    # no compression if ncompress is False
-    assert no_comp.isweighted()
-    assert_array_equal(no_comp, samples)
-    assert_array_equal(no_comp.get_weights(), samples.get_weights())
 
     if weighted:
         # weighted after compression
@@ -468,6 +472,38 @@ def test_weighted_compress(samples, weighted):
                        samples.compress('equal', weighted=weighted))
 
 
+@pytest.mark.parametrize('samples', [
+    WeightedSeries([1, 2, 3], weights=[1, 2, 3]),
+    WeightedDataFrame(dict(x=[1, 2, 3], y=[4, 5, 6]), weights=[1, 2, 3]),
+])
+def test_compress_frequency_weights(samples):
+    unchanged = samples.compress(ncompress=False, weighted=True)
+    assert unchanged.isweighted()
+    assert_array_equal(unchanged, samples)
+    assert_array_equal(unchanged.get_weights(), samples.get_weights())
+
+    expanded = samples.compress(ncompress=False, weighted=False)
+    expected = np.array([1, 2, 2, 3, 3, 3])
+    assert not expanded.isweighted()
+    assert len(expanded) == samples.get_weights().sum()
+    if isinstance(expanded, DataFrame):
+        assert_array_equal(expanded.x, expected)
+    else:
+        assert_array_equal(expanded, expected)
+
+
+def test_compress_frequency_weights_axis():
+    wdf = WeightedDataFrame([[1, 2, 3], [4, 5, 6]], columns=['a', 'b', 'c'])
+    wdf = wdf.set_weights([1, 2, 3], axis=1)
+    expanded = wdf.compress(ncompress=False, axis=1, weighted=False)
+
+    assert not expanded.isweighted(axis=0)
+    assert not expanded.isweighted(axis=1)
+    assert expanded.shape == (2, wdf.get_weights(axis=1).sum())
+    assert_array_equal(expanded, [[1, 2, 2, 3, 3, 3], [4, 5, 5, 6, 6, 6]])
+    assert_array_equal(expanded.columns, ['a', 'b', 'b', 'c', 'c', 'c'])
+
+
 def test_WeightedDataFrame_compress(frame):
     assert_array_equal(frame.T.compress().T, frame)
     assert_array_equal(frame.T.compress(axis=1).T, frame.compress())
@@ -478,7 +514,8 @@ def test_WeightedDataFrame_compress(frame):
                                                  (True, 1000),
                                                  (False, 1000),
                                                  ('equal', 1000)])
-def test_unweighted_compress(samples, ncompress, expected):
+@pytest.mark.parametrize('weighted', [False, True])
+def test_unweighted_compress(samples, ncompress, expected, weighted):
     """Test compression works for unweighted `WeightedDataFrames`."""
     # Create unweighted data
     np.random.seed(42)
@@ -486,9 +523,11 @@ def test_unweighted_compress(samples, ncompress, expected):
     assert not samples.isweighted()
 
     # Test compression
-    compressed = samples.compress(ncompress)
-    assert not compressed.isweighted()
+    compressed = samples.compress(ncompress, weighted=weighted)
+    assert compressed.isweighted() == weighted
     assert len(compressed) == expected
+    if weighted:
+        assert_array_equal(compressed.get_weights(), np.ones(len(compressed)))
     if isinstance(samples, DataFrame):
         assert list(compressed.columns) == list(samples.columns)
     else:

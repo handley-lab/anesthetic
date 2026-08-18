@@ -71,7 +71,7 @@ def read_cobaya(root, *args, **kwargs):
         data = np.loadtxt(chains_file)
         weights, minuslogP, data = np.split(data, [1, 2], axis=1)
         mcmc = MCMCSamples(data=data, columns=columns,
-                           weights=weights.flatten(),
+                           weights=weights.flatten().astype(int),
                            labels=labels, *args, **kwargs)
         mcmc['logP'] = -minuslogP
         mcmc.set_label('logP', '$\\ln\\mathcal{P}$')

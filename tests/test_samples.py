@@ -14,6 +14,8 @@ from anesthetic import (
     read_chains
 )
 from anesthetic.samples import merge_nested_samples, merge_samples_weighted
+from anesthetic.plotting._matplotlib.core import ScatterPlot2d
+from anesthetic.plotting._matplotlib.hist import FastKde1dPlot, FastKde2dPlot
 from anesthetic.weighted_labelled_pandas import (WeightedLabelledSeries,
                                                  WeightedLabelledDataFrame)
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
@@ -201,6 +203,50 @@ def test_plot_2d_kinds():
         ns.plot_2d(params, kind=0)
     with pytest.raises(ValueError):
         ns.plot_2d(params, kind='eggs')
+
+
+def test_plot_2d_scatter_ncompress():
+    # ensure sensible defaults for both weighted and unweighted data
+    s = read_chains('./tests/example_data/pc')
+    params = ['x0', 'x1']
+
+    # weighted: compress to equally weighted samples
+    fig, axes = make_2d_axes(params, upper=False, diagonal=False)
+    axes = s.plot_2d(axes, kind='scatter', q=0)
+    xydata = axes.iloc[0, 0].get_children()[0].get_xydata()
+    assert len(xydata) == int(s.neff(beta='equal'))
+
+    # unweighted: maximum of 1000 scatter points
+    s = s.drop_weights()
+    fig, axes = make_2d_axes(params, upper=False, diagonal=False)
+    axes = s.plot_2d(axes, kind='scatter', q=0)
+    xydata = axes.iloc[0, 0].get_children()[0].get_xydata()
+    assert len(xydata) == 1000
+
+    # unweighted: all scatter points below 1000
+    s = s.compress(ncompress=200)
+    fig, axes = make_2d_axes(params, upper=False, diagonal=False)
+    axes = s.plot_2d(axes, kind='scatter', q=0)
+    xydata = axes.iloc[0, 0].get_children()[0].get_xydata()
+    assert len(xydata) == 200
+
+
+def test_compressed_plot_default_ncompress_max():
+    n = 2000
+    samples = np.random.rand(n, 2)
+    samples = Samples(samples, columns=['x', 'y'],
+                      weights=np.tile([1, 2], n//2))
+    ncompress = int(samples.neff(beta='equal'))
+    assert ncompress > 1000
+
+    p = ScatterPlot2d(samples, 'x', 'y')
+    assert len(p.data) == 1000
+
+    p = FastKde1dPlot(samples.x)
+    assert len(p.data) == ncompress
+
+    p = FastKde2dPlot(samples, 'x', 'y')
+    assert len(p.data) == ncompress
 
 
 def test_plot_2d_kinds_multiple_calls():
@@ -2237,12 +2283,23 @@ def test_credibility_interval():
 
 @pytest.mark.parametrize('samples', (
     read_chains("./tests/example_data/pc"),
-    read_chains("./tests/example_data/gd"),
+    read_chains("./tests/example_data/cb"),
 ))
-def test_compress_returns_samples(samples):
-    compressed = samples.compress()
-    assert type(compressed) is Samples
-    assert not isinstance(compressed, (MCMCSamples, NestedSamples))
+@pytest.mark.parametrize('ncompress', [False, True])
+@pytest.mark.parametrize('weighted', [False, True])
+def test_compress_returns_samples(samples, ncompress, weighted):
+    if not ncompress and not weighted and isinstance(samples, NestedSamples):
+        with pytest.raises(ValueError, match='Requesting no compression'):
+            samples.compress(ncompress=ncompress, weighted=weighted)
+    else:
+        compressed = samples.compress(ncompress=ncompress, weighted=weighted)
+        assert compressed.isweighted() == weighted
+        if ncompress is False:
+            assert type(compressed) is type(samples)
+            assert isinstance(compressed, (MCMCSamples, NestedSamples))
+        else:
+            assert type(compressed) is Samples
+            assert not isinstance(compressed, (MCMCSamples, NestedSamples))
 
 
 @pytest.mark.parametrize('samples', (
