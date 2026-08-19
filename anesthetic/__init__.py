@@ -8,10 +8,7 @@ import pandas
 import pandas.plotting._core
 import pandas.plotting._misc
 from anesthetic._format import _DataFrameFormatter
-try:
-    from anesthetic._version import __version__  # noqa: F401
-except ImportError:  # source tree that was never built or installed
-    __version__ = '0.0.0+uninstalled'
+from anesthetic._version import __version__  # noqa: F401
 # TODO: remove this when conda pandas version catches up
 from packaging.version import parse
 assert parse(pandas.__version__) >= parse('2.0.0')

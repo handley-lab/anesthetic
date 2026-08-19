@@ -3,6 +3,7 @@ from utils import readme_version, run
 from packaging import version
 import sys
 
+VFILE = "anesthetic/_version.py"
 README = "README.rst"
 
 with open(README) as f:
@@ -31,10 +32,11 @@ elif update_type == "major":
 
 new_version = version.parse(f"{major}.{minor}.{micro}")
 
-if sys.platform == "darwin":  # macOS sed requires empty string for backup
-    run("sed", "-i", "", f"s/{escaped_version}/{new_version}/g", README)
-else:
-    run("sed", "-i", f"s/{escaped_version}/{new_version}/g", README)
+for f in [VFILE, README]:
+    if sys.platform == "darwin":  # macOS sed requires empty string for backup
+        run("sed", "-i", "", f"s/{escaped_version}/{new_version}/g", f)
+    else:
+        run("sed", "-i", f"s/{escaped_version}/{new_version}/g", f)
 
-run("git", "add", README)
+run("git", "add", VFILE, README)
 run("git", "commit", "-m", f"bump version to {new_version}")

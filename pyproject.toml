@@ -1,9 +1,6 @@
 [build-system]
-requires = ["setuptools", "setuptools_scm>=8"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]
-version_file = "anesthetic/_version.py"
 
 [project]
 name = "anesthetic"
@@ -77,3 +74,6 @@ dev = ["anesthetic[all]", "anesthetic[docs]", "anesthetic[test]"]
 
 [project.scripts]
 anesthetic = "anesthetic.scripts:gui"
+
+[tool.setuptools.dynamic]
+version = {attr = "anesthetic._version.__version__"}
