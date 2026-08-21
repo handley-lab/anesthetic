@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-from utils import run
+from utils import readme_version, run
 from packaging import version
 import sys
 
-vfile = "anesthetic/_version.py"
+VFILE = "anesthetic/_version.py"
 README = "README.rst"
 
-current_version = run("cat", vfile)
-current_version = current_version.split("=")[-1].strip().strip("'")
+with open(README) as f:
+    current_version = readme_version(f)
 escaped_version = current_version.replace(".", r"\.")
 current_version = version.parse(current_version)
 
@@ -32,11 +32,11 @@ elif update_type == "major":
 
 new_version = version.parse(f"{major}.{minor}.{micro}")
 
-for f in [vfile, README]:
+for f in [VFILE, README]:
     if sys.platform == "darwin":  # macOS sed requires empty string for backup
         run("sed", "-i", "", f"s/{escaped_version}/{new_version}/g", f)
     else:
         run("sed", "-i", f"s/{escaped_version}/{new_version}/g", f)
 
-run("git", "add", vfile, README)
+run("git", "add", VFILE, README)
 run("git", "commit", "-m", f"bump version to {new_version}")

@@ -1,24 +1,23 @@
 #!/usr/bin/env python
 import sys
-import subprocess
 from packaging import version
-from utils import unit_incremented, run
+from utils import readme_version, unit_incremented, run
 
-vfile = "anesthetic/_version.py"
+VFILE = "anesthetic/_version.py"
 README = "README.rst"
 
-current_version = run("cat", vfile)
+current_version = run("cat", VFILE)
 current_version = current_version.split("=")[-1].strip().strip("'")
 
 run("git", "fetch", "origin", "master")
-previous_version = run("git", "show", "remotes/origin/master:" + vfile)
+previous_version = run("git", "show", "remotes/origin/master:" + VFILE)
 previous_version = previous_version.split("=")[-1].strip().strip("'")
 
-readme_version = run("grep", ":Version:", README)
-readme_version = readme_version.split(":")[-1].strip()
+with open(README) as f:
+    readme = readme_version(f)
 
-if version.parse(current_version) != version.parse(readme_version):
-    sys.stderr.write("Version mismatch: {} != {}".format(vfile, README))
+if version.parse(current_version) != version.parse(readme):
+    sys.stderr.write("Version mismatch: {} != {}".format(VFILE, README))
     sys.exit(1)
 
 elif not unit_incremented(current_version, previous_version):
