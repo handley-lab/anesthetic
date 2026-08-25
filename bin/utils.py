@@ -10,7 +10,7 @@ def run(*args):
                           stderr=subprocess.PIPE).stdout
 
 
-def readme_version(lines):
+def get_readme_version(lines):
     """Extract the version from the ':Version:' line of a README."""
     line = next(line for line in lines if ":Version:" in line)
     return line.split(":")[-1].strip()

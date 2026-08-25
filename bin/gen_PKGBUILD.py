@@ -1,12 +1,12 @@
 import tomli
-from utils import readme_version
+from utils import get_readme_version
 
 with open("pyproject.toml", 'rb') as f:
     pyproject = tomli.load(f)
 
 description = pyproject["project"]["description"]
 with open("README.rst") as f:
-    version = readme_version(f)
+    version = get_readme_version(f)
 url = pyproject["project"]["urls"]["Homepage"]
 pyproject["project"]["dependencies"]
 rel = 1

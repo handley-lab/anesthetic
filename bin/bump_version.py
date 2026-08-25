@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from utils import readme_version, run
+from utils import get_readme_version, run
 from packaging import version
 import sys
 
@@ -7,7 +7,7 @@ VFILE = "anesthetic/_version.py"
 README = "README.rst"
 
 with open(README) as f:
-    current_version = readme_version(f)
+    current_version = get_readme_version(f)
 escaped_version = current_version.replace(".", r"\.")
 current_version = version.parse(current_version)
 
