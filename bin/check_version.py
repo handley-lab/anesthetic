@@ -14,9 +14,9 @@ previous_version = run("git", "show", "remotes/origin/master:" + VFILE)
 previous_version = previous_version.split("=")[-1].strip().strip("'")
 
 with open(README) as f:
-    readme = get_readme_version(f)
+    readme_version = get_readme_version(f)
 
-if version.parse(current_version) != version.parse(readme):
+if version.parse(current_version) != version.parse(readme_version):
     sys.stderr.write("Version mismatch: {} != {}".format(VFILE, README))
     sys.exit(1)
 
