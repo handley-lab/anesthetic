@@ -139,7 +139,7 @@ class Kde1dPlot(KdePlot):
 
 class FastKde1dPlot(_CompressedMPLPlot, Kde1dPlot):  # noqa: disable=D101
 
-    _default_ncompress_max = None
+    _default_ncompress_max = np.inf
 
     @property
     def _kind(self) -> Literal["fastkde_1d"]:
@@ -230,7 +230,7 @@ class Kde2dPlot(_WeightedMPLPlot, _PlanePlot2d):
 
 class FastKde2dPlot(_CompressedMPLPlot, _PlanePlot2d):  # noqa: disable=D101
 
-    _default_ncompress_max = None
+    _default_ncompress_max = np.inf
 
     @property
     def _kind(self) -> Literal["fastkde_2d"]:

@@ -69,8 +69,7 @@ def _compress_weights(kwargs, data, ncompress_max=1000):
             ncompress = int(neff(data.get_weights(), beta='equal'))
         else:
             ncompress = len(data)
-        if ncompress_max is not None:
-            ncompress = min(ncompress_max, ncompress)
+        ncompress = min(ncompress_max, ncompress)
     return data.compress(ncompress, weighted=False)
 
 
