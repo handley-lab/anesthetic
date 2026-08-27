@@ -137,8 +137,10 @@ class Kde1dPlot(KdePlot):
         return kde_plot_1d(ax, y, *args, **kwds)
 
 
-class FastKde1dPlot(_CompressedMPLPlot, Kde1dPlot):
-    # noqa: disable=D101
+class FastKde1dPlot(_CompressedMPLPlot, Kde1dPlot):  # noqa: disable=D101
+
+    _default_ncompress_max = np.inf
+
     @property
     def _kind(self) -> Literal["fastkde_1d"]:
         return "fastkde_1d"
@@ -198,6 +200,8 @@ class Hist1dPlot(HistPlot):
         bins,
         **kwds,
     ):
+        # ncompress not valid for histograms
+        kwds.pop('ncompress', None)
         if column_num == 0:
             cls._initialize_stacker(ax, stacking_id, len(bins) - 1)
 
@@ -224,8 +228,10 @@ class Kde2dPlot(_WeightedMPLPlot, _PlanePlot2d):
         return kde_contour_plot_2d(ax, x, y, **kwds)
 
 
-class FastKde2dPlot(_CompressedMPLPlot, _PlanePlot2d):
-    # noqa: disable=D101
+class FastKde2dPlot(_CompressedMPLPlot, _PlanePlot2d):  # noqa: disable=D101
+
+    _default_ncompress_max = np.inf
+
     @property
     def _kind(self) -> Literal["fastkde_2d"]:
         return "fastkde_2d"

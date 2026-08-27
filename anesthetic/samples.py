@@ -99,7 +99,7 @@ class Samples(WeightedLabelledDataFrame):
         axes : plotting axes, optional
             Can be:
 
-            * list(str) or str
+            * ``list(str)`` or ``str``
             * :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
 
             If a :class:`pandas.Series` is provided as an existing set of axes,
@@ -108,6 +108,10 @@ class Samples(WeightedLabelledDataFrame):
 
             If not provided, then all parameters are plotted. This is intended
             for plotting a sliced array (e.g. `samples[['x0','x1]].plot_1d()`.
+
+        logx : list(str), optional
+            Which parameters/columns to plot on a log scale.
+            Needs to match if plotting on top of a pre-existing axes.
 
         kind : str, default='kde_1d'
             What kind of plots to produce. Alongside the usual pandas options
@@ -122,17 +126,63 @@ class Samples(WeightedLabelledDataFrame):
             can be hard to interpret/expensive for :class:`Samples`,
             :class:`MCMCSamples`, or :class:`NestedSamples`.
 
-        logx : list(str), optional
-            Which parameters/columns to plot on a log scale.
-            Needs to match if plotting on top of a pre-existing axes.
+        q : int, float, or tuple, default=5
+            Quantile to determine the data range to be plotted.
+
+            * ``0``: full data range, i.e. ``q=0``: quantile range (0, 1)
+            * ``int``: q-sigma range, e.g. ``q=1``: quantile range (0.16, 0.84)
+            * ``float``: percentile, e.g. ``q=0.8``: quantile range (0.1, 0.9)
+            * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+
+        density : bool, default=False
+
+            * If ``False``, normalise such that the maximum peaks at 1.
+            * If ``True``, normalise such that the area integrates to 1.
+
+        ncompress : int, bool, or str, optional
+            Degree of sample compression determining the number of points
+            where the KDE is being constructed. Does not apply to histograms.
+
+            * If ``int``: desired number of samples after compression.
+            * If ``False``: no compression.
+            * If ``True``: compresses to the channel capacity, equivalent to
+              ``ncompress='entropy'``.
+            * If ``str``: determine number from the Huggins-Roy family of
+              effective samples in :func:`anesthetic.utils.neff`
+              with ``beta=ncompress``.
+
+            Defaults:
+
+            * ``kde_1d``: ``False``.
+            * ``fastkde_1d``: ``'equal'``.
 
         label : str, optional
             Legend label added to each axis.
 
+        **kwargs
+
+            * ``kde_1d``:
+
+              - ``levels``: List of iso-proba lines. ``default=(0.95, 0.68)``
+              - ``ngrid_kde``: Number of grid points where to evaluate the KDE.
+              - ``bw_method``: Forwarded to :class:`scipy.stats.gaussian_kde`.
+              - ``bw_scale``: Bandwidth scale factor. ``default=1``
+              - ``order``: Boundary correction, one of -1, 0, 1. ``default=1``
+              - ``clip_to_zero``: Close curve at data limits. ``default=True``
+              - ``facecolor``: Shade iso-probability regions at ``levels``.
+
+            * ``hist_1d``:
+
+              - ``bins``: Number of bins or auto-bin method. ``default='fd'``
+              - ``beta``: Effective-sample-size parameter. ``default='equal'``
+
+              Standard histogram kwargs such as ``histtype`` are passed on to
+              :meth:`matplotlib.axes.Axes.hist`.
+
         Returns
         -------
-        axes : :class:`pandas.Series` of :class:`matplotlib.axes.Axes`
-            Pandas array of axes objects
+        axes : :class:`anesthetic.plot.AxesSeries`
+            :class:`pandas.Series` of :class:`matplotlib.axes.Axes`.
 
         """
         # TODO: remove this in version >= 2.1
@@ -191,14 +241,14 @@ class Samples(WeightedLabelledDataFrame):
 
         To avoid interfering with y-axis sharing, one-dimensional plots are
         created on a separate axis, which is monkey-patched onto the argument
-        ax as the attribute ax.twin.
+        ``ax`` as the attribute ``ax.twin``.
 
         Parameters
         ----------
         axes : plotting axes, optional
             Can be:
-                - list(str) if the x and y axes are the same
-                - [list(str),list(str)] if the x and y axes are different
+                - ``list(str)`` if the x and y axes are the same
+                - ``[list(str),list(str)]`` if the x and y axes are different
                 - :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`
 
             If a :class:`pandas.DataFrame` is provided as an existing set of
@@ -211,7 +261,12 @@ class Samples(WeightedLabelledDataFrame):
             computationally expensive, and liable to run into linear algebra
             errors for degenerate derived parameters.
 
-        kind/kinds : dict, optional
+        logx, logy : list(str), optional
+            Which parameters/columns to plot on a log scale for the x-axis and
+            y-axis, respectively.
+            Needs to match if plotting on top of a pre-existing axes.
+
+        kind/kinds : dict or str, optional
             What kinds of plots to produce. Dictionary takes the keys
             'diagonal' for the 1D plots and 'lower' and 'upper' for the 2D
             plots. The options for 'diagonal' are:
@@ -244,32 +299,93 @@ class Samples(WeightedLabelledDataFrame):
                 - 'hist_2d': 2d histograms in lower triangle
                 - 'hist': 1d & 2d histograms in lower & diagonal
                 - 'scatter_2d': 2d scatter in lower triangle
-                - 'scatter': 1d histograms down diagonal
-                             & 2d scatter in lower triangle
+                - 'scatter': 1d hist in diagonal & 2d scatter in lower triangle
 
             Feel free to add your own to this list!
+
             Default:
-            {'diagonal': 'kde_1d', 'lower': 'kde_2d', 'upper':'scatter_2d'}
+            ``{'diagonal': 'kde_1d', 'lower': 'kde_2d', 'upper':'scatter_2d'}``
 
         diagonal_kwargs, lower_kwargs, upper_kwargs : dict, optional
-            kwargs for the diagonal (1D)/lower or upper (2D) plots. This is
+            kwargs for the diagonal (1D), or lower or upper (2D) plots. This is
             useful when there is a conflict of kwargs for different kinds of
-            plots.  Note that any kwargs directly passed to plot_2d will
+            plots.  Note that any kwargs directly passed to ``plot_2d`` will
             overwrite any kwarg with the same key passed to <sub>_kwargs.
             Default: {}
 
-        logx, logy : list(str), optional
-            Which parameters/columns to plot on a log scale for the x-axis and
-            y-axis, respectively.
-            Needs to match if plotting on top of a pre-existing axes.
+        q : int, float, or tuple, default=5
+            Quantile to determine the data range to be plotted.
+
+            * ``0``: full data range, i.e. ``q=0``: quantile range (0, 1)
+            * ``int``: q-sigma range, e.g. ``q=1``: quantile range (0.16, 0.84)
+            * ``float``: percentile, e.g. ``q=0.8``: quantile range (0.1, 0.9)
+            * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+
+        density : bool, default=False
+            For 1D plots (``kde_1d`` or ``hist_1d``):
+
+            * If ``False``, normalise such that the maximum peaks at 1.
+            * If ``True``, normalise such that the area integrates to 1.
+
+            For 2D histograms (``hist_2d``):
+
+            * If ``False``, fill each bin with its weighted bin count.
+            * If ``True``, fill each bin with its probability density function.
+
+        ncompress : int, bool, or str, optional
+            Degree of sample compression determining the number of points that
+            are being plotted (scatter plots) or where the KDE is being
+            constructed (KDE plots). Does not apply to histograms.
+
+            * If ``int``: desired number of samples after compression.
+            * If ``False``: no compression.
+            * If ``True``: compresses to the channel capacity, equivalent to
+              ``ncompress='entropy'``.
+            * If ``str``: determine number from the Huggins-Roy family of
+              effective samples in :func:`anesthetic.utils.neff`
+              with ``beta=ncompress``.
+
+            Defaults:
+
+            * ``fastkde_1d``: ``'equal'``.
+            * ``kde_1d``: ``False``.
+            * ``fastkde_2d``: ``'equal'``.
+            * ``kde_2d``: ``'equal'``, but does not exceed 10000 by default.
+            * ``scatter_2d``: ``'equal'``, but does not exceed 1000 by default.
 
         label : str, optional
             Legend label added to each axis.
 
+        **kwargs
+
+            * **KDE:**
+
+              - ``levels``: List of iso-proba lines. ``default=(0.95, 0.68)``
+              - ``ngrid_kde``: Number of grid points where to evaluate the KDE.
+              - ``grid_angle``: Oriented grid for correlated data/boundaries.
+              - ``bw_method``: Forwarded to :class:`scipy.stats.gaussian_kde`.
+              - ``bw_scale``: Bandwidth scale factor. ``default=1``
+              - ``order``: Boundary correction, one of -1, 0, 1. ``default=1``
+              - ``facecolor``: Set to ``'none'`` for unfilled contours.
+
+            * **Histograms:**
+
+              - ``levels``: Iso-proba list for colour bands. ``default=None``
+
+              Remaining kwargs such as ``color`` and ``bins`` are passed on to
+              :meth:`matplotlib.axes.Axes.hist` for 1D histograms,
+              or to :func:`numpy.histogram2d` and
+              :meth:`matplotlib.axes.Axes.pcolormesh` for 2D histograms, as
+              appropriate.
+
+            * **Scatter:**
+              Standard scatter kwargs such as ``markersize`` are passed on to
+              :meth:`matplotlib.axes.Axes.plot`.
+
         Returns
         -------
-        axes : :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`
-            Pandas array of axes objects
+        axes : :class:`anesthetic.plot.AxesDataFrame`
+            :class:`pandas.DataFrame` of :class:`matplotlib.axes.Axes`.
 
         """
         # TODO: remove this in version >= 2.1
@@ -460,8 +576,11 @@ class Samples(WeightedLabelledDataFrame):
         return anesthetic.read.hdf.to_hdf(path_or_buf, key, self,
                                           *args, **kwargs)
 
-    def compress(self, ncompress=True, axis=0, weighted=True):  # noqa: D102
-        return Samples(super().compress(ncompress, axis, weighted))
+    def compress(self, ncompress=True, axis=0, weighted=None):  # noqa: D102
+        compressed = super().compress(ncompress, axis=axis, weighted=weighted)
+        if ncompress is False:
+            return compressed
+        return Samples(compressed)
 
     compress.__doc__ = (
         inspect.getdoc(WeightedLabelledDataFrame.compress) + "\n\n" +
@@ -472,6 +591,8 @@ class Samples(WeightedLabelledDataFrame):
             Compressed samples (preserving input distribution). Downcast from
             :class:`MCMCSamples` or :class:`NestedSamples`, since MCMC- or
             nested-sampling-specific information is lost during compression.
+            Exception: With ``ncompress=False``, the original sample type is
+            retained because no information is lost.
         """
     )
 
@@ -1421,7 +1542,7 @@ class NestedSamples(Samples):
 
     def posterior_points(self, beta=1):
         """Get equally weighted posterior points at temperature beta."""
-        return self.set_beta(beta).compress('equal')
+        return self.set_beta(beta).compress('equal', weighted=False)
 
     def prior_points(self, params=None):
         """Get equally weighted prior points."""
