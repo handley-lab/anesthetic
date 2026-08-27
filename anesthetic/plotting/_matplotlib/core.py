@@ -61,17 +61,17 @@ class _WeightedMPLPlot(MPLPlot):
 
 
 def _compress_weights(kwargs, data, ncompress_max=1000):
-    if isinstance(data, _WeightedObject):
+    if not isinstance(data, _WeightedObject):
+        return data
+    ncompress = kwargs.pop('ncompress', None)
+    if ncompress is None:
         if data.isweighted():
             ncompress = int(neff(data.get_weights(), beta='equal'))
         else:
             ncompress = len(data)
         if ncompress_max is not None:
             ncompress = min(ncompress_max, ncompress)
-        ncompress = kwargs.pop('ncompress', ncompress)
-        return data.compress(ncompress, weighted=False)
-    else:
-        return data
+    return data.compress(ncompress, weighted=False)
 
 
 class _CompressedMPLPlot(MPLPlot):
