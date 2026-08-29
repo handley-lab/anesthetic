@@ -39,30 +39,38 @@ def read_ultranest(root, *args, columns=None, renames=None, **kwargs):
     :class:`anesthetic.samples.NestedSamples`
 
     """
+    points_file = os.path.join(root, 'results', 'points.hdf5')
+    if not os.path.exists(points_file):
+        raise FileNotFoundError(f"{points_file} not found.")
+
     parameters, _ = read_ultranest_paramnames(root)
-    num_params = len(parameters)
+    nparams = len(parameters)
     indices, columns, renames = _norm_columns(columns, parameters, renames)
 
-    filepath = os.path.join(root, 'results', 'points.hdf5')
     try:
         import h5py
     except ImportError:
         raise ImportError('h5py is required to read UltraNest results')
-    with h5py.File(filepath, 'r') as fileobj:
+    with h5py.File(points_file, 'r') as fileobj:
         points = fileobj['points']
         _, ncols = points.shape
-        x_dim = ncols - 3 - num_params
+        x_dim = ncols - 3 - nparams
         logL_birth = points[:, 0]
         logL = points[:, 1]
         if indices is None:
-            samples = points[:, 3+x_dim:3+x_dim+num_params]
+            data = points[:, 3+x_dim:3+x_dim+nparams]
         else:
-            samples = points[:, [3+x_dim+i for i in indices]]
+            data = points[:, [3+x_dim+i for i in indices]]
 
-    kwargs['label'] = kwargs.get('label', os.path.basename(root))
-    labels = kwargs.pop('labels', columns)
-    data = samples
     columns = [renames.get(column, column) for column in columns]
+    # UltraNest does not provide separate parameter labels.
+    labels = kwargs.pop('labels', columns)
+    kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
-    return NestedSamples(data=data, logL=logL, logL_birth=logL_birth,
-                         columns=columns, labels=labels, *args, **kwargs)
+    samples = NestedSamples(data=data, columns=columns,
+                            logL=logL, logL_birth=logL_birth,
+                            labels=labels, *args, **kwargs)
+
+    samples.root = root
+
+    return samples

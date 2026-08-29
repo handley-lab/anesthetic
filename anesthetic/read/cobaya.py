@@ -138,19 +138,22 @@ def read_cobaya(root, *args, columns=None, renames=None, burn_in=None,
     chain_files.sort(key=lambda chain_file: int(chain_file[0]))
 
     parameters, labels = read_cobaya_paramnames(root)
-    labels = kwargs.pop('labels', labels)
-    kwargs['label'] = kwargs.get('label', os.path.basename(root))
 
     data, columns, weights, minuslogP, chains, renames = _read_mcmc_chains(
         chain_files, parameters, columns, _count_samples,
         header_rows=1, burn_in=burn_in, thin=thin,
         compress_repeats=compress_repeats, renames=renames
     )
-
     logL = None if compress_repeats else -data[:, columns.index('chi2')] / 2
+
     columns = [renames.get(column, column) for column in columns]
-    samples = MCMCSamples(data=data, columns=columns, weights=weights,
-                          logL=logL, labels=labels, *args, **kwargs)
+    labels = kwargs.pop('labels', labels)
+    kwargs['label'] = kwargs.get('label', os.path.basename(root))
+
+    samples = MCMCSamples(data=data, columns=columns,
+                          weights=weights, logL=logL,
+                          labels=labels, *args, **kwargs)
+
     if not compress_repeats:
         samples['logP'] = -minuslogP
         if samples.islabelled():
@@ -159,6 +162,5 @@ def read_cobaya(root, *args, columns=None, renames=None, burn_in=None,
     if samples.islabelled():
         samples.set_label('chain', r'$n_\mathrm{chain}$')
     samples.root = root
-    samples.label = kwargs['label']
 
     return samples

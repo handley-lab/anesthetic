@@ -41,18 +41,26 @@ def read_nestedfit(root, *args, columns=None, renames=None, **kwargs):
     """
     dead_file = os.path.join(root, 'nf_output_points.txt')
     birth_file = os.path.join(root, 'nf_output_diag.dat')
+    if not os.path.exists(dead_file):
+        raise FileNotFoundError(f"{dead_file} not found.")
+
     parameters, _ = read_nestedfit_paramnames(root)
     indices, columns, renames = _norm_columns(columns, parameters, renames)
     usecols = None if indices is None else [0, 1] + [i+2 for i in indices]
 
-    data_dead = np.loadtxt(dead_file, usecols=usecols, ndmin=2)
-    weight, logL, data = np.split(data_dead, [1, 2], axis=1)
+    data = np.loadtxt(dead_file, usecols=usecols, ndmin=2)
+    weight, logL, data = np.split(data, [1, 2], axis=1)
     logL_birth = np.loadtxt(birth_file, usecols=0, ndmin=1)
+
+    columns = [renames.get(column, column) for column in columns]
     # Nested_fit does not provide separate parameter labels.
     labels = kwargs.pop('labels', columns)
     kwargs['label'] = kwargs.get('label', os.path.basename(root))
-    columns = [renames.get(column, column) for column in columns]
 
-    return NestedSamples(data=data, columns=columns,
-                         logL=logL, logL_birth=logL_birth,
-                         labels=labels, *args, **kwargs)
+    samples = NestedSamples(data=data, columns=columns,
+                            logL=logL, logL_birth=logL_birth,
+                            labels=labels, *args, **kwargs)
+
+    samples.root = root
+
+    return samples

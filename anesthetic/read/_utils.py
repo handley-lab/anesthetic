@@ -98,14 +98,14 @@ def _read_mcmc_chains(chain_files, parameters, columns, count_samples,
     elif indices is None:
         usecols = None
     elif compress_repeats:
-        usecols = [0] + [index + 2 for index in indices]
+        usecols = [0] + [i+2 for i in indices]
     else:
         if 'chi2' in parameters:
             index = parameters.index('chi2')
             if index not in indices:
                 indices = indices + [index]
                 columns = columns + ['chi2']
-        usecols = [0, 1] + [index + 2 for index in indices]
+        usecols = [0, 1] + [i+2 for i in indices]
 
     chain_lengths = np.array([count_samples(file) for _, file in chain_files])
     if burn_in is None:

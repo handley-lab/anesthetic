@@ -7,6 +7,7 @@ from pathlib import Path
 
 def read_csv(filename, *args, **kwargs):
     """Read a CSV file into a :class:`anesthetic.samples.Samples` object."""
+    root = filename
     try:
         filename = Path(filename)
         kwargs['label'] = kwargs.get('label', filename.stem)
@@ -15,7 +16,11 @@ def read_csv(filename, *args, **kwargs):
         pass
     wldf = wl_read_csv(filename)
     if 'nlive' in wldf.columns:
-        return NestedSamples(wldf, *args, **kwargs)
+        samples = NestedSamples(wldf, *args, **kwargs)
     else:
         wldf.set_weights(_infer_weight_dtype(wldf.get_weights()), inplace=True)
-        return MCMCSamples(wldf, *args, **kwargs)
+        samples = MCMCSamples(wldf, *args, **kwargs)
+
+    samples.root = root
+
+    return samples

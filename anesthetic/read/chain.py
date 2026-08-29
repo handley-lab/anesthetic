@@ -108,9 +108,7 @@ def read_chains(root, *args, **kwargs):
     ]
     for read in readers:
         try:
-            samples = read(root, *args, **kwargs)
-            samples.root = root
-            return samples
+            return read(root, *args, **kwargs)
         except (FileNotFoundError, IOError) as e:
             errors.append(str(read) + ": " + str(e))
 
