@@ -53,7 +53,7 @@ def test_boundary_correction_1d():
 
     _, ax = plt.subplots()
     t, = ax.plot(x, truth)
-    kwargs = dict(bw_method=0.25, q=0, nplot_1d=num)
+    kwargs = dict(bw_method=0.25, q=0, ngrid_kde=num)
     pn, = kde_plot_1d(ax, d, weights=w, order=-1, **kwargs)  # no correction
     p0, = kde_plot_1d(ax, d, weights=w, order=+0, **kwargs)  # order 0
     p1, = kde_plot_1d(ax, d, weights=w, order=+1, **kwargs)  # order 1

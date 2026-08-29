@@ -697,15 +697,18 @@ def test_q_1d(plot_1d):
     assert (p.min(), p.max()) == pytest.approx((-2, 1), rel=0.1)
 
 
-@pytest.mark.parametrize('plot_2d', [kde_contour_plot_2d,
-                                     hist_plot_2d,
-                                     scatter_plot_2d])
+@pytest.mark.parametrize('plot_2d', [
+    kde_contour_plot_2d,
+    skipif_no_fastkde(fastkde_contour_plot_2d),
+    hist_plot_2d,
+    scatter_plot_2d
+])
 def test_q_2d(plot_2d):
     np.random.seed(42)
     d = np.random.randn(2, 1000)
 
     def get_data_from_plot(plot_2d, p):
-        if plot_2d == kde_contour_plot_2d:
+        if plot_2d in [kde_contour_plot_2d, fastkde_contour_plot_2d]:
             # p[0].allsegs[i] is the list of polygon outlines drawn at
             # contourf level i; each outline is an (N, 2) vertex array.
             # Flatten the polygons within each level, skipping empty levels.
@@ -754,7 +757,11 @@ def test_q_2d(plot_2d):
     assert (y.min(), y.max()) == pytest.approx((-2, 1), rel=0.2)
 
 
-def test_q_invariant_levels():
+@pytest.mark.parametrize('contour_plot_2d', [
+    kde_contour_plot_2d,
+    skipif_no_fastkde(fastkde_contour_plot_2d)
+])
+def test_q_invariant_levels(contour_plot_2d):
     """Contour levels must not depend on the plotting window set by `q`.
 
     Regression test for a bug where ``iso_probability_contours`` was
@@ -765,26 +772,30 @@ def test_q_invariant_levels():
     x, y = np.random.randn(2, 500)
 
     fig, ax = plt.subplots()
-    fill_q5, line_q5 = kde_contour_plot_2d(ax, x, y, q=5)
-    fill_q1, line_q1 = kde_contour_plot_2d(ax, x, y, q=1)
+    fill_q5, line_q5 = contour_plot_2d(ax, x, y, q=5)
+    fill_q1, line_q1 = contour_plot_2d(ax, x, y, q=1)
     # The interior iso-probability levels should match bit-identically;
     # only the top value (``vmax``) depends on the plotting window.
     assert_array_equal(fill_q5.levels[:-1], fill_q1.levels[:-1])
     assert_array_equal(line_q5.levels[:-1], line_q1.levels[:-1])
 
 
-def test_kde_plot_nplot():
+def test_kde_plot_ngrid():
     fig, ax = plt.subplots()
     np.random.seed(0)
     data = np.random.randn(1000)
-    line, = kde_plot_1d(ax, data, ncompress=1000, nplot_1d=200)
+    with pytest.warns(FutureWarning):
+        kde_plot_1d(ax, data, ncompress=1000, nplot_1d=200)
+    line, = kde_plot_1d(ax, data, ncompress=1000, ngrid_kde=200)
     assert line.get_xdata().size == 200
 
     fig, ax = plt.subplots()
     np.random.seed(0)
     data_x = np.random.randn(1000)
     data_y = np.random.randn(1000)
-    kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
+    with pytest.warns(FutureWarning):
+        kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, nplot_2d=900)
+    kde_contour_plot_2d(ax, data_x, data_y, ncompress=1000, ngrid_kde=900)
 
 
 def test_kde_plot_1d_clip_to_zero():
@@ -1213,6 +1224,11 @@ def test_scatter_plot_2d():
     lines, = scatter_plot_2d(ax, data_x, data_y)
     assert isinstance(lines, Line2D)
 
+    # do not pass weights
+    with pytest.raises(ValueError, match='Must not pass `weights`'):
+        scatter_plot_2d(ax, data_x, data_y, weights=np.ones_like(data_x))
+
+    # colors
     fig, ax = plt.subplots()
     points, = scatter_plot_2d(ax, data_x, data_y, color='C0', lw=1)
     assert (points.get_color() == 'C0')
@@ -1223,9 +1239,16 @@ def test_scatter_plot_2d():
     assert (points.get_markerfacecolor() == 'C1')
     assert (points.get_markeredgecolor() == 'C2')
 
+    # fc=mfc and ec=mec aliases for better combination with other kinds
+    with pytest.raises(TypeError):
+        scatter_plot_2d(ax, data_x, data_y, ec='C1', mec='C2')
+    with pytest.raises(TypeError):
+        scatter_plot_2d(ax, data_x, data_y, fc='C1', mfc='C2')
+
     # Check that q is ignored
     fig, ax = plt.subplots()
-    scatter_plot_2d(ax, data_x, data_y, q=0)
+    p = scatter_plot_2d(ax, data_x, data_y, q=0)
+    assert len(p[0].get_xydata()) == 100
 
 
 def test_make_axes_logscale():
