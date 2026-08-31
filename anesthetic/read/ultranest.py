@@ -62,7 +62,11 @@ def read_ultranest(root, *args, columns=None, renames=None, **kwargs):
         if indices is None:
             data = points[:, 3+x_dim:3+x_dim+nparams]
         else:
-            data = points[:, [3+x_dim+i for i in indices]]
+            # h5py requires unique column indices in increasing order.
+            read_indices = sorted(set(indices))
+            data = points[:, [3+x_dim+i for i in read_indices]]
+            if read_indices != indices:
+                data = data[:, [read_indices.index(i) for i in indices]]
 
     columns = [renames.get(column, column) for column in columns]
     # UltraNest does not provide separate parameter labels.
