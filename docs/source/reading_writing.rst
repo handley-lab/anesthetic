@@ -5,20 +5,97 @@ Reading and writing
 
 .. _reading chains:
 
-Reading chain files from PolyChord, MultiNest, UltraNest, NestedFit, CosmoMC, or Cobaya
-=======================================================================================
+Reading chain files from nested sampling or MCMC codes
+======================================================
 
-If you have finished nested sampling or MCMC runs from one of:
+If you have nested sampling or MCMC chain files from one of:
 
 * `PolyChord <https://polychord.io>`_: https://github.com/PolyChord/PolyChordLite
 * MultiNest: https://github.com/farhanferoz/MultiNest
 * `UltraNest <https://johannesbuchner.github.io/UltraNest/index.html>`_: https://github.com/JohannesBuchner/UltraNest
-* NestedFit: https://github.com/martinit18/nested_fit 
+* Nested_fit: https://github.com/martinit18/nested_fit
+* `GetDist <https://getdist.readthedocs.io/en/latest/>`_-compatible chains: https://github.com/cmbant/getdist
 * `CosmoMC <https://cosmologist.info/cosmomc/readme.html>`_: https://github.com/cmbant/CosmoMC
 * `Cobaya <https://cobaya.readthedocs.io>`_: https://github.com/CobayaSampler/cobaya
 
 then you should be able to read in the chain files directly, by passing the
-``root`` to the :func:`anesthetic.read.chain.read_chains` function.
+``root`` to the :func:`anesthetic.read.chain.read_chains` function:
+
+::
+
+    from anesthetic import read_chains
+    root = "anesthetic/tests/example_data/cb"
+    samples = read_chains(root)
+
+Reading parameter names only
+----------------------------
+
+You can inspect the available parameters without loading the numerical samples
+using :func:`anesthetic.read.chain.read_paramnames`:
+
+::
+
+    from anesthetic import read_paramnames
+    parameters, labels = read_paramnames(root)
+
+Column selection and renaming
+-----------------------------
+
+Pass parameter names to ``columns`` to avoid loading unneeded parameter
+columns into memory. Weights and relevant sampler bookkeeping fields, such as
+``logL``, ``logP``, ``logL_birth``, or ``chain``, are retained in addition to
+the selected parameters:
+
+::
+
+    from anesthetic import read_chains
+    samples = read_chains(root, columns=["x0", "x1"])
+
+Use ``renames`` to change parameter names after selection.
+
+::
+
+    samples = read_chains(
+        root,
+        columns=["x0", "x1"],
+        renames={"x0": "omega_b", "x1": "omega_c"},
+    )
+
+Burn-in, thinning, and compression of MCMC chains
+-------------------------------------------------
+
+For MCMC chains, ``burn_in`` removes a number or fraction of stored rows from
+each chain before loading samples into memory. ``thin`` keeps every
+``thin``-th sample in the expanded MCMC chain represented by the frequency
+weights.
+
+Set ``compress_repeats=True`` to merge consecutive repeated MCMC rows by
+summing their weights. This is useful when oversampling nuisance parameters
+leaves the selected parameters of interest unchanged across consecutive
+samples. Retaining their weights while selecting only the parameters of
+interest effectively marginalises over the omitted nuisance parameters.
+Likelihood bookkeeping fields such as ``logL`` would distinguish otherwise
+identical selected rows, so they are omitted when compressing.
+
+Compression happens separately for each chain, after burn-in removal and
+thinning. In compression mode, only the selected columns and ``chain`` are
+returned, while weights are retained:
+
+::
+
+    samples = read_chains(
+        root,
+        columns=["x0", "x1"],
+        burn_in=0.1,
+        thin=2,
+        compress_repeats=True,
+    )
+
+Compression is performed after loading each selected chain file, so peak
+memory still includes one uncompressed selected chain.
+
+Examples
+--------
 
 Feel free to use the testing data in ``anesthetic/tests/example_data`` to try
 out the examples listed here.
@@ -27,33 +104,49 @@ out the examples listed here.
   :class:`anesthetic.samples.NestedSamples` class:
 
   ::
-      
+
       from anesthetic import read_chains
       samples = read_chains("anesthetic/tests/example_data/pc")
+
+* MultiNest samples, which will be an instance of the
+  :class:`anesthetic.samples.NestedSamples` class:
+
+  ::
+
+      from anesthetic import read_chains
+      samples = read_chains("anesthetic/tests/example_data/mn")
 
 * UltraNest samples, which will be an instance of the
   :class:`anesthetic.samples.NestedSamples` class:
 
   ::
-      
+
       from anesthetic import read_chains
       samples = read_chains("anesthetic/tests/example_data/un")
 
-* NestedFit samples, which will be an instance of the
+* Nested_fit samples, which will be an instance of the
   :class:`anesthetic.samples.NestedSamples` class:
 
   ::
-      
+
       from anesthetic import read_chains
       samples = read_chains("anesthetic/tests/example_data/nf")
+
+* GetDist-compatible MCMC samples, including CosmoMC chains, which will be an
+  instance of the :class:`anesthetic.samples.MCMCSamples` class:
+
+  ::
+
+      from anesthetic import read_chains
+      samples = read_chains("anesthetic/tests/example_data/gd")
 
 * Cobaya samples, which will be an instance of the
   :class:`anesthetic.samples.MCMCSamples` class:
 
   ::
-      
+
       from anesthetic import read_chains
-      samples = read_chains("anesthetic/tests/example_data/cb").remove_burn_in(burn_in=0.1)
+      samples = read_chains("anesthetic/tests/example_data/cb", burn_in=0.1)
 
 
 .. _passing data:
@@ -108,7 +201,7 @@ appropriate class: ``Samples``, ``MCMCSamples``, or ``NestedSamples``.
 * ``read_csv``:
 
   ::
-  
+
       from pandas import read_csv
       from anesthetic import Samples  # or MCMCSamples, or NestedSamples
       samples = Samples(read_csv("filename.csv"))
@@ -122,7 +215,7 @@ consequent loss of functionality
 * ``read_hdf``:
 
   ::
-  
+
       from anesthetic import read_hdf
       samples = read_hdf("filename.h5", "samples")
 

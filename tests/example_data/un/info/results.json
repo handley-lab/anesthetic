@@ -64,10 +64,10 @@
     },
     "ncall": 39885,
     "paramnames": [
-        "a",
-        "b",
-        "c",
-        "d"
+        "x0",
+        "x1",
+        "x2",
+        "x3"
     ],
     "logzerr_single": 0.31080410038734035,
     "insertion_order_MWW_test": {
