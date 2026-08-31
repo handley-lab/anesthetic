@@ -156,10 +156,10 @@ def _read_mcmc_chains(chain_files, parameters, columns, count_samples,
             weights[start:stop] = selected_weights[j][mask]
 
         if compress_repeats:
-            indices, compressed_weights = _compress_repeats(
+            compressed_indices, compressed_weights = _compress_repeats(
                 chain_data[:, 1:], weights[start:stop]
             )
-            compressed_data = chain_data[indices, 1:]
+            compressed_data = chain_data[compressed_indices, 1:]
             stop = start + len(compressed_data)
             data[start:stop] = compressed_data
             weights[start:stop] = compressed_weights
