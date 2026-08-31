@@ -488,8 +488,7 @@ def test_read_labels(root):
     ('mn', ['logL', 'logL_birth', 'nlive']),
     ('mn_old', ['logL', 'nlive']),
     ('nf', ['logL', 'logL_birth', 'nlive']),
-    pytest.param('un', ['logL', 'logL_birth', 'nlive'],
-                 marks=h5py_mark_xfail),
+    pytest.param('un', ['logL', 'logL_birth', 'nlive'], marks=h5py_mark_xfail),
 ])
 @pytest.mark.parametrize(('columns', 'parameters'), [
     ('x0', ['x0']),                    # scalar name
@@ -500,6 +499,11 @@ def test_read_labels(root):
     (np.int32([0, 1]), ['x0', 'x1']),  # numpy indices
     (slice(0, 2), ['x0', 'x1']),       # slice
     ([], []),                          # empty selection
+    (['x1', 'x0'], ['x1', 'x0']),      # reordered names
+    ([1, 0], ['x1', 'x0']),            # reordered indices
+    (np.int32([1, 0]), ['x1', 'x0']),  # reordered numpy indices
+    (['x0', 'x0'], ['x0', 'x0']),      # repeated names
+    ([0, 0], ['x0', 'x0']),            # repeated indices
 ])
 def test_read_columns(root, bookkeeping, columns, parameters):
     root = f'./tests/example_data/{root}'
@@ -508,30 +512,8 @@ def test_read_columns(root, bookkeeping, columns, parameters):
     assert_frame_equal(selected, expected)
 
 
-@pytest.mark.parametrize(('root', 'bookkeeping'), [
-    ('cb', ['chi2', 'logL', 'logP', 'chain']),
-    ('gd', ['logL', 'chain']),
-    ('pc', ['logL', 'logL_birth', 'nlive']),
-    ('mn', ['logL', 'logL_birth', 'nlive']),
-    ('mn_old', ['logL', 'nlive']),
-    ('nf', ['logL', 'logL_birth', 'nlive']),
-])
-@pytest.mark.parametrize(('columns', 'parameters'), [
-    (['x1', 'x0'], ['x1', 'x0']),      # reordered names
-    ([1, 0], ['x1', 'x0']),            # reordered indices
-    (np.int32([1, 0]), ['x1', 'x0']),  # reordered numpy indices
-    (['x0', 'x0'], ['x0', 'x0']),      # repeated names
-    ([0, 0], ['x0', 'x0']),            # repeated indices
-])
-def test_read_columns_reordered_repeated(root, bookkeeping, columns,
-                                         parameters):
-    root = f'./tests/example_data/{root}'
-    expected = read_chains(root)[parameters + bookkeeping]
-    selected = read_chains(root, columns=columns)
-    assert_frame_equal(selected, expected)
-
-
-@pytest.mark.parametrize('root', ['cb', 'gd', 'pc', 'mn', 'mn_old', 'nf'])
+@pytest.mark.parametrize('root', ['cb', 'gd', 'pc', 'mn', 'mn_old', 'nf',
+                                  pytest.param('un', marks=h5py_mark_xfail)])
 @pytest.mark.parametrize('columns', [[-4], [-3, 1, -2], slice(-4, -2)])
 def test_read_columns_negative_indexing(root, columns):
     root = f'./tests/example_data/{root}'
