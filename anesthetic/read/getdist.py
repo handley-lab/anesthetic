@@ -103,7 +103,9 @@ def read_getdist(root, *args, columns=None, renames=None, burn_in=None,
         fields only, not sampler bookkeeping fields such as ``logL``.
 
     renames : dict, optional
-        Mapping from parameter names to new names.
+        Mapping from parameter names to new names (i.e. column handles).
+        Labels are not carried over to renamed parameters, so provide them
+        separately via a ``labels`` dict with the new parameter names as keys.
 
     burn_in : int, float or array-like, optional
         Number or fraction of stored rows to remove from each chain before

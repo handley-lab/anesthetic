@@ -67,7 +67,9 @@ def read_chains(root, *args, **kwargs):
         fields only, not sampler bookkeeping fields such as ``logL``.
 
     renames : dict, optional
-        Mapping from parameter names to new names.
+        Mapping from parameter names to new names (i.e. column handles).
+        Labels are not carried over to renamed parameters, so provide them
+        separately via a ``labels`` dict with the new parameter names as keys.
 
     burn_in : int, float or array-like, optional
         For Cobaya and GetDist MCMC chains:
