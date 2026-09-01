@@ -753,11 +753,31 @@ def test_q_2d(plot_2d):
 
     # check per-axis q, mixing a custom interval with an integer
     fig, ax = plt.subplots()
-    p = plot_2d(ax, np.abs(d[0]), d[1], q=((0, 0.682689), 1))
+    p = plot_2d(ax, np.abs(d[0]), d[1], q=((0, 0.68), 1))
     x, y = get_data_from_plot(plot_2d, p)
     xlim, ylim = expected_limits(plot_2d, x, y)
     assert ax.get_xlim() == pytest.approx((0, 1), rel=0.2, abs=0.05)
     assert ax.get_ylim() == pytest.approx((-1, 1), rel=0.2)
+    assert ax.get_xlim() == pytest.approx(xlim, rel=1e-15)
+    assert ax.get_ylim() == pytest.approx(ylim, rel=1e-15)
+
+    # check per-axis q with 4-tuple shorthand
+    fig, ax = plt.subplots()
+    p = plot_2d(ax, np.abs(d[0]), d[1], q=(0, 0.68, 0.025, 0.975))
+    x, y = get_data_from_plot(plot_2d, p)
+    xlim, ylim = expected_limits(plot_2d, x, y)
+    assert ax.get_xlim() == pytest.approx((0, 1), rel=0.2, abs=0.05)
+    assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
+    assert ax.get_xlim() == pytest.approx(xlim, rel=1e-15)
+    assert ax.get_ylim() == pytest.approx(ylim, rel=1e-15)
+
+    # check per-axis q with integer tuple
+    fig, ax = plt.subplots()
+    p = plot_2d(ax, d[0], d[1], q=(1, 2))
+    x, y = get_data_from_plot(plot_2d, p)
+    xlim, ylim = expected_limits(plot_2d, x, y)
+    assert ax.get_xlim() == pytest.approx((-1, 1), rel=0.2)
+    assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
     assert ax.get_xlim() == pytest.approx(xlim, rel=1e-15)
     assert ax.get_ylim() == pytest.approx(ylim, rel=1e-15)
 
