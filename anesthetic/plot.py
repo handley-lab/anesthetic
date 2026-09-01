@@ -1727,7 +1727,7 @@ def _quantile_plot_intervals_2d(q):
 
     Parameters
     ----------
-    q : str, int, float, tuple, or tuple of tuples
+    q : str, int, float, tuple
         Quantile flag.
 
     Returns
@@ -1735,10 +1735,11 @@ def _quantile_plot_intervals_2d(q):
     qx, qy : tuple of floats
         Normalised quantile ranges for the x and y axes.
     """
-    is_sequence = isinstance(q, (tuple, list, np.ndarray))
-    if is_sequence and len(q) == 2 and any(not np.isscalar(qi) for qi in q):
+    is_sequence = isinstance(q, (tuple, list))
+    if is_sequence and len(q) == 2 and (any(not np.isscalar(qi) for qi in q) or
+                                        all(isinstance(qi, int) for qi in q)):
         # Explicit per-axis specifications:
-        # ((0, 0.95), 5) or (5, (0, 0.95)) or ((0, 0.95), (0.025, 0.975))
+        # (2, 5) or (5, (0, 0.95)) or ((0, 0.95), (0.025, 0.975))
         qx, qy = q
     elif is_sequence and len(q) == 4 and all(np.isscalar(qi) for qi in q):
         # Optional flat shorthand: (0, 0.95, 0.025, 0.975)
