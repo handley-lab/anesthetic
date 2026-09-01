@@ -836,15 +836,14 @@ def fastkde_plot_1d(ax, data, *args, q=5, density=False, levels=(0.95, 0.68),
     else:
         edgecolor = color
 
-    q = quantile_plot_interval(q=q)
-
     try:
         from anesthetic.kde import fastkde_1d
         x, p, xmin, xmax = fastkde_1d(data, xmin, xmax)
     except ImportError:
         raise ImportError("You need to install fastkde to use fastkde")
     p /= p.max()
-    i = ((x > quantile(x, q[0], p)) & (x < quantile(x, q[-1], p)))
+    q = quantile_plot_interval(q=q)
+    i = (x >= quantile(data, q[0])) & (x <= quantile(data, q[-1]))
 
     if version.parse(np.__version__) >= version.parse("2.0.0"):
         trapezoid = np.trapezoid
@@ -1179,6 +1178,7 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args,
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+        * ``tuple of q``: per-axis quantiles, e.g. ((0, 0.9), 5)
 
     levels : array-like, default=(0.95, 0.68)
         List of probability masses enclosed by iso-probability contours.
@@ -1240,11 +1240,9 @@ def fastkde_contour_plot_2d(ax, data_x, data_y, *args,
     except ImportError:
         raise ImportError("You need to install fastkde to use fastkde")
 
-    q = quantile_plot_interval(q=q)
-    pdf_x = pdf.sum(axis=0)
-    pdf_y = pdf.sum(axis=1)
-    i = ((x > quantile(x, q[0], pdf_x)) & (x < quantile(x, q[-1], pdf_x)))
-    j = ((y > quantile(y, q[0], pdf_y)) & (y < quantile(y, q[-1], pdf_y)))
+    qx, qy = _quantile_plot_intervals_2d(q)
+    i = (x >= quantile(data_x, qx[0])) & (x <= quantile(data_x, qx[-1]))
+    j = (y >= quantile(data_y, qy[0])) & (y <= quantile(data_y, qy[-1]))
 
     levels = iso_probability_contours(pdf, contours=levels) + [pdf.max()]
 
@@ -1311,6 +1309,7 @@ def kde_contour_plot_2d(ax, data_x, data_y, weights=None, *args, q=5,
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+        * ``tuple of q``: per-axis quantiles, e.g. ((0, 0.9), 5)
 
     levels : array-like, default=(0.95, 0.68)
         List of probability masses enclosed by iso-probability contours.
@@ -1431,11 +1430,11 @@ def kde_contour_plot_2d(ax, data_x, data_y, weights=None, *args, q=5,
         data_y = data_y.copy() + noise * evecs[1, 0]
         cov = np.cov(data_x, data_y, aweights=weights)
 
-    q = quantile_plot_interval(q=q)
-    xmin = quantile(data_x, q[0], weights)
-    xmax = quantile(data_x, q[-1], weights)
-    ymin = quantile(data_y, q[0], weights)
-    ymax = quantile(data_y, q[-1], weights)
+    qx, qy = _quantile_plot_intervals_2d(q)
+    xmin = quantile(data_x, qx[0], weights)
+    xmax = quantile(data_x, qx[-1], weights)
+    ymin = quantile(data_y, qy[0], weights)
+    ymax = quantile(data_y, qy[-1], weights)
     ngrid = int(np.sqrt(ngrid_kde))
     if corr > 0.99 or grid_angle is not None:
         if grid_angle is None and eig is None:
@@ -1542,6 +1541,7 @@ def hist_plot_2d(ax, data_x, data_y, weights=None, *args, q=5, density=False,
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+        * ``tuple of q``: per-axis quantiles, e.g. ((0, 0.9), 5)
 
     density : bool, default=False
 
@@ -1595,11 +1595,11 @@ def hist_plot_2d(ax, data_x, data_y, weights=None, *args, q=5, density=False,
     color = kwargs.pop('color', ax._get_lines.get_next_color())
     cmap = kwargs.pop('cmap', basic_cmap(color))
 
-    q = quantile_plot_interval(q=q)
-    xmin = quantile(data_x, q[0], weights)
-    xmax = quantile(data_x, q[-1], weights)
-    ymin = quantile(data_y, q[0], weights)
-    ymax = quantile(data_y, q[-1], weights)
+    qx, qy = _quantile_plot_intervals_2d(q)
+    xmin = quantile(data_x, qx[0], weights)
+    xmax = quantile(data_x, qx[-1], weights)
+    ymin = quantile(data_y, qy[0], weights)
+    ymax = quantile(data_y, qy[-1], weights)
     range = kwargs.pop('range', ((xmin, xmax), (ymin, ymax)))
 
     pdf, x, y = np.histogram2d(data_x, data_y, bins, range,
@@ -1649,6 +1649,7 @@ def scatter_plot_2d(ax, data_x, data_y, *args, q=5, **kwargs):
         * ``int``: q-sigma range, e.g. ``q=1`` --> quantile range (0.16, 0.84)
         * ``float``: percentile, e.g. ``q=0.8`` --> quantile range (0.1, 0.9)
         * ``tuple``: custom quantile range, e.g. (0.16, 0.84)
+        * ``tuple of q``: per-axis quantiles, e.g. ((0, 0.9), 5)
 
     Other Parameters
     ----------------
@@ -1685,11 +1686,11 @@ def scatter_plot_2d(ax, data_x, data_y, *args, q=5, **kwargs):
     color = kwargs.pop('color', (ax._get_lines.get_next_color()
                                  if cmap is None else cmap(0.68)))
 
-    q = quantile_plot_interval(q=q)
-    xmin = quantile(data_x, q[0])
-    xmax = quantile(data_x, q[-1])
-    ymin = quantile(data_y, q[0])
-    ymax = quantile(data_y, q[-1])
+    qx, qy = _quantile_plot_intervals_2d(q)
+    xmin = quantile(data_x, qx[0])
+    xmax = quantile(data_x, qx[-1])
+    ymin = quantile(data_y, qy[0])
+    ymax = quantile(data_y, qy[-1])
     mask = ((data_x >= xmin) & (data_x <= xmax) &
             (data_y >= ymin) & (data_y <= ymax))
 
@@ -1719,6 +1720,34 @@ def quantile_plot_interval(q):
             q = 1 - q
         q = (q, 1-q)
     return tuple(np.sort(q))
+
+
+def _quantile_plot_intervals_2d(q):
+    """Return normalised quantile intervals for the x and y axes.
+
+    Parameters
+    ----------
+    q : str, int, float, tuple
+        Quantile flag.
+
+    Returns
+    -------
+    qx, qy : tuple of floats
+        Normalised quantile ranges for the x and y axes.
+    """
+    is_sequence = isinstance(q, (tuple, list))
+    if is_sequence and len(q) == 2 and (any(not np.isscalar(qi) for qi in q) or
+                                        all(isinstance(qi, int) for qi in q)):
+        # Explicit per-axis specifications:
+        # (2, 5) or (5, (0, 0.95)) or ((0, 0.95), (0.025, 0.975))
+        qx, qy = q
+    elif is_sequence and len(q) == 4 and all(np.isscalar(qi) for qi in q):
+        # Optional flat shorthand: (0, 0.95, 0.025, 0.975)
+        qx, qy = q[:2], q[2:]
+    else:
+        # Scalar, string, or interval behaviour of `quantile_plot_interval`.
+        qx = qy = q
+    return quantile_plot_interval(qx), quantile_plot_interval(qy)
 
 
 def normalize_kwargs(kwargs, alias_mapping=None, drop=None):

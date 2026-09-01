@@ -660,19 +660,14 @@ def test_contour_plot_2d(contour_plot_2d):
     contour_plot_2d(ax, data_x, data_y, q=0)
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
-    if contour_plot_2d is fastkde_contour_plot_2d:
-        assert xmin <= 0
-        assert xmax >= 1
-        assert ymin <= 0
-        assert ymax >= 1
-    elif contour_plot_2d is kde_contour_plot_2d:
-        assert xmin == pytest.approx(0, abs=0.01)
-        assert xmax == pytest.approx(1, abs=0.01)
-        assert ymin == pytest.approx(0, abs=0.01)
-        assert ymax == pytest.approx(1, abs=0.01)
+    assert xmin == pytest.approx(0, abs=0.01)
+    assert xmax == pytest.approx(1, abs=0.01)
+    assert ymin == pytest.approx(0, abs=0.01)
+    assert ymax == pytest.approx(1, abs=0.01)
 
 
-@pytest.mark.parametrize('plot_1d', [kde_plot_1d, hist_plot_1d])
+@pytest.mark.parametrize('plot_1d', [kde_plot_1d, hist_plot_1d,
+                                     skipif_no_fastkde(fastkde_plot_1d)])
 def test_q_1d(plot_1d):
     np.random.seed(42)
     d = np.random.randn(1000)
@@ -755,6 +750,36 @@ def test_q_2d(plot_2d):
     assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
     assert (x.min(), x.max()) == pytest.approx((-2, 1), rel=0.2)
     assert (y.min(), y.max()) == pytest.approx((-2, 1), rel=0.2)
+
+    # check per-axis q, mixing a custom interval with an integer
+    fig, ax = plt.subplots()
+    p = plot_2d(ax, np.abs(d[0]), d[1], q=((0, 0.68), 1))
+    x, y = get_data_from_plot(plot_2d, p)
+    xlim, ylim = expected_limits(plot_2d, x, y)
+    assert ax.get_xlim() == pytest.approx((0, 1), rel=0.2, abs=0.05)
+    assert ax.get_ylim() == pytest.approx((-1, 1), rel=0.2)
+    assert ax.get_xlim() == pytest.approx(xlim, rel=1e-15)
+    assert ax.get_ylim() == pytest.approx(ylim, rel=1e-15)
+
+    # check per-axis q with 4-tuple shorthand
+    fig, ax = plt.subplots()
+    p = plot_2d(ax, np.abs(d[0]), d[1], q=(0, 0.68, 0.025, 0.975))
+    x, y = get_data_from_plot(plot_2d, p)
+    xlim, ylim = expected_limits(plot_2d, x, y)
+    assert ax.get_xlim() == pytest.approx((0, 1), rel=0.2, abs=0.05)
+    assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
+    assert ax.get_xlim() == pytest.approx(xlim, rel=1e-15)
+    assert ax.get_ylim() == pytest.approx(ylim, rel=1e-15)
+
+    # check per-axis q with integer tuple
+    fig, ax = plt.subplots()
+    p = plot_2d(ax, d[0], d[1], q=(1, 2))
+    x, y = get_data_from_plot(plot_2d, p)
+    xlim, ylim = expected_limits(plot_2d, x, y)
+    assert ax.get_xlim() == pytest.approx((-1, 1), rel=0.2)
+    assert ax.get_ylim() == pytest.approx((-2, 2), rel=0.2)
+    assert ax.get_xlim() == pytest.approx(xlim, rel=1e-15)
+    assert ax.get_ylim() == pytest.approx(ylim, rel=1e-15)
 
 
 @pytest.mark.parametrize('contour_plot_2d', [
